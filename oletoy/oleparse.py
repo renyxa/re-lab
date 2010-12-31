@@ -250,6 +250,125 @@ def parse_escher(model,data,parent):
   except:
       print "Failed"
 
+def parse_block(model,data,parent,i):
+	off = 0
+	value = None
+	try:
+		while off < len(data) - 2:
+			id = ord(data[off])
+			type = ord(data[off+1])
+#			print "id: %02x  type: %02x"%(id,type)
+			name = "ID: %02x  Type: %02x"%(id,type)
+			off+=2
+			dlen = -1
+			if type == 0 or type == 8 or type == 0x78:
+				value = None
+				dlen = 0
+			if type == 0x10 or type == 0x18:
+				value = data[off:off+2]
+				dlen = 2
+				name += " (%02x)"%struct.unpack("<h",value)[0]
+			if type == 0x20 or type == 0x28 or type == 0x38 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
+				value = data[off:off+4]
+				dlen = 4
+				name += " (%02x)"%struct.unpack("<i",value)[0]
+			if type == 0xb8:
+				value = data[off:off+4]
+				dlen = 4
+				name += " (offset 0x%04x)"%struct.unpack("<i",value)[0]
+				model.set_value(parent,0,"[%04x]"%struct.unpack("<i",value)[0])
+				#print "Block %d offset: 0x%04x"%(i,struct.unpack("<i",value)[0])
+			if type == 0x80 or type == 0x88 or type == 0x90 or type == 0x98 or type == 0xa0:
+				[dlen] = struct.unpack('<i', data[off:off+4])
+			if type == 0xc0:
+				[dlen] = struct.unpack('<i', data[off:off+4])
+				value = data[off+4:off+dlen]
+			if type == 0xFF: # current len just to pass parsing
+				value = ord(data[off+1])
+				dlen = 1
+			if dlen == -1:
+				print "Unknown type %02x at block %d"%(type,i)
+				return
+			else:
+				if type != 0x78:
+					iter1 = model.append(parent,None)
+					model.set_value(iter1,0,name)
+					model.set_value(iter1,1,0)
+					model.set_value(iter1,2,dlen)
+					model.set_value(iter1,3,value)
+					if dlen > 4 and type != 0xc0:
+						parse_block(model,data[off+4:off+dlen],iter1,i)
+					off += dlen
+	except:
+		print "Failed at parsing block %d"%i
+
+block_types = {0x4b:"Printers",0x4c:"Rulers",0x5c:"ColorSchemes",0x63:"Table",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
+
+def parse_pubconts(model,data,parent):
+	iter1 = model.append(parent,None)
+	model.set_value(iter1,0,"Header")
+	model.set_value(iter1,1,0)
+	model.set_value(iter1,2,44)
+	model.set_value(iter1,3,data[0:44])
+	off = 44
+# Parse the 1st block after header
+	[dlen] = struct.unpack('<I', data[off:off+4])
+	iter1 = model.append(parent,None)
+	model.set_value(iter1,0,"Block %d [%02x]"%(0,off))
+	model.set_value(iter1,1,0)
+	model.set_value(iter1,2,dlen)
+	model.set_value(iter1,3,data[off:off+dlen])
+	parse_block(model,data[off+4:off+dlen],iter1,0)
+# Parse the dummy list block (the 2nd after header)
+	[off] = struct.unpack('<I', data[0x1e:0x22])
+	[dlen] = struct.unpack('<I', data[off:off+4])
+	iter1 = model.append(parent,None)
+	model.set_value(iter1,0,"Block %d [%02x]"%(1,off))
+	model.set_value(iter1,1,0)
+	model.set_value(iter1,2,dlen)
+	model.set_value(iter1,3,data[off:off+dlen])
+	parse_block(model,data[off+4:off+dlen],iter1,1)
+# Parse the list of blocks block
+	off = struct.unpack('<I', data[0x1a:0x1e])[0]
+	[dlen] = struct.unpack('<I', data[off:off+4])
+	iter1 = model.append(parent,None)
+	model.set_value(iter1,0,"List of blocks   [%02x]"%(off))
+	model.set_value(iter1,1,0)
+	model.set_value(iter1,2,dlen)
+	model.set_value(iter1,3,data[off:off+dlen])
+	parse_block(model,data[off+4:off+dlen],iter1,2)
+
+	list_iter = model.iter_nth_child(iter1,2)
+	for i in range (model.iter_n_children(list_iter)):
+		curiter = model.iter_nth_child(list_iter,i)
+		opts = ""
+		for i in range (model.iter_n_children(curiter)):
+			child = model.iter_nth_child(curiter,i)
+			id = model.get_value(child,0)[4:6]
+			if id == "02":
+				type = struct.unpack("<H",model.get_value(child,3))[0]
+			if id == "04":
+				offset = struct.unpack("<I",model.get_value(child,3))[0]
+			if id == "05":
+				opts += "t5: %02x  "%struct.unpack("<I",model.get_value(child,3))[0]
+			if id == "06":
+				if opts == "":
+					opts += "         "
+				opts += "t6: %02x  "%struct.unpack("<H",model.get_value(child,3))[0]
+			if id == "0b":
+				opts += "tB: %02x "%struct.unpack("<H",model.get_value(child,3))[0]
+
+		[dlen] = struct.unpack('<I', data[offset:offset+4])
+		iter1 = model.append(parent,None)
+		if block_types.has_key(type):
+			name = "[%04x] %s, Ops: %s"%(offset,block_types[type],opts)
+		else:
+			name = "[%04x] Type: %02x, Ops: %s"%(offset,type,opts)
+		model.set_value(iter1,0,name)
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,dlen)
+		model.set_value(iter1,3,data[offset:offset+dlen])
+		parse_block(model,data[offset+4:offset+dlen],iter1,i+3)
 
 def parse_quill(model,data,parent):
 	off = 0
@@ -297,10 +416,13 @@ def get_children(model,infile,parent):
         model.set_value(iter1,1,0)
         model.set_value(iter1,2,infchild.size())
         model.set_value(iter1,3,data)
-        if infname == "EscherStm" or infname == "EscherDelayStm":
+        if infname == "EscherStm" or infname == "EscherDelayStm" and infchild.size()>0:
           parse_escher(model,data,iter1)
         if infname == "CONTENTS": # assuming no atttempt to parse something else
 			parse_quill(model,data,iter1)
+        if infname == "Contents": # assuming no atttempt to parse something else
+			parse_pubconts(model,data,iter1)
+
         if (infchild.num_children()>0):
           get_children(model,infchild,iter1)
     return

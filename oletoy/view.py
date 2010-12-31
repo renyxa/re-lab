@@ -152,7 +152,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy")
+		dialog.set_name("OLE toy v0.3")
 		dialog.set_copyright("\302\251 Copyright 2010 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
@@ -312,7 +312,7 @@ class ApplicationMainWindow(gtk.Window):
 			buffer_asc.insert_with_tags_by_name(iter_asc, str_asc,"monospace")
 	
 			hd.hdmodel.clear()
-			print "Type: %02x"%type
+#			print "Type: %02x"%type
 			if oleparse.odraw_ids.has_key(type):
 				oleparse.odraw_ids[type](hd, size, data)
 
