@@ -152,7 +152,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.3")
+		dialog.set_name("OLE toy v0.3.1")
 		dialog.set_copyright("\302\251 Copyright 2010 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
@@ -252,10 +252,15 @@ class ApplicationMainWindow(gtk.Window):
 		size = hd.hdmodel.get_value(hditer,3)
 		fmt = hd.hdmodel.get_value(hditer,4)
 #		print 'Format: ', fmt
-		if fmt != "clr":
-			value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
-		else:
+
+		if fmt == "clr":
 			value = value[0:offset] + struct.pack("B",int(new_text[4:6],16))+struct.pack("B",int(new_text[2:4],16))+struct.pack("B",int(new_text[0:2],16))+value[offset+3:]
+		else:
+			if fmt == "txt":
+				value = value[0:offset]+new_text+value[offset+size:]
+			else:
+				value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
+
 		model.set_value(iter,3,value)
 		self.on_row_activated(self.das[pn].view,model.get_path(iter),0)
 		hd.hdview.set_cursor(path)

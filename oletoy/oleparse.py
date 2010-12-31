@@ -188,7 +188,10 @@ escher_opids = { 0x0301:'hspMaster',0x0303:'cxstyle',
 0x0781:'wzSigSetupId',0x0782:'wzSigSetupProvId',0x0783:'wzSigSetupSuggSigner',
 0x0784:'wzSigSetupSuggSigner2',0x0785:'wzSigSetupSuggSignerEmail',
 0x0786:'wzSigSetupSignInst',0x0787:'wzSigSetupAddlXml',0x0788:'wzSigSetupProvUrl',
-0x07BF:'wzSigBoolProps'}
+0x07BF:'wzSigBoolProps',
+0x4104:'PXid',
+0xc105:'NameLength',
+0x06FF:'unk06ff_BoolProps'}
 
 odraw_id_names = {0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContainer',
 	0xF002:'OfficeArtDgContainer',0xF003:'OfficeArtSpgrContainer',
@@ -209,46 +212,38 @@ odraw_id_names = {0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContain
 
 def parse_escher(model,data,parent):
   try:
-    offset = 0
-    while offset < len(data) - 8:
-      contflag = ord(data[offset])
-      [newT] = struct.unpack('<H', data[offset+2:offset+4])
-      [newL] = struct.unpack('<I', data[offset+4:offset+8])
-      if newL > 0:
-#        print "Add: %02x %02x CF: %02x "%(newT,newL,contflag),
-        iter1 = model.append(parent,None)
-        if odraw_id_names.has_key(newT):
-          name = odraw_id_names[newT]
-        else:
-          name = "%02x"%newT
-        if newT == 0xF118 or newT == 0xF11A or newT == 0xF11E:
-          newL += 4
-#          print " +4 to newL %02x "%newL,
-        if newT == 0xF004 or newT == 0xF003:
-          newL -= 4
- #         print " -4 to newL %02x "%newL,
-
-        model.set_value(iter1,0,name)
-        model.set_value(iter1,1,newT)
-
-        if contflag == 0xF:
-          model.set_value(iter1,2,newL+12)
-          model.set_value(iter1,3,data[offset:offset+newL+12])
-          print "    Cont ",name
-          parse_escher(model,data[offset+8:offset+12+newL],iter1)
-          offset += newL + 12
-          
-        else:
-          model.set_value(iter1,2,newL+8)
-          model.set_value(iter1,3,data[offset:offset+newL+8])
-          offset += newL + 8
-          print "    Atom ",name
-
-      else:
-        offset += 4
-
+	offset = 0
+	while offset < len(data) - 8:
+		contflag = ord(data[offset])
+		[newT] = struct.unpack('<H', data[offset+2:offset+4])
+		[newL] = struct.unpack('<I', data[offset+4:offset+8])
+		if newL > 0:
+			iter1 = model.append(parent,None)
+			if odraw_id_names.has_key(newT):
+				name = odraw_id_names[newT]
+			else:
+				name = "%02x"%newT
+			if newT == 0xF118 or newT == 0xF11A or newT == 0xF11E:
+				newL += 4
+			if newT == 0xF004 or newT == 0xF003:
+				newL -= 4
+			model.set_value(iter1,0,name)
+			model.set_value(iter1,1,newT)
+			if contflag == 0xF:
+				model.set_value(iter1,2,newL+12)
+				model.set_value(iter1,3,data[offset:offset+newL+12])
+				print "    Cont ",name
+				parse_escher(model,data[offset+8:offset+12+newL],iter1)
+				offset += newL + 12
+			else:
+				model.set_value(iter1,2,newL+8)
+				model.set_value(iter1,3,data[offset:offset+newL+8])
+				offset += newL + 8
+				print "    Atom ",name
+		else:
+			offset += 4
   except:
-      print "Failed"
+	print "Failed"
 
 def parse_block(model,data,parent,i):
 	off = 0
@@ -489,6 +484,13 @@ def FOPT (hd, size, value):
 		else:
 			opids = "undef_0x%02x"%id
 		hd.hdmodel.set (iter, 0, opids, 1, struct.unpack("<i",value[off+2:off+6])[0],2,off+2,3,4,4,"<i")
+		if id == 0xc105:
+			nlen = struct.unpack("<i",value[off+2:off+6])[0]
+			nstr = unicode(value[size - nlen:size],"utf-16")
+			size -= nlen
+			iter = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter, 0, "FName", 1, nstr,2,size,3,nlen,4,"txt")
+
 		off +=6
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
