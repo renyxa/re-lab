@@ -1,0 +1,58 @@
+import gtk
+import gobject
+import tree
+
+class hexdump:
+	def __init__(self):
+		self.vpaned = gtk.VPaned()
+
+		#self.vscroll1 = gtk.ScrolledWindow()
+		#self.vscroll1.set_size_request(300, 300)
+		
+		self.hdmodel, self.hdview, self.hdscrolled, self.hdrend = tree.make_view2()
+		self.vpaned.add1(self.hdscrolled)
+		self.hdscrolled.set_size_request(300, 300)
+		
+		vbox =gtk.VBox()
+		hbox1 =gtk.HBox()
+
+		addrlabel = gtk.TextView();
+		buffer = addrlabel.get_buffer()
+		buffer.create_tag("monospace", family="monospace")
+		iter_label = buffer.get_iter_at_offset(0)
+		buffer.insert_with_tags_by_name(iter_label, "         ","monospace")
+		
+		hexlabel = gtk.TextView();
+		buffer = hexlabel.get_buffer()
+		buffer.create_tag("monospace", family="monospace")
+		iter_label = buffer.get_iter_at_offset(0)
+		buffer.insert_with_tags_by_name(iter_label, "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f","monospace")
+		
+		hbox1.pack_start(addrlabel,False,True,2)
+		hbox1.pack_start(hexlabel,False,True,2)
+		vbox.pack_start(hbox1,False,True,2)
+		
+		vscroll2 = gtk.ScrolledWindow()
+		hbox2 =gtk.HBox()
+		self.txtdump_addr = gtk.TextView();
+		self.txtdump_hex = gtk.TextView();
+		self.txtdump_asc = gtk.TextView();
+		self.txtdump_addr.set_editable(False)
+#		self.txtdump_hex.set_editable(False)
+#		self.txtdump_asc.set_editable(False)
+		buffer = self.txtdump_addr.get_buffer()
+		buffer.create_tag("monospace", family="monospace")
+		buffer = self.txtdump_asc.get_buffer()
+		buffer.create_tag("monospace", family="monospace")
+		buffer = self.txtdump_hex.get_buffer()
+		buffer.create_tag("monospace", family="monospace")
+		hbox2.pack_start(self.txtdump_addr, False,True,2)
+		hbox2.pack_start(self.txtdump_hex, False,True,2)
+		hbox2.pack_start(self.txtdump_asc, True,True,2)
+		vscroll2.add_with_viewport(hbox2)
+		vbox.pack_start(vscroll2,True,True,2)
+		self.vpaned.add2(vbox)
+
+	def update():
+		pass
+
