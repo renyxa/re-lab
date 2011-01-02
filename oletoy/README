@@ -1,0 +1,9 @@
+Oletoy is a set of Python scripts to parse and view contents of OLE container 
+based file formats by Microsoft. Originally oletoy was developed for 
+reverse-engineering of Microsoft Publisher file formats.
+
+The scripts depend on libgsf which has to be built with Python support 
+(--with-python). If you are Ubuntu user, you are unlucky and have to recompile 
+libgsf from source code which you can find here:
+
+http://ftp.gnome.org/pub/GNOME/sources/libgsf/
