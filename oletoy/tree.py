@@ -17,7 +17,7 @@ def make_view():
    # Create scrollbars around the view.
    scrolled = gtk.ScrolledWindow()
    scrolled.add(view)
-   scrolled.set_size_request(250,300)
+   scrolled.set_size_request(400,600)
    scrolled.show()
    return model,view,scrolled
 

@@ -26,6 +26,72 @@ import gsf
 #0xF011	OfficeArtClientData	PPT
 #0xF00D	OfficeArtClientTextbox	PPT Example
 
+msospt = {0x00:'NotPrimitive',0x01:'Rectangle',0x02:'RoundRectangle',0x03:'Ellipse',
+0x04:'Diamond',0x05:'IsocelesTriangle',0x06:'RightTriangle',0x07:'Parallelogram',
+0x08:'Trapezoid',0x09:'Hexagon',0x0A:'Octagon',0x0B:'Plus',0x0C:'Star',0x0D:'Arrow',
+0x0E:'DontUseThickArrow',0x0F:'HomePlate',0x10:'Cube',0x11:'Balloon',
+0x12:'Seal',0x13:'Arc',0x14:'Line',0x15:'Plague',0x16:'Can',0x17:'Donut',
+0x18:'TextSimple',0x19:'TextOctagon',0x1A:'TextHexagon',0x1B:'TextCurve',
+0x1C:'TextWave',0x1D:'TextRing',0x1E:'TextOnCurve',0x1F:'TextOnRing',
+0x20:'StraightConnector1',0x21:'BentConnector2',0x22:'BentConnector3',
+0x23:'BentConnector4',0x24:'BentConnector5',0x25:'CurvedConnector2',
+0x26:'CurvedConnector3',0x27:'CurvedConnector4',0x28:'CurvedConnector5',
+0x29:'Callout1',0x2A:'Callout2',0x2B:'Callout3',0x2C:'AccentCallout1',
+0x2D:'AccentCallout2',0x2E:'AccentCallout3',0x2F:'BorderCallout1',
+0x30:'BorderCallout2',0x31:'BorderCallout3',0x32:'AccentBorderCallout1',
+0x33:'AccentBorderCallout2',0x34:'AccentBorderCallout3',0x35:'Ribbon',
+0x36:'Ribbon2',0x37:'Chevron',0x38:'Pentagon',0x39:'NoSmoking',
+0x3A:'Seal8',0x3B:'Seal16',0x3C:'Seal32',0x3D:'WedgeRectCallout',
+0x3E:'WedgeRRectCallout',0x3F:'WdegeEllipseCallout',0x40:'Wave',
+0x41:'FoldedCorner',0x42:'LeftArrow',0x43:'DownArrow',0x44:'UpArrow',
+0x45:'LeftRightArrow',0x6:'UpDownArrow',0x47:'IrregularSeal1',
+0x48:'IrregularSeal2',0x49:'LightningBolt',0x4A:'Heart',0x4B:'PictureFrame',
+0x4C:'QuadArrow',0x4D:'LeftArrowCallout',0x4E:'RightArrowCallout',
+0x4F:'UpArrowCallout',0x50:'DownArrowCallout',0x51:'LeftRightArrowCallout',
+0x52:'UpDownArrowCallout',0x53:'QuadArrowCallout',0x54:'Bevel',
+0x55:'LeftBracket',0x56:'RightBracket',0x57:'LeftBrace',0x58:'RightBrace',
+0x59:'LeftUpArrow',0x5A:'BentUpArrow',0x5B:'BentArrow',0x5C:'Seal24',
+0x5D:'StripedRightArrow',0x5E:'NotchedRightArrow',0x5F:'BlockArc',
+0x60:'SmileyFace',0x61:'VerticalScroll',0x62:'HorizontalScroll',
+0x63:'CircularArrow',0x64:'DontUseNotchedCircularArrow',0x65:'UturnArrow',
+0x66:'CurvedRightArrow',0x67:'CurvedLeftArrow',0x68:'CurvedUpArrow',
+0x69:'CurvedDownArrow',0x6A:'CloudCallout',0x6B:'EllipseRibbon',
+0x6C:'EllipseRibbon2',0x6D:'FlowChartProcess',0x6E:'FlowChartDecision',
+0x6F:'FlowChartInputOutput',0x70:'FlowChartPredefinedProcess',
+0x71:'FlowChartInternalStorage',0x72:'FlowChartDocument',
+0x73:'FlowChartMultiDocument',0x74:'FlowChartTerminator',
+0x75:'FlowChartPreparation',0x76:'FlowChartManualInput',
+0x77:'FlowChartManualOperation',0x78:'FlowChartConnector',
+0x79:'FlowChartPunchedCard',0x7A:'FlowChartPunchedTape',
+0x7B:'FlowChartSummingJunction',0x7C:'FlowChartOr',
+0x7D:'FlowChartCollate',0x7E:'FlowChartSort',
+0x7F:'FlowChartExtract',0x80:'FlowChartMerge',0x81:'FlowChartOfflineStorage',
+0x82:'FlowChartOnlineStorage',0x83:'FlowChartMagneticTape',
+0x84:'FlowChartMagneticDisk',0x85:'FlowChartMagneticDrum',
+0x86:'FlowChartDisplay',0x87:'FlowChartDelay',0x88:'TextPlainText',
+0x89:'TextStop',0x8A:'TextTriangle',0x8B:'TextTriangleInverted',
+0x8C:'TextChevron',0x8D:'TextChevronInverted',0x8E:'TextRingInside',
+0x8F:'TextRingOutside',0x90:'TextArchUpCurve',0x91:'TextArchDownCurve',
+0x92:'TextCircleCurve',0x93:'TextButtonCurve',0x94:'TextArchUpPour',
+0x95:'TextArchDownPour',0x96:'TextCirclePour',0x97:'TextButtomPour',
+0x98:'TextCurveUp',0x99:'TextCurveDown',0x9A:'TextCascadeUp',
+0x9B:'TextCascadeDown',0x9C:'TextWave1',0x9D:'TextWave2',0x9E:'TextWave3',
+0x9F:'TextWave4',0xA0:'TextInflate',0xA1:'TextDeflate',0xA2:'TextInflateBottom',
+0xA3:'TextDeflateBottom',0xA4:'TextInflateTop',0xA5:'TextDeflateTop',
+0xA6:'TextDeflateInflate',0xA7:'TextDeflateInflateDeflate',
+0xA8:'TextFadeRight',0xA9:'TextFadeLeft',0xAA:'TextFadeUp',0xAB:'TextFadeDown',
+0xAC:'TextSlantUp',0xAD:'TextSlantDown',0xAE:'TextCanUp',0xAF:'TextCanDown',
+0xB0:'FlowChartAlternateProcess',0xB1:'FlowChartOffpageConnector',
+0xB2:'Callout90',0xB3:'AccentCallout90',0xB4:'BorderCallout90',
+0xB5:'AccentBorderCallout90',0xB6:'LeftRightUpArrow',0xB7:'Sun',0xB8:'Moon',
+0xB9:'BracketPair',0xBA:'BracePair',0xBB:'Seal4',0xBC:'DoubleWave',
+0xBD:'ActionButtonBlank',0xBE:'ActionButtonHome',0xBF:'ActionButtonHelp',
+0xC0:'ActionButtonInformation',0xC1:'ActionButtonForwardNext',
+0xC2:'ActionButtonBackPrevious',0xC3:'ActionButtonEnd',0xC4:'ActionButtonBeginning',
+0xC5:'ActionButtonReturn',0xC6:'ActionButtonDocument',0xC7:'ActionButtonSound',
+0xC8:'ActionButtonMovie',0xC9:'HostControl',0xCA:'TextBox'}
+
+
 escher_opids = { 0x0301:'hspMaster',0x0303:'cxstyle',
 0x0304:'bWMode',0x0305:'bWModePureBW',0x0306:'bWModeBW',
 0x0307:'idDiscussAnchor',0x0309:'dgmLayout',0x030A:'dgmNodeKind',
@@ -189,9 +255,18 @@ escher_opids = { 0x0301:'hspMaster',0x0303:'cxstyle',
 0x0784:'wzSigSetupSuggSigner2',0x0785:'wzSigSetupSuggSignerEmail',
 0x0786:'wzSigSetupSignInst',0x0787:'wzSigSetupAddlXml',0x0788:'wzSigSetupProvUrl',
 0x07BF:'wzSigBoolProps',
+# guesses by frob
 0x4104:'PXid',
+0x4186:'bgPXid',
+0xC0C0:'TextLength',
+0xC0C5:'FontNameLength',
 0xc105:'NameLength',
+0xc187:'bgNameLength',
+0xc680:'bookmarkLength',
+0xc681:'bookmarkNameLength',
 0x06FF:'unk06ff_BoolProps'}
+#0xc382 -- describes length of some Hyperlink-related structure at the end of the chunk, similar to 0xc105
+#			but it's more than just string
 
 odraw_id_names = {0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContainer',
 	0xF002:'OfficeArtDgContainer',0xF003:'OfficeArtSpgrContainer',
@@ -211,161 +286,298 @@ odraw_id_names = {0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContain
 	0xF121:'OfficeArtSecondaryFOPT',0xF122:'OfficeArtTertiaryFOPT'}
 
 def parse_escher(model,data,parent):
-  try:
-	offset = 0
-	while offset < len(data) - 8:
-		contflag = ord(data[offset])
-		[newT] = struct.unpack('<H', data[offset+2:offset+4])
-		[newL] = struct.unpack('<I', data[offset+4:offset+8])
-		if newL > 0:
-			iter1 = model.append(parent,None)
-			if odraw_id_names.has_key(newT):
-				name = odraw_id_names[newT]
+	try:
+		offset = 0
+		while offset < len(data) - 8:
+			contflag = ord(data[offset])
+			[newT] = struct.unpack('<H', data[offset+2:offset+4])
+			[newL] = struct.unpack('<I', data[offset+4:offset+8])
+			if newT == 0xF011:
+				[shapeid] = struct.unpack("<I",data[offset+14:offset+18])
+				pname = model.get_value(parent,0)
+				model.set_value(parent,0,pname+" (%02x)"%shapeid)
+			if newL > 0:
+				iter1 = model.append(parent,None)
+				if odraw_id_names.has_key(newT):
+					name = odraw_id_names[newT]
+				else:
+					name = "%02x"%newT
+				if newT == 0xF118 or newT == 0xF11E: #or newT == 0xF11A
+					newL += 4
+				if newT == 0xF004 or newT == 0xF003:
+					newL -= 4
+				model.set_value(iter1,0,name)
+				model.set_value(iter1,1,newT)
+				if contflag == 0xF:
+					model.set_value(iter1,2,newL+12)
+					model.set_value(iter1,3,data[offset:offset+newL+12])
+	#				print "    Cont ",name
+					parse_escher(model,data[offset+8:offset+12+newL],iter1)
+					offset += newL + 12
+				else:
+					model.set_value(iter1,2,newL+8)
+					model.set_value(iter1,3,data[offset:offset+newL+8])
+					offset += newL + 8
+	#				print "    Atom ",name
 			else:
-				name = "%02x"%newT
-			if newT == 0xF118 or newT == 0xF11A or newT == 0xF11E:
-				newL += 4
-			if newT == 0xF004 or newT == 0xF003:
-				newL -= 4
-			model.set_value(iter1,0,name)
-			model.set_value(iter1,1,newT)
-			if contflag == 0xF:
-				model.set_value(iter1,2,newL+12)
-				model.set_value(iter1,3,data[offset:offset+newL+12])
-				print "    Cont ",name
-				parse_escher(model,data[offset+8:offset+12+newL],iter1)
-				offset += newL + 12
-			else:
-				model.set_value(iter1,2,newL+8)
-				model.set_value(iter1,3,data[offset:offset+newL+8])
-				offset += newL + 8
-				print "    Atom ",name
-		else:
-			offset += 4
-  except:
-	print "Failed"
+				offset += 4
+	except:
+		print "Failed to parse Escher stream",len(data)
 
-def parse_block(model,data,parent,i):
+def parse_block(model,data,parent,i,j=-1):
 	off = 0
 	value = None
 	try:
 		while off < len(data) - 2:
 			id = ord(data[off])
 			type = ord(data[off+1])
-#			print "id: %02x  type: %02x"%(id,type)
 			name = "ID: %02x  Type: %02x"%(id,type)
+#			print "ID: %02x  Type: %02x Off: %02x"%(id,type,off)
 			off+=2
 			dlen = -1
-			if type == 0 or type == 8 or type == 0x78:
+			if type < 5 or type == 8 or type == 0xa:
 				value = None
 				dlen = 0
-			if type == 0x10 or type == 0x18:
+			if type == 0x78:	
+				value = None
+				dlen = 0
+				name = "(%02x) ID78"%j
+			if type == 0x10 or type == 0x12 or type == 0x18:
 				value = data[off:off+2]
 				dlen = 2
 				name += " (%02x)"%struct.unpack("<h",value)[0]
-			if type == 0x20 or type == 0x28 or type == 0x38 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
+			if type == 0x20 or type == 0x22 or type == 0x28 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
 				value = data[off:off+4]
 				dlen = 4
 				name += " (%02x)"%struct.unpack("<i",value)[0]
+				if id == 5 and type == 0x68:
+					pname = model.get_value(parent,0)
+					model.set_value(parent,0,pname+"\t\t%02x"%struct.unpack("<i",value)[0])
+			if type == 0x38:
+				value = data[off:off+16]
+				dlen = 16
+				name += " ()"
 			if type == 0xb8:
 				value = data[off:off+4]
 				dlen = 4
 				name += " (offset 0x%04x)"%struct.unpack("<i",value)[0]
-				model.set_value(parent,0,"[%04x]"%struct.unpack("<i",value)[0])
-				#print "Block %d offset: 0x%04x"%(i,struct.unpack("<i",value)[0])
-			if type == 0x80 or type == 0x88 or type == 0x90 or type == 0x98 or type == 0xa0:
+
+				id2_iter = model.iter_nth_child(parent,0)
+				id2_value = struct.unpack("<H",model.get_value(id2_iter,3))[0]
+				if block_types.has_key(id2_value):
+					btype = block_types[id2_value]
+				else:
+					btype = "%02x"%id2_value
+				if model.get_value(parent,0)[0:7] != "Block 0":
+					model.set_value(parent,0,"(%02x) Type: %s"%(j,btype))
+
+			if type == 0x80 or type == 0x8a or type == 0x88 or type == 0x90 or type == 0x98 or type == 0xa0:
 				[dlen] = struct.unpack('<i', data[off:off+4])
+				value = data[off:off+dlen]
 			if type == 0xc0:
 				[dlen] = struct.unpack('<i', data[off:off+4])
 				value = data[off+4:off+dlen]
+				try:
+					name += " %s"%unicode(value,'utf-16')
+				except:
+					print "UCode failed"
 			if type == 0xFF: # current len just to pass parsing
 				value = ord(data[off+1])
 				dlen = 1
+			j += 1
 			if dlen == -1:
-				print "Unknown type %02x at block %d"%(type,i)
+				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off)
 				return
 			else:
-				if type != 0x78:
+				if type != 0x78 or j > 0xFF:
 					iter1 = model.append(parent,None)
 					model.set_value(iter1,0,name)
 					model.set_value(iter1,1,0)
 					model.set_value(iter1,2,dlen)
 					model.set_value(iter1,3,value)
-					if dlen > 4 and type != 0xc0:
-						parse_block(model,data[off+4:off+dlen],iter1,i)
+					if dlen > 4 and type != 0xc0 and type != 0x38:
+						parse_block(model,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:
-		print "Failed at parsing block %d"%i
+		print "Failed at parsing block %d "%i,"val: ",value," off: ",off
 
-block_types = {0x4b:"Printers",0x4c:"Rulers",0x5c:"ColorSchemes",0x63:"Table",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
+block_types = {
+	0x01:"Shape",
+	0x10:"Table",
+	0x30:"Logo",
+	0x43:"Page",0x44:"Document",0x46:"BorderArt",0x4b:"Printers",0x4c:"Rulers",
+	0x5c:"ColorSchemes",
+	0x63:"Cells",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
 
 def parse_pubconts(model,data,parent):
-	iter1 = model.append(parent,None)
-	model.set_value(iter1,0,"Header")
-	model.set_value(iter1,1,0)
-	model.set_value(iter1,2,44)
-	model.set_value(iter1,3,data[0:44])
-	off = 44
-# Parse the 1st block after header
-	[dlen] = struct.unpack('<I', data[off:off+4])
-	iter1 = model.append(parent,None)
-	model.set_value(iter1,0,"Block %d [%02x]"%(0,off))
-	model.set_value(iter1,1,0)
-	model.set_value(iter1,2,dlen)
-	model.set_value(iter1,3,data[off:off+dlen])
-	parse_block(model,data[off+4:off+dlen],iter1,0)
-# Parse the dummy list block (the 2nd after header)
-	[off] = struct.unpack('<I', data[0x1e:0x22])
-	[dlen] = struct.unpack('<I', data[off:off+4])
-	iter1 = model.append(parent,None)
-	model.set_value(iter1,0,"Block %d [%02x]"%(1,off))
-	model.set_value(iter1,1,0)
-	model.set_value(iter1,2,dlen)
-	model.set_value(iter1,3,data[off:off+dlen])
-	parse_block(model,data[off+4:off+dlen],iter1,1)
-# Parse the list of blocks block
-	off = struct.unpack('<I', data[0x1a:0x1e])[0]
-	[dlen] = struct.unpack('<I', data[off:off+4])
-	iter1 = model.append(parent,None)
-	model.set_value(iter1,0,"List of blocks   [%02x]"%(off))
-	model.set_value(iter1,1,0)
-	model.set_value(iter1,2,dlen)
-	model.set_value(iter1,3,data[off:off+dlen])
-	parse_block(model,data[off+4:off+dlen],iter1,2)
-
-	list_iter = model.iter_nth_child(iter1,2)
-	for i in range (model.iter_n_children(list_iter)):
-		curiter = model.iter_nth_child(list_iter,i)
-		opts = ""
-		for i in range (model.iter_n_children(curiter)):
-			child = model.iter_nth_child(curiter,i)
-			id = model.get_value(child,0)[4:6]
-			if id == "02":
-				type = struct.unpack("<H",model.get_value(child,3))[0]
-			if id == "04":
-				offset = struct.unpack("<I",model.get_value(child,3))[0]
-			if id == "05":
-				opts += "t5: %02x  "%struct.unpack("<I",model.get_value(child,3))[0]
-			if id == "06":
-				if opts == "":
-					opts += "         "
-				opts += "t6: %02x  "%struct.unpack("<H",model.get_value(child,3))[0]
-			if id == "0b":
-				opts += "tB: %02x "%struct.unpack("<H",model.get_value(child,3))[0]
-
-		[dlen] = struct.unpack('<I', data[offset:offset+4])
+	try:
+		blocks = {}
+		reorders = []
 		iter1 = model.append(parent,None)
-		if block_types.has_key(type):
-			name = "[%04x] %s, Ops: %s"%(offset,block_types[type],opts)
-		else:
-			name = "[%04x] Type: %02x, Ops: %s"%(offset,type,opts)
-		model.set_value(iter1,0,name)
+		model.set_value(iter1,0,"Header")
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,44)
+		model.set_value(iter1,3,data[0:44])
+		off = 44
+	# Parse the 1st block after header
+		[dlen] = struct.unpack('<I', data[off:off+4])
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"Block %d [%02x]"%(0,off))
 		model.set_value(iter1,1,0)
 		model.set_value(iter1,2,dlen)
-		model.set_value(iter1,3,data[offset:offset+dlen])
-		parse_block(model,data[offset+4:offset+dlen],iter1,i+3)
+		model.set_value(iter1,3,data[off:off+dlen])
+		parse_block(model,data[off+4:off+dlen],iter1,0)
+	# Parse the dummy list block (the 2nd after header)
+		[off] = struct.unpack('<I', data[0x1e:0x22])
+		[dlen] = struct.unpack('<I', data[off:off+4])
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"Block %d [%02x]"%(1,off))
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,dlen)
+		model.set_value(iter1,3,data[off:off+dlen])
+		parse_block(model,data[off+4:off+dlen],iter1,1)
+	# Parse the list of blocks block
+		off = struct.unpack('<I', data[0x1a:0x1e])[0]
+		[dlen] = struct.unpack('<I', data[off:off+4])
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"List of blocks   [%02x]"%(off))
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,dlen)
+		model.set_value(iter1,3,data[off:off+dlen])
+		parse_block(model,data[off+4:off+dlen],iter1,2)
+		list_iter = model.iter_nth_child(iter1,2)
+		j = 255
+		for k in range (model.iter_n_children(list_iter)):
+	#		print "Parse block %d"%i
+			curiter = model.iter_nth_child(list_iter,k)
+			test = model.get_value(curiter,0)
+			if test[len(test)-4:] != "ID78":
+				opts = ""
+				parid = None
+				for i in range (model.iter_n_children(curiter)):
+					child = model.iter_nth_child(curiter,i)
+					id = model.get_value(child,0)[4:6]
+					if id == "02":
+						type = struct.unpack("<H",model.get_value(child,3))[0]
+					if id == "04":
+						offset = struct.unpack("<I",model.get_value(child,3))[0]
+					if id == "05":
+						[parid] = struct.unpack("<I",model.get_value(child,3))
+				[dlen] = struct.unpack('<I', data[offset:offset+4])
+				if parid != None:
+					if blocks.has_key(parid):
+						iter1 = model.append(blocks[parid],None)
+						if block_types.has_key(type):
+							name = "(%02x) %s"%(j,block_types[type])
+						else:
+							name = "(%02x) Type: %02x"%(j,type)
+						model.set_value(iter1,0,name)
+						model.set_value(iter1,1,0)
+						model.set_value(iter1,2,dlen)
+						model.set_value(iter1,3,data[offset:offset+dlen])
+						parse_block(model,data[offset+4:offset+dlen],iter1,i+3)
+						blocks[k+255] = iter1
+					else:
+						reorders.append(k+255)
+				else:
+					iter1 = model.append(parent,None)
+					if block_types.has_key(type):
+						name = "(%02x) %s"%(j,block_types[type])
+					else:
+						name = "(%02x) Type: %02x"%(j,type)
+					model.set_value(iter1,0,name)
+					model.set_value(iter1,1,0)
+					model.set_value(iter1,2,dlen)
+					model.set_value(iter1,3,data[offset:offset+dlen])
+					parse_block(model,data[offset+4:offset+dlen],iter1,i+3)
+					blocks[k+255] = iter1
+			j += 1
+		for k in reorders:
+			curiter = model.iter_nth_child(list_iter,k)
+			for i in range (model.iter_n_children(curiter)):
+				child = model.iter_nth_child(curiter,i)
+				id = model.get_value(child,0)[4:6]
+				if id == "02":
+					type = struct.unpack("<H",model.get_value(child,3))[0]
+				if id == "04":
+					offset = struct.unpack("<I",model.get_value(child,3))[0]
+				if id == "05":
+					[parid] = struct.unpack("<I",model.get_value(child,3))
+				[dlen] = struct.unpack('<I', data[offset:offset+4])
+				if blocks.has_key(parid):
+					iter1 = model.append(blocks[parid],None)
+					if block_types.has_key(type):
+						name = "(%02x) %s"%(j,block_types[type])
+					else:
+						name = "(%02x) Type: %02x"%(j,type)
+					model.set_value(iter1,0,name)
+					model.set_value(iter1,1,0)
+					model.set_value(iter1,2,dlen)
+					model.set_value(iter1,3,data[offset:offset+dlen])
+					parse_block(model,data[offset+4:offset+dlen],iter1,i)
+				else:
+					print "Failed to add reordered item %02x"%parid
+		return
+	except:
+		print "Failed in parsing Contents"
 
-def parse_quill(model,data,parent):
+def parse_fdpc (model,data,offset,fdpciter):
+	[num] = struct.unpack('<H', data[offset:offset+2])
+	for i in range (num):
+		[toff] = struct.unpack('<I', data[offset+8+i*4:offset+12+i*4])
+		[tflag] = struct.unpack('<H', data[offset+8+num*4+i*2:offset+8+2+num*4+i*2])
+		iter1 = model.append(fdpciter,None)
+		model.set_value(iter1,0,"[%02x] %02x"%(toff,tflag))
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,4)
+		model.set_value(iter1,3,data[offset+8+i*4:offset+12+i*4])
+		[nlen] = struct.unpack('<I', data[offset+tflag:offset+tflag+4])
+		parse_block(model,data[offset+tflag:offset+tflag+nlen],iter1,0,0)
+	return
+
+def parse_syid (model,data,offset,syiditer,txtiter,j):
+		[num] = struct.unpack('<I', data[offset+4:offset+8])
+		for i in range(num):
+			[id] = struct.unpack('<I', data[offset+8+i*4:offset+12+i*4])
+			iter = model.append(syiditer,None)
+			model.set(iter,0,"TXid: %02x"%id,1,0,2,4,3,data[offset+8+i*4:offset+12+i*4])
+		return i+j
+
+def parse_stsh (model,data,parent,flag):
+	[num] = struct.unpack('<I', data[4:8])
+	[off1] = struct.unpack('<I', data[20:24])
+	i = 1
+	while off1 < len(data):
+		if i == num:
+			off2 = len(data)
+		else:
+			[off2] = struct.unpack('<I', data[20+i*4:24+i*4])
+#		print "Offsets: %d %02x %02x"%(i,off1,off2)
+		if flag == "1": # and i/2.>i/2:
+			iter1 = model.append(parent,None)
+			model.set_value(iter1,0,"Ch %02x Pr %02x"%(i,struct.unpack("<H",data[20+off1:20+off1+2])[0]))
+			model.set_value(iter1,1,0)
+			model.set_value(iter1,2,2)
+			model.set_value(iter1,3,data[20+off1:20+off1+2])
+			[dlen] = struct.unpack('<I', data[20+off1+2:20+off1+6])
+			parse_block(model,data[20+off1+6:20+off1+dlen+2],iter1,i)
+			off1 += dlen+2
+			if off1 < off2:
+				iter = model.append(iter1,None)
+				model.set_value(iter,0,"Ps")
+				model.set_value(iter,1,0)
+				model.set_value(iter,2,off2-off1)
+				model.set_value(iter,3,data[20+off1:20+off2])
+		else:
+			iter1 = model.append(parent,None)
+			model.set_value(iter1,0,"Ch %02x"%i)
+			model.set_value(iter1,1,0)
+			model.set_value(iter1,2,off2-off1)
+			model.set_value(iter1,3,data[20+off1:20+off2])
+		off1 = off2
+		i += 1
+
+def parse_quill (model,data,parent):
 	off = 0
 	iter1 = model.append(parent,None)
 	model.set_value(iter1,0,"Header")
@@ -374,11 +586,22 @@ def parse_quill(model,data,parent):
 	model.set_value(iter1,3,data[off:off+32])
 	[ch_num] = struct.unpack('<H', data[off+26:off+28])
 	off += 32
+	txtiter = None
+	txtnum = -1
+	txtid = 0
 	for i in range(ch_num):
 		[doffset] = struct.unpack('<I', data[off+16:off+20])
 		[dlen] = struct.unpack('<I', data[off+20:off+24])
 		name = data[off+2:off+6]+"/"+data[off+12:off+16]+str(struct.unpack('<H', data[off+6:off+8])[0])+" [%02x:%02x]"%(doffset,doffset+dlen)
 		iter1 = model.append(parent,None)
+		if name[0:4] == "TEXT":
+			txtiter = iter1 # assume for now that I won't have "TEXT/TEXT<num>" with <num> greater than 0
+		if name[0:4] == "FDPC" or name[0:4] == "FDPP":
+			parse_fdpc(model,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
+		if name[0:4] == "SYID":
+			txtid = parse_syid(model,data,doffset,iter1,txtiter,txtid)
+		if name[0:4] == "STSH":
+			parse_stsh(model,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
 		model.set_value(iter1,0,name)
 		model.set_value(iter1,1,0)
 		model.set_value(iter1,2,dlen)
@@ -394,33 +617,34 @@ def open(fname,model):
     return
 
 def get_children(model,infile,parent):
-    for i in range(infile.num_children()):
-        infchild = infile.child_by_index(i)
-        infname = infile.name_by_index(i)
-        if ord(infname[0]) < 32: 
-            infname = infname[1:]
-        #itername = infname + ' \t(Size: %x)'%infchild.size()
-        print " ",infname
-        if infname == "dir":
-          infuncomp = infchild.uncompress()
-          data = infuncomp.read(infuncomp.size())
-        else:
-          data = infchild.read(infchild.size())
-        iter1 = model.append(parent,None)
-        model.set_value(iter1,0,infname)
-        model.set_value(iter1,1,0)
-        model.set_value(iter1,2,infchild.size())
-        model.set_value(iter1,3,data)
-        if infname == "EscherStm" or infname == "EscherDelayStm" and infchild.size()>0:
-          parse_escher(model,data,iter1)
-        if infname == "CONTENTS": # assuming no atttempt to parse something else
+	for i in range(infile.num_children()):
+		infchild = infile.child_by_index(i)
+		infname = infile.name_by_index(i)
+		if ord(infname[0]) < 32: 
+			infname = infname[1:]
+		#itername = infname + ' \t(Size: %x)'%infchild.size()
+		print " ",infname
+		if infname == "dir":
+			infuncomp = infchild.uncompress()
+			data = infuncomp.read(infuncomp.size())
+		else:
+			data = infchild.read(infchild.size())
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,infname)
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,infchild.size())
+		model.set_value(iter1,3,data)
+		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
+			print "Size: ",infchild.size()
+			parse_escher(model,data,iter1)
+		if infname == "CONTENTS": # assuming no atttempt to parse something else
 			parse_quill(model,data,iter1)
-        if infname == "Contents": # assuming no atttempt to parse something else
+		if infname == "Contents": # assuming no atttempt to parse something else
 			parse_pubconts(model,data,iter1)
 
-        if (infchild.num_children()>0):
-          get_children(model,infchild,iter1)
-    return
+		if (infchild.num_children()>0):
+			get_children(model,infchild,iter1)
+	return
 
 
 def FDGGBlock (hd, size, value):
@@ -460,6 +684,14 @@ def FSPGR (hd, size, value):
 
 def FSP (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
+	shtype = struct.unpack("<H",value[0:2])[0]>>4
+	if msospt.has_key(shtype):
+		type = "%s (%02x)"%(msospt[shtype],shtype)
+	else:
+		type = "%02x"%shtype
+	hd.hdmodel.set (iter, 0, "Shape", 1, type,2,0,3,2,4,"<H")
+
+	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "spid", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 	flags = struct.unpack("<I",value[12:16])[0]
 	fl = {'group':flags&1,'child':flags&2,'patriarch':flags&4,'Deleted':flags&8,'OleShape':flags&16,
@@ -473,8 +705,11 @@ def FSP (hd, size, value):
 	hd.hdmodel.set (iter, 0, "flags", 1, flagstr,2,12,3,4,4,"<I")
 
 
+fopt_names = {0xc0c0:'Text',0xc0c5:'Font',0xc105:'Name',0xc187:'bgName',0xc680:'bookmark',0xc681:'bookmarkName'}
+
 def FOPT (hd, size, value):
 # ignoring "complex" opids for now
+	fnames = []
 	off = 8
 	while off < size:
 		iter = hd.hdmodel.append(None, None)
@@ -484,14 +719,17 @@ def FOPT (hd, size, value):
 		else:
 			opids = "undef_0x%02x"%id
 		hd.hdmodel.set (iter, 0, opids, 1, struct.unpack("<i",value[off+2:off+6])[0],2,off+2,3,4,4,"<i")
-		if id == 0xc105:
+		if fopt_names.has_key(id):
 			nlen = struct.unpack("<i",value[off+2:off+6])[0]
-			nstr = unicode(value[size - nlen:size],"utf-16")
 			size -= nlen
-			iter = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter, 0, "FName", 1, nstr,2,size,3,nlen,4,"txt")
-
+			fnames.append([id,nlen])
 		off +=6
+	for i in range(len(fnames)):
+		iter = hd.hdmodel.append(None, None)
+		name = fopt_names[fnames[i][0]]
+		nlen =  fnames[i][1]
+		hd.hdmodel.set (iter, 0, name , 1, unicode(value[off:off+nlen],"utf-16"),2,off,3,nlen,4,"txt")
+		off += nlen
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
 
@@ -499,10 +737,17 @@ def ClientAnchor (hd, size, value):
 	off = 12
 	while off < size:
 		iter = hd.hdmodel.append(None, None)
-		opids = mspub_opids[struct.unpack("<H",value[off:off+2])[0]]
-		hd.hdmodel.set (iter, 0, opids, 1, struct.unpack("<i",value[off+2:off+6])[0]/12700.,2,off+2,3,4,4,"<i")
+		id = ord(value[off])
+		type = ord(value[off+1])
+		[val] = struct.unpack("<I",value[off+2:off+6])
+		hd.hdmodel.set (iter, 0, "%02x %02x"%(id,type), 1,"%2x"%val ,2,off+2,3,4,4,"<i")
 		off +=6
-		
+
+def ClientData (hd, size, value):
+	off = 14 # assume it only has ShapeID
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
+
 odraw_ids = {
 #	0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContainer',
 #	0xF002:'OfficeArtDgContainer',0xF003:'OfficeArtSpgrContainer',
@@ -516,7 +761,8 @@ odraw_ids = {
 # 0xF00D:'OfficeArtClientTextbox',
 #	0xF00F:'OfficeArtChildAnchor',
 	0xF010:ClientAnchor,
-#	0xF011: 'OfficeArtClientData',0xF012:'OfficeArtFConnectorRule',
+	0xF011:ClientData,
+#	0xF012:'OfficeArtFConnectorRule',
 #	0xF014:'OfficeArtFArcRule',0xF017:'OfficeArtFCalloutRule',
 #	0xF01A:'OfficeArtBlipEMF',0xF01B:'OfficeArtBlipWMF',
 #	0xF01C:'OfficeArtBlipPICT',0xF01D:'OfficeArtBlipJPEG',
