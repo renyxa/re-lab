@@ -142,17 +142,17 @@ class ApplicationMainWindow(gtk.Window):
 			model.foreach (self.dump_tree, f)
 			f.close()
 
-	def dump_tree (self, model, path, iter, f):
-		type = model.get_value(iter,1)
-		len = model.get_value(iter,2)
-		value = model.get_value(iter,3)
-		if len != None:
-			f.write(struct.pack("<I",type) + struct.pack("<I",len) + value)
+	def dump_tree (self, model, path, parent, f):
+		ntype = model.get_value(parent,1)
+		nlen = model.get_value(parent,2)
+		value = model.get_value(parent,3)
+		if nlen != None:
+			f.write(struct.pack("<I",ntype) + struct.pack("<I",nlen) + value)
 		return False
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.4.0")
+		dialog.set_name("OLE toy v0.4.4")
 		dialog.set_copyright("\302\251 Copyright 2010 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
@@ -187,20 +187,20 @@ class ApplicationMainWindow(gtk.Window):
 
 	def on_row_keypressed (self, view, event):
 		treeSelection = view.get_selection()
-		model, iter = treeSelection.get_selected()
-		if iter:
-			intPath = model.get_path(iter)
+		model, iter1 = treeSelection.get_selected()
+		if iter1:
+			intPath = model.get_path(iter1)
 			if event.keyval == 65535:
-				model.remove(iter)
+				model.remove(iter1)
 				if model.get_iter_first():
 					if intPath >= 0:
 						view.set_cursor(intPath)
 						view.grab_focus()
 			else:
 				if event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK:
-					self.selection = (model.get_value(iter,0),model.get_value(iter,1),model.get_value(iter,2),model.get_value(iter,3))
+					self.selection = (model.get_value(iter1,0),model.get_value(iter1,1),model.get_value(iter1,2),model.get_value(iter1,3))
 				if event.keyval == 118 and event.state == gtk.gdk.CONTROL_MASK and self.selection != None:
-					niter = model.insert_after (None, iter)
+					niter = model.insert_after (None, iter1)
 					model.set_value (niter, 0, self.selection[0])
 					model.set_value (niter, 1, self.selection[1])
 					model.set_value (niter, 2, self.selection[2])
@@ -208,25 +208,25 @@ class ApplicationMainWindow(gtk.Window):
 
 	def on_row_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
-		model, iter = treeSelection.get_selected()
-		if iter:
-			intPath = model.get_path(iter)
+		model, iter1 = treeSelection.get_selected()
+		if iter1:
+			intPath = model.get_path(iter1)
 			self.on_row_activated(view, intPath, 0)
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
-		model, iter = treeSelection.get_selected()
-		if iter:
-			intPath = model.get_path(iter)
+		model, iter1 = treeSelection.get_selected()
+		if iter1:
+			intPath = model.get_path(iter1)
 			self.on_hdrow_activated(view, intPath, 0)
 
 	def on_hdrow_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].hd.hdview.get_model()
 		hd = self.das[pn].hd
-		iter = model.get_iter(path)
-		offset = model.get_value(iter,2)
-		size = model.get_value(iter,3)
+		iter1 = model.get_iter(path)
+		offset = model.get_value(iter1,2)
+		size = model.get_value(iter1,3)
 		buffer_hex = hd.txtdump_hex.get_buffer()
 		try:
 			tag = buffer_hex.create_tag("hl",background="yellow")
@@ -243,9 +243,9 @@ class ApplicationMainWindow(gtk.Window):
 	def edited_cb (self, cell, path, new_text):
 		pn = self.notebook.get_current_page()
 		treeSelection = self.das[pn].view.get_selection()
-		model, iter = treeSelection.get_selected()
+		model, iter1 = treeSelection.get_selected()
 		hd = self.das[pn].hd
-		value = model.get_value(iter,3) 
+		value = model.get_value(iter1,3) 
 		hditer = hd.hdmodel.get_iter(path)
 
 		offset = hd.hdmodel.get_value(hditer,2)
@@ -261,8 +261,8 @@ class ApplicationMainWindow(gtk.Window):
 			else:
 				value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
 
-		model.set_value(iter,3,value)
-		self.on_row_activated(self.das[pn].view,model.get_path(iter),0)
+		model.set_value(iter1,3,value)
+		self.on_row_activated(self.das[pn].view,model.get_path(iter1),0)
 		hd.hdview.set_cursor(path)
 		hd.hdview.grab_focus()
 
@@ -270,10 +270,10 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
 		hd = self.das[pn].hd
-		iter = model.get_iter(path)
-		type = model.get_value(iter,1)
-		size = model.get_value(iter,2)
-		data = model.get_value(iter,3)
+		iter1 = model.get_iter(path)
+		ntype = model.get_value(iter1,1)
+		size = model.get_value(iter1,2)
+		data = model.get_value(iter1,3)
 		str_addr = ''
 		str_hex = ''
 		str_asc = ''
@@ -318,8 +318,13 @@ class ApplicationMainWindow(gtk.Window):
 	
 			hd.hdmodel.clear()
 #			print "Type: %02x"%type
-			if oleparse.odraw_ids.has_key(type):
-				oleparse.odraw_ids[type](hd, size, data)
+			if oleparse.odraw_ids.has_key(ntype):
+				oleparse.odraw_ids[ntype](hd, size, data)
+			else:
+				if ntype == 0xff:
+					iter1 = hd.hdmodel.append(None, None)
+					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
+
 
 	def activate_new (self,parent=None):
 		doc = mfdoc.mfPage()

@@ -264,7 +264,8 @@ escher_opids = { 0x0301:'hspMaster',0x0303:'cxstyle',
 0xc187:'bgNameLength',
 0xc680:'bookmarkLength',
 0xc681:'bookmarkNameLength',
-0x06FF:'unk06ff_BoolProps'}
+0x06FF:'unk06ff_BoolProps',
+0xc383:'wrapPtsLength'}
 #0xc382 -- describes length of some Hyperlink-related structure at the end of the chunk, similar to 0xc105
 #			but it's more than just string
 
@@ -342,7 +343,7 @@ def parse_block(model,data,parent,i,j=-1):
 				value = None
 				dlen = 0
 				name = "(%02x) ID78"%j
-			if type == 0x10 or type == 0x12 or type == 0x18:
+			if type == 0x10 or type == 0x12 or type == 0x18 or type == 0x1a:
 				value = data[off:off+2]
 				dlen = 2
 				name += " (%02x)"%struct.unpack("<h",value)[0]
@@ -371,7 +372,7 @@ def parse_block(model,data,parent,i,j=-1):
 				if model.get_value(parent,0)[0:7] != "Block 0":
 					model.set_value(parent,0,"(%02x) Type: %s"%(j,btype))
 
-			if type == 0x80 or type == 0x8a or type == 0x88 or type == 0x90 or type == 0x98 or type == 0xa0:
+			if type == 0x80 or type == 0x82 or type == 0x88 or type == 0x8a or type == 0x90 or type == 0x98 or type == 0xa0:
 				[dlen] = struct.unpack('<i', data[off:off+4])
 				value = data[off:off+dlen]
 			if type == 0xc0:
@@ -407,18 +408,19 @@ block_types = {
 	0x30:"Logo",
 	0x43:"Page",0x44:"Document",0x46:"BorderArt",0x4b:"Printers",0x4c:"Rulers",
 	0x5c:"ColorSchemes",
-	0x63:"Cells",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
+	0x60:'PageName', 0x63:"Cells",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
 
 def parse_pubconts(model,data,parent):
 	try:
 		blocks = {}
 		reorders = []
+		[hdrsize] = struct.unpack("<H",data[2:4])
 		iter1 = model.append(parent,None)
 		model.set_value(iter1,0,"Header")
 		model.set_value(iter1,1,0)
-		model.set_value(iter1,2,44)
-		model.set_value(iter1,3,data[0:44])
-		off = 44
+		model.set_value(iter1,2,hdrsize)
+		model.set_value(iter1,3,data[0:hdrsize])
+		off = hdrsize
 	# Parse the 1st block after header
 		[dlen] = struct.unpack('<I', data[off:off+4])
 		iter1 = model.append(parent,None)
@@ -532,16 +534,20 @@ def parse_fdpc (model,data,offset,fdpciter):
 		model.set_value(iter1,2,4)
 		model.set_value(iter1,3,data[offset+8+i*4:offset+12+i*4])
 		[nlen] = struct.unpack('<I', data[offset+tflag:offset+tflag+4])
-		parse_block(model,data[offset+tflag:offset+tflag+nlen],iter1,0,0)
+		parse_block(model,data[offset+tflag+4:offset+tflag+nlen],iter1,0,0)
 	return
 
 def parse_syid (model,data,offset,syiditer,txtiter,j):
+	try:
 		[num] = struct.unpack('<I', data[offset+4:offset+8])
+		i = 0
 		for i in range(num):
 			[id] = struct.unpack('<I', data[offset+8+i*4:offset+12+i*4])
 			iter = model.append(syiditer,None)
 			model.set(iter,0,"TXid: %02x"%id,1,0,2,4,3,data[offset+8+i*4:offset+12+i*4])
 		return i+j
+	except:
+		print "Failed in parse_syid"
 
 def parse_stsh (model,data,parent,flag):
 	[num] = struct.unpack('<I', data[4:8])
@@ -577,6 +583,89 @@ def parse_stsh (model,data,parent,flag):
 		off1 = off2
 		i += 1
 
+def parse_strs(model,data,parent,txtiter):
+	[num] = struct.unpack('<I', data[0:4])
+	tstart = 0
+	for i in range(num):
+		[nlen] = struct.unpack('<I',data[12+i*4:16+i*4])
+		iter1 = model.append(txtiter,None)
+		model.set_value(iter1,0,"TX %02x length (%02x)"%(i,nlen))
+		model.set_value(iter1,1,0xff)
+		model.set_value(iter1,2,nlen*2-2)
+		model.set_value(iter1,3,model.get_value(txtiter,3)[tstart:tstart+nlen*2-2])
+		tstart += nlen*2
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"TX %02x length (0x%02x)"%(i,nlen))
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,4)
+		model.set_value(iter1,3,data[12+i*4:16+i*4])
+
+def parse_tcd(model,data,parent,txtiter):
+	[num] = struct.unpack('<I', data[0:4])
+	for i in range(num+1):
+		[nlen] = struct.unpack('<I',data[12+i*4:16+i*4])
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"TX %02x end offset (0x%02x)"%(i,nlen*2))
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,4)
+		model.set_value(iter1,3,data[12+i*4:16+i*4])
+
+def parse_pl(model,data,parent):
+	[num] = struct.unpack('<I', data[0:4])
+	off = 12
+	for i in range(num):
+		[nlen] = struct.unpack('<I',data[12+i*4:16+i*4])
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"PL %02x"%i)
+		model.set_value(iter1,1,0)
+		model.set_value(iter1,2,nlen)
+		model.set_value(iter1,3,data[off:off+nlen])
+		parse_block(model,data[off+4:off+nlen],iter1,i)
+		off += nlen
+
+def parse_font(model,data,parent):
+		[num] = struct.unpack('<I', data[4:8])
+		for i in range(num):
+			[off] = struct.unpack('<I', data[20+i*4:24+i*4])
+			[nlen] = struct.unpack('<H', data[20+off:20+off+2])
+			fname = unicode(data[20+off+2:20+off+2+nlen*2],"utf-16")
+			[fid] = struct.unpack('<I', data[20+off+2+nlen*2:20+off+2+nlen*2+4])
+			iter1 = model.append(parent,None)
+			model.set_value(iter1,0,"(%02x) %s"%(fid,fname))
+			model.set_value(iter1,1,0)
+			model.set_value(iter1,2,nlen*2+4)
+			model.set_value(iter1,3,data[20+off:20+off+nlen*2+6])
+
+def parse_mcld(model,data,parent):
+		[num] = struct.unpack('<I', data[4:8])
+		off = num*4 + 8
+		for i in range(num):
+			iter1 = model.append(parent,None)
+			model.set_value(iter1,0,"(%02x) %02x"%(i,struct.unpack("<I",data[8+i*4:12+i*4])[0]))
+			model.set_value(iter1,1,0)
+			model.set_value(iter1,2,4)
+			model.set_value(iter1,3,data[8+i*4:12+i*4])
+			iter2 = model.append(iter1,None)
+			[nlen] = struct.unpack("<I",data[off:off+4])
+			model.set_value(iter2,0,"Hdr")
+			model.set_value(iter2,1,0)
+			model.set_value(iter2,2,nlen)
+			model.set_value(iter2,3,data[off:off+nlen])
+			parse_block (model,data[off+4:off+nlen],iter2,i,0)
+			off += nlen
+			[num2] = struct.unpack('<I', data[off:off+4])
+			off += 4
+			for k in range(num2):
+				[nlen2] = struct.unpack('<I', data[off:off+4])
+				iter3 = model.append(iter1,None)
+				model.set_value(iter3,0,"Ch %02x"%k)
+				model.set_value(iter3,1,0)
+				model.set_value(iter3,2,nlen2)
+				model.set_value(iter3,3,data[off:off+nlen2])
+				parse_block (model,data[off+4:off+nlen2],iter3,k,0)
+				off += nlen2
+
+
 def parse_quill (model,data,parent):
 	off = 0
 	iter1 = model.append(parent,None)
@@ -597,11 +686,22 @@ def parse_quill (model,data,parent):
 		if name[0:4] == "TEXT":
 			txtiter = iter1 # assume for now that I won't have "TEXT/TEXT<num>" with <num> greater than 0
 		if name[0:4] == "FDPC" or name[0:4] == "FDPP":
-			parse_fdpc(model,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
+			parse_fdpc (model,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
 		if name[0:4] == "SYID":
 			txtid = parse_syid(model,data,doffset,iter1,txtiter,txtid)
 		if name[0:4] == "STSH":
-			parse_stsh(model,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
+			parse_stsh (model,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
+		if name[0:4] == "STRS":
+			parse_strs (model,data[doffset:doffset+dlen],iter1,txtiter)
+		if name[0:4] == "TCD ":
+			parse_tcd (model,data[doffset:doffset+dlen],iter1,txtiter)
+		if name[0:4] == "PL  ":
+			parse_pl (model,data[doffset:doffset+dlen],iter1)
+		if name[0:4] == "FONT":
+			parse_font (model,data[doffset:doffset+dlen],iter1)
+		if name[0:4] == "MCLD":
+			parse_mcld (model,data[doffset:doffset+dlen],iter1)
+
 		model.set_value(iter1,0,name)
 		model.set_value(iter1,1,0)
 		model.set_value(iter1,2,dlen)
@@ -635,7 +735,6 @@ def get_children(model,infile,parent):
 		model.set_value(iter1,2,infchild.size())
 		model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
-			print "Size: ",infchild.size()
 			parse_escher(model,data,iter1)
 		if infname == "CONTENTS": # assuming no atttempt to parse something else
 			parse_quill(model,data,iter1)
@@ -648,51 +747,51 @@ def get_children(model,infile,parent):
 
 
 def FDGGBlock (hd, size, value):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "spidMax", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "spidMax", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
 	cidcl = struct.unpack("<I",value[12:16])[0]-1
-	hd.hdmodel.set (iter, 0, "cidcl", 1, cidcl ,2,12,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "cspSaved", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "cdgSaved", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "cidcl", 1, cidcl ,2,12,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "cspSaved", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "cdgSaved", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
 	off = 24
 	for i in range(cidcl):
-		iter = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter, 0, "dgid", 1, struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
-		iter = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter, 0, "cspidCur", 1, struct.unpack("<I",value[off+4:off+8])[0],2,off+4,3,4,4,"<I")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "dgid", 1, struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "cspidCur", 1, struct.unpack("<I",value[off+4:off+8])[0],2,off+4,3,4,4,"<I")
 		off += 8
 
 def FDG (hd, size, value):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "csp", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "spidCur", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "csp", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "spidCur", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
 
 def FSPGR (hd, size, value):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "xLeft", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "yTop", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "xRight", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "yBottom", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "xLeft", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "yTop", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "xRight", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "yBottom", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
 
 
 def FSP (hd, size, value):
-	iter = hd.hdmodel.append(None, None)
+	iter1 = hd.hdmodel.append(None, None)
 	shtype = struct.unpack("<H",value[0:2])[0]>>4
 	if msospt.has_key(shtype):
-		type = "%s (%02x)"%(msospt[shtype],shtype)
+		ntype = "%s (%02x)"%(msospt[shtype],shtype)
 	else:
-		type = "%02x"%shtype
-	hd.hdmodel.set (iter, 0, "Shape", 1, type,2,0,3,2,4,"<H")
+		ntype = "%02x"%shtype
+	hd.hdmodel.set (iter1, 0, "Shape", 1, ntype,2,0,3,2,4,"<H")
 
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "spid", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "spid", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 	flags = struct.unpack("<I",value[12:16])[0]
 	fl = {'group':flags&1,'child':flags&2,'patriarch':flags&4,'Deleted':flags&8,'OleShape':flags&16,
 		'HaveMaster':flags&32,'FlipH':flags&64,'FlipV':flags&128,'Connector':flags&256,
@@ -701,34 +800,40 @@ def FSP (hd, size, value):
 	for i in fl.items():
 		if i[1] != 0:
 			flagstr += i[0] + " "
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "flags", 1, flagstr,2,12,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "flags", 1, flagstr,2,12,3,4,4,"<I")
 
 
-fopt_names = {0xc0c0:'Text',0xc0c5:'Font',0xc105:'Name',0xc187:'bgName',0xc680:'bookmark',0xc681:'bookmarkName'}
+fopt_names = {0xc0c0:'Text',0xc0c5:'Font',0xc105:'Name',0xc187:'bgName',
+0xc680:'bookmark',0xc681:'bookmarkName',
+0xc383:'wrapPoints'
+}
 
 def FOPT (hd, size, value):
 # ignoring "complex" opids for now
 	fnames = []
 	off = 8
 	while off < size:
-		iter = hd.hdmodel.append(None, None)
+		iter1 = hd.hdmodel.append(None, None)
 		id = struct.unpack("<H",value[off:off+2])[0]
 		if escher_opids.has_key(id):
 			opids = escher_opids[id]
 		else:
 			opids = "undef_0x%02x"%id
-		hd.hdmodel.set (iter, 0, opids, 1, struct.unpack("<i",value[off+2:off+6])[0],2,off+2,3,4,4,"<i")
+		hd.hdmodel.set (iter1, 0, opids, 1, struct.unpack("<i",value[off+2:off+6])[0],2,off+2,3,4,4,"<i")
 		if fopt_names.has_key(id):
 			nlen = struct.unpack("<i",value[off+2:off+6])[0]
 			size -= nlen
 			fnames.append([id,nlen])
 		off +=6
 	for i in range(len(fnames)):
-		iter = hd.hdmodel.append(None, None)
+		iter1 = hd.hdmodel.append(None, None)
 		name = fopt_names[fnames[i][0]]
 		nlen =  fnames[i][1]
-		hd.hdmodel.set (iter, 0, name , 1, unicode(value[off:off+nlen],"utf-16"),2,off,3,nlen,4,"txt")
+		if name == 'wrapPoints':
+			hd.hdmodel.set (iter1, 0, name , 1, struct.unpack("<H",value[off:off+2])[0],2,off,3,nlen,4,"<H")
+		else:
+			hd.hdmodel.set (iter1, 0, name , 1, unicode(value[off:off+nlen],"utf-16"),2,off,3,nlen,4,"txt")
 		off += nlen
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
@@ -736,17 +841,17 @@ mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
 def ClientAnchor (hd, size, value):
 	off = 12
 	while off < size:
-		iter = hd.hdmodel.append(None, None)
+		iter1 = hd.hdmodel.append(None, None)
 		id = ord(value[off])
-		type = ord(value[off+1])
+		ntype = ord(value[off+1])
 		[val] = struct.unpack("<I",value[off+2:off+6])
-		hd.hdmodel.set (iter, 0, "%02x %02x"%(id,type), 1,"%2x"%val ,2,off+2,3,4,4,"<i")
+		hd.hdmodel.set (iter1, 0, "%02x %02x"%(id,ntype), 1,"%2x"%val ,2,off+2,3,4,4,"<i")
 		off +=6
 
 def ClientData (hd, size, value):
 	off = 14 # assume it only has ShapeID
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
 
 odraw_ids = {
 #	0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContainer',
@@ -772,3 +877,5 @@ odraw_ids = {
 #	0xF11D:'OfficeArtFPSPL',0xF11E:'OfficeArtSplitMenuColorContainer',
 	0xF121:FOPT,0xF122:FOPT
 }
+
+txt_id = {0xFF:'TextBlock'} # fake id used to mark text as text
