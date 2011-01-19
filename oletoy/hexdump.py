@@ -5,7 +5,7 @@ import tree
 class hexdump:
 	def __init__(self):
 		self.vpaned = gtk.VPaned()
-
+		self.data = None
 		#self.vscroll1 = gtk.ScrolledWindow()
 		#self.vscroll1.set_size_request(300, 300)
 		

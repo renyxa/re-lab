@@ -1,5 +1,6 @@
 import sys,struct
 import tree, gtk, gobject
+import gsf
 import oleparse
 
 class Page:
@@ -18,5 +19,25 @@ class Page:
 		else:
 			self.pname = self.fname
 		offset = 0
-		oleparse.open(self.fname,self.model)
+		src = gsf.InputStdio(self.fname)
+		buf = src.read(8)
+		if buf == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
+			oleparse.open(src, self.model)
+			return 0
+		if buf[0:4] == "\xd7\xcd\xc6\x9a":
+			print "Aldus Placeable WMF"
+		if buf[0:6] == "\x01\x00\x09\x00\x00\x03":
+			print "Probably standard WMF"
+		src.seek(32,0)
+		buf = src.read(4)
+		if buf == "\x20\x45\x4d\x46":
+			print "Probably EMF"
+		src.seek(0,1)
+		buf = src.read(src.size())
+		iter1 = self.model.append(None, None)
+		self.model.set_value(iter1, 0, "File")
+		self.model.set_value(iter1, 1, 0)
+		self.model.set_value(iter1, 2, src.size())
+		self.model.set_value(iter1, 3, buf)
 		return 0
+

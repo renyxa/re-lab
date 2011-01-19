@@ -1,4 +1,20 @@
 #!/usr/bin/env python
+# Copyright (C) 2007-2010,	Valek Filippov (frob@df.ru)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of version 3 or later of the GNU General Public
+# License as published by the Free Software Foundation.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
+# USA
+
+
 import sys,struct
 import gobject
 import gtk
@@ -6,6 +22,7 @@ import tree
 import hexdump
 import Doc
 import oleparse
+import escher
 
 ui_info = \
 '''<ui>
@@ -48,7 +65,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.connect('destroy', lambda *w: gtk.main_quit())
 
 		self.set_title("OLE toy")
-		self.set_default_size(500, 350)
+		self.set_default_size(400, 350)
 
 		merge = gtk.UIManager()
 		self.set_data("ui-manager", merge)
@@ -80,7 +97,10 @@ class ApplicationMainWindow(gtk.Window):
 			0,						 0);
 
 		# Create statusbar
-		self.statusbar = gtk.Statusbar()
+		self.statusbar = gtk.HBox()
+		self.label = gtk.Label()
+		self.label.set_use_markup(True)
+		self.statusbar.pack_start(self.label, True,True,2)
 		table.attach(self.statusbar,
 			# X direction		   Y direction
 			0, 1,				   2, 3,
@@ -152,7 +172,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.4.4")
+		dialog.set_name("OLE toy v0.5.0")
 		dialog.set_copyright("\302\251 Copyright 2010 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
@@ -164,8 +184,7 @@ class ApplicationMainWindow(gtk.Window):
 		 return
  
 	def update_statusbar(self, buffer):
-		# clear any previous message, underflow is allowed
-		self.statusbar.push(0,'%s' % (buffer))
+		self.label.set_markup("%s"%buffer)
 
 	def activate_close(self, action):
 		pn = self.notebook.get_current_page()
@@ -179,11 +198,6 @@ class ApplicationMainWindow(gtk.Window):
 					self.das[i] = self.das[i+1]
 				del self.das[len(self.das)-1]
 		return
-
-	def update_resize_grip(self, widget, event):
-		mask = gtk.gdk.WINDOW_STATE_MAXIMIZED | gtk.gdk.WINDOW_STATE_FULLSCREEN
-		if (event.changed_mask & mask):
-			self.statusbar.set_has_resize_grip(not (event.new_window_state & mask))
 
 	def on_row_keypressed (self, view, event):
 		treeSelection = view.get_selection()
@@ -272,8 +286,10 @@ class ApplicationMainWindow(gtk.Window):
 		hd = self.das[pn].hd
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
+#		print "NType: %s %02x"%(ntype[0],ntype[1])
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
+		hd.data = data
 		str_addr = ''
 		str_hex = ''
 		str_asc = ''
@@ -317,13 +333,15 @@ class ApplicationMainWindow(gtk.Window):
 			buffer_asc.insert_with_tags_by_name(iter_asc, str_asc,"monospace")
 	
 			hd.hdmodel.clear()
-#			print "Type: %02x"%type
-			if oleparse.odraw_ids.has_key(ntype):
-				oleparse.odraw_ids[ntype](hd, size, data)
-			else:
-				if ntype == 0xff:
-					iter1 = hd.hdmodel.append(None, None)
-					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
+			if ntype != 0:
+				if ntype[0] == "escher":
+					if ntype[1] == "odraw":
+						if escher.odraw_ids.has_key(ntype[2]):
+							escher.odraw_ids[ntype[2]](hd, size, data)
+				else:
+					if ntype[2] == 0xff:
+						iter1 = hd.hdmodel.append(None, None)
+						hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
 
 
 	def activate_new (self,parent=None):
@@ -348,6 +366,61 @@ class ApplicationMainWindow(gtk.Window):
 		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
 		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
+
+	def hdselect_cb(self,event,udata):
+		pn = self.notebook.get_current_page()
+		model = self.das[pn].view.get_model()
+		hd = self.das[pn].hd
+		try:
+			start,end = hd.txtdump_hex.get_buffer().get_selection_bounds()
+		except:
+			return
+		buffer_asc = hd.txtdump_asc.get_buffer()
+
+		slo = start.get_offset()
+		elo = end.get_offset()
+		if slo%3 == 1:
+			slo -= 1
+			start.set_offset(slo)
+		if slo%3 == 2:
+			slo += 1
+			start.set_offset(slo)
+		if elo%3 == 0:
+			elo -= 1
+			end.set_offset(elo)
+		if elo%3 == 1:
+			elo += 1
+			end.set_offset(elo)
+		hd.txtdump_hex.get_buffer().move_mark_by_name ('selection_bound',start)
+		hd.txtdump_hex.get_buffer().move_mark_by_name ('insert',end)
+
+		asl = start.get_line()
+		ael = end.get_line()
+		aslo = start.get_line_offset()
+		aelo = end.get_line_offset()
+
+		try:
+			tag = buffer_asc.create_tag("hl",background="yellow")
+		except:
+			pass
+		buffer_asc.remove_tag_by_name("hl",buffer_asc.get_iter_at_offset(0),buffer_asc.get_iter_at_offset(buffer_asc.get_char_count()))
+		iter_asc = buffer_asc.get_iter_at_offset(asl*17+aslo/3)
+		iter_asc_end = buffer_asc.get_iter_at_offset(ael*17+aelo/3+1)
+		buffer_asc.apply_tag_by_name("hl",iter_asc,iter_asc_end)
+		dstart = asl*16+aslo/3
+		dend = ael*16+aelo/3+1
+		buf = hd.data[dstart:dend]
+		if len(buf) == 2:
+			self.update_statusbar(struct.unpack("<h",buf)[0])
+		if len(buf) == 4:
+			self.update_statusbar(struct.unpack("<i",buf)[0])
+		if len(buf) == 8:
+			self.update_statusbar(struct.unpack("<d",buf)[0])
+		if len(buf) == 3:
+			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
+			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
+
+			self.update_statusbar(txt)
 
 	def activate_open(self,parent=None):
 		if self.fname !='':
@@ -374,6 +447,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdrend.connect('edited', self.edited_cb)
+				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
 				hpaned = gtk.HPaned()
 				hpaned.add1(scrolled)
 				hpaned.add2(vpaned)

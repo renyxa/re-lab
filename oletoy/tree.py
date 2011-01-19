@@ -2,13 +2,16 @@ import gobject
 import gtk
 
 def make_view():
-   # Create the model. Name/Type/Length/Value
-   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT)
+   # Create the model. Name/Type/Length/Value/Value2
+   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_reorderable(True)
    view.set_enable_tree_lines(True)
    renderer = gtk.CellRendererText()
+   renderer.set_property('family-set',True)
+   renderer.set_property('font','monospace')
+#   renderer.family="monospace"
    column = gtk.TreeViewColumn('Record', renderer, text=0)
    column2 = gtk.TreeViewColumn('Length', renderer, text=2)
    view.append_column(column)
@@ -17,7 +20,7 @@ def make_view():
    # Create scrollbars around the view.
    scrolled = gtk.ScrolledWindow()
    scrolled.add(view)
-   scrolled.set_size_request(400,600)
+   scrolled.set_size_request(400,400)
    scrolled.show()
    return model,view,scrolled
 
