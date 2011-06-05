@@ -23,6 +23,7 @@ import hexdump
 import Doc
 import oleparse
 import escher
+import vsdchunks
 
 ui_info = \
 '''<ui>
@@ -172,7 +173,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.5.0")
+		dialog.set_name("OLE toy v0.5.2")
 		dialog.set_copyright("\302\251 Copyright 2010 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
@@ -339,37 +340,21 @@ class ApplicationMainWindow(gtk.Window):
 						if escher.odraw_ids.has_key(ntype[2]):
 							escher.odraw_ids[ntype[2]](hd, size, data)
 				else:
-					if ntype[2] == 0xff:
+					if ntype[0] == "vsd":
+					 if ntype[1] == "chnk":
+						if vsdchunks.chnk_func.has_key(ntype[2]):
+							vsdchunks.chnk_func[ntype[2]](hd, size, data)
+					else:
+					 if ntype[2] == 0xff:
 						iter1 = hd.hdmodel.append(None, None)
 						hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
 
 
-	def activate_new (self,parent=None):
-		doc = mfdoc.mfPage()
-		dnum = len(self.das)
-		self.das[dnum] = doc
-		scrolled = doc.scrolled
-		doc.hd = hexdump.hexdump()
-		doc.hd.txtdump_hex.connect('populate_popup',self.build_context_menu)
-		vpaned = doc.hd.vpaned
-		hpaned = gtk.HPaned()
-		hpaned.add1(scrolled)
-		hpaned.add2(vpaned)
-		label = gtk.Label("Unnamed")
-		self.notebook.append_page(hpaned, label)
-		self.notebook.show_tabs = True
-		self.notebook.show_all()
-		doc.view.connect("row-activated", self.on_row_activated)
-		doc.view.connect("key-press-event", self.on_row_keypressed)
-		doc.view.connect("key-release-event", self.on_row_keyreleased)
-		doc.view.connect("button-release-event", self.on_row_keyreleased)
-		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
-		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
-		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
-
 	def hdselect_cb(self,event,udata):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
+		type = self.das[pn].type
+		print "Type: ",type
 		hd = self.das[pn].hd
 		try:
 			start,end = hd.txtdump_hex.get_buffer().get_selection_bounds()
@@ -411,16 +396,47 @@ class ApplicationMainWindow(gtk.Window):
 		dend = ael*16+aelo/3+1
 		buf = hd.data[dstart:dend]
 		if len(buf) == 2:
-			self.update_statusbar(struct.unpack("<h",buf)[0])
+			txt = "LE: %s\tBE: %s"%(struct.unpack("<h",buf)[0],struct.unpack(">h",buf)[0])
+			self.update_statusbar(txt)
 		if len(buf) == 4:
-			self.update_statusbar(struct.unpack("<i",buf)[0])
+			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])
+			if type == "PUB":
+				txt += "\t%s"%struct.unpack("<i",buf)[0]/12700.
+			self.update_statusbar(txt)
 		if len(buf) == 8:
-			self.update_statusbar(struct.unpack("<d",buf)[0])
+			txt = "LE: %s\tBE: %s"%(struct.unpack("<d",buf)[0],struct.unpack(">d",buf)[0])
+			self.update_statusbar(txt)
 		if len(buf) == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
 
 			self.update_statusbar(txt)
+
+
+	def activate_new (self,parent=None):
+		doc = mfdoc.mfPage()
+		dnum = len(self.das)
+		self.das[dnum] = doc
+		scrolled = doc.scrolled
+		doc.hd = hexdump.hexdump()
+		doc.hd.txtdump_hex.connect('populate_popup',self.build_context_menu)
+		vpaned = doc.hd.vpaned
+		hpaned = gtk.HPaned()
+		hpaned.add1(scrolled)
+		hpaned.add2(vpaned)
+		label = gtk.Label("Unnamed")
+		self.notebook.append_page(hpaned, label)
+		self.notebook.show_tabs = True
+		self.notebook.show_all()
+		doc.view.connect("row-activated", self.on_row_activated)
+		doc.view.connect("key-press-event", self.on_row_keypressed)
+		doc.view.connect("key-release-event", self.on_row_keyreleased)
+		doc.view.connect("button-release-event", self.on_row_keyreleased)
+		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
+		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
+		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
+
+
 
 	def activate_open(self,parent=None):
 		if self.fname !='':

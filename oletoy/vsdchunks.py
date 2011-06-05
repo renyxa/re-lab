@@ -19,35 +19,36 @@ import struct
 import vsd
 
 chunknoshift = {
-            0x15:'Page',\
-            0x18:'FontFaces',\
-            0x1a:'Styles',\
-            0x46:'PageSheet',\
-            0x47:'ShapeType="Group"',\
-            0x48:'ShapeType="Shape"',\
-            0x4a:'StyleSheet',\
-            0x4d:'ShapeType="Guide"',\
-            0x4e:'ShapeType="Foreign"',\
-            0x4f:'DocSheet'}
-            
+		0x15:'Page',\
+		0x18:'FontFaces',\
+		0x1a:'Styles',\
+		0x46:'PageSheet',\
+		0x47:'ShapeType="Group"',\
+		0x48:'ShapeType="Shape"',\
+		0x4a:'StyleSheet',\
+		0x4d:'ShapeType="Guide"',\
+		0x4e:'ShapeType="Foreign"',\
+		0x4f:'DocSheet'}
+
 chunklist = {
-            0x2c:'NameList',\
-            0x64:'ScratchList',\
-            0x65:'ShapeList',\
-            0x67:'UserDefList',\
-            0x68:'PropList',\
-            0x69:'CharList',\
-            0x6a:'ParaList',\
-            0x6b:'TabsDataList',\
-            0x6c:'GeomList',\
-            0x6d:'CustPropsList',\
-            0x6e:'ActIdList',\
-            0x6f:'LayerList',\
-            0x70:'CtrlList',\
-            0x71:'CPntsList',
-            0x76:'SmartTagList'}
+		0x2c:'NameList',\
+		0x64:'ScratchList',\
+		0x65:'ShapeList',\
+		0x67:'UserDefList',\
+		0x68:'PropList',\
+		0x69:'CharList',\
+		0x6a:'ParaList',\
+		0x6b:'TabsDataList',\
+		0x6c:'GeomList',\
+		0x6d:'CustPropsList',\
+		0x6e:'ActIdList',\
+		0x6f:'LayerList',\
+		0x70:'CtrlList',\
+		0x71:'CPntsList',
+		0x76:'SmartTagList'}
 
 chunktype = {
+		0x0a:'Prompt',\
 		0x0c:'FrgnData ',\
 		0x0d:'OLE_List ',\
 		0x0e:'Text IX  ',\
@@ -64,6 +65,7 @@ chunktype = {
 		0x2c:'NameList ',\
 		0x2d:'Name     ',\
 		0x31:'Document ',\
+		0x42:'UniqueID',\
 		0x46:'PageSheet',\
 		0x47:'ShapeType="Group"',\
 		0x48:'ShapeType="Shape"',\
@@ -84,6 +86,8 @@ chunktype = {
 		0x6f:'LayerList',\
 		0x70:'CtrlList ',\
 		0x71:'CPntsList',\
+		0x72:'Connection',\
+		0x73:'HypelLnkList',\
 		0x76:'SmartTagLst',\
 		0x83:'ShapeID  ',\
 		0x84:'Event    ',\
@@ -143,6 +147,20 @@ chunktype = {
 		0xc9:'NameIDX ',\
 		0xd1:'NRBSTo Data'}
 
+
+def Shape (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineStyle", 1, "%2x"%struct.unpack("<I",value[53:53+4])[0],2,53,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FillStyle", 1, "%2x"%struct.unpack("<I",value[61:61+4])[0],2,61,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "TextStyle", 1, "%2x"%struct.unpack("<I",value[69:69+4])[0],2,69,3,4,4,"<I")
+
+
+chnk_func = {
+	0x48:Shape
+}
+
 def parse(model, version, parent, pntr):
 	offset = 0
 	tmppntr = vsd.pointer()
@@ -151,7 +169,6 @@ def parse(model, version, parent, pntr):
 	path0 =  parent
 	path1 =  parent
 	path2 =  parent
-#	path_pointer = 0
 	level = 0
 	while offset < len(pntr.data):
 		try:
@@ -187,7 +204,7 @@ def parse(model, version, parent, pntr):
 					trailer = 0
 					if (chnk.list != 0) or (chnk.type == 0x71) or (chnk.type==0x70):
 						trailer = 8
-					if (0x6b == chnk.type or 0x6a == chnk.type or 0x69 == chnk.type or 0x66 == chnk.type or 0x65 == chnk.type or 0x2c == chnk.type):
+					if (0x64 == chnk.type or 0x6f == chnk.type or 0x6b == chnk.type or 0x6a == chnk.type or 0x69 == chnk.type or 0x66 == chnk.type or 0x65 == chnk.type or 0x2c == chnk.type):
 						trailer = 8
 					
 					if(11 == version): #/* separators were found only in Visio2k3 atm.  trailer means that there is a separator too. */
@@ -195,12 +212,17 @@ def parse(model, version, parent, pntr):
 							(2 == chnk.level and 0x55 == chnk.unkn3) or\
 							(2 == chnk.level and 0x54 == chnk.unkn3 and 0xaa == chnk.type) or\
 							(3 == chnk.level and 0x50 != chnk.unkn3) or\
-							(0x69 == chnk.type or 0x6a == chnk.type or 0x6b == chnk.type or 0x71 == chnk.type) or\
-							(0xb4 == chnk.type or 0xb6 == chnk.type or 0xb9 == chnk.type or 0xa9 == chnk.type):
+							(0x6f == chnk.type or 0x65 == chnk.type or 0x66 == chnk.type or 0x69 == chnk.type or 0x6a == chnk.type or 0x6b == chnk.type or 0x71 == chnk.type) or\
+							(0x64 == chnk.type or 0xc7 == chnk.type or 0xb4 == chnk.type or 0xb6 == chnk.type or 0xb9 == chnk.type or 0xa9 == chnk.type) or\
+							(0x2c == chnk.type and (0x50 == chnk.unkn3 or 0x54 == chnk.unkn3)):
 							trailer = trailer + 4
-					if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type)):
+					if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type or 0x2d == chnk.type)):
 						trailer = 0
-						
+			chlistflag = 0
+			if chnk.list > 0:
+				chlistflag = 1
+#			print chnk.type,"%02x"%chnk.type,chnk.level,chlistflag,"%02x"%chnk.unkn3,trailer
+			
 			if level==0:
 				level=chnk.level
 			ptr = vsd.pointer()
@@ -239,5 +261,5 @@ def parse(model, version, parent, pntr):
 		except:
 			name = model.get_value(parent,0)
 			print 'Something wrong with chunks',name,'%x'%offset
-			offset = offset + ch_hdr_len
+			offset = offset + 4 #ch_hdr_len, probably with +4 it will "autorecover" in some cases of underestimated trailer
 	return
