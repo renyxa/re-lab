@@ -31,9 +31,11 @@ chunknoshift = {
 		0x4f:'DocSheet'}
 
 chunklist = {
+		0xd:'OleList',\
 		0x2c:'NameList',\
 		0x64:'ScratchList',\
 		0x65:'ShapeList',\
+		0x66:'FieldList',
 		0x67:'UserDefList',\
 		0x68:'PropList',\
 		0x69:'CharList',\
@@ -45,6 +47,8 @@ chunklist = {
 		0x6f:'LayerList',\
 		0x70:'CtrlList',\
 		0x71:'CPntsList',
+		0x72:'CnnectList',\
+		0x73:'HypelLnkList',\
 		0x76:'SmartTagList'}
 
 chunktype = {
@@ -75,6 +79,7 @@ chunktype = {
 		0x4f:'DocSheet ',\
 		0x64:'ScratchList',\
 		0x65:'ShapeList',\
+		0x66:'FieldList',\
 		0x67:'UserDefList',\
 		0x68:'PropList ',\
 		0x69:'CharList ',\
@@ -86,7 +91,7 @@ chunktype = {
 		0x6f:'LayerList',\
 		0x70:'CtrlList ',\
 		0x71:'CPntsList',\
-		0x72:'Connection',\
+		0x72:'CnnectList',\
 		0x73:'HypelLnkList',\
 		0x76:'SmartTagLst',\
 		0x83:'ShapeID  ',\
@@ -148,7 +153,35 @@ chunktype = {
 		0xd1:'NRBSTo Data'}
 
 
+def Page (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	shl = struct.unpack("<I",value[19:19+4])[0]
+	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%struct.unpack("<I",value[23:23+4])[0],2,23,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
+
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ViewScale?", 1,struct.unpack("<d",value[45:45+8])[0],2,45,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ViewCntrX", 1, struct.unpack("<d",value[53:53+8])[0],2,53,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ViewCntrY", 1, struct.unpack("<d",value[61:61+8])[0],2,61,3,8,4,"<d")
+
+
+
 def Shape (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	shl = struct.unpack("<I",value[19:19+4])[0]
+	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%struct.unpack("<I",value[23:23+4])[0],2,23,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
+
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "MasterShape", 1, "%2x"%struct.unpack("<I",value[45:45+4])[0],2,45,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "LineStyle", 1, "%2x"%struct.unpack("<I",value[53:53+4])[0],2,53,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
@@ -157,8 +190,36 @@ def Shape (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "TextStyle", 1, "%2x"%struct.unpack("<I",value[69:69+4])[0],2,69,3,4,4,"<I")
 
 
+def List (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	shl = struct.unpack("<I",value[19:19+4])[0]
+	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%struct.unpack("<I",value[23:23+4])[0],2,23,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
+
+def NameID (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	numofrec = struct.unpack("<I",value[19:19+4])[0]
+	hd.hdmodel.set (iter1, 0, "#ofRecords", 1, "%2x"%numofrec,2,19,3,4,4,"<I")
+	for i in range(numofrec):
+		n1 = struct.unpack("<I",value[23+i*13:27+i*13])[0]
+		n2 = struct.unpack("<I",value[27+i*13:31+i*13])[0]
+		n3 = struct.unpack("<I",value[31+i*13:35+i*13])[0]
+		flag = ord(value[35+i*13])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "Rec #%d"%i, 1, "%2x %2x %2x %2x"%(n1,n2,n3,flag),2,23+i*13,3,13,4,"txt")
+
+
 chnk_func = {
-	0x48:Shape
+	0x15:Page,
+	0x47:Shape, 0x48:Shape, 0x4e:Shape,0x4f:Shape,
+	0xd:List,0x2c:List,
+	0x46:List,
+	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
+	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
+	0xc9:NameID
 }
 
 def parse(model, version, parent, pntr):
@@ -202,6 +263,7 @@ def parse(model, version, parent, pntr):
 					[chnk.level] = struct.unpack('<h', pntr.data[offset+16:offset+18])
 					chnk.unkn3 = ord(pntr.data[offset+18])
 					trailer = 0
+					
 					if (chnk.list != 0) or (chnk.type == 0x71) or (chnk.type==0x70):
 						trailer = 8
 					if (0x64 == chnk.type or 0x6f == chnk.type or 0x6b == chnk.type or 0x6a == chnk.type or 0x69 == chnk.type or 0x66 == chnk.type or 0x65 == chnk.type or 0x2c == chnk.type):
@@ -218,9 +280,11 @@ def parse(model, version, parent, pntr):
 							trailer = trailer + 4
 					if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type or 0x2d == chnk.type)):
 						trailer = 0
+# for data collection to verify rules
 			chlistflag = 0
 			if chnk.list > 0:
 				chlistflag = 1
+
 #			print chnk.type,"%02x"%chnk.type,chnk.level,chlistflag,"%02x"%chnk.unkn3,trailer
 			
 			if level==0:
@@ -233,7 +297,7 @@ def parse(model, version, parent, pntr):
 				itername = '%-24s'%chunktype[chnk.type]+'(IX: %02x  Len: %02x Lvl: %u)'%(chnk.IX, chnk.length,chnk.level)
 			else:
 				itername = 'Type: %02x \t\tI/L List/Level/u3: %02x/%02x  %02x %02x %02x'%(chnk.type,chnk.IX,chnk.length,chnk.list,chnk.level,chnk.unkn3)
-				
+				print "!!! --------------- !!!",'%02x'%chnk.type,'%02x'%chnk.level
 			if chnk.level ==0:
 				path = path0
 			if chnk.level ==1:
