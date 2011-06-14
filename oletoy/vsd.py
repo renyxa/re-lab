@@ -93,6 +93,8 @@ def parse (model, data, parent):
 def ptr_search (model, data, version, parent):
 #	try:
 		# ver 6 and up for now
+		namelist = 0
+		fontlist = 0
 		ptr = model.get_value (parent,4)
 		shift = ptr.shift
 		pdata = ptr.data
@@ -126,7 +128,15 @@ def ptr_search (model, data, version, parent):
 			itername = '%02x       \t%08x\t%04x\t%04x\t%02x'%(pntr.type,pntr.address,pntr.offset,pntr.length,pntr.format)
 			name2 = "%02x"%pntr.type
 			if streamtype.has_key (pntr.type):
-				itername = streamtype[pntr.type]+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
+				
+				idx = ""
+				if pntr.type == 0x33:
+				  idx = "%02x"%namelist
+				  namelist += 1
+				if pntr.type == 0xd7:
+				  idx = " %02x"%fontlist
+				  fontlist += 1
+				itername = streamtype[pntr.type]+idx+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
 				name2 = streamtype[pntr.type]
 			else:
 				if vsdchunks.chunktype.has_key(pntr.type):
@@ -153,7 +163,9 @@ def ptr_search (model, data, version, parent):
 				model.set_value(iter2,2,len(res))
 				model.set_value(iter2,3,res)
 
-			if pntr.format>>4 == 5 and pntr.type != 0x16:
+#			print "ptr type/fmt %02x %02x"%(pntr.type,pntr.format)
+
+			if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
 				ptr_search (model, data, version, iter1)
 				
 			if pntr.format >>4 == 0xd:

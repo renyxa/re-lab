@@ -190,6 +190,36 @@ def Shape (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "TextStyle", 1, "%2x"%struct.unpack("<I",value[69:69+4])[0],2,69,3,4,4,"<I")
 
 
+def XForm (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "PinX", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "PinY", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Width", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Height", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LocPinX", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LocPinY", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Angle", 1, "%.2f"%struct.unpack("<d",value[74:82]),2,74,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FlipX", 1, "%2x"%ord(value[83]),2,83,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FlipY", 1, "%2x"%ord(value[84]),2,84,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ResizeMode", 1, "%2x"%ord(value[85]),2,85,3,1,4,"<I")
+
+
+def MoveTo (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+
+
 def List (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	shl = struct.unpack("<I",value[19:19+4])[0]
@@ -219,6 +249,8 @@ chnk_func = {
 	0x46:List,
 	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
+	0x8a:MoveTo,0x8b:MoveTo,
+	0x9b:XForm,
 	0xc9:NameID
 }
 
