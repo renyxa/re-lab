@@ -130,10 +130,10 @@ def ptr_search (model, data, version, parent):
 			if streamtype.has_key (pntr.type):
 				
 				idx = ""
-				if pntr.type == 0x33:
+				if pntr.type == 0x33 or pntr.type == 0:
 				  idx = "%02x"%namelist
 				  namelist += 1
-				if pntr.type == 0xd7:
+				if pntr.type == 0xd7 or pntr.type == 0:
 				  idx = " %02x"%fontlist
 				  fontlist += 1
 				itername = streamtype[pntr.type]+idx+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
