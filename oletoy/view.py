@@ -180,7 +180,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.5.6")
+		dialog.set_name("OLE toy v0.5.7")
 		dialog.set_copyright("\302\251 Copyright 2010-2011 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
@@ -244,6 +244,8 @@ class ApplicationMainWindow(gtk.Window):
 		if iter1:
 			intPath = model.get_path(iter1)
 			self.on_row_activated(view, intPath, 0)
+		if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
+			self.entry.set_text(model.get_string_from_iter(iter1))
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
