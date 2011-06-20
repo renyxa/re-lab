@@ -36,6 +36,8 @@ ui_info = \
 		<separator/>
 		<menuitem action='Quit'/>
 	</menu>
+	<menu action='ViewMenu'>
+	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='About'/>
 	</menu>
@@ -99,9 +101,13 @@ class ApplicationMainWindow(gtk.Window):
 
 		# Create statusbar
 		self.statusbar = gtk.HBox()
+		self.entry = gtk.Entry()
+		self.statusbar.pack_start(self.entry, False,False,2)
+		self.entry.connect ("activate",self.on_entry_activate)
 		self.label = gtk.Label()
 		self.label.set_use_markup(True)
 		self.statusbar.pack_start(self.label, True,True,2)
+		
 		table.attach(self.statusbar,
 			# X direction		   Y direction
 			0, 1,				   2, 3,
@@ -122,6 +128,7 @@ class ApplicationMainWindow(gtk.Window):
 		# GtkActionEntry
 		entries = (
 			( "FileMenu", None, "_File" ),			   # name, stock id, label
+			( "ViewMenu", None, "_View" ),			   # name, stock id, label
 			( "HelpMenu", None, "_Help" ),			   # name, stock id, label
 			( "New", gtk.STOCK_NEW,					# name, stock id
 				"_New","<control>N",					  # label, accelerator
@@ -173,8 +180,8 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.5.5")
-		dialog.set_copyright("\302\251 Copyright 2010 V.F.")
+		dialog.set_name("OLE toy v0.5.6")
+		dialog.set_copyright("\302\251 Copyright 2010-2011 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
 		dialog.connect ("response", lambda d, r: d.destroy())
@@ -186,6 +193,16 @@ class ApplicationMainWindow(gtk.Window):
  
 	def update_statusbar(self, buffer):
 		self.label.set_markup("%s"%buffer)
+
+	def on_entry_activate (self,action):
+		goto = self.entry.get_text()
+		pn = self.notebook.get_current_page()
+		col = self.das[pn].view.get_column(0)
+		try:
+			self.das[pn].view.expand_to_path(goto)
+			self.das[pn].view.set_cursor_on_cell(goto)
+		except:
+			print "No such path"
 
 	def activate_close(self, action):
 		pn = self.notebook.get_current_page()

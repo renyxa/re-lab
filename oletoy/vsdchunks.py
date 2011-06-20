@@ -428,7 +428,7 @@ def parse(model, version, parent, pntr):
 							(0x64 == chnk.type or 0xc7 == chnk.type or 0xb4 == chnk.type or 0xb6 == chnk.type or 0xb9 == chnk.type or 0xa9 == chnk.type) or\
 							(0x2c == chnk.type and (0x50 == chnk.unkn3 or 0x54 == chnk.unkn3)):
 							trailer = trailer + 4
-					if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type or 0x2d == chnk.type)):
+					if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type or 0x2d == chnk.type or 0xd1 == chnk.type)):
 						trailer = 0
 # for data collection to verify rules
 			chlistflag = 0
@@ -464,6 +464,7 @@ def parse(model, version, parent, pntr):
 			model.set_value(iter1,2,len(ptr.data))
 			model.set_value(iter1,3,ptr.data)
 			model.set_value(iter1,4,ptr)
+			model.set_value(iter1,6,model.get_string_from_iter(iter1))
 
 			if chnk.level ==0:
 				path0 = iter1

@@ -26,13 +26,14 @@ import quill
 import vsd
 import gsf
 
-def open(src,model):
+def open(src,page):
 	infile = gsf.InfileMSOle(src)
 	iter = None
-	get_children(model,infile,iter)
-	return
+	type = get_children(page,infile,iter)
+	return type
 
-def get_children(model,infile,parent):
+def get_children(page,infile,parent):
+	type = "OLE"
 	for i in range(infile.num_children()):
 		infchild = infile.child_by_index(i)
 		infname = infile.name_by_index(i)
@@ -45,22 +46,23 @@ def get_children(model,infile,parent):
 			data = infuncomp.read(infuncomp.size())
 		else:
 			data = infchild.read(infchild.size())
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,infname)
-		model.set_value(iter1,1,0)
-		model.set_value(iter1,2,infchild.size())
-		model.set_value(iter1,3,data)
+		iter1 = page.model.append(parent,None)
+		page.model.set_value(iter1,0,infname)
+		page.model.set_value(iter1,1,0)
+		page.model.set_value(iter1,2,infchild.size())
+		page.model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
-			escher.parse (model,data,iter1)
+			escher.parse (page.model,data,iter1)
 		if infname == "CONTENTS": # assuming no atttempt to parse something else
-			quill.parse (model,data,iter1)
+			quill.parse (page.model,data,iter1)
 		if infname == "Contents": # assuming no atttempt to parse something else
-			pub.parse (model,data,iter1)
+			type = "PUB"
+			pub.parse (page.model,data,iter1)
 		if infname == "VisioDocument":
-			vsd.parse (model, data, iter1) 
+			vsd.parse (page, data, iter1) 
 		if (infchild.num_children()>0):
-			get_children(model,infchild,iter1)
-	return
+			get_children(page.model,infchild,iter1)
+	return type
 
 
 txt_id = {0xFF:'TextBlock'} # fake id used to mark text as text

@@ -41,7 +41,7 @@ streamtype = {
 	0xd7:'FontFace',0xd8:'FontFaces'}
 
 
-def parse (model, data, parent):
+def parse (page, data, parent):
 		ver_offset = 0x1a
 		size_offset = 0x1c
 		trlr_offset = 0x24
@@ -50,6 +50,7 @@ def parse (model, data, parent):
 		print "Version: %d"%version
 		print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
 
+		model = page.model
 		tr_pntr = pointer()
 		if version < 6:
 			pdata = data[trlr_offset:trlr_offset+16]
@@ -76,23 +77,29 @@ def parse (model, data, parent):
 			tr_pntr.shift = 0
 		tr_pntr.data = res
 		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Trailer\t\t  %08x\t  %04x\t  %04x\t  %02x\t"%(tr_pntr.address,tr_pntr.offset,tr_pntr.length,tr_pntr.format))
+#		model.set_value(iter1,0,"Trailer\t\t  %08x\t  %04x\t  %04x\t  %02x\t"%(tr_pntr.address,tr_pntr.offset,tr_pntr.length,tr_pntr.format))
+		model.set_value(iter1,0,"Trailer\t\t  %04x\t"%(tr_pntr.length))
 		model.set_value(iter1,1,("vsd","pntr",tr_pntr.type))
 		model.set_value(iter1,2,plen)
 		model.set_value(iter1,3,pdata)
 		model.set_value(iter1,4,tr_pntr)
+		model.set_value(iter1,6,model.get_string_from_iter(iter1))
+		if tr_pntr.format != 0:
+			model.set_value(iter1,7,"%02x"%tr_pntr.format)
 
 		iter2 = model.append(iter1,None)
 		model.set_value(iter2,0,"<Data referenced by trailer>")
 		model.set_value(iter2,1,0)
 		model.set_value(iter2,2,len(res))
 		model.set_value(iter2,3,res)
+		model.set_value(iter2,6,model.get_string_from_iter(iter2))
 
-		ptr_search (model, data, version, iter1)
+		ptr_search (page, data, version, iter1)
 
-def ptr_search (model, data, version, parent):
+def ptr_search (page, data, version, parent):
 #	try:
 		# ver 6 and up for now
+		model = page.model
 		namelist = 0
 		fontlist = 0
 		ptr = model.get_value (parent,4)
@@ -125,7 +132,9 @@ def ptr_search (model, data, version, parent):
 				[pntr.length] = struct.unpack ('<L', npdata[12:16])
 				[pntr.format] = struct.unpack ('<h', npdata[16:18])
 
-			itername = '%02x       \t%08x\t%04x\t%04x\t%02x'%(pntr.type,pntr.address,pntr.offset,pntr.length,pntr.format)
+#			itername = '%02x       \t%08x\t%04x\t%04x\t%02x'%(pntr.type,pntr.address,pntr.offset,pntr.length,pntr.format)
+			itername = '%02x       \t%04x'%(pntr.type,pntr.length)
+
 			name2 = "%02x"%pntr.type
 			if streamtype.has_key (pntr.type):
 				
@@ -136,11 +145,13 @@ def ptr_search (model, data, version, parent):
 				if pntr.type == 0xd7 or pntr.type == 0:
 				  idx = " %02x"%fontlist
 				  fontlist += 1
-				itername = streamtype[pntr.type]+idx+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
+#				itername = streamtype[pntr.type]+idx+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
+				itername = streamtype[pntr.type]+idx+'\t%04x'%(pntr.length)
 				name2 = streamtype[pntr.type]
 			else:
 				if vsdchunks.chunktype.has_key(pntr.type):
-					itername = vsdchunks.chunktype[pntr.type]+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
+#					itername = vsdchunks.chunktype[pntr.type]+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
+					itername = vsdchunks.chunktype[pntr.type]+'\t%04x'%(pntr.length)
 
 			if pntr.format&2 == 2 : #compressed
 				res = inflate.inflate(pntr, data)
@@ -155,50 +166,43 @@ def ptr_search (model, data, version, parent):
 			model.set_value(iter1,2,plen)
 			model.set_value(iter1,3,npdata)
 			model.set_value(iter1,4,pntr)
-
+			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+			if pntr.format != 0:
+			  model.set_value(iter1,7,"%02x"%pntr.format)
+			
 			if len(res) > 0:
 				iter2 = model.append(iter1,None)
 				model.set_value(iter2,0,"<Data referenced by %s>"%name2)
 				model.set_value(iter2,1,0)
 				model.set_value(iter2,2,len(res))
 				model.set_value(iter2,3,res)
+				model.set_value(iter2,6,model.get_string_from_iter(iter2))
 
 #			print "ptr type/fmt %02x %02x"%(pntr.type,pntr.format)
 
 			if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
-				ptr_search (model, data, version, iter1)
-				
+				ptr_search (page, data, version, iter1)
+			
+			if pntr.type == 0x16:
+				get_colors (page, res, version, iter1)
+
 			if pntr.format >>4 == 0xd:
 				vsdchunks.parse (model, version, iter1, pntr)
 #	except:
 #		print "Failed at ptr_search"
 
-def getcolors(doc,citer):
-##    print 'Color entries were found.'
-    colors = doc.colors
-    pntr = doc.model.get_value(citer,0)["pointer"]
-    res = pntr.data
-    clrnum = ord(res[6])
-    for i in range(clrnum):
-        clr = vsdoc.color()
-        clr.r = ord(res[8+i*4])
-        clr.g = ord(res[9+i*4])
-        clr.b = ord(res[10+i*4])
-        clr.a = 0
-        colors.append(clr)
-## small addition for Colors
-        cpntr = vsdoc.pointer()
-        iter = doc.model.append(pntr.path,(cpntr,'Colors'))
-        itername = 'Color: %02x'%i+'\tRGB: #%02x%02x%02x'%(clr.r,clr.g,clr.b) 
-        folder = { "name": itername, "pointer": cpntr }
-        doc.model.set_value(iter, 0, folder)
-        doc.model.set_value(iter, 1, folder["name"])
-        cpntr.path = iter
-        cpntr.data = res[8+i*4:11+i*4]
-        
-    for i in range(len(colors)):
-        clr = colors[i]
-##        print ' IX=%u  RGB=#%02x%02x%02x'%(i, clr.r,clr.g,clr.b)
+def get_colors (page, data, version, parent):
+	model = page.model
+	clrnum = ord(data[6])
+	for i in range(clrnum):
+		r = ord(data[8+i*4])
+		g = ord(data[9+i*4])
+		b = ord(data[10+i*4])
+		a = ord(data[11+i*4])
+		iter1 = model.append(parent, None)
+		txt = "Color #%02x: %02x%02x%02x %02x"%(i,r,g,b,a)
+		clr = "#%02x%02x%02x"%(r,g,b)
+		model.set (iter1, 0, txt,1,0,2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
 
 def getnames(doc, niter):
 ##    print 'Names were found...',doc.model.iter_n_children(niter)

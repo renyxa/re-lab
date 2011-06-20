@@ -2,20 +2,34 @@ import gobject
 import gtk
 
 def make_view():
-   # Create the model. Name/Type/Length/Value/Value2
-   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)
+   # Create the model. Name/Type/Length/Value/Value2//Color//Path//VSD_Stream_Format
+   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,gobject.TYPE_STRING,gobject.TYPE_STRING,gobject.TYPE_STRING)
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_reorderable(True)
    view.set_enable_tree_lines(True)
-   renderer = gtk.CellRendererText()
-   renderer.set_property('family-set',True)
-   renderer.set_property('font','monospace')
+   cell = gtk.CellRendererText()
+   cell.set_property('family-set',True)
+   cell.set_property('font','monospace')
+
+   cell1 = gtk.CellRendererText()
+   cell1.set_property('family-set',True)
+   cell1.set_property('font','monospace')
+
+   cell2 = gtk.CellRendererText()
+   cell2.set_property('family-set',True)
+   cell2.set_property('font','monospace 8')
+  
 #   renderer.family="monospace"
-   column = gtk.TreeViewColumn('Record', renderer, text=0)
-   column2 = gtk.TreeViewColumn('Length', renderer, text=2)
-   view.append_column(column)
+   column0 = gtk.TreeViewColumn('Record', cell, text=0,background=5)
+   column1 = gtk.TreeViewColumn('Type', cell1, text=7)
+   column2 = gtk.TreeViewColumn('Path', cell2, text=6)
+   column3 = gtk.TreeViewColumn('Length', cell1, text=2)
+
+   view.append_column(column0)
+   view.append_column(column1)
    view.append_column(column2)
+   view.append_column(column3)
    view.show()
    # Create scrollbars around the view.
    scrolled = gtk.ScrolledWindow()
