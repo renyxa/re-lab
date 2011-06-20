@@ -25,6 +25,8 @@ import oleparse
 import escher
 import vsdchunks
 
+version = "0.5.8"
+
 ui_info = \
 '''<ui>
 	<menubar name='MenuBar'>
@@ -180,7 +182,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
-		dialog.set_name("OLE toy v0.5.7")
+		dialog.set_name("OLE toy v"+version)
 		dialog.set_copyright("\302\251 Copyright 2010-2011 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response

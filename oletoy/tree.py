@@ -10,11 +10,11 @@ def make_view():
    view.set_enable_tree_lines(True)
    cell = gtk.CellRendererText()
    cell.set_property('family-set',True)
-   cell.set_property('font','monospace')
+   cell.set_property('font','monospace 10')
 
    cell1 = gtk.CellRendererText()
    cell1.set_property('family-set',True)
-   cell1.set_property('font','monospace')
+   cell1.set_property('font','monospace 10')
 
    cell2 = gtk.CellRendererText()
    cell2.set_property('family-set',True)
