@@ -25,7 +25,7 @@ import oleparse
 import escher
 import vsdchunks,vsdstream4
 
-version = "0.5.13"
+version = "0.5.14"
 
 ui_info = \
 '''<ui>
