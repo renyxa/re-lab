@@ -300,24 +300,44 @@ def sl_names70 (hd, data, shift, offset, blk_off):
 	hd.hdmodel.set (iter1, 0, "\tnames70", 1, "",2,shift+offset+blk_off,3,7,4,"txt")
 	return blk_off+11
 
+sl_vars72 = {0:"X",1:"Y"}
+sl_objs72 = {1:"Sheet",2:"Member",3:"Char",4:"Para",5:"Tabs",6:"Scratch",7:"Connections",8:"TextFields",9:"Controls",
+						0xF0:"Actions",0xF1:"Layer",0xF2:"User",0xF3:"Prop",0xF4:"Hyperlink"}
 
 def sl_names72 (hd, data, shift, offset, blk_off):
-	# FIXME, just skipping at the moment
+	idx = struct.unpack("<I",data[offset+blk_off:offset+blk_off+4])[0]
+	obj = ord(data[offset+blk_off+4])
+	var = ord(data[offset+blk_off+5])
+	if obj > 9 and obj < 0xf0:
+		obj_name = "Geometry%d"%(obj-9)
+	elif sl_objs72.has_key(obj):
+		obj_name = sl_objs72[obj]
+	else:
+		obj_name = "Obj%02x"%obj
+	if sl_vars72.has_key(var):
+		var_name = sl_vars72[var]
+	else:
+		var_name = "Var%02x_"%var
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tnames72", 1, "",2,shift+offset+blk_off,3,7,4,"txt")
+	hd.hdmodel.set (iter1, 0, "\tnames72", 1, obj_name+"."+var_name+"%d"%idx,2,shift+offset+blk_off,3,7,4,"txt")
 	return blk_off+7
 
 def sl_names74 (hd, data, shift, offset, blk_off):
-	# FIXME, just skipping at the moment
+	var = struct.unpack("<h",data[offset+blk_off:offset+blk_off+2])[0]
+	idx = struct.unpack("<I",data[offset+blk_off+4:offset+blk_off+8])[0]
+	if names75.has_key(var):
+		var_name = names75[var]
+	else:
+		var_name = "Var%02x"%var
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tnames74", 1, "",2,shift+offset+blk_off,3,8,4,"txt")
+	hd.hdmodel.set (iter1, 0, "\tnames74", 1, "Sheet.%d!"%idx+var_name,2,shift+offset+blk_off,3,8,4,"txt")
 	return blk_off+8
 
 def sl_names75(hd, data, shift, offset, blk_off):
 	value = ord(data[offset+blk_off])
 	nm_str = "%02x"%value
 	if names75.has_key(value):
-		nm_str += " ("+names75[value]+")"
+		nm_str = names75[value]
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "\tname75", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
 	return blk_off+4

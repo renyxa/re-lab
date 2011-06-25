@@ -213,6 +213,8 @@ def XForm (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "FlipY", 1, "%2x"%ord(value[83]),2,83,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ResizeMode", 1, "%2x"%ord(value[84]),2,84,3,1,4,"<I")
+	if len(value)>0x58:
+		vsdblock.parse(hd, size, value, 0x58)
 
 
 def XForm1D (hd, size, value):
@@ -247,10 +249,15 @@ def MoveTo (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	if len(value)>0x27:
+		vsdblock.parse(hd, size, value, 0x27)
 
 
 def ArcTo (hd, size, value):
-	MoveTo (hd, size, value)
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "A", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
 
