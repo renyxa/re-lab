@@ -1,0 +1,11 @@
+2011-06-24  Valek Filippov
+
+		* Initial parsing of blocks for some chunks
+		* Parsing of 'NURBS Data' for NURBS and Polyline functions
+
+2011-06-23  Valek Filippov
+
+		* Initial parsing of some streams of 0x4x type
+		* Combine and give to oleparse VBA Project stream
+		* Label 0x0a,0x0d,0x1f and 0xd1 streamtypes.
+		* Add ChangeLog

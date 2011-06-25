@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2010,	Valek Filippov (frob@df.ru)
+# Copyright (C) 2007-2011,	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -16,11 +16,12 @@
 
 import sys,struct
 import gobject
-import gtk
+import gtk,gsf
 import tree
 import hexdump
 import inflate
-import vsdchunks
+import vsdchunks,vsdstream4
+import oleparse
 
 class pointer:
 	type = 0
@@ -35,9 +36,15 @@ class pointer:
 
 streamtype = {
 	0:'Empty ptr',\
-	0x14:'Trailer', 0x15:'Page    ', 0x16:'Colors  ',0x18:'Fonts   ',0x1a:'Styles  ',0x1d:'Stencils', 0x1e:'Stncl Pg',\
-	0x23:'Icon    ',0x27:'Pages   ',0x29:'Windows ',0x2a:'Window  ',0x2e:'EventList',0x2f:'EventItem',\
-	0x31:'Document',0x32:'NameList',0x33:'Name    ',\
+	0x0a:'Prompt    ',0xd:'VBA Project',
+	0x14:'Trailer', 0x15:'Page      ', 0x16:'Colors  ',0x18:'Fonts     ',\
+	0x1a:'Styles    ',0x1d:'Stencils ', 0x1e:'Stncl Page', 0x1f:'VBA Data Part',\
+	0x23:'Icon        ',0x27:'Pages      ',0x29:'Windows   ',0x2a:'Window    ',0x2e:'EventList',\
+	0x2f:'EventItem',0x31:'Document',0x32:'NameList',0x33:'Name    ',\
+	0x46:'PageSheet        ',0x47:'ShapeType="Group"',0x48:'ShapeType="Shape"', 0x4a:'StyleSheet    ',\
+	0x4d:'ShapeType="Guide"',0x4e:'ShapeType="Foreign"',0x4f:'DocSheet',
+	0xc9:'NameIDX    ',
+	0xd1:'SolutionXML',
 	0xd7:'FontFace',0xd8:'FontFaces'}
 
 
@@ -107,7 +114,10 @@ def ptr_search (page, data, version, parent):
 		ptr = model.get_value (parent,4)
 		shift = ptr.shift
 		pdata = ptr.data
-		
+		vbaflag = 0
+		if ptr.type == 0xd:
+		  vbaflag = 1
+		  vbadata = ""
 		[offset] = struct.unpack ('<L', pdata[shift:shift+4])
 		if offset >= len(pdata):
 			return 0
@@ -134,7 +144,6 @@ def ptr_search (page, data, version, parent):
 				[pntr.length] = struct.unpack ('<L', npdata[12:16])
 				[pntr.format] = struct.unpack ('<h', npdata[16:18])
 
-#			itername = '%02x       \t%08x\t%04x\t%04x\t%02x'%(pntr.type,pntr.address,pntr.offset,pntr.length,pntr.format)
 			itername = '%02x\t %02x\t%04x'%(pntr.type,childlist,pntr.length)
 
 			name2 = "%02x"%pntr.type
@@ -156,14 +165,10 @@ def ptr_search (page, data, version, parent):
 					else:
 					  idx = " %02x"%childlist
 					  childlist +=1
-  #				itername = streamtype[pntr.type]+idx+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
 				  itername = streamtype[pntr.type]+idx+'\t%04x'%(pntr.length)
 				  name2 = streamtype[pntr.type]
 			  else:
 				  childlist +=1
-##				  if vsdchunks.chunktype.has_key(pntr.type):
-  #					itername = vsdchunks.chunktype[pntr.type]+'\t%08x\t%04x\t%04x\t%02x'%(pntr.address,pntr.offset,pntr.length,pntr.format)
-##					  itername = vsdchunks.chunktype[pntr.type]+'\t%04x'%(pntr.length)
   
 			  if pntr.format&2 == 2 : #compressed
 				  res = inflate.inflate(pntr, data)
@@ -185,12 +190,16 @@ def ptr_search (page, data, version, parent):
 			  if len(res) > 0:
 				  iter2 = model.append(iter1,None)
 				  model.set_value(iter2,0,"[Data referenced by %s]"%name2)
-				  model.set_value(iter2,1,0)
+				  if pntr.format >>4 == 4:
+					model.set_value(iter2,1,("vsd","str4",pntr.type))
+				  else:
+					model.set_value(iter2,1,0)
 				  model.set_value(iter2,2,len(res))
 				  model.set_value(iter2,3,res)
 				  model.set_value(iter2,6,model.get_string_from_iter(iter2))
 				  model.set_value(iter2,5,"#96afcf")
-  
+				  if vbaflag == 1:
+					vbadata += res[4:len(res)]
   #			print "ptr type/fmt %02x %02x"%(pntr.type,pntr.format)
   
 			  if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
@@ -198,9 +207,14 @@ def ptr_search (page, data, version, parent):
 			  
 			  if pntr.type == 0x16:
 				  get_colors (page, res, version, iter1)
-  
+				  
 			  if pntr.format >>4 == 0xd:
 				  vsdchunks.parse (model, version, iter1, pntr)
+		if vbaflag == 1:
+		  src = gsf.InputMemory(vbadata,False)
+		  oleparse.open (src, page, parent)
+
+  
 #	except:
 #		print "Failed at ptr_search"
 

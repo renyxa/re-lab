@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2010,	Valek Filippov (frob@df.ru)
+# Copyright (C) 2007-2011,	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -16,7 +16,7 @@
 
 import vsdoc
 import struct
-import vsd
+import vsd,vsdblock
 
 chunknoshift = {
 		0x15:'Page',\
@@ -181,7 +181,9 @@ def Shape (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
 
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "MasterShape", 1, "%2x"%struct.unpack("<I",value[45:45+4])[0],2,45,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "Master", 1, "%2x"%struct.unpack("<I",value[37:37+4])[0],2,37,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "MasterShape", 1, "%2x"%struct.unpack("<I",value[45:45+4])[0],2,37,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "LineStyle", 1, "%2x"%struct.unpack("<I",value[53:53+4])[0],2,53,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
@@ -210,7 +212,7 @@ def XForm (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "FlipY", 1, "%2x"%ord(value[83]),2,83,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ResizeMode", 1, "%2x"%ord(value[85]),2,85,3,1,4,"<I")
+	hd.hdmodel.set (iter1, 0, "ResizeMode", 1, "%2x"%ord(value[84]),2,84,3,1,4,"<I")
 
 
 def XForm1D (hd, size, value):
@@ -257,12 +259,26 @@ def InfLine (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "B", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
 
-def Ellipse (hd, size, value):
+def EllArcTo (hd, size, value):
 	InfLine (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "C", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "D", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
+
+def Ellipse (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Center X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Center Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Right X", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Right Y", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Top X", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Top Y", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
 
 
 def List (hd, size, value):
@@ -304,6 +320,8 @@ def Line (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "BeginArrSize", 1, "%2x"%ord(value[47]),2,47,3,1,4,"<I")
 #Cap/End flags not parsed at the moment
+	if len(value)>54:
+		vsdblock.parse(hd, size, value, 54)
 
 def Fill (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -318,6 +336,8 @@ def Fill (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "ShdwBG", 1, "%2x"%ord(value[35]),2,35,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShdwPattern", 1, "%2x"%ord(value[40]),2,40,3,1,4,"<I")
+	if len(value)>0x50:
+		vsdblock.parse(hd, size, value, 0x50)
 
 def Char (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -358,6 +378,91 @@ def Char (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "FontSize", 1, "%.2f pt"%(72*struct.unpack("<d",value[37:45])[0]),2,37,3,8,4,"<d")
 
 
+def PageProps (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "PageWidth", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "PageHeight", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwOffsetX", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwOffsetY", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "PageScale", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "DrawingScale", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "DrawingSizeType", 1, "%2x"%ord(value[73]),2,82,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "DrawingScaleType", 1, "%2x"%ord(value[74]),2,83,3,1,4,"<I")
+
+
+def NURBS (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Knot", 1, "%.2f"%struct.unpack("<d",value[37:45]),2,37,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Weight", 1, "%.2f"%struct.unpack("<d",value[45:53]),2,45,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "KnotPrev", 1, "%.2f"%struct.unpack("<d",value[53:61]),2,53,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "WeightPrev", 1, "%.2f"%struct.unpack("<d",value[61:69]),2,61,3,8,4,"<d")
+	if len(value)>80:
+		vsdblock.parse(hd, size, value, 80)
+
+nd_types = {0x80:"Polyline",0x82:"NURBS"}
+
+def NURBSData (hd, size, value):
+	nd_type = ord(value[19])
+	nd_str = "%02x "%nd_type
+	if nd_types.has_key(nd_type):
+		nd_str += "("+nd_types[nd_type]+")"
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Type", 1, nd_str,2,19,3,1,4,"<b")
+	if nd_type == 0x80:
+		xType = ord(value[0x23])
+		yType = ord(value[0x24])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "xType", 1, xType,2,0x23,3,1,4,"<b")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "yType", 1, yType,2,0x24,3,1,4,"<b")
+		[num_pts] = struct.unpack("<I",value[0x25:0x29])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "# of pts", 1, num_pts,2,0x25,3,4,4,"<I")
+		for i in range(num_pts):
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "x%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x29+i*16:0x31+i*16]),2,0x29+i*16,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "y%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x31+i*16:0x39+i*16]),2,0x31+i*16,3,8,4,"<d")
+	if nd_type == 0x82:
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "knotLast", 1, "%.2f"%struct.unpack("<d",value[0x23:0x2b]),2,0x23,3,8,4,"<d")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "degree", 1, "%.2f"%struct.unpack("<h",value[0x2b:0x2d]),2,0x2b,3,2,4,"<h")
+		xType = ord(value[0x2d])
+		yType = ord(value[0x2e])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "xType", 1, xType,2,0x2d,3,1,4,"<b")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "yType", 1, yType,2,0x2e,3,1,4,"<b")
+		[num_pts] = struct.unpack("<I",value[0x2f:0x33])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "# of pts", 1, num_pts,2,0x2f,3,4,4,"<I")
+		for i in range(num_pts):
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "x%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x33+i*32:0x3b+i*32]),2,0x33+i*32,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "y%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x3b+i*32:0x43+i*32]),2,0x3b+i*32,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "knot%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x43+i*32:0x4b+i*32]),2,0x43+i*32,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "weight%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x4b+i*32:0x53+i*32]),2,0x4b+i*32,3,8,4,"<d")
+
+
+
 chnk_func = {
 	0x15:Page,
 	0x47:Shape, 0x48:Shape, 0x4e:Shape,0x4f:Shape,
@@ -367,9 +472,10 @@ chnk_func = {
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
 	0x85:Line,0x86:Fill,
 	0x8a:MoveTo,0x8b:MoveTo,0x8c:ArcTo,0x8d:InfLine,
-	0x8f:Ellipse,0x90:Ellipse,
+	0x8f:Ellipse,0x90:EllArcTo,
+	0x92:PageProps,
 	0x94:Char,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
-	0xc9:NameID
+	0xc3:NURBS, 0xc9:NameID,0xd1:NURBSData
 }
 
 def parse(model, version, parent, pntr):

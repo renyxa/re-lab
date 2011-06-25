@@ -26,9 +26,8 @@ import quill
 import vsd
 import gsf
 
-def open(src,page):
+def open(src,page,iter=None):
 	infile = gsf.InfileMSOle(src)
-	iter = None
 	type = get_children(page,infile,iter)
 	return type
 
@@ -61,7 +60,7 @@ def get_children(page,infile,parent):
 		if infname == "VisioDocument":
 			vsd.parse (page, data, iter1) 
 		if (infchild.num_children()>0):
-			get_children(page.model,infchild,iter1)
+			get_children(page,infchild,iter1)
 	return type
 
 

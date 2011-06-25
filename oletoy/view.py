@@ -23,9 +23,9 @@ import hexdump
 import Doc
 import oleparse
 import escher
-import vsdchunks
+import vsdchunks,vsdstream4
 
-version = "0.5.8"
+version = "0.5.13"
 
 ui_info = \
 '''<ui>
@@ -365,6 +365,9 @@ class ApplicationMainWindow(gtk.Window):
 					 if ntype[1] == "chnk":
 						if vsdchunks.chnk_func.has_key(ntype[2]):
 							vsdchunks.chnk_func[ntype[2]](hd, size, data)
+					 if ntype[1] == "str4":
+						 if vsdstream4.stream_func.has_key(ntype[2]):
+							vsdstream4.stream_func[ntype[2]](hd, size, data)
 					else:
 					 if ntype[2] == 0xff:
 						iter1 = hd.hdmodel.append(None, None)
