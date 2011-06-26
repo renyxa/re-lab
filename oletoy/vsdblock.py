@@ -173,7 +173,7 @@ fnames7ab = {
 0x6d:'_UCON_SIMPLE(num1;num2;num3;num4;num5;num6;num7;num8)',
 0x6e:'_UCON_BEGTYP(num1;num2;num3;num4;num5)',
 0x6f:'_UCON_ENDTYP(num1;num2;num3;num4;num5)',
-0x70:'UNKNOWN_0x70',									0x71:'_SHAPEMIN(num1)',
+0x70:'_WALKGLUE(num1,num2,num3)',			0x71:'_SHAPEMIN(num1)',
 0x72:'_SHAPEMAX(num1)',								0x73:'_XFTRIGGER(cell)',
 0x74:'_UCON_C3(num1;num2)',						0x75:'_UCON_D3(num1;num2)',
 0x76:'_UCON_X3(num1;num2;num3;num4;num5;num6;num7;num8;num9)',
@@ -226,7 +226,7 @@ fnames7ab = {
 0xCB:'LEFT(text,pos)',								0xCC:'LEN(text)',
 0xCD:'MID(...)',											0xCE:'REPLACE(...)',
 0xCF:'REPT(...)',											0xD0:'RIGHT(...)',
-0xD1:'TRIM(...)',											0xD2:'UNKNOWN_0xd2',
+0xD1:'TRIM(...)',											0xD2:'QUEUEMARKEREVENT(...)',
 0xD3:'BOUND',													0xD4:'SUBSTITUTE(...)',
 0xD5:'BLOB(...)',											0xD6:'UNICHAR(...)',
 0xD7:'REWIDEN(...)',									0xD8:'SETATREF(...)',
@@ -357,7 +357,7 @@ def sl_logfunc (hd, data, shift, offset, blk_off):
 		op_txt = sl_logops[op]
 	else:
 		op_txt = "%02x"%op
-	len = struct.unpack("<I",data[offset+blk_off:offset+blk_off+4])[0]
+	len = struct.unpack("<I",data[offset+blk_off+1:offset+blk_off+5])[0]
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "\tlog.func", 1, op_txt,2,shift+offset+blk_off+1,3,len-1,4,"txt")
 	return blk_off+len
