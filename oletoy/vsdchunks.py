@@ -226,6 +226,8 @@ def XForm1D (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "EndX", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "EndY", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
+	if len(value)>0x39:
+		vsdblock.parse(hd, size, value, 0x39)
 
 
 def TxtXForm (hd, size, value):
@@ -272,6 +274,9 @@ def EllArcTo (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "C", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "D", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
+	if len(value)>0x4b:
+		vsdblock.parse(hd, size, value, 0x4b)
+
 
 def Ellipse (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -286,7 +291,8 @@ def Ellipse (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "Top X", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Top Y", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
-
+	if len(value)>0x4b:
+		vsdblock.parse(hd, size, value, 0x4b)
 
 def List (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -404,6 +410,19 @@ def PageProps (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "DrawingScaleType", 1, "%2x"%ord(value[74]),2,83,3,1,4,"<I")
 
 
+def LayerIX (hd, size, value):
+	if len(value)>0x34:
+		vsdblock.parse(hd, size, value, 0x34)
+
+def Polyline (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	if len(value)>0x30:
+		vsdblock.parse(hd, size, value, 0x30)
+
+
 def NURBS (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -482,6 +501,8 @@ chnk_func = {
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,
 	0x94:Char,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
+	0xa8:LayerIX,
+	0xc1:Polyline,
 	0xc3:NURBS, 0xc9:NameID,0xd1:NURBSData
 }
 

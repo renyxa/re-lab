@@ -362,6 +362,33 @@ def sl_logfunc (hd, data, shift, offset, blk_off):
 	hd.hdmodel.set (iter1, 0, "\tlog.func", 1, op_txt,2,shift+offset+blk_off+1,3,len-1,4,"txt")
 	return blk_off+len
 
+def sl_nurbs (hd, data, shift, offset, blk_off):
+	# the same as "NURBS Data (type 0x82)"
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "\tknotLast", 1, "%.2f"%struct.unpack("<d",data[offset+blk_off:offset+blk_off+8]),2,shift+offset+blk_off,3,8,4,"<d")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "\tdegree", 1, "%.2f"%struct.unpack("<h",data[offset+blk_off+8:offset+blk_off+10]),2,shift+offset+blk_off+8,3,2,4,"<h")
+		xType = ord(data[offset+blk_off+10])
+		yType = ord(data[offset+blk_off+11])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "\txType", 1, xType,2,shift+offset+blk_off+10,3,1,4,"<b")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "\tyType", 1, yType,2,shift+offset+blk_off+11,3,1,4,"<b")
+		[num_pts] = struct.unpack("<I",data[offset+blk_off+12:offset+blk_off+16])
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "\t# of pts", 1, num_pts,2,shift+offset+blk_off+12,3,4,4,"<I")
+		for i in range(num_pts):
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "--- x%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+16+i*32:offset+blk_off+24+i*32]),2,shift+offset+blk_off+16+i*32,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "\t y%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+24+i*32:offset+blk_off+32+i*32]),2,shift+offset+blk_off+24+i*32,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "\t knot%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+32+i*32:offset+blk_off+40+i*32]),2,shift+offset+blk_off+32+i*32,3,8,4,"<d")
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "\t weight%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+40+i*32:offset+blk_off+48+i*32]),2,shift+offset+blk_off+40+i*32,3,8,4,"<d")
+		return blk_off + 40 + num_pts*32
+
+
 
 def get_slice (hd, data, shift, offset, blk_off):
 	blk_func = ord(data[offset+blk_off])
@@ -389,6 +416,8 @@ def get_slice (hd, data, shift, offset, blk_off):
 		blk_off = sl_funcs7a (hd,data,shift,offset,blk_off+1)
 	elif blk_func == 0x7b or blk_func == 0x81:
 		blk_off = sl_funcs7b (hd,data,shift,offset,blk_off+1)
+	elif blk_func == 0x8a:
+		blk_off = sl_nurbs (hd,data,shift,offset,blk_off+1)
 	elif blk_func > 0x9f and blk_func < 0xa4:
 		blk_off = sl_logfunc (hd,data,shift,offset,blk_off)
 	else:
