@@ -270,6 +270,13 @@ class ApplicationMainWindow(gtk.Window):
 			pass
 		buffer_hex.remove_tag_by_name("hl",buffer_hex.get_iter_at_offset(0),buffer_hex.get_iter_at_offset(buffer_hex.get_char_count()))
 		iter_hex = buffer_hex.get_iter_at_offset(offset*3)
+		vadj = hd.vscroll2.get_vadjustment()
+		newval = vadj.get_upper()/buffer_hex.get_line_count()*(offset/16 -1)
+		lim = vadj.get_upper() - hd.vscroll2.allocation[3]
+		if newval < lim:
+			vadj.set_value(newval)
+		else:
+			vadj.set_value(lim)
 		off2 = offset*3+size*3-1
 		if off2 < 0:
 			off2 = 0
