@@ -1,3 +1,7 @@
+2011-07-01  Valek Filippov
+
+		* Added parsing of children lists in *List chunks
+
 2011-06-24  Valek Filippov
 
 		* Initial parsing of blocks for some chunks
