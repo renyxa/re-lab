@@ -152,16 +152,27 @@ chunktype = {
 		0xc9:'NameIDX ',\
 		0xd1:'NRBSTo Data'}
 
-
-def Page (hd, size, value):
+def List (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	shl = struct.unpack("<I",value[19:19+4])[0]
 	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%struct.unpack("<I",value[23:23+4])[0],2,23,3,4,4,"<I")
+	ch_list_len = struct.unpack("<I",value[23:23+4])[0]
+	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%ch_list_len,2,23,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
+	ch_list = ""
+	for i in range(ch_list_len/4):
+		ch_list += "%02x "%struct.unpack("<I",value[27+shl+i*4:31+shl+i*4])[0]
+	iter1 = hd.hdmodel.append(None, None)
+	if ch_list != "":
+		hd.hdmodel.set (iter1, 0, "ChldList", 1, ch_list,2,27+shl,3,ch_list_len,4,"txt")
+	else:
+		hd.hdmodel.set (iter1, 0, "ChldList", 1, "[empty]",2,27+shl,3,ch_list_len,4,"txt")
 
+
+def Page (hd, size, value):
+	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewScale?", 1,struct.unpack("<d",value[45:45+8])[0],2,45,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
@@ -172,14 +183,7 @@ def Page (hd, size, value):
 
 
 def Shape (hd, size, value):
-	iter1 = hd.hdmodel.append(None, None)
-	shl = struct.unpack("<I",value[19:19+4])[0]
-	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%struct.unpack("<I",value[23:23+4])[0],2,23,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
-
+	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Master", 1, "%2x"%struct.unpack("<I",value[37:37+4])[0],2,37,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
@@ -293,15 +297,6 @@ def Ellipse (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "Top Y", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
 	if len(value)>0x4b:
 		vsdblock.parse(hd, size, value, 0x4b)
-
-def List (hd, size, value):
-	iter1 = hd.hdmodel.append(None, None)
-	shl = struct.unpack("<I",value[19:19+4])[0]
-	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ChldLstLen", 1, "%2x"%struct.unpack("<I",value[23:23+4])[0],2,23,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "SubHdr", 1, "",2,27,3,shl,4,"txt")
 
 def NameID (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
