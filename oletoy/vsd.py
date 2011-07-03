@@ -33,6 +33,14 @@ class pointer:
 	path = '' # here I'm going to store path to TreeStore row with this pointer
 	data = '' # here I'm going to store content of suitable part of vsd file
 
+class chunk:
+    type = 0    #dword
+    IX = 0        #dword
+    list = 0   #dword
+    length = 0  #dword
+    level = 0   #word
+    unkn3 = 0   #byte
+    data = ''
 
 streamtype = {
 	0:'Empty ptr',\
@@ -84,7 +92,6 @@ def parse (page, data, parent):
 			tr_pntr.shift = 0
 		tr_pntr.data = res
 		iter1 = model.append(parent,None)
-#		model.set_value(iter1,0,"Trailer\t\t  %08x\t  %04x\t  %04x\t  %02x\t"%(tr_pntr.address,tr_pntr.offset,tr_pntr.length,tr_pntr.format))
 		model.set_value(iter1,0,"Trailer\t\t  %04x\t"%(tr_pntr.length))
 		model.set_value(iter1,1,("vsd","pntr",tr_pntr.type))
 		model.set_value(iter1,2,plen)

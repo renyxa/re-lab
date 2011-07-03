@@ -1,7 +1,7 @@
 import sys,struct
 import tree, gtk, gobject
 import gsf
-import oleparse
+import oleparse,mf
 
 class Page:
 	def __init__(self):
@@ -35,6 +35,10 @@ class Page:
 		if buf == "\x20\x45\x4d\x46":
 			self.type = "EMF"
 			print "Probably EMF"
+			src.seek(0,1)
+			buf = src.read(src.size())
+			mf.open(buf,self)
+			return 0
 		src.seek(0,1)
 		buf = src.read(src.size())
 		iter1 = self.model.append(None, None)

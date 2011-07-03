@@ -24,8 +24,9 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
+import emfparse
 
-version = "0.5.14"
+version = "0.5.15"
 
 ui_info = \
 '''<ui>
@@ -367,18 +368,19 @@ class ApplicationMainWindow(gtk.Window):
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
 							escher.odraw_ids[ntype[2]](hd, size, data)
-				else:
-					if ntype[0] == "vsd":
-					 if ntype[1] == "chnk":
+				elif ntype[0] == "vsd":
+					if ntype[1] == "chnk":
 						if vsdchunks.chnk_func.has_key(ntype[2]):
 							vsdchunks.chnk_func[ntype[2]](hd, size, data)
-					 if ntype[1] == "str4":
-						 if vsdstream4.stream_func.has_key(ntype[2]):
+					if ntype[1] == "str4":
+						if vsdstream4.stream_func.has_key(ntype[2]):
 							vsdstream4.stream_func[ntype[2]](hd, size, data)
-					else:
-					 if ntype[2] == 0xff:
-						iter1 = hd.hdmodel.append(None, None)
-						hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
+				elif ntype[0] == "emf":
+					if emfparse.emr_ids.has_key(ntype[1]):
+						emfparse.emr_ids[ntype[1]](hd,size,data)
+				elif ntype[2] == 0xff:
+					iter1 = hd.hdmodel.append(None, None)
+					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
 
 
 	def hdselect_cb(self,event,udata):

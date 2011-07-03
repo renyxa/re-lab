@@ -14,7 +14,6 @@
 # USA
 #
 
-import vsdoc
 import struct
 import vsd,vsdblock
 
@@ -512,7 +511,7 @@ def parse(model, version, parent, pntr):
 	level = 0
 	while offset < len(pntr.data):
 		try:
-			chnk = vsdoc.chunk()
+			chnk = vsd.chunk()
 			if version<6:
 				ch_hdr_len = 12
 				trailer = 0
