@@ -62,3 +62,18 @@ def inflate(ptr,vsd):
             print 'Inflate failed',i,ptr.length
             i+=1
     return res
+
+def deflate_piastre (buf):
+  # 'compression' function which increase size of the result by 12.5%
+  i = 0
+  res = ''
+  while i< len(buf):
+    res += '\xFF'+buf[i:i+8]
+    i +=8
+  n = len(buf)-(len(buf)/8)*8
+  res += '\x00'*n
+  return res
+
+def deflate (buf):
+  # wrapper to avoid later renaming if I implement something better then 'piastre' ;-)
+  return deflate_piastre (buf)
