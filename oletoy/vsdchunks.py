@@ -173,6 +173,8 @@ def List (hd, size, value):
 def Page (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "BG Page", 1,struct.unpack("<I",value[27:27+4])[0],2,27,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewScale?", 1,struct.unpack("<d",value[45:45+8])[0],2,45,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewCntrX", 1, struct.unpack("<d",value[53:53+8])[0],2,53,3,8,4,"<d")
