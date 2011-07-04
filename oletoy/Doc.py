@@ -24,12 +24,21 @@ class Page:
 		if buf == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 			self.type = oleparse.open(src, self)
 			return 0
+
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
+			src.seek(0,1)
+			buf = src.read(src.size())
+			mf.open(buf,self)
 			print "Aldus Placeable WMF"
+
 		if buf[0:6] == "\x01\x00\x09\x00\x00\x03":
 			self.type = "WMF"
+			src.seek(0,1)
+			buf = src.read(src.size())
+			mf.open(buf,self)
 			print "Probably standard WMF"
+
 		src.seek(32,0)
 		buf = src.read(4)
 		if buf == "\x20\x45\x4d\x46":

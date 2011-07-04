@@ -564,7 +564,7 @@ emr_ids = {1:Header,2:Polybezier,3:Polygone,4:Polyline,5:PolybezierTo,\
 
 def SetBKModeWMF (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Mode", 1, struct.unpack("<H",value[8:10])[0],2,8,3,2,4,"<H")
+	hd.hdmodel.set (iter, 0, "Mode", 1, struct.unpack("<H",value[6:8])[0],2,6,3,2,4,"<H")
 
 def SetMapModeWMF (hd, size, value):
 	SetBKModeWMF (hd, size, value)
@@ -593,7 +593,7 @@ wmr_ids = {
 #1045:'ExcludeClipRect', 1046:'IntersectClipRect',
 #523:'SetWindowOrgEx', 524:'SetWindowExtEx',525:'SetViewportOrgEx', 526:'SetViewportExtEx', 527:'OffsetWindowOrg', 529:'OffsetViewportOrgEx',
 #1040:'ScaleWindowExtEx', 1042:'ScaleViewportExtEx',
-#1049:'FloodFill', 1321:'META_MAGIC???', 1352:'ExtFloodFill', 1574:'Escape', 
+#1049:'FloodFill', 1352:'ExtFloodFill', 1574:'Escape', 
 #531:'LineTo', 532:'MoveTo', 804:'Polygone', 805:'Polyline', 1048:'Ellipse', 1051:'Rectangle', 1055:'SetPixel', 
 #1336:'PolyPolygone', 1564:'RoundRect', 2071:'Arc', 2074:'Pie', 2096:'Chord', 
 #1313:'TextOut', 1583:'DrawText',2610:'ExtTextOut',

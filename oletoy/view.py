@@ -165,13 +165,16 @@ class ApplicationMainWindow(gtk.Window):
 		return action_group
 
 	def activate_save (self, action):
-		fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
-		if fname:
-			pn = self.notebook.get_current_page()
-			model = self.das[pn].view.get_model()
-			f = open(fname,'w')
-			model.foreach (self.dump_tree, f)
-			f.close()
+		pn = self.notebook.get_current_page()
+		if self.das[pn] == "WMF" or self.das[pn] == "APWMF":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				model = self.das[pn].view.get_model()
+				f = open(fname,'w')
+				model.foreach (self.dump_tree, f)
+				f.close()
+		else:
+			print '"Save" is not implemented for non-WMF'
 
 	def dump_tree (self, model, path, parent, f):
 		ntype = model.get_value(parent,1)
@@ -378,6 +381,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "emf":
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)
+				elif ntype[0] == "wmf":
+					if emfparse.wmr_ids.has_key(ntype[1]):
+						emfparse.wmr_ids[ntype[1]](hd,size,data)
 				elif ntype[2] == 0xff:
 					iter1 = hd.hdmodel.append(None, None)
 					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")

@@ -170,7 +170,8 @@ def emf_gentree ():
 
 def open (buf,page):
 	offset = 0
-	while offset < len(buf) - 8:
+	if page.type == 'EMF':
+	  while offset < len(buf) - 8:
 		[newT] = struct.unpack('<I', buf[offset:offset+4])
 		[newL] = struct.unpack('<I', buf[offset+4:offset+8])
 		newV = buf[offset:offset+newL]
@@ -183,3 +184,34 @@ def open (buf,page):
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		#print offset, newT, rname, newL
 		offset = offset + newL
+	elif page.type == 'APWMF' or page.type == 'WMF':
+		if page.type == 'APWMF':
+		  iter1 = page.model.append(None,None)
+		  page.model.set_value(iter1,0,'AP Header')
+		  page.model.set_value(iter1,1,("wmf",1))
+		  page.model.set_value(iter1,2,22)
+		  page.model.set_value(iter1,3,buf[0:22])
+		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+		  offset = 22
+		iter1 = page.model.append(None,None)
+		page.model.set_value(iter1,0,'WMF Header')
+		page.model.set_value(iter1,1,("wmf",4))
+		page.model.set_value(iter1,2,18)
+		page.model.set_value(iter1,3,buf[offset:offset+18])
+		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+		offset += 18
+
+		while offset < len(buf) - 6:
+		  [newL] = struct.unpack('<I', buf[offset:offset+4])
+		  [newT] = struct.unpack('<H', buf[offset+4:offset+6])
+		  newV = buf[offset:offset+newL*2]
+		  rname = wmr_ids[newT]
+		  iter1 = page.model.append(None,None)
+		  page.model.set_value(iter1,0,rname)
+		  page.model.set_value(iter1,1,("wmf",newT))
+		  page.model.set_value(iter1,2,newL*2)
+		  page.model.set_value(iter1,3,newV)
+		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+		  #print offset, newT, rname, newL
+		  offset = offset + newL*2
+	  
