@@ -481,6 +481,16 @@ def NURBSData (hd, size, value):
 			iter1 = hd.hdmodel.append(None, None)
 			hd.hdmodel.set (iter1, 0, "weight%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x4b+i*32:0x53+i*32]),2,0x4b+i*32,3,8,4,"<d")
 
+bits = {1:'noFill',2:'noLine',4:'noShow',8:'noSnap',32:'noQuickDrag'}
+
+def Geometry (hd, size, value):
+	flags = ord(value[19])
+	for i in (1,2,4,8,32):
+		res = 'No'
+		if flags&i:
+			res = 'Yes'
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, bits[i], 1, res,2,19,3,1,4,"txt")
 
 
 chnk_func = {
@@ -490,7 +500,7 @@ chnk_func = {
 	0x46:List,
 	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
-	0x85:Line,0x86:Fill,
+	0x85:Line,0x86:Fill,0x89:Geometry,
 	0x8a:MoveTo,0x8b:MoveTo,0x8c:ArcTo,0x8d:InfLine,
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,

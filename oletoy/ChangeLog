@@ -1,3 +1,13 @@
+2011-07-04  Valek Filippov
+
+		* Minimal support for regular and AP WMFs. Prevent saving for non-WMF files.
+		* Parsing of 'Geometry' flags.
+
+2011-07-03  Valek Filippov
+
+		* Antieffective compression function for VSD, test.py to play with it.
+		* Initial support for EMF moved from mfview. Some clean-up.
+
 2011-07-01  Valek Filippov
 
 		* Added parsing of children lists in *List chunks
