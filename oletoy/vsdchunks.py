@@ -186,6 +186,9 @@ def Page (hd, size, value):
 def Shape (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Parent", 1, "%2x"%struct.unpack("<I",value[0x1d:0x21])[0],2,0x1d,3,4,4,"<I")
+	
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Master", 1, "%2x"%struct.unpack("<I",value[37:37+4])[0],2,37,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "MasterShape", 1, "%2x"%struct.unpack("<I",value[45:45+4])[0],2,45,3,4,4,"<I")
@@ -356,7 +359,7 @@ def Char (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Transparency", 1, "%d%%"%(ord(value[0x1d])*100/256),2,0x1d,3,1,4,"<I")
 
-	flags1 = ord(value[30])
+	flags1 = ord(value[0x1e])
 	ftxt = ""
 	if flags1&1 == 1:
 		ftxt += "bold "
@@ -367,25 +370,25 @@ def Char (hd, size, value):
 	if flags1&8 == 8:
 		ftxt += "smcaps "
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Font Mods1", 1, ftxt,2,30,3,1,4,"txt")
+	hd.hdmodel.set (iter1, 0, "Font Mods1", 1, ftxt,2,0x1e,3,1,4,"txt")
 
-	flags2 = ord(value[31])
+	flags2 = ord(value[0x1f])
 	ftxt = ""
 	if flags2&1 == 1:
 		ftxt += "allcaps "
 	if flags2&2== 2:
 		ftxt += "initcaps "
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Font Mods2", 1, ftxt,2,31,3,1,4,"txt")
+	hd.hdmodel.set (iter1, 0, "Font Mods2", 1, ftxt,2,0x1f,3,1,4,"txt")
 	
-	flags3 = ord(value[32])
+	flags3 = ord(value[0x20])
 	ftxt = ""
 	if flags3&1 == 1:
 		ftxt += "superscript "
 	if flags3&2== 2:
 		ftxt += "subscript "
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Font Mods3", 1, ftxt,2,32,3,1,4,"txt")
+	hd.hdmodel.set (iter1, 0, "Font Mods3", 1, ftxt,2,0x20,3,1,4,"txt")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Scale", 1, "%d%%"%(struct.unpack("<h",value[0x21:0x23])[0]/100.),2,0x21,3,2,4,"<h")
 	iter1 = hd.hdmodel.append(None, None)
@@ -402,8 +405,6 @@ def Char (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Font Mods4", 1, ftxt,2,0x2d,3,1,4,"txt")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "LangID", 1, "%d"%struct.unpack("<I",value[0x58:0x5c]),2,0x58,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Spacing", 1, "%d pt"%(struct.unpack("<h",value[0x2e:0x30])[0]/200.),2,0x2e,3,2,4,"<h")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "AsianFont", 1, "%d"%ord(value[0x38]),2,0x38,3,1,4,"<I")
@@ -413,6 +414,9 @@ def Char (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "LocalizeFont", 1, "%d"%ord(value[0x3c]),2,0x3c,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ComplexScriptSize", 1, "%d%%"%(struct.unpack("<d",value[0x3e:0x46])[0]*100),2,0x3e,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LangID", 1, "%d"%struct.unpack("<I",value[0x58:0x5c]),2,0x58,3,4,4,"<I")
+
 	if len(value)>0x6b:
 		vsdblock.parse(hd, size, value, 0x6b)
 
@@ -445,6 +449,8 @@ def Para (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "TxtPosAfterBullet", 1, "%.2f"%struct.unpack("<d",value[0x60:0x68]),2,0x60,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Flags", 1, "%d"%struct.unpack("<I",value[0x68:0x6c]),2,0x68,3,4,4,"<I")
+	if len(value)>0x8e:
+		vsdblock.parse(hd, size, value, 0x8e)
 
 
 def TextBlock (hd, size, value):
@@ -576,9 +582,45 @@ def Geometry (hd, size, value):
 		iter1 = hd.hdmodel.append(None, None)
 		hd.hdmodel.set (iter1, 0, bits[i], 1, res,2,19,3,1,4,"txt")
 
+def ShapeStencil (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ID?", 1, "%02x"%struct.unpack("<I",value[0x13:0x17]),2,0x13,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "var1?", 1, "%.2f"%struct.unpack("<d",value[0x17:0x1f]),2,0x17,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "var2?", 1, "%.2f"%struct.unpack("<d",value[0x1f:0x27]),2,0x1f,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "var3?", 1, "%.2f"%struct.unpack("<d",value[0x27:0x2f]),2,0x27,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "var4?", 1, "%.2f"%struct.unpack("<d",value[0x2f:0x37]),2,0x2f,3,8,4,"<d")
+
+
+def FrgnType (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ImgOffsetX", 1, "%.2f"%struct.unpack("<d",value[0x14:0x1c]),2,0x14,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ImgOffsetY", 1, "%.2f"%struct.unpack("<d",value[0x1d:0x25]),2,0x1d,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ImgWidth", 1, "%.2f"%struct.unpack("<d",value[0x26:0x2e]),2,0x26,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ImgHeight", 1, "%.2f"%struct.unpack("<d",value[0x2f:0x37]),2,0x2f,3,8,4,"<d")
+	[ftype] = struct.unpack("<h",value[0x37:0x39])
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Type ??", 1, "%d"%ftype,2,0x37,3,2,4,"<h")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "MapMode", 1, "%d"%struct.unpack("<h",value[0x39:0x3b]),2,0x39,3,2,4,"<h")
+	if ftype == 4:
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ExtentX", 1, "%d"%struct.unpack("<h",value[0x3b:0x3d]),2,0x3b,3,2,4,"<h")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ExtentY", 1, "%d"%struct.unpack("<h",value[0x3d:0x3f]),2,0x3d,3,2,4,"<h")
+	if len(value)>0x51:
+		vsdblock.parse(hd, size, value, 0x51)
+
 
 chnk_func = {
 	0x15:Page,
+	0x28:ShapeStencil,
 	0x47:Shape, 0x48:Shape, 0x4e:Shape,0x4f:Shape,
 	0xd:List,0x2c:List,
 	0x46:List,
@@ -588,7 +630,7 @@ chnk_func = {
 	0x8a:MoveTo,0x8b:MoveTo,0x8c:ArcTo,0x8d:InfLine,
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,
-	0x94:Char,0x95:Para,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
+	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
 	0xa8:LayerIX,
 	0xc1:Polyline,
 	0xc3:NURBS, 0xc9:NameID,0xd1:NURBSData

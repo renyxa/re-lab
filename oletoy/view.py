@@ -393,7 +393,7 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
 		type = self.das[pn].type
-		print "Type: ",type
+		#print "Type: ",type
 		hd = self.das[pn].hd
 		try:
 			start,end = hd.txtdump_hex.get_buffer().get_selection_bounds()
