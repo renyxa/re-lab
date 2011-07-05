@@ -188,7 +188,7 @@ def Shape (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Master", 1, "%2x"%struct.unpack("<I",value[37:37+4])[0],2,37,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "MasterShape", 1, "%2x"%struct.unpack("<I",value[45:45+4])[0],2,37,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "MasterShape", 1, "%2x"%struct.unpack("<I",value[45:45+4])[0],2,45,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "LineStyle", 1, "%2x"%struct.unpack("<I",value[53:53+4])[0],2,53,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
@@ -350,9 +350,13 @@ def Fill (hd, size, value):
 
 def Char (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "FontID", 1, "%2x"%ord(value[23]),2,23,3,1,4,"<I")
-	flags1 = ord(value[30])
+	hd.hdmodel.set (iter1, 0, "Num of Chars", 1, "%d"%struct.unpack("<I",value[0x13:0x17]),2,0x13,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FontID", 1, "%2x"%struct.unpack("<H",value[0x17:0x19]),2,0x17,3,2,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Transparency", 1, "%d%%"%(ord(value[0x1d])*100/256),2,0x1d,3,1,4,"<I")
 
+	flags1 = ord(value[30])
 	ftxt = ""
 	if flags1&1 == 1:
 		ftxt += "bold "
@@ -382,9 +386,86 @@ def Char (hd, size, value):
 		ftxt += "subscript "
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Font Mods3", 1, ftxt,2,32,3,1,4,"txt")
-
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "FontSize", 1, "%.2f pt"%(72*struct.unpack("<d",value[37:45])[0]),2,37,3,8,4,"<d")
+	hd.hdmodel.set (iter1, 0, "Scale", 1, "%d%%"%(struct.unpack("<h",value[0x21:0x23])[0]/100.),2,0x21,3,2,4,"<h")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FontSize", 1, "%.2f pt"%(72*struct.unpack("<d",value[0x25:0x2d])[0]),2,0x25,3,8,4,"<d")
+
+	flags4 = ord(value[0x2d])
+	ftxt = ""
+	if flags4&1 == 1:
+		ftxt += "dblunder "
+	if flags4&2== 2:
+		ftxt += "overline "
+	if flags4&20 == 20:
+		ftxt += "dblstrike "
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Font Mods4", 1, ftxt,2,0x2d,3,1,4,"txt")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LangID", 1, "%d"%struct.unpack("<I",value[0x58:0x5c]),2,0x58,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Spacing", 1, "%d pt"%(struct.unpack("<h",value[0x2e:0x30])[0]/200.),2,0x2e,3,2,4,"<h")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "AsianFont", 1, "%d"%ord(value[0x38]),2,0x38,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ComplexScriptFont", 1, "%d"%ord(value[0x3a]),2,0x3a,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LocalizeFont", 1, "%d"%ord(value[0x3c]),2,0x3c,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ComplexScriptSize", 1, "%d%%"%(struct.unpack("<d",value[0x3e:0x46])[0]*100),2,0x3e,3,8,4,"<d")
+	if len(value)>0x6b:
+		vsdblock.parse(hd, size, value, 0x6b)
+
+
+
+def Para (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "IndFirst", 1, "%.2f"%struct.unpack("<d",value[0x18:0x20]),2,0x18,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "IndLeft", 1, "%.2f"%struct.unpack("<d",value[0x21:0x29]),2,0x21,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "IndRight", 1, "%.2f"%struct.unpack("<d",value[0x2a:0x32]),2,0x2a,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "SpLine", 1, "%d%%"%(struct.unpack("<d",value[0x33:0x3b])[0]*100),2,0x33,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "SpBefore", 1, "%d pt"%round(struct.unpack("<d",value[0x3c:0x44])[0]*72),2,0x3c,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "SpAfter", 1, "%d pt"%round(struct.unpack("<d",value[0x45:0x4d])[0]*72),2,0x45,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "HAlign", 1, "%d"%ord(value[0x4d]),2,0x4d,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Bullet", 1, "%d"%ord(value[0x4e]),2,0x4e,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "BulletFont", 1, "%d"%struct.unpack("<H",value[0x53:0x55]),2,0x53,3,2,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LocBulletFont", 1, "%d"%ord(value[0x55]),2,0x55,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "BulletSize", 1, "%d%%"%(struct.unpack("<d",value[0x57:0x5f])[0]*100),2,0x57,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "TxtPosAfterBullet", 1, "%.2f"%struct.unpack("<d",value[0x60:0x68]),2,0x60,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Flags", 1, "%d"%struct.unpack("<I",value[0x68:0x6c]),2,0x68,3,4,4,"<I")
+
+
+def TextBlock (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LeftMargin", 1, "%.2f"%round(struct.unpack("<d",value[0x14:0x1c])[0]*72),2,0x14,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "RightMargin", 1, "%.2f"%round(struct.unpack("<d",value[0x1d:0x25])[0]*72),2,0x1d,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "TopMargin", 1, "%.2f"%round(struct.unpack("<d",value[0x26:0x2e])[0]*72),2,0x26,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "BottomMargin", 1, "%.2f"%round(struct.unpack("<d",value[0x2f:0x37])[0]*72),2,0x2f,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "VAlign", 1, "%d"%ord(value[0x37]),2,0x37,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "TxtBG CLR Id", 1, "%d"%ord(value[0x38]),2,0x38,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "TxtBG Trans", 1, "%d"%round(ord(value[0x3c])*100/256.),2,0x3c,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "DefTabStop", 1, "%.2f"%struct.unpack("<d",value[0x3e:0x46]),2,0x3e,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "TxtDirection", 1, "%d"%ord(value[0x52]),2,0x52,3,1,4,"<I")
 
 
 def PageProps (hd, size, value):
@@ -483,6 +564,7 @@ def NURBSData (hd, size, value):
 			iter1 = hd.hdmodel.append(None, None)
 			hd.hdmodel.set (iter1, 0, "weight%d"%(i+1), 1, "%.2f"%struct.unpack("<d",value[0x4b+i*32:0x53+i*32]),2,0x4b+i*32,3,8,4,"<d")
 
+
 bits = {1:'noFill',2:'noLine',4:'noShow',8:'noSnap',32:'noQuickDrag'}
 
 def Geometry (hd, size, value):
@@ -502,11 +584,11 @@ chnk_func = {
 	0x46:List,
 	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
-	0x85:Line,0x86:Fill,0x89:Geometry,
+	0x85:Line,0x86:Fill,0x87:TextBlock,0x89:Geometry,
 	0x8a:MoveTo,0x8b:MoveTo,0x8c:ArcTo,0x8d:InfLine,
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,
-	0x94:Char,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
+	0x94:Char,0x95:Para,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
 	0xa8:LayerIX,
 	0xc1:Polyline,
 	0xc3:NURBS, 0xc9:NameID,0xd1:NURBSData

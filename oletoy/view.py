@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse
 
-version = "0.5.15"
+version = "0.5.16"
 
 ui_info = \
 '''<ui>

@@ -3,6 +3,7 @@
 		* Minimal support for regular and AP WMFs. Prevent saving for non-WMF files.
 		* Parsing of 'Geometry' flags.
 		* Parse 'Background Page' from 'Page' chunk.
+		* Improved 'Char', added 'Para' and 'TextBlock' parsing.
 
 2011-07-03  Valek Filippov
 
