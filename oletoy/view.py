@@ -24,7 +24,7 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
-import emfparse
+import emfparse,svm
 
 version = "0.5.17"
 
