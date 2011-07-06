@@ -1,5 +1,9 @@
 2011-07-04  Valek Filippov
 
+		* Minimal support for Starview Metafiles (based on Inge Wallin/Pierre Ducroquet spec)
+
+2011-07-04  Valek Filippov
+
 		* Minimal support for regular and AP WMFs. Prevent saving for non-WMF files.
 		* Parsing of 'Geometry' flags.
 		* Parse 'Background Page' from 'Page' chunk.

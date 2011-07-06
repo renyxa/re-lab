@@ -1,7 +1,7 @@
 import sys,struct
 import tree, gtk, gobject
 import gsf
-import oleparse,mf
+import oleparse,mf,svm
 
 class Page:
 	def __init__(self):
@@ -25,6 +25,13 @@ class Page:
 			self.type = oleparse.open(src, self)
 			return 0
 
+		if buf[0:6] == "VCLMTF":
+			self.type = "SVM"
+			src.seek(0,1)
+			buf = src.read(src.size())
+			svm.open (buf,self)
+			return 0
+			
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
 			src.seek(0,1)
@@ -36,8 +43,9 @@ class Page:
 			self.type = "WMF"
 			src.seek(0,1)
 			buf = src.read(src.size())
+			print "Probably WMF"
 			mf.open(buf,self)
-			print "Probably standard WMF"
+			return 0
 
 		src.seek(32,0)
 		buf = src.read(4)
