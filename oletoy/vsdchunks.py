@@ -521,6 +521,12 @@ def Polyline (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
+	sdflag = value[0x26:0x2a]
+	sdtext = 'No'
+	if sdflag == '\x8b\x02\x00\x00':
+		sdtext = 'Yes'
+	hd.hdmodel.set (iter1, 0, "Use Shape Data", 1, sdtext,2,0x26,3,4,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShapeData Id", 1, "%02x"%struct.unpack("<I",value[0x2a:0x2e]),2,0x2a,3,4,4,"<I")
 	if len(value)>0x30:
 		vsdblock.parse(hd, size, value, 0x30)
@@ -539,6 +545,12 @@ def NURBS (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "KnotPrev", 1, "%.2f"%struct.unpack("<d",value[53:61]),2,53,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "WeightPrev", 1, "%.2f"%struct.unpack("<d",value[61:69]),2,61,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	sdflag = value[0x46:0x4a]
+	sdtext = 'No'
+	if sdflag == '\x8a\x02\x00\x00':
+		sdtext = 'Yes'
+	hd.hdmodel.set (iter1, 0, "Use Shape Data", 1, sdtext,2,0x46,3,4,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShapeData Id", 1, "%02x"%struct.unpack("<I",value[0x4a:0x4e]),2,0x4a,3,4,4,"<I")
 	if len(value)>80:
