@@ -36,15 +36,16 @@ class Page:
 			self.type = "APWMF"
 			src.seek(0,1)
 			buf = src.read(src.size())
-			mf.open(buf,self)
+			mf.mf_open(buf,self)
 			print "Aldus Placeable WMF"
+			return 0
 
 		if buf[0:6] == "\x01\x00\x09\x00\x00\x03":
 			self.type = "WMF"
 			src.seek(0,1)
 			buf = src.read(src.size())
 			print "Probably WMF"
-			mf.open(buf,self)
+			mf.mf_open(buf,self)
 			return 0
 
 		src.seek(32,0)
@@ -54,7 +55,7 @@ class Page:
 			print "Probably EMF"
 			src.seek(0,1)
 			buf = src.read(src.size())
-			mf.open(buf,self)
+			mf.mf_open(buf,self)
 			return 0
 		src.seek(0,1)
 		buf = src.read(src.size())

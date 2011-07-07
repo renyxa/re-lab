@@ -24,9 +24,9 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
-import emfparse,svm
+import emfparse,svm,mf
 
-version = "0.5.18"
+version = "0.5.19"
 
 ui_info = \
 '''<ui>
@@ -166,23 +166,13 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
-		if self.das[pn] == "WMF" or self.das[pn] == "APWMF":
+		ftype = self.das[pn].type
+		if  ftype == "WMF" or ftype  == "APWMF" or ftype  == "EMF" or ftype == "SVM":
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
-				model = self.das[pn].view.get_model()
-				f = open(fname,'w')
-				model.foreach (self.dump_tree, f)
-				f.close()
+				mf.mf_save(self.das[pn],fname,ftype)
 		else:
-			print '"Save" is not implemented for non-WMF'
-
-	def dump_tree (self, model, path, parent, f):
-		ntype = model.get_value(parent,1)
-		nlen = model.get_value(parent,2)
-		value = model.get_value(parent,3)
-		if nlen != None:
-			f.write(struct.pack("<I",ntype) + struct.pack("<I",nlen) + value)
-		return False
+			print '"Save" is not implemented for non-MF'
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
@@ -250,8 +240,8 @@ class ApplicationMainWindow(gtk.Window):
 		if iter1:
 			intPath = model.get_path(iter1)
 			self.on_row_activated(view, intPath, 0)
-		if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
-			self.entry.set_text(model.get_string_from_iter(iter1))
+			if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
+				self.entry.set_text(model.get_string_from_iter(iter1))
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
@@ -456,7 +446,7 @@ class ApplicationMainWindow(gtk.Window):
 
 
 	def activate_new (self,parent=None):
-		doc = mfdoc.mfPage()
+		doc = Doc.Page()
 		dnum = len(self.das)
 		self.das[dnum] = doc
 		scrolled = doc.scrolled

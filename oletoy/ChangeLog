@@ -1,5 +1,10 @@
 2011-07-06  Valek Filippov
 
+		* Change SVM command names to CamelCase
+		* Fix saving of WMF and EMFs, adding saving of SVMs
+
+2011-07-06  Valek Filippov
+
 		* More block parsing for vsdchunks
 		* Support for different block start offset in v6 and v11.
 		* Unified SVM entries, parsing of some records.
