@@ -149,7 +149,7 @@ chunktype = {
 		0xc7:'SmartTagDef',\
 		0xc8:'PrintProps',\
 		0xc9:'NameIDX ',\
-		0xd1:'NRBSTo Data'}
+		0xd1:'Shape Data'}
 
 def List (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -520,6 +520,8 @@ def Polyline (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShapeData Id", 1, "%02x"%struct.unpack("<I",value[0x2a:0x2e]),2,0x2a,3,4,4,"<I")
 	if len(value)>0x30:
 		vsdblock.parse(hd, size, value, 0x30)
 
@@ -537,12 +539,16 @@ def NURBS (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "KnotPrev", 1, "%.2f"%struct.unpack("<d",value[53:61]),2,53,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "WeightPrev", 1, "%.2f"%struct.unpack("<d",value[61:69]),2,61,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShapeData Id", 1, "%02x"%struct.unpack("<I",value[0x2a:0x2e]),2,0x2a,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShapeData Id", 1, "%02x"%struct.unpack("<I",value[0x4a:0x4e]),2,0x4a,3,4,4,"<I")
 	if len(value)>80:
 		vsdblock.parse(hd, size, value, 80)
 
 nd_types = {0x80:"Polyline",0x82:"NURBS"}
 
-def NURBSData (hd, size, value):
+def ShapeData (hd, size, value):
 	nd_type = ord(value[19])
 	nd_str = "%02x "%nd_type
 	if nd_types.has_key(nd_type):
@@ -654,7 +660,7 @@ chnk_func = {
 	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
 	0xa8:LayerIX,
 	0xc1:Polyline,
-	0xc3:NURBS, 0xc9:NameID,0xd1:NURBSData
+	0xc3:NURBS, 0xc9:NameID,0xd1:ShapeData
 }
 
 def parse(model, version, parent, pntr):
