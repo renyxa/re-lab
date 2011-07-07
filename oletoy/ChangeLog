@@ -1,3 +1,9 @@
+2011-07-06  Valek Filippov
+
+		* More block parsing for vsdchunks
+		* Support for different block start offset in v6 and v11.
+		* Unified SVM entries, parsing of some records.
+
 2011-07-04  Valek Filippov
 
 		* Minimal support for Starview Metafiles (based on Inge Wallin/Pierre Ducroquet spec)

@@ -62,6 +62,7 @@ def parse (page, data, parent):
 		trlr_offset = 0x24
 
 		version = ord(data[ver_offset])
+		page.hd.version = version
 		print "Version: %d"%version
 		print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
 

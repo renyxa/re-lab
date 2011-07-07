@@ -9,6 +9,7 @@ class hexdump:
 		self.hdmodel, self.hdview, self.hdscrolled, self.hdrend = tree.make_view2()
 		self.vpaned.add1(self.hdscrolled)
 		self.hdscrolled.set_size_request(300, 300)
+		self.version = 0 # to support vsdchunks for different versions
 		
 		vbox =gtk.VBox()
 		hbox1 =gtk.HBox()

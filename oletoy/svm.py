@@ -7,21 +7,44 @@ import struct
 
 def Line (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "X", 1, struct.unpack("<I",value[0:4])[0],2,0,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "X", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Y", 1, struct.unpack("<I",value[4:8])[0],2,4,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "Y", 1, struct.unpack("<i",value[10:14])[0],2,10,3,4,4,"<i")
 
 def Rect (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "X1", 1, struct.unpack("<I",value[0:4])[0],2,0,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "X1", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Y1", 1, struct.unpack("<I",value[4:8])[0],2,4,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "Y1", 1, struct.unpack("<i",value[10:14])[0],2,10,3,4,4,"<i")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "X2", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "X2", 1, struct.unpack("<i",value[14:18])[0],2,14,3,4,4,"<i")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Y2", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "Y2", 1, struct.unpack("<i",value[18:22])[0],2,18,3,4,4,"<i")
 
-svm_ids = {0x67:Rect}
+def TextArray (hd, size, value):
+	Line (hd, size, value)
+	txtlen =  struct.unpack("<H",value[14:16])[0]
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Txt Len", 1, txtlen,2,8,3,2,4,"<H")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Text", 1, value[16:16+txtlen],2,16,3,txtlen,4,"txt")
+	offset = 16 + txtlen
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "n1?", 1, "%02x"%struct.unpack("<H",value[offset:offset+2]),2,offset,3,2,4,"<H")
+	offset += 2
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "n2?", 1, "%02x"%struct.unpack("<H",value[offset:offset+2]),2,offset,3,2,4,"<H")
+	offset += 2
+	dxarr = struct.unpack("<I",value[offset:offset+4])[0]
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "DX array len", 1, dxarr,2,offset,3,4,4,"<I")
+	offset += 4
+	for i in range(dxarr):
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "  dx %d"%i, 1, struct.unpack("<I",value[offset:offset+4])[0],2,offset,3,4,4,"<I")
+		offset += 4
+	
+svm_ids = {0x67:Rect,0x81:Rect,0x71:TextArray}
 
 svm_actions = { 0x0:"NULL",
 0x64:"PIXEL", 0x65:"POINT", 0x66:"LINE", 0x67:"RECT", 0x68:"ROUNDRECT",
@@ -51,7 +74,7 @@ def open (buf,page):
 	[hver] = struct.unpack("<h",buf[offset:offset+2])
 	[hsize] = struct.unpack("<I",buf[offset+2:offset+6])
 	iter1 = page.model.append(None,None)
-	page.model.set_value(iter1,0,'Header               \t%02x %02x'%(hver,hsize))
+	page.model.set(iter1,0,'Header')
 	page.model.set(iter1,1,("svm",-1),2,6+hsize,3,buf[offset:offset+6+hsize])
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 	offset += 6 + hsize
@@ -63,9 +86,8 @@ def open (buf,page):
 		cmdname = "Cmd %02x"%cmd
 		if svm_actions.has_key(cmd):
 			cmdname = svm_actions[cmd]+ " "*(21-len(svm_actions[cmd]))
-		offset += 8
+		offset += 2
 		iter1 = page.model.append(None,None)
-		page.model.set_value(iter1,0,cmdname + '\t%02x %02x'%(ver,size))
-		page.model.set(iter1,1,("svm",cmd),2,size,3,buf[offset:offset+size])
+		page.model.set(iter1,0,cmdname,1,("svm",cmd),2,size+6,3,buf[offset:offset+size+6])
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-		offset += size
+		offset += size + 6

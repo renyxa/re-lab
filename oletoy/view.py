@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm
 
-version = "0.5.17"
+version = "0.5.18"
 
 ui_info = \
 '''<ui>
@@ -490,12 +490,12 @@ class ApplicationMainWindow(gtk.Window):
 		if fname:
 			doc = Doc.Page()
 			doc.fname = fname
+			doc.hd = hexdump.hexdump()
 			err = doc.fload()
 			if err == 0:
 				dnum = len(self.das)
 				self.das[dnum] = doc
 				scrolled = doc.scrolled
-				doc.hd = hexdump.hexdump()
 				vpaned = doc.hd.vpaned
 				doc.view.connect("row-activated", self.on_row_activated)
 				doc.view.connect("key-press-event", self.on_row_keypressed)
