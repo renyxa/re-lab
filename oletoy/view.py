@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf
 
-version = "0.5.19"
+version = "0.5.20"
 
 ui_info = \
 '''<ui>
@@ -196,7 +196,7 @@ class ApplicationMainWindow(gtk.Window):
 			viewscroll = gtk.ScrolledWindow()
 			viewscroll.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 			viewscroll.add(self.dictview)
-			window.set_title("Add record: "+self.das[pn].pname)
+			window.set_title("Insert record: "+self.das[pn].pname)
 			window.add(viewscroll)
 			window.show_all()
 		return
@@ -205,11 +205,10 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
-		size = model.get_value(iter1,2)
+		size = model.get_value(iter1,2)+4
 		value = model.get_value(iter1,3)
-		model.set_value(iter1,2,size+4)
-		model.set_value(iter1,3,value+'\x00'*4)
-
+		model.set_value(iter1,2,size)
+		model.set_value(iter1,3,value[0:4]+struct.pack("<I",size)+value[8:]+'\x00'*4)
 
 	def activate_less (self, action):
 		pn = self.notebook.get_current_page()
@@ -217,9 +216,9 @@ class ApplicationMainWindow(gtk.Window):
 		model, iter1 = treeSelection.get_selected()
 		size = model.get_value(iter1,2)
 		value = model.get_value(iter1,3)
-		if size > 12:
+		if size > 11:
 			model.set_value(iter1,2,size-4)
-			model.set_value(iter1,3,value[0:size-12])
+			model.set_value(iter1,3,value[0:4]+struct.pack("<I",size-4)+value[8:size-4])
 
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
@@ -242,6 +241,7 @@ class ApplicationMainWindow(gtk.Window):
 			model.set_value(iter1,2,size)
 			model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+			self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
 			print "Insert:",rname,size
 
 

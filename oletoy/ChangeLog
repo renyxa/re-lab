@@ -2,6 +2,8 @@
 
 		* Move 'Add record' from mfview
 		* Change record size +-4 bytes
+		* Move cursor to inserted record
+		* Recalculate size, prevent reducing record <8 bytes
 
 2011-07-07  Valek Filippov
 

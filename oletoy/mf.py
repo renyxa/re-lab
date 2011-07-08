@@ -118,19 +118,19 @@ def emf_gentree ():
 	model.set(iter, 0, "Bitmap Records", 1, -1, 2, "")
 	for i in range (len(bmprec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[bmprec[i]], 1, bmprec[i], 2, 0)
+		model.set(niter, 0, emr_ids[bmprec[i]], 1, bmprec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Clipping Records", 1, -1, 2, "")
 	for i in range (len(cliprec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[cliprec[i]], 1, cliprec[i], 2, 0)
+		model.set(niter, 0, emr_ids[cliprec[i]], 1, cliprec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Comment & Control Records", 1, -1, 2, "")
 	for i in range (len(ctrlrec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[ctrlrec[i]], 1, ctrlrec[i], 2, 0)
+		model.set(niter, 0, emr_ids[ctrlrec[i]], 1, ctrlrec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Drawing Records", 1, -1, 2, "")
@@ -142,7 +142,7 @@ def emf_gentree ():
 	model.set(iter, 0, "Escape Records", 1, -1, 2, "")
 	for i in range (len(escrec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[escrec[i]], 1, escrec[i], 2, 0)
+		model.set(niter, 0, emr_ids[escrec[i]], 1, escrec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Object Creation Records", 1, -1, 2, "")
@@ -154,33 +154,33 @@ def emf_gentree ():
 	model.set(iter, 0, "Object Modification Records", 1, -1, 2, "")
 	for i in range (len(objmrec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[objmrec[i]], 1, objmrec[i], 2, 0)
+		model.set(niter, 0, emr_ids[objmrec[i]], 1, objmrec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "OpenGL Records", 1, -1, 2, "")
 	niter = model.append (iter, None)
-	model.set(niter, 0, emr_ids[0x66], 1, 0x66, 2, 0)
+	model.set(niter, 0, emr_ids[0x66], 1, 0x66, 2, 8)
 	niter = model.append (iter, None)
-	model.set(niter, 0, emr_ids[0x67], 1, 0x67, 2, 0)
+	model.set(niter, 0, emr_ids[0x67], 1, 0x67, 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Path Bracket Records", 1, -1, 2, "")
 	for i in range (len(pathrec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[pathrec[i]], 1, pathrec[i], 2, 0)
+		model.set(niter, 0, emr_ids[pathrec[i]], 1, pathrec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "State Records", 1, -1, 2, "")
 	for i in range (len(staterec)):
 		niter = model.append (iter, None)
-		model.set(niter, 0, emr_ids[staterec[i]], 1, staterec[i], 2, 0)
+		model.set(niter, 0, emr_ids[staterec[i]], 1, staterec[i], 2, 8)
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Transform Records", 1, -1, 2, "")
 	niter = model.append (iter, None)
-	model.set(niter, 0, emr_ids[0x23], 1, 0x23, 2, 0)
+	model.set(niter, 0, emr_ids[0x23], 1, 0x23, 2, 8)
 	niter = model.append (iter, None)
-	model.set(niter, 0, emr_ids[0x24], 1, 0x24, 2, 0)
+	model.set(niter, 0, emr_ids[0x24], 1, 0x24, 2, 8)
 
 	return model,view
 
