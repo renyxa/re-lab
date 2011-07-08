@@ -1,10 +1,4 @@
-# This program was made as part of the sk1project activity to improve UniConvertor
-# See http://www.sk1project.org
-#
-# The code of vsview based on the results of the ALT Linux vsdump project.
-# See www.altlinux.ru and http://freshmeat.net/projects/vsdump
-#
-# Copyright (C) 2007,	Valek Filippov (frob@df.ru)
+# Copyright (C) 2007,2010,2011	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -18,6 +12,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
+#
 
 import gsf
 

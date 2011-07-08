@@ -39,6 +39,9 @@ ui_info = \
 		<separator/>
 		<menuitem action='Quit'/>
 	</menu>
+	<menu action='EditMenu'>
+		<menuitem action='Add'/>
+	</menu>
 	<menu action='ViewMenu'>
 	</menu>
 	<menu action='HelpMenu'>
@@ -121,6 +124,9 @@ class ApplicationMainWindow(gtk.Window):
 		self.fname = ''
 		self.selection = None
 
+		self.dictmod, self.dictview = mf.emf_gentree()
+		self.dictview.connect("row-activated", self.on_dict_row_activated)
+
 
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
@@ -131,8 +137,13 @@ class ApplicationMainWindow(gtk.Window):
 		# GtkActionEntry
 		entries = (
 			( "FileMenu", None, "_File" ),			   # name, stock id, label
+			( "EditMenu", None, "_Edit" ),			   # name, stock id, label
 			( "ViewMenu", None, "_View" ),			   # name, stock id, label
 			( "HelpMenu", None, "_Help" ),			   # name, stock id, label
+			( "Add", gtk.STOCK_ADD,					# name, stock id
+				"_Add Record","<control>A",					  # label, accelerator
+				"Add EMF Record",							 # tooltip
+				self.activate_add),
 			( "New", gtk.STOCK_NEW,					# name, stock id
 				"_New","<control>N",					  # label, accelerator
 				"Create file",							 # tooltip
@@ -153,6 +164,7 @@ class ApplicationMainWindow(gtk.Window):
 				"_Quit", "<control>Q",					 # label, accelerator
 				"Quit",									# tooltip
 				self.activate_quit ),
+
 			( "About", None,							 # name, stock id
 				"_About", "<control>A",					# label, accelerator
 				"About",								   # tooltip
@@ -163,6 +175,39 @@ class ApplicationMainWindow(gtk.Window):
 		action_group = gtk.ActionGroup("AppWindowActions")
 		action_group.add_actions(entries)
 		return action_group
+
+	def activate_add (self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			window.set_resizable(True)
+			window.set_default_size(650, 700)
+			window.set_border_width(0)
+			viewscroll = gtk.ScrolledWindow()
+			viewscroll.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			viewscroll.add(self.dictview)
+			window.set_title("Add record: "+self.das[pn].pname)
+			window.add(viewscroll)
+			window.show_all()
+		return
+
+	def on_dict_row_activated(self, view, path, column):
+		pn = self.notebook.get_current_page()
+		model = self.das[pn].view.get_model()
+		dictmodel = self.dictview.get_model()
+		iter = dictmodel.get_iter(path)
+		type = dictmodel.get_value(iter,1)
+		if type != -1:
+			size = int(dictmodel.get_value(iter,2))
+			rname = mf.emr_ids[type]
+			iter1 = model.append(None,None)
+			model.set_value(iter1,0,rname)
+			model.set_value(iter1,1,("emf",type))
+			model.set_value(iter1,2,size)
+			model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
+			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+			print "Insert:",rname,size
+
 
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
