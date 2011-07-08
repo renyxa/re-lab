@@ -1,6 +1,7 @@
 2011-07-08  Valek Filippov
 
 		* Move 'Add record' from mfview
+		* Change record size +-4 bytes
 
 2011-07-07  Valek Filippov
 

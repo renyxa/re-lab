@@ -40,7 +40,9 @@ ui_info = \
 		<menuitem action='Quit'/>
 	</menu>
 	<menu action='EditMenu'>
-		<menuitem action='Add'/>
+		<menuitem action='Insert'/>
+		<menuitem action='More'/>
+		<menuitem action='Less'/>
 	</menu>
 	<menu action='ViewMenu'>
 	</menu>
@@ -140,10 +142,18 @@ class ApplicationMainWindow(gtk.Window):
 			( "EditMenu", None, "_Edit" ),			   # name, stock id, label
 			( "ViewMenu", None, "_View" ),			   # name, stock id, label
 			( "HelpMenu", None, "_Help" ),			   # name, stock id, label
-			( "Add", gtk.STOCK_ADD,					# name, stock id
-				"_Add Record","<control>A",					  # label, accelerator
-				"Add EMF Record",							 # tooltip
+			( "Insert", gtk.STOCK_ADD,					# name, stock id
+				"Insert _Record","<control>R",					  # label, accelerator
+				"Insert EMF Record after the current one",							 # tooltip
 				self.activate_add),
+			( "More", gtk.STOCK_ADD,					# name, stock id
+				"_More bytes","<control>M",					  # label, accelerator
+				"Add more bytes at the end of the current record",							 # tooltip
+				self.activate_more),
+			( "Less", gtk.STOCK_ADD,					# name, stock id
+				"_Less bytes","<control>L",					  # label, accelerator
+				"Remove some bytes at the end of the current record",							 # tooltip
+				self.activate_less),
 			( "New", gtk.STOCK_NEW,					# name, stock id
 				"_New","<control>N",					  # label, accelerator
 				"Create file",							 # tooltip
@@ -191,16 +201,42 @@ class ApplicationMainWindow(gtk.Window):
 			window.show_all()
 		return
 
+	def activate_more (self, action):
+		pn = self.notebook.get_current_page()
+		treeSelection = self.das[pn].view.get_selection()
+		model, iter1 = treeSelection.get_selected()
+		size = model.get_value(iter1,2)
+		value = model.get_value(iter1,3)
+		model.set_value(iter1,2,size+4)
+		model.set_value(iter1,3,value+'\x00'*4)
+
+
+	def activate_less (self, action):
+		pn = self.notebook.get_current_page()
+		treeSelection = self.das[pn].view.get_selection()
+		model, iter1 = treeSelection.get_selected()
+		size = model.get_value(iter1,2)
+		value = model.get_value(iter1,3)
+		if size > 12:
+			model.set_value(iter1,2,size-4)
+			model.set_value(iter1,3,value[0:size-12])
+
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
 		dictmodel = self.dictview.get_model()
+		treeSelection = self.das[pn].view.get_selection()
+		model2, iter2 = treeSelection.get_selected()
+#		print "Where? ",model2.get_string_from_iter(iter2)
 		iter = dictmodel.get_iter(path)
 		type = dictmodel.get_value(iter,1)
 		if type != -1:
 			size = int(dictmodel.get_value(iter,2))
 			rname = mf.emr_ids[type]
-			iter1 = model.append(None,None)
+			if iter2:
+				iter1 = model.insert_after(None,iter2)
+			else:
+				iter1 = model.append(None,None)
 			model.set_value(iter1,0,rname)
 			model.set_value(iter1,1,("emf",type))
 			model.set_value(iter1,2,size)
