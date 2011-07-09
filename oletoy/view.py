@@ -24,7 +24,7 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
-import emfparse,svm,mf
+import emfparse,svm,mf,wmfparse
 
 version = "0.5.20"
 
@@ -373,11 +373,12 @@ class ApplicationMainWindow(gtk.Window):
 
 		if fmt == "clr":
 			value = value[0:offset] + struct.pack("B",int(new_text[4:6],16))+struct.pack("B",int(new_text[2:4],16))+struct.pack("B",int(new_text[0:2],16))+value[offset+3:]
+		elif fmt == "clrgb":
+			value = value[0:offset] + struct.pack("B",int(new_text[0:2],16))+struct.pack("B",int(new_text[2:4],16))+struct.pack("B",int(new_text[4:6],16))+value[offset+3:]
+		elif fmt == "txt":
+			value = value[0:offset]+new_text+value[offset+size:]
 		else:
-			if fmt == "txt":
-				value = value[0:offset]+new_text+value[offset+size:]
-			else:
-				value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
+			value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
 
 		model.set_value(iter1,3,value)
 		self.on_row_activated(self.das[pn].view,model.get_path(iter1),0)
@@ -453,8 +454,8 @@ class ApplicationMainWindow(gtk.Window):
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "wmf":
-					if emfparse.wmr_ids.has_key(ntype[1]):
-						emfparse.wmr_ids[ntype[1]](hd,size,data)
+					if wmfparse.wmr_ids.has_key(ntype[1]):
+						wmfparse.wmr_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "svm":
 					if svm.svm_ids.has_key(ntype[1]):
 						svm.svm_ids[ntype[1]](hd,size,data)

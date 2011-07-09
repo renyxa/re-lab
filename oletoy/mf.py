@@ -61,7 +61,7 @@ wmr_ids = {0:'Unknown',1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Hea
             523:'SetWindowOrgEx', 524:'SetWindowExtEx',525:'SetViewportOrgEx', 526:'SetViewportExtEx', 527:'OffsetWindowOrg', 529:'OffsetViewportOrgEx',
             1040:'ScaleWindowExtEx', 1042:'ScaleViewportExtEx',
             
-            1049:'FloodFill', 1321:'META_MAGIC???', 1352:'ExtFloodFill', 1574:'Escape', 
+            1049:'FloodFill', 1352:'ExtFloodFill', 1574:'Escape', 
             
             531:'LineTo', 532:'MoveTo', 804:'Polygone', 805:'Polyline', 1048:'Ellipse', 1051:'Rectangle', 1055:'SetPixel', 
             1336:'PolyPolygone', 1564:'RoundRect', 2071:'Arc', 2074:'Pie', 2096:'Chord', 

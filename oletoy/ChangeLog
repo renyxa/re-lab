@@ -1,3 +1,7 @@
+2011-07-09  Valek Filippov
+
+		* Split WMF of emfparse, add more parsing for WMF records.
+
 2011-07-08  Valek Filippov
 
 		* Move 'Add record' from mfview
