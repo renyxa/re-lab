@@ -82,7 +82,7 @@ def Polybezier (hd, size, value):
 		PointL (hd, value, i*8+28, str(i))
 
 #3
-def Polygone (hd, size, value):
+def Polygon (hd, size, value):
 	Polybezier (hd, size, value)
 
 #4
@@ -113,7 +113,7 @@ def PolyPolyline (hd, size, value):
 		PointL (hd, value, i*8+32+numpoly*4, str(i))
 
 #8
-def PolyPolygone (hd, size, value):
+def PolyPolygon (hd, size, value):
 	PolyPolyline (hd, size, value)
 
 #9
@@ -429,7 +429,7 @@ def Polybezier16 (hd, size, value):
 		PointS (hd, value, i*4+28, str(i))
 
 #86
-def Polygone16 (hd, size, value):
+def Polygon16 (hd, size, value):
 	Polybezier16 (hd, size, value)
 
 #87
@@ -460,7 +460,7 @@ def PolyPolyline16 (hd, size, value):
 		PointS (hd, value, i*4+32+numpoly*4, str(i))
 
 #91
-def PolyPolygone16 (hd, size, value):
+def PolyPolygon16 (hd, size, value):
 	PolyPolyline16 (hd, size, value)
 
 #92
@@ -524,8 +524,8 @@ def SetLayout (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "LayoutMode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-emr_ids = {1:Header,2:Polybezier,3:Polygone,4:Polyline,5:PolybezierTo,\
-	6:PolylineTo,7:PolyPolyline,8:PolyPolygone,9:SetWindowExtEx,10:SetWindowOrgEx,\
+emr_ids = {1:Header,2:Polybezier,3:Polygon,4:Polyline,5:PolybezierTo,\
+	6:PolylineTo,7:PolyPolyline,8:PolyPolygon,9:SetWindowExtEx,10:SetWindowOrgEx,\
 	11:SetViewportExtEx,12:SetViewportOrgEx,13:SetBrushOrgEx,\
 	#14:'EOF',15:'SetPixelV',\
 	16:SetMapperFlags,17:SetMapMode,18:SetBKMode,19:SetPolyfillMode,20:SetRop2,\
@@ -546,7 +546,7 @@ emr_ids = {1:Header,2:Polybezier,3:Polygone,4:Polyline,5:PolybezierTo,\
 	#70:'GDIComment',71:'FillRgn',72:'FrameRgn',73:'InvertRgn',74:'PaintRgn',75:'ExtSelectClipRgn',\
 	#76:'BitBlt',77:'StretchBlt',78:'MaskBlt',79:'PlgBlt',80:'SetDIBitsToDevice',81:'StretchDIBits',\
 	#82:'ExtCreateFontIndirectW',83:'ExtTextOutA',84:'ExtTextOutW',
-	85:Polybezier16,86:Polygone16,87:Polyline16,88:PolybezierTo16,89:PolylineTo16,90:PolyPolyline16,91:PolyPolygone16,\
+	85:Polybezier16,86:Polygon16,87:Polyline16,88:PolybezierTo16,89:PolylineTo16,90:PolyPolyline16,91:PolyPolygon16,\
 	92:Polydraw16,
 	#93:'CreateMonoBrush',94:'CreateDIBPatternBrushPT',
 	95:ExtCreatePen,\

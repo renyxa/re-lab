@@ -26,6 +26,45 @@ def PointS (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "x"+i, 1, struct.unpack("<h",value[offset+2:offset+4])[0],2,offset+2,3,2,4,"<h")
 
+def PointL (hd, value, offset, i=""):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "x"+i, 1, struct.unpack("<i",value[offset:offset+4])[0],2,offset,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "y"+i, 1, struct.unpack("<i",value[offset+4:offset+8])[0],2,offset+4,3,4,4,"<i")
+
+#1
+def Aldus_Header (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Signature", 1, struct.unpack("<i",value[0:4])[0],2,0,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Handle", 1, struct.unpack("<h",value[4:6])[0],2,4,3,2,4,"<h")
+	PointS (hd, value,6,'S')
+	PointS (hd, value,10,'E')
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Inch", 1, struct.unpack("<h",value[14:16])[0],2,14,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Reserved", 1, struct.unpack("<i",value[16:20])[0],2,16,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Checksum", 1, struct.unpack("<h",value[20:22])[0],2,20,3,2,4,"<h")
+
+
+#4
+def Header (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Type", 1, struct.unpack("<h",value[0:2])[0],2,0,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "HdrSize", 1, struct.unpack("<h",value[2:4])[0],2,2,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Version", 1, struct.unpack("<h",value[4:6])[0],2,4,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Size", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "#Objects", 1, struct.unpack("<h",value[10:12])[0],2,10,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "MaxRecord", 1, struct.unpack("<i",value[12:16])[0],2,12,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "#Parameters", 1, struct.unpack("<h",value[16:18])[0],2,16,3,2,4,"<h")
+
 
 #30
 def SaveDC (hd, size, value):
@@ -52,10 +91,28 @@ def SetPolyfillMode (hd, size, value):
 def SetStretchBltMode (hd, size, value):
 	SetBKMode (hd, size, value)
 
+#264
+def SetTextCharExtra (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Extra", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
+
 #295
 def RestoreDC (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "SavedDC", 1, struct.unpack("<h",value[6:8])[0],2,6,3,2,4,"<h")
+
+#298
+def InvertRegion (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Region ID", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
+
+#299
+def PaintRegion (hd, size, value):
+	InvertRegion (hd, size, value)
+
+#300
+def SelectClipRegion (hd, size, value):
+	InvertRegion (hd, size, value)
 
 #301
 def SelectObject (hd, size, value):
@@ -69,6 +126,23 @@ def SetTextAlign (hd, size, value):
 #496
 def DeleteObject (hd, size, value):
 	SelectObject (hd, size, value)
+
+#513
+def SetBKColor (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	clr = "%02X"%ord(value[6])+"%02X"%ord(value[7])+"%02X"%ord(value[8])
+	hd.hdmodel.set (iter, 0, "RGB", 1, clr,2,6,3,3,4,"clrbg")
+
+#521
+def SetTextColor (hd, size, value):
+	SetBKColor (hd, size, value)
+
+#522
+def SetTextJustification (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Extra", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Count", 1, struct.unpack("<i",value[10:14])[0],2,10,3,4,4,"<i")
 
 #523
 def SetWindowExtEx (hd, size, value):
@@ -102,6 +176,22 @@ def LineTo (hd, size, value):
 def MoveTo (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 
+#544
+def OffsetClipRgn (hd, size, value):
+	PointS (hd,value,size,'off')
+
+#552
+def FillRegion (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Region", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Brush", 1, struct.unpack("<i",value[10:14])[0],2,10,3,4,4,"<i")
+
+#561
+def SetMapperFlags (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Flag", 1, struct.unpack("<i",value[6:10])[0],2,6,3,4,4,"<i")
+
 #762
 def CreatePenIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
@@ -113,6 +203,36 @@ def CreatePenIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	clr = "%02X"%ord(value[12])+"%02X"%ord(value[13])+"%02X"%ord(value[14])
 	hd.hdmodel.set (iter, 0, "RGB", 1, clr,2,12,3,3,4,"clrgb")
+
+#763
+def CreateFontIndirect (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Height", 1, struct.unpack("<h",value[6:8])[0],2,6,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Width", 1, struct.unpack("<h",value[8:10])[0],2,8,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Escapement", 1, struct.unpack("<h",value[10:12])[0],2,10,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Orientation", 1, struct.unpack("<h",value[12:14])[0],2,12,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Weight", 1, struct.unpack("<h",value[14:16])[0],2,14,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Italic", 1, ord(value[16]),2,16,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Underline", 1, ord(value[17]),2,17,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "StrikeOut", 1, ord(value[18]),2,18,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Charset", 1, ord(value[19]),2,19,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "OutPrecision", 1, ord(value[20]),2,20,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "ClipPrecision", 1, ord(value[21]),2,21,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Quality", 1, ord(value[22]),2,22,3,1,4,"<B")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Pitch&Family", 1, ord(value[23]),2,23,3,1,4,"<B")
+
 
 #764
 def CreateBrushIndirect (hd, size, value):
@@ -152,6 +272,13 @@ def ScaleViewportExtEx (hd, size, value):
 def ScaleWindowExtEx (hd, size, value):
 	ScaleViewportExtEx (hd, size, value)
 
+#1045
+def ExcludeClipRect (hd, size, value):
+	Rectangle (hd, size, value)
+
+#1046
+def IntersectClipRect (hd, size, value):
+	Rectangle (hd, size, value)
 
 #1048
 def Ellipse (hd, size, value):
@@ -184,6 +311,11 @@ def RoundRect (hd, size, value):
 	Rectangle (hd, size, value)
 	PointS (hd, value, 14, "Diam")
 
+#1791
+def CreateRegion (hd, size, value):
+	PointL (hd, value, 6, "S")
+	PointL (hd, value, 14, "E")
+
 #2071
 def Arc (hd, size, value):
 	PointS(hd,value,6,"Rs")
@@ -199,35 +331,46 @@ def Pie (hd, size, value):
 def Chord (hd, size, value):
 	Arc (hd, size, value)
 
+#2610
+def ExtTextOut (hd, size, value):
+	PointS (hd, value, 6)
+	iter = hd.hdmodel.append(None, None)
+	count = struct.unpack("<h",value[10:12])[0]
+	hd.hdmodel.set (iter, 0, "Count", 1, count, 2,10,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<h",value[12:14])[0]
+	hd.hdmodel.set (iter, 0, "Flags", 1, flags, 2,12,3,2,4,"<h")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Text", 1, value[14:14+count],2,14,3,count,4,"txt")
+	# Fixme! DX/DY depends on flags
 
 
 wmr_ids = {
-#1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Header',
-30:SaveDC,
+1:Aldus_Header,
+#2:'CLP_Header16',3:'CLP_Header32',
+4:Header, 30:SaveDC,
 #53:'RealizePalette', 55:'SetPalEntries', 247:'CreatePalette', 313:'ResizePalette',564:'SelectPalette', 1078:'AnimatePalette', 
 #79:'StartPage', 80:'EndPage', 82:'AbortDoc', 94:'EndDoc', 333:'StartDoc', 
 #248:'CreateBrush', 322:'DibCreatePatternBrush', 505:'CreatePatternBrush',
 258:SetBKMode, 259:SetMapMode, 260:SetROP2, 262:SetPolyfillMode, 263:SetStretchBltMode,
-295:RestoreDC, 
+264:SetTextCharExtra, 295:RestoreDC,  298:InvertRegion, 299:PaintRegion,
+300:SelectClipRegion, 301:SelectObject, 302:SetTextAlign,
 #332:'ResetDc', 
-301:SelectObject, 
-#561:'SetMapperFlags', 
-#264:'SetTextCharExtra',
-302:SetTextAlign, #513:'SetBKColor', 521:'SetTextColor', 522:'SetTextJustification', 
-#298:'InvertRegion', 299:'PaintRegion', 300:'SelectClipRegion',
-496:DeleteObject, 531:LineTo, 532:MoveTo,
-#544:'OffsetClipRgn', 552:'FillRegion', 
-762:CreatePenIndirect,
-#763:'CreateFontIndirect',
-764:CreateBrushIndirect, #765:'CreateBitmapIndirect', 
-804:Polygon, 805:Polyline, 1048:Ellipse, 1051:Rectangle,
-#1065:'FrameRegion', 1791:'CreateRegion',
-#1045:'ExcludeClipRect', 1046:'IntersectClipRect',
-523:SetWindowOrgEx, 524:SetWindowExtEx,525:SetViewportOrgEx, 526:SetViewportExtEx, 527:OffsetWindowOrg, 529:OffsetViewportOrgEx,
-1040:ScaleWindowExtEx, 1042:ScaleViewportExtEx,
+
+496:DeleteObject, 513:SetBKColor, 521:SetTextColor, 522:SetTextJustification,
+523:SetWindowOrgEx, 524:SetWindowExtEx,525:SetViewportOrgEx,
+526:SetViewportExtEx, 527:OffsetWindowOrg, 529:OffsetViewportOrgEx,
+531:LineTo, 532:MoveTo, 544:OffsetClipRgn, 552:FillRegion, 561:SetMapperFlags,  
+762:CreatePenIndirect, 763:CreateFontIndirect, 764:CreateBrushIndirect,
+#765:'CreateBitmapIndirect', 
+804:Polygon, 805:Polyline, 1040:ScaleWindowExtEx, 1042:ScaleViewportExtEx,
+1045:ExcludeClipRect, 1046:IntersectClipRect, 1048:Ellipse, 1051:Rectangle,
+
+#1065:'FrameRegion',
 #1049:'FloodFill', 1352:'ExtFloodFill', 1574:'Escape', 
 #1055:'SetPixel',
-1336:PolyPolygon, 1564:RoundRect, 2071:Arc, 2074:Pie, 2096:Chord, 
-#1313:'TextOut', 1583:'DrawText',2610:'ExtTextOut',
+1336:PolyPolygon, 1564:RoundRect, 1791:CreateRegion, 2071:Arc, 2074:Pie, 2096:Chord, 
+#1313:'TextOut', 1583:'DrawText',
+2610:ExtTextOut,
 #1790:'CreateBitmap', 1565:'PatBlt', 2338:'BitBlt', 2368:'DibBitblt', 2851:'StretchBlt', 2881:'DibStretchBlt', 3379:'SetDibToDev', 3907:'StretchDIBits'
 }
