@@ -521,6 +521,18 @@ def PageProps (hd, size, value):
 	if len(value)>0x96:
 		vsdblock.parse(hd, size, value, 0x96)
 
+def StyleProps (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Use Line", 1, ord(value[0x13]),2,0x13,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Use Fill", 1, ord(value[0x14]),2,0x14,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Use Text", 1, ord(value[0x15]),2,0x15,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Hidden", 1, ord(value[0x16]),2,0x16,3,1,4,"<B")
+	if len(value)>0x1a:
+		vsdblock.parse(hd, size, value, 0x1a)
+	
 
 def LayerIX (hd, size, value):
 	if len(value)>0x34: # both 6 and 11
@@ -669,15 +681,14 @@ def FrgnType (hd, size, value):
 chnk_func = {
 	0x15:Page,
 	0x28:ShapeStencil,
-	0x47:Shape, 0x48:Shape, 0x4e:Shape,0x4f:Shape,
 	0xd:List,0x2c:List,
-	0x46:List,
+	0x46:List,0x47:Shape, 0x48:Shape, 0x4a:Shape, 0x4e:Shape,0x4f:Shape,
 	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
 	0x85:Line,0x86:Fill,0x87:TextBlock,0x89:Geometry,
 	0x8a:MoveTo,0x8b:MoveTo,0x8c:ArcTo,0x8d:InfLine,
 	0x8f:Ellipse,0x90:EllArcTo,
-	0x92:PageProps,
+	0x92:PageProps,0x93:StyleProps,
 	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
 	0xa8:LayerIX,
 	0xc1:Polyline,
