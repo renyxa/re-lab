@@ -187,7 +187,6 @@ def Shape (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Parent", 1, "%2x"%struct.unpack("<I",value[0x1d:0x21])[0],2,0x1d,3,4,4,"<I")
-	
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Master", 1, "%2x"%struct.unpack("<I",value[37:37+4])[0],2,37,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
@@ -276,7 +275,12 @@ def ArcTo (hd, size, value):
 		vsdblock.parse(hd, size, value, 0x30)
 
 def InfLine (hd, size, value):
-	ArcTo (hd, size, value)
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "A", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "B", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
 	if len(value)>0x39: # both 6 and 11 ???
@@ -284,7 +288,14 @@ def InfLine (hd, size, value):
 
 
 def EllArcTo (hd, size, value):
-	InfLine (hd, size, value)
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "A", 1, "%.2f"%struct.unpack("<d",value[38:46]),2,38,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "B", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "C", 1, "%.2f"%struct.unpack("<d",value[56:64]),2,56,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)

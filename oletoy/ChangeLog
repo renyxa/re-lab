@@ -1,3 +1,7 @@
+2011-07-11  Valek Filippov
+
+		* Fix issue with multiparsing of blocks in vsdchunks.
+
 2011-07-09  Valek Filippov
 
 		* Split WMF of emfparse, add more parsing for WMF records.
