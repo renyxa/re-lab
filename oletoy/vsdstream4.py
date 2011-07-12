@@ -62,6 +62,26 @@ def Window (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewCenterY", 1, "%.2f"%struct.unpack("<d",value[0x32:0x3a]),2,0x32,3,8,4,"<d")
 
+def FontFace (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Flags", 1, "%d"%struct.unpack("<i",value[0x4:0x8]),2,0x4,3,4,4,"<i")
+	facename = unicode(value[0x8:0x48],"utf-16")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Name", 1, facename,2,0x8,3,0x40,4,"txt")
+	ur1 = struct.unpack("<i",value[0x48:0x4c])[0]
+	ur2 = struct.unpack("<i",value[0x4c:0x50])[0]
+	ur3 = struct.unpack("<i",value[0x50:0x54])[0]
+	ur4 = struct.unpack("<i",value[0x54:0x58])[0]
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "UnicodeRanges", 1, "%d %d %d %d"%(ur1,ur2,ur3,ur4),2,0x48,3,0x10,4,"txt")
+	cs1 = struct.unpack("<i",value[0x58:0x5c])[0]
+	cs2 = struct.unpack("<i",value[0x5c:0x60])[0]
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "CharSets", 1, "%d %d"%(cs1,cs2),2,0x58,3,0x8,4,"txt")
+	panos = ""
+	for i in range(10):
+		panos += "%d "%ord(value[0x60+i])
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Panos", 1, panos,2,0x60,3,0xa,4,"txt")
 
-
-stream_func = {0x1e:StencilPage,0x2a:Window,0x2f:EventItem}
+stream_func = {0x1e:StencilPage,0x2a:Window,0x2f:EventItem,0xd7:FontFace}

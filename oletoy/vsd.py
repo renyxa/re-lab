@@ -215,7 +215,6 @@ def ptr_search (page, data, version, parent):
 			  
 			  if pntr.type == 0x16:
 				  get_colors (page, res, version, iter1)
-				  
 			  if pntr.format >>4 == 0xd:
 				  vsdchunks.parse (model, version, iter1, pntr)
 		if vbaflag == 1:
@@ -258,60 +257,3 @@ def getnames(doc, niter):
 ##            print 'Name: ',i,name
             nitername = nitername + '   \t'+name
             doc.model.set_value(nameiter,1,nitername)
-
-def getfonts(doc,iter):
-##    print 'Font entries were found...'
-    fonts = doc.fonts
-    pntr = doc.model.get_value(iter,0)["pointer"]
-    # for Visio 2k/2k2 this pntr.data is type D stream (made of chunks)
-    # for Visio 2k3 this pntr->children are FontEntries
-    if doc.version == 6:
-        chunks.chunk_parse(doc,pntr)
-        fiter = doc.model.iter_nth_child(iter, 0)
-        for i in range(doc.model.iter_n_children(fiter)):
-            fntiter = doc.model.iter_nth_child(fiter, i)
-            fpntr = doc.model.get_value(fntiter,0)["pointer"]
-            fitername = doc.model.get_value(fntiter,0)["name"]
-            fname = fpntr.data[25:len(fpntr.data)]
-            [fn] = struct.unpack('<h',fpntr.data[4:6])
-            cntr = fname.find('\00')
-            fonts[fn] = fname[0:cntr]
-            fitername = fitername + '   \t'+fname
-            doc.model.set_value(fntiter,1,fitername)
-
-    if doc.version == 11: ## check for font substitution
-        num = 0
-        fiter = doc.model.iter_nth_child(iter, 0)
-        for i in range(doc.model.iter_n_children(fiter)):
-            fntiter = doc.model.iter_nth_child(fiter, i)
-            fpntr = doc.model.get_value(fntiter,0)["pointer"]
-            fname = unicode(fpntr.data[8:72],'utf-16').encode('utf-8')
-            cntr = fname.find('\00')
-            fonts[i] = fname[0:cntr]
-            fitername = fitername + '   \t'+fname
-            doc.model.set_value(fntiter,1,fitername)
-            print 'Font ID: %u'%(i),' Font name: ',fname[0:cntr]
-
-        for i in range(doc.model.iter_n_children(iter)):
-            child = doc.model.iter_nth_child(iter,i)        
-            childptr = doc.model.get_value(child,0)["pointer"]
-            if childptr.type == 0x3f:
-            # looking for font idx substitution
-                fidx = doc.model.iter_nth_child(doc.model.iter_nth_child(child,0),1)
-                fidxpntr = doc.model.get_value(fidx,0)["pointer"]
-                print 'Found fidxptr! T/A/O/L/F: %02x \t%07x \t%04x \t%04x \t%02x'%(fidxpntr.type,fidxpntr.address,fidxpntr.offset,fidxpntr.length,fidxpntr.format)
-                print 'Data length: ',len(fidxpntr.data)
-                length = len(fidxpntr.data)
-                if length > 10:
-                    [f]= struct.unpack('<L',fidxpntr.data[10:14])
-                    if f > 4:
-                        shift = 10
-                    else:
-                        shift = 14
-                    for i in range((length-shift)/4):
-                        [fn] = struct.unpack('<L',fidxpntr.data[shift+i*4:shift+i*4+4])
-##                        print 'Substitution (fn/length/i): ', fn,length,i
-                        doc.fonts[fn] = doc.fonts[length+i]
-
-
-

@@ -1,5 +1,9 @@
 2011-07-11  Valek Filippov
 
+		* Parse FontFace for vsd ver 11.
+
+2011-07-11  Valek Filippov
+
 		* Fix issue with multiparsing of blocks in vsdchunks.
 
 2011-07-09  Valek Filippov
