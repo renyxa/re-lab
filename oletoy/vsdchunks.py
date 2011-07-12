@@ -518,7 +518,7 @@ def PageProps (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "DrawingSizeType", 1, "%2x"%ord(value[73]),2,82,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "DrawingScaleType", 1, "%2x"%ord(value[74]),2,83,3,1,4,"<I")
-	if len(value)>0x96:
+	if len(value)>0x9b:
 		vsdblock.parse(hd, size, value, 0x96)
 
 def StyleProps (hd, size, value):
@@ -537,6 +537,48 @@ def StyleProps (hd, size, value):
 def LayerIX (hd, size, value):
 	if len(value)>0x34: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x34)
+
+def Control (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.3f"%struct.unpack("<d",value[0x14:0x1c]),2,0x14,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.3f"%struct.unpack("<d",value[0x1d:0x25]),2,0x1d,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "XDyn", 1, "%.3f"%struct.unpack("<d",value[0x26:0x2e]),2,0x26,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "YDyn", 1, "%.3f"%struct.unpack("<d",value[0x2f:0x37]),2,0x2f,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "XCon", 1, ord(value[0x37]),2,0x37,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "YCon", 1, ord(value[0x38]),2,0x38,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "CanGlue", 1, ord(value[0x39]),2,0x39,3,1,4,"<B")
+	if len(value)>0x42: # 11
+		vsdblock.parse(hd, size, value, 0x42)
+
+
+def PageLayout (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineToNodeX", 1, "%.3f"%struct.unpack("<d",value[0x1d:0x25]),2,0x1d,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineToNodeY", 1, "%.3f"%struct.unpack("<d",value[0x26:0x2e]),2,0x26,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "BlockSizeX", 1, "%.3f"%struct.unpack("<d",value[0x2f:0x37]),2,0x2f,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "BlockSizeY", 1, "%.3f"%struct.unpack("<d",value[0x38:0x40]),2,0x38,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "AvenueSizeX", 1, "%.3f"%struct.unpack("<d",value[0x41:0x49]),2,0x41,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "AvenueSizeY", 1, "%.3f"%struct.unpack("<d",value[0x4a:0x52]),2,0x4a,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineToLineX", 1, "%.3f"%struct.unpack("<d",value[0x53:0x5b]),2,0x53,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineToLineY", 1, "%.3f"%struct.unpack("<d",value[0x5c:0x64]),2,0x5c,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineJumpFactorX", 1, "%.3f"%struct.unpack("<d",value[0x64:0x6c]),2,0x64,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineJumpFactorY", 1, "%.3f"%struct.unpack("<d",value[0x6c:0x74]),2,0x6c,3,8,4,"<d")
+
 
 def Polyline (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -690,9 +732,9 @@ chnk_func = {
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,0x93:StyleProps,
 	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
-	0xa8:LayerIX,
-	0xc1:Polyline,
-	0xc3:NURBS, 0xc9:NameID,0xd1:ShapeData
+	0xa8:LayerIX,0xaa:Control,
+	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
+	0xd1:ShapeData
 }
 
 def parse(model, version, parent, pntr):
