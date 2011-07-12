@@ -1,3 +1,7 @@
+2011-07-12  Valek Filippov
+
+		* Parse VSD SplineStart/Knot.
+
 2011-07-11  Valek Filippov
 
 		* Parse FontFace for vsd ver 11.

@@ -696,6 +696,32 @@ def ShapeStencil (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "var4?", 1, "%.2f"%struct.unpack("<d",value[0x2f:0x37]),2,0x2f,3,8,4,"<d")
 
+def SplineStart (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Knot", 1, "%.2f"%struct.unpack("<d",value[0x25:0x2d]),2,0x25,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Knot2", 1, "%.2f"%struct.unpack("<d",value[0x2d:0x35]),2,0x2d,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Knot3", 1, "%.2f"%struct.unpack("<d",value[0x35:0x3d]),2,0x35,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Degree", 1, "%d"%struct.unpack("<h",value[0x3d:0x3f]),2,0x3d,3,2,4,"<h")
+	if len(value)>0x41:
+		vsdblock.parse(hd, size, value, 0x41)
+
+def SplineKnot (hd, size, value):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Y", 1, "%.2f"%struct.unpack("<d",value[29:37]),2,29,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Knot", 1, "%.2f"%struct.unpack("<d",value[0x25:0x2d]),2,0x25,3,8,4,"<d")
+	if len(value)>0x2f:
+		vsdblock.parse(hd, size, value, 0x2f)
+
 
 def FrgnType (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -732,7 +758,7 @@ chnk_func = {
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,0x93:StyleProps,
 	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
-	0xa8:LayerIX,0xaa:Control,
+	0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
 	0xd1:ShapeData
 }
