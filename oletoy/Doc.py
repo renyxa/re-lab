@@ -38,7 +38,7 @@ class Page:
 		offset = 0
 		src = gsf.InputStdio(self.fname)
 		buf = src.read(12)
-		if buf == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
+		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 			self.type = oleparse.open(src, self)
 			return 0
 
