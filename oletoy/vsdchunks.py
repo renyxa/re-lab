@@ -169,19 +169,16 @@ def List (hd, size, value):
 	else:
 		hd.hdmodel.set (iter1, 0, "ChldList", 1, "[empty]",2,27+shl,3,ch_list_len,4,"txt")
 
-
 def Page (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "BG Page", 1,struct.unpack("<I",value[27:27+4])[0],2,27,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "BG Page", 1,"%d"%struct.unpack("<I",value[27:27+4])[0],2,27,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewScale?", 1,struct.unpack("<d",value[45:45+8])[0],2,45,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewCntrX", 1, struct.unpack("<d",value[53:53+8])[0],2,53,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewCntrY", 1, struct.unpack("<d",value[61:61+8])[0],2,61,3,8,4,"<d")
-
-
 
 def Shape (hd, size, value):
 	List (hd, size, value)
@@ -500,7 +497,7 @@ def TextBlock (hd, size, value):
 	elif len(value)>0x6f and hd.version == 11:
 		vsdblock.parse(hd, size, value, 0x6f)
 
-
+#0x92
 def PageProps (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "PageWidth", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -518,6 +515,11 @@ def PageProps (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "DrawingSizeType", 1, "%2x"%ord(value[73]),2,82,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "DrawingScaleType", 1, "%2x"%ord(value[74]),2,83,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwObliqueAngle", 1, "%.2f"%struct.unpack("<d",value[0x61:0x69]),2,0x61,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwScaleFactor", 1, "%.2f"%struct.unpack("<d",value[0x69:0x71]),2,0x69,3,8,4,"<d")
+
 	if len(value)>0x9b:
 		vsdblock.parse(hd, size, value, 0x96)
 
@@ -750,7 +752,7 @@ chnk_func = {
 	0x15:Page,
 	0x28:ShapeStencil,
 	0xd:List,0x2c:List,
-	0x46:List,0x47:Shape, 0x48:Shape, 0x4a:Shape, 0x4e:Shape,0x4f:Shape,
+	0x46:Shape,0x47:Shape, 0x48:Shape, 0x4a:Shape, 0x4e:Shape,0x4f:Shape,
 	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
 	0x85:Line,0x86:Fill,0x87:TextBlock,0x89:Geometry,

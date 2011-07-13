@@ -17,7 +17,7 @@
 import sys,struct
 import tree, gtk, gobject
 import gsf
-import oleparse,mf,svm
+import oleparse,mf,svm,cdr
 
 class Page:
 	def __init__(self):
@@ -25,6 +25,7 @@ class Page:
 		self.fname = ''
 		self.pname = ''
 		self.items = ''
+		self.version = 0
 		self.hd = None
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 
@@ -36,7 +37,7 @@ class Page:
 			self.pname = self.fname
 		offset = 0
 		src = gsf.InputStdio(self.fname)
-		buf = src.read(8)
+		buf = src.read(12)
 		if buf == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 			self.type = oleparse.open(src, self)
 			return 0
@@ -47,7 +48,15 @@ class Page:
 			buf = src.read(src.size())
 			svm.open (buf,self)
 			return 0
-			
+
+		if buf[0:4] == "RIFF" and buf[8:11] == "CDR":
+			self.type = "CDR%x"%(ord(buf[11])-0x30)
+			src.seek(0,1)
+			buf = src.read(src.size())
+			print 'Probably CDR %x'%(ord(buf[11])-0x30)
+			cdr.cdr_open(buf,self)
+			return 0
+
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
 			src.seek(0,1)

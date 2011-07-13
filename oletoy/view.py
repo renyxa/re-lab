@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse
 
-version = "0.5.23"
+version = "0.5.24"
 
 ui_info = \
 '''<ui>
@@ -459,6 +459,8 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "svm":
 					if svm.svm_ids.has_key(ntype[1]):
 						svm.svm_ids[ntype[1]](hd,size,data)
+				elif ntype[0] == "cdr":
+					pass
 				elif ntype[2] == 0xff:
 					iter1 = hd.hdmodel.append(None, None)
 					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
