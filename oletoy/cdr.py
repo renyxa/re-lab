@@ -16,8 +16,47 @@
 
 import sys,struct,gtk,gobject, zlib
 
-def flgs (hd,size,data):
-	print 'Check version: ',hd.version
+fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
+clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY",
+5:"RGB",6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"LAB"}
+
+def fild (hd,size,data):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Fill ID", 1, "%02x"%struct.unpack('<I', data[0:4])[0],2,0,3,4,4,"<I")
+	fill_type = struct.unpack('<I', data[4:8])[0]
+	ft_txt = "%d"%fill_type
+	if fill_types.has_key(fill_type):
+		ft_txt += " "+fill_types[fill_type]
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Fill Type", 1, ft_txt,2,4,3,4,4,"txt")
+	clr_model = struct.unpack('<h', data[8:0xa])[0]
+	clrm_txt = "%d"%clr_model
+	if clr_models.has_key(clr_model):
+		clrm_txt += " " + clr_models[clr_model]
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Color Model", 1, clrm_txt,2,8,3,2,4,"txt")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Color", 1, "%02x"%struct.unpack('<i', data[0x10:0x14])[0],2,0x10,3,4,4,"<i")
+
+loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",20:"Polygon"}
+
+def loda (hd,size,data):
+	n_args = struct.unpack('<i', data[4:8])[0]
+	s_args = struct.unpack('<i', data[8:0xc])[0]
+	s_types = struct.unpack('<i', data[0xc:0x10])[0]
+	l_type = struct.unpack('<i', data[0x10:0x14])[0]
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "# of args", 1, n_args,2,4,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Start of args", 1, s_args,2,8,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Start of arg types", 1, s_types,2,0xc,3,4,4,"<i")
+	t_txt = "%02x"%l_type
+	if loda_types.has_key(l_type):
+		t_txt += " " + loda_types[l_type]
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Type", 1, t_txt,2,0x10,3,2,4,"txt")
+	
 
 def trfd (hd,size,data):
 	start = 32
@@ -25,12 +64,10 @@ def trfd (hd,size,data):
 		start = 40
 	if hd.version == 5:
 		start = 18
-
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "x0", 1, "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),2,start+16,3,8,4,"<d")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "y0", 1, "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),2,start+40,3,8,4,"<d")
-
 	for i in (0,1,3,4):                     
 		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
 		iter = hd.hdmodel.append(None, None)
@@ -38,8 +75,7 @@ def trfd (hd,size,data):
 
 
 
-
-cdr_ids = {"flgs":flgs,"trfd":trfd}
+cdr_ids = {"fild":fild,"trfd":trfd,"loda":loda}
 
 def cdr_open (buf,page):
 	try:
