@@ -16,6 +16,31 @@
 
 import sys,struct,gtk,gobject, zlib
 
+def flgs (hd,size,data):
+	print 'Check version: ',hd.version
+
+def trfd (hd,size,data):
+	start = 32
+	if hd.version == 13:
+		start = 40
+	if hd.version == 5:
+		start = 18
+
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "x0", 1, "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),2,start+16,3,8,4,"<d")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "y0", 1, "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),2,start+40,3,8,4,"<d")
+
+	for i in (0,1,3,4):                     
+		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter, 0, "var%d"%(i+1), 1, "%f"%var,2,start+i*8,3,8,4,"<d")
+
+
+
+
+cdr_ids = {"flgs":flgs,"trfd":trfd}
+
 def cdr_open (buf,page):
 	try:
 		parse_fourcc (None,buf,page,0)
@@ -32,6 +57,9 @@ def parse_fourcc (parent,buf,page,offset):
 	offset +=4
 	f_val = buf[offset:offset+f_len]
 	offset += f_len
+	if f_type == "vrsn":
+		page.version = struct.unpack("<h",f_val)[0]/100
+
 	if f_type == 'RIFF' or f_type == 'LIST':
 		if debug:
 			f_iter = page.model.append(parent,None)

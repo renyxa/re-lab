@@ -24,7 +24,7 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
-import emfparse,svm,mf,wmfparse
+import emfparse,svm,mf,wmfparse,cdr
 
 version = "0.5.24"
 
@@ -389,6 +389,7 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
 		hd = self.das[pn].hd
+		hd.version = self.das[pn].version
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
 #		print "NType: %s %02x"%(ntype[0],ntype[1])
@@ -460,6 +461,8 @@ class ApplicationMainWindow(gtk.Window):
 					if svm.svm_ids.has_key(ntype[1]):
 						svm.svm_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cdr":
+					if cdr.cdr_ids.has_key(ntype[1]):
+						cdr.cdr_ids[ntype[1]](hd,size,data)
 					pass
 				elif ntype[2] == 0xff:
 					iter1 = hd.hdmodel.append(None, None)
