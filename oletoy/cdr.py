@@ -16,27 +16,46 @@
 
 import sys,struct,gtk,gobject, zlib
 
+def add_iter (hd,name,value,offset,length,vtype):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
+
 fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
-clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY",
-5:"RGB",6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"LAB"}
+clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
+							6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"LAB",12:'Unknown0xc',
+							13:'Unknown0xd',14:'Unknown0xe',15:'Unknown0xf',16:'Unknown0x10',
+							17:'CMYK255',18:'Unknown0x12',19:'Unknown0x13',20:'Registration Color'}
+
+bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
+								'HLS', 'PAL8', 'Unknown9', 'RGB', 'LAB')
+outl_corn_type =('Normal', 'Rounded', 'Cant')
+outl_caps_type =('Normal', 'Rounded', 'Out Square')
+fild_pal_type = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 0xb:'Texture'} # FIXME! names are guessed by frob
+fild_grad_type = ('Unknown', 'Linear', 'Radial', 'Conical', 'Squared') #FIXME! gussed
+#loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,0x68:loda_stlt, 0x2af8:loda_polygone,0x3e8:loda_name,
+#									0x2efe:loda_rot	#, 0x7d0:loda_palt, 0x1f40:loda_lens, 0x1f45:loda_contnr
+#									}
+
 
 def fild (hd,size,data):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Fill ID", 1, "%02x"%struct.unpack('<I', data[0:4])[0],2,0,3,4,4,"<I")
-	fill_type = struct.unpack('<I', data[4:8])[0]
+	add_iter (hd,"Fill ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
+	fill_type = struct.unpack('<h', data[4:6])[0]
 	ft_txt = "%d"%fill_type
 	if fill_types.has_key(fill_type):
 		ft_txt += " "+fill_types[fill_type]
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Fill Type", 1, ft_txt,2,4,3,4,4,"txt")
-	clr_model = struct.unpack('<h', data[8:0xa])[0]
-	clrm_txt = "%d"%clr_model
-	if clr_models.has_key(clr_model):
-		clrm_txt += " " + clr_models[clr_model]
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Color Model", 1, clrm_txt,2,8,3,2,4,"txt")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Color", 1, "%02x"%struct.unpack('<i', data[0x10:0x14])[0],2,0x10,3,4,4,"<i")
+	add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
+	if fill_type > 0:
+		clr_model = struct.unpack('<h', data[8:0xa])[0]
+		clrm_txt = "%d"%clr_model
+		if clr_models.has_key(clr_model):
+			clrm_txt += " " + clr_models[clr_model]
+		add_iter (hd, "Color Model", clrm_txt,8,2,"txt")
+		add_iter (hd, "Color", "%02x"%struct.unpack('<i', data[0x10:0x14])[0],0x10,4,"<i")
+
+def ftil (hd,size,data):
+	for i in range(6):
+		[var] = struct.unpack('<d', chunk.data[i*8:i*8+8]) 
+		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
 loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",20:"Polygon"}
 
@@ -45,18 +64,13 @@ def loda (hd,size,data):
 	s_args = struct.unpack('<i', data[8:0xc])[0]
 	s_types = struct.unpack('<i', data[0xc:0x10])[0]
 	l_type = struct.unpack('<i', data[0x10:0x14])[0]
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "# of args", 1, n_args,2,4,3,4,4,"<i")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Start of args", 1, s_args,2,8,3,4,4,"<i")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Start of arg types", 1, s_types,2,0xc,3,4,4,"<i")
+	add_iter (hd, "# of args", n_args,4,4,"<i")
+	add_iter (hd, "Start of args", s_args,8,4,"<i")
+	add_iter (hd, "Start of arg types", s_types,0xc,4,"<i")
 	t_txt = "%02x"%l_type
 	if loda_types.has_key(l_type):
 		t_txt += " " + loda_types[l_type]
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Type", 1, t_txt,2,0x10,3,2,4,"txt")
-	
+	add_iter (hd, "Type", t_txt,0x10,2,"txt")
 
 def trfd (hd,size,data):
 	start = 32
@@ -64,18 +78,13 @@ def trfd (hd,size,data):
 		start = 40
 	if hd.version == 5:
 		start = 18
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "x0", 1, "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),2,start+16,3,8,4,"<d")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "y0", 1, "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),2,start+40,3,8,4,"<d")
+	add_iter (hd, "x0", "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),start+16,8,"<d")
+	add_iter (hd, "y0", "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),start+40,8,"<d")
 	for i in (0,1,3,4):                     
 		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
-		iter = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter, 0, "var%d"%(i+1), 1, "%f"%var,2,start+i*8,3,8,4,"<d")
+		add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
 
-
-
-cdr_ids = {"fild":fild,"trfd":trfd,"loda":loda}
+cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda}
 
 def cdr_open (buf,page):
 	try:

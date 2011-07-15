@@ -348,7 +348,7 @@ def Line (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "BeginArrSize", 1, "%2x"%ord(value[47]),2,47,3,1,4,"<I")
 #Cap/End flags not parsed at the moment
 	if len(value)>0x36: # both 6 and 11
-		vsdblock.parse(hd, size, value, 0x30)
+		vsdblock.parse(hd, size, value, 0x36)
 
 def Fill (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)

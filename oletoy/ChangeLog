@@ -1,5 +1,10 @@
 2011-07-14  Valek Filippov
 
+		* VSD: fix 'Line' blocks.
+		* CDR: 'ftil' 
+
+2011-07-14  Valek Filippov
+
 		* CDR: loda header parsing.
 
 2011-07-13  Valek Filippov
