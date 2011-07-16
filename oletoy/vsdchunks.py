@@ -369,6 +369,7 @@ def Fill (hd, size, value):
 		vsdblock.parse(hd, size, value, 0x50)
 
 def Char (hd, size, value):
+	print "CHAR: ",len(value),hd.version
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Num of Chars", 1, "%d"%struct.unpack("<I",value[0x13:0x17]),2,0x13,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
@@ -423,20 +424,21 @@ def Char (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "Font Mods4", 1, ftxt,2,0x2d,3,1,4,"txt")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Spacing", 1, "%d pt"%(struct.unpack("<h",value[0x2e:0x30])[0]/200.),2,0x2e,3,2,4,"<h")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "AsianFont", 1, "%d"%ord(value[0x38]),2,0x38,3,1,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ComplexScriptFont", 1, "%d"%ord(value[0x3a]),2,0x3a,3,1,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "LocalizeFont", 1, "%d"%ord(value[0x3c]),2,0x3c,3,1,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ComplexScriptSize", 1, "%d%%"%(struct.unpack("<d",value[0x3e:0x46])[0]*100),2,0x3e,3,8,4,"<d")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "LangID", 1, "%d"%struct.unpack("<I",value[0x58:0x5c]),2,0x58,3,4,4,"<I")
-	if hd.version == 6 and len(value)>0x36:
+	if hd.version == 11:
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "AsianFont", 1, "%d"%ord(value[0x38]),2,0x38,3,1,4,"<I")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ComplexScriptFont", 1, "%d"%ord(value[0x3a]),2,0x3a,3,1,4,"<I")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "LocalizeFont", 1, "%d"%ord(value[0x3c]),2,0x3c,3,1,4,"<I")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ComplexScriptSize", 1, "%d%%"%(struct.unpack("<d",value[0x3e:0x46])[0]*100),2,0x3e,3,8,4,"<d")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "LangID", 1, "%d"%struct.unpack("<I",value[0x58:0x5c]),2,0x58,3,4,4,"<I")
+		if len(value)>0x6b and hd.version == 11:
+			vsdblock.parse(hd, size, value, 0x6b)
+	elif hd.version == 6 and len(value)>0x36:
 		vsdblock.parse(hd, size, value, 0x36)
-	elif len(value)>0x6b and hd.version == 11:
-		vsdblock.parse(hd, size, value, 0x6b)
 
 
 

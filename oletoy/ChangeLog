@@ -1,3 +1,8 @@
+2011-07-16  Valek Filippov
+
+		* VSD: fix version for chunks, tweek 'Char' to not parse ver11 fields in ver6 file
+		* CDR: more 'loda' functions
+
 2011-07-14  Valek Filippov
 
 		* VSD: fix 'Line' blocks.
