@@ -369,7 +369,6 @@ def Fill (hd, size, value):
 		vsdblock.parse(hd, size, value, 0x50)
 
 def Char (hd, size, value):
-	print "CHAR: ",len(value),hd.version
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Num of Chars", 1, "%d"%struct.unpack("<I",value[0x13:0x17]),2,0x13,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
