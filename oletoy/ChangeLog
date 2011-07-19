@@ -1,3 +1,7 @@
+2011-07-19  Valek Filippov
+
+		* VSD: Add num of chars to ParaIX chunk.
+
 2011-07-16  Valek Filippov
 
 		* VSD: fix version for chunks, tweek 'Char' to not parse ver11 fields in ver6 file

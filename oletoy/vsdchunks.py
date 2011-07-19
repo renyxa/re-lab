@@ -443,6 +443,8 @@ def Char (hd, size, value):
 
 def Para (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Num of Chars", 1, "%d"%struct.unpack("<I",value[0x13:0x17]),2,0x13,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "IndFirst", 1, "%.2f"%struct.unpack("<d",value[0x18:0x20]),2,0x18,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "IndLeft", 1, "%.2f"%struct.unpack("<d",value[0x21:0x29]),2,0x21,3,8,4,"<d")
