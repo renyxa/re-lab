@@ -169,6 +169,15 @@ def List (hd, size, value):
 	else:
 		hd.hdmodel.set (iter1, 0, "ChldList", 1, "[empty]",2,27+shl,3,ch_list_len,4,"txt")
 
+def Text (hd, size, value):
+	# no support for LangID for v.6
+	if hd.version == 11:
+		txt = unicode(value[0x1b:],'utf-16').encode('utf-8')
+	else:
+		txt = value[0x1b:]
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Text", 1,txt,2,0x1b,3,len(value)-8,4,"txt")
+	
 def Page (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
@@ -752,6 +761,7 @@ def FrgnType (hd, size, value):
 
 
 chnk_func = {
+	0xe:Text,
 	0x15:Page,
 	0x28:ShapeStencil,
 	0xd:List,0x2c:List,

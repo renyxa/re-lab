@@ -1,6 +1,7 @@
 2011-07-19  Valek Filippov
 
 		* VSD: Add num of chars to ParaIX chunk.
+		* VSD: Naive parsing of 'TextIX' chunk.
 
 2011-07-16  Valek Filippov
 
