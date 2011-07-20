@@ -177,7 +177,7 @@ def Text (hd, size, value):
 		txt = value[0x1b:]
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Text", 1,txt,2,0x1b,3,len(value)-8,4,"txt")
-	
+
 def Page (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
@@ -204,7 +204,6 @@ def Shape (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "TextStyle", 1, "%2x"%struct.unpack("<I",value[69:69+4])[0],2,69,3,4,4,"<I")
 
-
 def XForm (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "PinX", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -229,7 +228,6 @@ def XForm (hd, size, value):
 	if len(value)>0x58: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x58)
 
-
 def XForm1D (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "BeginX", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -241,7 +239,6 @@ def XForm1D (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "EndY", 1, "%.2f"%struct.unpack("<d",value[47:55]),2,47,3,8,4,"<d")
 	if len(value)>0x39: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x39)
-
 
 def TxtXForm (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -269,7 +266,6 @@ def MoveTo (hd, size, value):
 	if len(value)>0x27: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x27)
 
-
 def ArcTo (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -292,7 +288,6 @@ def InfLine (hd, size, value):
 	if len(value)>0x39: # both 6 and 11 ???
 		vsdblock.parse(hd, size, value, 0x39)
 
-
 def EllArcTo (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -308,7 +303,6 @@ def EllArcTo (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "D", 1, "%.2f"%struct.unpack("<d",value[65:73]),2,65,3,8,4,"<d")
 	if len(value)>0x4b: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x4b)
-
 
 def Ellipse (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -344,6 +338,10 @@ def Line (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "LineClrID", 1, "%2x"%ord(value[28]),2,28,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineClr", 1, "%02x%02x%02x"%(ord(value[29]),ord(value[30]),ord(value[31])),2,29,3,3,4,"clr")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineXparency", 1, "%d %%"%(ord(value[32])/2.56),2,32,3,1,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "LinePatternID", 1, "%2x"%ord(value[33]),2,33,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Rounding", 1, "%.2f"%struct.unpack("<d",value[35:43]),2,35,3,8,4,"<d")
@@ -354,8 +352,9 @@ def Line (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "EndArrow", 1, "%2x"%ord(value[45]),2,45,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "LineCap", 1, "%2x"%ord(value[46]),2,46,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "BeginArrSize", 1, "%2x"%ord(value[47]),2,47,3,1,4,"<I")
-#Cap/End flags not parsed at the moment
 	if len(value)>0x36: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x36)
 
@@ -363,15 +362,42 @@ def Fill (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "FillFG", 1, "%2x"%ord(value[19]),2,19,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FillFGClr", 1, "%02x%02x%02x"%(ord(value[20]),ord(value[21]),ord(value[22])),2,20,3,3,4,"clr")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FillFGXparency", 1, "%d %%"%(ord(value[23])/2.56),2,23,3,1,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "FillBG", 1, "%2x"%ord(value[24]),2,24,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FillBGClr", 1, "%02x%02x%02x"%(ord(value[25]),ord(value[26]),ord(value[27])),2,25,3,3,4,"clr")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "FillBGXparency", 1, "%d %%"%(ord(value[28])/2.56),2,28,3,1,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "FillPattern", 1, "%2x"%ord(value[29]),2,29,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShdwFG", 1, "%2x"%ord(value[30]),2,30,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwFGClr", 1, "%02x%02x%02x"%(ord(value[31]),ord(value[32]),ord(value[33])),2,31,3,3,4,"clr")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwFGXparency", 1, "%d %%"%(ord(value[34])/2.56),2,34,3,1,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShdwBG", 1, "%2x"%ord(value[35]),2,35,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwBGClr", 1, "%02x%02x%02x"%(ord(value[36]),ord(value[37]),ord(value[38])),2,36,3,3,4,"clr")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwBGXparency", 1, "%d %%"%(ord(value[39])/2.56),2,39,3,1,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShdwPattern", 1, "%2x"%ord(value[40]),2,40,3,1,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ShdwType", 1, "%2x"%ord(value[0x29]),2,0x29,3,1,4,"<I")
+	if hd.version == 11:
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ShdwOffsetX", 1, "%.2f"%struct.unpack("<d",value[0x2b:0x33]),2,0x2b,3,8,4,"<d")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ShdwOffsetY", 1, "%.2f"%struct.unpack("<d",value[0x34:0x3c]),2,0x34,3,8,4,"<d")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ShdwObliqueAngle", 1, "%.2f"%struct.unpack("<d",value[0x3d:0x45]),2,0x3d,3,8,4,"<d")
+		iter1 = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter1, 0, "ShdwScaleFactor", 1, "%.2f"%struct.unpack("<d",value[0x45:0x4d]),2,0x45,3,8,4,"<d")
 	if hd.version == 6 and len(value)>0x2c:
 		vsdblock.parse(hd, size, value, 0x2c)
 	elif len(value)>0x50 and hd.version == 11:

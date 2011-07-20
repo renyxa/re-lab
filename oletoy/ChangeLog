@@ -2,6 +2,8 @@
 
 		* VSD: Add num of chars to ParaIX chunk.
 		* VSD: Naive parsing of 'TextIX' chunk.
+		* VSD: fix blocks parsing for strings in ver 6
+		* VSD: complete Fill/Line parsing for ver 11 (transparency,cap,shadow offsets).
 
 2011-07-16  Valek Filippov
 

@@ -276,9 +276,15 @@ def sl_funcs7a(hd, data, shift, offset, blk_off):
 
 def sl_str(hd, data, shift, offset, blk_off):
 	slen = ord(data[offset+blk_off])
+	if hd.version == 11:
+		txt = unicode(data[offset+blk_off+1:offset+blk_off+3+slen*2],"utf-16")
+		tlen = slen*2+3
+	else:
+		txt = data[offset+blk_off+1:offset+blk_off+2+slen]
+		tlen = slen+2
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tstring", 1, unicode(data[offset+blk_off+1:offset+blk_off+3+slen*2],"utf-16"),2,shift+offset+blk_off,3,3+slen*2,4,"txt")
-	return blk_off+3+slen*2
+	hd.hdmodel.set (iter1, 0, "\tstring", 1, txt,2,shift+offset+blk_off,3,tlen,4,"txt")
+	return blk_off+tlen
 
 sl_opnames = {0x3:'+', 0x4:'-', 0x5:'*', 0x6:'/', 0x7:'^', 0x8:'&', 0x9:'<',
 				0xa:'<=', 0xb:'=', 0xc:'>=', 0xd:'>', 0xe:'!=',
