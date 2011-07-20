@@ -332,6 +332,8 @@ def NameID (hd, size, value):
 		iter1 = hd.hdmodel.append(None, None)
 		hd.hdmodel.set (iter1, 0, "Rec #%d"%i, 1, "%2x %2x %2x %2x"%(n1,n2,n3,flag),2,23+i*13,3,13,4,"txt")
 
+linecaps = {0:"Round (SVG: Round)", 1:"Square (SVG: Butt)",2:"Extended (SVG: Square)"}
+
 def Line (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Weight", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -351,8 +353,12 @@ def Line (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "BeginArrow", 1, "%2x"%ord(value[44]),2,44,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "EndArrow", 1, "%2x"%ord(value[45]),2,45,3,1,4,"<I")
+	lc = ord(value[46])
+	lc_txt = "%2x "%lc
+	if linecaps.has_key(lc):
+		lc_txt += linecaps[lc]
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "LineCap", 1, "%2x"%ord(value[46]),2,46,3,1,4,"<I")
+	hd.hdmodel.set (iter1, 0, "LineCap", 1, lc_txt,2,46,3,1,4,"txt")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "BeginArrSize", 1, "%2x"%ord(value[47]),2,47,3,1,4,"<I")
 	if len(value)>0x36: # both 6 and 11

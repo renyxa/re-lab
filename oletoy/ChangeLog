@@ -1,6 +1,7 @@
 2011-07-20  Valek Filippov
 
 		* VSD: Fill/Line opacity -- "off by one"
+		* VSD: Line cap mapping between VSD and SVG
 
 2011-07-19  Valek Filippov
 
