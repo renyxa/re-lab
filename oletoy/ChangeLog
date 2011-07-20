@@ -1,3 +1,7 @@
+2011-07-20  Valek Filippov
+
+		* VSD: Fill/Line opacity -- "off by one"
+
 2011-07-19  Valek Filippov
 
 		* VSD: Add num of chars to ParaIX chunk.
