@@ -415,6 +415,11 @@ def Char (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "FontID", 1, "%2x"%struct.unpack("<H",value[0x17:0x19]),2,0x17,3,2,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ColorID", 1, "%d"%ord(value[0x18]),2,0x18,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Color", 1, "%02x%02x%02x"%(ord(value[0x19]),ord(value[0x1a]),ord(value[0x1b])),2,0x19,3,3,4,"clr")
+
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Transparency", 1, "%d%%"%(ord(value[0x1d])*100/256),2,0x1d,3,1,4,"<I")
 
 	flags1 = ord(value[0x1e])

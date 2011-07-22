@@ -1,3 +1,7 @@
+2011-07-22  Valek Filippov
+
+		* VSD: Char -- colorID and color
+
 2011-07-20  Valek Filippov
 
 		* VSD: Fill/Line opacity -- "off by one"
