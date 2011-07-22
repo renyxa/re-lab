@@ -413,9 +413,9 @@ def Char (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Num of Chars", 1, "%d"%struct.unpack("<I",value[0x13:0x17]),2,0x13,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "FontID", 1, "%2x"%struct.unpack("<H",value[0x17:0x19]),2,0x17,3,2,4,"<I")
+	hd.hdmodel.set (iter1, 0, "FontID", 1, "0x%02x"%struct.unpack("<H",value[0x17:0x19]),2,0x17,3,2,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ColorID", 1, "%d"%ord(value[0x19]),2,0x19,3,1,4,"<B")
+	hd.hdmodel.set (iter1, 0, "ColorID", 1, "0x%02x"%ord(value[0x19]),2,0x19,3,1,4,"<B")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Color", 1, "%02x%02x%02x"%(ord(value[0x1a]),ord(value[0x1b]),ord(value[0x1c])),2,0x1a,3,3,4,"clr")
 
