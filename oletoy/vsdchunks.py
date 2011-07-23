@@ -19,7 +19,7 @@ import vsd,vsdblock
 
 chunknoshift = {
 		0x15:'Page',\
-		0x18:'FontFaces',\
+		0x18:'FontList',\
 		0x1a:'Styles',\
 		0x46:'PageSheet',\
 		0x47:'ShapeType="Group"',\
@@ -59,8 +59,8 @@ chunktype = {
 		0x11:'Data2    ',\
 		0x12:'Data3    ',\
 		0x15:'Page     ',\
-		0x18:'FontFaces',\
-		0x19:'FontFace ',\
+		0x18:'FontList',\
+		0x19:'Font ',\
 		0x1a:'Styles   ',\
 		0x1f:'OLE_Data ',\
 		0x23:'Icon     ',\
@@ -181,7 +181,7 @@ def Text (hd, size, value):
 def Page (hd, size, value):
 	List (hd, size, value)
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "BG Page", 1,"%d"%struct.unpack("<I",value[27:27+4])[0],2,27,3,4,4,"<I")
+	hd.hdmodel.set (iter1, 0, "BG Page", 1,"%x"%struct.unpack("<I",value[27:27+4])[0],2,27,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewScale?", 1,struct.unpack("<d",value[45:45+8])[0],2,45,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)

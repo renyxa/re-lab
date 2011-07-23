@@ -108,7 +108,7 @@ def parse (page, data, parent):
 		model.set_value(iter2,2,len(res))
 		model.set_value(iter2,3,res)
 		model.set_value(iter2,6,model.get_string_from_iter(iter2))
-		model.set_value(iter2,5,"#96afcf")
+		model.set_value(iter2,5,"#96dfcf")
 
 		ptr_search (page, data, version, iter1)
 
@@ -173,7 +173,10 @@ def ptr_search (page, data, version, parent):
 					else:
 					  idx = " %02x"%childlist
 					  childlist +=1
-				  itername = streamtype[pntr.type]+idx+'\t%04x'%(pntr.length)
+				  if (pntr.type == 0x15 and pntr.format&1 == 0):
+					itername = "Page BG   "+idx+'\t%04x'%(pntr.length)
+				  else:
+				    itername = streamtype[pntr.type]+idx+'\t%04x'%(pntr.length)
 				  name2 = streamtype[pntr.type]
 			  else:
 				  childlist +=1
@@ -205,7 +208,7 @@ def ptr_search (page, data, version, parent):
 				  model.set_value(iter2,2,len(res))
 				  model.set_value(iter2,3,res)
 				  model.set_value(iter2,6,model.get_string_from_iter(iter2))
-				  model.set_value(iter2,5,"#96afcf")
+				  model.set_value(iter2,5,"#96dfcf")
 				  if vbaflag == 1:
 					vbadata += res[4:len(res)]
   #			print "ptr type/fmt %02x %02x"%(pntr.type,pntr.format)
