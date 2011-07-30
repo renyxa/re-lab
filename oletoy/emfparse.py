@@ -244,8 +244,6 @@ def RestoreDC (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "SavedDC", 1, struct.unpack("<i",value[8:12])[0],2,8,3,4,4,"<i")
 
-
-
 #35
 def SetWorldTransform  (hd, size, value):
 	iter = hd.hdmodel.append(None, None)

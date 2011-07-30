@@ -24,9 +24,9 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
-import emfparse,svm,mf,wmfparse,cdr
+import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.27"
+version = "0.5.29"
 
 ui_info = \
 '''<ui>
@@ -464,7 +464,8 @@ class ApplicationMainWindow(gtk.Window):
 					if cdr.cdr_ids.has_key(ntype[1]):
 						cdr.cdr_ids[ntype[1]](hd,size,data)
 				elif	ntype[0] == "emf+":
-					pass
+					if emfplus.emfplus_ids.has_key(ntype[1]):
+						emfplus.emfplus_ids[ntype[1]](hd,data)
 
 #				elif ntype[2] == 0xff:
 #					iter1 = hd.hdmodel.append(None, None)
