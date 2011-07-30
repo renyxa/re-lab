@@ -73,7 +73,7 @@ class Page:
 			mf.mf_open(buf,self)
 			return 0
 
-		src.seek(32,0)
+		src.seek(28,0)
 		buf = src.read(4)
 		if buf == "\x20\x45\x4d\x46":
 			self.type = "EMF"

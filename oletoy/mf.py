@@ -16,6 +16,30 @@
 
 import sys,struct,gtk,gobject
 
+emrplus_ids = {
+  0x4001:"E+Header", 0x4002:"E+EOF", 0x4003:"E+Comment", 0x4004:"E+GetDC",
+  0x4005:"E+MultiFormatStart", 0x4006:"E+MultiFormatSection",
+  0x4007:"E+MultiFormatEnd", 0x4008:"E+Object", 0x4009:"E+Clear",
+  0x400A:"E+FillRects", 0x400B:"E+DrawRects", 0x400C:"E+FillPolygon",
+  0x400D:"E+DrawLines", 0x400E:"E+FillEllipse", 0x400F:"E+DrawEllipse",
+  0x4010:"E+FillPie", 0x4011:"E+DrawPie", 0x4012:"E+DrawArc",
+  0x4013:"E+FillRgn", 0x4014:"E+FillPath", 0x4015:"E+DrawPath",
+  0x4016:"E+FillClosedCurve", 0x4017:"E+DrawClosedCurve", 0x4018:"E+DrawCurve",
+  0x4019:"E+DrawBeziers", 0x401A:"E+DrawImage", 0x401B:"E+DrawImagePoints",
+  0x401C:"E+DrawString", 0x401D:"E+SetRenderingOrigin", 0x401E:"E+SetAntiAliasMode",
+  0x401F:"E+SetTextRenderingHint", 0x4020:"E+SetTextContrast", 0x4021:"E+SetInterpolationMode",
+  0x4022:"E+SetPixelOffsetMode", 0x4023:"E+SetCompositingMode",
+  0x4024:"E+SetCompositingQuality", 0x4025:"E+Save", 0x4026:"E+Restore",
+  0x4027:"E+BeginContainer", 0x4028:"E+BeginContainerNoParams",
+  0x4029:"E+EndContainer", 0x402A:"E+SetWorldTransform",
+  0x402B:"E+ResetWorldTransform", 0x402C:"E+MultiplyWorldTransform",
+  0x402D:"E+TranslateWorldTransform", 0x402E:"E+ScaleWorldTransform",
+  0x402F:"E+RotateWorldTransform", 0x4030:"E+SetPageTransform",
+  0x4031:"E+ResetClip", 0x4032:"E+SetClipRect", 0x4033:"E+SetClipPath",
+  0x4034:"E+SetClipRgn", 0x4035:"E+OffsetClip", 0x4036:"E+DrawDriverstring",
+  0x4037:"E+StrokeFillPath", 0x4038:"E+SerializableObject", 0x4039:"E+SetTSGraphics",
+  0x403A:"E+SetTSClip"}
+
 emr_ids = {0:'Unknown', 1:'Header',2:'Polybezier',3:'Polygon',4:'Polyline',5:'PolybezierTo',\
                  6:'PolylineTo',7:'PolyPolyline',8:'PolyPolygon',9:'SetWindowExtEx',10:'SetWindowOrgEx',\
                  11:'SetViewportExtEx',12:'SetViewportOrgEx',13:'SetBrushOrgEx',14:'EOF',15:'SetPixelV',\
@@ -189,8 +213,8 @@ def mf_open (buf,page):
 	offset = 0
 	if page.type == 'EMF':
 	  while offset < len(buf) - 8:
-		[newT] = struct.unpack('<I', buf[offset:offset+4])
-		[newL] = struct.unpack('<I', buf[offset+4:offset+8])
+		newT = struct.unpack('<I', buf[offset:offset+4])[0]
+		newL = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		newV = buf[offset:offset+newL]
 		rname = emr_ids[newT]
 		iter1 = page.model.append(None,None)
@@ -200,7 +224,28 @@ def mf_open (buf,page):
 		page.model.set_value(iter1,3,newV)
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		#print offset, newT, rname, newL
+		if newT == 0x46: # GDIComment
+			eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
+			eptype = buf[offset+0xc:offset+0x10]
+			if eptype == '\x45\x4d\x46\x2b':
+			  i = 0
+			  while i < eplen - 4:
+				try:
+				  eprid = struct.unpack('<H',buf[offset+i+0x10:offset+i+0x12])[0]
+				  eprlen = struct.unpack('<I',buf[offset+i+0x14:offset+i+0x18])[0]
+				  eprname = "%02x"%eprid
+				  if emrplus_ids.has_key(eprid):
+					eprname = emrplus_ids[eprid]
+				  iter2 = page.model.append(iter1, None)
+				  page.model.set(iter2, 0, eprname, 1, ("emf+",eprid))
+				  page.model.set(iter2, 2, eprlen)
+				  page.model.set(iter2, 3, buf[offset+0x10+i:offset+0x10+i+eprlen], 6, page.model.get_string_from_iter(iter2))
+				  i += eprlen
+				except:
+				  print "Oops"
+				  i += eplen
 		offset = offset + newL
+
 	elif page.type == 'APWMF' or page.type == 'WMF':
 		if page.type == 'APWMF':
 		  iter1 = page.model.append(None,None)

@@ -419,6 +419,12 @@ def SelectClipPath (hd, size, value):
 def AbortPath (hd, size, value):
 	return
 
+#70
+def GDIComment (hd, size, value):
+	type = value[0xC:0x10]
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Type", 1, type,2,0xc,3,4,4,"<I")
+
 #85
 def Polybezier16 (hd, size, value):
 	Rectangle (hd, size, value)
@@ -543,7 +549,8 @@ emr_ids = {1:Header,2:Polybezier,3:Polygon,4:Polyline,5:PolybezierTo,\
 	54:LineTo,55:ArcTo,56:Polydraw,57:SetArcDirection,58:SetMiterLimit,\
 	59:BeginPath,60:EndPath,61:CloseFigure,62:FillPath,63:StrokeAndFillPath,\
 	64:StrokePath,65:FlattenPath,66:WidenPath,67:SelectClipPath,68:AbortPath,\
-	#70:'GDIComment',71:'FillRgn',72:'FrameRgn',73:'InvertRgn',74:'PaintRgn',75:'ExtSelectClipRgn',\
+	70:GDIComment,
+	#71:'FillRgn',72:'FrameRgn',73:'InvertRgn',74:'PaintRgn',75:'ExtSelectClipRgn',\
 	#76:'BitBlt',77:'StretchBlt',78:'MaskBlt',79:'PlgBlt',80:'SetDIBitsToDevice',81:'StretchDIBits',\
 	#82:'ExtCreateFontIndirectW',83:'ExtTextOutA',84:'ExtTextOutW',
 	85:Polybezier16,86:Polygon16,87:Polyline16,88:PolybezierTo16,89:PolylineTo16,90:PolyPolyline16,91:PolyPolygon16,\

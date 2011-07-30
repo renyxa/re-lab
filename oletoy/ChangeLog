@@ -1,3 +1,7 @@
+2011-07-30  Valek Filippov
+
+		* EMF: Start to parse EMF+ records.
+
 2011-07-23  Valek Filippov
 
 		* VSD: Some chunks/streams renaming in Fonts, mark 'Background' pages as 'Page BG',

@@ -463,10 +463,12 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "cdr":
 					if cdr.cdr_ids.has_key(ntype[1]):
 						cdr.cdr_ids[ntype[1]](hd,size,data)
+				elif	ntype[0] == "emf+":
 					pass
-				elif ntype[2] == 0xff:
-					iter1 = hd.hdmodel.append(None, None)
-					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
+
+#				elif ntype[2] == 0xff:
+#					iter1 = hd.hdmodel.append(None, None)
+#					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
 
 
 	def hdselect_cb(self,event,udata):
