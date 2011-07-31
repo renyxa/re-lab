@@ -36,7 +36,7 @@ emrplus_ids = {
   0x402D:"E+TranslateWorldTransform", 0x402E:"E+ScaleWorldTransform",
   0x402F:"E+RotateWorldTransform", 0x4030:"E+SetPageTransform",
   0x4031:"E+ResetClip", 0x4032:"E+SetClipRect", 0x4033:"E+SetClipPath",
-  0x4034:"E+SetClipRgn", 0x4035:"E+OffsetClip", 0x4036:"E+DrawDriverstring",
+  0x4034:"E+SetClipRgn", 0x4035:"E+OffsetClip", 0x4036:"E+DrawDriverString",
   0x4037:"E+StrokeFillPath", 0x4038:"E+SerializableObject", 0x4039:"E+SetTSGraphics",
   0x403A:"E+SetTSClip"}
 
@@ -217,13 +217,13 @@ def mf_open (buf,page):
 		newL = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		newV = buf[offset:offset+newL]
 		rname = emr_ids[newT]
+#		if newT == 0x46: # to play with EMF+
 		iter1 = page.model.append(None,None)
 		page.model.set_value(iter1,0,rname)
 		page.model.set_value(iter1,1,("emf",newT))
 		page.model.set_value(iter1,2,newL)
 		page.model.set_value(iter1,3,newV)
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-		#print offset, newT, rname, newL
 		if newT == 0x46: # GDIComment
 			eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
 			eptype = buf[offset+0xc:offset+0x10]

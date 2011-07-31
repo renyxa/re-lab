@@ -65,14 +65,85 @@ PathPointType = {0:"Start", 1:"Line", 3:"Bezier"}
 
 PathPointTypeFlags = {0:"DashMode",1:"PathMarker",2:"RLE",3:"CloseSubpath"} # Added RLE and translated to power for high 4 bits
 
-RegionNodeDataType = {0:"And",1:"Or",2:"Xor",3:"Exclude",4:"Complement",
-	5:"Rect",6:"Path",7:"Empty",8:"Infinite"}
+RegionNodeDataType = {1:"And",2:"Or",3:"Xor",4:"Exclude",5:"Complement",
+	0x10000000:"Rect",0x10000001:"Path",0x10000002:"Empty",0x10000003:"Infinite"}
 
 ImageType = {0:"Unknown",1:"Bitmap",2:"Metafile"}
 
 MetafileType = {0:"Wmf",1:"WmfPlaceable",2:"Emf",3:"EmfPlusOnly",4:"EmfPlusDual"}
 
 FontStyleFlags = {0:"Bold", 1:"Italic", 2:"Underline", 3:"Strikeout"}
+
+StrFmtFlagNames = {0:"DirectionRightToLeft",1:"DirectionVertical",
+	2:"NoFitBlackBox",3:"DisplayFormatControl",4:"NoFontFallback",
+	5:"MeasureTrailingSpaces",6:"NoWrap",7:"LineLimit",8:"NoClip",9:"BypassGDI"}
+
+StrFmtFlagValues = {0:0x1, 1:0x2, 2:0x4, 3:0x20, 4:0x400,5:0x800,
+	6:0x1000, 7:0x2000, 8:0x4000, 9:0x80000000}
+
+LangIDnames = {0x0000:"LANG_NEUTRAL", 0x0004:"zh-CHS", 0x007F:"LANG_INVARIANT",
+	0x0400:"LANG_NEUTRAL_USER_DEFAULT", 0x0401:"ar-SA", 0x0402:"bg-BG", 0x0403:"ca-ES",
+	0x0404:"zh-CHT", 0x0405:"cs-CZ", 0x0406:"da-DK", 0x0407:"de-DE", 0x0408:"el-GR",
+	0x0409:"en-US", 0x040A:"es-Tradnl-ES", 0x040B:"fi-FI", 0x040C:"fr-FR", 0x040D:"he-IL",
+	0x040E:"hu-HU", 0x040F:"is-IS", 0x0410:"it-IT", 0x0411:"ja-JA", 0x0412:"ko-KR",
+	0x0413:"nl-NL", 0x0414:"nb-NO", 0x0415:"pl-PL", 0x0416:"pt-BR", 0x0417:"rm-CH",
+	0x0418:"ro-RO", 0x0419:"ru-RU", 0x041A:"hr-HR", 0x041B:"sk-SK", 0x041C:"sq-AL",
+	0x041D:"sv-SE", 0x041E:"th-TH", 0x041F:"tr-TR", 0x0420:"ur-PK", 0x0421:"id-ID",
+	0x0422:"uk-UA", 0x0423:"be-BY", 0x0424:"sl-SI", 0x0425:"et-EE", 0x0426:"lv-LV",
+	0x0427:"lt-LT", 0x0428:"tg-TJ", 0x0429:"fa-IR", 0x042A:"vi-VN", 0x042B:"hy-AM",
+	0x042C:"az-Latn-AZ", 0x042D:"eu-ES", 0x042E:"wen-DE", 0x042F:"mk-MK", 0x0430:"st-ZA",
+	0x0432:"tn-ZA", 0x0434:"xh-ZA", 0x0435:"zu-ZA", 0x0436:"af-ZA", 0x0437:"ka-GE",
+	0x0438:"fa-FA", 0x0439:"hi-IN", 0x043A:"mt-MT", 0x043B:"se-NO", 0x043C:"ga-GB",
+	0x043E:"ms-MY", 0x043F:"kk-KZ", 0x0440:"ky-KG", 0x0441:"sw-KE", 0x0442:"tk-TM",
+	0x0443:"uz-Latn-UZ", 0x0444:"tt-Ru", 0x0445:"bn-IN", 0x0446:"pa-IN", 0x0447:"gu-IN",
+	0x0448:"or-IN", 0x0449:"ta-IN", 0x044A:"te-IN", 0x044B:"kn-IN", 0x044C:"ml-IN",
+	0x044D:"as-IN", 0x044E:"mr-IN", 0x044F:"sa-IN", 0x0450:"mn-MN", 0x0451:"bo-CN",
+	0x0452:"cy-GB", 0x0453:"km-KH", 0x0454:"lo-LA", 0x0456:"gl-ES", 0x0457:"kok-IN",
+	0x0459:"sd-IN", 0x045A:"syr-SY", 0x045B:"si-LK", 0x045D:"iu-Cans-CA", 0x045E:"am-ET",
+	0x0461:"ne-NP",0x0462:"fy-NL",  0x0463:"ps-AF",0x0464:"fil-PH",  0x0465:"div-MV",
+	0x0468:"ha-Latn-NG", 0x046A:"yo-NG",0x046B:"quz-BO", 0x046C:"nzo-ZA",  0x046D:"ba-RU",
+	0x046E:"lb-LU", 0x046F:"kl-GL", 0x0470:"ig-NG", 0x0477:"so-SO", 0x0478:"ii-CN",
+	0x047A:"arn-CL",0x047C:"moh-CA",  0x047E:"br-FR", 0x0480:"ug-CN",0x0481:"mi-NZ", 
+	0x0482:"oc-FR", 0x0483:"co-FR",0x0484:"gsw-FR", 0x0485:"sah-RU", 0x0486:"qut-GT", 
+	0x0487:"rw-RW", 0x0488:"wo-SN", 0x048C:"gbz-AF", 0x0800:"LANG_NEUTRAL_SYS_DEFAULT",
+	0x0801:"ar-IQ",0x0804:"zh-CN",  0x0807:"de-CH", 0x0809:"en-GB",0x080A:"es-MX", 
+	0x080C:"fr-BE",0x0810:"it-CH",  0x0812:"ko-Johab-KR",0x0813:"nl-BE",  0x0814:"nn-NO",
+	0x0816:"pt-PT",  0x081A:"sr-Latn-SP", 0x081D:"sv-FI", 0x0820:"ur-IN", 0x0827:"lt-C-LT",
+	0x082C:"az-Cyrl-AZ", 0x082E:"wee-DE", 0x083B:"se-SE", 0x083C:"ga-IE", 0x083E:"ms-BN",
+	0x0843:"uz-Cyrl-UZ", 0x0845:"bn-BD", 0x0850:"mn-Mong-CN", 0x0859:"sd-PK", 0x085D:"iu-Latn-CA",
+	0x085F:"tzm-Latn-DZ", 0x086B:"quz-EC", 0x0C00:"LANG_NEUTRAL_CUSTOM_DEFAULT", 
+	0x0C01:"ar-EG", 0x0C04:"zh-HK", 0x0C07:"de-AT", 0x0C09:"en-AU", 0x0C0A:"es-ES",
+	0x0C0C:"fr-CA", 0x0C1A:"sr-Cyrl-CS", 0x0C3B:"se-FI",0x0C6B:"quz-PE",
+	0x1000:"LANG_NEUTRAL_CUSTOM",  0x1001:"ar-LY", 0x1004:"zh-SG", 0x1007:"de-LU",
+	0x1009:"en-CA", 0x100A:"es-GT", 0x100C:"fr-CH", 0x101A:"hr-BA", 0x103B:"smj-NO",
+	0x1400:"LANG_NEUTRAL_CUSTOM_DEFAULT_MUI", 0x1401:"ar-DZ", 0x1404:"zh-MO", 0x1407:"de-LI",
+	0x1409:"en-NZ", 0x140A:"es-CR", 0x140C:"fr-LU", 0x141A:"bs-Latn-BA", 0x143B:"smj-SE",
+	0x1801:"ar-MA", 0x1809:"en-IE", 0x180A:"es-PA", 0x180C:"ar-MC", 0x181A:"sr-Latn-BA",
+	0x183B:"sma-NO", 0x1C01:"ar-TN", 0x1C09:"en-ZA", 0x1C0A:"es-DO", 0x1C1A:"sr-Cyrl-BA",
+	0x1C3B:"sma-SE", 0x2001:"ar-OM", 0x2008:"el-2-GR", 0x2009:"en-JM", 0x200A:"es-VE",
+	0x201A:"bs-Cyrl-BA", 0x203B:"sms-FI", 0x2401:"ar-YE", 0x2409:"ar-029", 0x240A:"es-CO",
+	0x243B:"smn-FI", 0x2801:"ar-SY", 0x2809:"en-BZ", 0x280A:"es-PE", 0x2C01:"ar-JO",
+	0x2C09:"en-TT", 0x2C0A:"es-AR", 0x3001:"ar-LB", 0x3009:"en-ZW", 0x300A:"es-EC",
+	0x3401:"ar-KW", 0x3409:"en-PH", 0x340A:"es-CL", 0x3801:"ar-AE", 0x380A:"es-UY",
+	0x3C01:"ar-BH", 0x3C0A:"es-PY", 0x4001:"ar-QA", 0x4009:"en-IN", 0x400A:"es-BO",
+	0x4409:"en-MY", 0x440A:"es-SV", 0x4809:"en-SG", 0x480A:"es-HN", 0x4C0A:"es-NI",
+	0x500A:"es-PR", 0x540A:"es-US", 0x7C04:"zh-Hant"} 
+
+StrAlign = {0:"Near",1:"Center",2:"Far"}
+
+StrDgtSubs = {0:"User",1:"None",2:"National",3:"Traditional"}
+
+HotPfx = {0:"None", 1:"Show", 2:"Hide"}
+
+StrTrim = {0:"None", 1:"Character", 2:"Word", 3:"EllipsisCharacter", 4:"EllipsisWord", 5:"EllipsisPath"}
+
+ClampMode = {0:"Rect",1:"Bitmap"}
+
+CustLCapDataType ={0:"Default",1:"AdjustableArrow"}
+
+DrvStrOptFlags = {0:"CmapLookup", 1:"Vertical", 2:"RealizedAdvance", 3:"LimitSubpixel"}
+
+CombineMode = {0:"Replace", 1:"Intersect", 2:"Union", 3:"XOR", 4:"Exclude", 5:"Complement"}
 
 def PointL (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
@@ -136,12 +207,26 @@ def PointType(value,offset):
 	return ptft,pttt
 
 def RGBA (hd, value, offset,i=""):
-	clr = "%02X"%ord(value[2])+"%02X"%ord(value[1])+"%02X"%ord(value[0])+"%02X"%ord(value[3])
+	clr = "%02X"%ord(value[offset+2])+"%02X"%ord(value[offset+1])+"%02X"%ord(value[offset])+"%02X"%ord(value[offset+3])
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "%s  RGBA"%i, 1, clr,2,offset,3,4,4,"clr")
+	hd.hdmodel.set (iter, 0, "%s RGBA"%i, 1, clr,2,offset,3,4,4,"clr")
+
+def XFormMtrx (hd, value, offset):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "m11", 1, struct.unpack("<f",value[offset:offset+4])[0],2,offset,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "m12", 1, struct.unpack("<f",value[offset+4:offset+8])[0],2,offset+4,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "m21", 1, struct.unpack("<f",value[offset+8:offset+12])[0],2,offset+8,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "m22", 1, struct.unpack("<f",value[offset+12:offset+16])[0],2,offset+12,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Dx", 1, struct.unpack("<f",value[offset+16:offset+20])[0],2,offset+16,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Dy", 1, struct.unpack("<f",value[offset+20:offset+24])[0],2,offset+20,3,4,4,"<f")
 
 def PDF_Xform (hd, value, offset):
-# FIXME! Parse XForm
+	XFormMtrx(hd,value,offset)
 	return 24
 
 def PDF_StartCap (hd, value, offset):
@@ -229,26 +314,35 @@ def PDF_CustomEndCap (hd, value, offset):
 	hd.hdmodel.set(iter, 0, "  CustEndCapData", 1,"",2,offset+4,3,dlsize,4,"<I")
 	return dlsize+4
 
+def BDF_PresetColors (hd, value, offset):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "PresetColor")
+	iter = hd.hdmodel.append(None, None)
+	pcnt = struct.unpack("<I",value[offset:offset+4])[0]
+	hd.hdmodel.set(iter, 0, "  PosCount", 1, "%d"%pcnt,2,offset,3,4,4,"<I")
+	for i in range(pcnt):
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "  BlendPos%d"%i, 1, "%.2f"%struct.unpack("<f",value[offset+4+i*4:offset+8+i*4]),2,offset+4+i*4,3,4,4,"<I")
+	for i in range(pcnt):
+		RGBA(hd,value,offset+pcnt*4+4+i*4,"  Blend%d Clr"%i)
+	return 4+pcnt*8
+
 def BT_SolidColor (hd, value, offset):
 	RGBA(hd,value,offset)
 
 def BT_HatchFill (hd, value, offset):
 	iter = hd.hdmodel.append(None, None)
-	hstyle = struct.unpack("<I",value[0:4])[0]
+	hstyle = struct.unpack("<I",value[offset+0:offset+4])[0]
 	hst = "unknown"
 	if HatchStyle.has_key(hstyle):
 		hst = HatchStyle(hstyle)
 	hd.hdmodel.set(iter, 0, "  HatchStyle", 1, "0x%02X (%s)"%(hstyle,hst),2,offset,3,4,4,"<I")
-	iter = hd.hdmodel.append(None, None)
-	clr = "%02X"%ord(value[6])+"%02X"%ord(value[5])+"%02X"%ord(value[4])+"%02X"%ord(value[7])
-	hd.hdmodel.set (iter, 0, "  ForeClr RGBA", 1, clr,2,offset+4,3,4,4,"clr")
-	iter = hd.hdmodel.append(None, None)
-	clr = "%02X"%ord(value[10])+"%02X"%ord(value[9])+"%02X"%ord(value[8])+"%02X"%ord(value[11])
-	hd.hdmodel.set (iter, 0, "  BackClr RGBA", 1, clr,2,offset+8,3,4,4,"clr")
+	RGBA(hd,value,offset+4,"ForeClr ")
+	RGBA(hd,value,offset+8,"BackClr ")
 
 def BT_TextureFill (hd, value, offset):
 	iter = hd.hdmodel.append(None, None)
-	bdflags = struct.unpack("<I",value[0:4])[0]
+	bdflags = struct.unpack("<I",value[offset+0:offset+4])[0]
 	bdf = []
 	bdft = ""
 	flags = bdflags
@@ -258,11 +352,10 @@ def BT_TextureFill (hd, value, offset):
 	for i in range(8):
 		if bdf[i] == 1:
 			bdft += BrushDataFlags[i] + ", "
-	bdft = pdft[0:len(pdft)-2]
-	
+	bdft = bdft[0:len(bdft)-2]
 	hd.hdmodel.set(iter, 0, "  BrushDataFlags", 1, "0x%02X (%s)"%(bdflags,bdft),2,offset,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
-	wmode = struct.unpack("<I",value[4:8])[0]
+	wmode = struct.unpack("<I",value[offset+4:offset+8])[0]
 	wmt = ""
 	if WrapMode.has_key(wmode):
 		wmt = WrapMode[wmode]
@@ -271,11 +364,11 @@ def BT_TextureFill (hd, value, offset):
 	for i in range(8):
 		if bdf[i] == 1:
 			if bdf_ids.has_key(i):
-				offset += bdf_ids[i](hd,size,value[offset:],offset)
+				offset += bdf_ids[i](hd,value,offset)
 
 def BT_PathGradient (hd, value, offset):
 	iter = hd.hdmodel.append(None, None)
-	bdflags = struct.unpack("<I",value[0:4])[0]
+	bdflags = struct.unpack("<I",value[offset+0:offset+4])[0]
 	bdf = []
 	bdft = ""
 	flags = bdflags
@@ -285,41 +378,42 @@ def BT_PathGradient (hd, value, offset):
 	for i in range(8):
 		if bdf[i] == 1:
 			bdft += BrushDataFlags[i] + ", "
-	bdft = pdft[0:len(pdft)-2]
-	
+	bdft = bdft[0:len(bdft)-2]
 	hd.hdmodel.set(iter, 0, "  BrushDataFlags", 1, "0x%02X (%s)"%(bdflags,bdft),2,offset,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
-	wmode = struct.unpack("<I",value[4:8])[0]
+	wmode = struct.unpack("<I",value[offset+4:offset+8])[0]
 	wmt = ""
 	if WrapMode.has_key(wmode):
 		wmt = WrapMode[wmode]
 	hd.hdmodel.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+4,3,4,4,"<I")
-	RGBA(hd,value[offset+8:],offset+8,"CenterClr")
+	RGBA(hd,value,offset+8,"CenterClr")
 	PointF(hd,value,offset+12,"CenterPoint")
-	surclrcnt = struct.unpack("<I",value[20:24])[0]
+	surclrcnt = struct.unpack("<I",value[offset+20:offset+24])[0]
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "  SurClrCount", 1, "0x%02X"%surclrcnt,2,offset+20,3,4,4,"<I")
 	for i in range(surclrcnt):
 		RGBA(hd,value,offset+24+i*4,"SurClr#%s"%i)
 	if bdf[0]:
 		#Boundary path object
-		pathsize = struct.unpack("<I",value[28+surclrcnt*4:32+surclrcnt*4])[0]
-		#FIXME! parse Path Obj
-		offset += pathsize+32+surclrcnt*4
+		iter = hd.hdmodel.append(None, None)
+		psize = struct.unpack("<I",value[offset+24+surclrcnt*4:offset+28+surclrcnt*4])[0]
+		hd.hdmodel.set(iter, 0, "Path Size", 1, "0x%02X"%psize,2,offset+24+surclrcnt*4,3,4,4,"<I")
+		ObjPath(hd,value,offset+16+surclrcnt*4)
+		offset += psize+28+surclrcnt*4
 	else:
 		#Boundary point object
-		numofpts = struct.unpack("<I",value[28+surclrcnt*4:32+surclrcnt*4])[0]
+		numofpts = struct.unpack("<I",value[offset+28+surclrcnt*4:offset+32+surclrcnt*4])[0]
 		for i in range(numofpts):
 			PointF(hd,value,offset+32+surclrcnt*4+i*8,"BndrPnt#%s"%i)
 		offset += 32+surclrcnt*4+numofpts*8
 	for i in range(7): # have to skip first flag
 		if bdf[i+1] == 1:
 			if bdf_ids.has_key(i+1):
-				offset += bdf_ids[i+1](hd,size,value[offset:],offset)
+				offset += bdf_ids[i+1](hd,value,offset)
 
 def BT_LinearGradient (hd, value, offset):
 	iter = hd.hdmodel.append(None, None)
-	bdflags = struct.unpack("<I",value[0:4])[0]
+	bdflags = struct.unpack("<I",value[offset:offset+4])[0]
 	bdf = []
 	bdft = ""
 	flags = bdflags
@@ -329,31 +423,31 @@ def BT_LinearGradient (hd, value, offset):
 	for i in range(8):
 		if bdf[i] == 1:
 			bdft += BrushDataFlags[i] + ", "
-	bdft = pdft[0:len(pdft)-2]
+	bdft = bdft[0:len(bdft)-2]
 	hd.hdmodel.set(iter, 0, "  BrushDataFlags", 1, "0x%02X (%s)"%(bdflags,bdft),2,offset,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
-	wmode = struct.unpack("<I",value[4:8])[0]
+	wmode = struct.unpack("<I",value[offset+4:offset+8])[0]
 	wmt = ""
 	if WrapMode.has_key(wmode):
 		wmt = WrapMode[wmode]
 	hd.hdmodel.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+4,3,4,4,"<I")
 	PointL(hd,value,offset+8,"s")
 	PointL(hd,value,offset+16,"e")
-	RGBA(hd,value[offset+24:],offset+24,"StartClr")
-	RGBA(hd,value[offset+28:],offset+28,"EndClr")
+	RGBA(hd,value,offset+24,"StartClr")
+	RGBA(hd,value,offset+28,"EndClr")
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Rsrv1", 1, "0x%02X"%struct.unpack("<I",value[32:36])[0],2,offset+32,3,4,4,"<I")
+	hd.hdmodel.set(iter, 0, "Rsrv1", 1, "0x%02X"%struct.unpack("<I",value[offset+32:offset+36])[0],2,offset+32,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Rsrv2", 1, "0x%02X"%struct.unpack("<I",value[36:40])[0],2,offset+36,3,4,4,"<I")
+	hd.hdmodel.set(iter, 0, "Rsrv2", 1, "0x%02X"%struct.unpack("<I",value[offset+36:offset+40])[0],2,offset+36,3,4,4,"<I")
 	offset += 40
 	for i in range(8):
 		if bdf[i] == 1:
 			if bdf_ids.has_key(i):
-				offset += bdf_ids[i](hd,size,value[offset:],offset)
+				offset += bdf_ids[i](hd,value,offset)
 
-def RegionNode (hd,value,offset,txt=" "):
+def RegionNode (hd,value,offset,txt=""):
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "%s RegionNode"%txt)
+	hd.hdmodel.set(iter, 0, "%sRegionNode"%txt)
 	rtype = struct.unpack("<I",value[offset:offset+4])[0]
 	rt = "unknown"
 	if RegionNodeDataType.has_key(rtype):
@@ -365,8 +459,8 @@ def RegionNode (hd,value,offset,txt=" "):
 	return offset
 
 def RND_Child (hd,value,offset,i):
-	offset = RegionNode(hd,value,offset,"Left")
-	offset = RegionNode(hd,value,offset,"Right")
+	offset = RegionNode(hd,value,offset,"Left ")
+	offset = RegionNode(hd,value,offset,"Right ")
 	return offset
 
 def RND_Rect (hd,value,offset,i):
@@ -383,7 +477,7 @@ def RND_Path (hd,value,offset,i):
 	iter = hd.hdmodel.append(None, None)
 	psize = struct.unpack("<I",value[offset:offset+4])[0]
 	hd.hdmodel.set(iter, 0, "Path Size", 1, "0x%02X"%psize,2,offset,3,4,4,"<I")
-	ObjPath(hd,value,offset)
+	ObjPath(hd,value,offset-8)
 	return offset+psize
 
 def RND_Empty (hd,value,offset,i):
@@ -406,7 +500,7 @@ def ObjBrush (hd, value, offset = 0):
 		bt = BrushType[btype]
 	hd.hdmodel.set(iter, 0, "  Type", 1, "0x%02X (%s)"%(btype,bt),2,offset+0x10,3,4,4,"<I")
 	if bt_ids.has_key(btype):
-		bt_ids[btype](hd,value[offset+0x14:],offset+0x14)
+		bt_ids[btype](hd,value,offset+0x14)
 
 def ObjPen (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -523,7 +617,7 @@ def ObjRegion (hd, value, offset = 0):
 	rncnt = struct.unpack("<I",value[offset+0x10:offset+0x14])[0]
 	hd.hdmodel.set(iter, 0, "  RegionNodeCount", 1, "%d"%rncnt,2,offset+0x10,3,4,4,"<I")
 	offset += 0x14
-	for i in range(rncnt):
+	for i in range(rncnt+1):
 		offset = RegionNode(hd,value,offset)
 
 def ObjImage (hd, value, offset = 0):
@@ -553,6 +647,89 @@ def ObjImage (hd, value, offset = 0):
 		iter = hd.hdmodel.append(None, None)
 		hd.hdmodel.set(iter, 0, "  MetaFileSize", 1, "0x%02X"%msize,2,offset+0x18,3,4,4,"<I")
 		#FIXME! send Metafile values to parser
+
+def ObjStringFormat (hd, value, offset = 0):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "StringFormat")
+	ver = struct.unpack("<I",value[offset+0xc:offset+0x10])[0]
+	sig = ver&0xFFFFF000
+	graph = ver&0xFFF
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Ver Sig", 1, "0x%03X"%(sig/4096),2,offset+0xd,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Ver Graphics", 1, "0x%02X"%graph,2,offset+0xc,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	sfflags = struct.unpack("<I",value[offset+0x10:offset+0x14])[0]
+	sft = ""
+	for i in range(10):
+		if sfflags&StrFmtFlagValues[i]:
+			sft += StrFmtFlagNames[i]
+	hd.hdmodel.set(iter, 0, "  StringFmt Flags", 1, "0x%04X (%s)"%(sfflags,sft),2,offset+0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	langid = struct.unpack("<I",value[offset+0x14:offset+0x18])[0]
+	lt = "unknown"
+	if LangIDnames.has_key(lanid):
+		lt = LangIDnames[langid]
+	hd.hdmodel.set(iter, 0, "  LangID", 1, "0x%04X (%s)"%(langid,lt),2,offset+0x14,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	stral = struct.unpack("<I",value[offset+0x18:offset+0x1c])[0]
+	sat = "unknown"
+	if StrAlign.has_key(stral):
+		sat = StrAlign[stral]
+	hd.hdmodel.set(iter, 0, "  StringAlign", 1, "0x%04X (%s)"%(stral,sat),2,offset+0x18,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	lineal = struct.unpack("<I",value[offset+0x1c:offset+0x20])[0]
+	lat = "unknown"
+	if StrAlign.has_key(lineal):
+		lat = StrAlign[lineal]
+	hd.hdmodel.set(iter, 0, "  LineAlign", 1, "0x%04X (%s)"%(lineal,lat),2,offset+0x1c,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	sds = struct.unpack("<I",value[offset+0x20:offset+0x24])[0]
+	sdst = "unknown"
+	if StrDgtSubs.has_key(sds):
+		sdst = StrDgtSubs[sds]
+	hd.hdmodel.set(iter, 0, "  StrDigitSubst", 1, "0x%04X (%s)"%(sbs,sbst),2,offset+0x20,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	langid = struct.unpack("<I",value[offset+0x24:offset+0x28])[0]
+	lt = "unknown"
+	if LangIDnames.has_key(lanid):
+		lt = LangIDnames[langid]
+	hd.hdmodel.set(iter, 0, "  DigitLang", 1, "0x%04X (%s)"%(langid,lt),2,offset+0x24,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  FirstTabOffset", 1, "%.2f"%struct.unpack("<f",value[offset+0x28:offset+0x2c])[0],2,offset+0x28,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hkp = struct.unpack("<I",value[offset+0x2c:offset+0x30])[0]
+	hkpt = "unknown"
+	if HotPfx.has_key(hkp):
+		hkpt = HotPfx[hkp]
+	hd.hdmodel.set(iter, 0, "  HotKeyPrefix", 1, "0x%04X (%s)"%(hkp,hkpt),2,offset+0x2c,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  LeadMargin", 1, "%.2f"%struct.unpack("<f",value[offset+0x30:offset+0x34])[0],2,offset+0x30,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  TrailMargin", 1, "%.2f"%struct.unpack("<f",value[offset+0x34:offset+0x38])[0],2,offset+0x34,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Tracking", 1, "%.2f"%struct.unpack("<f",value[offset+0x38:offset+0x3c])[0],2,offset+0x38,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	strim = struct.unpack("<I",value[offset+0x3c:offset+0x40])[0]
+	st = "unknown"
+	if StrTrim.has_key(strim):
+		st = StrTrim[strim]
+	hd.hdmodel.set(iter, 0, "  StrTrimming", 1, "0x%04X (%s)"%(strim,st),2,offset+0x3c,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	tscnt = struct.unpack("<I",value[offset+0x40:offset+0x44])[0]
+	hd.hdmodel.set(iter, 0, "  TabStopCount", 1, "0x%04X"%tscnt,2,offset+0x40,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	rgcnt = struct.unpack("<I",value[offset+0x44:offset+0x48])[0]
+	hd.hdmodel.set(iter, 0, "  RangeCount", 1, "0x%04X"%tscnt,2,offset+0x44,3,4,4,"<I")
+	for i in range(tscnt):
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "  TabStop%d"%i, 1, "%.2f"%struct.unpack("<f",value[offset+0x48+i*4:offset+0x4c+i*4])[0],2,offset+0x48+i*4,3,4,4,"<f")
+	offset += 0x4c + tscnt*4
+	for i in range(rgcnt):
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "  Range%d First"%i, 1, "%d"%struct.unpack("<i",value[offset+i*4:offset+4+i*4])[0],2,offset+i*4,3,4,4,"<i")
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "  Range%d Length"%i, 1, "%d"%struct.unpack("<i",value[offset+4+i*4:offset+8+i*4])[0],2,offset+4+i*4,3,4,4,"<i")
 
 def ObjFont (hd, value, offset = 0):
 	iter = hd.hdmodel.append(None, None)
@@ -589,6 +766,52 @@ def ObjFont (hd, value, offset = 0):
 	hd.hdmodel.set(iter, 0, "  FontName Len", 1, "%d"%nlen,2,offset+0x20,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "  FontName", 1, unicode(value[offset+0x24:],"utf-16"),2,offset+0x24,3,nlen*2,4,"<I")
+
+def ObjImgAttr (hd, value, offset = 0):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "ImgAttributes")
+	ver = struct.unpack("<I",value[offset+0xc:offset+0x10])[0]
+	sig = ver&0xFFFFF000
+	graph = ver&0xFFF
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Ver Sig", 1, "0x%03X"%(sig/4096),2,offset+0xd,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Ver Graphics", 1, "0x%02X"%graph,2,offset+0xc,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Reserved1",2,offset+0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	wmode = struct.unpack("<I",value[0x14:0x18])[0]
+	wmt = ""
+	if WrapMode.has_key(wmode):
+		wmt = WrapMode[wmode]
+	hd.hdmodel.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+0x14,3,4,4,"<I")
+	RGBA(hd,value[0x18:],0x18,"ClampClr ")
+	iter = hd.hdmodel.append(None, None)
+	cmode = struct.unpack("<I",value[0x1c:0x20])[0]
+	cmt = ""
+	if ClampMode.has_key(cmode):
+		cmt = ClampMode[cmode]
+	hd.hdmodel.set(iter, 0, "  ClampMode", 1, "0x%02X (%s)"%(cmode,cmt),2,offset+0x1c,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Reserved2",2,offset+0x20,3,4,4,"<I")
+
+def ObjCustLineCap (hd, value, offset = 0):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "CustLineCap")
+	ver = struct.unpack("<I",value[offset+0xc:offset+0x10])[0]
+	sig = ver&0xFFFFF000
+	graph = ver&0xFFF
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Ver Sig", 1, "0x%03X"%(sig/4096),2,offset+0xd,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "  Ver Graphics", 1, "0x%02X"%graph,2,offset+0xc,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	citype = struct.unpack("<I",value[offset+0x10:offset+0x14])[0]
+	ct = "unknown"
+	if CustLCapDataType.has_key(ctype):
+		ct = CustLCapDataType[ctype]
+	hd.hdmodel.set(iter, 0, "  CustLineCapDataType", 1, "0x%02X (%s)"%(ctype,ct),2,offset+0x10,3,4,4,"<I")
+	#FIXME! Parse CustLineCapData
 
 #0x4001
 def Header (hd, value):
@@ -634,6 +857,64 @@ def Object (hd, value):
 	if obj_ids.has_key(otf):
 		obj_ids[otf](hd,value)
 
+#0x400A
+def FillRects (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	fc = (flags&0x4000)/0x4000
+	hd.hdmodel.set(iter, 0, "Flags (s, c)", 1, "0x%04X (%d, %d)"%(flags,fs,fc),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0x10:0x14])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0x10,3,4,4,"<I")
+	if fc == 1:  # 2bytes rect
+		for i in range(cnt):
+			PointS(hd,value,0x14+i*8,"Rect%d "%i)
+			iter = hd.hdmodel.append(None, None)
+			hd.hdmodel.set(iter, 0, "Rect%d Width"%i, 1, struct.unpack("<h",value[0x18+i*8:0x1a+i*8])[0],2,0x18+i*8,3,2,4,"<h")
+			iter = hd.hdmodel.append(None, None)
+			hd.hdmodel.set(iter, 0, "Rect%d Height"%i, 1, struct.unpack("<h",value[0x1a+i*8:0x1c+i*8])[0],2,0x1a+i*8,3,2,4,"<h")
+	else: # 4bytes rect
+		for i in range(cnt):
+			PointF(hd,value,0x14+i*16,"Rect%d "%i)
+			iter = hd.hdmodel.append(None, None)
+			hd.hdmodel.set(iter, 0, "Rect%d Width"%i, 1, struct.unpack("<f",value[0x1c+i*16:0x20+i*16])[0],2,0x1c+i*16,3,4,4,"<f")
+			iter = hd.hdmodel.append(None, None)
+			hd.hdmodel.set(iter, 0, "Rect%d Height"%i, 1, struct.unpack("<f",value[0x20+i*16:0x24+i*16])[0],2,0x20+i*16,3,4,4,"<f")
+
+#0x4014
+def FillPath (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (s, PathID)", 1, "0x%04X (%d, %02x)"%(flags,fs,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value,0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
+#0x4015
+def DrawPath (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (PathID)", 1, "0x%04X (%02x)"%(flags,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Pen ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
 #0x401D
 def SetRenderingOrigin (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -670,6 +951,23 @@ def SetTextRenderingHint (hd, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 
+#0x402A
+def SetWorldXform (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	hd.hdmodel.set(iter, 0, "Flags", 1, "0x%04X"%flags,2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	XFormMtrx(hd,value,0xc)
+
+#0x402B
+def RstWorldXform (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	hd.hdmodel.set(iter, 0, "Flags", 1, "0x%04X"%flags,2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
 #0x4030
 def SetPageXform (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -683,11 +981,76 @@ def SetPageXform (hd, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Page Scale", 1, "%.f"%struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
 
+#0x4033
+def SetClipPath (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	combmode = (flags&0xF00)/256
+	oid = ord(value[2])
+	cmt = "unknown"
+	if CombineMode.has_key(combmode):
+		cmt = CombineMode[combmode]
+	hd.hdmodel.set(iter, 0, "Flags (CM, PathID)", 1, "0x%04X (%02x (%s), %02x)"%(flags,combmode,cmt,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4034
+def SetClipRgn (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	combmode = (flags&0xF00)/256
+	oid = ord(value[2])
+	cmt = "unknown"
+	if CombineMode.has_key(combmode):
+		cmt = CombineMode[combmode]
+	hd.hdmodel.set(iter, 0, "Flags (CM, RgnID)", 1, "0x%04X (%02x (%s), %02x)"%(flags,combmode,cmt,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4036
+def DrawDriverString (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (s, FontID)", 1, "0x%04X (%d, %02x)"%(flags,fs,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	dsof = struct.unpack("<I",value[0x10:0x14])[0]
+	dsot = ""
+	flags = dsof
+	fcm = dsof&1
+	for i in range(5):
+		if flags&1:
+			dsot += DrvStrOptFlags[i]
+		flags /= 2
+	hd.hdmodel.set(iter, 0, "  DrvStringOpt Flags", 1, "0x%02X (%s)"%(dsof,dsot),2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	mp = struct.unpack("<I",value[0x14:0x18])[0]
+	hd.hdmodel.set(iter, 0, "  Matrix Present", 1, "%d"%mp,2,0x14,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	glcnt = struct.unpack("<I",value[0x18:0x1c])[0]
+	hd.hdmodel.set(iter, 0, "  Glyph Count", 1, "%d"%glcnt,2,0x18,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	glyphs = value[0x1c:0x1c+glcnt*2]
+#	fcm == 1 -- unicode, fcm == 0 -- indexes to glyphs in the font referred by FontID above
+	txt = unicode(glyphs,"utf-16")
+	hd.hdmodel.set(iter, 0, "  Glyphs", 1, txt,2,0x1c,3,glcnt*2,4,"txt")
+	for i in range(glcnt):
+		PointF(hd,value,0x1c+glcnt*2+i*8,"Glyph%d Pos "%i)
+	if mp:
+		XFormMtrx(hd,value,0x1c+glcnt*10)
 
 bdf_ids = {
-#0:BDF_Path,
+0:RND_Path, # will never be used
 #1:BDF_Transform,
-#2:BDF_PresetColors,
+2:BDF_PresetColors,
 #3:BDF_BlendFactorsH,
 #4:BDF_BlendFactorsV,
 #5:BDF_FocusScales,
@@ -704,12 +1067,10 @@ bt_ids = {0:BT_SolidColor, 1:BT_HatchFill, 2:BT_TextureFill,
 	3:BT_PathGradient, 4:BT_LinearGradient}
 
 rnd_ids = {0:RND_Child,1:RND_Child,2:RND_Child,3:RND_Child,4:RND_Child,
-5:RND_Rect,6:RND_Path,7:RND_Empty,8:RND_Empty}
+	5:RND_Rect,6:RND_Path,7:RND_Empty,8:RND_Empty}
 
-obj_ids = {
-1:ObjBrush, 2:ObjPen,3:ObjPath,4:ObjRegion,5:ObjImage,6:ObjFont
-#,7:"StringFormat",8:"ImageAttributes",9:"CustomLineCap"
-}
+obj_ids = {1:ObjBrush, 2:ObjPen,3:ObjPath,4:ObjRegion,5:ObjImage,6:ObjFont,
+	7:ObjStringFormat, 8:ObjImgAttr,9:ObjCustLineCap}
 
 emfplus_ids = {
 0x4001:Header, 0x4002:EOF,
@@ -719,10 +1080,12 @@ emfplus_ids = {
 #0x4007:"MultiFormatEnd",
 0x4008:Object,
 # 0x4009:"Clear",
-#0x400A:"FillRects", 0x400B:"DrawRects", 0x400C:"FillPolygon",
+0x400A:FillRects,
+# 0x400B:"DrawRects", 0x400C:"FillPolygon",
 #0x400D:"DrawLines", 0x400E:"FillEllipse", 0x400F:"DrawEllipse",
 #0x4010:"FillPie", 0x4011:"DrawPie", 0x4012:"DrawArc",
-#0x4013:"FillRegion", 0x4014:"FillPath", 0x4015:"DrawPath",
+#0x4013:"FillRegion",
+0x4014:FillPath, 0x4015:DrawPath,
 #0x4016:"FillClosedCurve", 0x4017:"DrawClosedCurve", 0x4018:"DrawCurve",
 #0x4019:"DrawBeziers", 0x401A:"DrawImage", 0x401B:"DrawImagePoints",
 #0x401C:"DrawString",
@@ -734,12 +1097,14 @@ emfplus_ids = {
 #0x4023:"SetCompositingMode", 0x4024:"SetCompositingQuality",
 #0x4025:"Save", 0x4026:"Restore", 0x4027:"BeginContainer",
 #0x4028:"BeginContainerNoParams", 0x4029:"EndContainer",
-#0x402A:"SetWorldTransform", 0x402B:"ResetWorldTransform",
+0x402A:SetWorldXform,0x402B:RstWorldXform,
 #0x402C:"MultiplyWorldTransform", 0x402D:"TranslateWorldTransform",
 #0x402E:"ScaleWorldTransform", 0x402F:"RotateWorldTransform",
 0x4030:SetPageXform,
 # 0x4031:"ResetClip", 0x4032:"SetClipRect",
-#0x4033:"SetClipPath", 0x4034:"SetClipRegion", 0x4035:"OffsetClip",
-#0x4036:"DrawDriverstring", 0x4037:"StrokeFillPath",
+0x4033:SetClipPath,0x4034:SetClipRgn,
+#0x4035:"OffsetClip",
+0x4036:DrawDriverString,
+# 0x4037:"StrokeFillPath",
 #0x4038:"SerializableObject", 0x4039:"SetTSGraphics", 0x403A:"SetTSClip"
 }
