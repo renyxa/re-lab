@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.29"
+version = "0.5.30"
 
 ui_info = \
 '''<ui>
@@ -522,6 +522,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.update_statusbar(txt)
 		if len(buf) == 4:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])
+			txt += "\tLEF: %s\tBEF: %s"%(struct.unpack("<f",buf)[0],struct.unpack(">f",buf)[0])
 			if type == "PUB":
 				txt += "\t%s"%struct.unpack("<i",buf)[0]/12700.
 			self.update_statusbar(txt)

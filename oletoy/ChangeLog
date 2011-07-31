@@ -1,5 +1,9 @@
 2011-07-30  Valek Filippov
 
+		* EMF: more EMF+ records parsing
+
+2011-07-30  Valek Filippov
+
 		* EMF: Start to parse EMF+ records.
 		* EMF: Parse EMF+ objects and some records.
 

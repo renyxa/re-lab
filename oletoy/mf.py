@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct,gtk,gobject
+import sys,struct,gtk,gobject,emfplus
 
 emrplus_ids = {
   0x4001:"E+Header", 0x4002:"E+EOF", 0x4003:"E+Comment", 0x4004:"E+GetDC",
@@ -217,13 +217,13 @@ def mf_open (buf,page):
 		newL = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		newV = buf[offset:offset+newL]
 		rname = emr_ids[newT]
-#		if newT == 0x46: # to play with EMF+
-		iter1 = page.model.append(None,None)
-		page.model.set_value(iter1,0,rname)
-		page.model.set_value(iter1,1,("emf",newT))
-		page.model.set_value(iter1,2,newL)
-		page.model.set_value(iter1,3,newV)
-		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+		if newT: # == 0x46: # to play with EMF+
+		  iter1 = page.model.append(None,None)
+		  page.model.set_value(iter1,0,rname)
+		  page.model.set_value(iter1,1,("emf",newT))
+		  page.model.set_value(iter1,2,newL)
+		  page.model.set_value(iter1,3,newV)
+		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		if newT == 0x46: # GDIComment
 			eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
 			eptype = buf[offset+0xc:offset+0x10]
@@ -236,15 +236,22 @@ def mf_open (buf,page):
 				  eprname = "%02x"%eprid
 				  if emrplus_ids.has_key(eprid):
 					eprname = emrplus_ids[eprid]
-				  iter2 = page.model.append(iter1, None)
+				  iter2 = page.model.append(iter1, None) # iter1 for parent/children, None for EMF+ collection
 				  page.model.set(iter2, 0, eprname, 1, ("emf+",eprid))
 				  page.model.set(iter2, 2, eprlen)
 				  page.model.set(iter2, 3, buf[offset+0x10+i:offset+0x10+i+eprlen], 6, page.model.get_string_from_iter(iter2))
+				  if emfplus.emfplus_ids.has_key(eprid):
+					pass
+				  else:
+					print "Found ",eprname,page.model.get_string_from_iter(iter2)  # warn on not parsed EMF+ records
+
 				  i += eprlen
 				except:
 				  print "Oops"
 				  i += eplen
-		offset = offset + newL
+		offset += newL
+		if newL == 0:
+		  offset+=8
 
 	elif page.type == 'APWMF' or page.type == 'WMF':
 		if page.type == 'APWMF':

@@ -145,6 +145,15 @@ DrvStrOptFlags = {0:"CmapLookup", 1:"Vertical", 2:"RealizedAdvance", 3:"LimitSub
 
 CombineMode = {0:"Replace", 1:"Intersect", 2:"Union", 3:"XOR", 4:"Exclude", 5:"Complement"}
 
+InterpolationMode = {0:"Default",1:"LowQuality",2:"HighQuality",3:"Bilinear",
+	4:"Bicubic",5:"NearestNeighbor",6:"HighQualityBilinear",7:"HighQualityBicubic"}
+
+PixelOffsetMode = {0:"Default",1:"HighSpeed",2:"HighQuality",3:"None",4:"Half"}
+
+CompositingQuality = {0:"Default",1:"HighSpeed",2:"HighQuality",3:"GammaCorrected",4:"AssumeLinear"}
+
+CompositingMode = {0:"Over",1"Copy"}
+
 def PointL (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "x"+i, 1, struct.unpack("<i",value[offset:offset+4])[0],2,offset,3,4,4,"<i")
@@ -205,6 +214,20 @@ def PointType(value,offset):
 	if PathPointType.has_key(ptt):
 		pttt = PathPointType[ptt]
 	return ptft,pttt
+
+def RectF (hd, value, offset, i=""):
+	PointF (he,value,offset,i)
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "%sWidth"%i, 1, struct.unpack("<f",value[offset+8:offset+12])[0],2,offset+8,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "%sHeight"%i, 1, struct.unpack("<f",value[offset+12:offset+16])[0],2,offset+12,3,4,4,"<f")
+
+def RectS (hd, value, offset, i=""):
+	PointS (he,value,offset,i)
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "%sWidth"%i, 1, struct.unpack("<f",value[offset+4:offset+6])[0],2,offset+4,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "%sHeight"%i, 1, struct.unpack("<f",value[offset+6:offset+8])[0],2,offset+6,3,4,4,"<f")
 
 def RGBA (hd, value, offset,i=""):
 	clr = "%02X"%ord(value[offset+2])+"%02X"%ord(value[offset+1])+"%02X"%ord(value[offset])+"%02X"%ord(value[offset+3])
@@ -464,13 +487,8 @@ def RND_Child (hd,value,offset,i):
 	return offset
 
 def RND_Rect (hd,value,offset,i):
-	PointF (hd,value,offset,"  ")
-	offset += 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "  Width"%i, 1, struct.unpack("<f",value[offset:offset+4])[0],2,offset,3,4,4,"<f")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "  Height"%i, 1, struct.unpack("<f",value[offset+4:offset+8])[0],2,offset+4,3,4,4,"<f")
-	offset += 8
+	RectF (hd,value,offset,"  ")
+	offset += 16
 	return offset
 
 def RND_Path (hd,value,offset,i):
@@ -876,18 +894,10 @@ def FillRects (hd, value):
 	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0x10,3,4,4,"<I")
 	if fc == 1:  # 2bytes rect
 		for i in range(cnt):
-			PointS(hd,value,0x14+i*8,"Rect%d "%i)
-			iter = hd.hdmodel.append(None, None)
-			hd.hdmodel.set(iter, 0, "Rect%d Width"%i, 1, struct.unpack("<h",value[0x18+i*8:0x1a+i*8])[0],2,0x18+i*8,3,2,4,"<h")
-			iter = hd.hdmodel.append(None, None)
-			hd.hdmodel.set(iter, 0, "Rect%d Height"%i, 1, struct.unpack("<h",value[0x1a+i*8:0x1c+i*8])[0],2,0x1a+i*8,3,2,4,"<h")
+			RectS(hd,value,0x14+i*8,"Rect%d "%i)
 	else: # 4bytes rect
 		for i in range(cnt):
-			PointF(hd,value,0x14+i*16,"Rect%d "%i)
-			iter = hd.hdmodel.append(None, None)
-			hd.hdmodel.set(iter, 0, "Rect%d Width"%i, 1, struct.unpack("<f",value[0x1c+i*16:0x20+i*16])[0],2,0x1c+i*16,3,4,4,"<f")
-			iter = hd.hdmodel.append(None, None)
-			hd.hdmodel.set(iter, 0, "Rect%d Height"%i, 1, struct.unpack("<f",value[0x20+i*16:0x24+i*16])[0],2,0x20+i*16,3,4,4,"<f")
+			RectF(hd,value,0x14+i*16,"Rect%d "%i)
 
 #0x4014
 def FillPath (hd, value):
@@ -914,6 +924,41 @@ def DrawPath (hd, value):
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Pen ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
+#0x401B
+def DrawImagePoints (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	fe = (flags&0x2000)/0x2000
+	fp = (flags&0x800)/0x800
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, e, p, ImageID)", 1, "0x%04X (%d, %d, %d, %02x)"%(flags,fc,fe,fp,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "ImgAttrID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	utype = struct.unpack("<I",value[0x10:0x14])[0]
+	ut = "unknown"
+	if UnitType.has_key(utype):
+		ut = UnitType[utype]
+	hd.hdmodel.set(iter, 0, "SrcUnit", 1, "0x%02X (%s)"%(utype,ut),2,0x10,3,4,4,"<I")
+	RectF(hd,value,0x14,"SrcRect ")
+	iter = hd.hdmodel.append(None, None)
+	ppcnt = struct.unpack("<I",value[0x24:0x28])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%ppcnt,2,0x24,3,4,4,"<I")
+	if fp == 0:
+		if fc == 0:
+			for i in range(ppcnt):
+				PointF(hd,value,0x28+i*8,"    Abs Pnt%s "%i)
+		else:
+			for i in range(ppcnt):
+				PointS(hd,value,0x28+i*4,"    Abs Pnt%s "%i)
+	else:
+		offset = 0x28
+		for i in range(ppcnt):
+			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
 
 #0x401D
 def SetRenderingOrigin (hd, value):
@@ -951,6 +996,101 @@ def SetTextRenderingHint (hd, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 
+#0x4020
+def SetTextContrast (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	gamma = (flags&0xFFF)/1000
+	hd.hdmodel.set(iter, 0, "Flags (gamma)", 1, "0x%04X (%d)"%(flags,gamma),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4021
+def SetInterpolationMode (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	imode = ord(value[2])
+	imt = "unknown"
+	if InterpolationMode.has_key(imode):
+		imt = InterpolationMode[imode]
+	hd.hdmodel.set(iter, 0, "Flags (IntrpMode)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4022
+def SetPixelOffsetMode (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	imode = ord(value[2])
+	imt = "unknown"
+	if InterpolationMode.has_key(imode):
+		imt = InterpolationMode[imode]
+	hd.hdmodel.set(iter, 0, "Flags (PxlOffsetMode)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4023
+def SetCompositingMode (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	imode = ord(value[2])
+	imt = "unknown"
+	if CompositingMode.has_key(imode):
+		imt = CompositingMode[imode]
+	hd.hdmodel.set(iter, 0, "Flags (ComposMode)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4024
+def SetCompositingQuality (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	imode = ord(value[2])
+	imt = "unknown"
+	if CompositingQuality.has_key(imode):
+		imt = CompositingQuality[imode]
+	hd.hdmodel.set(iter, 0, "Flags (ComposQly)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4025
+def Save (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	hd.hdmodel.set(iter, 0, "Flags", 1, "0x%04X"%flags,2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "StackIdx", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
+#0x4026
+def Restore (hd, value):
+	Save(hd, value)
+
+#0x4027
+def BeginContainer (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	utype = ord(value[3])
+	ut = "unknown"
+	if UnitType.has_key(utype):
+		ut = UnitType[utype]
+	hd.hdmodel.set(iter, 0, "Flags (PgUnit)", 1, "0x%04X (%s)"%(flags,ut),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	RectF(hd,value,0xc,"DestRect ")
+	RectF(hd,value,0x1c,"SrcRect ")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "StackIdx", 1, "0x%02X"%struct.unpack("<I",value[0x2c:0x30])[0],2,0x2c,3,4,4,"<I")
+
+#0x4028
+def BeginContainerNoParams (hd, value):
+	Save(hd, value)
+
+#0x4029
+def EndContainer (hd, value):
+	Save(hd, value)
+
 #0x402A
 def SetWorldXform (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -968,6 +1108,53 @@ def RstWorldXform (hd, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 
+#0x402C
+def MultiplyWorldXform (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fa = (flags&0x2000)/0x2000
+	hd.hdmodel.set(iter, 0, "Flags (a)", 1, "0x%04X (%d)"%(flags,fa),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	XFormMtrx(hd,value,0xc)
+
+#0x402D
+def XlateWorldXform (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fa = (flags&0x2000)/0x2000
+	hd.hdmodel.set(iter, 0, "Flags (a)", 1, "0x%04X (%d)"%(flags,fa),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Dx", 1, "%f"%struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Dy", 1, "%f"%struct.unpack("<f",value[0x10:0x14])[0],2,0x10,3,4,4,"<f")
+
+#0x402E
+def ScaleWorldXform (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fa = (flags&0x2000)/0x2000
+	hd.hdmodel.set(iter, 0, "Flags (a)", 1, "0x%04X (%d)"%(flags,fa),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Sx", 1, "%f"%struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Sy", 1, "%f"%struct.unpack("<f",value[0x10:0x14])[0],2,0x10,3,4,4,"<f")
+
+#0x402F
+def RotateWorldXform (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fa = (flags&0x2000)/0x2000
+	hd.hdmodel.set(iter, 0, "Flags (a)", 1, "0x%04X (%d)"%(flags,fa),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Angle", 1, "%f"%struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+
 #0x4030
 def SetPageXform (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -980,6 +1167,27 @@ def SetPageXform (hd, value):
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Page Scale", 1, "%.f"%struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+
+#0x4031
+def RstClip (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	hd.hdmodel.set(iter, 0, "Flags", 1, "0x%04X"%flags,2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4032
+def SetClipRect (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	combmode = (flags&0xF00)/256
+	cmt = "unknown"
+	if CombineMode.has_key(combmode):
+		cmt = CombineMode[combmode]
+	hd.hdmodel.set(iter, 0, "Flags (CM)", 1, "0x%04X (%02x (%s))"%(flags,combmode,cmt),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	RectF(hd,value,0xc,"ClipRect ")
 
 #0x4033
 def SetClipPath (hd, value):
@@ -1006,6 +1214,15 @@ def SetClipRgn (hd, value):
 	hd.hdmodel.set(iter, 0, "Flags (CM, RgnID)", 1, "0x%04X (%02x (%s), %02x)"%(flags,combmode,cmt,oid),2,2,3,2,4,"<H")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+
+#0x4035
+def OffsetClip (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	hd.hdmodel.set(iter, 0, "Flags", 1, "0x%04X"%flags,2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	PointF(hd,value,0xc,"D")
 
 #0x4036
 def DrawDriverString (hd, value):
@@ -1048,15 +1265,15 @@ def DrawDriverString (hd, value):
 		XFormMtrx(hd,value,0x1c+glcnt*10)
 
 bdf_ids = {
-0:RND_Path, # will never be used
-#1:BDF_Transform,
-2:BDF_PresetColors,
-#3:BDF_BlendFactorsH,
-#4:BDF_BlendFactorsV,
-#5:BDF_FocusScales,
-#6:BDF_IsGammaCorrected,
-#7:BDF_DoNotTransform
-}
+	0:RND_Path, # will never be used
+	#1:BDF_Transform,
+	2:BDF_PresetColors,
+	#3:BDF_BlendFactorsH,
+	#4:BDF_BlendFactorsV,
+	#5:BDF_FocusScales,
+	#6:BDF_IsGammaCorrected,
+	#7:BDF_DoNotTransform
+	}
 
 pdf_ids = {0:PDF_Xform, 1:PDF_StartCap, 2:PDF_EndCap, 3:PDF_Join,
 	4:PDF_MiterLimit, 5:PDF_LineStyle, 6:PDF_DashedLineCap,
@@ -1087,24 +1304,22 @@ emfplus_ids = {
 #0x4013:"FillRegion",
 0x4014:FillPath, 0x4015:DrawPath,
 #0x4016:"FillClosedCurve", 0x4017:"DrawClosedCurve", 0x4018:"DrawCurve",
-#0x4019:"DrawBeziers", 0x401A:"DrawImage", 0x401B:"DrawImagePoints",
+#0x4019:"DrawBeziers", 0x401A:"DrawImage",
+0x401B:DrawImagePoints,
 #0x401C:"DrawString",
-0x401D:SetRenderingOrigin,
-0x401E:SetAntiAliasMode,
-0x401F:SetTextRenderingHint,
-# 0x4020:"SetTextContrast",
-#0x4021:"SetInterpolationMode", 0x4022:"SetPixelOffsetMode",
-#0x4023:"SetCompositingMode", 0x4024:"SetCompositingQuality",
-#0x4025:"Save", 0x4026:"Restore", 0x4027:"BeginContainer",
-#0x4028:"BeginContainerNoParams", 0x4029:"EndContainer",
-0x402A:SetWorldXform,0x402B:RstWorldXform,
-#0x402C:"MultiplyWorldTransform", 0x402D:"TranslateWorldTransform",
-#0x402E:"ScaleWorldTransform", 0x402F:"RotateWorldTransform",
-0x4030:SetPageXform,
-# 0x4031:"ResetClip", 0x4032:"SetClipRect",
-0x4033:SetClipPath,0x4034:SetClipRgn,
-#0x4035:"OffsetClip",
+0x401D:SetRenderingOrigin,0x401E:SetAntiAliasMode,0x401F:SetTextRenderingHint,
+0x4020:SetTextContrast, 0x4021:SetInterpolationMode, 0x4022:SetPixelOffsetMode,
+0x4023:SetCompositingMode, 0x4024:SetCompositingQuality,
+
+0x4025:Save, 0x4026:Restore,0x4027:BeginContainer, 0x4028:BeginContainerNoParams,
+0x4029:EndContainer,
+
+0x402A:SetWorldXform, 0x402B:RstWorldXform,0x402C:MultiplyWorldXform,0x402D:XlateWorldXform,
+0x402E:ScaleWorldXform,0x402F:RotateWorldXform, 0x4030:SetPageXform,
+
+0x4031:RstClip, 0x4032:SetClipRect,0x4033:SetClipPath,0x4034:SetClipRgn,0x4035:OffsetClip,
 0x4036:DrawDriverString,
-# 0x4037:"StrokeFillPath",
+
+#0x4037:"StrokeFillPath",
 #0x4038:"SerializableObject", 0x4039:"SetTSGraphics", 0x403A:"SetTSClip"
 }
