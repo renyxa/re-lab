@@ -875,6 +875,15 @@ def Object (hd, value):
 	if obj_ids.has_key(otf):
 		obj_ids[otf](hd,value)
 
+#0x4009
+def Clear (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	hd.hdmodel.set(iter, 0, "Flags", 1, "0x%04X"%flags,2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	RGBA(hd,value,0xc,"Color ")
+
 #0x400A
 def FillRects (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -898,6 +907,80 @@ def FillRects (hd, value):
 	else: # 4bytes rect
 		for i in range(cnt):
 			RectF(hd,value,0x14+i*16,"Rect%d "%i)
+
+#0x400B
+def DrawRects (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	hd.hdmodel.set(iter, 0, "Flags (c)", 1, "0x%04X (%d)"%(flags,fc),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0xx:0x10])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0xc,3,4,4,"<I")
+	if fc == 1:  # 2bytes rect
+		for i in range(cnt):
+			RectS(hd,value,0x10+i*8,"Rect%d "%i)
+	else: # 4bytes rect
+		for i in range(cnt):
+			RectF(hd,value,0x10+i*16,"Rect%d "%i)
+
+#0x400C
+def FillPolygon (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	fc = (flags&0x4000)/0x4000
+	fp = (flags&0x800)/0x800
+	hd.hdmodel.set(iter, 0, "Flags (s, c, p)", 1, "0x%04X (%d, %d, %d)"%(flags,fs,fc,fp),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0x10:0x14])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0x10,3,4,4,"<I")
+	if fp == 0:
+		if fc == 0:
+			for i in range(cnt):
+				PointF(hd,value,0x14+i*8,"    Abs Pnt%s "%i)
+		else:
+			for i in range(ppcnt):
+				PointS(hd,value,0x14+i*4,"    Abs Pnt%s "%i)
+	else:
+		offset = 0x14
+		for i in range(ppcnt):
+			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
+
+#0x400D
+def DrawLines (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	fl = (flags&0x2000)/0x2000
+	fp = (flags&0x800)/0x800
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, l, p, PenID)", 1, "0x%04X (%d, %d, %d, %02x)"%(flags,fc,fl,fp, oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0xc:0x10])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0xc,3,4,4,"<I")
+	if fp == 0:
+		if fc == 0:
+			for i in range(cnt):
+				PointF(hd,value,0x10+i*8,"    Abs Pnt%s "%i)
+		else:
+			for i in range(ppcnt):
+				PointS(hd,value,0x10+i*4,"    Abs Pnt%s "%i)
+	else:
+		offset = 0x10
+		for i in range(ppcnt):
+			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
 
 #0x4014
 def FillPath (hd, value):
@@ -1290,16 +1373,14 @@ obj_ids = {1:ObjBrush, 2:ObjPen,3:ObjPath,4:ObjRegion,5:ObjImage,6:ObjFont,
 	7:ObjStringFormat, 8:ObjImgAttr,9:ObjCustLineCap}
 
 emfplus_ids = {
-0x4001:Header, 0x4002:EOF,
-# 0x4003:"Comment",
+0x4001:Header, 0x4002:EOF, # 0x4003:"Comment",
 0x4004:GetDC,
-# 0x4005:"MultiFormatStart", 0x4006:"MultiFormatSection",
-#0x4007:"MultiFormatEnd",
-0x4008:Object,
-# 0x4009:"Clear",
-0x400A:FillRects,
-# 0x400B:"DrawRects", 0x400C:"FillPolygon",
-#0x400D:"DrawLines", 0x400E:"FillEllipse", 0x400F:"DrawEllipse",
+
+# 0x4005:"MultiFormatStart", 0x4006:"MultiFormatSection",0x4007:"MultiFormatEnd", -- MUST NOT BE USED
+
+0x4008:Object, 0x4009:Clear, 0x400A:FillRects, 0x400B:DrawRects, 0x400C:FillPolygon,
+0x400D:DrawLines,
+# 0x400E:"FillEllipse", 0x400F:"DrawEllipse",
 #0x4010:"FillPie", 0x4011:"DrawPie", 0x4012:"DrawArc",
 #0x4013:"FillRegion",
 0x4014:FillPath, 0x4015:DrawPath,
