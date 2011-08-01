@@ -884,6 +884,29 @@ def Clear (hd, value):
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 	RGBA(hd,value,0xc,"Color ")
 
+#0x4010
+def FillPie (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	fc = (flags&0x4000)/0x4000
+	hd.hdmodel.set(iter, 0, "Flags (s, c)", 1, "0x%04X (%d, %d)"%(flags,fs,fc),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "StartAngle", 1, struct.unpack("<f",value[0x10:0x14])[0],2,0x10,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "SweepAngle", 1, struct.unpack("<f",value[0x14:0x18])[0],2,0x14,3,4,4,"<f")
+	if fc == 1:  # 2bytes rect
+		RectS(hd,value,0x18+i*8,"Rect ")
+	else: # 4bytes rect
+		RectF(hd,value,0x18+i*16,"Rect ")
+
 #0x400A
 def FillRects (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -913,11 +936,12 @@ def DrawRects (hd, value):
 	iter = hd.hdmodel.append(None, None)
 	flags = struct.unpack("<H",value[2:4])[0]
 	fc = (flags&0x4000)/0x4000
-	hd.hdmodel.set(iter, 0, "Flags (c)", 1, "0x%04X (%d)"%(flags,fc),2,2,3,2,4,"<H")
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, PenID)", 1, "0x%04X (%d, %02x)"%(flags,fc,oid),2,2,3,2,4,"<H")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
-	cnt = struct.unpack("<I",value[0xx:0x10])[0]
+	cnt = struct.unpack("<I",value[0xc:0x10])[0]
 	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0xc,3,4,4,"<I")
 	if fc == 1:  # 2bytes rect
 		for i in range(cnt):
@@ -982,6 +1006,76 @@ def DrawLines (hd, value):
 		for i in range(ppcnt):
 			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
 
+#0x400E
+def FillEllipse (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	fc = (flags&0x4000)/0x4000
+	hd.hdmodel.set(iter, 0, "Flags (s, c)", 1, "0x%04X (%d, %d)"%(flags,fs,fc),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	if fc == 1:  # 2bytes rect
+		RectS(hd,value,0x10+i*8,"Rect ")
+	else: # 4bytes rect
+		RectF(hd,value,0x10+i*16,"Rect ")
+
+#0x400F
+def DrawEllipse (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, PenID)", 1, "0x%04X (%d, %02x)"%(flags,fc,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fc == 1:  # 2bytes rect
+		RectS(hd,value,0xc+i*8,"Rect ")
+	else: # 4bytes rect
+		RectF(hd,value,0xc+i*16,"Rect ")
+
+#0x4011
+def DrawPie (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, PenID)", 1, "0x%04X (%d, %02x)"%(flags,fc,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "StartAngle", 1, struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "SweepAngle", 1, struct.unpack("<f",value[0x10:0x14])[0],2,0x10,3,4,4,"<f")
+	if fc == 1:  # 2bytes rect
+		RectS(hd,value,0x14+i*8,"Rect ")
+	else: # 4bytes rect
+		RectF(hd,value,0x14+i*16,"Rect ")
+
+#0x4012
+def DrawArc (hd, value):
+	DrawPie (hd, value)
+
+#0x4013
+def FillRegion (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (s, RegionID)", 1, "0x%04X (%d, %02x)"%(flags,fs,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
 #0x4014
 def FillPath (hd, value):
 	iter = hd.hdmodel.append(None, None)
@@ -1007,6 +1101,139 @@ def DrawPath (hd, value):
 	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Pen ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
+#0x4016
+def FillClosedCurve (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	fc = (flags&0x4000)/0x4000
+	fw = (flags&0x2000)/0x2000
+	fp = (flags&0x800)/0x800
+	hd.hdmodel.set(iter, 0, "Flags (s, c, w, p)", 1, "0x%04X (%d, %d, %d, %d)"%(flags,fs,fc,fw,fp),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value,0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Tension", 1, struct.unpack("<f",value[0x10:0x14])[0],2,0x10,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0x14:0x18])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0x14,3,4,4,"<I")
+	if fp == 0:
+		if fc == 0:
+			for i in range(cnt):
+				PointF(hd,value,0x18+i*8,"    Abs Pnt%s "%i)
+		else:
+			for i in range(ppcnt):
+				PointS(hd,value,0x18+i*4,"    Abs Pnt%s "%i)
+	else:
+		offset = 0x18
+		for i in range(ppcnt):
+			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
+
+#0x4017
+def DrawClosedCurve (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	fp = (flags&0x800)/0x800
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, p, PenID)", 1, "0x%04X (%d, %d, %02x)"%(flags,fc,fp,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Tension", 1, struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0x10:0x14])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0x10,3,4,4,"<I")
+	if fp == 0:
+		if fc == 0:
+			for i in range(cnt):
+				PointF(hd,value,0x14+i*8,"    Abs Pnt%s "%i)
+		else:
+			for i in range(ppcnt):
+				PointS(hd,value,0x14+i*4,"    Abs Pnt%s "%i)
+	else:
+		offset = 0x14
+		for i in range(ppcnt):
+			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
+
+#0x4018
+def DrawCurve (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, PenID)", 1, "0x%04X (%d, %02x)"%(flags,fc,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Tension", 1, struct.unpack("<f",value[0xc:0x10])[0],2,0xc,3,4,4,"<f")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Offset", 1, struct.unpack("<I",value[0x10:0x14])[0],2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "NumSegments", 1, struct.unpack("<I",value[0x14:0x18])[0],2,0x14,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0x18:0x1c])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0x18,3,4,4,"<I")
+	if fc == 1:  # 2bytes rect
+		for i in range(cnt):
+			PointS(hd,value,0x1c+i*8,"Point%d "%i)
+	else: # 4bytes rect
+		for i in range(cnt):
+			PointF(hd,value,0x1c+i*16,"Point%d "%i)
+
+#0x4019
+def DrawBeziers (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	fp = (flags&0x800)/0x800
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, p, PenID)", 1, "0x%04X (%d, %d, %02x)"%(flags,fc,fp,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cnt = struct.unpack("<I",value[0xc:0x10])[0]
+	hd.hdmodel.set(iter, 0, "Count", 1, "0x%02X"%cnt,2,0xc,3,4,4,"<I")
+	if fp == 0:
+		if fc == 0:
+			for i in range(cnt):
+				PointF(hd,value,0x10+i*8,"    Abs Pnt%s "%i)
+		else:
+			for i in range(ppcnt):
+				PointS(hd,value,0x10+i*4,"    Abs Pnt%s "%i)
+	else:
+		offset = 0x10
+		for i in range(ppcnt):
+			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
+
+#0x401A
+def DrawImage (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fc = (flags&0x4000)/0x4000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (c, ImageID)", 1, "0x%04X (%d, %02x)"%(flags,fc,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "ImgAttrID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	utype = struct.unpack("<I",value[0x10:0x14])[0]
+	ut = "unknown"
+	if UnitType.has_key(utype):
+		ut = UnitType[utype]
+	hd.hdmodel.set(iter, 0, "SrcUnit", 1, "0x%02X (%s)"%(utype,ut),2,0x10,3,4,4,"<I")
+	RectF(hd,value,0x14,"SrcRect ")
+	if fc == 1:  # 2bytes rect
+		RectS(hd,value,0x24+i*8,"Rect ")
+	else: # 4bytes rect
+		RectF(hd,value,0x24+i*16,"Rect ")
 
 #0x401B
 def DrawImagePoints (hd, value):
@@ -1042,6 +1269,30 @@ def DrawImagePoints (hd, value):
 		offset = 0x28
 		for i in range(ppcnt):
 			offset += PointR(hd,value,offset,"    Rel Pnt%s "%i)
+
+#0x401C
+def DrawString (hd, value):
+	iter = hd.hdmodel.append(None, None)
+	flags = struct.unpack("<H",value[2:4])[0]
+	fs = (flags&0x8000)/0x8000
+	oid = ord(value[2])
+	hd.hdmodel.set(iter, 0, "Flags (s, FontID)", 1, "0x%04X (%d, %02x)"%(flags,fs,oid),2,2,3,2,4,"<H")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	if fs == 1:
+		RGBA(hd,value[0xc:],0xc,"Brush Clr")
+	else:
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set(iter, 0, "Brush ID", 1, "0x%02X"%struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Format ID", 1, "0x%02X"%struct.unpack("<I",value[0x10:0x14])[0],2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	glcnt = struct.unpack("<I",value[0x14:0x18])[0]
+	hd.hdmodel.set(iter, 0, "  Length", 1, "%d"%glcnt,2,0x14,3,4,4,"<I")
+	RectF(hd,value,0x18,"LayoutRect ")
+	iter = hd.hdmodel.append(None, None)
+	txt = unicode(value[0x28:0x28+glcnt*2],"utf-16")
+	hd.hdmodel.set(iter, 0, "  String", 1, txt,2,0x28,3,glcnt*2,4,"txt")
 
 #0x401D
 def SetRenderingOrigin (hd, value):
@@ -1378,16 +1629,14 @@ emfplus_ids = {
 
 # 0x4005:"MultiFormatStart", 0x4006:"MultiFormatSection",0x4007:"MultiFormatEnd", -- MUST NOT BE USED
 
-0x4008:Object, 0x4009:Clear, 0x400A:FillRects, 0x400B:DrawRects, 0x400C:FillPolygon,
-0x400D:DrawLines,
-# 0x400E:"FillEllipse", 0x400F:"DrawEllipse",
-#0x4010:"FillPie", 0x4011:"DrawPie", 0x4012:"DrawArc",
-#0x4013:"FillRegion",
-0x4014:FillPath, 0x4015:DrawPath,
-#0x4016:"FillClosedCurve", 0x4017:"DrawClosedCurve", 0x4018:"DrawCurve",
-#0x4019:"DrawBeziers", 0x401A:"DrawImage",
-0x401B:DrawImagePoints,
-#0x401C:"DrawString",
+0x4008:Object, 0x4009:Clear, 0x400A:FillRects, 0x400B:DrawRects,
+0x400C:FillPolygon, 0x400D:DrawLines, 0x400E:FillEllipse,
+0x400F:DrawEllipse, 0x4010:FillPie,0x4011:DrawPie, 0x4012:DrawArc,
+0x4013:FillRegion, 0x4014:FillPath, 0x4015:DrawPath,
+0x4016:FillClosedCurve, 0x4017:DrawClosedCurve, 0x4018:DrawCurve,
+0x4019:DrawBeziers, 0x401A:DrawImage, 0x401B:DrawImagePoints,
+0x401C:DrawString,
+
 0x401D:SetRenderingOrigin,0x401E:SetAntiAliasMode,0x401F:SetTextRenderingHint,
 0x4020:SetTextContrast, 0x4021:SetInterpolationMode, 0x4022:SetPixelOffsetMode,
 0x4023:SetCompositingMode, 0x4024:SetCompositingQuality,
