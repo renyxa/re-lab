@@ -93,8 +93,8 @@ wmr_ids = {0:'Unknown',1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Hea
             1790:'CreateBitmap', 1565:'PatBlt', 2338:'BitBlt', 2368:'DibBitblt', 2851:'StretchBlt', 2881:'DibStretchBlt', 3379:'SetDibToDev', 3907:'StretchDIBits'}
 
 def emf_gentree ():
-	#							Record/Group Name		Rec. Type		Min. Length
-	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+	#							Record/Group Name		Rec. Type		Min. Length		Template
+	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
 	view = gtk.TreeView(model)
 	renderer = gtk.CellRendererText()
 	column = gtk.TreeViewColumn('Group/Record', renderer, text=0)
@@ -137,6 +137,19 @@ def emf_gentree ():
 
 	# Transform Record Types
 	## 0x23, 0x24
+
+	# EMF+ Record Templates
+
+	plusrec = (
+	(0x4001, 0x1c, "\x01\x40\x01\x00\x1c\x00\x00\x00\x10\x00\x00\x00\x02\x10\xc0\xdb\x01\x00\x00\x00\x60\x00\x00\x00\x60\x00\x00\x00\x00"),
+	)
+
+	iter = model.append(None, None)
+	model.set(iter, 0, "EMF+ Records", 1, -1, 2, "")
+	for i in range (len(plusrec)):
+		niter = model.append (iter, None)
+		model.set(niter,0,emrplus_ids[plusrec[i][0]],1,plusrec[i][0],2,plusrec[i][1],3,plusrec[i][2])
+
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "Bitmap Records", 1, -1, 2, "")

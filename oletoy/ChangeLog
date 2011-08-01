@@ -1,3 +1,7 @@
+2011-08-01  Valek Filippov
+
+		* MF: gen_tree fix, init EMF+ crafting 
+
 2011-07-31  Valek Filippov
 
 		* EMF: more EMF+ records parsing

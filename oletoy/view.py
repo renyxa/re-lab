@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.30"
+version = "0.5.31"
 
 ui_info = \
 '''<ui>
@@ -126,10 +126,6 @@ class ApplicationMainWindow(gtk.Window):
 		self.fname = ''
 		self.selection = None
 
-		self.dictmod, self.dictview = mf.emf_gentree()
-		self.dictview.connect("row-activated", self.on_dict_row_activated)
-
-
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
 				self.fname = sys.argv[i+1]
@@ -189,16 +185,18 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_add (self, action):
 		pn = self.notebook.get_current_page()
 		if pn != -1:
-			window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-			window.set_resizable(True)
-			window.set_default_size(650, 700)
-			window.set_border_width(0)
-			viewscroll = gtk.ScrolledWindow()
-			viewscroll.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-			viewscroll.add(self.dictview)
-			window.set_title("Insert record: "+self.das[pn].pname)
-			window.add(viewscroll)
-			window.show_all()
+			dictmod, dictview = mf.emf_gentree()
+			dictview.connect("row-activated", self.on_dict_row_activated)
+			dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			dictwin.set_resizable(True)
+			dictwin.set_default_size(650, 700)
+			dictwin.set_border_width(0)
+			dwviewscroll = gtk.ScrolledWindow()
+			dwviewscroll.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			dwviewscroll.add(dictview)
+			dictwin.add(dwviewscroll)
+			dictwin.set_title("Insert record: "+self.das[pn].pname)
+			dictwin.show_all()
 		return
 
 	def activate_more (self, action):
@@ -223,26 +221,32 @@ class ApplicationMainWindow(gtk.Window):
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
-		dictmodel = self.dictview.get_model()
+		dictmodel = view.get_model()
 		treeSelection = self.das[pn].view.get_selection()
 		model2, iter2 = treeSelection.get_selected()
-#		print "Where? ",model2.get_string_from_iter(iter2)
 		iter = dictmodel.get_iter(path)
 		type = dictmodel.get_value(iter,1)
 		if type != -1:
 			size = int(dictmodel.get_value(iter,2))
 			rname = mf.emr_ids[type]
 			if iter2:
-				iter1 = model.insert_after(None,iter2)
+				if model.get_value(iter2,1)[1] == 0x46:
+					print "We are on the GDI Comment"
+					# check dict rec type, if EMF+ -- extend GDI comment with it
+				else:
+					iter1 = model.insert_after(None,iter2)
 			else:
 				iter1 = model.append(None,None)
-			model.set_value(iter1,0,rname)
-			model.set_value(iter1,1,("emf",type))
-			model.set_value(iter1,2,size)
-			model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
-			model.set_value(iter1,6,model.get_string_from_iter(iter1))
-			self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
-			print "Insert:",rname,size
+
+			if iter1:
+				model.set_value(iter1,0,rname)
+				model.set_value(iter1,1,("emf",type))
+				model.set_value(iter1,2,size)
+			# check dict rec type, if EMF+ -- wrap it into GDI comment
+				model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
+				model.set_value(iter1,6,model.get_string_from_iter(iter1))
+				self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
+				print "Insert:",rname,size
 
 
 	def activate_save (self, action):

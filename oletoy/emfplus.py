@@ -152,7 +152,7 @@ PixelOffsetMode = {0:"Default",1:"HighSpeed",2:"HighQuality",3:"None",4:"Half"}
 
 CompositingQuality = {0:"Default",1:"HighSpeed",2:"HighQuality",3:"GammaCorrected",4:"AssumeLinear"}
 
-CompositingMode = {0:"Over",1"Copy"}
+CompositingMode = {0:"Over",1:"Copy"}
 
 def PointL (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
