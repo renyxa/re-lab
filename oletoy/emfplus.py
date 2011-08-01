@@ -1310,9 +1310,9 @@ def SetRenderingOrigin (hd, value):
 def SetAntiAliasMode (hd, value):
 	iter = hd.hdmodel.append(None, None)
 	flags = struct.unpack("<H",value[2:4])[0]
-	smf = flags&0x7f
+	smf = (flags&0xfe)/2
 	sm = "unknown"
-	a = (flags&0x80)/0x80
+	a = flags&1
 	if SmoothingMode.has_key(smf):
 		sm = SmoothingMode[smf]
 	hd.hdmodel.set(iter, 0, "Flags (mode, a)", 1, "0x%04X (%s, %d)"%(flags,sm,a),2,2,3,2,4,"<H")

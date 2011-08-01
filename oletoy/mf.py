@@ -141,8 +141,23 @@ def emf_gentree ():
 	# EMF+ Record Templates
 
 	plusrec = (
-	(0x4001, 0x1c, "\x01\x40\x01\x00\x1c\x00\x00\x00\x10\x00\x00\x00\x02\x10\xc0\xdb\x01\x00\x00\x00\x60\x00\x00\x00\x60\x00\x00\x00\x00"),
-	)
+	  (0x4001, 0x1c, "\x01\x40\x01\x00\x1c\x00\x00\x00\x10\x00\x00\x00\x02\x10\xc0\xdb\x01\x00\x00\x00"+"\x60\x00\x00\x00"*2),
+	  (0x4002, 0xc,  "\x02\x40\x00\x00\x0c"+"\x00"*7),
+	  (0x4014, 0x10, "\x14\x40\x00\x80\x10\x00\x00\x00\x04\x00\x00\x00\xff\xff\xff\x00"),
+	  (0x4015, 0x10, "\x15\x40\x00\x00\x10\x00\x00\x00\x04"+"\x00"*7),
+	  (0x401e, 0xc,  "\x1e\x40\x0b\x00\x0c"+"\x00"*7),
+	  (0x401f, 0xc,  "\x1e\x40\x05\x00\x0c"+"\x00"*7),
+	  (0x4021, 0xc,  "\x21\x40\x07\x00\x0c"+"\x00"*7),
+	  (0x4022, 0xc,  "\x21\x40\x03\x00\x0c"+"\x00"*7),
+	  (0x4024, 0xc,  "\x24\x40\x02\x00\x0c"+"\x00"*7),
+	  (0x4025, 0x10, "\x25\x40\x00\x00\x10\x00\x00\x00\x04"+"\x00"*7),
+	  (0x4026, 0x10, "\x29\x40\x00\x00\x10\x00\x00\x00\x04"+"\x00"*7),
+	  (0x4028, 0x10, "\x28\x40\x00\x00\x10\x00\x00\x00\x04"+"\x00"*7),
+	  (0x4029, 0x10, "\x29\x40\x00\x00\x10\x00\x00\x00\x04"+"\x00"*7),
+	  (0x402a, 0x24, "\x2a\x40\x00\x00\x24\x00\x00\x00\x18" +"\x00"*5+"x80\x3f"+"\x00"*10+"\x80\x3f"+"\x00"*8),
+	  (0x402c, 0x24, "\x2c\x40\x00\x00\x24\x00\x00\x00\x18" +"\x00"*5+"x80\x3f"+"\x00"*10+"\x80\x3f"+"\x00"*8),
+	  (0x4030, 0x10, "\x30\x40\x02\x00\x10\x00\x00\x00\x04"+"\x00"*5+"\x80\x3f"),
+	  )
 
 	iter = model.append(None, None)
 	model.set(iter, 0, "EMF+ Records", 1, -1, 2, "")
@@ -221,6 +236,25 @@ def emf_gentree ():
 
 	return model,view
 
+def parse_gdiplus (buf, offset, model, piter):
+	try:
+	  eprid = struct.unpack('<H',buf[offset+0x10:offset+0x12])[0]
+	  eprlen = struct.unpack('<I',buf[offset+0x14:offset+0x18])[0]
+	  eprname = "%02x"%eprid
+	  if emrplus_ids.has_key(eprid):
+		eprname = emrplus_ids[eprid]
+	  iter2 = model.append(piter, None) # piter for parent/children, None for EMF+ collection
+	  model.set(iter2, 0, eprname, 1, ("emf+",eprid))
+	  model.set(iter2, 2, eprlen)
+	  model.set(iter2, 3, buf[offset+0x10:offset+0x10+eprlen], 6, model.get_string_from_iter(iter2))
+	  if emfplus.emfplus_ids.has_key(eprid):
+		pass
+	  else:
+		print "Found ",eprname,model.get_string_from_iter(iter2)  # warn on not parsed EMF+ records
+	  return eprlen
+	except:
+	  print "Oops"
+	  return 4
 
 def mf_open (buf,page):
 	offset = 0
@@ -238,30 +272,12 @@ def mf_open (buf,page):
 		  page.model.set_value(iter1,3,newV)
 		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		if newT == 0x46: # GDIComment
+		  eptype = buf[offset+0xc:offset+0x10]
+		  if eptype == '\x45\x4d\x46\x2b':
 			eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
-			eptype = buf[offset+0xc:offset+0x10]
-			if eptype == '\x45\x4d\x46\x2b':
-			  i = 0
-			  while i < eplen - 4:
-				try:
-				  eprid = struct.unpack('<H',buf[offset+i+0x10:offset+i+0x12])[0]
-				  eprlen = struct.unpack('<I',buf[offset+i+0x14:offset+i+0x18])[0]
-				  eprname = "%02x"%eprid
-				  if emrplus_ids.has_key(eprid):
-					eprname = emrplus_ids[eprid]
-				  iter2 = page.model.append(iter1, None) # iter1 for parent/children, None for EMF+ collection
-				  page.model.set(iter2, 0, eprname, 1, ("emf+",eprid))
-				  page.model.set(iter2, 2, eprlen)
-				  page.model.set(iter2, 3, buf[offset+0x10+i:offset+0x10+i+eprlen], 6, page.model.get_string_from_iter(iter2))
-				  if emfplus.emfplus_ids.has_key(eprid):
-					pass
-				  else:
-					print "Found ",eprname,page.model.get_string_from_iter(iter2)  # warn on not parsed EMF+ records
-
-				  i += eprlen
-				except:
-				  print "Oops"
-				  i += eplen
+			i = 0
+			while i < eplen - 4:
+			  i += parse_gdiplus (buf, offset+i, page.model, iter1)
 		offset += newL
 		if newL == 0:
 		  offset+=8
@@ -313,8 +329,10 @@ def mf_save (page, fname, ftype):
 	f.close()
 
 def dump_mf_tree (model, path, parent, f):
-	nlen = model.get_value(parent,2)
-	value = model.get_value(parent,3)
-	if nlen != None:
-		f.write(value)
+	ntype = model.get_value(parent,1)[1]
+	if ntype < 0x4001:
+	  nlen = model.get_value(parent,2)
+	  value = model.get_value(parent,3)
+	  if nlen != None:
+		  f.write(value)
 	return False

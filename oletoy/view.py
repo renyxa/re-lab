@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.31"
+version = "0.5.32"
 
 ui_info = \
 '''<ui>
@@ -172,8 +172,8 @@ class ApplicationMainWindow(gtk.Window):
 				self.activate_quit ),
 
 			( "About", None,							 # name, stock id
-				"_About", "<control>A",					# label, accelerator
-				"About",								   # tooltip
+				"About", "",					# label, accelerator
+				"About OleToy",								   # tooltip
 				self.activate_about ),
 		);
 
@@ -228,17 +228,22 @@ class ApplicationMainWindow(gtk.Window):
 		type = dictmodel.get_value(iter,1)
 		if type != -1:
 			size = int(dictmodel.get_value(iter,2))
-			rname = mf.emr_ids[type]
 			if iter2:
 				if model.get_value(iter2,1)[1] == 0x46:
-					print "We are on the GDI Comment"
-					# check dict rec type, if EMF+ -- extend GDI comment with it
+					if type > 0x4000:
+						cursize = model2.get_value(iter2,2)
+						curval = model2.get_value(iter2,3)
+						addval = dictmodel.get_value(iter,3)
+						model2.set_value(iter2,2,size+len(addval))
+						model2.set_value(iter2,3,curval+addval)
+						#clear and parse GDIComment again
+						mf.parse_gdiplus(addval,-16,model2,iter2)
 				else:
 					iter1 = model.insert_after(None,iter2)
 			else:
 				iter1 = model.append(None,None)
-
-			if iter1:
+			if model.get_value(iter2,1)[1] != 0x46:
+				rname = mf.emr_ids[type]
 				model.set_value(iter1,0,rname)
 				model.set_value(iter1,1,("emf",type))
 				model.set_value(iter1,2,size)
@@ -247,7 +252,6 @@ class ApplicationMainWindow(gtk.Window):
 				model.set_value(iter1,6,model.get_string_from_iter(iter1))
 				self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
 				print "Insert:",rname,size
-
 
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
@@ -471,11 +475,6 @@ class ApplicationMainWindow(gtk.Window):
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)
 
-#				elif ntype[2] == 0xff:
-#					iter1 = hd.hdmodel.append(None, None)
-#					hd.hdmodel.set (iter1, 0, "Txt:", 1, unicode(data,"utf-16"),2,0,3,len(data),4,"txt")
-
-
 	def hdselect_cb(self,event,udata):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
@@ -539,7 +538,6 @@ class ApplicationMainWindow(gtk.Window):
 
 			self.update_statusbar(txt)
 
-
 	def activate_new (self,parent=None):
 		doc = Doc.Page()
 		dnum = len(self.das)
@@ -562,8 +560,6 @@ class ApplicationMainWindow(gtk.Window):
 		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
 		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
-
-
 
 	def activate_open(self,parent=None):
 		if self.fname !='':
@@ -645,7 +641,6 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_child(self, menuitem):
 		pn = self.notebook.get_current_page()
-
 
 def main():
 	ApplicationMainWindow()
