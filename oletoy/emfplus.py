@@ -216,7 +216,7 @@ def PointType(value,offset):
 	return ptft,pttt
 
 def RectF (hd, value, offset, i=""):
-	PointF (he,value,offset,i)
+	PointF (hd,value,offset,i)
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "%sWidth"%i, 1, struct.unpack("<f",value[offset+8:offset+12])[0],2,offset+8,3,4,4,"<f")
 	iter = hd.hdmodel.append(None, None)
@@ -761,13 +761,13 @@ def ObjFont (hd, value, offset = 0):
 	hd.hdmodel.set(iter, 0, "  Ver Graphics", 1, "0x%02X"%graph,2,offset+0xc,3,2,4,"<H")
 	iter = hd.hdmodel.append(None, None)
 	emsize = struct.unpack("<f",value[offset+0x10:offset+0x14])[0]
-	hd.hdmodel.set(iter, 0, "  EmSize", 1, "0x%02X"%emsize,2,offset+0x10,3,4,4,"<f")
+	hd.hdmodel.set(iter, 0, "  EmSize", 1, "%.2f"%emsize,2,offset+0x10,3,4,4,"<f")
 	iter = hd.hdmodel.append(None, None)
 	utype = struct.unpack("<I",value[offset+0x14:offset+0x18])[0]
 	ut ="unknown"
 	if UnitType.has_key(utype):
 		ut = UnitType[utype]
-	hd.hdmodel.set(iter, 0, "EmSize Units", 1, "0x%02X (%s)"%(utype,ut),2,offset+0x14,3,2,4,"<H")
+	hd.hdmodel.set(iter, 0, "EmSize Units", 1, "0x%02X (%s)"%(utype,ut),2,offset+0x14,3,4,4,"<I")
 	iter = hd.hdmodel.append(None, None)
 	fflags = struct.unpack("<I",value[offset+0x18:offset+0x1c])[0]
 	fdft = ""

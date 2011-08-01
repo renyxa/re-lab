@@ -421,7 +421,7 @@ def AbortPath (hd, size, value):
 def GDIComment (hd, size, value):
 	type = value[0xC:0x10]
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Type", 1, type,2,0xc,3,4,4,"<I")
+	hd.hdmodel.set (iter, 0, "Type", 1, type,2,0xc,3,4,4,"txt")
 
 #85
 def Polybezier16 (hd, size, value):
