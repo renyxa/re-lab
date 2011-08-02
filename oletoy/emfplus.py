@@ -1292,7 +1292,7 @@ def DrawString (hd, value):
 	RectF(hd,value,0x18,"LayoutRect ")
 	iter = hd.hdmodel.append(None, None)
 	txt = unicode(value[0x28:0x28+glcnt*2],"utf-16")
-	hd.hdmodel.set(iter, 0, "  String", 1, txt,2,0x28,3,glcnt*2,4,"txt")
+	hd.hdmodel.set(iter, 0, "  String", 1, txt,2,0x28,3,glcnt*2,4,"utxt")
 
 #0x401D
 def SetRenderingOrigin (hd, value):
@@ -1592,7 +1592,7 @@ def DrawDriverString (hd, value):
 	glyphs = value[0x1c:0x1c+glcnt*2]
 #	fcm == 1 -- unicode, fcm == 0 -- indexes to glyphs in the font referred by FontID above
 	txt = unicode(glyphs,"utf-16")
-	hd.hdmodel.set(iter, 0, "  Glyphs", 1, txt,2,0x1c,3,glcnt*2,4,"txt")
+	hd.hdmodel.set(iter, 0, "  Glyphs", 1, txt,2,0x1c,3,glcnt*2,4,"utxt")
 	for i in range(glcnt):
 		PointF(hd,value,0x1c+glcnt*2+i*8,"Glyph%d Pos "%i)
 	if mp:

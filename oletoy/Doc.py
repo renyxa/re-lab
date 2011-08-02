@@ -17,7 +17,7 @@
 import sys,struct
 import tree, gtk, gobject
 import gsf
-import oleparse,mf,svm,cdr
+import oleparse,mf,svm,cdr,clp
 
 class Page:
 	def __init__(self):
@@ -40,6 +40,13 @@ class Page:
 		buf = src.read(12)
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 			self.type = oleparse.open(src, self)
+			return 0
+
+		if buf[0:2] == "\x50\xc3":
+			self.type = "CLP"
+			src.seek(0,1)
+			buf = src.read(src.size())
+			clp.open (buf,self)
 			return 0
 
 		if buf[0:6] == "VCLMTF":

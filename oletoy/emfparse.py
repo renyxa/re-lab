@@ -20,6 +20,11 @@ import gtk
 import tree
 import hexdump
 
+
+ColorSpace = {1:"ENABLE",2:"DISABLE",3:"DELETE_TRANSFORM"}
+
+ColorMatchToTarget = {0:"NOTEMBEDDED",1:"EMBEDDED"}
+
 def PointS (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "x"+i, 1, struct.unpack("<h",value[offset:offset+2])[0],2,offset,3,2,4,"<h")
@@ -31,7 +36,6 @@ def PointL (hd, value, offset, i=""):
 	hd.hdmodel.set(iter, 0, "x"+i, 1, struct.unpack("<i",value[offset:offset+4])[0],2,offset,3,4,4,"<i")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "y"+i, 1, struct.unpack("<i",value[offset+4:offset+8])[0],2,offset+4,3,4,4,"<i")
-
 
 def GC_BeginGroup (hd, value):
 	PointL(hd,value,0x14,"S")
@@ -430,7 +434,7 @@ def SelectClipPath (hd, size, value):
 def AbortPath (hd, size, value):
 	return
 
-#70
+#0x46
 def GDIComment (hd, size, value):
 	type = value[0xC:0x10]
 	iter = hd.hdmodel.append(None, None)
@@ -445,7 +449,15 @@ def GDIComment (hd, size, value):
 		if gcfunc_ids.has_key(ctype):
 			gcfunc_ids[ctype](hd,value)
 
-#85
+#0x49
+def InvertRgn (hd, size, value):
+	Rectangle (hd,size,value)
+	iter = hd.hdmodel.append(None, None)
+	rds = struct.unpack("<I",value[0x18:0x1c])[0]
+	hd.hdmodel.set (iter, 0, "RgnDataSize", 1, rds,2,0x18,3,4,4,"<I")
+	#FIXME! Add RegionData->RegionDataHeader
+
+#0x55
 def Polybezier16 (hd, size, value):
 	Rectangle (hd, size, value)
 	iter = hd.hdmodel.append(None, None)
@@ -454,23 +466,23 @@ def Polybezier16 (hd, size, value):
 	for i in range(count):
 		PointS (hd, value, i*4+28, str(i))
 
-#86
+#0x56
 def Polygon16 (hd, size, value):
 	Polybezier16 (hd, size, value)
 
-#87
+#0x57
 def Polyline16 (hd, size, value):
 	Polybezier16 (hd, size, value)
 
-#88
+#0x58
 def PolybezierTo16 (hd, size, value):
 	Polybezier16 (hd, size, value)
 
-#89
+#0x59
 def PolylineTo16 (hd, size, value):
 	Polybezier16 (hd, size, value)
 
-#90
+#0x5a
 def PolyPolyline16 (hd, size, value):
 	Rectangle (hd, size, value)
 	iter = hd.hdmodel.append(None, None)
@@ -485,11 +497,11 @@ def PolyPolyline16 (hd, size, value):
 	for i in range(count):
 		PointS (hd, value, i*4+32+numpoly*4, str(i))
 
-#91
+#0x5b
 def PolyPolygon16 (hd, size, value):
 	PolyPolyline16 (hd, size, value)
 
-#92
+#0x5c
 def Polydraw16 (hd, size, value):
 	Polybezier16 (hd, size, value)
 	[count] = struct.unpack("<i",value[24:28])
@@ -536,18 +548,51 @@ def ExtCreatePen (hd, size, value):
 def SetICMMode (hd, size, value):
 	SetBKMode (hd, size, value)
 
-#100
+#0x64
 def SetColorSpace (hd, size, value):
 	SelectObject (hd, size, value)
 
-#101
+#0x65
 def DeleteColorSpace (hd, size, value):
 	SelectObject (hd, size, value)
 
-#115
+#0x6d
+def ForceUFIMapping (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "ChkSum", 1, struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Idx", 1, struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
+
+#0x73
 def SetLayout (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "LayoutMode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+
+#0x79
+def ClrMatchToTargetW (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	dwAction = struct.unpack("<I",value[0x8:0xc])[0]
+	dt = "unknown"
+	if ColorSpace.has_key(dwAction):
+		dt = ColorSpace[dwAction]
+	hd.hdmodel.set (iter, 0, "dwAction", 1, "%d (%s)"%(dwAction,dt),2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	dwFlags = struct.unpack("<I",value[0xc:0x10])[0]
+	dt = "unknown"
+	if ColorMatchToTarget.has_key(dwFlags):
+		dt = ColorMatchToTarget[dwFlags]
+	hd.hdmodel.set (iter, 0, "dwFlags", 1, "%d (%s)"%(dwFlags,dt),2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cbName = struct.unpack("<I",value[0x10:0x14])[0]
+	hd.hdmodel.set (iter, 0, "cbName", 1, "%d"%cbName,2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cbData = struct.unpack("<I",value[0x14:0x18])[0]
+	hd.hdmodel.set (iter, 0, "cbData", 1, "%d"%cbData,2,0x14,3,4,4,"<I")
+	txt = unicode(value[0x18:0x18+cbName*2],"utf-16")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Name", 1, txt,2,0x18,3,cbName*2,4,"utxt")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Data",2,0x18+cbName*2,3,cbData,4,"txt")
 
 gc_ids = {0x80000001:"WindowsMetafile",2:"BeginGroup", 3:"EndGroup",
 	0x40000004:"MultiFormats",
@@ -561,40 +606,46 @@ gcfunc_ids = {
 	}
 
 emr_ids = {1:Header,2:Polybezier,3:Polygon,4:Polyline,5:PolybezierTo,\
-	6:PolylineTo,7:PolyPolyline,8:PolyPolygon,9:SetWindowExtEx,10:SetWindowOrgEx,\
-	11:SetViewportExtEx,12:SetViewportOrgEx,13:SetBrushOrgEx,\
-	#14:'EOF',15:'SetPixelV',\
-	16:SetMapperFlags,17:SetMapMode,18:SetBKMode,19:SetPolyfillMode,20:SetRop2,\
-	21:SetStretchBltMode,22:SetTextAlign, 23:SetColorAdjustment,24:SetTextColor,\
-	25:SetBKColor,26:OffsetClipRgn,27:MoveToEx,\
-	#28:'SetMetaRgn',
-	29:ExcludeClipRect,\
-	30:IntersectClipRect,31:ScaleViewportExtEx,32:ScaleWindowExtEx,33:SaveDC,\
-	34:RestoreDC,35:SetWorldTransform,36:ModifyWorldTransform,37:SelectObject,\
-	38:CreatePen,39:CreateBrushIndirect,40:DeleteObject,\
-	41:AngleArc,
-	42:Ellipse, 43:Rectangle,44:RoundRect,45:Arc,46:Chord,47:Pie,48:SelectPalette,\
-	#49:'CreatePalette',50:'SetPaletteEntries',51:'ResizePalette',52:'RealizePalette',\
-	#53:'ExtFloodFill',
-	54:LineTo,55:ArcTo,56:Polydraw,57:SetArcDirection,58:SetMiterLimit,\
-	59:BeginPath,60:EndPath,61:CloseFigure,62:FillPath,63:StrokeAndFillPath,\
-	64:StrokePath,65:FlattenPath,66:WidenPath,67:SelectClipPath,68:AbortPath,\
-	70:GDIComment,
-	#71:'FillRgn',72:'FrameRgn',73:'InvertRgn',74:'PaintRgn',75:'ExtSelectClipRgn',\
-	#76:'BitBlt',77:'StretchBlt',78:'MaskBlt',79:'PlgBlt',80:'SetDIBitsToDevice',81:'StretchDIBits',\
-	#82:'ExtCreateFontIndirectW',83:'ExtTextOutA',84:'ExtTextOutW',
-	85:Polybezier16,86:Polygon16,87:Polyline16,88:PolybezierTo16,89:PolylineTo16,90:PolyPolyline16,91:PolyPolygon16,\
-	92:Polydraw16,
-	#93:'CreateMonoBrush',94:'CreateDIBPatternBrushPT',
-	95:ExtCreatePen,\
-	#96:'PolyTextOutA',97:'PolyTextOutW',
-	98:SetICMMode,
-	#99:'CreateColorSpace',
-	100:SetColorSpace,101:DeleteColorSpace,
-	#102:'GLSRecord',103:'GLSBoundedRecord',104:'PixelFormat',105:'DrawEscape',\
-	#106:'ExtEscape',107:'StartDoc',108:'SmallTextOut',109:'ForceUFIMapping',110:'NamedEscape',\
-	#111:'ColorCorrectPalette',112:'SetICMProfileA',113:'SetICMProfileW',114:'AlphaBlend',\
-	115:SetLayout,\
-	#116:'TransparentBlt',118:'GradientFill',119:'SetLinkedUFI',\
-	#120:'SetTextJustification',121:'ColorMatchToTargetW',122:'CreateColorSpaceW'
+	6:PolylineTo,7:PolyPolyline,8:PolyPolygon,9:SetWindowExtEx,0xa:SetWindowOrgEx,\
+	0xb:SetViewportExtEx,0xc:SetViewportOrgEx,0xd:SetBrushOrgEx,\
+	#0xe:'EOF',0xf:'SetPixelV',\
+	0x10:SetMapperFlags,0x11:SetMapMode,0x12:SetBKMode,0x13:SetPolyfillMode,0x14:SetRop2,\
+	0x15:SetStretchBltMode,0x16:SetTextAlign,0x17:SetColorAdjustment,0x18:SetTextColor,\
+	0x19:SetBKColor,0x1a:OffsetClipRgn,0x1b:MoveToEx,\
+	#0x1c:'SetMetaRgn',
+	0x1d:ExcludeClipRect,\
+	0x1e:IntersectClipRect,0x1f:ScaleViewportExtEx,0x20:ScaleWindowExtEx,0x21:SaveDC,\
+	0x22:RestoreDC,0x23:SetWorldTransform,0x24:ModifyWorldTransform,0x25:SelectObject,\
+	0x26:CreatePen,0x27:CreateBrushIndirect,0x28:DeleteObject,\
+	0x29:AngleArc,
+	0x2a:Ellipse, 0x2b:Rectangle,0x2c:RoundRect,0x2d:Arc,0x2e:Chord,0x2f:Pie,0x30:SelectPalette,\
+	#0x31:'CreatePalette',0x32:'SetPaletteEntries',0x33:'ResizePalette',0x34:'RealizePalette',\
+	#0x35:'ExtFloodFill',
+	0x36:LineTo,0x37:ArcTo,0x38:Polydraw,0x39:SetArcDirection,0x3a:SetMiterLimit,\
+	0x3b:BeginPath,0x3c:EndPath,0x3d:CloseFigure,0x3e:FillPath,0x3f:StrokeAndFillPath,\
+	0x40:StrokePath,0x41:FlattenPath,0x42:WidenPath,0x43:SelectClipPath,0x44:AbortPath,\
+	0x46:GDIComment,
+	#0x47:'FillRgn',0x48:'FrameRgn',
+	0x49:InvertRgn,
+	#0x4a:'PaintRgn',0x4b:'ExtSelectClipRgn',\
+	#0x4c:'BitBlt',0x4d:'StretchBlt',0x4e:'MaskBlt',0x4f:'PlgBlt',0x50:'SetDIBitsToDevice',0x51:'StretchDIBits',\
+	#0x52:'ExtCreateFontIndirectW',0x53:'ExtTextOutA',0x54:'ExtTextOutW',
+	0x55:Polybezier16,0x56:Polygon16,0x57:Polyline16,0x58:PolybezierTo16,0x59:PolylineTo16,0x5a:PolyPolyline16,0x5b:PolyPolygon16,\
+	0x5c:Polydraw16,
+	#0x5d:'CreateMonoBrush',0x5e:'CreateDIBPatternBrushPT',
+	0x5f:ExtCreatePen,\
+	#0x60:'PolyTextOutA',0x61:'PolyTextOutW',
+	0x62:SetICMMode,
+	#0x63:'CreateColorSpace',
+	0x64:SetColorSpace,0x65:DeleteColorSpace,
+	#0x66:'GLSRecord',0x67:'GLSBoundedRecord',0x68:'PixelFormat',0x69:'DrawEscape',\
+	#0x6a:'ExtEscape',0x6b:'StartDoc',0x6c:'SmallTextOut',
+	0x6d:ForceUFIMapping,
+	#0x6e:'NamedEscape',\
+	#0x6f:'ColorCorrectPalette',0x70:'SetICMProfileA',0x71:'SetICMProfileW',0x72:'AlphaBlend',\
+	0x73:SetLayout,\
+	#0x74:'TransparentBlt',0x76:'GradientFill',0x77:'SetLinkedUFI',\
+	#0x78:'SetTextJustification',
+	0x79:ClrMatchToTargetW,
+	#0x7a:'CreateColorSpaceW'
 	}

@@ -66,7 +66,7 @@ emr_ids = {0:'Unknown', 1:'Header',2:'Polybezier',3:'Polygon',4:'Polyline',5:'Po
                  115:'SetLayout',116:'TransparentBlt',117:'Reserved_117',118:'GradientFill',119:'SetLinkedUFI',
                  120:'SetTextJustification',121:'ColorMatchToTargetW',122:'CreateColorSpaceW'}
 
-wmr_ids = {0:'Unknown',1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Header',
+wmr_ids = {0:'EOF',1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Header',
             30:'SaveDC', 295:'RestoreDC', 332:'ResetDc', 
             
             53:'RealizePalette', 55:'SetPalEntries', 247:'CreatePalette', 313:'ResizePalette',564:'SelectPalette', 1078:'AnimatePalette', 
@@ -314,7 +314,7 @@ def mf_open (buf,page):
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		offset += 18
 
-		while offset < len(buf) - 6:
+		while offset < len(buf) - 5:
 			[newL] = struct.unpack('<I', buf[offset:offset+4])
 			[newT] = struct.unpack('<H', buf[offset+4:offset+6])
 			newV = buf[offset:offset+newL*2]
@@ -350,4 +350,4 @@ def dump_mf_tree (model, path, parent, f):
 	  value = model.get_value(parent,3)
 	  if nlen != None:
 		  f.write(value)
-	return False
+#	return True

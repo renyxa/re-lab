@@ -336,8 +336,26 @@ def ExtTextOut (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	flags = struct.unpack("<h",value[12:14])[0]
 	hd.hdmodel.set (iter, 0, "Flags", 1, flags, 2,12,3,2,4,"<h")
+	off = 0xe
+	if (flags&4):
+		PointS(hd,value,off,"S")
+		PointS(hd,value,off+4,"S")
+		off += 8
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Text", 1, value[14:14+count],2,14,3,count,4,"txt")
+	hd.hdmodel.set (iter, 0, "Text", 1, value[off:off+count],2,off,3,count,4,"txt")
+	off += count
+	if flags&0x10 == 0:
+		if flags&0x2000:
+			for i in range(count):
+				iter = hd.hdmodel.append(None, None)
+				hd.hdmodel.set (iter, 0, "Dx%d"%i, 1, struct.unpack("<H",value[off+i*4:off+2+i*4])[0],2,off+i*4,3,2,4,"<H")
+				iter = hd.hdmodel.append(None, None)
+				hd.hdmodel.set (iter, 0, "Dy%d"%i, 1, struct.unpack("<H",value[off+2+i*4:off+4+i*4])[0],2,off+2+i*4,3,2,4,"<H")
+		else:
+			for i in range(count):
+				iter = hd.hdmodel.append(None, None)
+				hd.hdmodel.set (iter, 0, "Dx%d"%i, 1, struct.unpack("<h",value[off+i*2:off+2+i*2])[0],2,off+i*2,3,2,4,"<H")
+			
 	# Fixme! DX/DY depends on flags
 
 wmr_ids = {

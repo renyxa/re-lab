@@ -1,3 +1,10 @@
+2011-08-02  Valek Filippov
+
+		* EMF: re-pack EMF+ changes back to parent
+		* EMF: 1 more record parsed
+		* Added "utxt" format
+		* Initial support for CLP files, saving of parts into files.
+
 2011-08-01  Valek Filippov
 
 		* MF: gen_tree fix, init EMF+ crafting 

@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.33"
+version = "0.5.34"
 
 ui_info = \
 '''<ui>
@@ -203,20 +203,30 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
-		size = model.get_value(iter1,2)+4
+		type = model.get_value(iter1,1)[0]
 		value = model.get_value(iter1,3)
+		if type == "emf":
+			size = model.get_value(iter1,2)+4
+			model.set_value(iter1,3,value[0:4]+struct.pack("<I",size)+value[8:]+'\x00'*4)
+		elif type == "wmf":
+			size = model.get_value(iter1,2)+2
+			model.set_value(iter1,3,struct.pack("<I",len(value)/2+1)+value[4:]+'\x00'*2)
 		model.set_value(iter1,2,size)
-		model.set_value(iter1,3,value[0:4]+struct.pack("<I",size)+value[8:]+'\x00'*4)
 
 	def activate_less (self, action):
 		pn = self.notebook.get_current_page()
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
+		type = model.get_value(iter1,1)[0]
+		print "Type ",type
 		size = model.get_value(iter1,2)
 		value = model.get_value(iter1,3)
-		if size > 11:
+		if type == "emf" and size > 11:
 			model.set_value(iter1,2,size-4)
 			model.set_value(iter1,3,value[0:4]+struct.pack("<I",size-4)+value[8:size-4])
+		elif type == "wmf" and size > 7:
+			model.set_value(iter1,2,size-2)
+			model.set_value(iter1,3,struct.pack("<I",len(value)/2-1)+value[4:size-2])
 
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
@@ -260,6 +270,24 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				mf.mf_save(self.das[pn],fname,ftype)
+		elif ftype == "CLP":
+			treeSelection = self.das[pn].view.get_selection()
+			model, iter1 = treeSelection.get_selected()
+			type = model.get_value(iter1,1)[1]
+			if type == 2:
+				fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+				if fname:
+					nlen = model.get_value(iter1,2)
+					value = model.get_value(iter1,3)
+					if nlen != None:
+						f = open(fname,'w')
+						f.write(value)
+						f.close()
+					else:
+						print "Nothing to save"
+
+			else:
+				print "Select Clipboard entry to save it"
 		else:
 			print '"Save" is not implemented for non-MF'
 
@@ -385,10 +413,20 @@ class ApplicationMainWindow(gtk.Window):
 			value = value[0:offset] + struct.pack("B",int(new_text[0:2],16))+struct.pack("B",int(new_text[2:4],16))+struct.pack("B",int(new_text[4:6],16))+value[offset+3:]
 		elif fmt == "txt":
 			value = value[0:offset]+new_text+value[offset+size:]
+		elif fmt == "utxt":
+			value = value[0:offset]+new_text.encode("utf-16-le")+value[offset+size:]
 		else:
 			value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
 
 		model.set_value(iter1,3,value)
+		type = model.get_value(iter1,1)[1]
+		if type > 0x4000:
+			piter = model.iter_parent(iter1)
+			nvalue = model.get_value(piter,3)[:16]
+			for i in range(model.iter_n_children(piter)):
+				nvalue += model.get_value(model.iter_nth_child(piter,i),3)
+			model.set_value(piter,3,nvalue)
+			
 		self.on_row_activated(self.das[pn].view,model.get_path(iter1),0)
 		hd.hdview.set_cursor(path)
 		hd.hdview.grab_focus()
