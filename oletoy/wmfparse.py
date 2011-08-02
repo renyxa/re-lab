@@ -47,7 +47,6 @@ def Aldus_Header (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Checksum", 1, struct.unpack("<h",value[20:22])[0],2,20,3,2,4,"<h")
 
-
 #4
 def Header (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
@@ -64,7 +63,6 @@ def Header (hd, size, value):
 	hd.hdmodel.set (iter, 0, "MaxRecord", 1, struct.unpack("<i",value[12:16])[0],2,12,3,4,4,"<i")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "#Parameters", 1, struct.unpack("<h",value[16:18])[0],2,16,3,2,4,"<h")
-
 
 #30
 def SaveDC (hd, size, value):
@@ -233,7 +231,6 @@ def CreateFontIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Pitch&Family", 1, ord(value[23]),2,23,3,1,4,"<B")
 
-
 #764
 def CreateBrushIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
@@ -243,7 +240,6 @@ def CreateBrushIndirect (hd, size, value):
 	hd.hdmodel.set (iter, 0, "RGB", 1, clr,2,8,3,3,4,"clrbg")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Hatch", 1, struct.unpack("<h",value[12:14])[0],2,12,3,2,4,"<h")
-
 
 #804
 def Polygon (hd, size, value):
@@ -343,7 +339,6 @@ def ExtTextOut (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Text", 1, value[14:14+count],2,14,3,count,4,"txt")
 	# Fixme! DX/DY depends on flags
-
 
 wmr_ids = {
 1:Aldus_Header,

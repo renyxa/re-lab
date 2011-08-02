@@ -32,6 +32,20 @@ def PointL (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "y"+i, 1, struct.unpack("<i",value[offset+4:offset+8])[0],2,offset+4,3,4,4,"<i")
 
+
+def GC_BeginGroup (hd, value):
+	PointL(hd,value,0x14,"S")
+	PointL(hd,value,0x1c,"E")
+	nlen = struct.unpack("<I",value[0x24:0x28])[0]
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "DescLength", 1, nlen,2,0x24,3,4,4,"<I")
+	txt = unicode(value[0x28:0x28+nlen*2],"utf-16")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Description", 1, txt,2,0x28,3,nlen*2,4,"txt")
+
+def GC_EndGroup (hd, value):
+	pass
+
 #1
 def Header (hd, size, value):
 	PointL (hd, value, 8, "S")
@@ -295,7 +309,6 @@ def CreateBrushIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Hatch", 1, struct.unpack("<i",value[20:24])[0],2,20,3,4,4,"<i")
 
-
 #40
 def DeleteObject (hd, size, value):
 	SelectObject (hd, size, value)
@@ -422,6 +435,15 @@ def GDIComment (hd, size, value):
 	type = value[0xC:0x10]
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Type", 1, type,2,0xc,3,4,4,"txt")
+	if type == '\x47\x44\x49\x43':
+		ctype = struct.unpack("<I",value[0x10:0x14])[0]
+		ct = "unknown"
+		if gc_ids.has_key(ctype):
+			ct = gc_ids[ctype]
+		iter = hd.hdmodel.append(None, None)
+		hd.hdmodel.set (iter, 0, "PubComment ID", 1, "%d (%s)"%(ctype,ct),2,0x10,3,4,4,"<I")
+		if gcfunc_ids.has_key(ctype):
+			gcfunc_ids[ctype](hd,value)
 
 #85
 def Polybezier16 (hd, size, value):
@@ -510,7 +532,6 @@ def ExtCreatePen (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "BitmapBuffer", 1, "(Optional)",2,52+numstyle*4,3,0)
 
-
 #98
 def SetICMMode (hd, size, value):
 	SetBKMode (hd, size, value)
@@ -527,6 +548,17 @@ def DeleteColorSpace (hd, size, value):
 def SetLayout (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "LayoutMode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+
+gc_ids = {0x80000001:"WindowsMetafile",2:"BeginGroup", 3:"EndGroup",
+	0x40000004:"MultiFormats",
+	0x00000040:"UNICODE_STRING",0x00000080:"UNICODE_END"} #last two must not be used
+
+gcfunc_ids = {
+	#0x80000001:"WindowsMetafile",
+	2:GC_BeginGroup,
+	3:GC_EndGroup,
+	#0x40000004:"MultiFormats"
+	}
 
 emr_ids = {1:Header,2:Polybezier,3:Polygon,4:Polyline,5:PolybezierTo,\
 	6:PolylineTo,7:PolyPolyline,8:PolyPolygon,9:SetWindowExtEx,10:SetWindowOrgEx,\

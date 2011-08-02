@@ -288,7 +288,7 @@ def mf_open (buf,page):
 		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		if newT == 0x46: # GDIComment
 		  eptype = buf[offset+0xc:offset+0x10]
-		  if eptype == '\x45\x4d\x46\x2b':
+		  if eptype == '\x45\x4d\x46\x2b':  # EMF+
 			eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
 			i = 0
 			while i < eplen - 4:
