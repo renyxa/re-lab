@@ -1,7 +1,7 @@
 2011-08-02  Valek Filippov
 
 		* EMF: re-pack EMF+ changes back to parent
-		* EMF: 1 more record parsed
+		* EMF: 9 more record parsed
 		* Added "utxt" format
 		* Initial support for CLP files, saving of parts into files.
 

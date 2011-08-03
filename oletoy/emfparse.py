@@ -25,6 +25,8 @@ ColorSpace = {1:"ENABLE",2:"DISABLE",3:"DELETE_TRANSFORM"}
 
 ColorMatchToTarget = {0:"NOTEMBEDDED",1:"EMBEDDED"}
 
+FloodFill = {0:"Border",1:"Surface"}
+
 def PointS (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "x"+i, 1, struct.unpack("<h",value[offset:offset+2])[0],2,offset,3,2,4,"<h")
@@ -138,54 +140,54 @@ def PolyPolygon (hd, size, value):
 def SetWindowExtEx (hd, size, value):
 	PointL (hd,value,8)
 
-#10
+#0xa
 def SetWindowOrgEx (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 
-#11
+#0xb
 def SetViewportExtEx (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 
-#12
+#0xc
 def SetViewportOrgEx (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 
-#13
+#0xd
 def SetBrushOrgEx (hd, size, value):
 	PointL (hd, value, 8, "Org")
 
-#16
+#0x10
 def SetMapperFlags (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Mode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#17
+#0x11
 def SetMapMode (hd, size, value):
 	SetBKMode (hd, size, value)
 
-#18
+#0x12
 def SetBKMode (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Mode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#19
+#0x13
 def SetPolyfillMode (hd, size, value):
 	SetBKMode (hd, size, value)
 
-#20
+#0x14
 def SetRop2 (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Mode", 1, "0x%0x"%struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#21
+#0x15
 def SetStretchBltMode (hd, size, value):
 	SetBKMode (hd, size, value)
 
-#22
+#0x16
 def SetTextAlign (hd, size, value):
 	SetBKMode (hd, size, value)
 
-#23
+#0x17
 def SetColorAdjustment (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Size", 1, struct.unpack("<i",value[8:10])[0],2,8,3,2,4,"<i")
@@ -212,33 +214,33 @@ def SetColorAdjustment (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "RedGreenTint", 1, struct.unpack("<i",value[30:32])[0],2,30,3,2,4,"<i")
 
-#24
+#0x18
 def SetTextColor (hd, size, value):
 	SetBKColor (hd, size, value)
 
-#25
+#0x19
 def SetBKColor (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	clr = "%02X"%ord(value[10])+"%02X"%ord(value[9])+"%02X"%ord(value[8])
 	hd.hdmodel.set (iter, 0, "RGB", 1, clr,2,8,3,3,4,"clr")
 
-#26
+#0x1a
 def OffsetClipRgn (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 	
-#27
+#0x1c
 def MoveToEx (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 
-#29
+#0x1d
 def ExcludeClipRect (hd, size, value):
 	Rectangle (hd, size, value)
 
-#30
+#0x1e
 def IntersectClipRect (hd, size, value):
 	Rectangle (hd, size, value)
 
-#31
+#0x1f
 def ScaleViewportExtEx (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "xNum", 1, struct.unpack("<i",value[8:12])[0],2,8,3,4,4,"<i")
@@ -249,20 +251,20 @@ def ScaleViewportExtEx (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "yDenom", 1, struct.unpack("<i",value[20:24])[0],2,20,3,4,4,"<i")
 
-#32
+#0x20
 def ScaleWindowExtEx (hd, size, value):
 	ScaleViewportExtEx (hd, size, value)
 	
-#33
+#0x21
 def SaveDC (hd, size, value):
 	return
 
-#34
+#0x22
 def RestoreDC (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "SavedDC", 1, struct.unpack("<i",value[8:12])[0],2,8,3,4,4,"<i")
 
-#35
+#0x23
 def SetWorldTransform  (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "m11", 1, struct.unpack("<f",value[8:12])[0],2,8,3,4,4,"<f")
@@ -277,18 +279,18 @@ def SetWorldTransform  (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Dy", 1, struct.unpack("<f",value[28:32])[0],2,28,3,4,4,"<f")
 
-#36
+#0x24
 def ModifyWorldTransform (hd, size, value):
 	SetWorldTransform  (hd, size, value)
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Mode", 1, struct.unpack("<I",value[32:36])[0],2,32,3,4,4,"<I")
 
-#37
+#0x25
 def SelectObject (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "ObjID", 1, "0x%0x"%struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#38
+#0x26
 def CreatePen (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "ObjID", 1, "0x%0x"%struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
@@ -301,7 +303,7 @@ def CreatePen (hd, size, value):
 	clr = "%02X"%ord(value[26])+"%02X"%ord(value[25])+"%02X"%ord(value[24])
 	hd.hdmodel.set (iter, 0, "RGB", 1, clr,2,24,3,3,4,"clr")
 
-#39
+#0x27
 def CreateBrushIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "ObjID", 1, "0x%0x"%struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
@@ -313,11 +315,11 @@ def CreateBrushIndirect (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Hatch", 1, struct.unpack("<i",value[20:24])[0],2,20,3,4,4,"<i")
 
-#40
+#0x28
 def DeleteObject (hd, size, value):
 	SelectObject (hd, size, value)
 
-#41
+#0x29
 def AngleArc (hd, size, value):
 	PointL (hd, value, 8, "C")
 	iter = hd.hdmodel.append(None, None)
@@ -327,11 +329,11 @@ def AngleArc (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "SweepAng", 1, struct.unpack("<f",value[24:28])[0],2,24,3,4,4,"<f")
 
-#42
+#0x2a
 def Ellipse (hd, size, value):
 	Rectangle (hd, size, value)
 
-#43
+#0x2b
 def Rectangle (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "xS", 1, struct.unpack("<i",value[8:12])[0],2,8,3,4,4,"<i")
@@ -342,38 +344,57 @@ def Rectangle (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "yE", 1, struct.unpack("<i",value[20:24])[0],2,20,3,4,4,"<i")
 
-#44
+#0x2c
 def RoundRect (hd, size, value):
 	Rectangle (hd, size, value)
 	PointL (hd, value, 24, "R")
 
-#45
+#0x2d
 def Arc (hd, size, value):
 	Rectangle (hd, size, value)
 	PointL (hd, value, 24, "S")
 	PointL (hd, value, 32, "E")
 
-#46
+#0x2e
 def Chord (hd, size, value):
 	Arc (hd, size, value)
 
-#47
+#0x2f
 def Pie (hd, size, value):
 	Arc (hd, size, value)
 
-#48
+#0x30
 def SelectPalette (hd, size, value):
 	SelectObject (hd, size, value)
 
-#54
+#0x33
+def ResizePalette (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "lhPal", 1, struct.unpack("<i",value[8:0xc])[0],2,8,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "NumOfEntries", 1, struct.unpack("<i",value[0xc:0x10])[0],2,0xc,3,4,4,"<i")
+
+#0x35
+def ExtFloodFill (hd, size, value):
+	PointL(hd,value,8,"Start ")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Color", 1, struct.unpack("<I",value[0x10:0x14])[0],2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	ffm = struct.unpack("<I",value[0x14:0x18])[0]
+	ft = "unknown"
+	if FloodFill.has_key(ffm):
+		ft = FloodFill(ffm)
+	hd.hdmodel.set (iter, 0, "FloodFillMode", 1, "%d (%s)"%(ffm,ft),2,0x14,3,4,4,"<I")
+
+#0x36
 def LineTo (hd, size, value):
 	SetWindowExtEx (hd, size, value)
 
-#55
+#0x37
 def ArcTo (hd, size, value):
 	Arc (hd, size, value)
 
-#56
+#0x38
 def Polydraw (hd, size, value):
 	Polybezier (hd, size, value)
 	[count] = struct.unpack("<i",value[24:28])
@@ -383,54 +404,54 @@ def Polydraw (hd, size, value):
 		iter = hd.hdmodel.append(None, None)
 		hd.hdmodel.set (iter, 0, "abType %d"%i, 1, str(value[count*4+28+i]),2,count*4+28+i,3,1,4,"b")
 
-#57
+#0x39
 def SetArcDirection (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "ArcDirection", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#58
+#0x3a
 def SetMiterLimit (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "MitterLimit", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#59
+#0x3b
 def BeginPath (hd, size, value):
 	return
 
-#60
+#0x3c
 def EndPath (hd, size, value):
 	return
 
-#61
+#0x3d
 def CloseFigure (hd, size, value):
 	return
 
-#62
+#0x3e
 def FillPath (hd, size, value):
 	Rectangle (hd, size, value)
 
-#63
+#0x3f
 def StrokeAndFillPath (hd, size, value):
 	Rectangle (hd, size, value)
 
-#64
+#0x40
 def StrokePath (hd, size, value):
 	Rectangle (hd, size, value)
 
-#65
+#0x41
 def FlattenPath (hd, size, value):
 	return
 
-#66
+#0x42
 def WidenPath (hd, size, value):
 	return
 
-#67
+#0x43
 def SelectClipPath (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "RegionMode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 
-#68
+#0x44
 def AbortPath (hd, size, value):
 	return
 
@@ -511,7 +532,7 @@ def Polydraw16 (hd, size, value):
 		iter = hd.hdmodel.append(None, None)
 		hd.hdmodel.set (iter, 0, "abType %d"%i, 1, str(value[count*4+28+i]),2,count*4+28+i,3,1,4,"b")
 
-#95
+#0x5f
 def ExtCreatePen (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "ObjID", 1, "0x%0x"%struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
@@ -544,9 +565,14 @@ def ExtCreatePen (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "BitmapBuffer", 1, "(Optional)",2,52+numstyle*4,3,0)
 
-#98
+#0x62
 def SetICMMode (hd, size, value):
 	SetBKMode (hd, size, value)
+
+#0x63
+def CreateColorSpace (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "lhCS", 1, struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
 
 #0x64
 def SetColorSpace (hd, size, value):
@@ -563,10 +589,47 @@ def ForceUFIMapping (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Idx", 1, struct.unpack("<I",value[0xc:0x10])[0],2,0xc,3,4,4,"<I")
 
+#0x70
+def SetICMProfileA (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "dwFlags", 1, struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cbName = struct.unpack("<I",value[0xc:0x10])[0]
+	hd.hdmodel.set (iter, 0, "cbName", 1,cbName,2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cbData = struct.unpack("<I",value[0x10:0x14])[0]
+	hd.hdmodel.set (iter, 0, "cbData", 1,cbName,2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Name", 1,value[0x14:0x14+cbName],2,0x14,3,cbName,4,"txt")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Data",2,0x14+cbName,3,cbData,4,"txt")
+
+#0x71
+def SetICMProfileW (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "dwFlags", 1, struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cbName = struct.unpack("<I",value[0xc:0x10])[0]
+	hd.hdmodel.set (iter, 0, "cbName", 1,cbName,2,0xc,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	cbData = struct.unpack("<I",value[0x10:0x14])[0]
+	hd.hdmodel.set (iter, 0, "cbData", 1,cbName,2,0x10,3,4,4,"<I")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Name", 1,unicode(value[0x14:0x14+cbName*2],"utf-16"),2,0x14,3,cbName*2,4,"utxt")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "Data",2,0x14+cbName*2,3,cbData,4,"txt")
+
 #0x73
 def SetLayout (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "LayoutMode", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+
+#0x78
+def SetTextJustification (hd, size, value):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "nBreakExtra", 1, struct.unpack("<i",value[8:0xc])[0],2,8,3,4,4,"<i")
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, "nBreakCount", 1, struct.unpack("<i",value[0xc:0x10])[0],2,0xc,3,4,4,"<i")
 
 #0x79
 def ClrMatchToTargetW (hd, size, value):
@@ -619,8 +682,10 @@ emr_ids = {1:Header,2:Polybezier,3:Polygon,4:Polyline,5:PolybezierTo,\
 	0x26:CreatePen,0x27:CreateBrushIndirect,0x28:DeleteObject,\
 	0x29:AngleArc,
 	0x2a:Ellipse, 0x2b:Rectangle,0x2c:RoundRect,0x2d:Arc,0x2e:Chord,0x2f:Pie,0x30:SelectPalette,\
-	#0x31:'CreatePalette',0x32:'SetPaletteEntries',0x33:'ResizePalette',0x34:'RealizePalette',\
-	#0x35:'ExtFloodFill',
+	#0x31:'CreatePalette',0x32:'SetPaletteEntries',
+	0x33:ResizePalette,
+	#0x34:'RealizePalette',
+	0x35:ExtFloodFill,
 	0x36:LineTo,0x37:ArcTo,0x38:Polydraw,0x39:SetArcDirection,0x3a:SetMiterLimit,\
 	0x3b:BeginPath,0x3c:EndPath,0x3d:CloseFigure,0x3e:FillPath,0x3f:StrokeAndFillPath,\
 	0x40:StrokePath,0x41:FlattenPath,0x42:WidenPath,0x43:SelectClipPath,0x44:AbortPath,\
@@ -635,17 +700,18 @@ emr_ids = {1:Header,2:Polybezier,3:Polygon,4:Polyline,5:PolybezierTo,\
 	#0x5d:'CreateMonoBrush',0x5e:'CreateDIBPatternBrushPT',
 	0x5f:ExtCreatePen,\
 	#0x60:'PolyTextOutA',0x61:'PolyTextOutW',
-	0x62:SetICMMode,
-	#0x63:'CreateColorSpace',
+	0x62:SetICMMode,0x63:CreateColorSpace,
 	0x64:SetColorSpace,0x65:DeleteColorSpace,
 	#0x66:'GLSRecord',0x67:'GLSBoundedRecord',0x68:'PixelFormat',0x69:'DrawEscape',\
 	#0x6a:'ExtEscape',0x6b:'StartDoc',0x6c:'SmallTextOut',
 	0x6d:ForceUFIMapping,
 	#0x6e:'NamedEscape',\
-	#0x6f:'ColorCorrectPalette',0x70:'SetICMProfileA',0x71:'SetICMProfileW',0x72:'AlphaBlend',\
+	#0x6f:'ColorCorrectPalette',
+	0x70:SetICMProfileA, 0x71:SetICMProfileW,
+	#0x72:'AlphaBlend',\
 	0x73:SetLayout,\
 	#0x74:'TransparentBlt',0x76:'GradientFill',0x77:'SetLinkedUFI',\
-	#0x78:'SetTextJustification',
+	0x78:SetTextJustification,
 	0x79:ClrMatchToTargetW,
 	#0x7a:'CreateColorSpaceW'
 	}
