@@ -1,6 +1,7 @@
 2011-08-03  Valek Filippov
 
 		* XLS: Initial support
+		* XLS: parse Font record
 
 2011-08-02  Valek Filippov
 

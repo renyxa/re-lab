@@ -21,6 +21,17 @@ import tree
 import hexdump
 import oleparse
 
+charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
+	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
+	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
+	161:"Greek",162:"Turkish",163:"Vietnamese",177:"Hebrew",178:"Arabic",
+	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
+	255:"OEM Latin I"}
+
+escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
+
+underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Double accounting"}
+
 rec_ids = {
 	6:"Formula", 10:"EOF", 12:"CalcCount", 13:"CalcMode", 14:"CalcPrecision",
 	15:"CalcRefMode", 16:"CalcDelta", 17:"CalcIter", 18:"Protect", 19:"Password",
@@ -103,10 +114,56 @@ rec_ids = {
 	4199:"BopPopCustom", 4200:"Fbi2"
 	}
 
+
+def add_iter (hd,name,value,offset,length,vtype):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
+
+def biff58_font (hd,data):
+	fonth = struct.unpack("<H",data[0:2])[0]
+	flags = struct.unpack("<H",data[2:4])[0]
+	clridx = struct.unpack("<H",data[4:6])[0]
+	fontw = struct.unpack("<H",data[6:8])[0]
+	esc = struct.unpack("<H",data[8:0xa])[0]
+	et = ""
+	if escapement.has_key(esc):
+		et = escapement[esc]
+	und = ord(data[0xa])
+	ut = ""
+	if underline.has_key(und):
+		ut = underline[und]
+	fam = ord(data[0xb])
+	cset = ord(data[0xc])
+	cst = ""
+	if charsets.has_key(cset):
+		cst = charsets[cset]
+	fnlen = ord(data[0xe])
+	fname = data[0xf:0xf+fnlen]
+	add_iter (hd,"Font Height",fonth,0,2,"<H")
+	add_iter (hd,"Option Flags",flags,2,2,"<H")
+	add_iter (hd,"Color Index",clridx,4,2,"<H")
+	add_iter (hd,"Font Weight",fontw,6,2,"<H")
+	add_iter (hd,"Escapement","%02x (%s)"%(esc,et),8,2,"<H")
+	add_iter (hd,"Underline","%02x (%s)"%(und,ut),0xa,1,"<B")
+	add_iter (hd,"Font Family",fam,0xb,1,"<B")
+	add_iter (hd,"Charset","%02x (%s)"%(cset,cst),0xc,2,"<B")
+	add_iter (hd,"Font Name Length",fnlen,0xe,2,"<B")
+	add_iter (hd,"Font Name",fname,0xf,fnlen,"txt")
+
+
+biff5_ids = {0x31:biff58_font}
+
 def parse (page, data, parent):
 	offset = 0
+	type = "XLS"
 	while offset < len(data) - 4:
 		rtype = struct.unpack("<H",data[offset:offset+2])[0]
+		if rtype == 0x809:
+			ver = struct.unpack("<H",data[offset+4:offset+6])[0]
+			if ver == 0x500:
+				type = "XLS5"
+			elif ver == 0x600:
+				type = "XLS8"
 		offset += 2
 		rlen = struct.unpack("<H",data[offset:offset+2])[0]
 		offset += 2
@@ -115,12 +172,10 @@ def parse (page, data, parent):
 		rname = ""
 		if rec_ids.has_key(rtype):
 			rname = rec_ids[rtype] + " "
-#		rname += "%02x"%rtype
 		page.model.set_value(iter1,0,rname)
 		page.model.set_value(iter1,1,("xls",rtype))
 		page.model.set_value(iter1,2,rlen)
 		page.model.set_value(iter1,3,rdata)
 		page.model.set_value(iter1,7,"%02x"%rtype)
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-
 		offset += rlen

@@ -56,9 +56,10 @@ def get_children(page,infile,parent):
 			type = "PUB"
 			pub.parse (page.model,data,iter1)
 		if infname == "VisioDocument":
+			type = "VSD"
 			vsd.parse (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
-			xls.parse (page, data, iter1)
+			type = xls.parse (page, data, iter1)
 		if (infchild.num_children()>0):
 			get_children(page,infchild,iter1)
 	return type

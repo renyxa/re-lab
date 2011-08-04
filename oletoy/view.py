@@ -24,7 +24,7 @@ import Doc
 import oleparse
 import escher
 import vsdchunks,vsdstream4
-import emfparse,svm,mf,wmfparse,cdr,emfplus
+import emfparse,svm,mf,wmfparse,cdr,emfplus,xls
 
 version = "0.5.35"
 
@@ -512,6 +512,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)
+				elif	ntype[0] == "xls":
+					if xls.biff5_ids.has_key(ntype[1]):
+						xls.biff5_ids[ntype[1]](hd,data)
 
 	def hdselect_cb(self,event,udata):
 		pn = self.notebook.get_current_page()
