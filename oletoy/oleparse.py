@@ -20,8 +20,7 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd
-import xls
+import vsd, xls, ppt
 import gsf
 
 def open(src,page,iter=None):
@@ -60,6 +59,9 @@ def get_children(page,infile,parent):
 			vsd.parse (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
 			type = xls.parse (page, data, iter1)
+		if infname == "PowerPoint Document" or infname == "Pictures":
+			type = "PPT"
+			ppt.parse (page, data, iter1)
 		if (infchild.num_children()>0):
 			get_children(page,infchild,iter1)
 	return type

@@ -26,7 +26,7 @@ import escher
 import vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus,xls
 
-version = "0.5.35"
+version = "0.5.36"
 
 ui_info = \
 '''<ui>
