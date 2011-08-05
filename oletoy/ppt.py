@@ -252,7 +252,6 @@ rec_ids = {0x03E8:"RT_Document",
 	0xF145:"RT_TimeSlaveContainer",
 	}
 
-
 def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)

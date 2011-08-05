@@ -1,5 +1,9 @@
 2011-08-03  Valek Filippov
 
+		* VSD: reordered text/line/fill styles based on Tibby Lickle report
+
+2011-08-03  Valek Filippov
+
 		* XLS: Initial support
 		* XLS: parse Font record
 		* PPT: Initial support
