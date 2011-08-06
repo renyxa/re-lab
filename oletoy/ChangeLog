@@ -1,6 +1,7 @@
-2011-08-03  Valek Filippov
+2011-08-05  Valek Filippov
 
 		* VSD: reordered text/line/fill styles based on Tibby Lickle report
+		* XLS: group records in BOF/EOF brackets, add substream type
 
 2011-08-03  Valek Filippov
 

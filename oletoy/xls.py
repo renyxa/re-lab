@@ -32,6 +32,8 @@ escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
 
 underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Double accounting"}
 
+substream = {5:"Book", 16:"Sheet", 32:"Chart", 64:"Macro"}
+
 rec_ids = {
 	6:"Formula", 10:"EOF", 12:"CalcCount", 13:"CalcMode", 14:"CalcPrecision",
 	15:"CalcRefMode", 16:"CalcDelta", 17:"CalcIter", 18:"Protect", 19:"Password",
@@ -114,7 +116,6 @@ rec_ids = {
 	4199:"BopPopCustom", 4200:"Fbi2"
 	}
 
-
 def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
@@ -156,22 +157,33 @@ biff5_ids = {0x31:biff58_font}
 def parse (page, data, parent):
 	offset = 0
 	type = "XLS"
+	curiter = parent
 	while offset < len(data) - 4:
 		rtype = struct.unpack("<H",data[offset:offset+2])[0]
+		if rtype == 0:
+			break
+		iter1 = page.model.append(curiter,None)
+		rname = ""
+		if rec_ids.has_key(rtype):
+			rname = rec_ids[rtype]
 		if rtype == 0x809:
+			curiter = iter1
 			ver = struct.unpack("<H",data[offset+4:offset+6])[0]
+			dt = struct.unpack("<H",data[offset+6:offset+8])[0]
+			if substream.has_key(dt):
+				rname = "BOF (%s)"%substream[dt]
+			else:
+				rname = "BOF (unknown)" 
 			if ver == 0x500:
 				type = "XLS5"
 			elif ver == 0x600:
 				type = "XLS8"
+		elif rtype == 10:
+			curiter = parent
 		offset += 2
 		rlen = struct.unpack("<H",data[offset:offset+2])[0]
 		offset += 2
 		rdata = data[offset:offset+rlen]
-		iter1 = page.model.append(parent,None)
-		rname = ""
-		if rec_ids.has_key(rtype):
-			rname = rec_ids[rtype] + " "
 		page.model.set_value(iter1,0,rname)
 		page.model.set_value(iter1,1,("xls",rtype))
 		page.model.set_value(iter1,2,rlen)
