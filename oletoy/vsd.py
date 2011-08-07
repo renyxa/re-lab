@@ -271,6 +271,7 @@ def dump_tree (model, path, parent, outfile):
 		cgsf.gsf_output_close (child)
 	  else: # VisioDocument
 		# Not implemented yet
+		pass
 
 def save (page, fname):
 	model = page.view.get_model()
