@@ -1,3 +1,11 @@
+2011-08-07  Valek Filippov
+
+		* VSD: start to implement saving
+
+2011-08-06  Valek Filippov
+
+		* XLS: fontname in v8 is utf-16.
+
 2011-08-05  Valek Filippov
 
 		* VSD: reordered text/line/fill styles based on Tibby Lickle report

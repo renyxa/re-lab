@@ -22,6 +22,9 @@ import hexdump
 import inflate
 import vsdchunks,vsdstream4
 import oleparse
+import ctypes
+
+cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
 class pointer:
 	type = 0
@@ -54,7 +57,6 @@ streamtype = {
 	0xc9:'NameIDX    ',
 	0xd1:'SolutionXML',
 	0xd7:'FontFace',0xd8:'FontFaces'}
-
 
 def parse (page, data, parent):
 		ver_offset = 0x1a
@@ -104,7 +106,7 @@ def parse (page, data, parent):
 
 		iter2 = model.append(iter1,None)
 		model.set_value(iter2,0,"[Data referenced by trailer]")
-		model.set_value(iter2,1,0)
+		model.set_value(iter2,1,("vsd","str5"))
 		model.set_value(iter2,2,len(res))
 		model.set_value(iter2,3,res)
 		model.set_value(iter2,6,model.get_string_from_iter(iter2))
@@ -204,7 +206,7 @@ def ptr_search (page, data, version, parent):
 				  if pntr.format >>4 == 4:
 					model.set_value(iter2,1,("vsd","str4",pntr.type))
 				  else:
-					model.set_value(iter2,1,0)
+					model.set_value(iter2,1,("vsd","str"))
 				  model.set_value(iter2,2,len(res))
 				  model.set_value(iter2,3,res)
 				  model.set_value(iter2,6,model.get_string_from_iter(iter2))
@@ -224,10 +226,6 @@ def ptr_search (page, data, version, parent):
 		  src = gsf.InputMemory(vbadata,False)
 		  oleparse.open (src, page, parent)
 
-  
-#	except:
-#		print "Failed at ptr_search"
-
 def get_colors (page, data, version, parent):
 	model = page.model
 	clrnum = ord(data[6])
@@ -239,7 +237,7 @@ def get_colors (page, data, version, parent):
 		iter1 = model.append(parent, None)
 		txt = "Color #%02x: %02x%02x%02x %02x"%(i,r,g,b,a)
 		clr = "#%02x%02x%02x"%(r,g,b)
-		model.set (iter1, 0, txt,1,0,2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
+		model.set (iter1, 0, txt,1,("vsd","clr"),2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
 
 def getnames(doc, niter):
 ##    print 'Names were found...',doc.model.iter_n_children(niter)
@@ -260,3 +258,25 @@ def getnames(doc, niter):
 ##            print 'Name: ',i,name
             nitername = nitername + '   \t'+name
             doc.model.set_value(nameiter,1,nitername)
+
+def dump_tree (model, path, parent, outfile):
+	ntype = model.get_value(parent,1)
+	if ntype[0] == "OLE":
+	  if ntype[1] == 0:
+		name = model.get_value(parent,0)
+		child = cgsf.gsf_outfile_new_child(outfile,name,0)
+		value = model.get_value(parent,3)
+		size = model.get_value(parent,2)
+		cgsf.gsf_output_write (child,size,value)
+		cgsf.gsf_output_close (child)
+	  else: # VisioDocument
+		# Not implemented yet
+
+def save (page, fname):
+	model = page.view.get_model()
+	cgsf.gsf_init()
+	output = cgsf.gsf_output_stdio_new (fname)
+	outfile = cgsf.gsf_outfile_msole_new (output);
+	model.foreach (dump_tree, outfile)
+	cgsf.gsf_output_close(outfile)
+	cgsf.gsf_shutdown()

@@ -140,6 +140,8 @@ def biff58_font (hd,data):
 		cst = charsets[cset]
 	fnlen = ord(data[0xe])
 	fname = data[0xf:0xf+fnlen]
+	if hd.version == 8:
+		fname = unicode(data[0x10:0x10+fnlen*2],"utf-16")
 	add_iter (hd,"Font Height",fonth,0,2,"<H")
 	add_iter (hd,"Option Flags",flags,2,2,"<H")
 	add_iter (hd,"Color Index",clridx,4,2,"<H")
@@ -158,6 +160,7 @@ def parse (page, data, parent):
 	offset = 0
 	type = "XLS"
 	curiter = parent
+	idx = 0
 	while offset < len(data) - 4:
 		rtype = struct.unpack("<H",data[offset:offset+2])[0]
 		if rtype == 0:
@@ -176,10 +179,19 @@ def parse (page, data, parent):
 				rname = "BOF (unknown)" 
 			if ver == 0x500:
 				type = "XLS5"
+				page.version = 5
+				print "Version: 5"
 			elif ver == 0x600:
 				type = "XLS8"
+				page.version = 8
+				print "Version: 8"
 		elif rtype == 10:
 			curiter = parent
+		elif rtype == 0x208: #row
+			rname = "Row %04x"%struct.unpack("<H",data[offset+0x10:offset+0x12])
+		elif rtype == 0xe0: #xf
+			rname = "XF %02x"%idx
+			idx += 1
 		offset += 2
 		rlen = struct.unpack("<H",data[offset:offset+2])[0]
 		offset += 2
@@ -188,6 +200,6 @@ def parse (page, data, parent):
 		page.model.set_value(iter1,1,("xls",rtype))
 		page.model.set_value(iter1,2,rlen)
 		page.model.set_value(iter1,3,rdata)
-		page.model.set_value(iter1,7,"%02x"%rtype)
+		page.model.set_value(iter1,7,"0x%02x"%rtype)
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		offset += rlen

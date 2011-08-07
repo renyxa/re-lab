@@ -23,7 +23,7 @@ import hexdump
 import Doc
 import oleparse
 import escher
-import vsdchunks,vsdstream4
+import vsd, vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus,xls
 
 version = "0.5.36"
@@ -288,8 +288,12 @@ class ApplicationMainWindow(gtk.Window):
 
 			else:
 				print "Select Clipboard entry to save it"
+		elif ftype == "VSD":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				vsd.save(self.das[pn],fname)
 		else:
-			print '"Save" is not implemented for non-MF'
+			print '"Save" is not implemented for this file format.'
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
@@ -438,7 +442,7 @@ class ApplicationMainWindow(gtk.Window):
 		hd.version = self.das[pn].version
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
-#		print "NType: %s %02x"%(ntype[0],ntype[1])
+		#print "Type: %s %02x"%(ntype[0],ntype[1])
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
 		hd.data = data

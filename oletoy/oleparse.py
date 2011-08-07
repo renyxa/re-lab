@@ -35,7 +35,6 @@ def get_children(page,infile,parent):
 		infname = infile.name_by_index(i)
 		if ord(infname[0]) < 32: 
 			infname = infname[1:]
-		#itername = infname + ' \t(Size: %x)'%infchild.size()
 		print " ",infname
 		if infname == "dir":
 			infuncomp = infchild.uncompress()
@@ -44,18 +43,19 @@ def get_children(page,infile,parent):
 			data = infchild.read(infchild.size())
 		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,infname)
-		page.model.set_value(iter1,1,0)
+		page.model.set_value(iter1,1,("OLE",0))
 		page.model.set_value(iter1,2,infchild.size())
 		page.model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
 			escher.parse (page.model,data,iter1)
-		if infname == "CONTENTS": # assuming no atttempt to parse something else
+		if infname == "CONTENTS": # assuming no attempt to parse something else
 			quill.parse (page.model,data,iter1)
-		if infname == "Contents": # assuming no atttempt to parse something else
+		if infname == "Contents": # assuming no attempt to parse something else
 			type = "PUB"
 			pub.parse (page.model,data,iter1)
 		if infname == "VisioDocument":
 			type = "VSD"
+			page.model.set_value(iter1,1,("OLE",1))
 			vsd.parse (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
 			type = xls.parse (page, data, iter1)
