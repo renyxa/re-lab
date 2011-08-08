@@ -29,15 +29,16 @@ def EventItem (hd, size, value):
 
 def StencilPage (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "UniqueID", 1, "",2,16,3,8,4,"txt")
+	hd.hdmodel.set (iter1, 0, "UniqueID", 1, "",2,0x16,3,8,4,"txt")
 	iter1 = hd.hdmodel.append(None, None)
 	base_id = "%02X%02X%02X%02X-"%(ord(value[0x3f]),ord(value[0x3e]),ord(value[0x3d]),ord(value[0x3c]))
 	base_id += "%02X%02X-%02X%02X-"%(ord(value[0x39]),ord(value[0x38]),ord(value[0x3b]),ord(value[0x3a]))
-	base_id += "%02X%02X-%02X%02X%"%(ord(value[0x24]),ord(value[0x25]),ord(value[0x26]),ord(value[0x27]))
-	base_id += "02X%02X%02X%02X"%(ord(value[0x28]),ord(value[0x29]),ord(value[0x2a]),ord(value[0x2b]))
-	hd.hdmodel.set (iter1, 0, "BaseID", 1, base_id,2,24,3,28,4,"txt")
+	base_id += "%02X%02X-%02X%02X"%(ord(value[0x24]),ord(value[0x25]),ord(value[0x26]),ord(value[0x27]))
+	base_id += "%02X%02X%02X%02X"%(ord(value[0x28]),ord(value[0x29]),ord(value[0x2a]),ord(value[0x2b]))
+	hd.hdmodel.set (iter1, 0, "BaseID", 1, base_id,2,0x24,3,8,4,"txt")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "UniqueID", 1, "",2,16,3,8,4,"txt")
+	hd.hdmodel.set (iter1, 0, "Pattern Flags", 1, "%02x"%struct.unpack("<I",value[0x34:0x38]),2,0x34,3,4,4,"<I")
+
 
 
 def Window (hd, size, value):
@@ -58,9 +59,19 @@ def Window (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "WinHeight", 1, "%d"%struct.unpack("<h",value[0x18:0x1a]),2,0x18,3,2,4,"<h")
 	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "ViewScale", 1, "%.2f"%struct.unpack("<d",value[0x22:0x2a]),2,0x22,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewCenterX", 1, "%.2f"%struct.unpack("<d",value[0x2a:0x32]),2,0x2a,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ViewCenterY", 1, "%.2f"%struct.unpack("<d",value[0x32:0x3a]),2,0x32,3,8,4,"<d")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Snap Settings", 1, "%d"%struct.unpack("<I",value[0x56:0x5a]),2,0x56,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Glue Settings", 1, "%d"%struct.unpack("<I",value[0x5a:0x5e]),2,0x5a,3,4,4,"<I")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Snap Extentions", 1, "%d"%struct.unpack("<I",value[0x5e:0x62]),2,0x62,3,4,4,"<I")
+
+
 
 def FontFace (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)

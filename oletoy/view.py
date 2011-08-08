@@ -26,7 +26,7 @@ import escher
 import vsd, vsdchunks,vsdstream4
 import emfparse,svm,mf,wmfparse,cdr,emfplus,xls
 
-version = "0.5.36"
+version = "0.5.37"
 
 ui_info = \
 '''<ui>
@@ -498,9 +498,12 @@ class ApplicationMainWindow(gtk.Window):
 					if ntype[1] == "chnk":
 						if vsdchunks.chnk_func.has_key(ntype[2]):
 							vsdchunks.chnk_func[ntype[2]](hd, size, data)
-					if ntype[1] == "str4":
+					elif ntype[1] == "str4":
 						if vsdstream4.stream_func.has_key(ntype[2]):
 							vsdstream4.stream_func[ntype[2]](hd, size, data)
+					elif ntype[1] == "hdr":
+						vsd.hdr(hd,data)
+
 				elif ntype[0] == "emf":
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)

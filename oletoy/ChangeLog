@@ -1,6 +1,8 @@
 2011-08-07  Valek Filippov
 
 		* VSD: start to implement saving
+		* VSD: add "header" and piece after pointer to trailer
+		* VSD: cheat to parse StencilPG header (only PatternFlags are interesting)
 
 2011-08-06  Valek Filippov
 

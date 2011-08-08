@@ -58,17 +58,43 @@ streamtype = {
 	0xd1:'SolutionXML',
 	0xd7:'FontFace',0xd8:'FontFaces'}
 
+def hdr (hd, data):
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Sig", 1, data[0:0x12],2,0,3,0x12,4,"txt")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Version", 1, "%d"%ord(data[0x1a]),2,0x1a,3,1,4,"<B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "Size", 1, "0x%02x"%struct.unpack("<I",data[0x1c:0x20]),2,0x1c,3,4,4,"<I")
+
 def parse (page, data, parent):
 		ver_offset = 0x1a
 		size_offset = 0x1c
 		trlr_offset = 0x24
 
+		model = page.model
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"Header")
+		model.set_value(iter1,1,("vsd","hdr"))
+		model.set_value(iter1,2,0x24)
+		model.set_value(iter1,3,data[0:0x24])
+		model.set_value(iter1,6,model.get_string_from_iter(iter1))
+
 		version = ord(data[ver_offset])
 		page.version = version
 		print "Version: %d"%version
 		print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
+		if version == 6:
+		  lenhdr2 = 4
+		else:
+		  lenhdr2 = 74  
+		iter1 = model.append(parent,None)
+		model.set_value(iter1,0,"Header part2")
+		model.set_value(iter1,1,("vsd","hdr2"))
+		model.set_value(iter1,2,0x36)
+		model.set_value(iter1,3,data[0x36:0x36+lenhdr2])
+		model.set_value(iter1,6,model.get_string_from_iter(iter1))
 
-		model = page.model
+		
 		tr_pntr = pointer()
 		if version < 6:
 			pdata = data[trlr_offset:trlr_offset+16]
@@ -115,116 +141,109 @@ def parse (page, data, parent):
 		ptr_search (page, data, version, iter1)
 
 def ptr_search (page, data, version, parent):
-#	try:
-		# ver 6 and up for now
-		model = page.model
-		namelist = 0
-		fontlist = 0
-		childlist = 0
-		ptr = model.get_value (parent,4)
-		shift = ptr.shift
-		pdata = ptr.data
-		vbaflag = 0
-		if ptr.type == 0xd:
-		  vbaflag = 1
-		  vbadata = ""
-		[offset] = struct.unpack ('<L', pdata[shift:shift+4])
-		if offset >= len(pdata):
-			return 0
-		[num] =  struct.unpack ('<L', pdata[offset+shift:offset+shift+4])
-		offset = offset+8+shift
-
-		for i in range(num):
-			pntr = pointer()
-			if version < 6:
-				plen = 16
-				npdata = pdata[offset+i*plen:offset+i*plen+16]
-				[pntr.type] = struct.unpack ('<h', npdata[0:2])
-				[pntr.format] = struct.unpack ('<h', npdata[2:4])
-				[pntr.address] = struct.unpack ('<L', npdata[4:8])
-				[pntr.offset] = struct.unpack ('<L', npdata[8:12])
-				[pntr.length] = struct.unpack ('<L', npdata[12:16])
-
-			else:
-				plen = 18
-				npdata = pdata[offset+i*plen:offset+i*plen+18]
-				[pntr.type] = struct.unpack ('<L', npdata[0:4])
-				[pntr.address] = struct.unpack ('<L', npdata[4:8])
-				[pntr.offset] = struct.unpack ('<L', npdata[8:12])
-				[pntr.length] = struct.unpack ('<L', npdata[12:16])
-				[pntr.format] = struct.unpack ('<h', npdata[16:18])
-
-			itername = '%02x\t %02x\t%04x'%(pntr.type,childlist,pntr.length)
-
-			name2 = "%02x"%pntr.type
-
-			if pntr.type == 0:
+	model = page.model
+	namelist = 0
+	fontlist = 0
+	childlist = 0
+	ptr = model.get_value (parent,4)
+	shift = ptr.shift
+	pdata = ptr.data
+	vbaflag = 0
+	if ptr.type == 0xd:
+	  vbaflag = 1
+	  vbadata = ""
+	[offset] = struct.unpack ('<L', pdata[shift:shift+4])
+	if offset >= len(pdata):
+		return 0
+	[num] =  struct.unpack ('<L', pdata[offset+shift:offset+shift+4])
+	offset = offset+8+shift
+	for i in range(num):
+		pntr = pointer()
+		if version < 6:
+			plen = 16
+			npdata = pdata[offset+i*plen:offset+i*plen+16]
+			[pntr.type] = struct.unpack ('<h', npdata[0:2])
+			[pntr.format] = struct.unpack ('<h', npdata[2:4])
+			[pntr.address] = struct.unpack ('<L', npdata[4:8])
+			[pntr.offset] = struct.unpack ('<L', npdata[8:12])
+			[pntr.length] = struct.unpack ('<L', npdata[12:16])
+		else:
+			plen = 18
+			npdata = pdata[offset+i*plen:offset+i*plen+18]
+			[pntr.type] = struct.unpack ('<L', npdata[0:4])
+			[pntr.address] = struct.unpack ('<L', npdata[4:8])
+			[pntr.offset] = struct.unpack ('<L', npdata[8:12])
+			[pntr.length] = struct.unpack ('<L', npdata[12:16])
+			[pntr.format] = struct.unpack ('<h', npdata[16:18])
+		itername = '%02x\t %02x\t%04x'%(pntr.type,childlist,pntr.length)
+		name2 = "%02x"%pntr.type
+		if pntr.type == 0:
+			namelist += 1
+			fontlist += 1
+			childlist +=1
+		else:
+		  if streamtype.has_key (pntr.type):
+			  idx = " %02x"%childlist
+			  if pntr.type == 0x33:
+				idx = "%02x"%namelist
 				namelist += 1
-				fontlist += 1
-				childlist +=1
-			else:
-			  if streamtype.has_key (pntr.type):
+			  else:
+				if pntr.type == 0xd7:
+				  idx = " %02x"%fontlist
+				  fontlist += 1
+				else:
 				  idx = " %02x"%childlist
-				  if pntr.type == 0x33:
-					idx = "%02x"%namelist
-					namelist += 1
-				  else:
-					if pntr.type == 0xd7:
-					  idx = " %02x"%fontlist
-					  fontlist += 1
-					else:
-					  idx = " %02x"%childlist
-					  childlist +=1
-				  if (pntr.type == 0x15 and pntr.format&1 == 0):
-					itername = "Page BG   "+idx+'\t%04x'%(pntr.length)
-				  else:
-				    itername = streamtype[pntr.type]+idx+'\t%04x'%(pntr.length)
-				  name2 = streamtype[pntr.type]
-			  else:
 				  childlist +=1
-  
-			  if pntr.format&2 == 2 : #compressed
-				  res = inflate.inflate(pntr, data)
-				  pntr.shift = 4
+			  if (pntr.type == 0x15 and pntr.format&1 == 0):
+				itername = "Page BG   "+idx+'\t%04x'%(pntr.length)
 			  else:
-				  res = data[pntr.offset:pntr.offset+pntr.length]
-				  pntr.shift = 0
-			  pntr.data = res
-			  iter1 = model.append(parent,None)
-			  model.set_value(iter1,0,itername)
-			  model.set_value(iter1,1,("vsd","pntr",pntr.type))
-			  model.set_value(iter1,2,plen)
-			  model.set_value(iter1,3,npdata)
-			  model.set_value(iter1,4,pntr)
-			  model.set_value(iter1,6,model.get_string_from_iter(iter1))
-			  if pntr.format != 0:
-				model.set_value(iter1,7,"%02x"%pntr.format)
-			  
-			  if len(res) > 0:
-				  iter2 = model.append(iter1,None)
-				  model.set_value(iter2,0,"[Data referenced by %s]"%name2)
-				  if pntr.format >>4 == 4:
-					model.set_value(iter2,1,("vsd","str4",pntr.type))
-				  else:
-					model.set_value(iter2,1,("vsd","str"))
-				  model.set_value(iter2,2,len(res))
-				  model.set_value(iter2,3,res)
-				  model.set_value(iter2,6,model.get_string_from_iter(iter2))
-				  model.set_value(iter2,5,"#96dfcf")
-				  if vbaflag == 1:
-					vbadata += res[4:len(res)]
+			    itername = streamtype[pntr.type]+idx+'\t%04x'%(pntr.length)
+			  name2 = streamtype[pntr.type]
+		  else:
+			  childlist +=1
+  
+		  if pntr.format&2 == 2 : #compressed
+			  res = inflate.inflate(pntr, data)
+			  pntr.shift = 4
+		  else:
+			  res = data[pntr.offset:pntr.offset+pntr.length]
+			  pntr.shift = 0
+		  pntr.data = res
+		  iter1 = model.append(parent,None)
+		  model.set_value(iter1,0,itername)
+		  model.set_value(iter1,1,("vsd","pntr",pntr.type))
+		  model.set_value(iter1,2,plen)
+		  model.set_value(iter1,3,npdata)
+		  model.set_value(iter1,4,pntr)
+		  model.set_value(iter1,6,model.get_string_from_iter(iter1))
+		  if pntr.format != 0:
+			model.set_value(iter1,7,"%02x"%pntr.format)
+		  if len(res) > 0:
+			  iter2 = model.append(iter1,None)
+			  model.set_value(iter2,0,"[Data referenced by %s]"%name2)
+			  if pntr.format >>4 == 4:
+				model.set_value(iter2,1,("vsd","str4",pntr.type))
+			  else:
+				model.set_value(iter2,1,("vsd","str"))
+			  model.set_value(iter2,2,len(res))
+			  model.set_value(iter2,3,res)
+			  model.set_value(iter2,6,model.get_string_from_iter(iter2))
+			  model.set_value(iter2,5,"#96dfcf")
+			  if vbaflag == 1:
+				vbadata += res[4:len(res)]
   #			print "ptr type/fmt %02x %02x"%(pntr.type,pntr.format)
   
-			  if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
-				  ptr_search (page, data, version, iter1)
-			  
-			  if pntr.type == 0x16:
-				  get_colors (page, res, version, iter1)
-			  if pntr.format >>4 == 0xd:
-				  vsdchunks.parse (model, version, iter1, pntr)
-		if vbaflag == 1:
-		  src = gsf.InputMemory(vbadata,False)
-		  oleparse.open (src, page, parent)
+		  if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
+			  if pntr.type == 0x1e:
+				model.set_value(iter2,1,("vsd","str4",pntr.type)) # it's not a stream4, but...
+			  ptr_search (page, data, version, iter1)
+		  if pntr.type == 0x16:
+			  get_colors (page, res, version, iter1)
+		  if pntr.format >>4 == 0xd:
+			  vsdchunks.parse (model, version, iter1, pntr)
+	if vbaflag == 1:
+	  src = gsf.InputMemory(vbadata,False)
+	  oleparse.open (src, page, parent)
 
 def get_colors (page, data, version, parent):
 	model = page.model
