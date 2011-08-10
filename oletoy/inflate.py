@@ -57,12 +57,12 @@ def inflate_vba (data):
         distance = addr >> shift
         clean = True
         for j in range(blen):
-          print "Addr ",len(buf),j,addr,i
+#          print "Addr ",len(buf),j,addr,i
           srcpos = (pos - distance - 1) % 4096
           c = buf[srcpos]
           buf = buf[:pos % 4096] + c + buf[pos % 4096 + 1:]
           pos +=1
-        print "---------------"
+#        print "---------------"
       else:  
         if pos != 0 and pos % 4096 == 0 and clean:
           i += 2  # why? (check gsf_msole_inflate)

@@ -1,3 +1,7 @@
+2011-08-10  Valek Filippov
+
+		* VBA: decompress all modules
+
 2011-08-09  Valek Filippov
 
 		* VBA: initial parsing of VBA streams (in VSD), compression ported from libgsf, have to be fixed
