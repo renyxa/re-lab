@@ -24,9 +24,10 @@ import Doc
 import oleparse
 import escher
 import vsd, vsdchunks,vsdstream4
-import emfparse,svm,mf,wmfparse,cdr,emfplus,xls
+import xls, vba
+import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.37"
+version = "0.5.39"
 
 ui_info = \
 '''<ui>
@@ -409,7 +410,7 @@ class ApplicationMainWindow(gtk.Window):
 		offset = hd.hdmodel.get_value(hditer,2)
 		size = hd.hdmodel.get_value(hditer,3)
 		fmt = hd.hdmodel.get_value(hditer,4)
-#		print 'Format: ', fmt
+		#print 'Format: ', fmt
 
 		if fmt == "clr":
 			value = value[0:offset] + struct.pack("B",int(new_text[4:6],16))+struct.pack("B",int(new_text[2:4],16))+struct.pack("B",int(new_text[0:2],16))+value[offset+3:]
@@ -423,8 +424,8 @@ class ApplicationMainWindow(gtk.Window):
 			value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
 
 		model.set_value(iter1,3,value)
-		type = model.get_value(iter1,1)[1]
-		if type > 0x4000:
+		(ifmt,itype,t) = model.get_value(iter1,1)
+		if ifmt == "emf" and itype > 0x4000:
 			piter = model.iter_parent(iter1)
 			nvalue = model.get_value(piter,3)[:16]
 			for i in range(model.iter_n_children(piter)):
@@ -442,7 +443,7 @@ class ApplicationMainWindow(gtk.Window):
 		hd.version = self.das[pn].version
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
-		#print "Type: %s %02x"%(ntype[0],ntype[1])
+#		print "Type: %s"%ntype[0],ntype[1]
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
 		hd.data = data
@@ -503,7 +504,8 @@ class ApplicationMainWindow(gtk.Window):
 							vsdstream4.stream_func[ntype[2]](hd, size, data)
 					elif ntype[1] == "hdr":
 						vsd.hdr(hd,data)
-
+				elif ntype[0] == "vba" and ntype[1] == "dir":
+					vba.vba_dir(hd,data)
 				elif ntype[0] == "emf":
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)

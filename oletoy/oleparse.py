@@ -20,16 +20,15 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt
+import vsd, xls, ppt, vba
 import gsf
 
 def open(src,page,iter=None):
 	infile = gsf.InfileMSOle(src)
-	type = get_children(page,infile,iter)
+	type = get_children(page,infile,iter,"OLE")
 	return type
 
-def get_children(page,infile,parent):
-	type = "OLE"
+def get_children(page,infile,parent,type):
 	for i in range(infile.num_children()):
 		infchild = infile.child_by_index(i)
 		infname = infile.name_by_index(i)
@@ -41,9 +40,11 @@ def get_children(page,infile,parent):
 			data = infuncomp.read(infuncomp.size())
 		else:
 			data = infchild.read(infchild.size())
+		if infname == "VBA":
+			type = "VBA"
 		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,infname)
-		page.model.set_value(iter1,1,("OLE",0))
+		page.model.set_value(iter1,1,(type,0))
 		page.model.set_value(iter1,2,infchild.size())
 		page.model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
@@ -62,8 +63,11 @@ def get_children(page,infile,parent):
 		if infname == "PowerPoint Document" or infname == "Pictures":
 			type = "PPT"
 			ppt.parse (page, data, iter1)
+		if type == "VBA" and infname == "dir":
+			print 'Parse vba'
+			vba.parse (page, data, iter1)
 		if (infchild.num_children()>0):
-			get_children(page,infchild,iter1)
+			get_children(page,infchild,iter1,type)
 	return type
 
 

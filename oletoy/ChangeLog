@@ -1,3 +1,11 @@
+2011-08-09  Valek Filippov
+
+		* VBA: initial parsing of VBA streams (in VSD), compression ported from libgsf, have to be fixed
+
+2011-08-08  Valek Filippov
+
+		* VSD: save all streams, "hdr"/"trailer" parts of 0x5* are ignored for now.
+
 2011-08-07  Valek Filippov
 
 		* VSD: start to implement saving

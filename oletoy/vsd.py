@@ -278,25 +278,92 @@ def getnames(doc, niter):
             nitername = nitername + '   \t'+name
             doc.model.set_value(nameiter,1,nitername)
 
-def dump_tree (model, path, parent, outfile):
+def collect_chunks (model,parent):
+  value = ""
+  for i in range(model.iter_n_children(parent)):
+	citer = model.iter_nth_child(parent,i)
+	value += model.get_value(citer,3)
+	value += collect_chunks (model,citer)
+  return value
+  
+def collect_strD (model, parent):
+  value = ""
+  miter = model.iter_nth_child(parent,1)
+  if miter != None:
+	value += model.get_value(miter,3)
+	value += collect_chunks (model,miter)
+  else:
+	print 'None iter?'
+  return value
+  
+
+def collect_str5 (model, parent, offset):
+  value = ""
+  ptr_array = ""
+  ptr_count = 0
+  
+  for i in range(model.iter_n_children(parent)-1):
+	citer = model.iter_nth_child(parent,i+1)
+	ctype = struct.unpack("<H",model.get_value(citer,3)[16:18])[0]
+	if ctype >> 4 == 4:
+	  res = model.get_value(model.iter_nth_child(citer,0),3)
+	  ptype = model.get_value(citer,3)[0:4]
+	  ptr_array += ptype + "\x00"*4+struct.pack("<I",offset)+struct.pack("<I",len(res))+"\x40\x00"
+	  ptr_count += 1
+	  value += res
+	  offset += len(res)
+	if ctype >> 4 == 0xd:
+	  res = collect_strD (model,citer)
+	  ptype = model.get_value(citer,3)[0:4]
+	  pfmt = (struct.unpack("<H",model.get_value(citer,3)[16:18])[0])&0xFD
+	  ptr_array += ptype + "\x00"*4+struct.pack("<I",offset)+struct.pack("<I",len(res))+struct.pack("<H",pfmt)
+	  ptr_count += 1
+	  value += res
+	  offset += len(res)
+	if ctype >> 4 == 0x5:
+	  res,rpal = collect_str5 (model,citer,offset)
+	  ptype = model.get_value(citer,3)[0:4]
+	  pfmt = (struct.unpack("<H",model.get_value(citer,3)[16:18])[0])&0xFD
+	  ptr_array += ptype + "\x00"*4+struct.pack("<I",offset+len(res)-rpal)+struct.pack("<I",rpal)+struct.pack("<H",pfmt)
+	  ptr_count += 1
+	  value += res
+	  offset += len(res)
+	
+  value += "\x18"+"\x00"*23 +struct.pack("<I",ptr_count)+"\x00"*4+ptr_array
+  ptrarlen = 32+len(ptr_array)
+  return value,ptrarlen
+
+def collect_vd (model, parent):
+	hdr = model.get_value(model.iter_nth_child(parent,0),3)[0:0x1c]
+	hdr2 = model.get_value(model.iter_nth_child(parent,1),3)
+	offset = 0x24+18+len(hdr2)
+	trailiter = model.iter_nth_child(parent,2)
+	res, ptrarlen = collect_str5 (model, trailiter, offset)
+	tr_ptr = '\x14'+'\x00'*7+ struct.pack("<I",0x24+18+len(hdr2)+len(res)-ptrarlen)+struct.pack("<I",ptrarlen)+'\x50\x00'
+	value = hdr + struct.pack("<I",len(res)+18+0x24+len(hdr2)) + "\x00\x84\x01\x00" + tr_ptr + hdr2 + res
+	return value
+
+def dump_tree (model, parent, outfile):
 	ntype = model.get_value(parent,1)
-	if ntype[0] == "OLE":
-	  if ntype[1] == 0:
-		name = model.get_value(parent,0)
-		child = cgsf.gsf_outfile_new_child(outfile,name,0)
-		value = model.get_value(parent,3)
-		size = model.get_value(parent,2)
-		cgsf.gsf_output_write (child,size,value)
-		cgsf.gsf_output_close (child)
-	  else: # VisioDocument
-		# Not implemented yet
-		pass
+	name = model.get_value(parent,0)
+	if ntype[1] == 0:
+	  value = model.get_value(parent,3)
+	else: # VisioDocument
+	  value = collect_vd (model, parent)
+	child = cgsf.gsf_outfile_new_child(outfile,name,0)
+	cgsf.gsf_output_write (child,len(value),value)
+	cgsf.gsf_output_close (child)
+
 
 def save (page, fname):
 	model = page.view.get_model()
 	cgsf.gsf_init()
 	output = cgsf.gsf_output_stdio_new (fname)
 	outfile = cgsf.gsf_outfile_msole_new (output);
-	model.foreach (dump_tree, outfile)
+	iter1 = model.get_iter_first()
+	while None != iter1:
+	  dump_tree(model, iter1, outfile)
+	  iter1 = model.iter_next(iter1)
 	cgsf.gsf_output_close(outfile)
 	cgsf.gsf_shutdown()
+

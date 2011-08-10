@@ -14,8 +14,73 @@
 # USA
 #
 
-import gsf
+import gsf, struct
 
+def inflate_vba (data):
+  i = 0
+  pos = 0
+  buf = ""
+  res = ""
+  while i < len(data):
+    flag = ord(data[i])
+    i += 1
+    for mask in (1,2,4,8,16,32,64,128):
+      if flag&mask:
+        addr = struct.unpack("<H",data[i:i+2])[0]
+        i += 2
+        win_pos = pos % 4096
+        if win_pos <= 0x80:
+          if win_pos <= 0x20:
+            if win_pos <= 0x10:
+              shift = 12
+            else:
+              shift = 11
+          else:
+            if win_pos <= 0x40:
+              shift = 10
+            else:
+              shift = 9
+        else:
+          if win_pos <= 0x200:
+            if win_pos <= 0x100:
+              shift = 8
+            else:
+              shift = 7
+          elif win_pos <= 0x800:
+            if win_pos <= 0x400:
+              shift = 6
+            else:
+              shift = 5
+          else:
+            shift = 4
+        blen = (addr & ((1 << shift) - 1)) + 3
+        distance = addr >> shift
+        clean = True
+        for j in range(blen):
+          print "Addr ",len(buf),j,addr,i
+          srcpos = (pos - distance - 1) % 4096
+          c = buf[srcpos]
+          buf = buf[:pos % 4096] + c + buf[pos % 4096 + 1:]
+          pos +=1
+        print "---------------"
+      else:  
+        if pos != 0 and pos % 4096 == 0 and clean:
+          i += 2  # why? (check gsf_msole_inflate)
+          clean = False
+          res += buf
+          break
+        if i < len(data):
+          c = data[i]
+          buf = buf[:pos % 4096] + c + buf[pos % 4096 + 1:]
+          pos += 1
+          i += 1
+        clean = True
+  if pos % 4096:
+    res += buf
+  return res
+
+
+# vsd inflate
 def inflate(ptr,vsd):
     res = ''
     buff = ['\x00']*4096
@@ -58,6 +123,7 @@ def inflate(ptr,vsd):
             i+=1
     return res
 
+# vsd deflate
 def deflate_piastre (buf):
   # 'compression' function which increase size of the result by 12.5%
   i = 0
