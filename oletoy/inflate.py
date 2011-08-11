@@ -16,7 +16,7 @@
 
 import gsf, struct
 
-def inflate_vba (data):
+def inflate_vba_stream (data):
   i = 0
   pos = 0
   buf = ""
@@ -79,6 +79,24 @@ def inflate_vba (data):
     res += buf
   return res
 
+def inflate_vba (data):
+  if ord(data[0]) != 1:
+    print "Attempt to inflate wrong stream"
+    return ""
+
+  off = 1
+  res = ""
+  while off < len(data):
+    flags = struct.unpack("<H",data[off:off+2])[0]
+    cf = (flags&0xf000)/0x1000
+    if cf == 0xb: #compressed
+      clen = flags&0xfff
+      res += inflate_vba_stream(data[off+2:off+2+clen+3])
+      off += clen+5
+    else:
+      res += data[off+2:off+2+4095]
+      off += 4095
+  return res
 
 # vsd inflate
 def inflate(ptr,vsd):

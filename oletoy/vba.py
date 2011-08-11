@@ -57,7 +57,7 @@ def parse (page, data, parent):
 	if ord(data[0]) == 1:
 		# compressed stream
 		try:
-			value = inflate.inflate_vba(data[3:])
+			value = inflate.inflate_vba(data)
 			iter1 = model.append(parent,None)
 			model.set_value(iter1,0,"[Decompressed stream]")
 			model.set_value(iter1,1,("vba","dir"))
@@ -93,7 +93,7 @@ def parse (page, data, parent):
 			cdata = model.get_value(citer,3)
 			if ord(cdata[moff[j]]) == 1:
 				try:
-					cvalue = inflate.inflate_vba(cdata[moff[j]+3:])
+					cvalue = inflate.inflate_vba(cdata[moff[j]:])
 					iter1 = model.append(citer,None)
 					model.set_value(iter1,0,"VBA SourceCode")
 					model.set_value(iter1,1,("vba","src"))

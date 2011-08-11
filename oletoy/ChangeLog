@@ -1,3 +1,8 @@
+2011-08-11  Valek Filippov
+
+		* VBA: fix inflate_vba
+		* VSD: put back names for stencil streams
+
 2011-08-10  Valek Filippov
 
 		* VBA: decompress all modules

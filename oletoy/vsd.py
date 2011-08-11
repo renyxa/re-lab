@@ -182,8 +182,8 @@ def ptr_search (page, data, version, parent):
 			fontlist += 1
 			childlist +=1
 		else:
+		  idx = " %02x"%childlist
 		  if streamtype.has_key (pntr.type):
-			  idx = " %02x"%childlist
 			  if pntr.type == 0x33:
 				idx = "%02x"%namelist
 				namelist += 1
@@ -201,7 +201,9 @@ def ptr_search (page, data, version, parent):
 			  name2 = streamtype[pntr.type]
 		  else:
 			  childlist +=1
-  
+			  if vsdchunks.chunktype.has_key(pntr.type):
+				itername = vsdchunks.chunktype[pntr.type]+idx+'\t%04x'%(pntr.length)
+
 		  if pntr.format&2 == 2 : #compressed
 			  res = inflate.inflate(pntr, data)
 			  pntr.shift = 4
