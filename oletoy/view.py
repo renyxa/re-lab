@@ -27,7 +27,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.40"
+version = "0.5.42"
 
 ui_info = \
 '''<ui>
@@ -316,11 +316,22 @@ class ApplicationMainWindow(gtk.Window):
 		goto = self.entry.get_text()
 		pn = self.notebook.get_current_page()
 		col = self.das[pn].view.get_column(0)
-		try:
-			self.das[pn].view.expand_to_path(goto)
-			self.das[pn].view.set_cursor_on_cell(goto)
-		except:
-			print "No such path"
+		if goto[0] == "#":
+			hd = self.das[pn].hd
+			try:
+				addr = int(goto[1:], 16)
+				buffer_hex = hd.txtdump_hex.get_buffer()
+				vadj = hd.vscroll2.get_vadjustment()
+				newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
+				vadj.set_value(newval)
+			except:
+				print "Wrong address"
+		else:
+			try:
+				self.das[pn].view.expand_to_path(goto)
+				self.das[pn].view.set_cursor_on_cell(goto)
+			except:
+				print "No such path"
 
 	def activate_close(self, action):
 		pn = self.notebook.get_current_page()
@@ -387,12 +398,13 @@ class ApplicationMainWindow(gtk.Window):
 		buffer_hex.remove_tag_by_name("hl",buffer_hex.get_iter_at_offset(0),buffer_hex.get_iter_at_offset(buffer_hex.get_char_count()))
 		iter_hex = buffer_hex.get_iter_at_offset(offset*3)
 		vadj = hd.vscroll2.get_vadjustment()
-		newval = vadj.get_upper()/buffer_hex.get_line_count()*(offset/16 -1)
+		rowh = vadj.get_upper()/buffer_hex.get_line_count()
+		newval = rowh*(offset/16)
 		lim = vadj.get_upper() - hd.vscroll2.allocation[3]
-		if newval < lim:
+		if newval + 2*rowh > hd.vscroll2.allocation[3] and newval -2.5*rowh < lim:
+			vadj.set_value(newval-rowh*2)
+		elif newval < lim:
 			vadj.set_value(newval)
-		else:
-			vadj.set_value(lim)
 		off2 = offset*3+size*3-1
 		if off2 < 0:
 			off2 = 0
@@ -525,6 +537,23 @@ class ApplicationMainWindow(gtk.Window):
 					if xls.biff5_ids.has_key(ntype[1]):
 						xls.biff5_ids[ntype[1]](hd,data)
 
+	def hdscroll_cb(self,view,event):
+		pn = self.notebook.get_current_page()
+		hd = self.das[pn].hd
+		buffer_hex = hd.txtdump_hex.get_buffer()
+		line = buffer_hex.get_property ("cursor-position")/47
+		vadj = hd.vscroll2.get_vadjustment()
+		rowh = vadj.get_upper()/buffer_hex.get_line_count()
+		newval = rowh*line
+		lim = vadj.get_upper() - hd.vscroll2.allocation[3]
+		if newval + 2*rowh > hd.vscroll2.allocation[3] and newval -2.5*rowh < lim:
+			vadj.set_value(newval-rowh*2)
+		elif newval < lim:
+			vadj.set_value(newval)
+		if line >= buffer_hex.get_line_count():
+			vadj.set_value(lim)
+		
+
 	def hdselect_cb(self,event,udata):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
@@ -637,6 +666,9 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdrend.connect('edited', self.edited_cb)
 				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
+				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb) 
+				doc.hd.txtdump_hex.connect('key-press-event',self.hdscroll_cb)
+
 				hpaned = gtk.HPaned()
 				hpaned.add1(scrolled)
 				hpaned.add2(vpaned)

@@ -21,31 +21,49 @@ import tree
 import hexdump
 import pub, pubblock, escher, quill
 import vsd, xls, ppt, vba
-import gsf
+import ctypes
 
-def open(src,page,iter=None):
-	infile = gsf.InfileMSOle(src)
+cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+
+def open(buf,page,iter=None):
+	cgsf.gsf_init()
+	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
+	infile = cgsf.gsf_infile_msole_new(src)
 	type = get_children(page,infile,iter,"OLE")
+	cgsf.gsf_shutdown()
 	return type
 
 def get_children(page,infile,parent,type):
-	for i in range(infile.num_children()):
-		infchild = infile.child_by_index(i)
-		infname = infile.name_by_index(i)
+	for i in range(cgsf.gsf_infile_num_children(infile)):
+		infchild = cgsf.gsf_infile_child_by_index(infile,i)
+		infname = ctypes.string_at(cgsf.gsf_infile_name_by_index(infile,i))
 		if ord(infname[0]) < 32: 
 			infname = infname[1:]
-		print " ",infname
 		if infname == "dir":
-			infuncomp = infchild.uncompress()
-			data = infuncomp.read(infuncomp.size())
+			infuncomp = cgsf.gsf_input_uncompress(infchild)
+			chsize = cgsf.gsf_input_size(infuncomp)
+			data = ctypes.string_at(cgsf.gsf_input_read(infuncomp,chsize,None),chsize)
 		else:
-			data = infchild.read(infchild.size())
+			chsize = cgsf.gsf_input_size(infchild)
+			data = ""
+			pos = -1
+			inc = 1024
+			while cgsf.gsf_input_tell(infchild) < chsize:
+				if pos == cgsf.gsf_input_tell(infchild):
+					if inc == 1:
+						break
+					else:
+						inc = inc/2
+				else:
+					pos = cgsf.gsf_input_tell(infchild)
+				data += ctypes.string_at(cgsf.gsf_input_read(infchild,inc,None),inc)
+			
 		if infname == "VBA":
 			type = "VBA"
 		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,infname)
 		page.model.set_value(iter1,1,(type,0))
-		page.model.set_value(iter1,2,infchild.size())
+		page.model.set_value(iter1,2,chsize)
 		page.model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
 			escher.parse (page.model,data,iter1)
@@ -66,7 +84,7 @@ def get_children(page,infile,parent,type):
 		if type == "VBA" and infname == "dir":
 			print 'Parse vba'
 			vba.parse (page, data, iter1)
-		if (infchild.num_children()>0):
+		if (cgsf.gsf_infile_num_children(infchild)>0):
 			get_children(page,infchild,iter1,type)
 	return type
 

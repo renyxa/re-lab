@@ -16,7 +16,7 @@
 
 import sys,struct
 import gobject
-import gtk,gsf
+import gtk
 import tree
 import hexdump
 import oleparse
@@ -161,45 +161,48 @@ def parse (page, data, parent):
 	type = "XLS"
 	curiter = parent
 	idx = 0
-	while offset < len(data) - 4:
-		rtype = struct.unpack("<H",data[offset:offset+2])[0]
-		if rtype == 0:
-			break
-		iter1 = page.model.append(curiter,None)
-		rname = ""
-		if rec_ids.has_key(rtype):
-			rname = rec_ids[rtype]
-		if rtype == 0x809:
-			curiter = iter1
-			ver = struct.unpack("<H",data[offset+4:offset+6])[0]
-			dt = struct.unpack("<H",data[offset+6:offset+8])[0]
-			if substream.has_key(dt):
-				rname = "BOF (%s)"%substream[dt]
-			else:
-				rname = "BOF (unknown)" 
-			if ver == 0x500:
-				type = "XLS5"
-				page.version = 5
-				print "Version: 5"
-			elif ver == 0x600:
-				type = "XLS8"
-				page.version = 8
-				print "Version: 8"
-		elif rtype == 10:
-			curiter = parent
-		elif rtype == 0x208: #row
-			rname = "Row %04x"%struct.unpack("<H",data[offset+0x10:offset+0x12])
-		elif rtype == 0xe0: #xf
-			rname = "XF %02x"%idx
-			idx += 1
-		offset += 2
-		rlen = struct.unpack("<H",data[offset:offset+2])[0]
-		offset += 2
-		rdata = data[offset:offset+rlen]
-		page.model.set_value(iter1,0,rname)
-		page.model.set_value(iter1,1,("xls",rtype))
-		page.model.set_value(iter1,2,rlen)
-		page.model.set_value(iter1,3,rdata)
-		page.model.set_value(iter1,7,"0x%02x"%rtype)
-		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-		offset += rlen
+	try:
+		while offset < len(data) - 4:
+			rtype = struct.unpack("<H",data[offset:offset+2])[0]
+			if rtype == 0:
+				break
+			iter1 = page.model.append(curiter,None)
+			rname = ""
+			if rec_ids.has_key(rtype):
+				rname = rec_ids[rtype]
+			if rtype == 0x809:
+				curiter = iter1
+				ver = struct.unpack("<H",data[offset+4:offset+6])[0]
+				dt = struct.unpack("<H",data[offset+6:offset+8])[0]
+				if substream.has_key(dt):
+					rname = "BOF (%s)"%substream[dt]
+				else:
+					rname = "BOF (unknown)" 
+				if ver == 0x500:
+					type = "XLS5"
+					page.version = 5
+					print "Version: 5"
+				elif ver == 0x600:
+					type = "XLS8"
+					page.version = 8
+					print "Version: 8"
+			elif rtype == 10:
+				curiter = parent
+			elif rtype == 0x208: #row
+				rname = "Row %04x"%struct.unpack("<H",data[offset+0x10:offset+0x12])
+			elif rtype == 0xe0: #xf
+				rname = "XF %02x"%idx
+				idx += 1
+			offset += 2
+			rlen = struct.unpack("<H",data[offset:offset+2])[0]
+			offset += 2
+			rdata = data[offset:offset+rlen]
+			page.model.set_value(iter1,0,rname)
+			page.model.set_value(iter1,1,("xls",rtype))
+			page.model.set_value(iter1,2,rlen)
+			page.model.set_value(iter1,3,rdata)
+			page.model.set_value(iter1,7,"0x%02x"%rtype)
+			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+			offset += rlen
+	except:
+		print "Something was wrong in XLS parse"

@@ -244,8 +244,7 @@ def ptr_search (page, data, version, parent):
 		  if pntr.format >>4 == 0xd:
 			  vsdchunks.parse (model, version, iter1, pntr)
 	if vbaflag == 1:
-	  src = gsf.InputMemory(vbadata,False)
-	  oleparse.open (src, page, parent)
+	  oleparse.open (vbadata, page, parent)
 
 def get_colors (page, data, version, parent):
 	model = page.model

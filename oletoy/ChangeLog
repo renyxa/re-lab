@@ -1,7 +1,12 @@
+2011-08-12  Valek Filippov
+
+		* Moved libgsf parts to ctypes, no more dependency on python bindings to libgsf.
+
 2011-08-11  Valek Filippov
 
 		* VBA: fix inflate_vba
 		* VSD: put back names for stencil streams
+		* Added "#" to entry to go to offset at hexdump
 
 2011-08-10  Valek Filippov
 
