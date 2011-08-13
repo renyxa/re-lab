@@ -46,6 +46,7 @@ def get_children(page,infile,parent,type):
 		else:
 			chsize = cgsf.gsf_input_size(infchild)
 			data = ""
+			res = ""
 			pos = -1
 			inc = 1024
 			while cgsf.gsf_input_tell(infchild) < chsize:
@@ -56,7 +57,9 @@ def get_children(page,infile,parent,type):
 						inc = inc/2
 				else:
 					pos = cgsf.gsf_input_tell(infchild)
-				data += ctypes.string_at(cgsf.gsf_input_read(infchild,inc,None),inc)
+				res = ctypes.string_at(cgsf.gsf_input_read(infchild,inc,None),inc)
+				if pos != cgsf.gsf_input_tell(infchild):
+					data += res
 			
 		if infname == "VBA":
 			type = "VBA"

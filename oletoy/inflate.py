@@ -25,6 +25,7 @@ def inflate_vba_stream (data):
     flag = ord(data[i])
     i += 1
     for mask in (1,2,4,8,16,32,64,128):
+     try:
       if flag&mask:
         addr = struct.unpack("<H",data[i:i+2])[0]
         i += 2
@@ -75,6 +76,10 @@ def inflate_vba_stream (data):
           pos += 1
           i += 1
         clean = True
+     except:
+       print "Not enough bytes to decompress"
+       i += 1
+       break
   if pos % 4096:
     res += buf
   return res
@@ -89,13 +94,13 @@ def inflate_vba (data):
   while off < len(data):
     flags = struct.unpack("<H",data[off:off+2])[0]
     cf = (flags&0xf000)/0x1000
-    if cf == 0xb: #compressed
-      clen = flags&0xfff
+    clen = flags&0xfff
+    if cf == 0xb and clen > 0x100: # >0x100 to workaround Visio bug, shouldn't be like this
       res += inflate_vba_stream(data[off+2:off+2+clen+3])
       off += clen+5
     else:
-      res += data[off+2:off+2+4095]
-      off += 4095
+      res += inflate_vba_stream(data[off+2:off+4096])
+      off += 4096
   return res
 
 # vsd inflate

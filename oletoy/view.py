@@ -27,7 +27,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.42"
+version = "0.5.44"
 
 ui_info = \
 '''<ui>
@@ -317,15 +317,29 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		col = self.das[pn].view.get_column(0)
 		if goto[0] == "#":
+			pos = goto.find("+")
+			if pos != -1:
+				addr1 = int(goto[1:pos],16)
+				addr2 = int(goto[pos+1:],16)
+				addr = addr1+addr2
+			else:
+				pos = goto.find("-")
+				if pos != -1:
+					addr1 = int(goto[1:pos],16)
+					addr2 = int(goto[pos+1:],16)
+					addr = addr1-addr2
+				else:
+					addr = int(goto[1:], 16)
+			self.entry.set_text("#%02x"%addr)
 			hd = self.das[pn].hd
 			try:
-				addr = int(goto[1:], 16)
 				buffer_hex = hd.txtdump_hex.get_buffer()
 				vadj = hd.vscroll2.get_vadjustment()
 				newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
 				vadj.set_value(newval)
 			except:
 				print "Wrong address"
+
 		else:
 			try:
 				self.das[pn].view.expand_to_path(goto)

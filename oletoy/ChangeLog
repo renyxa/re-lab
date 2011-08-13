@@ -1,6 +1,9 @@
 2011-08-12  Valek Filippov
 
 		* Moved libgsf parts to ctypes, no more dependency on python bindings to libgsf.
+		* VBA: [MS-OVBA] seems to be incorrect about CompressedChunkHeader
+		* Add simple +- to entry for address
+		* OLE: Workaround for semi-broken files
 
 2011-08-11  Valek Filippov
 

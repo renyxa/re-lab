@@ -71,18 +71,22 @@ def parse (page, data, parent):
 	moff = {}
 	i = 0
 	while off < len(value):
-		recid = struct.unpack("<H",value[off:off+2])[0]
-		reclen = struct.unpack("<I",value[off+2:off+6])[0]
-		if recid == 9:
-			reclen = 6
-		if recid == 0x19: # ModuleName
-			mname1 = value[off+6:off+6+reclen]
-		if recid == 0x31: # ModuleOffset
-			moff1 = struct.unpack("<I",value[off+6:off+10])[0]
-			mname[i] = mname1 # assume ModuleOffset always after ModuleName
-			moff[i] = moff1
-			i += 1
-		off += reclen + 6
+		try:
+			recid = struct.unpack("<H",value[off:off+2])[0]
+			reclen = struct.unpack("<I",value[off+2:off+6])[0]
+			if recid == 9:
+				reclen = 6
+			if recid == 0x19: # ModuleName
+				mname1 = value[off+6:off+6+reclen]
+			if recid == 0x31: # ModuleOffset
+				moff1 = struct.unpack("<I",value[off+6:off+10])[0]
+				mname[i] = mname1 # assume ModuleOffset always after ModuleName
+				moff[i] = moff1
+				i += 1
+			off += reclen + 6
+		except:
+			print "Failed at VBA parsing"
+			off += 2
 
 	vbaiter = model.iter_parent(parent)
 	j = 0
@@ -93,6 +97,7 @@ def parse (page, data, parent):
 			cdata = model.get_value(citer,3)
 			if ord(cdata[moff[j]]) == 1:
 				try:
+					print "VBA inflate %02x"%moff[j], cname
 					cvalue = inflate.inflate_vba(cdata[moff[j]:])
 					iter1 = model.append(citer,None)
 					model.set_value(iter1,0,"VBA SourceCode")
