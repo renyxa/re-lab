@@ -1,3 +1,9 @@
+2011-08-13  Valek Filippov
+
+		* VBA: fix module iteration
+		* Add copying hdrow value as address into entry
+		* Remove gsf import from inflate.py
+
 2011-08-12  Valek Filippov
 
 		* Moved libgsf parts to ctypes, no more dependency on python bindings to libgsf.

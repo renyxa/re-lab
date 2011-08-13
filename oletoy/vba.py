@@ -20,6 +20,28 @@ import tree
 import hexdump
 import inflate
 
+
+def rt_0 (data):
+	return ""
+
+def rt_2 (data):
+	return "%02x"%struct.unpack("<H",data)[0]
+
+def rt_4 (data):
+	return "%02x"%struct.unpack("<I",data)[0]
+
+def rt_TL (data):
+	return data[4:]
+
+def rt_U (data):
+	return unicode(data,"utf-16")
+
+def rt_UL (data):
+	return rt_U(data[4:])
+
+rec_types = {1:rt_4,2:rt_4,3:rt_2,0x14:rt_4,9:rt_0,0xd:rt_TL,0xf:rt_2,
+	0x13:rt_2, 0x2c:rt_2,0x31:rt_4,0x32:rt_U,0x3e:rt_U,0x47:rt_U}
+
 rec_ids = {1:"SysKind",2:"Lcid",3:"CodePage",4:"Name",5:"DocString",
 	6:"HelpFile1",7:"HelpContext",8:"LibFlags",9:"Version",
 	0xc:"Constants", 0xd:"RefRegistred", 0xe:"RefProject",
@@ -40,6 +62,7 @@ rec_ids = {1:"SysKind",2:"Lcid",3:"CodePage",4:"Name",5:"DocString",
 
 def vba_dir (hd,data):
 	off = 0
+	miter = None
 	while off < len(data):
 		recid = struct.unpack("<H",data[off:off+2])[0]
 		reclen = struct.unpack("<I",data[off+2:off+6])[0]
@@ -48,9 +71,17 @@ def vba_dir (hd,data):
 		recname = "%02x"%recid
 		if rec_ids.has_key(recid):
 			recname = rec_ids[recid]
-		iter = hd.hdmodel.append(None, None)
-		hd.hdmodel.set(iter, 0, recname,2,off,3,reclen+6,4,"txt")
+		iter = hd.hdmodel.append(miter, None)
+		if rec_types.has_key(recid):
+			value = rec_types[recid](data[off+6:off+6+reclen])
+		else:
+			value = data[off+6:off+6+reclen]
+		hd.hdmodel.set(iter, 0, recname,1, value,2,off,3,reclen+6,4,"txt")
 		off += reclen + 6
+		if recid == 0x19:
+			miter = iter
+		if recid == 0x2b:
+			miter = None
 
 def parse (page, data, parent):
 	model = page.model
@@ -67,9 +98,7 @@ def parse (page, data, parent):
 		except:
 			print 'VBA Inflate failed'
 	off = 0
-	mname = {}
-	moff = {}
-	i = 0
+	mods = {}
 	while off < len(value):
 		try:
 			recid = struct.unpack("<H",value[off:off+2])[0]
@@ -80,25 +109,25 @@ def parse (page, data, parent):
 				mname1 = value[off+6:off+6+reclen]
 			if recid == 0x31: # ModuleOffset
 				moff1 = struct.unpack("<I",value[off+6:off+10])[0]
-				mname[i] = mname1 # assume ModuleOffset always after ModuleName
-				moff[i] = moff1
-				i += 1
+				mods[mname1] = moff1
 			off += reclen + 6
 		except:
 			print "Failed at VBA parsing"
 			off += 2
 
+	print "Found %d modules"%len(mods)
+
 	vbaiter = model.iter_parent(parent)
-	j = 0
 	for k in range(model.iter_n_children(vbaiter)):
 		citer = model.iter_nth_child(vbaiter,k)
 		cname = model.get_value(citer,0)
-		if cname == mname[j]:
+		print "Check ",cname
+		if mods.has_key(cname):
 			cdata = model.get_value(citer,3)
-			if ord(cdata[moff[j]]) == 1:
+			if ord(cdata[mods[cname]]) == 1:
 				try:
-					print "VBA inflate %02x"%moff[j], cname
-					cvalue = inflate.inflate_vba(cdata[moff[j]:])
+					print "VBA inflate %02x"%mods[cname]
+					cvalue = inflate.inflate_vba(cdata[mods[cname]:])
 					iter1 = model.append(citer,None)
 					model.set_value(iter1,0,"VBA SourceCode")
 					model.set_value(iter1,1,("vba","src"))
@@ -106,7 +135,4 @@ def parse (page, data, parent):
 					model.set_value(iter1,3,cvalue)
 					model.set_value(iter1,6,model.get_string_from_iter(iter1))
 				except:
-					print 'VBA Src Inflate failed ',mname
-				j += 1
-				if j == i:
-					break
+					print 'VBA Src Inflate failed ',cname

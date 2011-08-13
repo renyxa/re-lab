@@ -27,7 +27,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.44"
+version = "0.5.45"
 
 ui_info = \
 '''<ui>
@@ -396,6 +396,9 @@ class ApplicationMainWindow(gtk.Window):
 		if iter1:
 			intPath = model.get_path(iter1)
 			self.on_hdrow_activated(view, intPath, 0)
+			if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
+				val = model.get_value(iter1,1)
+				self.entry.set_text("#%s"%val)
 
 	def on_hdrow_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
