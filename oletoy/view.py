@@ -535,6 +535,9 @@ class ApplicationMainWindow(gtk.Window):
 						vsd.hdr(hd,data)
 				elif ntype[0] == "vba" and ntype[1] == "dir":
 					vba.vba_dir(hd,data)
+				elif ntype[0] == "vba" and ntype[1] == "src":
+					vba.vba_src(hd,data)
+
 				elif ntype[0] == "emf":
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)

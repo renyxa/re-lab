@@ -1,5 +1,9 @@
 2011-08-13  Valek Filippov
 
+		* VBA: placeholder for ctyping gsf_vba_inflate
+
+2011-08-13  Valek Filippov
+
 		* VBA: fix module iteration
 		* Add copying hdrow value as address into entry
 		* Remove gsf import from inflate.py

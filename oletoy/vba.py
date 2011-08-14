@@ -20,7 +20,6 @@ import tree
 import hexdump
 import inflate
 
-
 def rt_0 (data):
 	return ""
 
@@ -60,6 +59,10 @@ rec_ids = {1:"SysKind",2:"Lcid",3:"CodePage",4:"Name",5:"DocString",
 	0x49:"HelpFile2" #typo?
 	}
 
+def vba_src (hd,data):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 1, data,2,0,3,len(data),4,"txt")
+
 def vba_dir (hd,data):
 	off = 0
 	miter = None
@@ -87,7 +90,8 @@ def parse (page, data, parent):
 	model = page.model
 	if ord(data[0]) == 1:
 		# compressed stream
-		try:
+#		try:
+		if model:
 			value = inflate.inflate_vba(data)
 			iter1 = model.append(parent,None)
 			model.set_value(iter1,0,"[Decompressed stream]")
@@ -95,8 +99,8 @@ def parse (page, data, parent):
 			model.set_value(iter1,2,len(value))
 			model.set_value(iter1,3,value)
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
-		except:
-			print 'VBA Inflate failed'
+#		except:
+#			print 'VBA Inflate failed'
 	off = 0
 	mods = {}
 	while off < len(value):

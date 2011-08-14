@@ -15,6 +15,9 @@
 #
 
 import struct
+import ctypes as C
+
+cgsf = C.cdll.LoadLibrary('libgsf-1.so')
 
 def inflate_vba_stream (data):
   i = 0
@@ -58,12 +61,10 @@ def inflate_vba_stream (data):
         distance = addr >> shift
         clean = True
         for j in range(blen):
-#          print "Addr ",len(buf),j,addr,i
           srcpos = (pos - distance - 1) % 4096
           c = buf[srcpos]
           buf = buf[:pos % 4096] + c + buf[pos % 4096 + 1:]
           pos +=1
-#        print "---------------"
       else:  
         if pos != 0 and pos % 4096 == 0 and clean:
           i += 2  # why? (check gsf_msole_inflate)
@@ -77,14 +78,15 @@ def inflate_vba_stream (data):
           i += 1
         clean = True
      except:
-       print "Not enough bytes to decompress"
+			 # FIXME!  Better handling of LZ stream ends?
+       print "Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask)
        i += 1
        break
   if pos % 4096:
     res += buf
   return res
 
-def inflate_vba (data):
+def inflate_vba_oletoy (data):
   if ord(data[0]) != 1:
     print "Attempt to inflate wrong stream"
     return ""
@@ -97,11 +99,25 @@ def inflate_vba (data):
     clen = flags&0xfff
     if cf == 0xb and clen > 0: # >0x100 to workaround Visio bug, shouldn't be like this
       res += inflate_vba_stream(data[off+2:off+2+clen+3])
-      off += clen+5
+      off += clen+3
     else:
       res += inflate_vba_stream(data[off+2:off+4096])
       off += 4096
   return res
+
+def inflate_vba_gsf (data):
+  cgsf.gsf_init()
+  cgsf.gsf_input_memory_new.restype = C.c_void_p
+  src = cgsf.gsf_input_memory_new (data,len(data),False)
+  size = C.create_string_buffer(4)
+  cgsf.gsf_vba_inflate.argtypes = [C.c_void_p,C.c_double,C.c_void_p,C.c_int]
+  res = C.string_at(cgsf.gsf_vba_inflate(src,C.c_double(0),size,C.c_int(0)),struct.unpack("<I",size)[0])
+  cgsf.gsf_shutdown()
+  return res
+  
+def inflate_vba (data):
+  return inflate_vba_oletoy (data)
+  
 
 # vsd inflate
 def inflate(ptr,vsd):
