@@ -1,6 +1,7 @@
-2011-08-13  Valek Filippov
+2011-08-14  Valek Filippov
 
 		* VBA: placeholder for ctyping gsf_vba_inflate
+		* PPT: parse RT_ExternalOleObjectStg
 
 2011-08-13  Valek Filippov
 

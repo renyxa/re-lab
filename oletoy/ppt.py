@@ -20,6 +20,7 @@ import gtk,gsf
 import tree
 import hexdump
 import oleparse
+import zlib
 
 
 rec_ids = {0x03E8:"RT_Document",
@@ -265,15 +266,22 @@ def parse (page, data, parent):
 		offset += 2
 		rlen = struct.unpack("<I",data[offset:offset+4])[0]
 		offset += 4
-		rdata = data[offset:offset+rlen]
+		rdata = data[offset-8:offset+rlen]
 		iter1 = page.model.append(parent,None)
-		rname = ""
+		rname = "%02x  ver %02x inst %02x"%(rtype,verinst&0xf,(verinst&0xFFF0)/0x10)
 		if rec_ids.has_key(rtype):
-			rname = rec_ids[rtype] + " "
+			rname = rec_ids[rtype] + " ver %02x inst %02x"%(verinst&0xf,(verinst&0xFFF0)/0x10)
 		page.model.set_value(iter1,0,rname)
 		page.model.set_value(iter1,1,("ppt",rtype))
 		page.model.set_value(iter1,2,rlen)
 		page.model.set_value(iter1,3,rdata)
 		page.model.set_value(iter1,7,"%02x"%rtype)
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+		if rtype == 0x1011:
+			if (verinst&0xFFF0)/0x10 == 1:
+				decomp = zlib.decompressobj()
+				uncompdata = decomp.decompress(data[offset+4:offset+rlen])
+			else:
+				uncompdata = data[offset+4:offset+rlen]
+			oleparse.open(uncompdata,page,iter1)
 		offset += rlen

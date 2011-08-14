@@ -68,7 +68,7 @@ def get_children(page,infile,parent,type):
 		page.model.set_value(iter1,1,(type,0))
 		page.model.set_value(iter1,2,chsize)
 		page.model.set_value(iter1,3,data)
-		if (infname == "EscherStm" or infname == "EscherDelayStm") and infchild.size()>0:
+		if (infname == "EscherStm" or infname == "EscherDelayStm"): # and infchild.size()>0:
 			escher.parse (page.model,data,iter1)
 		if infname == "CONTENTS": # assuming no attempt to parse something else
 			quill.parse (page.model,data,iter1)
