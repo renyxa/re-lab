@@ -97,7 +97,7 @@ def inflate_vba_oletoy (data):
     flags = struct.unpack("<H",data[off:off+2])[0]
     cf = (flags&0xf000)/0x1000
     clen = flags&0xfff
-    if cf == 0xb and clen > 0: # >0x100 to workaround Visio bug, shouldn't be like this
+    if cf == 0xb and clen > 0 and (len(data)-off < 4096): # to workaround MSOffice compression bugs
       res += inflate_vba_stream(data[off+2:off+2+clen+3])
       off += clen+3
     else:
