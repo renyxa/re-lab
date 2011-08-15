@@ -20,7 +20,7 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt, vba
+import vsd, xls, ppt, vba, doc
 import ctypes
 
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
@@ -79,6 +79,10 @@ def get_children(page,infile,parent,type):
 			type = "VSD"
 			page.model.set_value(iter1,1,("OLE",1))
 			vsd.parse (page, data, iter1)
+		if infname == "WordDocument":
+			type = "DOC"
+			page.model.set_value(iter1,1,("OLE",1))
+			doc.parse (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
 			type = xls.parse (page, data, iter1)
 		if infname == "PowerPoint Document" or infname == "Pictures":

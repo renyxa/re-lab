@@ -3,6 +3,7 @@
 		* VBA: placeholder for ctyping gsf_vba_inflate
 		* PPT: parse RT_ExternalOleObjectStg
 		* VBA: workaround for compression bug in MSOffice
+		* DOC: initial minimal support for doc
 
 2011-08-13  Valek Filippov
 
