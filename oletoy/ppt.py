@@ -19,7 +19,7 @@ import gobject
 import gtk,gsf
 import tree
 import hexdump
-import oleparse
+import ole
 import zlib
 
 
@@ -283,5 +283,5 @@ def parse (page, data, parent):
 				uncompdata = decomp.decompress(data[offset+4:offset+rlen])
 			else:
 				uncompdata = data[offset+4:offset+rlen]
-			oleparse.open(uncompdata,page,iter1)
+			ole.open(uncompdata,page,iter1)
 		offset += rlen

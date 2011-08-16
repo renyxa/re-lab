@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import oleparse,mf,svm,cdr,clp
+import ole,mf,svm,cdr,clp
 
 class Page:
 	def __init__(self):
@@ -39,7 +39,7 @@ class Page:
 		buf = f.read()
 
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-			self.type = oleparse.open(buf, self)
+			self.type = ole.open(buf, self)
 			return 0
 
 		if buf[0:2] == "\x50\xc3":

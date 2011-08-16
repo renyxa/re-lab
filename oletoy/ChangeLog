@@ -1,6 +1,11 @@
+2011-08-15  Valek Filippov
+
+		* OLE: rename oleparse to ole. Start to implement CFB parsing.
+		* Added "command" to entry line, only "$ole" with optional "@offset" is supported atm.
+
 2011-08-14  Valek Filippov
 
-		* VBA: placeholder for ctyping gsf_vba_inflate
+		* VBA: placeholder for ctyping gsf_vba_inflateup
 		* PPT: parse RT_ExternalOleObjectStg
 		* VBA: workaround for compression bug in MSOffice
 		* DOC: initial minimal support for doc

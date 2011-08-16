@@ -21,7 +21,7 @@ import tree
 import hexdump
 import inflate
 import vsdchunks,vsdstream4
-import oleparse
+import ole
 import ctypes
 
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
@@ -244,7 +244,7 @@ def ptr_search (page, data, version, parent):
 		  if pntr.format >>4 == 0xd:
 			  vsdchunks.parse (model, version, iter1, pntr)
 	if vbaflag == 1:
-	  oleparse.open (vbadata, page, parent)
+	  ole.open (vbadata, page, parent)
 
 def get_colors (page, data, version, parent):
 	model = page.model

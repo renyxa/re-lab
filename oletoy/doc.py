@@ -19,7 +19,6 @@ import gobject
 import gtk
 import tree
 import hexdump
-import oleparse
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
