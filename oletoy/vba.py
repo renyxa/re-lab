@@ -119,22 +119,22 @@ def parse (page, data, parent):
 			print "Failed at VBA parsing"
 			off += 2
 
-	print "Found %d modules"%len(mods)
+#	print "Found %d modules"%len(mods)
 
 	vbaiter = model.iter_parent(parent)
 	for k in range(model.iter_n_children(vbaiter)):
 		citer = model.iter_nth_child(vbaiter,k)
 		cname = model.get_value(citer,0)
-		print "Check ",cname
+#		print "Check ",cname
 		if mods.has_key(cname):
 			cdata = model.get_value(citer,3)
 			if ord(cdata[mods[cname]]) == 1:
 				try:
-					print "VBA inflate %02x"%mods[cname]
+#					print "VBA inflate %02x"%mods[cname]
 					cvalue = inflate.inflate_vba(cdata[mods[cname]:])
 					iter1 = model.append(citer,None)
 					model.set_value(iter1,0,"VBA SourceCode")
-					model.set_value(iter1,1,("vba","src"))
+					model.set_value(iter1,1,("vba","src",mods[cname]))
 					model.set_value(iter1,2,len(cvalue))
 					model.set_value(iter1,3,cvalue)
 					model.set_value(iter1,6,model.get_string_from_iter(iter1))

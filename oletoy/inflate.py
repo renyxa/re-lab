@@ -79,7 +79,7 @@ def inflate_vba_stream (data):
         clean = True
      except:
 			 # FIXME!  Better handling of LZ stream ends?
-       print "Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask)
+#       print "Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask)
        i += 1
        break
   if pos % 4096:
@@ -163,17 +163,21 @@ def inflate(ptr,vsd):
     return res
 
 # vsd deflate
-def deflate_piastre (buf):
+def deflate_piastre (buf, flavour=0):
   # 'compression' function which increase size of the result by 12.5%
+  if flavour == 0:
+    token = '\xFF'
+  else:
+    token = '\x00'
   i = 0
   res = ''
   while i< len(buf):
-    res += '\xFF'+buf[i:i+8]
+    res += token+buf[i:i+8]
     i +=8
   n = len(buf)-(len(buf)/8)*8
   res += '\x00'*n
   return res
 
-def deflate (buf):
+def deflate (buf, flavour):
   # wrapper to avoid later renaming if I implement something better then 'piastre' ;-)
-  return deflate_piastre (buf)
+  return deflate_piastre (buf, flavour)

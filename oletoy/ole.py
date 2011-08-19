@@ -44,70 +44,76 @@ def open (buf,page,iter=None):
 	cgsf.gsf_init()
 	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
 	infile = cgsf.gsf_infile_msole_new(src)
-	type = get_children(page,infile,iter,"OLE")
+	type = get_children(page,infile,iter,"ole")
 	cgsf.gsf_shutdown()
 	return type
 
-def get_children(page,infile,parent,type):
+def get_children(page,infile,parent,type,dirflag=0):
 	for i in range(cgsf.gsf_infile_num_children(infile)):
 		infchild = cgsf.gsf_infile_child_by_index(infile,i)
 		infname = ctypes.string_at(cgsf.gsf_infile_name_by_index(infile,i))
+#		print "Name ", infname, dirflag
+
 		if ord(infname[0]) < 32: 
 			infname = infname[1:]
-		if infname == "dir":
-			infuncomp = cgsf.gsf_input_uncompress(infchild)
-			chsize = cgsf.gsf_input_size(infuncomp)
-			data = ctypes.string_at(cgsf.gsf_input_read(infuncomp,chsize,None),chsize)
-		else:
-			chsize = cgsf.gsf_input_size(infchild)
-			data = ""
-			res = ""
-			pos = -1
-			inc = 1024
-			while cgsf.gsf_input_tell(infchild) < chsize:
-				if pos == cgsf.gsf_input_tell(infchild):
-					if inc == 1:
-						break
-					else:
-						inc = inc/2
+		chsize = cgsf.gsf_input_size(infchild)
+		data = ""
+		res = ""
+		pos = -1
+		inc = 1024
+		while cgsf.gsf_input_tell(infchild) < chsize:
+			if pos == cgsf.gsf_input_tell(infchild):
+				if inc == 1:
+					break
 				else:
-					pos = cgsf.gsf_input_tell(infchild)
-				res = ctypes.string_at(cgsf.gsf_input_read(infchild,inc,None),inc)
-				if pos != cgsf.gsf_input_tell(infchild):
-					data += res
+					inc = inc/2
+			else:
+				pos = cgsf.gsf_input_tell(infchild)
+			res = ctypes.string_at(cgsf.gsf_input_read(infchild,inc,None),inc)
+			if pos != cgsf.gsf_input_tell(infchild):
+				data += res
 			
 		if infname == "VBA":
-			type = "VBA"
+			type = "vba"
 		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,infname)
-		page.model.set_value(iter1,1,(type,0))
+		page.model.set_value(iter1,1,("ole",dirflag))
 		page.model.set_value(iter1,2,chsize)
 		page.model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm"): # and infchild.size()>0:
+			type = "escher"
+			page.model.set_value(iter1,1,("escher",dirflag))
 			escher.parse (page.model,data,iter1)
-		if infname == "CONTENTS": # assuming no attempt to parse something else
+		if infname == "CONTENTS":
+			type = "quill"
+			page.model.set_value(iter1,1,("quill",dirflag))
 			quill.parse (page.model,data,iter1)
-		if infname == "Contents": # assuming no attempt to parse something else
-			type = "PUB"
+		if infname == "Contents":
+			type = "pub"
+			page.model.set_value(iter1,1,("pub",dirflag))
 			pub.parse (page.model,data,iter1)
 		if infname == "VisioDocument":
-			type = "VSD"
-			page.model.set_value(iter1,1,("OLE",1))
+			type = "vsd"
+			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
 			vsd.parse (page, data, iter1)
 		if infname == "WordDocument":
-			type = "DOC"
-			page.model.set_value(iter1,1,("OLE",1))
+			type = "doc"
+			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 			doc.parse (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
+			page.model.set_value(iter1,1,("xls",dirflag))
 			type = xls.parse (page, data, iter1)
 		if infname == "PowerPoint Document" or infname == "Pictures":
-			type = "PPT"
+			type = "ppt"
+			page.model.set_value(iter1,1,("ppt",dirflag))
 			ppt.parse (page, data, iter1)
-		if type == "VBA" and infname == "dir":
-			print 'Parse vba'
+		if type == "vba" and infname == "dir":
+			page.model.set_value(iter1,1,("vba",dirflag))
 			vba.parse (page, data, iter1)
+		
 		if (cgsf.gsf_infile_num_children(infchild)>0):
-			get_children(page,infchild,iter1,type)
+			page.model.set_value(iter1,1,(type,1))
+			get_children(page,infchild,iter1,type,0)
 	return type
 
 def cfb_hdr (hd,data):
@@ -214,7 +220,7 @@ def parse (buf,page,iter=None):
 		print "No OLE signature found"
 		return
 		
-	oiter = add_pgiter (page,"OLE",buf,None)
+	oiter = add_pgiter (page,"CFB",buf,None)
 	majver = struct.unpack("<H",buf[0x1a:0x1c])[0]
 	if majver == 3:
 		hdrsize = 512

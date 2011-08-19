@@ -19,6 +19,11 @@ import gobject
 import gtk
 import tree
 import hexdump
+import inflate
+import ctypes
+
+cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -47,7 +52,6 @@ def add_pgiter (page, name, ftype, stype, data, parent = None):
 def parse (page, data, parent):
 	offset = 0
 	type = "DOC"
-
 	add_pgiter (page,"Base","doc","base",data[0:0x20],parent)
 	offset += 0x20
 	csw = struct.unpack("<H",data[offset:offset+2])[0]
@@ -61,3 +65,48 @@ def parse (page, data, parent):
 	offset += 2+cbRgFcLcb*8
 	cswNew = struct.unpack("<H",data[offset:offset+2])[0]
 	add_pgiter (page,"fibRgCswNew","doc","fibRgCswNew",data[offset:offset+2+cswNew*2],parent)
+
+
+def dump_tree (model, parent, outfile):
+	ntype = model.get_value(parent,1)
+	name = model.get_value(parent,0)
+	if ntype[1] == 0:
+	  child = cgsf.gsf_outfile_new_child(outfile,name,0)
+	  value = model.get_value(parent,3)
+	  if name[:6] == "Module":
+		piter = model.iter_nth_child(parent,0)
+		data = model.get_value(piter,3)
+		srcoff = model.get_value(piter,1)[2]
+		off = 0
+		value = value[:srcoff]
+		while  off + 4094 < len(data):
+		  value += "\x30\x00"+data[off:off+4094]
+		  off += 4094
+		if off < len(data):
+		  res = inflate.deflate(data[off:],1)
+		  flag = 0xb000+len(res)
+		  value += struct.pack("<H",flag)+res
+	  cgsf.gsf_output_write (child,len(value),value)
+
+	else: # Directory
+	  child = cgsf.gsf_outfile_new_child(outfile,name,1)
+
+	  for i in range(model.iter_n_children(parent)):
+		piter = model.iter_nth_child(parent,i)
+		dump_tree (model, piter, child)
+
+	cgsf.gsf_output_close (child)
+
+
+def save (page, fname):
+	model = page.view.get_model()
+	cgsf.gsf_init()
+	output = cgsf.gsf_output_stdio_new (fname)
+	outfile = cgsf.gsf_outfile_msole_new (output);
+	iter1 = model.get_iter_first()
+	while None != iter1:
+	  dump_tree(model, iter1, outfile)
+	  iter1 = model.iter_next(iter1)
+	cgsf.gsf_output_close(outfile)
+	cgsf.gsf_shutdown()
+

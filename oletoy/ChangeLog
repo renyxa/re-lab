@@ -1,3 +1,9 @@
+2011-08-18  Valek Filippov
+
+		* DOC: saving with screwing VBA modules
+		* XLS: fix FONT, part of XF parsed
+		* inflate.deflate takes 'flavour' to invert tokens meaning
+
 2011-08-15  Valek Filippov
 
 		* OLE: rename oleparse to ole. Start to implement CFB parsing.

@@ -119,41 +119,64 @@ def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
 
+#0x31
 def biff58_font (hd,data):
-	fonth = struct.unpack("<H",data[0:2])[0]
-	flags = struct.unpack("<H",data[2:4])[0]
-	clridx = struct.unpack("<H",data[4:6])[0]
-	fontw = struct.unpack("<H",data[6:8])[0]
-	esc = struct.unpack("<H",data[8:0xa])[0]
+	off = 4
+	fonth = struct.unpack("<H",data[0+off:2+off])[0]
+	flags = struct.unpack("<H",data[2+off:4+off])[0]
+	clridx = struct.unpack("<H",data[4+off:6+off])[0]
+	fontw = struct.unpack("<H",data[6+off:8+off])[0]
+	esc = struct.unpack("<H",data[8+off:0xa+off])[0]
 	et = ""
 	if escapement.has_key(esc):
 		et = escapement[esc]
-	und = ord(data[0xa])
+	und = ord(data[0xa+off])
 	ut = ""
 	if underline.has_key(und):
 		ut = underline[und]
-	fam = ord(data[0xb])
-	cset = ord(data[0xc])
+	fam = ord(data[0xb+off])
+	cset = ord(data[0xc+off])
 	cst = ""
 	if charsets.has_key(cset):
 		cst = charsets[cset]
-	fnlen = ord(data[0xe])
-	fname = data[0xf:0xf+fnlen]
+	fnlen = ord(data[0xe+off])
+	fname = data[0xf+off:0xf+fnlen+off]
 	if hd.version == 8:
-		fname = unicode(data[0x10:0x10+fnlen*2],"utf-16")
-	add_iter (hd,"Font Height",fonth,0,2,"<H")
-	add_iter (hd,"Option Flags",flags,2,2,"<H")
-	add_iter (hd,"Color Index",clridx,4,2,"<H")
-	add_iter (hd,"Font Weight",fontw,6,2,"<H")
-	add_iter (hd,"Escapement","%02x (%s)"%(esc,et),8,2,"<H")
-	add_iter (hd,"Underline","%02x (%s)"%(und,ut),0xa,1,"<B")
-	add_iter (hd,"Font Family",fam,0xb,1,"<B")
-	add_iter (hd,"Charset","%02x (%s)"%(cset,cst),0xc,2,"<B")
-	add_iter (hd,"Font Name Length",fnlen,0xe,2,"<B")
-	add_iter (hd,"Font Name",fname,0xf,fnlen,"txt")
+		if ord(data[0xf+off]) == 1:
+			fname = unicode(data[0x10+off:0x10+fnlen*2+off],"utf-16")
+		else:
+			fname = data[0x10+off:0x10+fnlen*2+off]
 
+	add_iter (hd,"Font Height",fonth,0+off,2,"<H")
+	add_iter (hd,"Option Flags",flags,2+off,2,"<H")
+	add_iter (hd,"Color Index",clridx,4+off,2,"<H")
+	add_iter (hd,"Font Weight",fontw,6+off,2,"<H")
+	add_iter (hd,"Escapement","%02x (%s)"%(esc,et),8+off,2,"<H")
+	add_iter (hd,"Underline","%02x (%s)"%(und,ut),0xa+off,1,"<B")
+	add_iter (hd,"Font Family",fam,0xb+off,1,"<B")
+	add_iter (hd,"Charset","%02x (%s)"%(cset,cst),0xc+off,2,"<B")
+	add_iter (hd,"Font Name Length",fnlen,0xe+off,2,"<B")
+	add_iter (hd,"Font Name",fname,0x10+off,fnlen,"txt")
 
-biff5_ids = {0x31:biff58_font}
+xf_flags = {1:"Locked ",2:"Hidden ",3:"Style ",4:"123Prefix "}
+#0xe0
+def biff_xf (hd,data):
+	off = 4
+	fontidx = struct.unpack("<H",data[0+off:2+off])[0]
+	numfmt = struct.unpack("<H",data[2+off:4+off])[0]
+	flags = struct.unpack("<H",data[4+off:6+off])[0]
+	fstyle = (flags&4)/4
+	xfparent = flags/16
+	fname = ""
+	for i in range(4):
+		if flags&(2^i):
+			fname += xf_flags[i+1]
+	add_iter (hd,"Font IDX",fontidx,0+off,2,"<H")
+	add_iter (hd,"Num format",numfmt,2+off,2,"<H")
+	add_iter (hd,"Flags/Parent","%s  %02x"%(fname,xfparent),4+off,2,"<H")
+#FIXME! Parse style/cell XF part
+
+biff5_ids = {0x31:biff58_font,0xe0:biff_xf}
 
 def parse (page, data, parent):
 	offset = 0
@@ -195,7 +218,7 @@ def parse (page, data, parent):
 			offset += 2
 			rlen = struct.unpack("<H",data[offset:offset+2])[0]
 			offset += 2
-			rdata = data[offset:offset+rlen]
+			rdata = data[offset-4:offset+rlen]
 			page.model.set_value(iter1,0,rname)
 			page.model.set_value(iter1,1,("xls",rtype))
 			page.model.set_value(iter1,2,rlen)
