@@ -79,7 +79,7 @@ def inflate_vba_stream (data):
         clean = True
      except:
 			 # FIXME!  Better handling of LZ stream ends?
-#       print "Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask)
+       print "Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask)
        i += 1
        break
   if pos % 4096:
@@ -98,7 +98,7 @@ def inflate_vba_oletoy (data):
     cf = (flags&0xf000)/0x1000
     clen = flags&0xfff
     if cf == 0xb and clen > 0 and (len(data)-off < 4096): # to workaround MSOffice compression bugs
-      res += inflate_vba_stream(data[off+2:off+2+clen+3])
+      res += inflate_vba_stream(data[off+2:off+2+clen+1])
       off += clen+3
     else:
       res += inflate_vba_stream(data[off+2:off+4096])
@@ -116,7 +116,7 @@ def inflate_vba_gsf (data):
   return res
   
 def inflate_vba (data):
-  return inflate_vba_oletoy (data)
+  return inflate_vba_gsf (data)
   
 
 # vsd inflate

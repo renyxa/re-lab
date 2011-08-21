@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
 import emfparse,svm,mf,wmfparse,cdr,emfplus
 
-version = "0.5.46"
+version = "0.5.48"
 
 ui_info = \
 '''<ui>
@@ -34,6 +34,7 @@ ui_info = \
 	<menu action='FileMenu'>
 		<menuitem action='New'/>
 		<menuitem action='Open'/>
+		<menuitem action='Reload'/>
 		<menuitem action='Save'/>
 		<menuitem action='Close'/>
 		<separator/>
@@ -158,6 +159,11 @@ class ApplicationMainWindow(gtk.Window):
 				"_Open","<control>O",					  # label, accelerator
 				"Open a file",							 # tooltip
 				self.activate_open),
+			( "Reload", gtk.STOCK_OPEN,					# name, stock id
+				"_Reload","<control>R",					  # label, accelerator
+				"Reload a file",							 # tooltip
+				self.activate_reload),
+
 			( "Save", gtk.STOCK_SAVE,                    # name, stock id
 				"_Save","<control>S",                      # label, accelerator
 				"Save the file",                             # tooltip
@@ -666,6 +672,24 @@ class ApplicationMainWindow(gtk.Window):
 		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
 		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
+
+
+	def activate_reload (self,parent=None):
+		pn = self.notebook.get_current_page()
+		treeSelection = self.das[pn].view.get_selection()
+		model, iter1 = treeSelection.get_selected()
+		if iter1:
+			intPath = model.get_path(iter1)
+		fname = self.das[pn].fname
+		self.activate_close(self)
+		print "Reloading ",fname
+		self.fname = fname
+		self.activate_open(self)
+		self.notebook.set_current_page(pn)
+		self.das[pn].view.expand_to_path(intPath)
+		self.das[pn].view.set_cursor_on_cell(intPath)
+		
+
 
 	def activate_open(self,parent=None):
 		if self.fname !='':

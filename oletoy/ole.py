@@ -52,7 +52,7 @@ def get_children(page,infile,parent,type,dirflag=0):
 	for i in range(cgsf.gsf_infile_num_children(infile)):
 		infchild = cgsf.gsf_infile_child_by_index(infile,i)
 		infname = ctypes.string_at(cgsf.gsf_infile_name_by_index(infile,i))
-#		print "Name ", infname, dirflag
+		print "Name ", infname, dirflag
 
 		if ord(infname[0]) < 32: 
 			infname = infname[1:]
