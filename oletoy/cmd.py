@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole
+import ole, escher
 
 def parse (cmd, entry, page):
 	if cmd[0] == "$":
@@ -28,16 +28,20 @@ def parse (cmd, entry, page):
 		else:
 			chtype = cmd[1:4]
 			chaddr = "0"
+			print "Command: ",chtype,chaddr
 		
-		if "ole" == chtype.lower():
+		treeSelection = page.view.get_selection()
+		model, iter1 = treeSelection.get_selected()
+		if iter1 == None:
+			page.view.set_cursor_on_cell(0)
 			treeSelection = page.view.get_selection()
 			model, iter1 = treeSelection.get_selected()
-			if iter1 == None:
-				page.view.set_cursor_on_cell(0)
-				treeSelection = page.view.get_selection()
-				model, iter1 = treeSelection.get_selected()
-			buf = model.get_value(iter1,3)
+		buf = model.get_value(iter1,3)
+
+		if "ole" == chtype.lower():
 			if buf[int(chaddr,16):int(chaddr,16)+8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-				ole.parse (buf[int(chaddr,16):],page)
+				ole.open (buf[int(chaddr,16):],page,iter1)
 			else:
 				print "OLE stream not found at ",chaddr
+		elif "esc" == chtype.lower():
+			escher.parse (model,buf[int(chaddr,16):],iter1)

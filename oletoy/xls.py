@@ -181,8 +181,11 @@ biff5_ids = {0x31:biff58_font,0xe0:biff_xf}
 def parse (page, data, parent):
 	offset = 0
 	type = "XLS"
-	curiter = parent
 	idx = 0
+	iters = []
+	iters.append(parent)
+	print "Length of iters ",len(iters)
+	curiter = iters[len(iters)-1]
 	try:
 		while offset < len(data) - 4:
 			rtype = struct.unpack("<H",data[offset:offset+2])[0]
@@ -193,6 +196,7 @@ def parse (page, data, parent):
 			if rec_ids.has_key(rtype):
 				rname = rec_ids[rtype]
 			if rtype == 0x809:
+				iters.append(iter1)
 				curiter = iter1
 				ver = struct.unpack("<H",data[offset+4:offset+6])[0]
 				dt = struct.unpack("<H",data[offset+6:offset+8])[0]
@@ -208,8 +212,12 @@ def parse (page, data, parent):
 					type = "XLS8"
 					page.version = 8
 					print "Version: 8"
-			elif rtype == 10:
-				curiter = parent
+			elif rtype == 10 or rtype == 0x1034:
+				iters.pop()
+				curiter = iters[len(iters)-1]
+			elif rtype == 0x1033:
+				iters.append(iter1)
+				curiter = iter1
 			elif rtype == 0x208: #row
 				rname = "Row %04x"%struct.unpack("<H",data[offset+0x10:offset+0x12])
 			elif rtype == 0xe0: #xf

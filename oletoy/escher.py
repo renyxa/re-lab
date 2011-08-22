@@ -423,10 +423,10 @@ def parse (model,data,parent):
 		offset = 0
 		while offset < len(data) - 8:
 			contflag = ord(data[offset])
-			[newT] = struct.unpack('<H', data[offset+2:offset+4])
-			[newL] = struct.unpack('<I', data[offset+4:offset+8])
+			newT = struct.unpack('<H', data[offset+2:offset+4])[0]
+			newL = struct.unpack('<I', data[offset+4:offset+8])[0]
 			if newT == 0xF011:
-				[shapeid] = struct.unpack("<I",data[offset+14:offset+18])
+				shapeid = struct.unpack("<I",data[offset+14:offset+18])[0]
 				pname = model.get_value(parent,0)
 				model.set_value(parent,0,pname+" (%02x)"%shapeid)
 			if newL > 0:
@@ -441,6 +441,7 @@ def parse (model,data,parent):
 					newL -= 4
 				model.set_value(iter1,0,name)
 				model.set_value(iter1,1,("escher","odraw",newT))
+				print "Escher name ",name
 				if contflag == 0xF:
 					model.set_value(iter1,2,newL+12)
 					model.set_value(iter1,3,data[offset:offset+newL+12])
