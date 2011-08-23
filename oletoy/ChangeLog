@@ -1,7 +1,12 @@
 2011-08-21  Valek Filippov
 
+		* VBA: "dir" is not always the last one
+		* Try to show more than 3 bytes as utf-16 string
+
+2011-08-21  Valek Filippov
+
 		* Added "esc" command to parse 'Escher' blocks
-		* Handle nested BOFs in XLS; group records by Begin/End brackets
+		* XLS: Handle nested BOFs; group records by Begin/End brackets
 
 2011-08-20  Valek Filippov
 

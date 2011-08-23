@@ -19,6 +19,7 @@ import gobject
 import gtk
 import tree
 import hexdump
+import escher
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -158,7 +159,9 @@ def biff58_font (hd,data):
 	add_iter (hd,"Font Name Length",fnlen,0xe+off,2,"<B")
 	add_iter (hd,"Font Name",fname,0x10+off,fnlen,"txt")
 
+
 xf_flags = {1:"Locked ",2:"Hidden ",3:"Style ",4:"123Prefix "}
+
 #0xe0
 def biff_xf (hd,data):
 	off = 4
@@ -176,7 +179,16 @@ def biff_xf (hd,data):
 	add_iter (hd,"Flags/Parent","%s  %02x"%(fname,xfparent),4+off,2,"<H")
 #FIXME! Parse style/cell XF part
 
-biff5_ids = {0x31:biff58_font,0xe0:biff_xf}
+#0x1ae
+def biff_supbook (hd,data):
+	off = 4
+	ctab = struct.unpack("<H",data[0+off:2+off])[0]
+	cch = struct.unpack("<H",data[2+off:4+off])[0]
+	add_iter (hd,"ctab",ctab,0+off,2,"<H")
+	add_iter (hd,"cch",cch,2+off,2,"<H")
+
+
+biff5_ids = {0x31:biff58_font,0xe0:biff_xf,0x1ae:biff_supbook}
 
 def parse (page, data, parent):
 	offset = 0
@@ -233,6 +245,8 @@ def parse (page, data, parent):
 			page.model.set_value(iter1,3,rdata)
 			page.model.set_value(iter1,7,"0x%02x"%rtype)
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+			if rtype == 0xec: #MsoDrawing
+				escher.parse (page.model,rdata[4:],iter1)
 			offset += rlen
 	except:
 		print "Something was wrong in XLS parse"

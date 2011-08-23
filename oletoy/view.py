@@ -632,6 +632,7 @@ class ApplicationMainWindow(gtk.Window):
 		dstart = asl*16+aslo/3
 		dend = ael*16+aelo/3+1
 		buf = hd.data[dstart:dend]
+		txt = ""
 		if len(buf) == 2:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<h",buf)[0],struct.unpack(">h",buf)[0])
 			self.update_statusbar(txt)
@@ -647,8 +648,15 @@ class ApplicationMainWindow(gtk.Window):
 		if len(buf) == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-
 			self.update_statusbar(txt)
+		if len(buf)>3 and len(buf)%2 == 0:
+			try:
+				utxt = unicode(buf,"utf16")
+				txt += "  " +utxt
+				self.update_statusbar(txt)
+			except:
+				print "Failed unicode convertion"
+		
 
 	def activate_new (self,parent=None):
 		doc = Doc.Page()

@@ -441,7 +441,6 @@ def parse (model,data,parent):
 					newL -= 4
 				model.set_value(iter1,0,name)
 				model.set_value(iter1,1,("escher","odraw",newT))
-				print "Escher name ",name
 				if contflag == 0xF:
 					model.set_value(iter1,2,newL+12)
 					model.set_value(iter1,3,data[offset:offset+newL+12])

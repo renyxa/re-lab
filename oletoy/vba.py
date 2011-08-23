@@ -90,17 +90,17 @@ def parse (page, data, parent):
 	model = page.model
 	if ord(data[0]) == 1:
 		# compressed stream
-#		try:
-		if model:
-			value = inflate.inflate_vba(data)
-			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"[Decompressed stream]")
-			model.set_value(iter1,1,("vba","dir"))
-			model.set_value(iter1,2,len(value))
-			model.set_value(iter1,3,value)
-			model.set_value(iter1,6,model.get_string_from_iter(iter1))
-#		except:
-#			print 'VBA Inflate failed'
+		try:
+			if model:
+				value = inflate.inflate_vba(data)
+				iter1 = model.append(parent,None)
+				model.set_value(iter1,0,"[Decompressed stream]")
+				model.set_value(iter1,1,("vba","dir"))
+				model.set_value(iter1,2,len(value))
+				model.set_value(iter1,3,value)
+				model.set_value(iter1,6,model.get_string_from_iter(iter1))
+		except:
+			print 'VBA Inflate failed'
 	off = 0
 	mods = {}
 	while off < len(value):
@@ -125,12 +125,10 @@ def parse (page, data, parent):
 	for k in range(model.iter_n_children(vbaiter)):
 		citer = model.iter_nth_child(vbaiter,k)
 		cname = model.get_value(citer,0)
-#		print "Check ",cname
 		if mods.has_key(cname):
 			cdata = model.get_value(citer,3)
 			if ord(cdata[mods[cname]]) == 1:
 				try:
-#					print "VBA inflate %02x"%mods[cname]
 					cvalue = inflate.inflate_vba(cdata[mods[cname]:])
 					iter1 = model.append(citer,None)
 					model.set_value(iter1,0,"VBA SourceCode")

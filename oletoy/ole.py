@@ -49,10 +49,11 @@ def open (buf,page,iter=None):
 	return type
 
 def get_children(page,infile,parent,type,dirflag=0):
+	vbaiter = None
 	for i in range(cgsf.gsf_infile_num_children(infile)):
 		infchild = cgsf.gsf_infile_child_by_index(infile,i)
 		infname = ctypes.string_at(cgsf.gsf_infile_name_by_index(infile,i))
-		print "Name ", infname, dirflag
+#		print "Name ", infname, dirflag
 
 		if ord(infname[0]) < 32: 
 			infname = infname[1:]
@@ -109,11 +110,15 @@ def get_children(page,infile,parent,type,dirflag=0):
 			ppt.parse (page, data, iter1)
 		if type == "vba" and infname == "dir":
 			page.model.set_value(iter1,1,("vba",dirflag))
-			vba.parse (page, data, iter1)
-		
+			vbaiter = iter1
+			vbadata = data
 		if (cgsf.gsf_infile_num_children(infchild)>0):
 			page.model.set_value(iter1,1,(type,1))
 			get_children(page,infchild,iter1,type,0)
+
+	if vbaiter != None:
+		vba.parse (page, vbadata, vbaiter)
+
 	return type
 
 def cfb_hdr (hd,data):
