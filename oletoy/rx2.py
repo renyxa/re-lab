@@ -27,10 +27,10 @@ def parse (model,buf,offset = 0,parent=None):
 		if newT == "CAT ":
 			desc = buf[offset:offset+4]
 			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"CAT ")
+			model.set_value(iter1,0,"CAT %s"%desc)
 			model.set_value(iter1,1,("rx2","cat"))
 			model.set_value(iter1,2,newL)
-			model.set_value(iter1,3,buf[offset:offset+newL])
+			model.set_value(iter1,3,buf[offset-8:offset+newL])
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
 
 			offset += 4
@@ -47,21 +47,22 @@ def parse (model,buf,offset = 0,parent=None):
 			model.set_value(iter1,0,newT)
 			model.set_value(iter1,1,("rx2",newT))
 			model.set_value(iter1,2,newL)
-			model.set_value(iter1,3,buf[offset:offset+newL])
+			model.set_value(iter1,3,buf[offset-8:offset+newL])
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
-
-			offset = offset + newL
 			if newT == "SLCE":
-				[sloffset] = struct.unpack('>I', newV[0:4])
-				[sllen] = struct.unpack('>I', newV[4:8])
-				[slunkn] =	struct.unpack('>I', newV[8:12])
-
-				iter1 = model.append(parent,None)
-				model.set_value(iter1,0,newT)
-				model.set_value(iter1,1,("rx2",newT))
-				model.set_value(iter1,2,newL)
-				model.set_value(iter1,3,buf[offset:offset+newL])
-				model.set_value(iter1,6,model.get_string_from_iter(iter1))
+				sloffset = struct.unpack('>I', newV[0:4])[0]
+				sllen = struct.unpack('>I', newV[4:8])[0]
+				slunkn =	struct.unpack('>I', newV[8:12])[0]
+				model.set_value(iter1,0,"%s %04x %04x %04x"%(newT,sloffset,sllen,slunkn))
+			if newT == "SDAT":
+				iter2 = model.append(iter1,None)
+				model.set_value(iter2,0,"Data")
+				model.set_value(iter2,1,("rx2","data"))
+				model.set_value(iter2,2,newL)
+				model.set_value(iter2,3,buf[offset:offset+newL])
+				model.set_value(iter2,6,model.get_string_from_iter(iter2))
+				
+			offset += newL
 		return offset,newL+8
 
 
