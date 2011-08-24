@@ -24,9 +24,9 @@ import Doc, cmd
 import escher
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
-import emfparse,svm,mf,wmfparse,cdr,emfplus
+import emfparse,svm,mf,wmfparse,cdr,emfplus, rx2
 
-version = "0.5.50"
+version = "0.5.51"
 
 ui_info = \
 '''<ui>
@@ -276,24 +276,6 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				mf.mf_save(self.das[pn],fname,ftype)
-		elif ftype == "CLP":
-			treeSelection = self.das[pn].view.get_selection()
-			model, iter1 = treeSelection.get_selected()
-			type = model.get_value(iter1,1)[1]
-			if type == 2:
-				fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
-				if fname:
-					nlen = model.get_value(iter1,2)
-					value = model.get_value(iter1,3)
-					if nlen != None:
-						f = open(fname,'w')
-						f.write(value)
-						f.close()
-					else:
-						print "Nothing to save"
-
-			else:
-				print "Select Clipboard entry to save it"
 		elif ftype == "vsd":
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
@@ -303,7 +285,18 @@ class ApplicationMainWindow(gtk.Window):
 			if fname:
 				doc.save(self.das[pn],fname)
 		else:
-			print '"Save" is not implemented for this file format.'
+			treeSelection = self.das[pn].view.get_selection()
+			model, iter1 = treeSelection.get_selected()
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				nlen = model.get_value(iter1,2)
+				value = model.get_value(iter1,3)
+				if nlen != None:
+					f = open(fname,'w')
+					f.write(value)
+					f.close()
+				else:
+					print "Nothing to save"
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
@@ -569,6 +562,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif	ntype[0] == "cfb":
 					if ole.ole_ids.has_key(ntype[1]):
 						ole.ole_ids[ntype[1]](hd,data)
+				elif ntype[0] == "rx2":
+					if rx2.rx2_ids.has_key(ntype[1]):
+						rx2.rx2_ids[ntype[1]](hd,data)
 
 	def hdscroll_cb(self,view,event):
 		pn = self.notebook.get_current_page()

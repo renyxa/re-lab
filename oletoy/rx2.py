@@ -58,13 +58,41 @@ def parse (model,buf,offset = 0,parent=None):
 				iter2 = model.append(iter1,None)
 				model.set_value(iter2,0,"Data")
 				model.set_value(iter2,1,("rx2","data"))
-				model.set_value(iter2,2,newL)
+				model.set_value(iter2,2,newL-8)
 				model.set_value(iter2,3,buf[offset:offset+newL])
 				model.set_value(iter2,6,model.get_string_from_iter(iter2))
 				
 			offset += newL
 		return offset,newL+8
 
+def rx2_eq (hd,data):
+	off = 9
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Lo Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Lo",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "G",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Q",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Hi",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "G",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Q",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Hi Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+
+
+rx2_ids = {"EQ  ":rx2_eq}
 
 def open (buf,page):
 	parse (page.model,buf,0)

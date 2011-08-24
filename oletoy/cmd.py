@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole, escher
+import ole, escher, rx2
 
 def parse (cmd, entry, page):
 	if cmd[0] == "$":
@@ -45,3 +45,6 @@ def parse (cmd, entry, page):
 				print "OLE stream not found at ",chaddr
 		elif "esc" == chtype.lower():
 			escher.parse (model,buf[int(chaddr,16):],iter1)
+		elif "rx2" == chtype.lower():
+			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
+			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
