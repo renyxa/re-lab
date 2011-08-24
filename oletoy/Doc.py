@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp
+import ole,mf,svm,cdr,clp,rx2
 
 class Page:
 	def __init__(self):
@@ -75,6 +75,13 @@ class Page:
 			print "Probably EMF"
 			mf.mf_open(buf,self)
 			return 0
+			
+		if buf[0:4] == "CAT " and buf[0x8:0xc] == "REX2":
+			self.type = "REX2"
+			print "Probably REX2"
+			rx2.open(buf,self)
+			return 0
+			
 		iter1 = self.model.append(None, None)
 		self.model.set_value(iter1, 0, "File")
 		self.model.set_value(iter1, 1, 0)

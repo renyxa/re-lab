@@ -1,4 +1,8 @@
-2011-08-21  Valek Filippov
+2011-08-23  Valek Filippov 
+
+		* RX2: moved initial parsing of REX2 from rexpy to oletoy.
+
+2011-08-22  Valek Filippov
 
 		* VBA: "dir" is not always the last one
 		* Try to show more than 3 bytes as utf-16 string
