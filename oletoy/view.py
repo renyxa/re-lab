@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
 import emfparse,svm,mf,wmfparse,cdr,emfplus, rx2
 
-version = "0.5.51"
+version = "0.5.52"
 
 ui_info = \
 '''<ui>

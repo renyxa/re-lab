@@ -53,7 +53,7 @@ def parse (model,buf,offset = 0,parent=None):
 				sloffset = struct.unpack('>I', newV[0:4])[0]
 				sllen = struct.unpack('>I', newV[4:8])[0]
 				slunkn =	struct.unpack('>I', newV[8:12])[0]
-				model.set_value(iter1,0,"%s %04x %04x %04x"%(newT,sloffset,sllen,slunkn))
+				model.set_value(iter1,0,"%s %04x %04x"%(newT,sloffset,sllen))
 			if newT == "SDAT":
 				iter2 = model.append(iter1,None)
 				model.set_value(iter2,0,"Data")
@@ -91,8 +91,46 @@ def rx2_eq (hd,data):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Hi Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 
+def rx2_trsh (hd,data):
+	off = 9
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Attack",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Decay",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Stretch",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 
-rx2_ids = {"EQ  ":rx2_eq}
+def rx2_comp (hd,data):
+	off = 9
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Thrsh",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Amount",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Attack",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Release",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+
+def rx2_slce (hd,data):
+	off = 8
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Offset?",1, "%02x"%struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	off +=4
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Length?",1, "%02x"%struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	off +=4
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Unkn1",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	off +=2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Unkn2",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+
+rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce}
 
 def open (buf,page):
 	parse (page.model,buf,0)
