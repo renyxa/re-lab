@@ -130,7 +130,21 @@ def rx2_slce (hd,data):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Unkn2",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 
-rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce}
+def rx2_glob(hd,data):
+	off = 12 
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Length (Bars)",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
+	off += 2
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Length (Beats)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	off += 1
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Time Signature (upper numeral)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	off += 1
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Time Signature (lower numeral)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+
+rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce, "GLOB":rx2_glob}
 
 def open (buf,page):
 	parse (page.model,buf,0)
