@@ -99,6 +99,7 @@ def open (buf,page):
 		items[key] = value
 	[size] = struct.unpack('>L', buf[offset:offset+4])
 	print '# of items:\t%u'%size
+	page.dict = items
 	offset+= 4
 
 	parser = fhparse.parser()

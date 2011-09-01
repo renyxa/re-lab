@@ -1,6 +1,7 @@
 2011-08-31  Valek Filippov
 
 		* FH: Minimal support for Freehand format moved from fhre.
+		* FH: Use dict to update status line
 
 2011-08-29  Alexandre Prokoudine
 

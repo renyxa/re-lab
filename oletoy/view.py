@@ -631,6 +631,8 @@ class ApplicationMainWindow(gtk.Window):
 		txt = ""
 		if len(buf) == 2:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<h",buf)[0],struct.unpack(">h",buf)[0])
+			if type == "FH" and self.das[pn].dict.has_key(struct.unpack(">h",buf)[0]):
+				txt += "\t"+self.das[pn].dict[struct.unpack(">h",buf)[0]]
 			self.update_statusbar(txt)
 		if len(buf) == 4:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])

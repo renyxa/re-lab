@@ -26,6 +26,7 @@ class Page:
 		self.items = ''
 		self.version = 0
 		self.hd = None
+		self.dict = None
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 
 	def fload(self):
