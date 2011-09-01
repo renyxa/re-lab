@@ -1,3 +1,11 @@
+2011-08-31  Valek Filippov
+
+		* FH: Minimal support for Freehand format moved from fhre.
+
+2011-08-29  Alexandre Prokoudine
+
+		* RX2: Committed Frankie Fisher improvements 
+
 2011-08-24  Valek Filippov 
 
 		*RX2: small improvements

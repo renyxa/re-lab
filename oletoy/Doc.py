@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp,rx2
+import ole,mf,svm,cdr,clp,rx2,fh
 
 class Page:
 	def __init__(self):
@@ -81,7 +81,16 @@ class Page:
 			print "Probably REX2"
 			rx2.open(buf,self)
 			return 0
-			
+		
+		agd_off = buf.find('AGD')
+		if agd_off != -1:
+			agd_ver = ord(buf[agd_off+3])
+			if agd_ver > 0x33: # >ver 8
+				self.type = "FH"
+				print "Probably Freehand 9 or better"
+				fh.open(buf,self)
+				return 0
+
 		iter1 = self.model.append(None, None)
 		self.model.set_value(iter1, 0, "File")
 		self.model.set_value(iter1, 1, 0)

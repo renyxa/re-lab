@@ -24,11 +24,10 @@ def parse (cmd, entry, page):
 		if pos != -1:
 			chtype = cmd[1:pos]
 			chaddr = cmd[pos+1:]
-			print "Command: ",chtype,chaddr
 		else:
 			chtype = cmd[1:4]
 			chaddr = "0"
-			print "Command: ",chtype,chaddr
+		print "Command: ",chtype,chaddr
 		
 		treeSelection = page.view.get_selection()
 		model, iter1 = treeSelection.get_selected()
