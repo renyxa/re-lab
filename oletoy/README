@@ -1,6 +1,22 @@
-Oletoy is a set of Python scripts to parse and view contents of OLE container 
-based file formats by Microsoft. Originally oletoy was developed for 
-reverse-engineering of Microsoft Publisher file formats.
+OLE Toy is a set of Python scripts to parse and view contents of various 
+binary file formats. Originally OLE Toy was developed for 
+reverse-engineering of Microsoft Publisher file format, but later support 
+for more of them was added, partially written from scratch, partially 
+moved from our earlier work.
+
+As of now OLE Toy reads and parses:
+
+- PUB (Microsoft Publisher)
+- VSD, VSS (Microsoft Visio)
+- DOC (Microsoft Word)
+- XLS (Microsoft Excel)
+- PUB (Microsoft Publisher)
+- PPT (Microsoft PowerPoint)
+- VBA (Microsoft Office)
+- FH (Macromedia Freehand)
+- CDR (Corel DRAW)
+- EMF, EMF+, WMF (Microsoft)
+- REX, RX2 (Propellerheads ReCycle)
 
 The scripts depend on libgsf which has to be built with Python support 
 (--with-python). If you are Ubuntu user, you are unlucky and have to recompile 
@@ -11,3 +27,8 @@ http://ftp.gnome.org/pub/GNOME/sources/libgsf/
 To run oletoy just do
 
 $ ./view.py
+
+All commercial software mentioned in this file and elsewhere in source code is 
+trademarks of respective vendors. Re-lab team is not related to those vendors 
+in any way. All work on support for those file formats is a result of 
+clean-room reverse-engineering. No DLL and EXE files have been looked at.
