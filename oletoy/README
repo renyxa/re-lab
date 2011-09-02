@@ -13,6 +13,7 @@ As of now OLE Toy reads and parses:
 - PUB (Microsoft Publisher)
 - PPT (Microsoft PowerPoint)
 - VBA (Microsoft Office)
+- CLP (Microsoft clipboard)
 - FH (Macromedia Freehand)
 - CDR (Corel DRAW)
 - EMF, EMF+, WMF (Microsoft)
