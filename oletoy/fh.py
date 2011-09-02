@@ -25,7 +25,7 @@ chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.V
 				"StylePropLst":fhparse.StylePropLst,"SpotColor6":fhparse.SpotColor6,"BasicLine":fhparse.BasicLine,"BasicFill":fhparse.BasicFill,\
 				"Guides":fhparse.Guides,"Path":fhparse.Path,"Collector":fhparse.Collector,"Rectangle":fhparse.Rectangle,"Layer":fhparse.Layer,\
 				"ArrowPath":fhparse.ArrowPath,"Group":fhparse.Group,"Xform":fhparse.Xform,"Oval":fhparse.Oval,"MultiColorList":fhparse.MultiColorList,\
-				"ContourFill":fhparse.CountourFill,"ClipGroup":fhparse.ClipGroup,"NewBlend":fhparse.NewBlend,"BrushStroke":fhparse.BrushStroke,\
+				"ContourFill":fhparse.ContourFill,"ClipGroup":fhparse.ClipGroup,"NewBlend":fhparse.NewBlend,"BrushStroke":fhparse.BrushStroke,\
 				"GraphicStyle":fhparse.GraphicStyle,"ContentFill":fhparse.ContentFill,"AttributeHolder":fhparse.AttributeHolder,\
 				"FWShadowFilter":fhparse.FWShadowFilter,"FilterAttributeHolder":fhparse.FilterAttributeHolder,\
 				"FWBevelFilter":fhparse.FWBevelFilter,"Extrusion":fhparse.Extrusion,"LinearFill":fhparse.LinearFill,\
@@ -39,7 +39,11 @@ chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.V
 				"OpacityFilter":fhparse.OpacityFilter,"FWBlurFilter":fhparse.FWBlurFilter,"FWGlowFilter":fhparse.FWGlowFilter,"TFOnPath":fhparse.TFOnPath,\
 				"CharacterFill":fhparse.CharacterFill,"FWFeatherFilter":fhparse.FWFeatherFilter, "PolygonFigure":fhparse.PolygonFigure,\
 				"CalligraphicStroke":fhparse.CalligraphicStroke, "Envelope":fhparse.Envelope, "PathTextLineInfo":fhparse.PathTextLineInfo,\
-				"PatternFill":fhparse.PatternFill,"FWSharpenFilter":fhparse.FWSharpenFilter,"RadialFill":fhparse.RadialFill,"SwfImport":fhparse.SwfImport}
+				"PatternFill":fhparse.PatternFill,"FWSharpenFilter":fhparse.FWSharpenFilter,"RadialFill":fhparse.RadialFill,"SwfImport":fhparse.SwfImport,\
+				"PerspectiveEnvelope":fhparse.PerspectiveEnvelope,"MultiBlend":fhparse.MultiBlend, "MasterPageElement":fhparse.MasterPageElement,\
+				"MasterPageDocMan":fhparse.MasterPageDocMan,"MasterPageSymbolClass":fhparse.MasterPageSymbolClass, "MasterPageLayerElement":fhparse.MasterPageLayerElement,\
+				"MQuickDict":fhparse.MQuickDict,"TEffect":fhparse.TEffect, "MasterPageSymbolInstance":fhparse.MasterPageSymbolInstance,\
+				"MasterPageLayerInstance":fhparse.MasterPageLayerInstance, "TextInPath":fhparse.TextInPath, "ImageFill":fhparse.ImageFill}
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 
@@ -118,7 +122,8 @@ def open (buf,page):
 				try:
 					length = chunks[items[key]](parser,agdoffset, key)
 				except:
-					print "Failed to parse. Offset: %02x "%agdoffset,
+					print "Failed to parse. Chunk: %02x 2:%s"%(i,i-1)
+					return
 			else:
 				length = 128
 				if agdoffset + length > len(output):
@@ -126,7 +131,7 @@ def open (buf,page):
 				# later will implement search for easy detectable chunks
 			iname = items[key]
 			iter1 = page.model.append(dditer,None)
-			page.model.set_value(iter1,0,"%02x %s"%(i+1,iname))
+			page.model.set_value(iter1,0,"%s [%02x]"%(iname,i+1))
 			page.model.set_value(iter1,1,("fh",iname))
 			page.model.set_value(iter1,2,length)
 			page.model.set_value(iter1,3,output[agdoffset:agdoffset+length])
@@ -134,7 +139,7 @@ def open (buf,page):
 			agdoffset = agdoffset + length
 			
 		else:
-			print 'WARNING! Unknown key: ',items[key],"%02x"%agdoffset
+			print 'WARNING! Unknown key: ',items[key],"%02x %02x"%(i+1,agdoffset)
 			unkn_flag = 1
 			length = 128
 			if agdoffset + length > len(output):

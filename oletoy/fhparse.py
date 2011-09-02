@@ -138,26 +138,30 @@ def Xform(parser,offset,key):
 	var2 = ord(parser.data[offset+1])
 
 	if var1 == 3:
-		if var2 == 0xf0:
+		if var2 == 0xf0 or var2 == 0x60:
 			length = 52
-		else:
-			if var2 == 0x90: #03 90
-				length = 36
-			else:
-				if var2 == 0xb0:
-					length = 44 # 03 b0
-				else:
-					print "WARNING! New Xform second byte: 0x%02x"%var2
-					length = var2/4
-	if var1 == 0x33: # 33 90
+		elif var2 == 0x90: #03 90
+			length = 36
+		elif var2 == 0xb0 or var2 == 0xd0:
+			length = 44 # 03 b0, 03 d0
+			
+	if var1 == 0x31: # 31 90
 		if var2 == 0x90:
+			length = 12
+	if var1 == 0x33: 
+		if var2 == 0x90: # 33 90
 			length = 20
-		if var2 == 0xf0:
+		if var2 == 0xd0: # 33 d0
+			length = 28
+		if var2 == 0xf0: # 33 f0
 			length = 44
 	if var1 == 0x32: # 32 90
 		length = 12
 		if var2 == 0xb0: # 32 b0
 			length = 20
+	if var1 == 0x01 and var2 == 0x90: # 01 90
+		length = 28
+
 
 	return length
 	
@@ -166,11 +170,33 @@ def SymbolClass(parser,offset,key):
 	return length
 
 def SymbolInstance(parser,offset,key):
-	length=24 # was 32
-	return length
+	var1 = ord(parser.data[offset+0xe])
+	var2 = ord(parser.data[offset+0xf])
 	
+	length=24 # was 32
+	if (var1 == 0x0b or var1==3) and var2 == 0x90:
+		length=32
+	elif var1 == 3 and var2 == 0xf0:
+		length=40
+	elif var1 == 0x23 and var2 == 0x90:
+		length=28
+	return length
+
+def MasterPageSymbolInstance(parser,offset,key):
+	# has 0x34 90
+	length=18
+	return length
+
+def MasterPageLayerInstance(parser,offset,key):
+# has 0x33 90
+	length=26
+	return length
+
 def PerspectiveGrid(parser,offset,key):
-	length=65
+	i = 0
+	while ord(parser.data[offset+i]) != 0:
+		i += 1
+	length=59+i
 	return length
 	
 def MpObject(parser,offset,key):
@@ -194,7 +220,27 @@ def MDict(parser,offset,key):
 def DateTime(parser,offset,key):
 	length=14
 	return length
-   
+
+def MasterPageElement(parser,offset,key):
+	length=14
+	return length
+
+def MasterPageDocMan(parser,offset,key):
+	length=4
+	return length
+
+def MasterPageSymbolClass(parser,offset,key):
+	length=12
+	return length
+
+def MasterPageLayerElement(parser,offset,key):
+	length=14
+	return length
+
+def MQuickDict(parser,offset,key):
+	length=407
+	return length
+
 def FHDocHeader(parser,offset,key):
 	length=4   #!!!! just to set to non-zero!!!!
 	return length
@@ -206,7 +252,7 @@ def Block(parser,offset,key):
 	if parser.version == 9:
 		length = 47
 	return length
-	
+
 def Element(parser,offset,key):
 	length=4   #!!!! just to set to non-zero!!!!
 	return length
@@ -227,6 +273,21 @@ def VMpObj(parser,offset,key):
 			shift+=8
 	return shift
 
+def TextInPath(parser,offset,key):
+	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
+	shift = 20
+	for i in range(num):
+		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
+		if key == 2:
+			shift+=6
+		else:
+			shift+=8
+	return shift
+
+def ImageFill(parser,offset,key):
+	length=6
+	return length
+
 def AGDFont(parser,offset,key):
 	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
 	shift = 8
@@ -239,12 +300,16 @@ def AGDFont(parser,offset,key):
 	return shift
 
 def FileDescriptor(parser,offset,key):
-	#[size] = struct.unpack('>h', parser.data[offset+17:offset+19])
-	length=51 # can be 67
+	[size] = struct.unpack('>h', parser.data[offset+9:offset+11])
+	#length=51 # can be 67
+	length=11+size
 	return length
 	
 def TabTable(parser,offset,key):
 	length=4
+	[size] = struct.unpack('>h', parser.data[offset:offset+2])
+	if size == 1:
+		length = 10
 	return length
 	
 def SymbolLibrary(parser,offset,key):
@@ -265,11 +330,19 @@ def Procedure(parser,offset,key):
 	length = 4 #!!!! just to set non-zero !!!
 	return length
 
+def TEffect(parser,offset,key):
+	length = 14
+	return length
+
+
 def Color6(parser,offset,key):
 	length=28
 	var = ord(parser.data[offset+1])
 	if var == 4:
 		length=32
+	if var == 7:
+		length=44
+
 	if parser.version < 10:
 		length-=2
 	return length
@@ -334,7 +407,8 @@ def BasicFill(parser,offset,key):
 	return length
 	
 def Guides(parser,offset,key):
-	length=22
+	[size] =  struct.unpack('>h', parser.data[offset:offset+2])
+	length=22 + size*8
 	return length
 	
 def Path(parser,offset,key):
@@ -391,16 +465,20 @@ def Group(parser,offset,key):
 	return length
 
 def Oval(parser,offset,key):
-#	length=34 #ver10?
-	length=44 # was 38
+	if parser.version > 10:
+		length=44
+	else:
+		length=34 
 	return length
 
 def MultiColorList(parser,offset,key):
 	[num]= struct.unpack('>h', parser.data[offset:offset+2])
 	length=6+num*10
+	if parser.version == 10:
+		length=10+num*10
 	return length
 	
-def CountourFill(parser,offset,key):
+def ContourFill(parser,offset,key):
 	[num]= struct.unpack('>h', parser.data[offset+0:offset+2])
 	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
 	length = 0
@@ -409,6 +487,8 @@ def CountourFill(parser,offset,key):
 		[num]= struct.unpack('>h', parser.data[offset+0+length:offset+2+length])
 		[size]= struct.unpack('>h', parser.data[offset+2+length:offset+4+length])
 	length = length +10+size*2
+	if parser.version == 10:
+		 length = 18
 	return length
 
 def ClipGroup(parser,offset,key):
@@ -479,7 +559,9 @@ def DataList(parser,offset,key):
 	return length
 
 def ImageImport(parser,offset,key):
-	length=87
+	length=55  # was 87
+	if ord(parser.data[offset+55]) != 0:  # 0-terminated string?
+		length = 58
 	return length
 
 def TextBlok(parser,offset,key):
@@ -494,7 +576,7 @@ def Paragraph(parser,offset,key):
 
 def TString(parser,offset,key):
 	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
-	length=18+size*4
+	length=20+size*2
 	return length
 
 def LineTable(parser,offset,key):
@@ -514,19 +596,17 @@ def TextColumn(parser,offset,key):
 	return shift
 
 def RadialFillX(parser,offset,key):
-	length=52
-	#hexprint(data,offset,length,key)
+	#length=52
+	length=20
+	if parser.version == 10:
+		length = 16
 	return length
 
 def TaperedFillX(parser,offset,key):
 #	[size] = struct.unpack('>h', parser.data[offset:offset+2]) #!!!! quick-n-dirty
-	length=58
-	#if size == 0x4b:
-	   # length=78
-	if ver['mcl'] != -1:
-		length =  ver['mcl']*10+18
-		ver['mcl'] = -1
-	#hexprint(data,offset,length,key)
+	length=16
+	if parser.version == 10:
+		length = 12
 	return length
 
 def TintColor6(parser,offset,key):
@@ -541,3 +621,11 @@ def LensFill(parser,offset,key):
 	length=40
 	return length
 
+def PerspectiveEnvelope(parser,offset,key):
+	length=177
+	return length
+
+def MultiBlend(parser,offset,key):
+	[size] = struct.unpack('>h', parser.data[offset:offset+2])
+	length=52 + size*6
+	return length
