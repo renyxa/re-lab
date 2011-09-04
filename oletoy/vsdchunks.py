@@ -15,6 +15,7 @@
 #
 
 import struct
+import datetime
 import vsd,vsdblock
 
 chunknoshift = {
@@ -747,6 +748,22 @@ def ShapeStencil (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "var4?", 1, "%.2f"%struct.unpack("<d",value[0x2f:0x37]),2,0x2f,3,8,4,"<d")
 
+def TextField (hd, size, value):
+	fmt = ord(value[0x1a])
+	tdiff = struct.unpack("<d",value[0x1b:0x23])[0]
+	if fmt == 0x28:
+		#FIXME! has to convert fractional part to time of the day
+		dt = datetime.date(1908,2,6)+datetime.timedelta(tdiff)
+		dname = "Date"
+	else:
+		dt = "%.2f"%tdiff
+		dname = "Value"
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, dname, 1, dt,2,0x1b,3,8,4,"<d")
+	if len(value)>0x49:
+		vsdblock.parse(hd, size, value, 0x49)
+	
+
 def SplineStart (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "X", 1, "%.2f"%struct.unpack("<d",value[20:28]),2,20,3,8,4,"<d")
@@ -810,7 +827,7 @@ chnk_func = {
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,0x93:StyleProps,
 	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
-	0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
+	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
 	0xd1:ShapeData
 }
