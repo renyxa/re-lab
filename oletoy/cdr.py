@@ -205,67 +205,104 @@ def trfd (hd,size,data):
 cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda}
 
 def cdr_open (buf,page):
-	try:
-		parse_fourcc (None,buf,page,0)
-	except:
-		print 'Oops'
+	chunk = cdrChunk()
+	chunk.load (buf,page,None)
 
-def parse_fourcc (parent,buf,page,offset):
-	debug = 0
-	f_type = buf[offset:offset+4]
-	offset +=4
-	f_len = struct.unpack('<I', buf[offset:offset+4])[0]
-	if f_len & 1:
-			f_len += 1
-	offset +=4
-	f_val = buf[offset:offset+f_len]
-	offset += f_len
-	if f_type == "vrsn":
-		page.version = struct.unpack("<h",f_val)[0]/100
+class cdrChunk:
+	fourcc = '????'
+	hdroffset = 0
+	rawsize = 0
+	data = ''
+	name= ''
+	size= 0
+	cmpr = False
+	number=0
 
-	if f_type == 'RIFF' or f_type == 'LIST':
-		if debug:
-			f_iter = page.model.append(parent,None)
-			page.model.set_value(f_iter,0,f_type)
-			page.model.set_value(f_iter,1,("cdr",f_type))
-			page.model.set_value(f_iter,2,f_len)
-			page.model.set_value(f_iter,3,f_val)
-			page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
-			parse_list (f_iter,f_val,page)
-		else:
-			parse_list (parent,f_val,page)
-	else:
-		f_iter = page.model.append(parent,None)
-		page.model.set_value(f_iter,0,f_type)
-		page.model.set_value(f_iter,1,("cdr",f_type))
-		page.model.set_value(f_iter,2,f_len)
-		page.model.set_value(f_iter,3,f_val)
-		page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
-	return offset
-
-def parse_list (parent,data,page):
-	lname = data[0:4]
-	l_iter = page.model.append(parent,None)
-	page.model.set_value(l_iter,0,lname)
-	page.model.set_value(l_iter,1,("cdr",lname))
-	page.model.set_value(l_iter,2,len(data)-4)
-	page.model.set_value(l_iter,3,data[4:])
-	page.model.set_value(l_iter,6,page.model.get_string_from_iter(l_iter))
-	offset = 0
-	if lname == 'cmpr':
+	def load_pack(self,page,parent):
+		self.cmpr=True
 		decomp = zlib.decompressobj()
-		uncompdata = decomp.decompress(data[0x1c:])
-		u_iter = page.model.append(l_iter,None)
-		page.model.set_value(u_iter,0,"[Uncompressed data]")
-		page.model.set_value(u_iter,1,("cdr","uncomp"))
-		page.model.set_value(u_iter,2,len(uncompdata))
-		page.model.set_value(u_iter,3,uncompdata)
-#		if len(decomp.unconsumed_tail):
-#			raise Exception('unconsumed tail in compressed data (%u bytes)' % len(decomp.unconsumed_tail))
-		while offset < len(uncompdata) - 8:
-			offset = parse_fourcc(l_iter,uncompdata,page,offset)
-	elif lname == 'stlt':
-		pass
-	else:
-		while offset < len(data) - 8:
-			offset = parse_fourcc(l_iter,data[4:],page,offset)
+		self.uncompresseddata = decomp.decompress(self.data[12:])
+		offset = 0
+		while offset < len(self.uncompresseddata):
+			chunk = cdrChunk()
+			chunk.load(self.uncompresseddata, page, f_iter,offset)
+			offset += 8 + chunk.rawsize
+
+	def loadcompressed(self,page,parent):
+		if self.data[0:4] != 'cmpr':
+			raise Exception("can't happen")
+		self.cmpr=True
+		cmprsize = struct.unpack('<I', self.data[4:8])[0]
+		uncmprsize = struct.unpack('<I', self.data[8:12])[0]
+		blcks = struct.unpack('<I', self.data[12:16])[0]
+		# 16:20 unknown (seen 12, 1096)
+		assert(self.data[20:24] == 'CPng')
+		assert(struct.unpack('<H', self.data[24:26])[0] == 1)
+		assert(struct.unpack('<H', self.data[26:28])[0] == 4)
+		if (20 + cmprsize + blcks + 1) & ~1 != self.rawsize:
+			raise Exception('mismatched blocksizessize value (20 + %u + %u != %u)' % (cmprsize, blcks, self.rawsize))
+		decomp = zlib.decompressobj()
+		self.uncmprdata = decomp.decompress(self.data[28:])
+		if len(decomp.unconsumed_tail):
+			raise Exception('unconsumed tail in compressed data (%u bytes)' % len(decomp.unconsumed_tail))
+		if len(decomp.unused_data) != blcks:
+			raise Exception('mismatch in unused data after compressed data (%u != %u)' % (len(decomp.unused_data), bytesatend))
+		if len(self.uncmprdata) != uncmprsize:
+			raise Exception('mismatched compressed data size: expected %u got %u' % (uncmprsize, len(self.uncmprdata)))
+		blcksdata = zlib.decompress(self.data[28+cmprsize:])
+		blocksizes = []
+		for i in range(0, len(blcksdata), 4):
+			blocksizes.append(struct.unpack('<I', blcksdata[i:i+4])[0])
+		offset = 0
+		while offset < len(self.uncmprdata):
+			chunk = cdrChunk()
+			chunk.load(self.uncmprdata, page,parent,offset, blocksizes)
+			offset += 8 + chunk.rawsize
+
+	def load(self, buf, page, parent, offset=0, blocksizes=()):
+		self.hdroffset = offset
+		self.fourcc = buf[offset:offset+4]
+		self.rawsize = struct.unpack('<I', buf[offset+4:offset+8])[0]
+		if len(blocksizes):
+			self.rawsize = blocksizes[self.rawsize]
+		self.data = buf[offset+8:offset+8+self.rawsize]
+		if self.rawsize & 1:
+			self.rawsize += 1
+
+		self.name = self.chunk_name()
+		f_iter = page.model.append(parent,None)
+		page.model.set_value(f_iter,0,self.name)
+		page.model.set_value(f_iter,1,("cdr",self.name))
+		page.model.set_value(f_iter,2,self.rawsize)
+		page.model.set_value(f_iter,3,self.data)
+		page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
+
+		if self.fourcc == 'vrsn':	
+			page.version = struct.unpack("<h",self.data)[0]/100
+		if self.fourcc == 'pack':	
+			self.load_pack(page,f_iter)
+		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
+			self.listtype = buf[offset+8:offset+12]
+			self.name = self.chunk_name()
+			page.model.set_value(f_iter,0,self.name)
+			page.model.set_value(f_iter,1,("cdr",self.name))
+
+			parent = f_iter
+			if self.listtype == 'stlt':
+				self.name = '<stlt>'
+				#pass     # dunno what's up with these, but they're not lists
+			elif self.listtype == 'cmpr':
+				self.loadcompressed(page,parent)
+			else:
+				offset += 12
+				while offset < self.hdroffset + 8 + self.rawsize:
+					chunk = cdrChunk()
+					chunk.load(buf,page,parent,offset, blocksizes)
+					offset += 8 + chunk.rawsize
+
+	def chunk_name(self):
+		if self.fourcc == 'RIFF':
+			return self.fourcc
+		if hasattr(self, 'listtype'):
+			return self.listtype
+		return self.fourcc

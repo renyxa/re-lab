@@ -1,6 +1,7 @@
 2011-09-04  Valek Filippov
 
 		* VSD: Parse TextField.
+		* CDR: Adopted cdr_explorer RIFF parser.
 
 2011-09-01  Valek Filippov
 
