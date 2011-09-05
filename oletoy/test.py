@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import inflate, vsd, sys, gsf
+import inflate, vsd, sys
 
 def main():
 	if len(sys.argv) > 1:
 		fname = sys.argv[1]
-		src = gsf.InputStdio(fname)
-		buf = src.read(src.size())
+		f = open(self.fname)
+		buf = f.read()
 		defbuf = inflate.deflate(buf)
 		ptr = vsd.pointer()
 		ptr.length = len(defbuf)
