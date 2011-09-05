@@ -19,9 +19,8 @@ As of now OLE Toy reads and parses:
 - EMF, EMF+, WMF (Microsoft)
 - REX, RX2 (Propellerheads ReCycle)
 
-The scripts depend on libgsf which has to be built with Python support 
-(--with-python). If you are Ubuntu user, you are unlucky and have to recompile 
-libgsf from source code which you can find here:
+The scripts depend on libgsf.
+You can find libgsf source code here:
 
 http://ftp.gnome.org/pub/GNOME/sources/libgsf/
 
