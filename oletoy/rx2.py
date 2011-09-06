@@ -141,6 +141,19 @@ def rx2_slce (hd,data):
 	off +=2
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Unkn2",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	
+def rx2_sinf (hd, data):
+	off = 14;
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Sound/slice length 1",1, struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	
+	off = 21;
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Move left locator to first slice point",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	
+	off +=1;
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Sound/slice length 2",1, struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
 
 def rx2_glob(hd,data):
 	off = 12 
@@ -209,13 +222,28 @@ def rx2_recy(hd, data):
 	off = 13
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Toggle: Preview",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+
+    #this changed when the number of visible slices changed
+	off = 16	
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "something to do with visible slices?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	off += 1;
 	
 	#this changes when you move the pitch control, at the same time as the pitch setting at offset 22 in the GLOB section.
 	#this also changes if you enable/disable the Envelope effect (but not either of the other two)
 	#I am not sure what this value means. Might need access to a copy of recycle 1 to work this out?
-	off = 17
+	
+	#I also observed that it is related to the length of the file. Without changing the pitch from the default:
+	#file length(samples)        value (dec)
+	#5							14
+	#10							28
+	#25							70
+	#125						352
+	#375						1056
+	
+
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Pitch/TRSH ?",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
+	hd.hdmodel.set(iter, 0, "Pitch/TRSH/num samples ?",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
 	
 	off = 22
 	iter = hd.hdmodel.append(None, None)
@@ -237,7 +265,8 @@ def rx2_rcyx(hd, data):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Toggle: Transient Shaper Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")	
 
-rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce, "GLOB":rx2_glob, "RCYX":rx2_rcyx, "RECY":rx2_recy}
+rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce, 
+		"SINF":rx2_sinf, "GLOB":rx2_glob, "RCYX":rx2_rcyx, "RECY":rx2_recy}
 
 def open (buf,page):
 	parse (page.model,buf,0)
