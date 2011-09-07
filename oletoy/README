@@ -19,16 +19,15 @@ As of now OLE Toy reads and parses:
 - EMF, EMF+, WMF (Microsoft)
 - REX, RX2 (Propellerheads ReCycle)
 
-The scripts depend on libgsf.
-You can find libgsf source code here:
+The scripts depend on libgsf. You can find libgsf source code here:
 
 http://ftp.gnome.org/pub/GNOME/sources/libgsf/
 
-To run oletoy just do
+To start OLE Toy just run:
 
 $ ./view.py
 
 All commercial software mentioned in this file and elsewhere in source code is 
-trademarks of respective vendors. Re-lab team is not related to those vendors 
+trademarks of respective vendors. Re-lab team is not affiliated to those vendors 
 in any way. All work on support for those file formats is a result of 
 clean-room reverse-engineering. No DLL and EXE files have been looked at.
