@@ -205,6 +205,8 @@ def trfd (hd,size,data):
 cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda}
 
 def cdr_open (buf,page):
+	# Path, Name, ID
+	page.dict = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	chunk = cdrChunk()
 	chunk.load (buf,page,None)
 
@@ -276,6 +278,12 @@ class cdrChunk:
 		page.model.set_value(f_iter,2,self.rawsize)
 		page.model.set_value(f_iter,3,self.data)
 		page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
+		if self.name == "outl" or self.name == "fild":
+			d_iter = page.dict.append(None,None)
+			page.dict.set_value(d_iter,0,page.model.get_path(f_iter))
+			page.dict.set_value(d_iter,1,self.name)
+			page.dict.set_value(d_iter,2,d2hex(self.data[0:4]))
+
 
 		if self.fourcc == 'vrsn':	
 			page.version = struct.unpack("<h",self.data)[0]/100

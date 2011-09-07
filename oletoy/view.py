@@ -46,6 +46,7 @@ ui_info = \
 		<menuitem action='Less'/>
 	</menu>
 	<menu action='ViewMenu'>
+		<menuitem action='Dict'/>
 	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='About'/>
@@ -163,6 +164,10 @@ class ApplicationMainWindow(gtk.Window):
 				"_Reload","<control>R",					  # label, accelerator
 				"Reload a file",							 # tooltip
 				self.activate_reload),
+			( "Dict", gtk.STOCK_INDEX,					# name, stock id
+				"_Dictionary","<control>D",					  # label, accelerator
+				"Show typoe dependant dictionary",							 # tooltip
+				self.activate_dict),
 
 			( "Save", gtk.STOCK_SAVE,                    # name, stock id
 				"_Save","<control>S",                      # label, accelerator
@@ -187,6 +192,37 @@ class ApplicationMainWindow(gtk.Window):
 		action_group = gtk.ActionGroup("AppWindowActions")
 		action_group.add_actions(entries)
 		return action_group
+
+	def activate_dict (self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			if self.das[pn].type[0:3] == "CDR":
+				view = gtk.TreeView(self.das[pn].dict)
+				view.set_reorderable(True)
+				view.set_enable_tree_lines(True)
+				cell1 = gtk.CellRendererText()
+				cell1.set_property('family-set',True)
+				cell1.set_property('font','monospace 10')
+				cell2 = gtk.CellRendererText()
+				cell2.set_property('family-set',True)
+				cell2.set_property('font','monospace 10')
+				column1 = gtk.TreeViewColumn('Type', cell1, text=1)
+				column2 = gtk.TreeViewColumn('Value', cell2, text=2)
+				view.append_column(column1)
+				view.append_column(column2)
+				view.show()
+				scrolled = gtk.ScrolledWindow()
+				scrolled.add(view)
+				scrolled.set_size_request(400,400)
+				scrolled.show()
+				dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+				dictwin.set_resizable(True)
+				dictwin.set_border_width(0)
+				scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+				dictwin.add(scrolled)
+				dictwin.set_title("CDR Dictionary")
+				dictwin.show_all()
+
 
 	def activate_add (self, action):
 		pn = self.notebook.get_current_page()
