@@ -53,7 +53,7 @@ def fild (hd,size,data):
 
 def ftil (hd,size,data):
 	for i in range(6):
-		[var] = struct.unpack('<d', chunk.data[i*8:i*8+8]) 
+		[var] = struct.unpack('<d', data[i*8:i*8+8]) 
 		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
 def loda_outl (hd,data,offset,l_type):
@@ -206,7 +206,7 @@ cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda}
 
 def cdr_open (buf,page):
 	# Path, Name, ID
-	page.dict = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
+	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	chunk = cdrChunk()
 	chunk.load (buf,page,None)
 
@@ -227,6 +227,7 @@ class cdrChunk:
 		offset = 0
 		while offset < len(self.uncompresseddata):
 			chunk = cdrChunk()
+			chunk.cmpr = True
 			chunk.load(self.uncompresseddata, page, f_iter,offset)
 			offset += 8 + chunk.rawsize
 
@@ -258,6 +259,7 @@ class cdrChunk:
 		offset = 0
 		while offset < len(self.uncmprdata):
 			chunk = cdrChunk()
+			chunk.cmpr = True
 			chunk.load(self.uncmprdata, page,parent,offset, blocksizes)
 			offset += 8 + chunk.rawsize
 
@@ -265,6 +267,7 @@ class cdrChunk:
 		self.hdroffset = offset
 		self.fourcc = buf[offset:offset+4]
 		self.rawsize = struct.unpack('<I', buf[offset+4:offset+8])[0]
+		id = self.rawsize
 		if len(blocksizes):
 			self.rawsize = blocksizes[self.rawsize]
 		self.data = buf[offset+8:offset+8+self.rawsize]
@@ -273,17 +276,16 @@ class cdrChunk:
 
 		self.name = self.chunk_name()
 		f_iter = page.model.append(parent,None)
-		page.model.set_value(f_iter,0,self.name)
+		page.model.set_value(f_iter,0,self.name+" %02x"%id)
 		page.model.set_value(f_iter,1,("cdr",self.name))
 		page.model.set_value(f_iter,2,self.rawsize)
 		page.model.set_value(f_iter,3,self.data)
 		page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
 		if self.name == "outl" or self.name == "fild":
-			d_iter = page.dict.append(None,None)
-			page.dict.set_value(d_iter,0,page.model.get_path(f_iter))
-			page.dict.set_value(d_iter,1,self.name)
-			page.dict.set_value(d_iter,2,d2hex(self.data[0:4]))
-
+			d_iter = page.dictmod.append(None,None)
+			page.dictmod.set_value(d_iter,0,page.model.get_path(f_iter))
+			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
+			page.dictmod.set_value(d_iter,1,self.name)
 
 		if self.fourcc == 'vrsn':	
 			page.version = struct.unpack("<h",self.data)[0]/100
@@ -291,8 +293,10 @@ class cdrChunk:
 			self.load_pack(page,f_iter)
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			self.listtype = buf[offset+8:offset+12]
-			self.name = self.chunk_name()
-			page.model.set_value(f_iter,0,self.name)
+			name = self.chunk_name()
+			if self.cmpr == True:
+				name += " %02x"%id
+			page.model.set_value(f_iter,0,name)
 			page.model.set_value(f_iter,1,("cdr",self.name))
 
 			parent = f_iter

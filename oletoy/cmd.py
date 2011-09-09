@@ -18,6 +18,21 @@ import sys,struct
 import tree, gtk, gobject
 import ole, escher, rx2
 
+def hex2d(data):
+	res = ''
+	for i in range(len(data)/2):
+		num = int(data[i*2:i*2+2],16)
+		res += struct.pack("B",num)
+	return res
+
+def cmdfind(model,path,iter,(page,data)):
+	buf = model.get_value(iter,3)
+	test = buf.find(data)
+	if test != -1:
+		s_iter = page.search.append(None,None)
+		page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+		page.search.set_value(s_iter,1,test)
+
 def parse (cmd, entry, page):
 	if cmd[0] == "$":
 		pos = cmd.find("@")
@@ -47,3 +62,15 @@ def parse (cmd, entry, page):
 		elif "rx2" == chtype.lower():
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
+	elif cmd[0] == "?":
+		ctype = cmd[1]
+		carg = cmd[2:]
+		if ctype == 'x' or ctype == 'X':
+			model = page.view.get_model()
+			data = hex2d(carg)
+			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT)
+			model.foreach(cmdfind,(page,data))
+			page.show_search(carg)
+			
+		else:
+			print 'Only hex search implemented'

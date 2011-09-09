@@ -197,7 +197,7 @@ class ApplicationMainWindow(gtk.Window):
 		pn = self.notebook.get_current_page()
 		if pn != -1:
 			if self.das[pn].type[0:3] == "CDR":
-				view = gtk.TreeView(self.das[pn].dict)
+				view = gtk.TreeView(self.das[pn].dictmod)
 				view.set_reorderable(True)
 				view.set_enable_tree_lines(True)
 				cell1 = gtk.CellRendererText()
@@ -377,7 +377,7 @@ class ApplicationMainWindow(gtk.Window):
 				vadj.set_value(newval)
 			except:
 				print "Wrong address"
-		elif goto[0] == "$":
+		elif goto[0] == "$" or goto[0] == "?":
 			cmd.parse (goto,self.entry,self.das[pn])
 		else:
 			try:
@@ -511,7 +511,6 @@ class ApplicationMainWindow(gtk.Window):
 		hd.version = self.das[pn].version
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
-#		print "Type: %s"%ntype[0],ntype[1]
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
 		hd.data = data

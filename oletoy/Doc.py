@@ -27,7 +27,9 @@ class Page:
 		self.version = 0
 		self.hd = None
 		self.dict = None
+		self.dictmod = None
 		self.dictview = None
+		self.search = None
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 
 	def fload(self):
@@ -100,3 +102,96 @@ class Page:
 		self.model.set_value(iter1, 3, buf)
 		return 0
 
+	def show_search(self,carg):
+		view = gtk.TreeView(self.search)
+		view.set_reorderable(True)
+		view.set_enable_tree_lines(True)
+		cell1 = gtk.CellRendererText()
+		cell1.set_property('family-set',True)
+		cell1.set_property('font','monospace 10')
+		cell2 = gtk.CellRendererText()
+		cell2.set_property('family-set',True)
+		cell2.set_property('font','monospace 10')
+		column1 = gtk.TreeViewColumn('Type', cell1, text=0)
+		column2 = gtk.TreeViewColumn('Value', cell2, text=1)
+		view.append_column(column1)
+		view.append_column(column2)
+		view.show()
+		view.connect("row-activated", self.on_search_row_activated)
+		scrolled = gtk.ScrolledWindow()
+		scrolled.add(view)
+		scrolled.set_size_request(400,400)
+		scrolled.show()
+		searchwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		searchwin.set_resizable(True)
+		searchwin.set_border_width(0)
+		scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		searchwin.add(scrolled)
+		searchwin.set_title("Search: %s"%carg)
+		searchwin.show_all()
+
+	def on_search_row_activated(self, view, path, column):
+		treeSelection = view.get_selection()
+		model1, iter1 = treeSelection.get_selected()
+		goto = model1.get_value(iter1,0)
+		addr = model1.get_value(iter1,1)
+		self.view.expand_to_path(goto)
+		self.view.set_cursor_on_cell(goto)
+		hd = self.hd
+# FIXME! copy-pasted from view.py
+# check why need double activation to scroll to addr
+		hd.version = self.version
+		treeSelection = self.view.get_selection()
+		model, siter = treeSelection.get_selected()
+		ntype = model.get_value(siter,1)
+		size = model.get_value(siter,2)
+		data = model.get_value(siter,3)
+		hd.data = data
+		str_addr = ''
+		str_hex = ''
+		str_asc = ''
+		if data != None:
+			for line in range(0, len(data), 16):
+				str_addr+="%07x: "%line
+				end = min(16, len(data) - line)
+				for byte in range(0, 15):
+					if byte < end:
+						str_hex+="%02x " % ord(data[line + byte])
+						if ord(data[line + byte]) < 32 or 126<ord(data[line + byte]):
+							str_asc +='.'
+						else:
+							str_asc += data[line + byte]
+				if end > 15:			
+					str_hex+="%02x" % ord(data[line + 15])
+					if ord(data[line + 15]) < 32 or 126<ord(data[line + 15]):
+						str_asc += '.'
+					else:
+						str_asc += data[line + 15]
+					str_hex+='\n'
+					str_asc+='\n'
+					str_addr+='\n'
+			if len(str_hex) < 47:
+				str_hex += " "*(47-len(str_hex))
+	
+			buffer_addr = hd.txtdump_addr.get_buffer()
+			iter_addr = buffer_addr.get_iter_at_offset(0)
+			iter_addr_end = buffer_addr.get_iter_at_offset(buffer_addr.get_char_count())
+			buffer_addr.delete(iter_addr, iter_addr_end)
+			buffer_addr.insert_with_tags_by_name(iter_addr, str_addr,"monospace")
+			buffer_asc = hd.txtdump_asc.get_buffer()
+			iter_asc = buffer_asc.get_iter_at_offset(0)
+			iter_asc_end = buffer_asc.get_iter_at_offset(buffer_asc.get_char_count())
+			buffer_hex = hd.txtdump_hex.get_buffer()
+			iter_hex = buffer_hex.get_iter_at_offset(0)
+			iter_hex_end = buffer_hex.get_iter_at_offset(buffer_hex.get_char_count())
+			buffer_hex.delete(iter_hex, iter_hex_end)
+			buffer_hex.insert_with_tags_by_name(iter_hex, str_hex,"monospace")
+			buffer_asc.delete(iter_asc, iter_asc_end)
+			buffer_asc.insert_with_tags_by_name(iter_asc, str_asc,"monospace")
+		try:
+			buffer_hex = hd.txtdump_hex.get_buffer()
+			vadj = hd.vscroll2.get_vadjustment()
+			newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
+			vadj.set_value(newval)
+		except:
+			print "Wrong address"
