@@ -57,13 +57,13 @@ def ftil (hd,size,data):
 		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
 def loda_outl (hd,data,offset,l_type):
-	add_iter (hd, "[0x0a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[0x000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_fild (hd,data,offset,l_type):
-	add_iter (hd, "[0x14] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[0x0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_stlt (hd,data,offset,l_type):
-	add_iter (hd, "[0x68] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[0x0068] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_rot(hd,data,offset,l_type):
 	[rot] = struct.unpack('<L', data[offset:offset+4])
@@ -74,7 +74,7 @@ def loda_name(hd,data,offset,l_type):
 		layrname = unicode(data[offset:],'utf-16').encode('utf-8')
 	else:
 		layrname = data[offset:]
-	add_iter (hd,"[0x3e8] Layer name",layrname,offset,len(data[offset:]),"txt")
+	add_iter (hd,"[0x03e8] Layer name",layrname,offset,len(data[offset:]),"txt")
 
 def loda_polygon (hd,data,offset,l_type):
 	num = struct.unpack('<L', data[offset+4:offset+8])[0]
@@ -96,20 +96,20 @@ def loda_coords124 (hd,data,offset,l_type):
 		x1 -= 0x100000000
 	if y1 > 0x7FFFFFFF:
 		y1 -= 0x100000000
-	add_iter (hd,"[0x1e] x1/y1","%u/%u mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
+	add_iter (hd,"[0x001e] x1/y1","%u/%u mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
 
 	if l_type == 1:
 		R1 = struct.unpack('<L', data[offset+8:offset+12])[0]
 		R2 = struct.unpack('<L', data[offset+12:offset+16])[0]
 		R3 = struct.unpack('<L', data[offset+16:offset+20])[0]
 		R4 = struct.unpack('<L', data[offset+20:offset+24])[0]
-		add_iter (hd,"[0x1e] R1 R2 R3 R4","%u %u %u %u mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+8,16,"txt")
+		add_iter (hd,"[0x001e] R1 R2 R3 R4","%u %u %u %u mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+8,16,"txt")
 
 	if l_type == 2:
 		a1 = struct.unpack('<L', data[offset+8:offset+12])[0]
 		a2 = struct.unpack('<L', data[offset+12:offset+16])[0]
 		a3 = struct.unpack('<L', data[offset+16:offset+20])[0]
-		add_iter (hd,"[0x1e] Start/End/Rot angles","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
+		add_iter (hd,"[0x001e] Start/End/Rot angles","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
 
 def loda_coords3 (hd,data,offset,l_type):
 	[pointnum] = struct.unpack('<L', data[offset:offset+4])
@@ -143,7 +143,7 @@ def loda_coords3 (hd,data,offset,l_type):
 			x -= 0x100000000
 		if y > 0x7FFFFFFF:
 			y -= 0x100000000
-		add_iter (hd,"[0x1e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,9,"txt")
+		add_iter (hd,"[0x001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,9,"txt")
 
 
 
@@ -188,7 +188,8 @@ def loda (hd,size,data):
 			if loda_type_func.has_key(argtype):
 				loda_type_func[argtype](hd,data,offset,l_type)
 			else:
-				print 'Unknown argtype: %x'%argtype                             
+				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+#				print 'Unknown argtype: %x'%argtype                             
 
 def trfd (hd,size,data):
 	start = 32
