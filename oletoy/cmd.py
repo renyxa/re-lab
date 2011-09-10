@@ -20,6 +20,7 @@ import ole, escher, rx2
 
 def hex2d(data):
 	res = ''
+	data = data.replace(" ","")
 	for i in range(len(data)/2):
 		num = int(data[i*2:i*2+2],16)
 		res += struct.pack("B",num)
@@ -66,11 +67,13 @@ def parse (cmd, entry, page):
 		ctype = cmd[1]
 		carg = cmd[2:]
 		if ctype == 'x' or ctype == 'X':
-			model = page.view.get_model()
 			data = hex2d(carg)
-			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT)
-			model.foreach(cmdfind,(page,data))
-			page.show_search(carg)
-			
-		else:
-			print 'Only hex search implemented'
+		elif ctype == 'a' or ctype == 'A':
+			data = carg
+		elif ctype == 'u' or ctype == 'U':
+			data = carg.encode("utf-16")[2:]
+		model = page.view.get_model()
+		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT)
+		model.foreach(cmdfind,(page,data))
+		page.show_search(carg)
+
