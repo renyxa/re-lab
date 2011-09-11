@@ -27,13 +27,21 @@ def hex2d(data):
 	return res
 
 def cmdfind(model,path,iter,(page,data)):
+	if page.type[0:3] == "CDR" and model.iter_n_children(iter)>0:
+		return
 	buf = model.get_value(iter,3)
-	test = buf.find(data)
-	if test != -1:
-		s_iter = page.search.append(None,None)
-		page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
-		page.search.set_value(s_iter,1,test)
-		page.search.set_value(s_iter,2,"%04x (%s)"%(test,model.get_value(iter,0)))
+	test = 0
+	print len(buf)
+	while test < len(buf):
+		print test
+		test = buf.find(data,test+1)
+		if test != -1:
+			s_iter = page.search.append(None,None)
+			page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+			page.search.set_value(s_iter,1,test)
+			page.search.set_value(s_iter,2,"%04x (%s)"%(test,model.get_value(iter,0)))
+		else:
+			return
 
 def parse (cmd, entry, page):
 	if cmd[0] == "$":
