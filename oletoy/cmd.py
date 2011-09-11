@@ -33,6 +33,7 @@ def cmdfind(model,path,iter,(page,data)):
 		s_iter = page.search.append(None,None)
 		page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
 		page.search.set_value(s_iter,1,test)
+		page.search.set_value(s_iter,2,"%04x (%s)"%(test,model.get_value(iter,0)))
 
 def parse (cmd, entry, page):
 	if cmd[0] == "$":
@@ -73,7 +74,7 @@ def parse (cmd, entry, page):
 		elif ctype == 'u' or ctype == 'U':
 			data = carg.encode("utf-16")[2:]
 		model = page.view.get_model()
-		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT)
+		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
 		model.foreach(cmdfind,(page,data))
 		page.show_search(carg)
 

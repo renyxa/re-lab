@@ -113,7 +113,7 @@ class Page:
 		cell2.set_property('family-set',True)
 		cell2.set_property('font','monospace 10')
 		column1 = gtk.TreeViewColumn('Type', cell1, text=0)
-		column2 = gtk.TreeViewColumn('Value', cell2, text=1)
+		column2 = gtk.TreeViewColumn('Value', cell2, text=2)
 		view.append_column(column1)
 		view.append_column(column2)
 		view.show()

@@ -63,7 +63,7 @@ def loda_fild (hd,data,offset,l_type):
 	add_iter (hd, "[0x0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_stlt (hd,data,offset,l_type):
-	add_iter (hd, "[0x0068] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[0x00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_rot(hd,data,offset,l_type):
 	[rot] = struct.unpack('<L', data[offset:offset+4])
@@ -153,9 +153,9 @@ def loda_coords (hd,data,offset,l_type):
 	elif l_type == 3:
 		loda_coords3 (hd,data,offset,l_type)
 
-loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",20:"Polygon"}
+loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon"}
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
-									0x68:loda_stlt, 0x2af8:loda_polygon,
+									0xc8:loda_stlt, 0x2af8:loda_polygon,
 									0x3e8:loda_name,
 									0x2efe:loda_rot	#, 0x7d0:loda_palt, 0x1f40:loda_lens, 0x1f45:loda_contnr
 									}
