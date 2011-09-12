@@ -1,6 +1,57 @@
 #!/usr/bin/env python
 import sys,struct,zlib
 
+def add_iter (hd,name,value,offset,length,vtype):
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
+
+def hdRectangle(hd,data):
+		offset = 0
+		gr_style = struct.unpack('>H', data[offset:offset+2])[0]
+		layer = struct.unpack('>H', data[offset+2:offset+4])[0]
+		x1 = struct.unpack('>H', data[offset+18:offset+20])[0] - 1692
+		x1f = struct.unpack('>H', data[offset+20:offset+22])[0]
+		y1 = struct.unpack('>H', data[offset+22:offset+24])[0] - 1584
+		y1f = struct.unpack('>H', data[offset+24:offset+26])[0]
+		x2 = struct.unpack('>H', data[offset+26:offset+28])[0] - 1692
+		x2f = struct.unpack('>H', data[offset+28:offset+30])[0]
+		y2 = struct.unpack('>H', data[offset+30:offset+32])[0] - 1584
+		y2f = struct.unpack('>H', data[offset+32:offset+34])[0]
+		rtlt = struct.unpack('>H', data[offset+34:offset+36])[0]
+		rtltf = struct.unpack('>H', data[offset+36:offset+38])[0]
+		rtll = struct.unpack('>H', data[offset+38:offset+40])[0]
+		rtllf = struct.unpack('>H', data[offset+40:offset+42])[0]
+		rtrt = struct.unpack('>H', data[offset+42:offset+44])[0]
+		rtrtf = struct.unpack('>H', data[offset+44:offset+46])[0]
+		rtrr = struct.unpack('>H', data[offset+46:offset+48])[0]
+		rtrrf = struct.unpack('>H', data[offset+48:offset+50])[0]
+		rbrb = struct.unpack('>H', data[offset+50:offset+52])[0]
+		rbrbf = struct.unpack('>H', data[offset+52:offset+54])[0]
+		rbrr = struct.unpack('>H', data[offset+54:offset+56])[0]
+		rbrrf = struct.unpack('>H', data[offset+56:offset+58])[0]
+		rblb = struct.unpack('>H', data[offset+58:offset+60])[0]
+		rblbf = struct.unpack('>H', data[offset+60:offset+62])[0]
+		rbll = struct.unpack('>H', data[offset+62:offset+64])[0]
+		rbllf = struct.unpack('>H', data[offset+64:offset+66])[0]
+		add_iter (hd,'Graphic Style',gr_style,0,2,">H")
+		add_iter (hd,'Layer',layer,2,2,">h")
+		add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),18,4,"txt")
+		add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
+		add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),26,4,"txt")
+		add_iter (hd,'Y2',"%.4f"%(y2+y2f/65536.),30,4,"txt")
+		add_iter (hd,'Rad TopLeft (Top)',"%.4f"%(rtlt+rtltf/65536.),34,4,"txt")
+		add_iter (hd,'Rad TopLeft (Left)',"%.4f"%(rtll+rtllf/65536.),38,4,"txt")
+		add_iter (hd,'Rad TopRight (Top)',"%.4f"%(rtrt+rtrtf/65536.),42,4,"txt")
+		add_iter (hd,'Rad TopRight (Right)',"%.4f"%(rtrr+rtrrf/65536.),46,4,"txt")
+		add_iter (hd,'Rad BtmRight (Btm)',"%.4f"%(rbrb+rbrbf/65536.),50,4,"txt")
+		add_iter (hd,'Rad BtmRight (Right)',"%.4f"%(rbrr+rbrrf/65536.),54,4,"txt")
+		add_iter (hd,'Rad BtmLeft (Btm)',"%.4f"%(rblb+rblbf/65536.),58,4,"txt")
+		add_iter (hd,'Rad BtmLeft (Left)',"%.4f"%(rbll+rbllf/65536.),62,4,"txt")
+
+
+hdp = {'Rectangle':hdRectangle}
+
+
 class parser:
 	def  __init__(self):
 		self.version = 0

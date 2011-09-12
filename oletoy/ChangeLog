@@ -1,3 +1,8 @@
+2011-09-11  Valek Filippov
+
+		* FH: Parse coords for Rectangle.
+		* Add tooltip with FH X/Y for 2 and 4 bytes hexdump selections.
+
 2011-09-10  Valek Filippov
 
 		* Added '?a' and '?u' commands, chop spaces from '?x'.

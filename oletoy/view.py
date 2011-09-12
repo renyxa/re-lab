@@ -24,9 +24,9 @@ import Doc, cmd
 import escher
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
-import emfparse,svm,mf,wmfparse,cdr,emfplus, rx2
+import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fhparse
 
-version = "0.5.56"
+version = "0.5.57"
 
 ui_info = \
 '''<ui>
@@ -600,6 +600,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "rx2":
 					if rx2.rx2_ids.has_key(ntype[1]):
 						rx2.rx2_ids[ntype[1]](hd,data)
+				elif ntype[0] == "fh":
+					if fhparse.hdp.has_key(ntype[1]):
+						fhparse.hdp[ntype[1]](hd,data)
 
 	def hdscroll_cb(self,view,event):
 		pn = self.notebook.get_current_page()
@@ -668,12 +671,20 @@ class ApplicationMainWindow(gtk.Window):
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<h",buf)[0],struct.unpack(">h",buf)[0])
 			if type == "FH" and self.das[pn].dict.has_key(struct.unpack(">h",buf)[0]):
 				txt += "\t"+self.das[pn].dict[struct.unpack(">h",buf)[0]]
+			if type == "FH":
+				v = struct.unpack(">H",buf)[0]
+				txt += "\tX: %d Y: %d"%(v-1692,v-1584)
 			self.update_statusbar(txt)
 		if len(buf) == 4:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])
 			txt += "\tLEF: %s\tBEF: %s"%(struct.unpack("<f",buf)[0],struct.unpack(">f",buf)[0])
 			if type == "PUB":
 				txt += "\t%s"%struct.unpack("<i",buf)[0]/12700.
+			if type == "FH":
+				v1 = struct.unpack(">H",buf[0:2])[0]
+				v2 = struct.unpack(">H",buf[2:4])[0]
+				txt += "\tX: %.4f Y: %.4f"%(v1-1692+v2/65536.,v1-1584+v2/65536.)
+
 			self.update_statusbar(txt)
 		if len(buf) == 8:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<d",buf)[0],struct.unpack(">d",buf)[0])

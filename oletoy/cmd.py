@@ -31,9 +31,7 @@ def cmdfind(model,path,iter,(page,data)):
 		return
 	buf = model.get_value(iter,3)
 	test = 0
-	print len(buf)
 	while test < len(buf):
-		print test
 		test = buf.find(data,test+1)
 		if test != -1:
 			s_iter = page.search.append(None,None)
