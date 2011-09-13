@@ -64,6 +64,11 @@ def parse (model,buf,offset = 0,parent=None):
 				
 			offset += newL
 		return offset,newL+8
+	
+def rx2_head (hd, data):
+	off = 13
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Bytes per sample?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 
 def rx2_eq (hd,data):
 	off = 8
@@ -219,6 +224,10 @@ def rx2_glob(hd,data):
 
 
 def rx2_recy(hd, data):
+	off = 9
+	iter = hd.hdmodel.append(None, None)
+	hd.hdmodel.set(iter, 0, "Bytes per sample?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	
 	off = 13
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set(iter, 0, "Toggle: Preview",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
@@ -266,7 +275,8 @@ def rx2_rcyx(hd, data):
 	hd.hdmodel.set(iter, 0, "Toggle: Transient Shaper Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")	
 
 rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce, 
-		"SINF":rx2_sinf, "GLOB":rx2_glob, "RCYX":rx2_rcyx, "RECY":rx2_recy}
+		"SINF":rx2_sinf, "GLOB":rx2_glob, "RCYX":rx2_rcyx, "RECY":rx2_recy,
+		"HEAD": rx2_head}
 
 def open (buf,page):
 	parse (page.model,buf,0)
