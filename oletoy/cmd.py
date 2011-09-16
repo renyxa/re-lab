@@ -15,7 +15,7 @@
 #
 
 import sys,struct
-import tree, gtk, gobject
+import tree, gtk, gobject,zlib
 import ole, escher, rx2
 
 def hex2d(data):
@@ -70,6 +70,20 @@ def parse (cmd, entry, page):
 		elif "rx2" == chtype.lower():
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
+		elif "zip" == chtype.lower():
+#			try:
+				print int(chaddr,16)
+				output = zlib.decompress(buf[int(chaddr,16):],-15)
+				iter2 = page.model.append(iter1,None)
+				model.set_value(iter2,0,"Decompressed data")
+				model.set_value(iter2,1,("","data"))
+				model.set_value(iter2,2,len(output))
+				model.set_value(iter2,3,output)
+				model.set_value(iter2,6,page.model.get_string_from_iter(iter2))
+#			except:
+#				print "Failed to decompress"
+
+
 	elif cmd[0] == "?":
 		ctype = cmd[1]
 		carg = cmd[2:]

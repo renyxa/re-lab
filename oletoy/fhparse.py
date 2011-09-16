@@ -5,10 +5,11 @@ def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
 
-def hdRectangle(hd,data):
+def hdRectangle(hd,data,page):
 	offset = 0
 	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
 	layer = struct.unpack('>H', data[offset+2:offset+4])[0]
+	xform = struct.unpack('>H', data[offset+16:offset+18])[0]
 	x1 = struct.unpack('>H', data[offset+18:offset+20])[0] - 1692
 	x1f = struct.unpack('>H', data[offset+20:offset+22])[0]
 	y1 = struct.unpack('>H', data[offset+22:offset+24])[0] - 1584
@@ -33,8 +34,9 @@ def hdRectangle(hd,data):
 	rblbf = struct.unpack('>H', data[offset+60:offset+62])[0]
 	rbll = struct.unpack('>H', data[offset+62:offset+64])[0]
 	rbllf = struct.unpack('>H', data[offset+64:offset+66])[0]
-	add_iter (hd,'Graphic Style',gr_style,0,2,">H")
-	add_iter (hd,'Layer',layer,2,2,">h")
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
+	add_iter (hd,'Layer',"%02x"%layer,2,2,">h")
+	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
 	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),18,4,"txt")
 	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
 	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),26,4,"txt")
@@ -48,10 +50,11 @@ def hdRectangle(hd,data):
 	add_iter (hd,'Rad BtmLeft (Btm)',"%.4f"%(rblb+rblbf/65536.),58,4,"txt")
 	add_iter (hd,'Rad BtmLeft (Left)',"%.4f"%(rbll+rbllf/65536.),62,4,"txt")
 
-def hdOval(hd,data):
+def hdOval(hd,data,page):
 	offset = 0
 	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
 	layer = struct.unpack('>H', data[offset+2:offset+4])[0]
+	xform = struct.unpack('>H', data[offset+16:offset+18])[0]
 	x1 = struct.unpack('>H', data[offset+18:offset+20])[0] - 1692
 	x1f = struct.unpack('>H', data[offset+20:offset+22])[0]
 	y1 = struct.unpack('>H', data[offset+22:offset+24])[0] - 1584
@@ -65,8 +68,9 @@ def hdOval(hd,data):
 	arc2 = struct.unpack('>H', data[offset+38:offset+40])[0]
 	arc2f = struct.unpack('>H', data[offset+40:offset+42])[0]
 	clsd = ord(data[offset+42])
-	add_iter (hd,'Graphic Style',gr_style,0,2,">H")
-	add_iter (hd,'Layer',layer,2,2,">h")
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
+	add_iter (hd,'Layer',"%02x"%layer,2,2,">h")
+	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
 	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),18,4,"txt")
 	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
 	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),26,4,"txt")
@@ -75,7 +79,7 @@ def hdOval(hd,data):
 	add_iter (hd,'Arc ()',"%.4f"%(arc2+arc2f/65536.),38,4,"txt")
 	add_iter (hd,'Closed',clsd,42,1,"B")
 
-def hdBasicLine(hd,data):
+def hdBasicLine(hd,data,page):
 	offset = 0
 	mit = struct.unpack('>H', data[offset+8:offset+10])[0]
 	mitf = struct.unpack('>H', data[offset+10:offset+12])[0]
@@ -83,8 +87,16 @@ def hdBasicLine(hd,data):
 	add_iter (hd,'Miter',"%.4f"%(mit+mitf/65536.),8,4,"txt")
 	add_iter (hd,'Width',w,12,2,">H")
 
+def hdList(hd,data,page):
+	offset = 0
+	ltype = struct.unpack('>H', data[offset+10:offset+12])[0]
+	ltxt = "%02x"%ltype
+	if page.dict.has_key(ltype):
+		ltxt += " (%s)"%page.dict[ltype]
+		add_iter (hd,'List Type',ltxt,10,2,">H")
 
-hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval}
+hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,
+			"List":hdList,"MList":hdList,"BrushList":hdList}
 
 
 class parser:
@@ -92,6 +104,11 @@ class parser:
 		self.version = 0
 		self.data = None
 		self.iter = None
+
+def CustomProc(parser,offset,key):
+	length=48
+	return length
+
 
 def TFOnPath(parser,offset,key):
 	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])

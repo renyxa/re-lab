@@ -91,7 +91,7 @@ class Page:
 			agd_ver = ord(buf[agd_off+3])
 			if agd_ver > 0x33: # >ver 8
 				self.type = "FH"
-				print "Probably Freehand 9 or better"
+				print "Probably Freehand"
 				fh.open(buf,self)
 				return 0
 

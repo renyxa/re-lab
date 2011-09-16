@@ -43,7 +43,8 @@ chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.V
 				"PerspectiveEnvelope":fhparse.PerspectiveEnvelope,"MultiBlend":fhparse.MultiBlend, "MasterPageElement":fhparse.MasterPageElement,\
 				"MasterPageDocMan":fhparse.MasterPageDocMan,"MasterPageSymbolClass":fhparse.MasterPageSymbolClass, "MasterPageLayerElement":fhparse.MasterPageLayerElement,\
 				"MQuickDict":fhparse.MQuickDict,"TEffect":fhparse.TEffect, "MasterPageSymbolInstance":fhparse.MasterPageSymbolInstance,\
-				"MasterPageLayerInstance":fhparse.MasterPageLayerInstance, "TextInPath":fhparse.TextInPath, "ImageFill":fhparse.ImageFill}
+				"MasterPageLayerInstance":fhparse.MasterPageLayerInstance, "TextInPath":fhparse.TextInPath, "ImageFill":fhparse.ImageFill,
+				"CustomProc":fhparse.CustomProc}
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 
@@ -68,23 +69,30 @@ def open (buf,page):
 	page.model.set_value(iter1,2,12)
 	page.model.set_value(iter1,3,buf[offset:offset+12])
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-	output = zlib.decompress(buf[offset+14:offset+14+size],-15)
-	offset = offset + size
+
 	dditer = page.model.append(None,None)
-	page.model.set_value(dditer,0,"FH Decompressed Data")
 	page.model.set_value(dditer,1,("fh","data"))
-	page.model.set_value(dditer,2,size)
+	if page.version > 8:
+		output = zlib.decompress(buf[offset+14:offset+14+size],-15)
+		page.model.set_value(dditer,0,"FH Decompressed Data")
+		page.model.set_value(dditer,2,size)
+
+	else:
+		output = buf[offset+12:offset+size]
+		page.model.set_value(dditer,0,"FH Data")
+		page.model.set_value(dditer,2,size-12)
+
+	offset = offset + size
 	page.model.set_value(dditer,3,output)
 	page.model.set_value(dditer,6,page.model.get_string_from_iter(dditer))
-	
+
 	dictsize = struct.unpack('>h', buf[offset:offset+2])[0]
 	print 'Dict size:\t%u'%dictsize
 	dictiter = page.model.append(None,None)
 	page.model.set_value(dictiter,0,"FH Dictionary")
 	page.model.set_value(dictiter,1,("fh","dict"))
-	page.model.set_value(dictiter,2,dictsize+4)
-	page.model.set_value(dictiter,3,buf[offset:offset+dictsize+4])
 	page.model.set_value(dictiter,6,page.model.get_string_from_iter(dictiter))
+	dictoffset = offset
 	offset+=4
 	items = {}
 	for i in range(dictsize):
@@ -101,6 +109,9 @@ def open (buf,page):
 		page.model.set_value(niter,6,page.model.get_string_from_iter(niter))
 		offset = offset+k+3
 		items[key] = value
+	page.model.set_value(dictiter,2,offset-dictoffset)
+	page.model.set_value(dictiter,3,buf[dictoffset:offset])
+	print 'Test %02x'%offset
 	[size] = struct.unpack('>L', buf[offset:offset+4])
 	print '# of items:\t%u'%size
 	page.dict = items
