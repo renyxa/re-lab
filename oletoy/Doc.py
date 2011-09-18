@@ -89,11 +89,11 @@ class Page:
 		agd_off = buf.find('AGD')
 		if agd_off != -1:
 			agd_ver = ord(buf[agd_off+3])
-			if agd_ver > 0x33: # >ver 8
-				self.type = "FH"
-				print "Probably Freehand"
-				fh.open(buf,self)
-				return 0
+#			if agd_ver > 0x33: # >ver 8
+			self.type = "FH"
+			print "Probably Freehand"
+			fh.open(buf,self)
+			return 0
 
 		iter1 = self.model.append(None, None)
 		self.model.set_value(iter1, 0, "File")

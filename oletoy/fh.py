@@ -44,7 +44,7 @@ chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.V
 				"MasterPageDocMan":fhparse.MasterPageDocMan,"MasterPageSymbolClass":fhparse.MasterPageSymbolClass, "MasterPageLayerElement":fhparse.MasterPageLayerElement,\
 				"MQuickDict":fhparse.MQuickDict,"TEffect":fhparse.TEffect, "MasterPageSymbolInstance":fhparse.MasterPageSymbolInstance,\
 				"MasterPageLayerInstance":fhparse.MasterPageLayerInstance, "TextInPath":fhparse.TextInPath, "ImageFill":fhparse.ImageFill,
-				"CustomProc":fhparse.CustomProc}
+				"CustomProc":fhparse.CustomProc, "ConnectorLine":fhparse.ConnectorLine}
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 
@@ -86,35 +86,40 @@ def open (buf,page):
 	page.model.set_value(dditer,3,output)
 	page.model.set_value(dditer,6,page.model.get_string_from_iter(dditer))
 
-	dictsize = struct.unpack('>h', buf[offset:offset+2])[0]
-	print 'Dict size:\t%u'%dictsize
 	dictiter = page.model.append(None,None)
 	page.model.set_value(dictiter,0,"FH Dictionary")
 	page.model.set_value(dictiter,1,("fh","dict"))
 	page.model.set_value(dictiter,6,page.model.get_string_from_iter(dictiter))
 	dictoffset = offset
-	offset+=4
-	items = {}
-	for i in range(dictsize):
-		[key] = struct.unpack('>h', buf[offset:offset+2])
-		k = 0
-		while ord(buf[offset+k+2]) != 0:
-			k+=1
-		value = buf[offset+2:offset+k+2]
-		niter = page.model.append(dictiter,None)
-		page.model.set_value(niter,0,"%04x %s"%(key,value))
-		page.model.set_value(niter,1,("fh","dval"))
-		page.model.set_value(niter,2,k+3)
-		page.model.set_value(niter,3,buf[offset:offset+k+3])
-		page.model.set_value(niter,6,page.model.get_string_from_iter(niter))
-		offset = offset+k+3
-		items[key] = value
+
+	if page.version > 8:
+		dictsize = struct.unpack('>h', buf[offset:offset+2])[0]
+		print 'Dict size:\t%u'%dictsize
+		offset+=4
+		items = {}
+		for i in range(dictsize):
+			[key] = struct.unpack('>h', buf[offset:offset+2])
+			k = 0
+			while ord(buf[offset+k+2]) != 0:
+				k+=1
+			value = buf[offset+2:offset+k+2]
+			niter = page.model.append(dictiter,None)
+			page.model.set_value(niter,0,"%04x %s"%(key,value))
+			page.model.set_value(niter,1,("fh","dval"))
+			page.model.set_value(niter,2,k+3)
+			page.model.set_value(niter,3,buf[offset:offset+k+3])
+			page.model.set_value(niter,6,page.model.get_string_from_iter(niter))
+			offset = offset+k+3
+			items[key] = (value,0)
+	else:
+		offset,items = v8dict(buf,offset,dictiter)
+
 	page.model.set_value(dictiter,2,offset-dictoffset)
 	page.model.set_value(dictiter,3,buf[dictoffset:offset])
-	print 'Test %02x'%offset
+	page.dict = items
+
 	[size] = struct.unpack('>L', buf[offset:offset+4])
 	print '# of items:\t%u'%size
-	page.dict = items
 	offset+= 4
 
 	parser = fhparse.parser()
@@ -128,10 +133,10 @@ def open (buf,page):
 	for i in range(size):
 		[key] = struct.unpack('>h', buf[offset:offset+2])
 		offset+= 2
-		if chunks.has_key(items[key]):
+		if chunks.has_key(items[key][0]):
 			if unkn_flag == 0:
 				try:
-					length = chunks[items[key]](parser,agdoffset, key)
+					length = chunks[items[key][0]](parser,agdoffset, key)
 				except:
 					print "Failed to parse. Chunk: %02x 2:%s"%(i,i-1)
 					return
@@ -140,7 +145,7 @@ def open (buf,page):
 				if agdoffset + length > len(output):
 					length = len(output) - agdoffset
 				# later will implement search for easy detectable chunks
-			iname = items[key]
+			iname = items[key][0]
 			iter1 = page.model.append(dditer,None)
 			page.model.set_value(iter1,0,"%s [%02x]"%(iname,i+1))
 			page.model.set_value(iter1,1,("fh",iname))
@@ -150,12 +155,12 @@ def open (buf,page):
 			agdoffset = agdoffset + length
 			
 		else:
-			print 'WARNING! Unknown key: ',items[key],"%02x %02x"%(i+1,agdoffset)
+			print 'WARNING! Unknown key: ',items[key][0],"%02x %02x"%(i+1,agdoffset)
 			unkn_flag = 1
 			length = 128
 			if agdoffset + length > len(output):
 				length = len(output) - agdoffset
-			iname = items[key]
+			iname = items[key][0]
 			name = "%02x: "%(i+1)+" !!! " + iname+"\t0x%02x"%length+"\t0x%02x"%agdoffset+" <-------"
 			iter1 = page.model.append(dditer,None)
 			page.model.set_value(iter1,0,name)
@@ -163,3 +168,32 @@ def open (buf,page):
 			page.model.set_value(iter1,2,length)
 			page.model.set_value(iter1,3,output[agdoffset:agdoffset+length])
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+
+def v8dict(buf,offset,parent):
+	dictsize = struct.unpack('>h', buf[offset:offset+2])[0]
+	lastkey = struct.unpack('>h', buf[offset+2:offset+4])[0]
+	offset += 4
+	print 'Dict size:\t%u, Last record: %04x'%(dictsize,lastkey)
+	flag = 0
+	keyspaths = {}
+	items = {}
+	for i in range(dictsize):
+		key = struct.unpack('>h', buf[offset:offset+2])[0]
+		key2 = struct.unpack('>h', buf[offset+2:offset+4])[0]
+		offset += 4
+		k = 0
+		while ord(buf[offset+k]) != 0:
+			k+=1
+		value = buf[offset:offset+k]
+		offset += k+1
+		k = 0
+		while flag != 2:
+			while ord(buf[offset+k]) != 0:
+				k+=1
+			flag += 1
+			k+=1
+		flag = 0
+		unkn = buf[offset:offset+k]
+		offset+=k
+		items[key] = (value,unkn)
+	return offset,items

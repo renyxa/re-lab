@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fhparse
 
-version = "0.5.58"
+version = "0.5.59"
 
 ui_info = \
 '''<ui>
@@ -222,7 +222,8 @@ class ApplicationMainWindow(gtk.Window):
 				dictwin.add(scrolled)
 				dictwin.set_title("CDR Dictionary")
 				dictwin.show_all()
-
+			if self.das[pn].type == "FH":
+				pass
 
 	def activate_add (self, action):
 		pn = self.notebook.get_current_page()

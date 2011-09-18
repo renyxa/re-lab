@@ -5,6 +5,13 @@ def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
 
+
+def hdAGDFont(hd,data,page):
+	offset = 0
+	fsize = struct.unpack('>H', data[offset+26:offset+28])[0]
+	add_iter (hd,'Font Size',fsize,26,2,">h")
+
+
 def hdRectangle(hd,data,page):
 	offset = 0
 	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
@@ -92,10 +99,10 @@ def hdList(hd,data,page):
 	ltype = struct.unpack('>H', data[offset+10:offset+12])[0]
 	ltxt = "%02x"%ltype
 	if page.dict.has_key(ltype):
-		ltxt += " (%s)"%page.dict[ltype]
+		ltxt += " (%s)"%page.dict[ltype][0]
 		add_iter (hd,'List Type',ltxt,10,2,">H")
 
-hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,
+hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,"AGDFont":hdAGDFont,
 			"List":hdList,"MList":hdList,"BrushList":hdList}
 
 
@@ -199,6 +206,10 @@ def FWBlurFilter(parser,offset,key):
 
 def FWGlowFilter(parser,offset,key):
 	length= 22 #was 38
+	return length
+
+def ConnectorLine(parser,offset,key):
+	length= 166
 	return length
 
 def OpacityFilter(parser,offset,key):
