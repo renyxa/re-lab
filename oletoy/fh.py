@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct,tree,zlib,fhparse
+import sys,struct,tree,zlib,fhparse,gtk,gobject
 
 chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.VDict, "UString":fhparse.UString, "SymbolClass":fhparse.SymbolClass,\
 				"PerspectiveGrid":fhparse.PerspectiveGrid,"MpObject":fhparse.MpObject,"MString":fhparse.MString,"MList":fhparse.MList,"MDict":fhparse.MDict,\
@@ -50,6 +50,7 @@ ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 
 
 def open (buf,page):
+	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	iter1 = page.model.append(None,None)
 	page.model.set_value(iter1,0,"FH file")
 	page.model.set_value(iter1,1,("fh","file"))
@@ -112,7 +113,7 @@ def open (buf,page):
 			offset = offset+k+3
 			items[key] = (value,0)
 	else:
-		offset,items = v8dict(buf,offset,dictiter)
+		offset,items = v8dict(buf,offset,dictiter,page)
 
 	page.model.set_value(dictiter,2,offset-dictoffset)
 	page.model.set_value(dictiter,3,buf[dictoffset:offset])
@@ -169,13 +170,19 @@ def open (buf,page):
 			page.model.set_value(iter1,3,output[agdoffset:agdoffset+length])
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 
-def v8dict(buf,offset,parent):
+def str2hex(data):
+	s = ''
+	for i in range(len(data)):
+		s+= '%02x '%ord(data[i])
+	return s
+	
+def v8dict(buf,offset,parent,page):
 	dictsize = struct.unpack('>h', buf[offset:offset+2])[0]
 	lastkey = struct.unpack('>h', buf[offset+2:offset+4])[0]
 	offset += 4
 	print 'Dict size:\t%u, Last record: %04x'%(dictsize,lastkey)
 	flag = 0
-	keyspaths = {}
+	keypaths = {"":None}
 	items = {}
 	for i in range(dictsize):
 		key = struct.unpack('>h', buf[offset:offset+2])[0]
@@ -195,5 +202,22 @@ def v8dict(buf,offset,parent):
 		flag = 0
 		unkn = buf[offset:offset+k]
 		offset+=k
+		niter = page.model.append(parent,None)
+		page.model.set_value(niter,0,"%04x %s"%(key,value))
+		page.model.set_value(niter,1,("fh","dval"))
+		page.model.set_value(niter,2,len(value)+len(unkn)+4)
+		page.model.set_value(niter,3,buf[offset-len(value)-len(unkn)-5:offset])
+		page.model.set_value(niter,6,page.model.get_string_from_iter(niter))
+
+
 		items[key] = (value,unkn)
+		piter = None
+		if keypaths.has_key(key2):
+			piter = keypaths[key2]
+		d_iter = page.dictmod.append(piter,None)
+		keypaths[key] = d_iter
+		page.dictmod.set_value(d_iter,0,"%04x"%key)
+		page.dictmod.set_value(d_iter,1,value)
+		page.dictmod.set_value(d_iter,2,str2hex(unkn))
+
 	return offset,items

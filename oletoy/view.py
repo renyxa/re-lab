@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fhparse
 
-version = "0.5.59"
+version = "0.5.60"
 
 ui_info = \
 '''<ui>
@@ -222,8 +222,37 @@ class ApplicationMainWindow(gtk.Window):
 				dictwin.add(scrolled)
 				dictwin.set_title("CDR Dictionary")
 				dictwin.show_all()
-			if self.das[pn].type == "FH":
-				pass
+			if self.das[pn].type == "FH" and self.das[pn].version < 9:
+				view = gtk.TreeView(self.das[pn].dictmod)
+				view.set_reorderable(True)
+				view.set_enable_tree_lines(True)
+				cell0 = gtk.CellRendererText()
+				cell0.set_property('family-set',True)
+				cell0.set_property('font','monospace 10')
+				cell1 = gtk.CellRendererText()
+				cell1.set_property('family-set',True)
+				cell1.set_property('font','monospace 10')
+				cell2 = gtk.CellRendererText()
+				cell2.set_property('family-set',True)
+				cell2.set_property('font','monospace 10')
+				column0 = gtk.TreeViewColumn('Key', cell1, text=0)
+				column1 = gtk.TreeViewColumn('Value', cell1, text=1)
+				column2 = gtk.TreeViewColumn('???', cell2, text=2)
+				view.append_column(column0)
+				view.append_column(column1)
+				view.append_column(column2)
+				view.show()
+				scrolled = gtk.ScrolledWindow()
+				scrolled.add(view)
+				scrolled.set_size_request(400,400)
+				scrolled.show()
+				dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+				dictwin.set_resizable(True)
+				dictwin.set_border_width(0)
+				scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+				dictwin.add(scrolled)
+				dictwin.set_title("FH Dictionary")
+				dictwin.show_all()
 
 	def activate_add (self, action):
 		pn = self.notebook.get_current_page()
