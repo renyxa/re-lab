@@ -83,10 +83,10 @@ def parse (page, data, parent):
 		page.version = version
 		print "Version: %d"%version
 		print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
-		if version == 6:
-		  lenhdr2 = 4
+		if version > 6:
+		  lenhdr2 = 74
 		else:
-		  lenhdr2 = 74  
+		  lenhdr2 = 4  
 		iter1 = model.append(parent,None)
 		model.set_value(iter1,0,"Header part2")
 		model.set_value(iter1,1,("vsd","hdr2"))
@@ -138,8 +138,11 @@ def parse (page, data, parent):
 		model.set_value(iter2,6,model.get_string_from_iter(iter2))
 		model.set_value(iter2,5,"#96dfcf")
 
-		ptr_search (page, data, version, iter1)
-
+		try:
+		  ptr_search (page, data, version, iter1)
+		except:
+		  print "ptr_search failed in trailer"
+		  
 def ptr_search (page, data, version, parent):
 	model = page.model
 	namelist = 0
@@ -152,11 +155,25 @@ def ptr_search (page, data, version, parent):
 	if ptr.type == 0xd:
 	  vbaflag = 1
 	  vbadata = ""
-	[offset] = struct.unpack ('<L', pdata[shift:shift+4])
-	if offset >= len(pdata):
-		return 0
-	[num] =  struct.unpack ('<L', pdata[offset+shift:offset+shift+4])
-	offset = offset+8+shift
+	if version > 5:
+		[offset] = struct.unpack ('<L', pdata[shift:shift+4])
+		if offset >= len(pdata):
+			return 0
+		num =  struct.unpack ('<L', pdata[offset+shift:offset+shift+4])[0]
+		offset = offset+8+shift
+	else:
+		num = struct.unpack ('<H', pdata[0xa+shift:0xa+shift+2])[0]
+		offset = 0xa+shift+2
+		if ptr.type == 0x14:
+			num = struct.unpack ('<H', pdata[0x82+shift:0x82+shift+2])[0]
+			offset = 0x82+shift+2
+		if ptr.type == 0x1d:
+			num = struct.unpack ('<H', pdata[0x1e+shift:0x1e+shift+2])[0]
+			offset = 0x1e+shift+2
+		if ptr.type == 0x1e:
+			num = struct.unpack ('<H', pdata[0x36+shift:0x36+shift+2])[0]
+			offset = 0x36+shift+2
+
 	for i in range(num):
 		pntr = pointer()
 		if version < 6:
@@ -238,7 +255,10 @@ def ptr_search (page, data, version, parent):
 		  if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
 			  if pntr.type == 0x1e:
 				model.set_value(iter2,1,("vsd","str4",pntr.type)) # it's not a stream4, but...
-			  ptr_search (page, data, version, iter1)
+			  try:
+				ptr_search (page, data, version, iter1)
+			  except:
+				print "ptr_search failed in %02x"%pntr.type
 		  if pntr.type == 0x16:
 			  get_colors (page, res, version, iter1)
 		  if pntr.format >>4 == 0xd:

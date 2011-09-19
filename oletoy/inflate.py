@@ -159,7 +159,7 @@ def inflate(ptr,vsd):
                     pos = pos + len
         except:
             print 'Inflate failed',i,ptr.length
-            i+=1
+            return res
     return res
 
 # vsd deflate

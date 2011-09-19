@@ -1,10 +1,14 @@
+2011-09-19  Valek Filippov
+
+		* VSD: unstable support for ver 5.
+
 2011-09-18  Valek Filippov
 
-		FH: show FH8 dictionary.
+		* FH: show FH8 dictionary.
 
 2011-09-18  Valek Filippov
 
-		FH: add parsing of v8 dictionary.
+		* FH: add parsing of v8 dictionary.
 
 2011-09-15  Valek Filippov
 

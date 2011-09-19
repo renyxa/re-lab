@@ -482,9 +482,9 @@ def List(parser,offset,key):
 	
 def LinePat(parser,offset,key):
 	[numstrokes] = struct.unpack('>h', parser.data[offset:offset+2])
-	if numstrokes == 0:
-		numstrokes = 1
 	length=10+numstrokes*4
+	if numstrokes == 0:
+		length = 28 # for Ver8, to skip 1st 14 bytes of 0s
 	return length
 	
 def ElemList(parser,offset,key):
