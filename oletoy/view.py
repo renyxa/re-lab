@@ -641,15 +641,18 @@ class ApplicationMainWindow(gtk.Window):
 		line = buffer_hex.get_property ("cursor-position")/47
 		vadj = hd.vscroll2.get_vadjustment()
 		rowh = vadj.get_upper()/buffer_hex.get_line_count()
+		if line == buffer_hex.get_line_count():
+			line -= 1
 		newval = rowh*line
-		lim = vadj.get_upper() - hd.vscroll2.allocation[3]
-		if newval + 2*rowh > hd.vscroll2.allocation[3] and newval -2.5*rowh < lim:
-			vadj.set_value(newval-rowh*2)
-		elif newval < lim:
-			vadj.set_value(newval)
-		if line >= buffer_hex.get_line_count():
-			vadj.set_value(lim)
-		
+		nv = round(vadj.get_value()/rowh)
+		if newval + rowh > hd.vscroll2.allocation[3]+vadj.get_value():
+			print (nv+1)*rowh,hd.vscroll2.allocation[3]+vadj.get_value(),vadj.get_upper()
+			if hd.vscroll2.allocation[3]+ (nv+1)*rowh> vadj.get_upper():
+				vadj.set_value(vadj.get_upper() - hd.vscroll2.allocation[3]+rowh/5)
+			else:
+				vadj.set_value((nv+1)*rowh)
+		if newval + rowh <= vadj.get_value():
+			vadj.set_value((nv-1)*rowh)
 
 	def hdselect_cb(self,event,udata):
 		pn = self.notebook.get_current_page()
@@ -802,7 +805,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdrend.connect('edited', self.edited_cb)
 				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
-				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb) 
+				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb)
 				doc.hd.txtdump_hex.connect('key-press-event',self.hdscroll_cb)
 
 				hpaned = gtk.HPaned()
