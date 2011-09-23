@@ -646,7 +646,6 @@ class ApplicationMainWindow(gtk.Window):
 		newval = rowh*line
 		nv = round(vadj.get_value()/rowh)
 		if newval + rowh > hd.vscroll2.allocation[3]+vadj.get_value():
-			print (nv+1)*rowh,hd.vscroll2.allocation[3]+vadj.get_value(),vadj.get_upper()
 			if hd.vscroll2.allocation[3]+ (nv+1)*rowh> vadj.get_upper():
 				vadj.set_value(vadj.get_upper() - hd.vscroll2.allocation[3]+rowh/5)
 			else:
