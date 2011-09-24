@@ -86,14 +86,28 @@ class Page:
 			rx2.open(buf,self)
 			return 0
 		
-		agd_off = buf.find('AGD')
-		if agd_off != -1:
+		fh_off = buf.find('Freehand')
+		if buf[0:3] == 'AGD':
+			agd_off = 0
 			agd_ver = ord(buf[agd_off+3])
-#			if agd_ver > 0x33: # >ver 8
 			self.type = "FH"
-			print "Probably Freehand"
-			fh.open(buf,self)
-			return 0
+			print "Probably Freehand 8"
+			try:
+				fh.open(buf,self)
+				return 0
+			except:
+				print 'Failed to parse as FH8'
+		elif fh_off != -1:
+			agd_off = buf.find('AGD')
+			if agd_off > fh_off:
+				agd_ver = ord(buf[agd_off+3])
+				self.type = "FH"
+				print "Probably Freehand 9+"
+				try:
+					fh.open(buf,self)
+					return 0
+				except:
+					print 'Failed to parse as FH9+'
 
 		iter1 = self.model.append(None, None)
 		self.model.set_value(iter1, 0, "File")
