@@ -86,7 +86,7 @@ class Page:
 			rx2.open(buf,self)
 			return 0
 		
-		fh_off = buf.find('Freehand')
+		fh_off = buf.find('FreeHand')
 		if buf[0:3] == 'AGD':
 			agd_off = 0
 			agd_ver = ord(buf[agd_off+3])

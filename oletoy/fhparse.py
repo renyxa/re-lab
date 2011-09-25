@@ -536,6 +536,10 @@ def Path(parser,offset,key):
 		var=ord(parser.data[offset+15])
 		length = 16 + 27*var
 
+	if parser.data[offset+4:offset+6] == '\xFF\xFF':
+		[var]=struct.unpack('>h', parser.data[offset+22:offset+24])
+		length = 24 + 27*var
+		#length += 6
 	return length
 
 def Collector(parser,offset,key):
@@ -578,6 +582,8 @@ def VDict(parser,offset,key):
 
 def Group(parser,offset,key):
 	length=16
+	if parser.data[offset+2:offset+4] == '\xFF\xFF':
+		length = 18
 	return length
 
 def Oval(parser,offset,key):
@@ -630,6 +636,8 @@ def ContentFill(parser,offset,key):
 
 def CompositePath(parser,offset,key):
 	length=14
+	if parser.data[offset+2:offset+4] == '\xFF\xFF':
+		length = 16
 	return length
 
 def AttributeHolder(parser,offset,key):
