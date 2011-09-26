@@ -5,12 +5,172 @@ def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
 
+def d2hex(data):
+	hex = ''
+	for i in range(len(data)):
+		hex += "%02x"%ord(data[i])
+	return hex
+
+
+vmp_rec = {0x0321:"Name?",
+0x065b:"?",
+0x15e3:"Txt Align", # 0 left, 1 right, 2 center, 3 justify, 
+0x15ea:"?",
+0x15f2:"?",
+0x15f9:"?",
+0x1604:"?",
+0x160b:"?",
+0x1614:"?",
+0x161c:"Spc % Letter Max",
+0x1624:"Spc % Word Max",
+0x162b:"?",
+0x1634:"Spc % Letter Min",
+0x163c:"Spc % Word Min",
+0x1644:"?",
+0x164c:"Spc % Letter Opt",
+0x1654:"Spc % Word Opt",
+0x165c:"?",
+0x1664:"?",
+0x166b:"?",
+0x1674:"?",
+0x167c:"?",
+0x1684:"ParaSpc Below",
+0x168c:"ParaSpc Above",
+0x1691:"TabTable ID",
+0x169c:"BaseLn Shift" ,
+0x16a2:"?",
+0x16aa:"?",
+0x16b1:"?",
+0x16b9:"Txt Color ID",
+0x16c1:"Font ID",
+0x16c9:"?",
+0x16d4:"Hor Scale %",
+0x16dc:"Leading",
+0x16e3:"Leading Type", # 0 +, 1 =, 2 % 
+0x16ec:"Rng Kern %",
+0x16f1:"?",
+0x16fb:"?",
+0x1729:"?",
+0x1734:"?",
+0x1739:"?",
+0x1743:"?",
+0x1749:"?",
+0x1c24:"?",
+0x1c2c:"?",
+0x1c34:"?",
+0x1c3c:"?",
+0x1c43:"?",
+0x1c4c:"?",
+0x1c51:"?",
+0x1c71:"?",
+0x1c7c:"?",
+0x1c84:"?",
+0x1c89:"?",
+	}
+
+
+def hdVMpObj(hd,data,page):
+	offset = 0
+	[num] = struct.unpack('>h', data[offset+4:offset+6])
+	shift = 8
+	for i in range(num):
+		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
+		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
+		if vmp_rec.has_key(rec):
+			rname = vmp_rec[rec]
+		else:
+			rname = 'Unkn rec %04x'%rec
+		if rname == "?":
+			rname = 'Unkn rec %04x'%rec
+		if key == 2:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
+			shift+=6
+		else:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
+			shift+=8
+
+	
 
 def hdAGDFont(hd,data,page):
 	offset = 0
 	fsize = struct.unpack('>H', data[offset+26:offset+28])[0]
+	fstyle = ord(data[offset+21])
+	fstxt = 'Plain'
+	if fstyle == 1:
+		fstxt = 'Bold'
+	if fstyle == 2:
+		fstxt = 'Italic'
+	if fstyle == 3:
+		fstxt = 'BoldItalic'
+	add_iter (hd,'Font Style',fstxt,21,1,"B")
 	add_iter (hd,'Font Size',fsize,26,2,">h")
 
+def hdLinearFill(hd,data,page):
+	offset = 0
+	# 2-4 -- angle1
+	# 11 -- overprint
+	# 16-20 -- X
+	# 20-24 -- Y
+	# 24-28 -- <->1
+	# 28-30 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
+	# 30-32 -- repeat
+
+def hdNewRadialFill(hd,data,page):
+	offset = 0
+	# 2-6 -- X
+	# 6-10 -- Y
+	# 15 -- overprint
+	# 22-24 -- angle1
+	# 26-30 -- <-> Hndl1
+	# 30-32 -- angle2
+	# 34-38 -- <-> Hndl2
+	# 38-40 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
+	# 40-42 -- repeat
+
+def hdNewContourFill(hd,data,page):
+	offset = 0
+	# 2-6 -- X
+	# 6-10 -- Y
+	# 10-12 -- Taper
+	# 15 -- overprint
+	# 18-20 -- link to ColorList
+	# 20-22 -- link to GraphicStyle
+	# 22-24 -- angle1
+	# 26-30 -- <-> Hndl1
+	# 31 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
+	# 32-34 -- repeat
+
+def hdLensFill(hd,data,page):
+	offset = 0
+	# 39: 0 -- Transparency, 1 -- Magnify, 2 -- Lighten, 3 -- Darken, 4 -- Invert, 5 -- Monochrome
+	# Transparency
+	# 8-10.10-12 -- Opacity
+	# 26-30 -- X
+	# 30-34 -- Y
+	# 37: 1 -- CenterPoint, 2 -- ObjOnly, 4 -- Snapshot (flags)
+	# Magnify
+	# 8-10.10-12 -- mag.coeff
+	
+def hdBendFilter(hd,data,page):
+	offset = 0
+	# 0-2  -- Size
+	# 2-4.4-6 -- X
+	# 6-8.8-10 -- Y
+
+
+def hdLayer(hd,data,page):
+	offset = 0
+	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
+	mode = ord(data[offset+9])
+	lmtxt = 'Normal'
+	if mode&0x10 == 0x10:
+		lmtxt = 'Wire'
+	if mode&0x1 == 1:
+		lmtxt += ' Locked'
+	visib = ord(data[offset+17])
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
+	add_iter (hd,'View mode',lmtxt,offset+9,1,"txt")
+	add_iter (hd,'Visible',visib,offset+17,1,"B")
 
 def hdRectangle(hd,data,page):
 	offset = 0
@@ -42,7 +202,7 @@ def hdRectangle(hd,data,page):
 	rbll = struct.unpack('>H', data[offset+62:offset+64])[0]
 	rbllf = struct.unpack('>H', data[offset+64:offset+66])[0]
 	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
-	add_iter (hd,'Layer',"%02x"%layer,2,2,">h")
+	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
 	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
 	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),18,4,"txt")
 	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
@@ -76,7 +236,7 @@ def hdOval(hd,data,page):
 	arc2f = struct.unpack('>H', data[offset+40:offset+42])[0]
 	clsd = ord(data[offset+42])
 	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
-	add_iter (hd,'Layer',"%02x"%layer,2,2,">h")
+	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
 	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
 	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),18,4,"txt")
 	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
@@ -86,11 +246,28 @@ def hdOval(hd,data,page):
 	add_iter (hd,'Arc ()',"%.4f"%(arc2+arc2f/65536.),38,4,"txt")
 	add_iter (hd,'Closed',clsd,42,1,"B")
 
+def hdGroup(hd,data,page):
+	offset = 0
+	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
+	layer = struct.unpack('>H', data[offset+2:offset+4])[0]
+	xform = struct.unpack('>H', data[offset+16:offset+18])[0]
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
+	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
+	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
+
 def hdBasicLine(hd,data,page):
 	offset = 0
+	clr = struct.unpack('>H', data[offset:offset+2])[0] # link to color chunk????
+	dash = struct.unpack('>H', data[offset+2:offset+4])[0] # link to linepat chunk
+	larr = struct.unpack('>H', data[offset+4:offset+6])[0] # link to arrowpat chunk
+	rarr = struct.unpack('>H', data[offset+6:offset+8])[0] # link to arrowpat chunk
+
 	mit = struct.unpack('>H', data[offset+8:offset+10])[0]
 	mitf = struct.unpack('>H', data[offset+10:offset+12])[0]
 	w = struct.unpack('>H', data[offset+12:offset+14])[0]
+	overprint = ord(data[offset+17])
+	join = ord(data[offset+18]) # 0 - angle, 1 - round, 2 - square
+	cap = ord(data[offset+19]) # 0 - none, 1 - round, 2 - square
 	add_iter (hd,'Miter',"%.4f"%(mit+mitf/65536.),8,4,"txt")
 	add_iter (hd,'Width',w,12,2,">H")
 
@@ -102,8 +279,17 @@ def hdList(hd,data,page):
 		ltxt += " (%s)"%page.dict[ltype][0]
 		add_iter (hd,'List Type',ltxt,10,2,">H")
 
-hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,"AGDFont":hdAGDFont,
-			"List":hdList,"MList":hdList,"BrushList":hdList}
+def hdColor6(hd,data,page):
+	offset = 0
+	ustr1 = struct.unpack('>H', data[offset+2:offset+4])[0]
+	ustr2 = struct.unpack('>H', data[offset+14:offset+16])[0]
+	add_iter (hd,'Name1?',"%02x"%ustr1,2,2,">h")
+	add_iter (hd,'Name2?',"%02x"%ustr2,14,2,">h")
+
+hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,"Group":hdGroup,"AGDFont":hdAGDFont,'Layer':hdLayer,
+			"List":hdList,"MList":hdList,"BrushList":hdList,
+			"Color6":hdColor6,"SpotColor6":hdColor6,"TintColor6":hdColor6,
+			"VMpObj":hdVMpObj,}
 
 
 class parser:
@@ -143,6 +329,22 @@ def RadialFill(parser,offset,key):
 def PatternFill(parser,offset,key):
 	length= 10
 	return length
+
+def PatternLine(parser,offset,key):
+	# 0-2 -- link to Color
+	# 2-10 -- bitmap of the pattern
+	# 10-14 -- mitter?
+	# 14-16 -- width?
+	length= 22
+	return length
+
+def PSLine(parser,offset,key):
+	# 0-2 -- link to Color
+	# 2-4 -- link to UString with PS commands
+	# 4-6 width
+	length= 8
+	return length
+
 
 def PathTextLineInfo(parser,offset,key):
 # SHOULD BE VARIABLE, just have no idea about base and multiplier
@@ -380,11 +582,16 @@ def VMpObj(parser,offset,key):
 	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
 	shift = 8
 	for i in range(num):
-		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
+		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
+		rec = struct.unpack('>h', parser.data[offset+shift+2:offset+shift+4])[0]
+		if not vmp_rec.has_key(rec):
+			print 'Unknown VMpObj record: %04x'%rec
+		
 		if key == 2:
 			shift+=6
 		else:
 			shift+=8
+	
 	return shift
 
 def TextInPath(parser,offset,key):
@@ -420,10 +627,8 @@ def FileDescriptor(parser,offset,key):
 	return length
 	
 def TabTable(parser,offset,key):
-	length=4
 	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	if size == 1:
-		length = 10
+	length = 4+size*6
 	return length
 	
 def SymbolLibrary(parser,offset,key):
