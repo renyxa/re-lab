@@ -44,7 +44,8 @@ chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.V
 				"MasterPageDocMan":fhparse.MasterPageDocMan,"MasterPageSymbolClass":fhparse.MasterPageSymbolClass, "MasterPageLayerElement":fhparse.MasterPageLayerElement,\
 				"MQuickDict":fhparse.MQuickDict,"TEffect":fhparse.TEffect, "MasterPageSymbolInstance":fhparse.MasterPageSymbolInstance,\
 				"MasterPageLayerInstance":fhparse.MasterPageLayerInstance, "TextInPath":fhparse.TextInPath, "ImageFill":fhparse.ImageFill,
-				"CustomProc":fhparse.CustomProc, "ConnectorLine":fhparse.ConnectorLine, "PatternLine":fhparse.PatternLine,"PSLine":fhparse.PSLine,}
+				"CustomProc":fhparse.CustomProc, "ConnectorLine":fhparse.ConnectorLine, "PatternLine":fhparse.PatternLine,"PSLine":fhparse.PSLine,
+				"Halftone":fhparse.Halftone}
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 

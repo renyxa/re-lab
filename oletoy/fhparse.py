@@ -89,7 +89,45 @@ def hdVMpObj(hd,data,page):
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
 
+def hdHaftone(hd,data,page):
+	offset = 0
+	# 0-2 -- link to MName with "Screen" string
+	# 2-4.4-6 -- angle
+	# 6-8 -- Frequency
+
+pts_types = {0:"corner",1:"connector",2:"curve"}
+def hdPath(hd,data,page):
+	offset = 0
+	# 15 -- flatness
+	# 19 -- 0 no Even/Odd no Closed, 1 closed, 2 Even/Odd, 3 Even/Odd + Closed
+	# ptype -- 0x1b -- automatic, 0x9 -- no authomatic
 	
+	shift = offset + 22
+	numpts = struct.unpack('>h', data[offset+20:offset+22])[0]
+	for i in range(numpts):
+		ptype = ord(data[shift+1+i*27])
+		add_iter (hd,'Type %d'%i,"%d (%s)"%(ptype,pts_types[ptype]),shift+i*27+1,1,"B")
+		x1 = struct.unpack('>H', data[shift+i*27+3:shift+i*27+5])[0] - 1692
+		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
+		y1 = struct.unpack('>H', data[shift+i*27+7:shift+i*27+9])[0] - 1584
+		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
+		add_iter (hd,'X %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
+		add_iter (hd,'Y %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
+		shift +=8
+		x1 = struct.unpack('>H', data[shift+i*27+3:shift+i*27+5])[0] - 1692
+		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
+		y1 = struct.unpack('>H', data[shift+i*27+7:shift+i*27+9])[0] - 1584
+		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
+		add_iter (hd,'\tXh1 %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
+		add_iter (hd,'\tYh1 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
+		shift +=8
+		x1 = struct.unpack('>H', data[shift+i*27+3:shift+i*27+5])[0] - 1692
+		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
+		y1 = struct.unpack('>H', data[shift+i*27+7:shift+i*27+9])[0] - 1584
+		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
+		add_iter (hd,'\tXh2 %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
+		add_iter (hd,'\tYh2 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
+		shift -=16
 
 def hdAGDFont(hd,data,page):
 	offset = 0
@@ -114,6 +152,7 @@ def hdLinearFill(hd,data,page):
 	# 24-28 -- <->1
 	# 28-30 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
 	# 30-32 -- repeat
+	pass
 
 def hdNewRadialFill(hd,data,page):
 	offset = 0
@@ -126,6 +165,7 @@ def hdNewRadialFill(hd,data,page):
 	# 34-38 -- <-> Hndl2
 	# 38-40 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
 	# 40-42 -- repeat
+	pass
 
 def hdNewContourFill(hd,data,page):
 	offset = 0
@@ -139,6 +179,7 @@ def hdNewContourFill(hd,data,page):
 	# 26-30 -- <-> Hndl1
 	# 31 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
 	# 32-34 -- repeat
+	pass 
 
 def hdLensFill(hd,data,page):
 	offset = 0
@@ -150,13 +191,14 @@ def hdLensFill(hd,data,page):
 	# 37: 1 -- CenterPoint, 2 -- ObjOnly, 4 -- Snapshot (flags)
 	# Magnify
 	# 8-10.10-12 -- mag.coeff
-	
+	pass
+
 def hdBendFilter(hd,data,page):
 	offset = 0
 	# 0-2  -- Size
 	# 2-4.4-6 -- X
 	# 6-8.8-10 -- Y
-
+	pass
 
 def hdLayer(hd,data,page):
 	offset = 0
@@ -289,7 +331,7 @@ def hdColor6(hd,data,page):
 hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,"Group":hdGroup,"AGDFont":hdAGDFont,'Layer':hdLayer,
 			"List":hdList,"MList":hdList,"BrushList":hdList,
 			"Color6":hdColor6,"SpotColor6":hdColor6,"TintColor6":hdColor6,
-			"VMpObj":hdVMpObj,}
+			"VMpObj":hdVMpObj,"Path":hdPath,}
 
 
 class parser:
@@ -850,6 +892,10 @@ def AttributeHolder(parser,offset,key):
 	length=4 #was 2
 	if size == 0:
 		length=4
+	return length
+
+def Halftone(parser,offset,key):
+	length=10
 	return length
 
 def FWShadowFilter(parser,offset,key):
