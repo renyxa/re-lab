@@ -54,7 +54,7 @@ vmp_rec = {0x0321:"Name?",
 0x1734:"?",
 0x1739:"?",
 0x1743:"?",
-0x1749:"?",
+0x1749:"Next style?",
 0x1c24:"?",
 0x1c2c:"?",
 0x1c34:"?",
@@ -69,6 +69,15 @@ vmp_rec = {0x0321:"Name?",
 	}
 
 
+teff_rec = {
+	0x1a91:"Effect Name",
+#	0x1ab9:"",
+#	0x1ac1:"", 
+#	0x1acc:"BG Width", #2.2
+#	0x1ad4:"Stroke Width", #2.2
+#	0x1adb:"Count",
+	}
+
 def hdVMpObj(hd,data,page):
 	offset = 0
 	[num] = struct.unpack('>h', data[offset+4:offset+6])
@@ -79,9 +88,49 @@ def hdVMpObj(hd,data,page):
 		if vmp_rec.has_key(rec):
 			rname = vmp_rec[rec]
 		else:
-			rname = 'Unkn rec %04x'%rec
+			rname = '\t\t%04x'%rec
 		if rname == "?":
-			rname = 'Unkn rec %04x'%rec
+			rname = '\t\t%04x'%rec
+		if key == 2:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
+			shift+=6
+		else:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
+			shift+=8
+
+def hdTEffect(hd,data,page):
+	offset = 0
+	[num] = struct.unpack('>h', data[offset+4:offset+6])
+	shift = 8
+	for i in range(num):
+		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
+		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
+		if teff_rec.has_key(rec):
+			rname = teff_rec[rec]
+		else:
+			rname = '\t\t%04x'%rec
+		if rname == "?":
+			rname = '\t\t%04x'%rec
+		if key == 2:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
+			shift+=6
+		else:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
+			shift+=8
+
+def hdTFOnPath(hd,data,page):
+	offset = 0
+	[num] = struct.unpack('>h', data[offset+4:offset+6])
+	shift = 26
+	for i in range(num):
+		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
+		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
+		if teff_rec.has_key(rec):
+			rname = teff_rec[rec]
+		else:
+			rname = '\t\t%04x'%rec
+		if rname == "?":
+			rname = '\t\t%04x'%rec
 		if key == 2:
 			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
 			shift+=6
@@ -100,7 +149,7 @@ def hdPath(hd,data,page):
 	offset = 0
 	# 15 -- flatness
 	# 19 -- 0 no Even/Odd no Closed, 1 closed, 2 Even/Odd, 3 Even/Odd + Closed
-	# ptype -- 0x1b -- automatic, 0x9 -- no authomatic
+	# ptype+1 -- 0x1b -- automatic, 0x9 -- no authomatic
 	
 	shift = offset + 22
 	numpts = struct.unpack('>h', data[offset+20:offset+22])[0]
@@ -227,22 +276,23 @@ def hdRectangle(hd,data,page):
 	x2f = struct.unpack('>H', data[offset+28:offset+30])[0]
 	y2 = struct.unpack('>H', data[offset+30:offset+32])[0] - 1584
 	y2f = struct.unpack('>H', data[offset+32:offset+34])[0]
-	rtlt = struct.unpack('>H', data[offset+34:offset+36])[0]
-	rtltf = struct.unpack('>H', data[offset+36:offset+38])[0]
-	rtll = struct.unpack('>H', data[offset+38:offset+40])[0]
-	rtllf = struct.unpack('>H', data[offset+40:offset+42])[0]
-	rtrt = struct.unpack('>H', data[offset+42:offset+44])[0]
-	rtrtf = struct.unpack('>H', data[offset+44:offset+46])[0]
-	rtrr = struct.unpack('>H', data[offset+46:offset+48])[0]
-	rtrrf = struct.unpack('>H', data[offset+48:offset+50])[0]
-	rbrb = struct.unpack('>H', data[offset+50:offset+52])[0]
-	rbrbf = struct.unpack('>H', data[offset+52:offset+54])[0]
-	rbrr = struct.unpack('>H', data[offset+54:offset+56])[0]
-	rbrrf = struct.unpack('>H', data[offset+56:offset+58])[0]
-	rblb = struct.unpack('>H', data[offset+58:offset+60])[0]
-	rblbf = struct.unpack('>H', data[offset+60:offset+62])[0]
-	rbll = struct.unpack('>H', data[offset+62:offset+64])[0]
-	rbllf = struct.unpack('>H', data[offset+64:offset+66])[0]
+	if page.version > 10:
+		rtlt = struct.unpack('>H', data[offset+34:offset+36])[0]
+		rtltf = struct.unpack('>H', data[offset+36:offset+38])[0]
+		rtll = struct.unpack('>H', data[offset+38:offset+40])[0]
+		rtllf = struct.unpack('>H', data[offset+40:offset+42])[0]
+		rtrt = struct.unpack('>H', data[offset+42:offset+44])[0]
+		rtrtf = struct.unpack('>H', data[offset+44:offset+46])[0]
+		rtrr = struct.unpack('>H', data[offset+46:offset+48])[0]
+		rtrrf = struct.unpack('>H', data[offset+48:offset+50])[0]
+		rbrb = struct.unpack('>H', data[offset+50:offset+52])[0]
+		rbrbf = struct.unpack('>H', data[offset+52:offset+54])[0]
+		rbrr = struct.unpack('>H', data[offset+54:offset+56])[0]
+		rbrrf = struct.unpack('>H', data[offset+56:offset+58])[0]
+		rblb = struct.unpack('>H', data[offset+58:offset+60])[0]
+		rblbf = struct.unpack('>H', data[offset+60:offset+62])[0]
+		rbll = struct.unpack('>H', data[offset+62:offset+64])[0]
+		rbllf = struct.unpack('>H', data[offset+64:offset+66])[0]
 	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
 	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
 	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
@@ -250,14 +300,15 @@ def hdRectangle(hd,data,page):
 	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
 	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),26,4,"txt")
 	add_iter (hd,'Y2',"%.4f"%(y2+y2f/65536.),30,4,"txt")
-	add_iter (hd,'Rad TopLeft (Top)',"%.4f"%(rtlt+rtltf/65536.),34,4,"txt")
-	add_iter (hd,'Rad TopLeft (Left)',"%.4f"%(rtll+rtllf/65536.),38,4,"txt")
-	add_iter (hd,'Rad TopRight (Top)',"%.4f"%(rtrt+rtrtf/65536.),42,4,"txt")
-	add_iter (hd,'Rad TopRight (Right)',"%.4f"%(rtrr+rtrrf/65536.),46,4,"txt")
-	add_iter (hd,'Rad BtmRight (Btm)',"%.4f"%(rbrb+rbrbf/65536.),50,4,"txt")
-	add_iter (hd,'Rad BtmRight (Right)',"%.4f"%(rbrr+rbrrf/65536.),54,4,"txt")
-	add_iter (hd,'Rad BtmLeft (Btm)',"%.4f"%(rblb+rblbf/65536.),58,4,"txt")
-	add_iter (hd,'Rad BtmLeft (Left)',"%.4f"%(rbll+rbllf/65536.),62,4,"txt")
+	if page.version > 10:
+		add_iter (hd,'Rad TopLeft (Top)',"%.4f"%(rtlt+rtltf/65536.),34,4,"txt")
+		add_iter (hd,'Rad TopLeft (Left)',"%.4f"%(rtll+rtllf/65536.),38,4,"txt")
+		add_iter (hd,'Rad TopRight (Top)',"%.4f"%(rtrt+rtrtf/65536.),42,4,"txt")
+		add_iter (hd,'Rad TopRight (Right)',"%.4f"%(rtrr+rtrrf/65536.),46,4,"txt")
+		add_iter (hd,'Rad BtmRight (Btm)',"%.4f"%(rbrb+rbrbf/65536.),50,4,"txt")
+		add_iter (hd,'Rad BtmRight (Right)',"%.4f"%(rbrr+rbrrf/65536.),54,4,"txt")
+		add_iter (hd,'Rad BtmLeft (Btm)',"%.4f"%(rblb+rblbf/65536.),58,4,"txt")
+		add_iter (hd,'Rad BtmLeft (Left)',"%.4f"%(rbll+rbllf/65536.),62,4,"txt")
 
 def hdOval(hd,data,page):
 	offset = 0
@@ -331,7 +382,9 @@ def hdColor6(hd,data,page):
 hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,"Group":hdGroup,"AGDFont":hdAGDFont,'Layer':hdLayer,
 			"List":hdList,"MList":hdList,"BrushList":hdList,
 			"Color6":hdColor6,"SpotColor6":hdColor6,"TintColor6":hdColor6,
-			"VMpObj":hdVMpObj,"Path":hdPath,}
+			"VMpObj":hdVMpObj,"Path":hdPath,
+			"TFOnPath":hdTFOnPath,"TextColumn":hdTFOnPath,"TextInPath":hdTFOnPath,
+			"TEffect":hdTEffect,"VDict":hdTEffect}
 
 
 class parser:
@@ -343,7 +396,6 @@ class parser:
 def CustomProc(parser,offset,key):
 	length=48
 	return length
-
 
 def TFOnPath(parser,offset,key):
 	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
@@ -490,37 +542,39 @@ def UString(parser,offset,key):
 	length=4*(size+1)
 	return length
 
+def AGDSelection(parser,offset,key):
+	size = struct.unpack('>h', parser.data[offset:offset+2])[0]
+	length=4*size+8
+	return length
+	
+def xform_calc(var1,var2):
+	if (var1 == 0x34 or var1 == 0x04) and var2 ==0x90:
+		len1 = 0
+	elif (var1 == 0x31 or var1 == 0x32) and var2 ==0x90:
+		len1 = 4
+	elif (var1 == 0x33 and var2 == 0x90) or (var1 == 0x32 and var2 ==0xb0):
+		len1 = 8
+	elif ((var1 == 0x01 or var1 == 0x02 or var1 == 0x23) and var2 == 0x90) or (var1 == 0x33 and var2 == 0xd0):
+		len1 = 12
+	elif (var1 == 0x03 and var2 == 0x90) or (var1 == 0x23 and (var2 == 0xb0 or var2 == 0xd0)):
+		len1 = 16
+	elif (var1 == 0x03 and (var2 == 0xb0 or var2 == 0xd0)) or ((var1 == 0x23 or var1 == 0x33) and var2 == 0xf0):
+		len1 = 20
+	elif var1 == 0x03 and (var2 == 0xf0 or var2 == 0x60):
+		len1 = 24
+	else:
+		len1 = 24
+		print "Unknown XForm ID %02x %02x"%(var1,var2)
+	return len1
+
 def Xform(parser,offset,key):
-	length=4
 	var1 = ord(parser.data[offset])
 	var2 = ord(parser.data[offset+1])
-
-	if var1 == 3:
-		if var2 == 0xf0 or var2 == 0x60:
-			length = 52
-		elif var2 == 0x90: #03 90
-			length = 36
-		elif var2 == 0xb0 or var2 == 0xd0:
-			length = 44 # 03 b0, 03 d0
-			
-	if var1 == 0x31: # 31 90
-		if var2 == 0x90:
-			length = 12
-	if var1 == 0x33: 
-		if var2 == 0x90: # 33 90
-			length = 20
-		if var2 == 0xd0: # 33 d0
-			length = 28
-		if var2 == 0xf0: # 33 f0
-			length = 44
-	if var1 == 0x32: # 32 90
-		length = 12
-		if var2 == 0xb0: # 32 b0
-			length = 20
-	if var1 == 0x01 and var2 == 0x90: # 01 90
-		length = 28
-
-
+	len1 = xform_calc(var1,var2)
+	var1 = ord(parser.data[offset+len1+2])
+	var2 = ord(parser.data[offset+len1+3])
+	len2 = xform_calc(var1,var2)
+	length = len1+len2+4
 	return length
 	
 def SymbolClass(parser,offset,key):
@@ -572,7 +626,8 @@ def MList(parser,offset,key):
 	return length
 	
 def MDict(parser,offset,key):
-	length=4   #!!!! just to set to non-zero!!!!
+	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	length = 6 + size*4
 	return length
 
 def DateTime(parser,offset,key):
@@ -692,9 +747,18 @@ def Procedure(parser,offset,key):
 	return length
 
 def TEffect(parser,offset,key):
-	length = 14
-	return length
-
+	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
+	shift = 8
+	for i in range(num):
+		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
+		rec = struct.unpack('>h', parser.data[offset+shift+2:offset+shift+4])[0]
+		if not teff_rec.has_key(rec):
+			print 'Unknown TEffect record: %04x'%rec
+		if key == 2:
+			shift+=6
+		else:
+			shift+=8
+	return shift
 
 def Color6(parser,offset,key):
 	length=28
@@ -730,7 +794,7 @@ def List(parser,offset,key):
 def LinePat(parser,offset,key):
 	[numstrokes] = struct.unpack('>h', parser.data[offset:offset+2])
 	length=10+numstrokes*4
-	if numstrokes == 0:
+	if numstrokes == 0 and parser.version == 8:
 		length = 28 # for Ver8, to skip 1st 14 bytes of 0s
 	return length
 	
@@ -763,10 +827,14 @@ def SpotColor6(parser,offset,key):
 def BasicLine(parser,offset,key):
 	##length=20 ##ver10
 	length= 20 ##ver11
+	if parser.data[offset:offset+2] == '\x00\x00':
+		length = 18
 	return length
 	
 def BasicFill(parser,offset,key):
 	length=6
+	if parser.data[offset:offset+2] == '\x00\x00':
+		length = 4
 	return length
 	
 def Guides(parser,offset,key):
@@ -798,7 +866,7 @@ def Rectangle(parser,offset,key):
 ##	length=36 #?ver.10?
 ##	length=42 #?ver.10?
 	length=0x4b #?ver11?
-	if parser.version == 10:
+	if parser.version < 11:
 		length = 42
 ##	if var == 0xc:
 ##		length = 69
@@ -937,6 +1005,8 @@ def ImageImport(parser,offset,key):
 	length=55  # was 87
 	if ord(parser.data[offset+55]) != 0:  # 0-terminated string?
 		length = 58
+	if parser.data[offset+10:offset+12] == '\xFF\xFF':
+		length = 57
 	return length
 
 def TextBlok(parser,offset,key):

@@ -26,6 +26,14 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
+def recfind(model,path,iter,(page,data)):
+	rec = model.get_value(iter,0)
+	pos = rec.find(data)
+	if pos != -1:
+		s_iter = page.search.append(None,None)
+		page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+		page.search.set_value(s_iter,2,"%s (%d)"%(rec,model.get_value(iter,2)))
+
 def cmdfind(model,path,iter,(page,data)):
 	if page.type[0:3] == "CDR" and model.iter_n_children(iter)>0:
 		return
@@ -87,14 +95,21 @@ def parse (cmd, entry, page):
 	elif cmd[0] == "?":
 		ctype = cmd[1]
 		carg = cmd[2:]
-		if ctype == 'x' or ctype == 'X':
-			data = hex2d(carg)
-		elif ctype == 'a' or ctype == 'A':
-			data = carg
-		elif ctype == 'u' or ctype == 'U':
-			data = carg.encode("utf-16")[2:]
-		model = page.view.get_model()
-		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
-		model.foreach(cmdfind,(page,data))
-		page.show_search(carg)
+		if ctype == 'r' or ctype == 'R':
+			#pos = cmd.find(":")
+			model = page.view.get_model()
+			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+			model.foreach(recfind,(page,carg))
+			page.show_search(carg)
+		else:
+			if ctype == 'x' or ctype == 'X':
+				data = hex2d(carg)
+			elif ctype == 'a' or ctype == 'A':
+				data = carg
+			elif ctype == 'u' or ctype == 'U':
+				data = carg.encode("utf-16")[2:]
+			model = page.view.get_model()
+			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+			model.foreach(cmdfind,(page,data))
+			page.show_search(carg)
 
