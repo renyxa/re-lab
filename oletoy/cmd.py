@@ -26,15 +26,37 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
+def arg_conv (ctype,carg):
+	data = ''
+	if ctype == 'x' or ctype == 'X':
+		data = hex2d(carg)
+	elif ctype == 'u' or ctype == 'U':
+		data = carg.encode("utf-16")[2:]
+	elif ctype == 'a' or ctype == 'A' or ctype == 'r' or ctype == 'R':
+		data = carg
+	return data
+
 def recfind(model,path,iter,(page,data)):
 	rec = model.get_value(iter,0)
-	pos = rec.find(data)
+	arg = data.find(":")
+	rdata1 = data
+	if arg != -1:
+		rdata1 = data[:arg]
+		ctype = data[arg+1]
+		rdata2 = arg_conv(ctype,data[arg+2:])
+
+	pos = rec.find(rdata1)
 	if pos != -1:
+		if arg != -1:
+			recdata = model.get_value(iter,3)
+			pos2 = recdata.find(rdata2)
+			if pos2 == -1:
+				return
 		s_iter = page.search.append(None,None)
 		page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
 		page.search.set_value(s_iter,2,"%s (%d)"%(rec,model.get_value(iter,2)))
 
-def cmdfind(model,path,iter,(page,data)):
+def cmdfind (model,path,iter,(page,data)):
 	if page.type[0:3] == "CDR" and model.iter_n_children(iter)>0:
 		return
 	buf = model.get_value(iter,3)
@@ -79,7 +101,7 @@ def parse (cmd, entry, page):
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
 		elif "zip" == chtype.lower():
-#			try:
+			try:
 				print int(chaddr,16)
 				output = zlib.decompress(buf[int(chaddr,16):],-15)
 				iter2 = page.model.append(iter1,None)
@@ -88,28 +110,18 @@ def parse (cmd, entry, page):
 				model.set_value(iter2,2,len(output))
 				model.set_value(iter2,3,output)
 				model.set_value(iter2,6,page.model.get_string_from_iter(iter2))
-#			except:
-#				print "Failed to decompress"
-
+			except:
+				print "Failed to decompress"
 
 	elif cmd[0] == "?":
 		ctype = cmd[1]
 		carg = cmd[2:]
+		data = arg_conv(ctype,carg)
+		model = page.view.get_model()
+		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
 		if ctype == 'r' or ctype == 'R':
-			#pos = cmd.find(":")
-			model = page.view.get_model()
-			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
-			model.foreach(recfind,(page,carg))
-			page.show_search(carg)
+			model.foreach(recfind,(page,data))
 		else:
-			if ctype == 'x' or ctype == 'X':
-				data = hex2d(carg)
-			elif ctype == 'a' or ctype == 'A':
-				data = carg
-			elif ctype == 'u' or ctype == 'U':
-				data = carg.encode("utf-16")[2:]
-			model = page.view.get_model()
-			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
 			model.foreach(cmdfind,(page,data))
-			page.show_search(carg)
+		page.show_search(carg)
 

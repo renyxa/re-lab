@@ -1,7 +1,7 @@
 2011-09-27  Valek Filippov
 
 		* FH: More records parsing, rewrite Xform as two parts record.
-		* ?r command.
+		* ?r command with a/u/x subargs.
 
 2011-09-25  Valek Filippov
 
