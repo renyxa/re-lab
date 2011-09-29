@@ -343,10 +343,11 @@ def hdGroup(hd,data,page):
 	offset = 0
 	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
 	layer = struct.unpack('>H', data[offset+2:offset+4])[0]
-	xform = struct.unpack('>H', data[offset+16:offset+18])[0]
 	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
 	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
-	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
+	if data[offset+2:offset+4] == '\xFF\xFF':
+		xform = struct.unpack('>H', data[offset+16:offset+18])[0]
+		add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
 
 def hdBasicLine(hd,data,page):
 	offset = 0
@@ -547,18 +548,18 @@ def AGDSelection(parser,offset,key):
 	length=4*size+8
 	return length
 	
-def xform_calc(var1,var2):
+def xform_calc2(var1,var2):
 	if (var1 == 0x34 or var1 == 0x04) and var2 ==0x90:
 		len1 = 0
 	elif (var1 == 0x31 or var1 == 0x32) and var2 ==0x90:
 		len1 = 4
-	elif (var1 == 0x33 and var2 == 0x90) or (var1 == 0x32 and var2 ==0xb0):
+	elif ((var1 == 0x12 or var1 == 0x21 or var1 == 0x33) and var2 == 0x90) or (var1 == 0x32 and var2 ==0xb0) or (var1 == 0x31 and var2 == 0xd0):
 		len1 = 8
-	elif ((var1 == 0x01 or var1 == 0x02 or var1 == 0x23) and var2 == 0x90) or (var1 == 0x33 and var2 == 0xd0):
+	elif ((var1 == 0x01 or var1 == 0x02 or var1 == 0x13 or var1 == 0x23) and var2 == 0x90) or ((var1 == 0x21 or var1 == 0x33) and var2 == 0xd0) or (var1 == 0x12 and var2 == 0xb0):
 		len1 = 12
-	elif (var1 == 0x03 and var2 == 0x90) or (var1 == 0x23 and (var2 == 0xb0 or var2 == 0xd0)):
+	elif ((var1 == 0x03 or var1 == 0x0b) and var2 == 0x90) or ((var1 == 0x13 or var1 == 0x23) and (var2 == 0xb0 or var2 == 0xd0)) or (var1 == 0x33 and var2 == 0xf0):
 		len1 = 16
-	elif (var1 == 0x03 and (var2 == 0xb0 or var2 == 0xd0)) or ((var1 == 0x23 or var1 == 0x33) and var2 == 0xf0):
+	elif (var1 == 0x03 and (var2 == 0xb0 or var2 == 0xd0)) or ((var1 == 0x13 or var1 == 0x23) and var2 == 0xf0):
 		len1 = 20
 	elif var1 == 0x03 and (var2 == 0xf0 or var2 == 0x60):
 		len1 = 24
@@ -566,6 +567,19 @@ def xform_calc(var1,var2):
 		len1 = 24
 		print "Unknown XForm ID %02x %02x"%(var1,var2)
 	return len1
+
+def xform_calc(var1,var2):
+	a5 = not (var1&0x20)/0x20
+	a4 = not (var1&0x10)/0x10
+	a2 = (var1&0x4)/0x4
+	a1 = (var1&0x2)/0x2
+	a0 = (var1&0x1)/0x1
+	b6 = (var2&0x40)/0x40
+	b5 = (var2&0x20)/0x20
+	if a2:
+		return 0
+	xlen = (a5+a4+a1+a0+b6+b5)*4
+	return xlen
 
 def Xform(parser,offset,key):
 	var1 = ord(parser.data[offset])
