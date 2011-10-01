@@ -246,7 +246,7 @@ biff5_ids = {0x31:biff58_font,0xe0:biff_xf,0x1ae:biff_supbook}
 
 def parse (page, data, parent):
 	offset = 0
-	type = "XLS"
+	ftype = "XLS"
 	idx = 0
 	iters = []
 	iters.append(parent)
@@ -271,11 +271,11 @@ def parse (page, data, parent):
 				else:
 					rname = "BOF (unknown)" 
 				if ver == 0x500:
-					type = "XLS5"
+					ftype = "XLS5"
 					page.version = 5
 					print "Version: 5"
 				elif ver == 0x600:
-					type = "XLS8"
+					ftype = "XLS8"
 					page.version = 8
 					print "Version: 8"
 			elif rtype == 10 or rtype == 0x1034:
@@ -304,3 +304,5 @@ def parse (page, data, parent):
 			offset += rlen
 	except:
 		print "Something was wrong in XLS parse"
+
+	return ftype

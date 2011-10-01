@@ -44,11 +44,11 @@ def open (buf,page,iter=None):
 	cgsf.gsf_init()
 	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
 	infile = cgsf.gsf_infile_msole_new(src)
-	type = get_children(page,infile,iter,"ole")
+	ftype = get_children(page,infile,iter,"ole")
 	cgsf.gsf_shutdown()
-	return type
+	return ftype
 
-def get_children(page,infile,parent,type,dirflag=0):
+def get_children(page,infile,parent,ftype,dirflag=0):
 	vbaiter = None
 	for i in range(cgsf.gsf_infile_num_children(infile)):
 		infchild = cgsf.gsf_infile_child_by_index(infile,i)
@@ -75,51 +75,51 @@ def get_children(page,infile,parent,type,dirflag=0):
 				data += res
 			
 		if infname == "VBA":
-			type = "vba"
+			ftype = "vba"
 		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,infname)
 		page.model.set_value(iter1,1,("ole",dirflag))
 		page.model.set_value(iter1,2,chsize)
 		page.model.set_value(iter1,3,data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm"): # and infchild.size()>0:
-			type = "escher"
+			ftype = "escher"
 			page.model.set_value(iter1,1,("escher",dirflag))
 			escher.parse (page.model,data,iter1)
 		if infname == "CONTENTS":
-			type = "quill"
+			ftype = "quill"
 			page.model.set_value(iter1,1,("quill",dirflag))
 			quill.parse (page.model,data,iter1)
 		if infname == "Contents":
-			type = "pub"
+			ftype = "pub"
 			page.model.set_value(iter1,1,("pub",dirflag))
 			pub.parse (page.model,data,iter1)
 		if infname == "VisioDocument":
-			type = "vsd"
+			ftype = "vsd"
 			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
 			vsd.parse (page, data, iter1)
 		if infname == "WordDocument":
-			type = "doc"
+			ftype = "doc"
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 			doc.parse (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
 			page.model.set_value(iter1,1,("xls",dirflag))
-			type = xls.parse (page, data, iter1)
+			ftype = xls.parse (page, data, iter1)
 		if infname == "PowerPoint Document" or infname == "Pictures":
-			type = "ppt"
+			ftype = "ppt"
 			page.model.set_value(iter1,1,("ppt",dirflag))
 			ppt.parse (page, data, iter1)
-		if type == "vba" and infname == "dir":
+		if ftype == "vba" and infname == "dir":
 			page.model.set_value(iter1,1,("vba",dirflag))
 			vbaiter = iter1
 			vbadata = data
 		if (cgsf.gsf_infile_num_children(infchild)>0):
-			page.model.set_value(iter1,1,(type,1))
-			get_children(page,infchild,iter1,type,0)
+			page.model.set_value(iter1,1,(ftype,1))
+			get_children(page,infchild,iter1,ftype,0)
 
 	if vbaiter != None:
 		vba.parse (page, vbadata, vbaiter)
 
-	return type
+	return ftype
 
 def cfb_hdr (hd,data):
 	off = 0
