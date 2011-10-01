@@ -177,7 +177,61 @@ def biff_xf (hd,data):
 	add_iter (hd,"Font IDX",fontidx,0+off,2,"<H")
 	add_iter (hd,"Num format",numfmt,2+off,2,"<H")
 	add_iter (hd,"Flags/Parent","%s  %02x"%(fname,xfparent),4+off,2,"<H")
-#FIXME! Parse style/cell XF part
+	off = 10
+	alc = ord(data[off])&7
+	fWrap = (ord(data[off])&8)/8
+	alcV = (ord(data[off])&70)/0x10
+	fJustLast = (ord(data[off])&80)/0x80
+	trot = ord(data[off+1])
+	cIndent = ord(data[off+2])&0xF
+	fShrinkToFit = (ord(data[off+2])&0x10)/0x10
+	rsvd1 = (ord(data[off+2])&0x20)/0x20
+	iReadOrder = (ord(data[off+2])&0xc0)/0x40
+	unused = ord(data[off+3])
+	dgLeft = ord(data[off+4])&0xF
+	dgRight = (ord(data[off+4])&0xF0)/0x10
+	dgTop = ord(data[off+5])&0xF
+	dgBottom = (ord(data[off+5])&0xF0)/0x10
+	lrg = struct.unpack("<H",data[6+off:8+off])[0]
+	icvLeft = lrg&0x7f
+	icvRight = (lrg&0x3f80)/0x80
+	grbitDiag = (lrg&0xc000)/0x4000
+	tbd = struct.unpack("<I",data[8+off:12+off])[0]
+	icvTop = tbd&0x7f
+	icvBottom = (tbd&0x3f80)/0x80
+	icvDiag = (tbd&0x1fc000)/0x4000
+	dgDiag = (tbd&0x1e00000)/0x200000
+	rsvd2 = (tbd&0x2000000)/0x2000000
+	fls = (tbd&0xfc000000)/0x4000000
+	pfb = struct.unpack("<H",data[12+off:14+off])[0]
+	icvFore = pfb&0x7f
+	icvBack = (pfb&0x3f80)/0x80
+	rsvd3 = (pfb&0xc000)/0x4000
+	add_iter (hd,"alc",alc,off,1,"<B")
+	add_iter (hd,"fWrap",fWrap,off,1,"<B")
+	add_iter (hd,"alcV",alcV,off,1,"<B")
+	add_iter (hd,"fJustLast",fJustLast,off,1,"<B")
+	add_iter (hd,"trot",trot,off+1,1,"<B")
+	add_iter (hd,"cIndent",cIndent,off+2,1,"<B")
+	add_iter (hd,"fShrinkToFit",fShrinkToFit,off+2,1,"<B")
+	add_iter (hd,"rsvd1",rsvd1,off+2,1,"<B")
+	add_iter (hd,"iReadOrder",iReadOrder,off+2,1,"<B")
+	add_iter (hd,"unused",unused,off+3,1,"<B")
+	add_iter (hd,"dgLeft",dgLeft,off+4,1,"<B")
+	add_iter (hd,"dgRight",dgRight,off+4,1,"<B")
+	add_iter (hd,"dgTop",dgTop,off+5,1,"<B")
+	add_iter (hd,"dgBottom",dgBottom,off+5,1,"B")
+	add_iter (hd,"icvLeft",icvLeft,off+6,1,"<B")
+	add_iter (hd,"icvRight",icvRight,off+6,1,"<B")
+	add_iter (hd,"grbitDiag",grbitDiag,off+7,1,"<B")
+	add_iter (hd,"icvTop",icvTop,off+8,1,"<B")
+	add_iter (hd,"icvBottom",icvBottom,off+9,1,"<B")
+	add_iter (hd,"dgDiag",dgDiag,off+10,1,"<B")
+	add_iter (hd,"rsvd2",rsvd2,off+11,1,"<B")
+	add_iter (hd,"fls",fls,off+11,1,"<B")
+	add_iter (hd,"icvFore",icvFore,off+12,1,"<B")
+	add_iter (hd,"icvBack",icvBack,off+13,1,"<B")
+	add_iter (hd,"rsvd3",rsvd3,off+13,1,"<B")
 
 #0x1ae
 def biff_supbook (hd,data):

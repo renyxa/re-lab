@@ -447,10 +447,8 @@ def PathTextLineInfo(parser,offset,key):
 	return length
 
 def Envelope(parser,offset,key):
-	[type] = struct.unpack('>h', parser.data[offset+20:offset+22])
-	length= 204 # 'type = 5'
-	if type == 8:
-		length = 297
+	num = struct.unpack('>h', parser.data[offset+20:offset+22])[0]
+	length = 81+num*27
 	return length
 
 def CalligraphicStroke(parser,offset,key):
@@ -506,7 +504,8 @@ def FWGlowFilter(parser,offset,key):
 	return length
 
 def ConnectorLine(parser,offset,key):
-	length= 166
+	num = struct.unpack('>h', parser.data[offset+20:offset+22])[0]
+	length= 58+num*27
 	return length
 
 def OpacityFilter(parser,offset,key):
@@ -598,24 +597,19 @@ def SymbolClass(parser,offset,key):
 def SymbolInstance(parser,offset,key):
 	var1 = ord(parser.data[offset+0xe])
 	var2 = ord(parser.data[offset+0xf])
-	
-	length=24 # was 32
-	if (var1 == 0x0b or var1==3) and var2 == 0x90:
-		length=32
-	elif var1 == 3 and var2 == 0xf0:
-		length=40
-	elif var1 == 0x23 and var2 == 0x90:
-		length=28
+	length=14 + xform_calc(var1,var2)+2
 	return length
 
 def MasterPageSymbolInstance(parser,offset,key):
-	# has 0x34 90
-	length=18
+	var1 = ord(parser.data[offset+0xe])
+	var2 = ord(parser.data[offset+0xf])
+	length=14 + xform_calc(var1,var2)+2 +2
 	return length
 
 def MasterPageLayerInstance(parser,offset,key):
-# has 0x33 90
-	length=26
+	var1 = ord(parser.data[offset+0xe])
+	var2 = ord(parser.data[offset+0xf])
+	length=14 + xform_calc(var1,var2)+2 +2
 	return length
 
 def PerspectiveGrid(parser,offset,key):
@@ -665,7 +659,8 @@ def MasterPageLayerElement(parser,offset,key):
 	return length
 
 def MQuickDict(parser,offset,key):
-	length=407
+	length=7
+	#length=407
 	return length
 
 def FHDocHeader(parser,offset,key):
@@ -993,15 +988,11 @@ def FilterAttributeHolder(parser,offset,key):
 	return length
 
 def Extrusion(parser,offset,key):
-	size= ord(parser.data[offset+0x60])
-	length=98 # "size" == 2
-	if size == 3:
-		length = 114
-	if size == 19:
-		length = 110
-	print size,"%02x"%key,"%02x"%offset
+	var1 = ord(parser.data[offset+0x60])
+	var2 = ord(parser.data[offset+0x61])
+	length= 96 + xform_calc(var1,var2)+2
 	return length
-	
+
 def LinearFill(parser,offset,key):
 	length=32 # was 54
 	return length

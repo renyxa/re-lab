@@ -137,20 +137,6 @@ def open (buf,page):
 		if i/2000 == i/2000.:
 			print '\rRecord #%d'%i,items[key][0]
 		[key] = struct.unpack('>h', buf[offset:offset+2])
-
-		# temporary in attempt to figure out the rules
-#		if prkey != 0 and items[prkey][0] == 'Path' and items[key][0] == 'MList':
-#			print 'Injection! ',i,prkey,key,items[prkey][0],items[key][0]
-#			if output[agdoffset:agdoffset+2] == '\x00\x00':
-#				iter1 = page.model.append(dditer,None)
-#				page.model.set_value(iter1,0,"%s [%02x]"%('!!!AttributeHolder',i))
-#				page.model.set_value(iter1,1,("fh",'AttributeHolder'))
-#				page.model.set_value(iter1,2,4)
-#				page.model.set_value(iter1,3,output[agdoffset:agdoffset+4])
-#				page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-#				agdoffset = agdoffset + 4
-#		prkey = key
-
 		offset+= 2
 		if chunks.has_key(items[key][0]):
 			if unkn_flag == 0:

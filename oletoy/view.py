@@ -522,7 +522,10 @@ class ApplicationMainWindow(gtk.Window):
 			value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
 
 		model.set_value(iter1,3,value)
-		(ifmt,itype,t) = model.get_value(iter1,1)
+		if self.das[pn].type == "VSD":
+			(ifmt,itype,t) = model.get_value(iter1,1)
+		else:
+			(ifmt,itype) = model.get_value(iter1,1)
 		if ifmt == "emf" and itype > 0x4000:
 			piter = model.iter_parent(iter1)
 			nvalue = model.get_value(piter,3)[:16]
