@@ -49,8 +49,53 @@ chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.V
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 
+def fh_save (page, fname):
+	model = page.view.get_model()
+	f = open(fname,'w')
+	endptr = 0
+	iter1 = model.get_iter_first()
+	iter1 = model.iter_next(iter1) # 'FH Header'
+	value = model.get_value(iter1,3)
+	f.write(value[:len(value)-4])
+	endptr += len(value)-4
+	iter2 = model.iter_next(iter1) # 'FH Decompressed data'
+	value = ''
+	clist = {}
+	for i in range(model.iter_n_children(iter2)):
+		citer = model.iter_nth_child(iter2,i)
+		value += model.get_value(citer,3)
+		rname = model.get_value(citer,0)
+		clist[i] = rname[0:len(rname)-5]
+	output = zlib.compress(value)
+	clen = struct.pack(">L",len(output)+12)
 
-def open (buf,page):
+	f.write(clen)
+	f.write(output)
+	endptr += 4 + len(output)
+	
+	dictsize = struct.pack('>h', len(page.dict))
+	f.write(dictsize)
+	f.write('\x02\x04') # points to some random record ID?
+	endptr += 4
+	cntlist = {}
+	for k, v in page.dict.items():
+		f.write(struct.pack('>h',k))
+		f.write(v[0])
+		f.write('\x00')
+		cntlist[v[0]] = k
+		endptr += 3 + len(v[0])
+	size = struct.pack('>L', model.iter_n_children(iter2))
+	f.write(size)
+	for i in range(len(clist)):
+		v = struct.pack(">h",cntlist[clist[i]])
+		f.write(v)
+	f.write('FlateDecode\x00\xFF\xFF\xFF\xFF\x1c\x09\x0a\x00\x04')
+	f.write(struct.pack(">L",endptr))
+	f.close()
+
+
+
+def fh_open (buf,page):
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	iter1 = page.model.append(None,None)
 	page.model.set_value(iter1,0,"FH file")
@@ -68,8 +113,8 @@ def open (buf,page):
 	iter1 = page.model.append(None,None)
 	page.model.set_value(iter1,0,"FH Header")
 	page.model.set_value(iter1,1,("fh","header"))
-	page.model.set_value(iter1,2,12)
-	page.model.set_value(iter1,3,buf[offset:offset+12])
+	page.model.set_value(iter1,2,offset+12)
+	page.model.set_value(iter1,3,buf[:offset+12])
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 
 	dditer = page.model.append(None,None)
@@ -120,7 +165,7 @@ def open (buf,page):
 	page.model.set_value(dictiter,3,buf[dictoffset:offset])
 	page.dict = items
 
-	[size] = struct.unpack('>L', buf[offset:offset+4])
+	size = struct.unpack('>L', buf[offset:offset+4])[0]
 	print '# of items:\t%u'%size
 	offset+= 4
 

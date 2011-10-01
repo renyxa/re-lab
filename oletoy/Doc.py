@@ -93,7 +93,7 @@ class Page:
 			self.type = "FH"
 			print "Probably Freehand 8"
 			try:
-				fh.open(buf,self)
+				fh.fh_open(buf,self)
 				return 0
 			except:
 				print 'Failed to parse as FH8'
@@ -104,7 +104,7 @@ class Page:
 				self.type = "FH"
 				print "Probably Freehand 9+"
 				try:
-					fh.open(buf,self)
+					fh.fh_open(buf,self)
 					return 0
 				except:
 					print 'Failed to parse as FH9+'

@@ -24,7 +24,7 @@ import Doc, cmd
 import escher
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
-import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fhparse
+import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 
 version = "0.5.62"
 
@@ -350,6 +350,10 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				doc.save(self.das[pn],fname)
+		elif ftype == "FH":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				fh.fh_save(self.das[pn],fname)
 		else:
 			treeSelection = self.das[pn].view.get_selection()
 			model, iter1 = treeSelection.get_selected()
