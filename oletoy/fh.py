@@ -57,39 +57,60 @@ def fh_save (page, fname):
 	iter1 = model.iter_next(iter1) # 'FH Header'
 	value = model.get_value(iter1,3)
 	f.write(value[:len(value)-4])
-	endptr += len(value)-4
+	epos = len(value)-16
+#	endptr += len(value)-4
 	iter2 = model.iter_next(iter1) # 'FH Decompressed data'
 	value = ''
 	clist = {}
-	for i in range(model.iter_n_children(iter2)):
+	for i in range(model.iter_n_children(iter2)-1):
 		citer = model.iter_nth_child(iter2,i)
 		value += model.get_value(citer,3)
 		rname = model.get_value(citer,0)
 		clist[i] = rname[0:len(rname)-5]
+
+	citer = model.iter_nth_child(iter2,i+1) # 'FH Tail'
+	value += model.get_value(citer,3)
 	output = zlib.compress(value)
 	clen = struct.pack(">L",len(output)+12)
 
 	f.write(clen)
 	f.write(output)
-	endptr += 4 + len(output)
+	endptr += 4 + len(output) + 8
 	
 	dictsize = struct.pack('>h', len(page.dict))
 	f.write(dictsize)
 	f.write('\x02\x04') # points to some random record ID?
 	endptr += 4
 	cntlist = {}
-	for k, v in page.dict.items():
-		f.write(struct.pack('>h',k))
-		f.write(v[0])
-		f.write('\x00')
-		cntlist[v[0]] = k
-		endptr += 3 + len(v[0])
-	size = struct.pack('>L', model.iter_n_children(iter2))
-	f.write(size)
-	for i in range(len(clist)):
-		v = struct.pack(">h",cntlist[clist[i]])
+#	for k, v in page.dict.items():  # not sure if FH pays attention to dict items sequence
+#		f.write(struct.pack('>h',k))
+#		f.write(v[0])
+#		f.write('\x00')
+#		cntlist[v[0]] = k
+#		endptr += 3 + len(v[0])
+	iter3 = model.iter_next(iter2) # 'FH Dictionary'
+	for i in range(model.iter_n_children(iter3)):
+		citer = model.iter_nth_child(iter3,i)
+		value = model.get_value(citer,3)
+		k = value[0:2]
+		v = value[2:]
+		f.write(k)
 		f.write(v)
+		v = v[:(len(v)-1)]
+		cntlist[v] = k
+		endptr += 3 + len(v)
+
+	size = struct.pack('>L', model.iter_n_children(iter2)-1) # don't count tail
+	f.write(size)
+	endptr += 4
+	for i in range(len(clist)):
+		v = cntlist[clist[i]]
+		f.write(v)
+	endptr += len(clist)*2
 	f.write('FlateDecode\x00\xFF\xFF\xFF\xFF\x1c\x09\x0a\x00\x04')
+	endptr += 16
+	f.write(struct.pack(">L",endptr))
+	f.seek(epos)
 	f.write(struct.pack(">L",endptr))
 	f.close()
 
@@ -218,6 +239,14 @@ def fh_open (buf,page):
 			page.model.set_value(iter1,2,length)
 			page.model.set_value(iter1,3,output[agdoffset:agdoffset+length])
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+	iter1 = page.model.append(dditer,None)
+	page.model.set_value(iter1,0,"FH Tail")
+	page.model.set_value(iter1,1,("fh","tail"))
+	page.model.set_value(iter1,2,len(output)-agdoffset)
+	page.model.set_value(iter1,3,output[agdoffset:])
+	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+
+
 
 def str2hex(data):
 	s = ''

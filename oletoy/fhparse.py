@@ -276,11 +276,11 @@ def hdRectangle(hd,data,page):
 	x2f = struct.unpack('>H', data[offset+28:offset+30])[0]
 	y2 = struct.unpack('>H', data[offset+30:offset+32])[0] - 1584
 	y2f = struct.unpack('>H', data[offset+32:offset+34])[0]
+	rtlt = struct.unpack('>H', data[offset+34:offset+36])[0]
+	rtltf = struct.unpack('>H', data[offset+36:offset+38])[0]
+	rtll = struct.unpack('>H', data[offset+38:offset+40])[0]
+	rtllf = struct.unpack('>H', data[offset+40:offset+42])[0]
 	if page.version > 10:
-		rtlt = struct.unpack('>H', data[offset+34:offset+36])[0]
-		rtltf = struct.unpack('>H', data[offset+36:offset+38])[0]
-		rtll = struct.unpack('>H', data[offset+38:offset+40])[0]
-		rtllf = struct.unpack('>H', data[offset+40:offset+42])[0]
 		rtrt = struct.unpack('>H', data[offset+42:offset+44])[0]
 		rtrtf = struct.unpack('>H', data[offset+44:offset+46])[0]
 		rtrr = struct.unpack('>H', data[offset+46:offset+48])[0]
@@ -309,6 +309,10 @@ def hdRectangle(hd,data,page):
 		add_iter (hd,'Rad BtmRight (Right)',"%.4f"%(rbrr+rbrrf/65536.),54,4,"txt")
 		add_iter (hd,'Rad BtmLeft (Btm)',"%.4f"%(rblb+rblbf/65536.),58,4,"txt")
 		add_iter (hd,'Rad BtmLeft (Left)',"%.4f"%(rbll+rbllf/65536.),62,4,"txt")
+	else:
+		add_iter (hd,'Rad X',"%d"%rtlt,34,2,">h")
+		add_iter (hd,'Rad Y',"%d"%rtll,38,2,">h")
+		
 
 def hdOval(hd,data,page):
 	offset = 0
