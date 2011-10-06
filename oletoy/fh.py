@@ -19,7 +19,8 @@ import sys,struct,tree,zlib,fhparse,gtk,gobject
 chunks = { "BrushTip":fhparse.BrushTip, "Brush":fhparse.Brush, "VDict":fhparse.VDict, "UString":fhparse.UString, "SymbolClass":fhparse.SymbolClass,\
 				"PerspectiveGrid":fhparse.PerspectiveGrid,"MpObject":fhparse.MpObject,"MString":fhparse.MString,"MList":fhparse.MList,"MDict":fhparse.MDict,\
 				"DateTime":fhparse.DateTime,"FHDocHeader":fhparse.FHDocHeader,"Block":fhparse.Block,"Element":fhparse.Element,"BrushList":fhparse.BrushList,\
-				"VMpObj":fhparse.VMpObj,"AGDFont":fhparse.AGDFont,"FileDescriptor":fhparse.FileDescriptor,"TabTable":fhparse.TabTable,\
+				"VMpObj":fhparse.VMpObj,"AGDFont":fhparse.VMpObj,   #fhparse.AGDFont,
+				"FileDescriptor":fhparse.FileDescriptor,"TabTable":fhparse.TabTable,\
 				"SymbolLibrary":fhparse.SymbolLibrary,"PropLst":fhparse.PropLst,"Procedure":fhparse.Procedure,"Color6":fhparse.Color6,"Data":fhparse.Data,\
 				"MName":fhparse.MName,"List":fhparse.List,"LinePat":fhparse.LinePat,"ElemList":fhparse.ElemList,"ElemPropLst":fhparse.ElemPropLst,"Figure":fhparse.Figure,\
 				"StylePropLst":fhparse.StylePropLst,"SpotColor6":fhparse.SpotColor6,"BasicLine":fhparse.BasicLine,"BasicFill":fhparse.BasicFill,\
@@ -70,7 +71,7 @@ def fh_save (page, fname):
 
 	citer = model.iter_nth_child(iter2,i+1) # 'FH Tail'
 	value += model.get_value(citer,3)
-	output = zlib.compress(value)
+	output = zlib.compress(value,1)
 	clen = struct.pack(">L",len(output)+12)
 
 	f.write(clen)
@@ -194,28 +195,27 @@ def fh_open (buf,page):
 	parser.data = output
 	parser.version = page.version
 	parser.iter = dditer
-	unkn_flag = 0
 	agdoffset = 0
 	length = 0
-
+	brflag = 0
 	prkey = 0
 	for i in range(size):
-		if i/2000 == i/2000.:
-			print '\rRecord #%d'%i,items[key][0]
+		if i/2000 == i/2000. and i > 0:
+			print '\rRecord #%d'%i,items[key][0],len(parser.data)-agdoffset
 		[key] = struct.unpack('>h', buf[offset:offset+2])
 		offset+= 2
 		if chunks.has_key(items[key][0]):
-			if unkn_flag == 0:
+			if brflag == 0:
 				try:
 					length = chunks[items[key][0]](parser,agdoffset, key)
+					if length < 0:
+						length = len(output)-agdoffset
+						brflag = 1
 				except:
 					print "Failed to parse. Chunk: %02x 2:%s"%(i,i-1)
 					return
 			else:
-				length = 128
-				if agdoffset + length > len(output):
-					length = len(output) - agdoffset
-				# later will implement search for easy detectable chunks
+				length = 0
 			iname = items[key][0]
 			iter1 = page.model.append(dditer,None)
 			page.model.set_value(iter1,0,"%s [%02x]"%(iname,i+1))
@@ -224,21 +224,21 @@ def fh_open (buf,page):
 			page.model.set_value(iter1,3,output[agdoffset:agdoffset+length])
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 			agdoffset = agdoffset + length
+			if brflag == 1:
+				print "Negative length. Chunk: %02x 2:%s"%(i,i-1)
+				brflag = 2
 			
 		else:
 			print 'WARNING! Unknown key: ',items[key][0],"%02x %02x"%(i+1,agdoffset)
-			unkn_flag = 1
-			length = 128
-			if agdoffset + length > len(output):
-				length = len(output) - agdoffset
 			iname = items[key][0]
 			name = "%02x: "%(i+1)+" !!! " + iname+"\t0x%02x"%length+"\t0x%02x"%agdoffset+" <-------"
 			iter1 = page.model.append(dditer,None)
 			page.model.set_value(iter1,0,name)
 			page.model.set_value(iter1,1,("fh","unknown"))
-			page.model.set_value(iter1,2,length)
-			page.model.set_value(iter1,3,output[agdoffset:agdoffset+length])
+			page.model.set_value(iter1,2,1234)
+			page.model.set_value(iter1,3,output[agdoffset:])
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+
 	iter1 = page.model.append(dditer,None)
 	page.model.set_value(iter1,0,"FH Tail")
 	page.model.set_value(iter1,1,("fh","tail"))

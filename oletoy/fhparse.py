@@ -450,9 +450,10 @@ def PathTextLineInfo(parser,offset,key):
 	length= 46
 	return length
 
-def Envelope(parser,offset,key):
+def Envelope (parser,offset,key):
 	num = struct.unpack('>h', parser.data[offset+20:offset+22])[0]
-	length = 81+num*27
+	num2 = struct.unpack('>h', parser.data[offset+43:offset+45])[0]
+	length = 45+num2*4+num*27
 	return length
 
 def CalligraphicStroke(parser,offset,key):
@@ -461,6 +462,8 @@ def CalligraphicStroke(parser,offset,key):
 
 def PolygonFigure(parser,offset,key):
 	length= 53
+	if parser.data[offset+12:offset+14] == '\xFF\xFF':
+		length = 55
 	return length
 
 def BendFilter(parser,offset,key):
@@ -481,19 +484,39 @@ def TransformFilter(parser,offset,key):
 
 def NewContourFill(parser,offset,key):
 	length= 34
-	return length
+	shift = 0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 2
+	if parser.data[offset+2+shift:offset+4+shift] == '\xFF\xFF':
+		shift += 2
+	if parser.data[offset+18+shift:offset+20+shift] == '\xFF\xFF':
+		shift += 2
+	return length+shift
 
 def CharacterFill(parser,offset,key):
 	length= 0
 	return length
 
 def ConeFill(parser,offset,key):
-	length= 34
-	return length
+	length= 30
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift+16:offset+shift+18] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def TileFill(parser,offset,key):
 	length= 32
-	return length
+	shift = 0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 2
+	if parser.data[offset+shift+2:offset+shift+4] == '\xFF\xFF':
+		shift += 2
+	return length+shift
 
 def DuetFilter(parser,offset,key):
 	length= 14
@@ -505,6 +528,10 @@ def FWBlurFilter(parser,offset,key):
 
 def FWGlowFilter(parser,offset,key):
 	length= 22 #was 38
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		length += 2
+	return length
+
 	return length
 
 def ConnectorLine(parser,offset,key):
@@ -521,9 +548,17 @@ def RaggedFilter(parser,offset,key):
 	return length
 
 def NewRadialFill(parser,offset,key):
-	length= 43
-	return length
-	
+	length= 39
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift+16:offset+shift+18] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
+
 def SketchFilter(parser,offset,key):
 	length= 11
 	return length
@@ -535,12 +570,21 @@ def BrushTip(parser,offset,key):
 		length=66 
 	if parser.version == 10:
 		length =62
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		length += 2
 	return length
-	
+
 def Brush(parser,offset,key):
-	length=4
-	return length
-	
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return shift
+
 def UString(parser,offset,key):
 	[size] = struct.unpack('>h', parser.data[offset:offset+2])
 	length=4*(size+1)
@@ -548,7 +592,11 @@ def UString(parser,offset,key):
 
 def AGDSelection(parser,offset,key):
 	size = struct.unpack('>h', parser.data[offset:offset+2])[0]
-	length=4*size+8
+	length=4*size+6
+	if parser.data[offset+12:offset+14] == '\xFF\xFF':
+		length += 4
+	else:
+		length += 2
 	return length
 	
 def xform_calc2(var1,var2):
@@ -595,13 +643,32 @@ def Xform(parser,offset,key):
 	return length
 	
 def SymbolClass(parser,offset,key):
-	length=10
-	return length
+	shift = 0
+	for i in range(5):
+		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	return shift
 
 def SymbolInstance(parser,offset,key):
-	var1 = ord(parser.data[offset+0xe])
-	var2 = ord(parser.data[offset+0xf])
-	length=14 + xform_calc(var1,var2)+2
+	shift = 0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+
+	var1 = ord(parser.data[offset+shift+8])
+	var2 = ord(parser.data[offset+shift+9])
+	length= 10 + shift + xform_calc(var1,var2)
 	return length
 
 def MasterPageSymbolInstance(parser,offset,key):
@@ -633,8 +700,14 @@ def MString(parser,offset,key):
 	return length
 
 def MList(parser,offset,key):
-	[size] =  struct.unpack('>h', parser.data[offset+2:offset+4])
-	length=size*2+12
+	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	shift = 0
+	for i in range(size):
+		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	length = 12 + shift
 	return length
 	
 def MDict(parser,offset,key):
@@ -663,8 +736,8 @@ def MasterPageLayerElement(parser,offset,key):
 	return length
 
 def MQuickDict(parser,offset,key):
-	length=7
-	#length=407
+	size =  struct.unpack('>h', parser.data[offset+0:offset+2])[0]
+	length=7 + size*4
 	return length
 
 def FHDocHeader(parser,offset,key):
@@ -672,24 +745,50 @@ def FHDocHeader(parser,offset,key):
 	return length
 
 def Block(parser,offset,key):
-	length=53 #really? was 49
-	if parser.version == 10:
-		length =49
-	if parser.version == 9:
-		length = 47
-	return length
+#	length=53 #really? was 49
+#	if parser.version == 10:
+#		length =49
+#	if parser.version == 9:
+#		length = 47
+
+	shift = 0
+	for i in range(12):
+		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	shift += 16
+	for i in range(3):
+		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	shift +=1
+	for i in range(4):
+		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	
+	return shift
 
 def Element(parser,offset,key):
 	length=4   #!!!! just to set to non-zero!!!!
 	return length
 
 def BrushList(parser,offset,key):
-	[size] =  struct.unpack('>h', parser.data[offset+2:offset+4])
-	length= size*2+12
+	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	shift = 0
+	for i in range(size):
+		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	length = 12 + shift
 	return length
-	
+
 def VMpObj(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
+	num = struct.unpack('>h', parser.data[offset+4:offset+6])[0]
 	shift = 8
 	for i in range(num):
 		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
@@ -697,10 +796,10 @@ def VMpObj(parser,offset,key):
 		if not vmp_rec.has_key(rec):
 			print 'Unknown VMpObj record: %04x'%rec
 		
-		if key == 2:
-			shift+=6
-		else:
+		if key == 0 or parser.data[offset+shift+4:offset+shift+6] == '\xFF\xFF':
 			shift+=8
+		else:
+			shift+=6
 	
 	return shift
 
@@ -731,9 +830,16 @@ def AGDFont(parser,offset,key):
 	return shift
 
 def FileDescriptor(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset+9:offset+11])
-	#length=51 # can be 67
-	length=11+size
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	size = struct.unpack('>h', parser.data[offset+5+shift:offset+7+shift])[0]
+	length=7+shift+size
 	return length
 	
 def TabTable(parser,offset,key):
@@ -742,17 +848,19 @@ def TabTable(parser,offset,key):
 	return length
 	
 def SymbolLibrary(parser,offset,key):
-	[size] =  struct.unpack('>h', parser.data[offset+2:offset+4])
-	length= size*2+18
+	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	shift = 0
+	for i in range(size+3):
+		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	length = 12 + shift
 	return length
 
 def PropLst(parser,offset,key):
 	[size] = struct.unpack('>h', parser.data[offset+2:offset+4])
-##	if size == 0:
-##		length=10
-##	else:
 	length=8+4*size
-	#hexprint(data,offset,length,key)
 	return length
 	
 def Procedure(parser,offset,key):
@@ -783,7 +891,13 @@ def Color6(parser,offset,key):
 
 	if parser.version < 10:
 		length-=2
-	return length
+		
+	shift = 0
+	if parser.data[offset+2:offset+4] == '\xFF\xFF':
+			shift = 2
+	if parser.data[offset+14+shift:offset+16+shift] == '\xFF\xFF':
+		shift += 2
+	return length+shift
 
 def Data(parser,offset,key):
 	[size] = struct.unpack('>h', parser.data[offset:offset+2])
@@ -796,13 +910,16 @@ def MName(parser,offset,key):
 	return length
 
 def List(parser,offset,key):
-	var = ord(parser.data[offset+1])
-	if var ==0x3c:
-		length=16
-	else:
-		[size] = struct.unpack('>h', parser.data[offset+2:offset+4])
-		length=12+2*size
+	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	shift = 0
+	for i in range(size):
+		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	length = 12 + shift
 	return length
+
 	
 def LinePat(parser,offset,key):
 	[numstrokes] = struct.unpack('>h', parser.data[offset:offset+2])
@@ -825,36 +942,51 @@ def Figure(parser,offset,key):
 	return length
 
 def StylePropLst(parser,offset,key):
-	[size] =  struct.unpack('>h', parser.data[offset+2:offset+4])
-	length= size*4+10
-	return length
-	
-def SpotColor6(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	[name_idx] = struct.unpack('>h', parser.data[offset+2:offset+4])
-	length = 28 + size*4
-	if parser.version < 10:
-		length = 38
+	size = 2*struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	if parser.data[offset+8:offset+10] == '\xFF\xFF':
+		size += 1
+	shift = 0
+	for i in range(size):
+		if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	length = 10 + shift
 	return length
 
+def SpotColor6(parser,offset,key):
+	[size] = struct.unpack('>h', parser.data[offset:offset+2])
+	length = 28 + size*4
+	shift = 0
+	if parser.data[offset+2:offset+4] == '\xFF\xFF':
+		shift = 2
+	if parser.version < 10:
+		length = 38
+	return length+shift
+
 def BasicLine(parser,offset,key):
-	##length=20 ##ver10
 	length= 20 ##ver11
 	if parser.data[offset:offset+2] == '\x00\x00':
 		length = 18
+	elif parser.data[offset:offset+2] == '\xFF\xFF':
+		length = 22
 	return length
 	
 def BasicFill(parser,offset,key):
 	length=6
 	if parser.data[offset:offset+2] == '\x00\x00':
 		length = 4
+	elif parser.data[offset:offset+2] == '\xFF\xFF':
+		length = 8
 	return length
 	
 def Guides(parser,offset,key):
-	[size] =  struct.unpack('>h', parser.data[offset:offset+2])
+	size =  struct.unpack('>h', parser.data[offset:offset+2])[0]
 	length=22 + size*8
+	if parser.data[offset+2:offset+4] == '\xFF\xFF':
+		length += 2
 	return length
-	
+
 def Path(parser,offset,key):
 	[size] =  struct.unpack('>h', parser.data[offset:offset+2])
 	length=128
@@ -867,7 +999,10 @@ def Path(parser,offset,key):
 	if parser.data[offset+4:offset+6] == '\xFF\xFF':
 		[var]=struct.unpack('>h', parser.data[offset+22:offset+24])
 		length = 24 + 27*var
-		#length += 6
+	if parser.data[offset+16:offset+18] == '\xFF\xFF':
+		[var]=struct.unpack('>h', parser.data[offset+24:offset+26])
+		length = 26 + 27*var
+		
 	return length
 
 def Collector(parser,offset,key):
@@ -875,22 +1010,39 @@ def Collector(parser,offset,key):
 	return length
 
 def Rectangle(parser,offset,key):
-##	var=ord(parser.data[offset+1])
-##	length=36 #?ver.10?
-##	length=42 #?ver.10?
-	length=0x4b #?ver11?
+	length=69 #?ver11?
 	if parser.version < 11:
-		length = 42
-##	if var == 0xc:
-##		length = 69
-##	length = 69 #?ver.11?
-	return length
+		length = 36
+		
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def Layer(parser,offset,key):
-	length=20 
-#	if ord(parser.data[offset+1])==0:
-#	  length=17
-	return length
+	length=14
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def ArrowPath(parser,offset,key):
 	size =  ord(parser.data[offset+21])
@@ -909,25 +1061,57 @@ def VDict(parser,offset,key):
 	return shift
 
 def Group(parser,offset,key):
-	length=16
-	if parser.data[offset+2:offset+4] == '\xFF\xFF':
-		length = 18
-	return length
+	length=8
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+
+	if parser.data[offset+shift+8:offset+shift+10] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift+8:offset+shift+10] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def Oval(parser,offset,key):
 	if parser.version > 10:
-		length=44
+		length=38
 	else:
-		length=34 
-	return length
+		length=28 
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift+12:offset+shift+14] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def MultiColorList(parser,offset,key):
-	[num]= struct.unpack('>h', parser.data[offset:offset+2])
-	length=6+num*10
-	if parser.version == 10:
-		length=10+num*10
-	return length
-	
+	num= struct.unpack('>h', parser.data[offset:offset+2])[0]
+#	length=6+num*10
+#	if parser.version == 10:
+#		length=10+num*10
+		
+	shift = 0
+	for i in range(num+1):
+		if parser.data[offset+4+i*10+shift:offset+6+i*10+shift] == '\xFF\xFF':
+			shift += 2
+	return num*10+shift+6
+
 def ContourFill(parser,offset,key):
 	[num]= struct.unpack('>h', parser.data[offset+0:offset+2])
 	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
@@ -942,20 +1126,73 @@ def ContourFill(parser,offset,key):
 	return length
 
 def ClipGroup(parser,offset,key):
-	length=16
-	return length
+	length=12
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+8+shift:offset+10+shift] == '\xFF\xFF':
+		length += 2 
+	return length+shift
 
 def NewBlend(parser,offset,key):
-	length=44
-	return length
+	length=34
+	shift =0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+#	if parser.data[offset+shift+10:offset+12+shift] == '\xFF\xFF':
+#		length += 2
+
+	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def BrushStroke(parser,offset,key):
-	length=6
-	return length
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift =2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return shift
 
 def GraphicStyle(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
-	length=10+size*4
+	size = 2*struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+	if parser.data[offset+8:offset+10] == '\xFF\xFF':
+		size += 1
+	shift = 0
+	for i in range(size):
+		if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	length = 10 + shift
 	return length
 
 def ContentFill(parser,offset,key):
@@ -963,17 +1200,32 @@ def ContentFill(parser,offset,key):
 	return length
 
 def CompositePath(parser,offset,key):
-	length=14
-	if parser.data[offset+2:offset+4] == '\xFF\xFF':
-		length = 16
-	return length
+	shift = 0
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+shift+8:offset+shift+10] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+		
+	return shift+8
 
 def AttributeHolder(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset+0:offset+2])
-	length=4 #was 2
-	if size == 0:
-		length=4
-	return length
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return shift
 
 def Halftone(parser,offset,key):
 	length=10
@@ -981,15 +1233,29 @@ def Halftone(parser,offset,key):
 
 def FWShadowFilter(parser,offset,key):
 	length=22
-	return length
+	shift = 0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 2
+	return length+shift
 
 def FWBevelFilter(parser,offset,key):
 	length=30
-	return length
+	shift = 0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 2
+	return length+shift
 
 def FilterAttributeHolder(parser,offset,key):
-	length=6
-	return length
+	length = 2
+	if parser.data[offset+2:offset+4] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+shift+2:offset+shift+4] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return length+shift
 
 def Extrusion(parser,offset,key):
 	var1 = ord(parser.data[offset+0x60])
@@ -999,7 +1265,12 @@ def Extrusion(parser,offset,key):
 
 def LinearFill(parser,offset,key):
 	length=32 # was 54
-	return length
+	shift = 0
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		shift = 2
+	if parser.data[offset+14+shift:offset+16+shift] == '\xFF\xFF':
+		shift += 2
+	return length+shift
 
 def GradientMaskFilter(parser,offset,key):
 	length=2
@@ -1014,8 +1285,10 @@ def ImageImport(parser,offset,key):
 	length=55  # was 87
 	if ord(parser.data[offset+55]) != 0:  # 0-terminated string?
 		length = 58
-	if parser.data[offset+10:offset+12] == '\xFF\xFF':
+	if parser.data[offset+10:offset+12] == '\xFF\xFF' and parser.version > 10:
 		length = 57
+	if parser.data[offset+36:offset+38] != '\x00\x00':
+		length += 4 
 	return length
 
 def TextBlok(parser,offset,key):
@@ -1057,7 +1330,6 @@ def RadialFillX(parser,offset,key):
 	return length
 
 def TaperedFillX(parser,offset,key):
-#	[size] = struct.unpack('>h', parser.data[offset:offset+2]) #!!!! quick-n-dirty
 	length=16
 	if parser.version == 10:
 		length = 12
@@ -1065,6 +1337,8 @@ def TaperedFillX(parser,offset,key):
 
 def TintColor6(parser,offset,key):
 	length=38
+	if parser.data[offset+16:offset+18] == '\xFF\xFF':
+		length += 2
 	return length
 
 def TaperedFill(parser,offset,key):
@@ -1073,6 +1347,8 @@ def TaperedFill(parser,offset,key):
 
 def LensFill(parser,offset,key):
 	length=40
+	if parser.data[offset:offset+2] == '\xFF\xFF':
+		length += 2
 	return length
 
 def PerspectiveEnvelope(parser,offset,key):
