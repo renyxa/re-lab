@@ -808,10 +808,10 @@ def TextInPath(parser,offset,key):
 	shift = 20
 	for i in range(num):
 		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
-		if key == 2:
-			shift+=6
-		else:
+		if key == 0 or parser.data[offset+shift+4:offset+shift+6] == '\xFF\xFF':
 			shift+=8
+		else:
+			shift+=6
 	return shift
 
 def ImageFill(parser,offset,key):
@@ -859,10 +859,16 @@ def SymbolLibrary(parser,offset,key):
 	return length
 
 def PropLst(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset+2:offset+4])
-	length=8+4*size
-	return length
-	
+	size = struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+#	length=8+4*size
+	shift = 8
+	for i in range(2*size):
+		if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	return shift
+
 def Procedure(parser,offset,key):
 	length = 4 #!!!! just to set non-zero !!!
 	return length
@@ -1297,29 +1303,61 @@ def TextBlok(parser,offset,key):
 	return length
 
 def Paragraph(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
-	length=10 + 24*size # was 38
-	return length
+	size= struct.unpack('>h', parser.data[offset+2:offset+4])[0]
+#	length= 6 + 24*size # need to replace with per entry parsing of recIDs
+	if parser.data[offset+6:offset+8] == '\xFF\xFF':
+		shift = 4
+	else:
+		shift = 2
+	if parser.data[offset+6+shift:offset+8+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+6+shift:offset+8+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	if parser.data[offset+6+shift:offset+8+shift] == '\xFF\xFF':
+		shift += 4
+	else:
+		shift += 2
+	return 26+shift
 
 def TString(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
+	size= struct.unpack('>h', parser.data[offset+2:offset+4])[0]
 	length=20+size*2
+	# should repeat for others if size > 1
+	if parser.data[offset+20:offset+22] == '\xFF\xFF':
+		length += 2
 	return length
 
 def LineTable(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
+	size= struct.unpack('>h', parser.data[offset+2:offset+4])[0]
 	length=4+size*50
+	if parser.data[offset+52:offset+54] == '\xFF\xFF':
+		length += 2
 	return length
 
 def TextColumn(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
-	shift = 26
-	for i in range(num):
-		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
-		if key == 2:
-			shift+=6
+	num = struct.unpack('>h', parser.data[offset+4:offset+6])[0]
+	shift = 8
+	for i in range(2):
+		if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+			shift += 4
 		else:
+			shift += 2
+	shift += 8
+	for i in range(3):
+		if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
+			shift += 4
+		else:
+			shift += 2
+	for i in range(num):
+		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
+		if key == 0 or parser.data[offset+shift+4:offset+shift+6] == '\xFF\xFF':
 			shift+=8
+		else:
+			shift+=6
 	return shift
 
 def RadialFillX(parser,offset,key):

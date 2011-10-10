@@ -348,6 +348,10 @@ def dump_mf_tree (model, path, parent, f):
 	if ntype < 0x4001:
 	  nlen = model.get_value(parent,2)
 	  value = model.get_value(parent,3)
+	  if ntype == 0x46:
+		value = value[:16]
+		for i in range(model.iter_n_children(parent)):
+		  value += model.get_value(model.iter_nth_child(parent,i),3)
 	  if nlen != None:
 		  f.write(value)
 #	return True

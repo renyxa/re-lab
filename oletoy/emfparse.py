@@ -273,7 +273,7 @@ def SetWorldTransform  (hd, size, value):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "m21", 1, struct.unpack("<f",value[16:20])[0],2,16,3,4,4,"<f")
 	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "m22", 1, struct.unpack("<f",value[20:24])[0],2,24,3,4,4,"<f")
+	hd.hdmodel.set (iter, 0, "m22", 1, struct.unpack("<f",value[20:24])[0],2,20,3,4,4,"<f")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Dx", 1, struct.unpack("<f",value[24:28])[0],2,24,3,4,4,"<f")
 	iter = hd.hdmodel.append(None, None)
