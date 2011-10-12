@@ -1,3 +1,7 @@
+2011-10-10  Valek Filippov
+
+		* XLS: more records parsing.
+
 2011-10-09  Valek Filippov
 
 		* EMF+: fix saving of modified records.

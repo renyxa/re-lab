@@ -120,6 +120,45 @@ def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
 
+def XLUnicodeRichExtendedString (hd,data,offset):
+	cch = struct.unpack("<H",data[0+offset:2+offset])[0]
+	flags = ord(data[offset+2])
+	fHighByte = flags&1
+	fExtSt = (flags&4)/4
+	fRichSt = (flags&8)/8
+	add_iter (hd,"  cch",cch,offset,2,"<H")
+	add_iter (hd,"  fHighByte",fHighByte,offset+2,1,"<B")
+	add_iter (hd,"  fExtSt",fExtSt,offset+2,1,"<B")
+	add_iter (hd,"  fRichSt",fRichSt,offset+2,1,"<B")
+	offset += 2
+	if fRichSt:
+		cRun = struct.unpack("<H",data[1+offset:3+offset])[0]
+		add_iter (hd,"  cRun",cRun,offset+1,2,"<H")
+		offset += 2
+	if fExtSt:
+		cbExtRst = struct.unpack("<I",data[1+offset:5+offset])[0]
+		add_iter (hd,"  cbExtRst",cbExtRst,offset+1,4,"<H")
+		offset += 4
+	if fHighByte:
+		text = unicode(data[offset+1:offset+1+cch*2],"utf16")
+		add_iter (hd,"  text",text,offset+1,cch*2,"txt")
+		offset += cch*2 + 1
+	else:
+		text = data[offset+1:offset+1+cch]
+		add_iter (hd,"  text",text,offset+1,cch,"txt")
+		offset += cch + 1
+	if fRichSt:
+		for i in range(cRun):
+			ich = struct.unpack("<H",data[0+offset+i*4:2+offset+i*4])[0]
+			ifnt = struct.unpack("<H",data[2+offset+i*4:4+offset+i*4])[0]
+			add_iter (hd,"  ich %d"%i,ich,offset+i*4,2,"<H")
+			add_iter (hd,"  ifnt %d"%i,ifnt,2+offset+i*4,2,"<H")
+		offset += cRun*4
+	if fExtSt:
+		add_iter (hd,"  ExtRst",None,offset,cbExtRst,"txt")
+		offset += cbExtRst
+	return offset
+
 #0x31
 def biff58_font (hd,data):
 	off = 4
@@ -161,6 +200,39 @@ def biff58_font (hd,data):
 
 
 xf_flags = {1:"Locked ",2:"Hidden ",3:"Style ",4:"123Prefix "}
+
+#0x55
+def biff_defcolw (hd,data):
+	off = 4
+	cw = struct.unpack("<H",data[0+off:2+off])[0]
+	add_iter (hd,"cchdefColWidth",cw,off,2,"<H")
+
+#0x7d
+def biff_colinfo (hd,data):
+	off = 4
+	colFirst = struct.unpack("<H",data[0+off:2+off])[0]
+	colLast = struct.unpack("<H",data[2+off:4+off])[0]
+	coldx = struct.unpack("<H",data[4+off:6+off])[0]
+	ixfe = struct.unpack("<H",data[6+off:8+off])[0]
+	flags1 = ord(data[8+off])
+	flags2 = ord(data[9+off])
+	unused = struct.unpack("<H",data[10+off:12+off])[0]
+	fHidden = flags1&1
+	fUserSet = (flags1&2)/2
+	fBestFit = (flags1&4)/4
+	fPhonetic = (flags1&8)/8
+	iOutLevel = flags2&7
+	fCollapsed = (flags2&16)/16
+	add_iter (hd,"colFirst",colFirst,off,2,"<H")
+	add_iter (hd,"colLast",colLast,off+2,2,"<H")
+	add_iter (hd,"coldx",coldx,off+4,2,"<H")
+	add_iter (hd,"ixfe",ixfe,off+6,2,"<H")
+	add_iter (hd,"fHidden",fHidden,off+8,1,"<B")
+	add_iter (hd,"fUserSet",fUserSet,off+8,1,"<B")
+	add_iter (hd,"fBestFit",fBestFit,off+8,1,"<B")
+	add_iter (hd,"fPhonetic",fPhonetic,off+8,1,"<B")
+	add_iter (hd,"iOutLevel",iOutLevel,off+9,1,"<B")
+	add_iter (hd,"fCollapsed",fCollapsed,off+9,1,"<B")
 
 #0xe0
 def biff_xf (hd,data):
@@ -233,6 +305,40 @@ def biff_xf (hd,data):
 	add_iter (hd,"icvBack",icvBack,off+13,1,"<B")
 	add_iter (hd,"rsvd3",rsvd3,off+13,1,"<B")
 
+#0xe5
+def biff_mergecells (hd,data):
+	off = 4
+	cmcs = struct.unpack("<H",data[0+off:2+off])[0]
+	add_iter (hd,"cmcs",cmcs,off,2,"<H")
+	for i in range(cmcs):
+		rwFirst = struct.unpack("<H",data[2+off+i*8:4+off+i*8])[0]
+		rwLast = struct.unpack("<H",data[4+off+i*8:6+off+i*8])[0]
+		colFirst = struct.unpack("<H",data[6+off+i*8:8+off+i*8])[0]
+		colLast = struct.unpack("<H",data[8+off+i*8:10+off+i*8])[0]
+		add_iter (hd,"rwFirst %d"%i,rwFirst,off+2+i*8,2,"<H")
+		add_iter (hd,"  rwLast %d"%i,rwLast,off+4+i*8,2,"<H")
+		add_iter (hd,"  colFirst %d"%i,colFirst,off+6+i*8,2,"<H")
+		add_iter (hd,"  colLast %d"%i,colLast,off+8+i*8,2,"<H")
+
+#0xfc
+def biff_sst (hd,data):
+	off = 4
+	cstTotal = struct.unpack("<I",data[0+off:4+off])[0]
+	cstUnique = struct.unpack("<I",data[4+off:8+off])[0]
+	add_iter (hd,"cstTotal",cstTotal,off,4,"<I")
+	add_iter (hd,"cstUnique",cstUnique,off+4,4,"<I")
+	offset = 12
+	for i in range(cstUnique):
+		add_iter (hd,"rgb %d"%i,None,0,0,"txt")
+		offset = XLUnicodeRichExtendedString (hd,data,offset)
+
+#0xfd
+def biff_labelsst (hd,data):
+	off = 4
+	biff_blank(hd,data)
+	isst = struct.unpack("<I",data[6+off:10+off])[0]
+	add_iter (hd,"isst",isst,6+off,4,"<I")
+
 #0x1ae
 def biff_supbook (hd,data):
 	off = 4
@@ -241,8 +347,94 @@ def biff_supbook (hd,data):
 	add_iter (hd,"ctab",ctab,0+off,2,"<H")
 	add_iter (hd,"cch",cch,2+off,2,"<H")
 
+#0x200
+def biff_dimensions (hd,data):
+	off = 4
+	rwMic = struct.unpack("<I",data[0+off:4+off])[0]
+	rwMac = struct.unpack("<I",data[4+off:8+off])[0]
+	colMic = struct.unpack("<H",data[8+off:10+off])[0]
+	colMac = struct.unpack("<H",data[10+off:12+off])[0]
+	add_iter (hd,"rwMic",rwMic,off,4,"<I")
+	add_iter (hd,"rwMac",rwMac,off+4,4,"<I")
+	add_iter (hd,"colMic",colMic,off+8,2,"<H")
+	add_iter (hd,"colMac",colMac,off+10,2,"<H")
 
-biff5_ids = {0x31:biff58_font,0xe0:biff_xf,0x1ae:biff_supbook}
+#0x201
+def biff_blank(hd,data):
+	off = 4
+	rw = struct.unpack("<H",data[0+off:2+off])[0]
+	col = struct.unpack("<H",data[2+off:4+off])[0]
+	ixfe = struct.unpack("<H",data[4+off:6+off])[0]
+	add_iter (hd,"rw",rw,off,2,"<H")
+	add_iter (hd,"col",col,off+2,2,"<H")
+	add_iter (hd,"ixfe",ixfe,off+4,2,"<H")
+
+#0x203
+def biff_number (hd,data):
+	off = 4
+	biff_blank(hd,data)
+	num = struct.unpack("<d",data[6+off:114+off])[0]
+	add_iter (hd,"num",num,6+off,8,"<d")
+
+#0x208
+def biff_row (hd,data):
+	off = 4
+	rw = struct.unpack("<H",data[0+off:2+off])[0]
+	colMic = struct.unpack("<H",data[2+off:4+off])[0]
+	colMac = struct.unpack("<H",data[4+off:6+off])[0]
+	miyRw = struct.unpack("<H",data[6+off:8+off])[0]
+	rsrv1 = struct.unpack("<H",data[8+off:10+off])[0]
+	unused1 = struct.unpack("<H",data[10+off:12+off])[0]
+	flags1 = ord(data[12+off])
+	iOutLevel = flags1&7
+	fCollapsed = (flags1&16)/16
+	fDyZero = (flags1&32)/32
+	fUnsync= (flags1&64)/64
+	fGhostDirty = (flags1&128)/128
+	flags2 = struct.unpack("<H",data[14+off:16+off])[0]
+	ixfe_val = flags2&0xFFF
+	flags2 /= 4096
+	fExAsc = flags2&1
+	fExDes = (flags2&2)/2
+	fPhonetic = (flags2&4)/4
+	add_iter (hd,"rw",rw,off,2,"<H")
+	add_iter (hd,"colMic",colMic,off+2,2,"<H")
+	add_iter (hd,"colMac",colMac,off+4,2,"<H")
+	add_iter (hd,"miyRw",miyRw,off+6,2,"<H")
+	add_iter (hd,"iOutLevel",iOutLevel,12+off,1,"<B")
+	add_iter (hd,"fCollapsed",fCollapsed,12+off,1,"<B")
+	add_iter (hd,"fDyZero",fDyZero,12+off,1,"<B")
+	add_iter (hd,"fUnsync",fUnsync,12+off,1,"<B")
+	add_iter (hd,"fGhostDirty",fGhostDirty,12+off,1,"<B")
+	add_iter (hd,"ixfe_val",ixfe_val,14+off,2,"<H")
+	add_iter (hd,"fExAsc",fExAsc,15+off,1,"<B")
+	add_iter (hd,"fExDes",fExDes,15+off,1,"<B")
+	add_iter (hd,"fPhonetic",fPhonetic,15+off,1,"<B")
+
+#0x225
+def biff_defrowh (hd,data):
+	off = 4
+	flags = struct.unpack("<H",data[0+off:2+off])[0]
+	fUnsync = flags&1
+	fDyZero = (flags&2)/2
+	fExAsc = (flags&4)/4
+	fExDes = (flags&8)/8
+	add_iter (hd,"fUnsync",fUnsync,off,1,"<B")
+	add_iter (hd,"fDyZero",fDyZero,off,1,"<B")
+	add_iter (hd,"fExAsc",fExAsc,off,1,"<B")
+	add_iter (hd,"fExDes",fExDes,off,1,"<B")
+	if fDyZero == 0:
+		miyRw = struct.unpack("<H",data[2+off:4+off])[0]
+		add_iter (hd,"miyRw",miyRw,off+2,2,"<H")
+	else:
+		miyRwHidden = struct.unpack("<H",data[4+off:6+off])[0]
+		add_iter (hd,"miyRwHidden",miyRwHidden,off+4,2,"<H")
+
+
+
+biff5_ids = {0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
+	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
+	0x1ae:biff_supbook,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh}
 
 def parse (page, data, parent):
 	offset = 0
