@@ -281,7 +281,7 @@ class ApplicationMainWindow(gtk.Window):
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		type = model.get_value(iter1,1)[0]
-		print 'Type'
+		print 'Type',type
 		value = model.get_value(iter1,3)
 		if type == "emf":
 			size = model.get_value(iter1,2)+4
@@ -313,7 +313,6 @@ class ApplicationMainWindow(gtk.Window):
 			model.set_value(iter1,2,size-1)
 			model.set_value(iter1,3,value[:2]+struct.pack("<H",size-1)+value[4:3+size])
 
-
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
@@ -325,8 +324,8 @@ class ApplicationMainWindow(gtk.Window):
 		if self.das[pn].type[:3] == "XLS":
 			iter1 = model.insert_after(None,iter2)
 			model.set_value(iter1,0,dictmodel.get_value(iter,0))
-			model.set_value(iter1,1,("XLS",type))
-			model.set_value(iter1,2,4)
+			model.set_value(iter1,1,("xls",type))
+			model.set_value(iter1,2,0)
 			model.set_value(iter1,3,struct.pack("<H",type)+"\x00"*2)
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
 			model.set_value(iter1,7,"0x%02x"%type)

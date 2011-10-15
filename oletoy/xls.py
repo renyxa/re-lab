@@ -132,7 +132,7 @@ def gentree():
 	model.set(iter, 0, "XLS Records", 1, -1, 2, "")
 	for i in rec_ids.items():
 		niter = model.append (iter, None)
-		model.set(niter, 0, i[1], 1, i[0], 2, 4)
+		model.set(niter, 0, i[1], 1, i[0], 2, "0")
 	return model,view
 
 
