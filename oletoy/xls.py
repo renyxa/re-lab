@@ -20,6 +20,10 @@ import gtk
 import tree
 import hexdump
 import escher
+import ctypes
+
+cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -115,6 +119,22 @@ rec_ids = {
 	4195:"Dat", 4196:"PlotGrowth", 4197:"SIIndex", 4198:"GelFrame",
 	4199:"BopPopCustom", 4200:"Fbi2"
 	}
+
+def gentree():
+	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
+	view = gtk.TreeView(model)
+	renderer = gtk.CellRendererText()
+	column = gtk.TreeViewColumn('Group/Record', renderer, text=0)
+	column2 = gtk.TreeViewColumn('Length', renderer, text=2)
+	view.append_column(column)
+	view.append_column(column2)
+	iter = model.append(None, None)
+	model.set(iter, 0, "XLS Records", 1, -1, 2, "")
+	for i in rec_ids.items():
+		niter = model.append (iter, None)
+		model.set(niter, 0, i[1], 1, i[0], 2, 4)
+	return model,view
+
 
 def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
@@ -498,3 +518,40 @@ def parse (page, data, parent):
 		print "Something was wrong in XLS parse"
 
 	return ftype
+
+def collect_tree (model, parent, value=""):
+	for i in range(model.iter_n_children(parent)):
+		citer = model.iter_nth_child(parent, i)
+		print 'mname',model.get_value(citer,0)
+
+		value += model.get_value(citer,3)
+		if model.iter_n_children(citer):
+#			print 'We call collect',len(value)
+			value = collect_tree(model, citer, value)
+	return value
+
+def dump_iter (model, parent, outfile):
+	ntype = model.get_value(parent,1)
+	name = model.get_value(parent,0)
+	value = ""
+	if name == 'Workbook' or name == 'Book':
+		value = collect_tree(model, parent)
+	else:
+		value = model.get_value(parent,3)
+	child = cgsf.gsf_outfile_new_child(outfile,name,0)
+	cgsf.gsf_output_write (child,len(value),value)
+	cgsf.gsf_output_close (child)
+
+
+def save (page, fname):
+	model = page.view.get_model()
+	cgsf.gsf_init()
+	output = cgsf.gsf_output_stdio_new (fname)
+	outfile = cgsf.gsf_outfile_msole_new (output);
+	iter1 = model.get_iter_first()
+	while None != iter1:
+	  dump_iter (model, iter1, outfile)
+	  iter1 = model.iter_next(iter1)
+	cgsf.gsf_output_close(outfile)
+	cgsf.gsf_shutdown()
+

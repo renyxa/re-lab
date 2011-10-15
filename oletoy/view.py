@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 
-version = "0.5.65"
+version = "0.5.66"
 
 ui_info = \
 '''<ui>
@@ -257,7 +257,12 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_add (self, action):
 		pn = self.notebook.get_current_page()
 		if pn != -1:
-			dictmod, dictview = mf.emf_gentree()
+			if self.das[pn].type == "EMF":
+				dictmod, dictview = mf.emf_gentree()
+			elif self.das[pn].type[:3] == "XLS":
+				dictmod, dictview = xls.gentree()
+			else:
+				return
 			dictview.connect("row-activated", self.on_dict_row_activated)
 			dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
 			dictwin.set_resizable(True)
@@ -276,6 +281,7 @@ class ApplicationMainWindow(gtk.Window):
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		type = model.get_value(iter1,1)[0]
+		print 'Type'
 		value = model.get_value(iter1,3)
 		if type == "emf":
 			size = model.get_value(iter1,2)+4
@@ -283,6 +289,11 @@ class ApplicationMainWindow(gtk.Window):
 		elif type == "wmf":
 			size = model.get_value(iter1,2)+2
 			model.set_value(iter1,3,struct.pack("<I",len(value)/2+1)+value[4:]+'\x00'*2)
+		elif type == "xls":
+			size = model.get_value(iter1,2)+1
+			model.set_value(iter1,3,value[:2]+struct.pack("<H",size)+value[4:3+size]+'\x00')
+		else:
+			return
 		model.set_value(iter1,2,size)
 
 	def activate_less (self, action):
@@ -290,7 +301,6 @@ class ApplicationMainWindow(gtk.Window):
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		type = model.get_value(iter1,1)[0]
-		print "Type ",type
 		size = model.get_value(iter1,2)
 		value = model.get_value(iter1,3)
 		if type == "emf" and size > 11:
@@ -299,6 +309,10 @@ class ApplicationMainWindow(gtk.Window):
 		elif type == "wmf" and size > 7:
 			model.set_value(iter1,2,size-2)
 			model.set_value(iter1,3,struct.pack("<I",len(value)/2-1)+value[4:size-2])
+		elif type == "xls" and size > 0:
+			model.set_value(iter1,2,size-1)
+			model.set_value(iter1,3,value[:2]+struct.pack("<H",size-1)+value[4:3+size])
+
 
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
@@ -308,32 +322,43 @@ class ApplicationMainWindow(gtk.Window):
 		model2, iter2 = treeSelection.get_selected()
 		iter = dictmodel.get_iter(path)
 		type = dictmodel.get_value(iter,1)
-		if type != -1:
-			size = int(dictmodel.get_value(iter,2))
-			if iter2:
-				if model.get_value(iter2,1)[1] == 0x46:
-					if type > 0x4000:
-						cursize = model2.get_value(iter2,2)
-						curval = model2.get_value(iter2,3)
-						addval = dictmodel.get_value(iter,3)
-						model2.set_value(iter2,2,size+len(addval))
-						model2.set_value(iter2,3,curval+addval)
-						#clear and parse GDIComment again
-						mf.parse_gdiplus(addval,-16,model2,iter2)
+		if self.das[pn].type[:3] == "XLS":
+			iter1 = model.insert_after(None,iter2)
+			model.set_value(iter1,0,dictmodel.get_value(iter,0))
+			model.set_value(iter1,1,("XLS",type))
+			model.set_value(iter1,2,4)
+			model.set_value(iter1,3,struct.pack("<H",type)+"\x00"*2)
+			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+			model.set_value(iter1,7,"0x%02x"%type)
+			self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
+
+		elif self.das[pn].type == "EMF":
+			if type != -1:
+				size = int(dictmodel.get_value(iter,2))
+				if iter2:
+					if model.get_value(iter2,1)[1] == 0x46:
+						if type > 0x4000:
+							cursize = model2.get_value(iter2,2)
+							curval = model2.get_value(iter2,3)
+							addval = dictmodel.get_value(iter,3)
+							model2.set_value(iter2,2,size+len(addval))
+							model2.set_value(iter2,3,curval+addval)
+							#clear and parse GDIComment again
+							mf.parse_gdiplus(addval,-16,model2,iter2)
+					else:
+						iter1 = model.insert_after(None,iter2)
 				else:
-					iter1 = model.insert_after(None,iter2)
-			else:
-				iter1 = model.append(None,None)
-			if model.get_value(iter2,1)[1] != 0x46:
-				rname = mf.emr_ids[type]
-				model.set_value(iter1,0,rname)
-				model.set_value(iter1,1,("emf",type))
-				model.set_value(iter1,2,size)
-			# check dict rec type, if EMF+ -- wrap it into GDI comment
-				model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
-				model.set_value(iter1,6,model.get_string_from_iter(iter1))
-				self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
-				print "Insert:",rname,size
+					iter1 = model.append(None,None)
+				if model.get_value(iter2,1)[1] != 0x46:
+					rname = mf.emr_ids[type]
+					model.set_value(iter1,0,rname)
+					model.set_value(iter1,1,("emf",type))
+					model.set_value(iter1,2,size)
+				# check dict rec type, if EMF+ -- wrap it into GDI comment
+					model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
+					model.set_value(iter1,6,model.get_string_from_iter(iter1))
+					self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
+					print "Insert:",rname,size
 
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
@@ -346,6 +371,10 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				vsd.save(self.das[pn],fname)
+		elif ftype[0:3] == "XLS":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				xls.save(self.das[pn],fname)
 		elif ftype == "doc":
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:

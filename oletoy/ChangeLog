@@ -1,3 +1,7 @@
+2011-10-14  Valek Filippov
+
+		* XLS: save/insert/more/less implemented
+
 2011-10-10  Valek Filippov
 
 		* XLS: more records parsing.
