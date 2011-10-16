@@ -533,7 +533,7 @@ def TextBlock (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "BottomMargin", 1, "%.2f"%round(struct.unpack("<d",value[0x2f:0x37])[0]*72),2,0x2f,3,8,4,"<d")
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "VAlign", 1, "%d"%ord(value[0x37]),2,0x37,3,1,4,"<I")
+	hd.hdmodel.set (iter1, 0, "VAlign", 1, "%d"%ord(value[0x37]),2,0x37,3,1,4,"<B")
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "TxtBG CLR Id", 1, "%d"%ord(value[0x38]),2,0x38,3,1,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)

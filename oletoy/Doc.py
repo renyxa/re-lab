@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp,rx2,fh
+import ole,mf,svm,cdr,clp,rx2,fh,mdb
 
 class Page:
 	def __init__(self):
@@ -84,6 +84,12 @@ class Page:
 			self.type = "REX2"
 			print "Probably REX2"
 			rx2.open(buf,self)
+			return 0
+		
+		if buf[4:19] == "Standard Jet DB" or buf[4:19] == "Standard ACE DB":
+			self.type = "MDB"
+			print "Probably MDB"
+			mdb.parse (buf,self)
 			return 0
 		
 		fh_off = buf.find('FreeHand')
