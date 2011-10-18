@@ -23,7 +23,7 @@ import hexdump
 import Doc, cmd
 import escher
 import vsd, vsdchunks,vsdstream4
-import xls, vba, ole, doc
+import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 
 version = "0.5.66"
@@ -659,6 +659,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif	ntype[0] == "xls":
 					if xls.biff5_ids.has_key(ntype[1]):
 						xls.biff5_ids[ntype[1]](hd,data)
+				elif ntype[0] == "mdb":
+					if mdb.rec_ids.has_key(ntype[1]):
+						mdb.rec_ids[ntype[1]](hd,data)
 				elif	ntype[0] == "cfb":
 					if ole.ole_ids.has_key(ntype[1]):
 						ole.ole_ids[ntype[1]](hd,data)
