@@ -751,15 +751,32 @@ def ShapeStencil (hd, size, value):
 def TextField (hd, size, value):
 	fmt = ord(value[0x1a])
 	tdiff = struct.unpack("<d",value[0x1b:0x23])[0]
+	dlen = 8
+	dfmt = "<d"
 	if fmt == 0x28:
 		#FIXME! has to convert fractional part to time of the day
-		dt = datetime.date(1908,2,6)+datetime.timedelta(tdiff)
+		dt = datetime.date(1900,1,1)+datetime.timedelta(tdiff)
 		dname = "Date"
+	elif fmt == 0xe8:
+		dt = struct.unpack("<I",value[0x1b:0x1f])[0]
+		dname = "Name ID"
+		dlen = 4
+		dfmt = "<I"
 	else:
 		dt = "%.2f"%tdiff
 		dname = "Value"
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, dname, 1, dt,2,0x1b,3,8,4,"<d")
+	hd.hdmodel.set (iter1, 0, dname, 1, dt,2,0x1b,3,dlen,4,dfmt)
+	iter1 = hd.hdmodel.append(None, None)
+	dtype = struct.unpack("<H",value[0x2d:0x2f])[0]
+	hd.hdmodel.set (iter1, 0, "Type", 1, dtype,2,0x2d,3,2,4,"<H")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "UICat", 1, "0x%02x"%ord(value[0x2f]),2,0x2f,3,1,4,"B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "UICod", 1, "0x%02x"%ord(value[0x30]),2,0x30,3,1,4,"B")
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, "UIFmt", 1, "0x%02x"%ord(value[0x31]),2,0x31,3,1,4,"B")
+
 	if len(value)>0x49:
 		vsdblock.parse(hd, size, value, 0x49)
 	

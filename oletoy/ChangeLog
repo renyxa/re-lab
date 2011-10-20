@@ -1,3 +1,7 @@
+2011-10-20  Valek Filippov
+
+		* VSD: textfield parsing improvements.
+
 2011-10-18  Valek Filippov
 
 		* MDB: added initial support, ported some data from mdbtools.
