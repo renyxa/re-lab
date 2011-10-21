@@ -86,7 +86,7 @@ def inflate_vba_stream (data):
     res += buf
   return res
 
-def inflate_vba_oletoy (data):
+def inflate_vba_oletoy (data,ptype):
   if ord(data[0]) != 1:
     print "Attempt to inflate wrong stream"
     return ""
@@ -97,7 +97,11 @@ def inflate_vba_oletoy (data):
     flags = struct.unpack("<H",data[off:off+2])[0]
     cf = (flags&0xf000)/0x1000
     clen = flags&0xfff
-    if cf == 0xb and clen > 0 and (len(data)-off < 4096): # to workaround MSOffice compression bugs
+   
+# to workaround MSOffice compression bugs.
+# XLS is slightly different than PPT and DOC
+
+    if cf == 0xb and clen > 0 and ((ptype[:3] != "XLS" and len(data)-off < 4096) or ptype[:3] == "XLS"):
       res += inflate_vba_stream(data[off+2:off+2+clen+1])
       off += clen+3
     else:
@@ -105,7 +109,7 @@ def inflate_vba_oletoy (data):
       off += 4096
   return res
 
-def inflate_vba_gsf (data):
+def inflate_vba_gsf (data,ptype):
   cgsf.gsf_init()
   cgsf.gsf_input_memory_new.restype = C.c_void_p
   src = cgsf.gsf_input_memory_new (data,len(data),False)
@@ -115,8 +119,8 @@ def inflate_vba_gsf (data):
   cgsf.gsf_shutdown()
   return res
   
-def inflate_vba (data):
-  return inflate_vba_oletoy (data)
+def inflate_vba (data,ptype):
+  return inflate_vba_oletoy (data,ptype)
   
 
 # vsd inflate

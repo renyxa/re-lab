@@ -74,8 +74,6 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			if pos != cgsf.gsf_input_tell(infchild):
 				data += res
 			
-		if infname == "VBA":
-			ftype = "vba"
 		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,infname)
 		page.model.set_value(iter1,1,("ole",dirflag))
@@ -108,6 +106,9 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			ftype = "ppt"
 			page.model.set_value(iter1,1,("ppt",dirflag))
 			ppt.parse (page, data, iter1)
+		if infname == "VBA":
+			page.type = ftype
+			ftype = "vba"
 		if ftype == "vba" and infname == "dir":
 			page.model.set_value(iter1,1,("vba",dirflag))
 			vbaiter = iter1

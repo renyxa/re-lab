@@ -103,7 +103,7 @@ def hd_table(hd,buf):
 		colnumwd = struct.unpack("<H",buf[offset+84+i*25:offset+86+i*25])[0]
 		add_iter(hd,"  Colnum (with deleted)",colnumwd,offset+84+i*25,2,"<H")
 		scale = struct.unpack("<I",buf[offset+86+i*25:offset+90+i*25])[0]
-		add_iter(hd,"  Prec/Scale??",scale,offset+86+i*25,4,"<I")
+		add_iter(hd,"  LangID??",scale,offset+86+i*25,4,"<I")
 		add_iter(hd,"  Bitmask",ord(buf[offset+90+i*25]),offset+90+i*25,1,"B")
 		add_iter(hd,"  Unkn2",ord(buf[offset+91+i*25]),offset+91+i*25,1,"B")
 		add_iter(hd,"  Unkn3","%02x"%struct.unpack("<I",buf[offset+92+i*25:offset+96+i*25]),offset+92+i*25,4,"<I")
@@ -119,6 +119,22 @@ def hd_table(hd,buf):
 		add_iter(hd,"Column NameLen",cnlen,offset+100,2,"<H")
 		add_iter(hd,"  Column Name",unicode(cname,"utf16"),offset+102,cnlen,"txt")
 		offset += 2+ cnlen
+
+	for i in range(nridx):
+		nri_unkn2 = struct.unpack("<I",buf[offset+100:offset+104])[0]
+		add_iter(hd,"nri_unkn2",nri_unkn2,offset+100,4,"<I")
+		for j in range(10):
+			cnum = struct.unpack("<H",buf[offset+104+j*3:offset+106+j*3])[0]
+			corder = ord(buf[offset+106+j*3])
+			add_iter(hd," Column Num",cnum,offset+104+j*3,2,"<H")
+			add_iter(hd,"  Column Order",corder,offset+106+j*3,1,"B")
+		offset += 28
+		nri_unkn3 = struct.unpack("<I",buf[offset+106:offset+110])[0]
+		add_iter(hd,"nri_unkn3",nri_unkn3,offset+106,4,"<I")
+		first_dp = struct.unpack("<I",buf[offset+110:offset+114])[0]
+		add_iter(hd,"Data Ptr IDX page",first_dp,offset+110,4,"<I")
+		add_iter(hd,"Flags",ord(buf[offset+114]),offset+114,1,"B")
+		offset += 24
 
 rec_ids = {"data_hdr":hd_data_hdr, "Table":hd_table}
 

@@ -1,6 +1,8 @@
 2011-10-20  Valek Filippov
 
 		* VSD: textfield parsing improvements.
+		* VBA: change inflate_vba for XLS.
+		* MDB: more fields in table_def.
 
 2011-10-18  Valek Filippov
 
