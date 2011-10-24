@@ -117,10 +117,11 @@ def hd_table(hd,buf):
 		cnlen = struct.unpack("<H",buf[offset+100:offset+102])[0]
 		cname = buf[offset+102:offset+102+cnlen]
 		add_iter(hd,"Column NameLen",cnlen,offset+100,2,"<H")
-		add_iter(hd,"  Column Name",unicode(cname,"utf16"),offset+102,cnlen,"txt")
+		add_iter(hd,"  Column Name",unicode(cname,"utf16"),offset+102,cnlen,"utxt")
 		offset += 2+ cnlen
 
 	for i in range(nridx):
+		add_iter(hd,"---- %02x"%i,"",offset+100,0,"txt")
 		nri_unkn2 = struct.unpack("<I",buf[offset+100:offset+104])[0]
 		add_iter(hd,"nri_unkn2",nri_unkn2,offset+100,4,"<I")
 		for j in range(10):
@@ -134,7 +135,37 @@ def hd_table(hd,buf):
 		first_dp = struct.unpack("<I",buf[offset+110:offset+114])[0]
 		add_iter(hd,"Data Ptr IDX page",first_dp,offset+110,4,"<I")
 		add_iter(hd,"Flags",ord(buf[offset+114]),offset+114,1,"B")
+		add_iter(hd,"nri_unkn4","",offset+115,9,"txt")
 		offset += 24
+
+	for i in range(nridx):
+		add_iter(hd,"---- %02x"%i,"",offset+100,0,"txt")
+		nri_unkn5 = struct.unpack("<I",buf[offset+100:offset+104])[0]
+		idx_num = struct.unpack("<I",buf[offset+104:offset+108])[0]
+		idx_num2 = struct.unpack("<I",buf[offset+108:offset+112])[0]
+		nri_unknfrob = ord(buf[offset+112])
+		nri_unkn6 = struct.unpack("<I",buf[offset+113:offset+117])[0]
+		nri_unkn7 = struct.unpack("<I",buf[offset+117:offset+121])[0]
+		nri_unkn8 = struct.unpack("<H",buf[offset+121:offset+123])[0]
+		prikey = ord(buf[offset+123])
+		nri_unkn9 = struct.unpack("<I",buf[offset+124:offset+128])[0]
+		add_iter(hd,"nri_unkn5",nri_unkn5,offset+100,4,"<I")
+		add_iter(hd,"Num of Index",idx_num,offset+104,4,"<I")
+		add_iter(hd,"Num of Index2",idx_num2,offset+108,4,"<I")
+		add_iter(hd,"nri_unknfrob",nri_unknfrob,offset+112,1,"B")
+		add_iter(hd,"nri_unkn6",nri_unkn6,offset+113,4,"<I")
+		add_iter(hd,"nri_unkn7",nri_unkn7,offset+117,4,"<I")
+		add_iter(hd,"nri_unkn8",nri_unkn8,offset+121,2,"<H")
+		add_iter(hd,"Primary Key",prikey,offset+123,1,"B")
+		add_iter(hd,"nri_unkn9",nri_unkn9,offset+124,4,"<I")
+		offset+=28
+
+	for i in range(nridx):
+		cnlen = struct.unpack("<H",buf[offset+100:offset+102])[0]
+		cname = buf[offset+102:offset+102+cnlen]
+		add_iter(hd,"Index NameLen",cnlen,offset+100,2,"<H")
+		add_iter(hd,"  Index Name",unicode(cname,"utf16"),offset+102,cnlen,"utxt")
+		offset += 2+ cnlen
 
 rec_ids = {"data_hdr":hd_data_hdr, "Table":hd_table}
 

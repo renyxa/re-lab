@@ -1,3 +1,7 @@
+2011-10-23  Valek Filippov
+
+		* MDB: more fields in table_def.
+
 2011-10-20  Valek Filippov
 
 		* VSD: textfield parsing improvements.
