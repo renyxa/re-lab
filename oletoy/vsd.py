@@ -279,26 +279,6 @@ def get_colors (page, data, version, parent):
 		clr = "#%02x%02x%02x"%(r,g,b)
 		model.set (iter1, 0, txt,1,("vsd","clr"),2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
 
-def getnames(doc, niter):
-##    print 'Names were found...',doc.model.iter_n_children(niter)
-    names = doc.names
-    for i in range(doc.model.iter_n_children(niter)):
-            nameiter = doc.model.iter_nth_child(niter, i)
-            npntr = doc.model.get_value(nameiter,0)["pointer"]
-            nitername = doc.model.get_value(nameiter,0)["name"]
-            shift = 4
-            if npntr.format&2 == 2 : #compressed
-                shift = 8
-            if doc.version == 6:
-                name = unicode(npntr.data[shift:],'cp1251').encode('utf-8')  ## FIXME! have to check locale in the file
-            if doc.version == 11:
-                name = unicode(npntr.data[shift:],'utf-16').encode('utf-8')
-            cntr = name.find('\00')
-            names[i] = name[0:cntr]
-##            print 'Name: ',i,name
-            nitername = nitername + '   \t'+name
-            doc.model.set_value(nameiter,1,nitername)
-
 def collect_chunks (model,parent):
   value = ""
   for i in range(model.iter_n_children(parent)):

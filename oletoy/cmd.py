@@ -97,6 +97,15 @@ def parse (cmd, entry, page):
 				print "OLE stream not found at ",chaddr
 		elif "esc" == chtype.lower():
 			escher.parse (model,buf[int(chaddr,16):],iter1)
+		elif "xls" == chtype.lower():
+			ch2 = chaddr[1]
+			if ch2.isdigit():
+				coladdr = ord(chaddr[0].lower()) - 97
+				rowaddr = int(chaddr[1:]) - 1
+			else:
+				coladdr = 26*(ord(chaddr[0].lower()) - 96)+ ord(chaddr[1].lower()) - 97
+				rowaddr = int(chaddr[2:]) - 1
+#			print "Column",coladdr,"Row",rowaddr
 		elif "rx2" == chtype.lower():
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)

@@ -1,6 +1,7 @@
 2011-10-25  Valek Filippov
 
 		* VSD: fix ability to save.
+		* XLS: preparation for XLS-specific search.
 
 2011-10-23  Valek Filippov
 
