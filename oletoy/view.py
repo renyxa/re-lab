@@ -554,7 +554,7 @@ class ApplicationMainWindow(gtk.Window):
 			value = value[0:offset] + struct.pack(fmt,float(new_text))+value[offset+size:]
 
 		model.set_value(iter1,3,value)
-		if self.das[pn].type == "VSD":
+		if self.das[pn].type == "vsd":
 			(ifmt,itype,t) = model.get_value(iter1,1)
 		else:
 			(ifmt,itype) = model.get_value(iter1,1)

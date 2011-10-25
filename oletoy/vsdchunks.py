@@ -174,10 +174,12 @@ def Text (hd, size, value):
 	# no support for LangID for v.6
 	if hd.version == 11:
 		txt = unicode(value[0x1b:],'utf-16').encode('utf-8')
+		fmt = "utxt"
 	else:
 		txt = value[0x1b:]
+		fmt = "txt"
 	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Text", 1,txt,2,0x1b,3,len(value)-8,4,"txt")
+	hd.hdmodel.set (iter1, 0, "Text", 1,txt,2,0x1b,3,len(value)-8,4,fmt)
 
 def Page (hd, size, value):
 	List (hd, size, value)

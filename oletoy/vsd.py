@@ -367,14 +367,14 @@ def collect_vd (model, parent):
 def dump_tree (model, parent, outfile):
 	ntype = model.get_value(parent,1)
 	name = model.get_value(parent,0)
-	if ntype[1] == 0:
+	if name != 'VisioDocument':
 	  value = model.get_value(parent,3)
 	else: # VisioDocument
 	  value = collect_vd (model, parent)
+
 	child = cgsf.gsf_outfile_new_child(outfile,name,0)
 	cgsf.gsf_output_write (child,len(value),value)
 	cgsf.gsf_output_close (child)
-
 
 def save (page, fname):
 	model = page.view.get_model()
