@@ -36,7 +36,27 @@ def arg_conv (ctype,carg):
 		data = carg
 	return data
 
-def recfind(model,path,iter,(page,data)):
+def xlsfind (model,path,iter,(page,rowaddr,coladdr)):
+	rname = model.get_value(iter,0)
+	rdata = model.get_value(iter,3)
+	if rname == 'Dimensions':
+		rwmin = struct.unpack('<I',rdata[4:8])[0]
+		rwmax = struct.unpack('<I',rdata[8:12])[0]
+		colmin = struct.unpack('<H',rdata[12:14])[0]
+		colmax = struct.unpack('<H',rdata[14:16])[0]
+		if rowaddr < rwmin or rowaddr > rwmax or coladdr < colmin or coladdr > colmax:
+			return True
+	if rname == 'LabelSst' or rname == 'Number' or rname == 'Blank' or rname == 'Formula':
+		rw = struct.unpack('<H',rdata[4:6])[0]
+		col = struct.unpack('<H',rdata[6:8])[0]
+		if rowaddr == rw and coladdr == col:
+			s_iter = page.search.append(None,None)
+			page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+			page.search.set_value(s_iter,2,"%s (%d)"%(rname,model.get_value(iter,2)))
+#			print 'Found',model.get_string_from_iter(iter)
+			return True
+
+def recfind (model,path,iter,(page,data)):
 	rec = model.get_value(iter,0)
 	arg = data.find(":")
 	rdata1 = data
@@ -106,6 +126,9 @@ def parse (cmd, entry, page):
 				coladdr = 26*(ord(chaddr[0].lower()) - 96)+ ord(chaddr[1].lower()) - 97
 				rowaddr = int(chaddr[2:]) - 1
 #			print "Column",coladdr,"Row",rowaddr
+			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+			model.foreach(xlsfind,(page,rowaddr,coladdr))
+			page.show_search("XLS: cell %s"%chaddr)
 		elif "rx2" == chtype.lower():
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
