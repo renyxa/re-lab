@@ -496,8 +496,8 @@ def parse (page, data, parent):
 			elif rtype == 0x1033:
 				iters.append(iter1)
 				curiter = iter1
-			elif rtype == 0x208: #row
-				rname = "Row %04x"%struct.unpack("<H",data[offset+0x10:offset+0x12])
+#			elif rtype == 0x208: #row
+#				rname = "Row %04x"%struct.unpack("<H",data[offset+0x10:offset+0x12])
 			elif rtype == 0xe0: #xf
 				rname = "XF %02x"%idx
 				idx += 1

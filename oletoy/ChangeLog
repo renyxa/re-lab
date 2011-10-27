@@ -1,3 +1,8 @@
+2011-10-26  Valek Filippov
+
+		* Add command history (arrow up/down to navigate)
+		* Add row expand/collapse with arrow right/left.
+
 2011-10-25  Valek Filippov
 
 		* VSD: fix ability to save.

@@ -114,6 +114,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.entry = gtk.Entry()
 		self.statusbar.pack_start(self.entry, False,False,2)
 		self.entry.connect ("activate",self.on_entry_activate)
+		self.entry.connect ("key-press-event", self.on_entry_keypressed)
 		self.label = gtk.Label()
 		self.label.set_use_markup(True)
 		self.statusbar.pack_start(self.label, True,True,2)
@@ -127,6 +128,8 @@ class ApplicationMainWindow(gtk.Window):
 		self.das = {}
 		self.fname = ''
 		self.selection = None
+		self.cmdhistory = []
+		self.curcmd = -1
 
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
@@ -414,39 +417,63 @@ class ApplicationMainWindow(gtk.Window):
 
 	def on_entry_activate (self,action):
 		goto = self.entry.get_text()
-		pn = self.notebook.get_current_page()
-		col = self.das[pn].view.get_column(0)
-		if goto[0] == "#":
-			pos = goto.find("+")
-			if pos != -1:
-				addr1 = int(goto[1:pos],16)
-				addr2 = int(goto[pos+1:],16)
-				addr = addr1+addr2
-			else:
-				pos = goto.find("-")
+		if len(goto) > 0:
+			if self.curcmd == -1 or self.cmdhistory[self.curcmd] != goto:
+				self.cmdhistory.append(goto)
+				self.curcmd = -1
+			pn = self.notebook.get_current_page()
+			col = self.das[pn].view.get_column(0)
+			if goto[0] == "#":
+				pos = goto.find("+")
 				if pos != -1:
 					addr1 = int(goto[1:pos],16)
 					addr2 = int(goto[pos+1:],16)
-					addr = addr1-addr2
+					addr = addr1+addr2
 				else:
-					addr = int(goto[1:], 16)
-			self.entry.set_text("#%02x"%addr)
-			hd = self.das[pn].hd
-			try:
-				buffer_hex = hd.txtdump_hex.get_buffer()
-				vadj = hd.vscroll2.get_vadjustment()
-				newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
-				vadj.set_value(newval)
-			except:
-				print "Wrong address"
-		elif goto[0] == "$" or goto[0] == "?":
-			cmd.parse (goto,self.entry,self.das[pn])
-		else:
-			try:
-				self.das[pn].view.expand_to_path(goto)
-				self.das[pn].view.set_cursor_on_cell(goto)
-			except:
-				print "No such path"
+					pos = goto.find("-")
+					if pos != -1:
+						addr1 = int(goto[1:pos],16)
+						addr2 = int(goto[pos+1:],16)
+						addr = addr1-addr2
+					else:
+						addr = int(goto[1:], 16)
+				self.entry.set_text("#%02x"%addr)
+				hd = self.das[pn].hd
+				try:
+					buffer_hex = hd.txtdump_hex.get_buffer()
+					vadj = hd.vscroll2.get_vadjustment()
+					newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
+					vadj.set_value(newval)
+				except:
+					print "Wrong address"
+			elif goto[0] == "$" or goto[0] == "?":
+				cmd.parse (goto,self.entry,self.das[pn])
+			else:
+				try:
+					self.das[pn].view.expand_to_path(goto)
+					self.das[pn].view.set_cursor_on_cell(goto)
+				except:
+					print "No such path"
+
+	def on_entry_keypressed (self, view, event):
+		if len(self.cmdhistory) > 0:
+			if event.keyval == 65362:
+				if self.curcmd == -1:
+					if len(self.cmdhistory) > 1:
+						self.curcmd = len(self.cmdhistory) - 2
+					else:
+						self.curcmd = 0
+				elif self.curcmd > 0:
+					self.curcmd -= 1
+				self.entry.set_text(self.cmdhistory[self.curcmd])
+				return True
+			elif event.keyval == 65364:
+				if self.curcmd == -1:
+					self.curcmd = len(self.cmdhistory) - 1
+				elif self.curcmd < len(self.cmdhistory) - 1:
+					self.curcmd += 1
+				self.entry.set_text(self.cmdhistory[self.curcmd])
+				return True
 
 	def activate_close(self, action):
 		pn = self.notebook.get_current_page()
@@ -472,6 +499,10 @@ class ApplicationMainWindow(gtk.Window):
 					if intPath >= 0:
 						view.set_cursor(intPath)
 						view.grab_focus()
+			elif event.keyval == 65363 and model.iter_n_children(iter1)>0:
+				view.expand_row(intPath,False)
+			elif event.keyval == 65361 and model.iter_n_children(iter1)>0:
+				view.collapse_row(intPath)
 			else:
 				if event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK:
 					self.selection = (model.get_value(iter1,0),model.get_value(iter1,1),model.get_value(iter1,2),model.get_value(iter1,3))
