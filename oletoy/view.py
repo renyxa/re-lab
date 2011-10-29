@@ -49,6 +49,7 @@ ui_info = \
 		<menuitem action='Dict'/>
 	</menu>
 	<menu action='HelpMenu'>
+		<menuitem action='Manual'/>
 		<menuitem action='About'/>
 	</menu>
 	</menubar>
@@ -189,12 +190,47 @@ class ApplicationMainWindow(gtk.Window):
 				"About", "",					# label, accelerator
 				"About OleToy",								   # tooltip
 				self.activate_about ),
+			( "Manual", gtk.STOCK_HELP,							 # name, stock id
+				"Manual", "<control>H",					# label, accelerator
+				"Manual for OleToy",								   # tooltip
+				self.activate_manual ),
 		);
 
 		# Create the menubar and toolbar
 		action_group = gtk.ActionGroup("AppWindowActions")
 		action_group.add_actions(entries)
 		return action_group
+
+	def activate_manual (self, action):
+		w = gtk.Window()
+		t = gtk.TextView();
+		tb = t.get_buffer()
+		iter_txt = tb.get_iter_at_offset(0)
+		mytxt = "Main tree:\n\
+	Up/Down - walk the tree.\n\
+	Right/Left - expand/collapse branch.\n\
+	Right click - copy tree path to entry line.\n\
+	Delete - remove leaf from the tree\n\
+	Type text for quick search (Up/Down for next/prev result).\n\n\
+Entry line:\n\
+	Up/Down - scroll 'command history'\n\
+	gtk tree path - scroll/expand tree\n\
+	#addr - scroll hexdump to addr\n\
+	#addr+shift, #addr-shift - calculate new addr and scroll hexdump\n\
+	$ole{@addr} - try to parse record as OLE starting from addr (or 0)\n\
+	$xls@RC - search XLS file for record related to cell RC\n\
+	?aSTRING - search for ASCII string\n\
+	?uSTRING - search for Unicode string\n\
+	?x0123 - search for hex value\n\
+	?rREC{:[aux]STRING} - search for record with REC in the name and STRING in data.\n\n\
+Hexdump selection:\n\
+	Select 2,3,4 or 8 bytes - check tooltip in statusbar.\n"
+		tb.insert(iter_txt, mytxt)
+		w.set_title("OLE Toy Manual")
+		w.set_default_size(520, 300)
+		w.add(t)
+		w.show_all()
+
 
 	def activate_dict (self, action):
 		pn = self.notebook.get_current_page()
