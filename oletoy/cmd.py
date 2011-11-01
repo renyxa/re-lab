@@ -46,7 +46,7 @@ def xlsfind (model,path,iter,(page,rowaddr,coladdr)):
 		colmax = struct.unpack('<H',rdata[14:16])[0]
 		if rowaddr < rwmin or rowaddr > rwmax or coladdr < colmin or coladdr > colmax:
 			return True
-	if rname == 'LabelSst' or rname == 'Number' or rname == 'Blank' or rname == 'Formula':
+	if rname == 'LabelSst' or rname == 'Number' or rname == 'Blank' or rname == 'Formula' or rname == 'RK':
 		rw = struct.unpack('<H',rdata[4:6])[0]
 		col = struct.unpack('<H',rdata[6:8])[0]
 		if rowaddr == rw and coladdr == col:

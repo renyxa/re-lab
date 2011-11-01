@@ -393,7 +393,7 @@ def biff_blank(hd,data):
 def biff_number (hd,data):
 	off = 4
 	biff_blank(hd,data)
-	num = struct.unpack("<d",data[6+off:114+off])[0]
+	num = struct.unpack("<d",data[6+off:14+off])[0]
 	add_iter (hd,"num",num,6+off,8,"<d")
 
 #0x208
@@ -450,11 +450,31 @@ def biff_defrowh (hd,data):
 		miyRwHidden = struct.unpack("<H",data[4+off:6+off])[0]
 		add_iter (hd,"miyRwHidden",miyRwHidden,off+4,2,"<H")
 
-
+#0x27e
+def biff_rk (hd,data):
+	off = 4
+	biff_blank(hd,data)
+	value = struct.unpack("<I",data[6+off:10+off])[0]
+	fx100 = value&1
+	fint = (value&2)/2
+	num = value/4
+	add_iter (hd,"fx100",fx100,6+off,1,"B")
+	add_iter (hd,"fint",fint,6+off,1,"B")
+	if fint:
+		numv = num
+	else:
+		n = struct.pack("\x00\x00\x00\x00"+num*4)
+		numv = struct.unpack("<d",n)
+	if fx100:
+		numv *= 100
+	
+	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
+ 
 
 biff5_ids = {0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
 	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
-	0x1ae:biff_supbook,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh}
+	0x1ae:biff_supbook,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
+	0x27e:biff_rk}
 
 def parse (page, data, parent):
 	offset = 0
