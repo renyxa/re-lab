@@ -756,8 +756,7 @@ def TextField (hd, size, value):
 	dlen = 8
 	dfmt = "<d"
 	if fmt == 0x28:
-		#FIXME! has to convert fractional part to time of the day
-		dt = datetime.date(1900,1,1)+datetime.timedelta(tdiff)
+		dt = datetime.datetime(1900,1,1)+datetime.timedelta(tdiff)
 		dname = "Date"
 	elif fmt == 0xe8:
 		dt = struct.unpack("<I",value[0x1b:0x1f])[0]
