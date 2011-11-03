@@ -1,6 +1,10 @@
+2011-11-03  Valek Filippov
+
+		* VSD: small addition to TextField.
+
 2011-10-31  Valek Filippov
 
-		*XLS: parse RK (not sure about RkNum for fint = 0), add 'RK' into search list.
+		* XLS: parse RK (not sure about RkNum for fint = 0), add 'RK' into search list.
 
 2011-10-28  Valek Filippov
 

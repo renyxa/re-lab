@@ -767,8 +767,16 @@ def TextField (hd, size, value):
 	else:
 		dt = "%.2f"%tdiff
 		dname = "Value"
+	fmtidtype = ord(value[0x24])
+	if fmtidtype == 0xe8:
+		fmtid = struct.unpack("<I",value[0x25:0x29])[0]
+		fmtname = "Format ID"
+		fmtlen = 4
+		fmtfmt = "<I"
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, dname, 1, dt,2,0x1b,3,dlen,4,dfmt)
+	iter1 = hd.hdmodel.append(None, None)
+	hd.hdmodel.set (iter1, 0, fmtname, 1, fmtid,2,0x25,3,fmtlen,4,fmtfmt)
 	iter1 = hd.hdmodel.append(None, None)
 	dtype = struct.unpack("<H",value[0x2d:0x2f])[0]
 	hd.hdmodel.set (iter1, 0, "Type", 1, dtype,2,0x2d,3,2,4,"<H")
