@@ -1,6 +1,7 @@
 2011-11-04  Valek Filippov
 
-		"$esc" was not in Help->Manual.
+		* "$esc" was not in Help->Manual.
+		* VSD: fix the date.
 
 2011-11-03  Valek Filippov
 
