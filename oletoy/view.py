@@ -217,6 +217,7 @@ Entry line:\n\
 	gtk tree path - scroll/expand tree\n\
 	#addr - scroll hexdump to addr\n\
 	#addr+shift, #addr-shift - calculate new addr and scroll hexdump\n\
+	$esc{@addr} - try to parse record as Escher starting from addr (or 0)\n\
 	$ole{@addr} - try to parse record as OLE starting from addr (or 0)\n\
 	$xls@RC - search XLS file for record related to cell RC\n\
 	?aSTRING - search for ASCII string\n\

@@ -1,3 +1,7 @@
+2011-11-04  Valek Filippov
+
+		"$esc" was not in Help->Manual.
+
 2011-11-03  Valek Filippov
 
 		* VSD: small addition to TextField, change date to date/time.
