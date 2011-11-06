@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 
-version = "0.5.67"
+version = "0.5.68"
 
 ui_info = \
 '''<ui>
@@ -53,13 +53,6 @@ ui_info = \
 		<menuitem action='About'/>
 	</menu>
 	</menubar>
-</ui>'''
-
-ui_popup = \
-'''<ui>
-	<popup name="EntryPopup">
-		<menuitem name="child" action="child"/>
-	</popup>
 </ui>'''
 
 def register_stock_icons():
@@ -934,37 +927,6 @@ Hexdump selection:\n\
 		if resp == gtk.RESPONSE_CANCEL:
 			return None
 		return fname
-
-	def build_context_menu(self,txt,menu):
-		pn = self.notebook.get_current_page()
-		hd = self.das[pn].hd
-		merge = gtk.UIManager()
-		merge.insert_action_group(self.__create_action_group_popup(), 0)
-		bounds = hd.txtdump_hex.get_buffer().get_selection_bounds()
-		try:
-			mergeid = merge.add_ui_from_string(ui_popup)
-			menu = merge.get_widget("/EntryPopup")
-			if not bounds:
-				menu.set_sensitive(False)
-			menu.popup(None,None,None,0,0)
-		except gobject.GError, msg:
-			print "building menus failed: %s" % msg
-
-	def __create_action_group_popup(self):
-		# GtkActionEntry
-		entries = (
-		  ( "child", None,					# name, stock id
-			"Add child","<control>A",					  # label, accelerator
-			"Add EMF command",							 # tooltip
-			self.activate_child),
-		);
-		# Create the menubar and toolbar
-		action_group = gtk.ActionGroup("PopupActions")
-		action_group.add_actions(entries)
-		return action_group
-
-	def activate_child(self, menuitem):
-		pn = self.notebook.get_current_page()
 
 def main():
 	ApplicationMainWindow()

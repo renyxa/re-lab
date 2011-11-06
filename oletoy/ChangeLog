@@ -1,3 +1,7 @@
+2011-11-05  Valek Filippov
+
+		* Little code clean-up.
+
 2011-11-04  Valek Filippov
 
 		* "$esc" was not in Help->Manual.
