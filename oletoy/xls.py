@@ -120,6 +120,35 @@ rec_ids = {
 	4199:"BopPopCustom", 4200:"Fbi2"
 	}
 
+ptg = {0x01:"PtgExp",0x02:"PtgTbl",0x03:"PtgAdd",0x04:"PtgSub",
+	0x05:"PtgMul",0x06:"PtgDiv",0x07:"PtgPower",0x08:"PtgConcat",
+	0x09:"PtgLt",0x0A:"PtgLe",0x0B:"PtgEq",0x0C:"PtgGe",
+	0x0D:"PtgGt",0x0E:"PtgNe",0x0F:"PtgIsect",0x10:"PtgUnion",
+	0x11:"PtgRange",0x12:"PtgUplus",0x13:"PtgUminus",0x14:"PtgPercent",
+	0x15:"PtgParen",0x16:"PtgMissArg",0x17:"PtgStr",0x1C:"PtgErr",
+	0x1D:"PtgBool",0x1E:"PtgInt",0x1F:"PtgNum",0x20:"PtgArray",
+	0x21:"PtgFunc",0x22:"PtgFuncVar",0x23:"PtgName",0x24:"PtgRef",
+	0x25:"PtgArea",0x26:"PtgMemArea",0x27:"PtgMemErr",0x28:"PtgMemNoMem",
+	0x29:"PtgMemFunc",0x2A:"PtgRefErr",0x2B:"PtgAreaErr",0x2C:"PtgRefN",
+	0x2D:"PtgAreaN",0x39:"PtgNameX",0x3A:"PtgRef3d",0x3B:"PtgArea3d",
+	0x3C:"PtgRefErr3d",0x3D:"PtgAreaErr3d",0x40:"PtgArray",0x41:"PtgFunc",
+	0x42:"PtgFuncVar",0x43:"PtgName",0x44:"PtgRef",0x45:"PtgArea",
+	0x46:"PtgMemArea",0x47:"PtgMemErr",0x48:"PtgMemNoMem",0x49:"PtgMemFunc",
+	0x4A:"PtgRefErr",0x4B:"PtgAreaErr",0x4C:"PtgRefN",0x4D:"PtgAreaN",
+	0x59:"PtgNameX",0x5A:"PtgRef3d",0x5B:"PtgArea3d",0x5C:"PtgRefErr3d",
+	0x5D:"PtgAreaErr3d",0x60:"PtgArray",0x61:"PtgFunc",0x62:"PtgFuncVar",
+	0x63:"PtgName",0x64:"PtgRef",0x65:"PtgArea",0x66:"PtgMemArea",
+	0x67:"PtgMemErr",0x68:"PtgMemNoMem",0x69:"PtgMemFunc",0x6A:"PtgRefErr",
+	0x6B:"PtgAreaErr",0x6C:"PtgRefN",0x6D:"PtgAreaN",0x79:"PtgNameX",
+	0x7A:"PtgRef3d",0x7B:"PtgArea3d",0x7C:"PtgRefErr3d",0x7D:"PtgAreaErr3d"}
+
+ptg18 = {0x01:"PtgElfLel",0x02:"PtgElfRw",0x03:"PtgElfCol",0x06:"PtgElfRwV",
+	0x07:"PtgElfColV",0x0A:"PtgElfRadical",0x0B:"PtgElfRadicalS",0x0D:"PtgElfColS",
+	0x0F:"PtgElfColSV",0x10:"PtgElfRadicalLel",0x1D:"PtgSxName"}
+
+ptg19 = {0x01:"PtgAttrSemi",0x02:"PtgAttrIf",0x04:"PtgAttrChoose",0x08:"PtgAttrGoto",
+	0x10:"PtgAttrSum",0x20:"PtgAttrBaxcel",0x21:"PtgAttrBaxcel",0x40:"PtgAttrSpace",0x41:"PtgAttrSpaceSemi"}
+
 def gentree():
 	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
 	view = gtk.TreeView(model)
@@ -134,7 +163,6 @@ def gentree():
 		niter = model.append (iter, None)
 		model.set(niter, 0, i[1], 1, i[0], 2, "0")
 	return model,view
-
 
 def add_iter (hd,name,value,offset,length,vtype):
 	iter = hd.hdmodel.append(None, None)
@@ -469,7 +497,6 @@ def biff_rk (hd,data):
 		numv *= 100
 	
 	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
- 
 
 biff5_ids = {0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
 	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
@@ -480,6 +507,7 @@ def parse (page, data, parent):
 	offset = 0
 	ftype = "XLS"
 	idx = 0
+	lblidx = 1
 	iters = []
 	iters.append(parent)
 	print "Length of iters ",len(iters)
@@ -521,6 +549,9 @@ def parse (page, data, parent):
 			elif rtype == 0xe0: #xf
 				rname = "XF %02x"%idx
 				idx += 1
+			elif rtype == 0x18: #Lbl
+				rname = "Lbl %02x"%lblidx
+				lblidx += 1
 			offset += 2
 			rlen = struct.unpack("<H",data[offset:offset+2])[0]
 			offset += 2
@@ -574,4 +605,3 @@ def save (page, fname):
 	  iter1 = model.iter_next(iter1)
 	cgsf.gsf_output_close(outfile)
 	cgsf.gsf_shutdown()
-
