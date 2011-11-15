@@ -207,6 +207,52 @@ def XLUnicodeRichExtendedString (hd,data,offset):
 		offset += cbExtRst
 	return offset
 
+
+lbl_flags = {1:"Hidden ",2:"Func ",3:"OB ",4:"Proc ",5:"CalcExp ",6:"Builtin "}
+lbl_grp = ["All", "Financial", "Date Time", "Math Trigonometry", "Statistical",
+	"Lookup", "Database", "Text", "Logical", "Info", "Commands", "Customize",
+	"Macro Control", "DDE External", "User Defined", "Engineering", "Cube"]
+lbl_names = ["Consolidate_Area", "Auto_Open", "Auto_Close", "Extract", "Database", "Criteria", "Print_Area", "Print_Titles", "Recorder", "Data_Form", "Auto_Activate", "Auto_Deactivate", "Sheet_Title", "_FilterDatabase"]
+#0x18
+def biff_lbl (hd,data):
+	off = 4
+	flags = struct.unpack("<H",data[0+off:2+off])[0]
+	fname = ""
+	fbltin = 0
+	for i in range(6):
+		if flags&(2**i):
+			fname += lbl_flags[i+1]
+			if i == 5:
+				fbltin = 1
+
+	if flags&(2**13):
+		fname += "Published "
+	if flags&(2**14):
+		fname += "WrkBookParam"
+	add_iter (hd,"Flags",fname,0+off,2,"<H")
+	grp = (flags/64)&0x3F
+	grpname = lbl_grp[grp]
+	add_iter (hd,"Grp",grpname,0+off,2,"<H")
+	chKey = ord(data[3+off])
+	add_iter (hd,"chKey",chKey,3+off,1,"B")
+	cch = ord(data[4+off])
+	add_iter (hd,"cch",cch,4+off,1,"B")
+	cce = struct.unpack("<H",data[5+off:7+off])[0]
+	add_iter (hd,"cce",cce,5+off,2,"<H")
+	rsrv3 = struct.unpack("<H",data[7+off:9+off])[0]
+	ltab = struct.unpack("<H",data[9+off:11+off])[0]
+	add_iter (hd,"ltab",ltab,9+off,2,"<H")
+	#rsrv4 1 byte
+	#rsrv5 1 byte
+	#rsrv6 1 byte
+	#rsrv7 1 byte
+	if fbltin:
+		lname = lbl_names[ord(data[15+off])]
+	else:
+		lname = data[15+off:15+chKey+off]
+	add_iter (hd,"Name",lname,15+off,chKey,"txt")
+	# parse expression
+
 #0x31
 def biff58_font (hd,data):
 	off = 4
@@ -292,7 +338,7 @@ def biff_xf (hd,data):
 	xfparent = flags/16
 	fname = ""
 	for i in range(4):
-		if flags&(2^i):
+		if flags&(2**i):
 			fname += xf_flags[i+1]
 	add_iter (hd,"Font IDX",fontidx,0+off,2,"<H")
 	add_iter (hd,"Num format",numfmt,2+off,2,"<H")
@@ -498,7 +544,7 @@ def biff_rk (hd,data):
 	
 	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
 
-biff5_ids = {0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
+biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
 	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
 	0x27e:biff_rk}
