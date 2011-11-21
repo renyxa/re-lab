@@ -786,7 +786,9 @@ def TextField (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "UIFmt", 1, "0x%02x"%ord(value[0x31]),2,0x31,3,1,4,"B")
 
-	if len(value)>0x49:
+	if hd.version == 6 and len(value)>0x37:
+		vsdblock.parse(hd, size, value, 0x37)
+	elif len(value)>0x49:
 		vsdblock.parse(hd, size, value, 0x49)
 	
 

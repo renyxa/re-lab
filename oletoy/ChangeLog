@@ -1,3 +1,7 @@
+2011-11-21  Valek Filippov
+
+		* VSD: fix blocks offset for TextFields in ver6
+
 2011-11-14  Valek Filippov
 
 		* XLS: start to parse Lbl.
