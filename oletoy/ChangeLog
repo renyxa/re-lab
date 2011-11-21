@@ -1,6 +1,7 @@
 2011-11-21  Valek Filippov
 
 		* VSD: fix blocks offset for TextFields in ver6
+		* XLS: parse Unicode Lbl names properly ([MS-XLS] is wrong)
 
 2011-11-14  Valek Filippov
 

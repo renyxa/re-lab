@@ -240,16 +240,21 @@ def biff_lbl (hd,data):
 	cce = struct.unpack("<H",data[5+off:7+off])[0]
 	add_iter (hd,"cce",cce,5+off,2,"<H")
 	rsrv3 = struct.unpack("<H",data[7+off:9+off])[0]
-	ltab = struct.unpack("<H",data[9+off:11+off])[0]
-	add_iter (hd,"ltab",ltab,9+off,2,"<H")
+	itab = struct.unpack("<H",data[9+off:11+off])[0]
+	add_iter (hd,"itab",itab,9+off,2,"<H")
 	#rsrv4 1 byte
 	#rsrv5 1 byte
 	#rsrv6 1 byte
-	#rsrv7 1 byte
+	#rsrv7 1 byte ??? seems to be fHightByte
+	fhb = ord(data[14+off])
+	add_iter (hd,"fHighByte",fhb,41+off,1,"B")
 	if fbltin:
 		lname = lbl_names[ord(data[15+off])]
 	else:
-		lname = data[15+off:15+chKey+off]
+		if fhb == 0:
+			lname = data[15+off:15+chKey+off]
+		else:
+			lname = unicode(data[15+off:15+chKey+off],"utf16")
 	add_iter (hd,"Name",lname,15+off,chKey,"txt")
 	# parse expression
 
