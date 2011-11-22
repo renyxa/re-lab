@@ -2,6 +2,7 @@
 
 		* VSD: fix blocks offset for TextFields in ver6
 		* XLS: parse Unicode Lbl names properly ([MS-XLS] is wrong)
+		* XLS: start to parse expressions
 
 2011-11-14  Valek Filippov
 

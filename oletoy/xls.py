@@ -120,27 +120,80 @@ rec_ids = {
 	4199:"BopPopCustom", 4200:"Fbi2"
 	}
 
-ptg = {0x01:"PtgExp",0x02:"PtgTbl",0x03:"PtgAdd",0x04:"PtgSub",
-	0x05:"PtgMul",0x06:"PtgDiv",0x07:"PtgPower",0x08:"PtgConcat",
-	0x09:"PtgLt",0x0A:"PtgLe",0x0B:"PtgEq",0x0C:"PtgGe",
-	0x0D:"PtgGt",0x0E:"PtgNe",0x0F:"PtgIsect",0x10:"PtgUnion",
-	0x11:"PtgRange",0x12:"PtgUplus",0x13:"PtgUminus",0x14:"PtgPercent",
-	0x15:"PtgParen",0x16:"PtgMissArg",0x17:"PtgStr",0x1C:"PtgErr",
-	0x1D:"PtgBool",0x1E:"PtgInt",0x1F:"PtgNum",0x20:"PtgArray",
-	0x21:"PtgFunc",0x22:"PtgFuncVar",0x23:"PtgName",0x24:"PtgRef",
-	0x25:"PtgArea",0x26:"PtgMemArea",0x27:"PtgMemErr",0x28:"PtgMemNoMem",
-	0x29:"PtgMemFunc",0x2A:"PtgRefErr",0x2B:"PtgAreaErr",0x2C:"PtgRefN",
-	0x2D:"PtgAreaN",0x39:"PtgNameX",0x3A:"PtgRef3d",0x3B:"PtgArea3d",
-	0x3C:"PtgRefErr3d",0x3D:"PtgAreaErr3d",0x40:"PtgArray",0x41:"PtgFunc",
-	0x42:"PtgFuncVar",0x43:"PtgName",0x44:"PtgRef",0x45:"PtgArea",
-	0x46:"PtgMemArea",0x47:"PtgMemErr",0x48:"PtgMemNoMem",0x49:"PtgMemFunc",
-	0x4A:"PtgRefErr",0x4B:"PtgAreaErr",0x4C:"PtgRefN",0x4D:"PtgAreaN",
-	0x59:"PtgNameX",0x5A:"PtgRef3d",0x5B:"PtgArea3d",0x5C:"PtgRefErr3d",
-	0x5D:"PtgAreaErr3d",0x60:"PtgArray",0x61:"PtgFunc",0x62:"PtgFuncVar",
-	0x63:"PtgName",0x64:"PtgRef",0x65:"PtgArea",0x66:"PtgMemArea",
-	0x67:"PtgMemErr",0x68:"PtgMemNoMem",0x69:"PtgMemFunc",0x6A:"PtgRefErr",
-	0x6B:"PtgAreaErr",0x6C:"PtgRefN",0x6D:"PtgAreaN",0x79:"PtgNameX",
-	0x7A:"PtgRef3d",0x7B:"PtgArea3d",0x7C:"PtgRefErr3d",0x7D:"PtgAreaErr3d"}
+def RgceArea (hd,data,off):
+	rf = struct.unpack("<H",data[off:off+2])[0]
+	rl = struct.unpack("<H",data[off+2:off+4])[0]
+	cf = struct.unpack("<H",data[off+4:off+6])[0]
+	cl = struct.unpack("<H",data[off+6:off+8])[0]
+	add_iter(hd,"\trowFirst",rf,off,2,"<H")
+	add_iter(hd,"\trowLast",rl,off+2,2,"<H")
+	add_iter(hd,"\tcolFirst",cf,off+4,2,"<H")
+	add_iter(hd,"\tcolLast",cl,off+6,2,"<H")
+
+def PtgAdd (hd,data,off):
+	add_iter(hd,"Add","",off,1,"B")
+
+def PtgConcat (hd,data,off):
+	add_iter(hd,"Concat","",off,1,"B")
+
+def PtgDiv (hd,data,off):
+	add_iter(hd,"Div","",off,1,"B")
+
+def PtgEq (hd,data,off):
+	add_iter(hd,"Equal","",off,1,"B")
+
+def PtgGe (hd,data,off):
+	add_iter(hd,"Greater or Equal","",off,1,"B")
+
+def PtgGt (hd,data,off):
+	add_iter(hd,"Greater","",off,1,"B")
+
+def PtgLe (hd,data,off):
+	add_iter(hd,"Less or Equal","",off,1,"B")
+
+def PtgLt (hd,data,off):
+	add_iter(hd,"Less","",off,1,"B")
+
+def PtgMul (hd,data,off):
+	add_iter(hd,"Mul","",off,1,"B")
+
+def PtgNe (hd,data,off):
+	add_iter(hd,"Not Equal","",off,1,"B")
+
+def PtgPower (hd,data,off):
+	add_iter(hd,"Power","",off,1,"B")
+
+def PtgSub (hd,data,off):
+	add_iter(hd,"Sub","",off,1,"B")
+
+def PtgArea (hd,data,off):
+	add_iter(hd,"Area","",off,1,"B")
+	RgceArea(hd,data,off+1)
+
+def PtgNotImpl (hd,data,off):
+	pass
+
+ptg = {0x01:("PtgExp",PtgNotImpl),0x02:("PtgTbl",PtgNotImpl),0x03:("PtgAdd",PtgAdd),0x04:("PtgSub",PtgSub),
+	0x05:("PtgMul",PtgMul),0x06:("PtgDiv",PtgDiv),0x07:("PtgPower",PtgPower),0x08:("PtgConcat",PtgConcat),
+	0x09:("PtgLt",PtgLt),0x0A:("PtgLe",PtgLe),0x0B:("PtgEq",PtgEq),0x0C:("PtgGe",PtgGe),
+	0x0D:("PtgGt",PtgGt),0x0E:("PtgNe",PtgNe),0x0F:("PtgIsect",PtgNotImpl),0x10:("PtgUnion",PtgNotImpl),
+	0x11:("PtgRange",PtgNotImpl),0x12:("PtgUplus",PtgNotImpl),0x13:("PtgUminus",PtgNotImpl),0x14:("PtgPercent",PtgNotImpl),
+	0x15:("PtgParen",PtgNotImpl),0x16:("PtgMissArg",PtgNotImpl),0x17:("PtgStr",PtgNotImpl),0x1C:("PtgErr",PtgNotImpl),
+	0x1D:("PtgBool",PtgNotImpl),0x1E:("PtgInt",PtgNotImpl),0x1F:("PtgNum",PtgNotImpl),0x20:("PtgArray",PtgNotImpl),
+	0x21:("PtgFunc",PtgNotImpl),0x22:("PtgFuncVar",PtgNotImpl),0x23:("PtgName",PtgNotImpl),0x24:("PtgRef",PtgNotImpl),
+	0x25:("PtgArea",PtgArea),0x26:("PtgMemArea",PtgNotImpl),0x27:("PtgMemErr",PtgNotImpl),0x28:("PtgMemNoMem",PtgNotImpl),
+	0x29:("PtgMemFunc",PtgNotImpl),0x2A:("PtgRefErr",PtgNotImpl),0x2B:("PtgAreaErr",PtgNotImpl),0x2C:("PtgRefN",PtgNotImpl),
+	0x2D:("PtgAreaN",PtgNotImpl),0x39:("PtgNameX",PtgNotImpl),0x3A:("PtgRef3d",PtgNotImpl),0x3B:("PtgArea3d",PtgNotImpl),
+	0x3C:("PtgRefErr3d",PtgNotImpl),0x3D:("PtgAreaErr3d",PtgNotImpl),0x40:("PtgArray",PtgNotImpl),0x41:("PtgFunc",PtgNotImpl),
+	0x42:("PtgFuncVar",PtgNotImpl),0x43:("PtgName",PtgNotImpl),0x44:("PtgRef",PtgNotImpl),0x45:("PtgArea",PtgNotImpl),
+	0x46:("PtgMemArea",PtgNotImpl),0x47:("PtgMemErr",PtgNotImpl),0x48:("PtgMemNoMem",PtgNotImpl),0x49:("PtgMemFunc",PtgNotImpl),
+	0x4A:("PtgRefErr",PtgNotImpl),0x4B:("PtgAreaErr",PtgNotImpl),0x4C:("PtgRefN",PtgNotImpl),0x4D:("PtgAreaN",PtgNotImpl),
+	0x59:("PtgNameX",PtgNotImpl),0x5A:("PtgRef3d",PtgNotImpl),0x5B:("PtgArea3d",PtgNotImpl),0x5C:("PtgRefErr3d",PtgNotImpl),
+	0x5D:("PtgAreaErr3d",PtgNotImpl),0x60:("PtgArray",PtgNotImpl),0x61:("PtgFunc",PtgNotImpl),0x62:("PtgFuncVar",PtgNotImpl),
+	0x63:("PtgName",PtgNotImpl),0x64:("PtgRef",PtgNotImpl),0x65:("PtgArea",PtgNotImpl),0x66:("PtgMemArea",PtgNotImpl),
+	0x67:("PtgMemErr",PtgNotImpl),0x68:("PtgMemNoMem",PtgNotImpl),0x69:("PtgMemFunc",PtgNotImpl),0x6A:("PtgRefErr",PtgNotImpl),
+	0x6B:("PtgAreaErr",PtgNotImpl),0x6C:("PtgRefN",PtgNotImpl),0x6D:("PtgAreaN",PtgNotImpl),0x79:("PtgNameX",PtgNotImpl),
+	0x7A:("PtgRef3d",PtgNotImpl),0x7B:("PtgArea3d",PtgNotImpl),0x7C:("PtgRefErr3d",PtgNotImpl),0x7D:("PtgAreaErr3d",PtgNotImpl)}
 
 ptg18 = {0x01:"PtgElfLel",0x02:"PtgElfRw",0x03:"PtgElfCol",0x06:"PtgElfRwV",
 	0x07:"PtgElfColV",0x0A:"PtgElfRadical",0x0B:"PtgElfRadicalS",0x0D:"PtgElfColS",
@@ -256,7 +309,10 @@ def biff_lbl (hd,data):
 		else:
 			lname = unicode(data[15+off:15+chKey+off],"utf16")
 	add_iter (hd,"Name",lname,15+off,chKey,"txt")
-	# parse expression
+	# FIXME: parse the whole expression
+	pkey = ord(data[15+chKey+off])
+	if ptg.has_key(pkey):
+		ptg[pkey][1](hd,data,off+chKey+15)
 
 #0x31
 def biff58_font (hd,data):
