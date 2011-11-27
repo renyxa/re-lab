@@ -49,6 +49,77 @@ def add_pgiter (page, name, ftype, stype, data, parent = None):
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 	return iter1
 
+
+def fib_base (hd, data):
+	off = 0
+	add_hditer(hd,"wIdent",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"nFib",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"unused",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"lid",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"pnNext",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	# FIXME
+	add_hditer(hd,"FixMe (flags)",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"nFibBack",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"iKey",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"envr",ord(data[off]),off,1,"B")
+
+def fib_RgW (hd, data):
+	off = 0
+	add_hditer(hd,"csw",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	for i in range(13):
+		add_hditer(hd,"rsrv%d"%(i+1),struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+		off += 2
+	add_hditer(hd,"lidFE",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+
+def fib_RgLw (hd, data):
+	off = 0
+	add_hditer(hd,"cslw",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+	add_hditer(hd,"cbMac",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"rsrv1",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"rsrv2",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpText",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpFtn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpHdd",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"rsrv3",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpAtn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpEdn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpTxbx",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"ccpHdrTxbx",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	for i in range(11):
+		add_hditer(hd,"rsrv%d"%(i+4),struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+
+def fib_RgFcLcbBlob (hd, data):
+	off = 0
+	add_hditer(hd,"cbRgFcLcb",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	off += 2
+
+
+
+recs = {"base":fib_base,"fibRgW":fib_RgW,"fibRgLw":fib_RgLw, "fibRgFcLcbBlob":fib_RgFcLcbBlob
+}
+
 def parse (page, data, parent):
 	offset = 0
 	type = "DOC"

@@ -717,9 +717,12 @@ Hexdump selection:\n\
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)
-				elif	ntype[0] == "xls":
+				elif ntype[0] == "xls":
 					if xls.biff5_ids.has_key(ntype[1]):
 						xls.biff5_ids[ntype[1]](hd,data)
+				elif ntype[0] == "doc":
+					if doc.recs.has_key(ntype[1]):
+						doc.recs[ntype[1]](hd,data)
 				elif ntype[0] == "mdb":
 					if mdb.rec_ids.has_key(ntype[1]):
 						mdb.rec_ids[ntype[1]](hd,data)
