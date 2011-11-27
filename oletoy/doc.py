@@ -110,15 +110,160 @@ def fib_RgLw (hd, data):
 		add_hditer(hd,"rsrv%d"%(i+4),struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
+#fcStshf -- StyleSheet offset in Table
+#fcPlcffndRef -- Footnotes refs offset
+#fcPlcffndTxt -- Footnotes text offset
+#fcPlcfandRef -- Dates/Locations of comments offset
+#fcPlcfandTxt -- Text of comments offset
+#fcPlcfSed -- PropList location offset
+#fcPlcPad -- undef, ignore
+#fcPlcfPhe -- ver specific para height info offset
+#fcSttbfGlsy -- autotext offset
+#fcPlcfGlsy -- autotext offset
+#fcPlcfHdd -- header/footer locations offset
+#fcPlcfBteChpx -- PlcBteChpx offset
+#fcPlcfBtePapx -- PlcfBtePapx offset
+#fcPlcfSea -- undef, ignore
+#fcSttbfFfn -- fonts spec offset
+#fcPlcfFldMom -- field chars location offset
+#fcPlcfFldHdr -- header field chars location offset
+#fcPlcfFldFtn -- footer field chars location offset
+#fcPlcfFldAtn -- comments field chars location offset
+#fcPlcfFldMcr -- undef, ignore
+#fcSttbfBkmk -- bookmarks name offset
+#fcPlcfBkf -- standard bookmark offset
+#fcPlcfBkl -- standard bookmark offset
+#fcCmds -- command customizations offset
+#fcUnused1 -- undef, ignore
+#fcSttbfMcr -- undef, ignore
+#fcPrDrvr -- printer driver info offset
+#fcPrEnvPort -- print env in portrait mode offset
+#fcPrEnvLand -- print env in landscape mode offset
+#fcWss -- last selection offset
+#fcDop -- Dop offset
+#fcSttbfAssoc -- strings offset
+#fcClx -- Clx offset
+#fcPlcfPgdFtn -- undef, ignore
+#fcAutosaveSource -- undef, ignore
+#fcGrpXstAtnOwners -- comments authors offset
+#fcSttbfAtnBkmk -- annotation bookmarks offset
+#fcUnused2 -- undef, ignore
+#fcUnused3 -- undef, ignore
+#fcPlcSpaMom -- shape info offset
+#fcPlcSpaHdr -- header shape info offset
+#fcPlcfAtnBkf -- annotation bookmark offset
+#fcPlcfAtnBkl -- annotation bookmark offset
+#fcPms -- print merge offset
+#FormFldSttbs
+#PlcfendRef 
+#PlcfFldEdn
+#Unused4
+#DggInfo
+#SttbfRMark
+#SttbfCaption
+#SttbfAutoCaption
+#PlcfWkb
+#PlcfSpl
+#PlcftxbxTxt
+#PlcfFldTxbx
+#PlcfHdrtxbxTxt
+#PlcffldHdrTxbx
+#StwUser
+#SttbTtmbd
+#CookieData
+#PgdMotherOldOld
+#BkdMotherOldOld
+#PgdFtnOldOld
+#BkdFtnOldOld
+#PgdEdnOldOld
+#BkdEdnOldOld
+#SttbfIntlFld
+#RouteSlip
+#SttbSavedBy
+#SttbFnm
+#PlfLst
+#PlfLfo
+#PlcfTxbxBkd
+#PlcfTxbxHdrBkd
+#DocUndoWord9
+#RgbUse
+#Usp
+#Uskf
+#PlcupcRgbUse
+#PlcupcUsp
+#SttbGlsyStyle
+#Plcosl
+#Plcocx
+#PlcfBteLvc
+
+
+fclcb97recs1 = ["StshfOrig","Stshf","PlcffndRef","PlcffndTxt","PlcfandRef",
+  "PlcfandTxt","PlcfSed","PlcPad","PlcfPhe","SttbfGlsy","PlcfGlsy",
+  "PlcfHdd","PlcfBteChpx","PlcfBtePapx","PlcfSea","SttbfFfn","PlcfFldMom",
+  "PlcfFldHdr","PlcfFldFtn","PlcfFldAtn","PlcfFldMcr","SttbfBkmk",
+  "PlcfBkf","PlcfBkl","Cmds","Unused1","SttbfMcr","PrDrvr","PrEnvPort",
+  "PrEnvLand","Wss","Dop","SttbfAssoc","Clx","PlcfPgdFtn","AutosaveSource",
+  "GrpXstAtnOwners","SttbfAtnBkmk","Unused2","Unused3","PlcSpaMom",
+  "PlcSpaHdr","PlcfAtnBkf","PlcfAtnBkl","Pms","FormFldSttbs","PlcfendRef",
+  "PlcfendTxt","PlcfFldEdn","Unused4","DggInfo","SttbfRMark","SttbfCaption",
+  "SttbfAutoCaption","PlcfWkb","PlcfSpl","PlcftxbxTxt","PlcfFldTxbx",
+  "PlcfHdrtxbxTxt","PlcffldHdrTxbx","StwUser","SttbTtmbd","CookieData",
+  "PgdMotherOldOld","BkdMotherOldOld","PgdFtnOldOld","BkdFtnOldOld",
+  "PgdEdnOldOld","BkdEdnOldOld","SttbfIntlFld","RouteSlip","SttbSavedBy",
+  "SttbFnm","PlfLst","PlfLfo","PlcfTxbxBkd","PlcfTxbxHdrBkd",
+  "DocUndoWord9","RgbUse","Usp","Uskf","PlcupcRgbUse","PlcupcUsp",
+  "SttbGlsyStyle","Plgosl","Plcocx","PlcfBteLvc"]
+
+#dwLowDateTime
+#dwHighDateTime
+
+#PlcfLvcPre10
+
+fclcb97recs2 = ["PlcfLvcPre10","PlcfAsumy","PlcfGram","SttbListNames","SttbfUssr"]
+
+def FcLcb97 (hd,data):
+	off = 2
+	for i in fclcb97recs1:
+		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+	add_hditer(hd,"dwLowDateTime",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_hditer(hd,"dwHighDateTime",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	off += 4
+	for i in fclcb97recs2:
+		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+
+def FcLcb2k (hd,data):
+	FcLcb97 (hd,data)
+	pass
+
+def FcLcb2k2 (hd,data):
+	FcLcb2k (hd,data)
+	pass
+
+def FcLcb2k3 (hd,data):
+	FcLcb2k2 (hd,data)
+	pass
+
+def FcLcb2k7 (hd,data):
+	FcLcb2k3 (hd,data)
+	pass
+
 def fib_RgFcLcbBlob (hd, data):
 	off = 0
-	add_hditer(hd,"cbRgFcLcb",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	cb = struct.unpack("<H",data[off:off+2])[0]
+	add_hditer(hd,"cbRgFcLcb",cb,off,2,"<H")
 	off += 2
+	if fclcb2nfib.has_key(cb):
+	  fclcb2nfib[cb][1](hd,data)
 
-
-
-recs = {"base":fib_base,"fibRgW":fib_RgW,"fibRgLw":fib_RgLw, "fibRgFcLcbBlob":fib_RgFcLcbBlob
-}
+fclcb2nfib = {0x5d:(0xc1,FcLcb97),0x6c:(0xd9,FcLcb2k),0x88:(0x101,FcLcb2k2),0xa4:(0x10c,FcLcb2k3),0xb7:(0x112,FcLcb2k7)}
+recs = {"base":fib_base,"fibRgW":fib_RgW,"fibRgLw":fib_RgLw, "fibRgFcLcbBlob":fib_RgFcLcbBlob}
 
 def parse (page, data, parent):
 	offset = 0
