@@ -238,21 +238,63 @@ def FcLcb97 (hd,data):
 		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
+fclcb2krecs = ["PlcfTch","RmdThreading","Mid","SttbRgtplc","MsoEnvelope",
+  "PlcfLad","RgDofr","Plcosl","PlcfCookieOld","PgdMotherOld","BkdMotherOld",
+  "PgdFtnOld","BkdFtnOld","PgdEdnOld","BkdEdnOld"]
+
 def FcLcb2k (hd,data):
 	FcLcb97 (hd,data)
-	pass
+	off = 746
+	for i in fclcb2krecs:
+		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+
+fclcb2k2recs = ["Unused1","PlcfPgp","Plcfuim","PlfguidUim","AtrdExtra",
+  "Plrsid","SttbfBkmkFactoid","PlcfBkfFactoid","Plcfcookie","PlcfBklFactoid",
+  "FactoidData","DocUndo","SttbfBkmkFcc","PlcfBkfFcc","PlcfBklFcc",
+  "SttbfbkmkBPRepairs","PlcfbkfBPRepairs","PlcfbklBPRepairs","PmsNew",
+  "ODSO","PlcfpmiOldXP","PlcfpmiNewXP","PlcfpmiMixedXP","Unused2","Plcffactoid",
+  "PlcflvcOldXP","PlcflvcNewXP","PlcflvcMixedXP"]
 
 def FcLcb2k2 (hd,data):
 	FcLcb2k (hd,data)
-	pass
+	off = 866
+	for i in fclcb2k2recs:
+		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+
+fclcb2k3recs = ["Hplxsdr","SttbfBkmkSdt","PlcfBkfSdt","PlcfBklSdt","CustomXForm",
+  "SttbfBkmkProt","PlcfBkfProt","PlcfBklProt","SttbProtUser","Unused","PlcfpmiOld",
+  "PlcfpmiOldInline","PlcfpmiNew","PlcfpmiNewInline","PlcflvcOld","PlcflvcOldInline",
+  "PlcflvcNew","PlcflvcNewInline","PgdMother","BkdMother","AfdMother","PgdFtn",
+  "BkdFtn","AfdFtn","PgdEdn","BkdEdn","AfdEdn","Afd"]
 
 def FcLcb2k3 (hd,data):
 	FcLcb2k2 (hd,data)
-	pass
+	off = 1090
+	for i in fclcb2k3recs:
+		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+
+fclcb2k7recs = ["Plcfmthd","SttbfBkmkMoveFrom","PlcfBkfMoveFrom","PlcfBklMoveFrom",
+  "SttbfBkmkMoveTo","PlcfBkfMoveTo","PlcfBklMoveTo","Unused1","Unused2",
+  "Unused3","SttbfBkmkArto","PlcfBkfArto","PlcfBklArto","ArtoData",
+  "Unused4","Unused5","Unused6","OssTheme","ColorSchemeMapping"]
 
 def FcLcb2k7 (hd,data):
 	FcLcb2k3 (hd,data)
-	pass
+	off = 1314
+	for i in fclcb2k7recs:
+		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		off += 4
 
 def fib_RgFcLcbBlob (hd, data):
 	off = 0
