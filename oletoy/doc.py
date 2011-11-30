@@ -110,50 +110,50 @@ def fib_RgLw (hd, data):
 		add_hditer(hd,"rsrv%d"%(i+4),struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
-#fcStshf -- StyleSheet offset in Table
-#fcPlcffndRef -- Footnotes refs offset
-#fcPlcffndTxt -- Footnotes text offset
-#fcPlcfandRef -- Dates/Locations of comments offset
-#fcPlcfandTxt -- Text of comments offset
-#fcPlcfSed -- PropList location offset
-#fcPlcPad -- undef, ignore
-#fcPlcfPhe -- ver specific para height info offset
-#fcSttbfGlsy -- autotext offset
-#fcPlcfGlsy -- autotext offset
-#fcPlcfHdd -- header/footer locations offset
-#fcPlcfBteChpx -- PlcBteChpx offset
-#fcPlcfBtePapx -- PlcfBtePapx offset
-#fcPlcfSea -- undef, ignore
-#fcSttbfFfn -- fonts spec offset
-#fcPlcfFldMom -- field chars location offset
-#fcPlcfFldHdr -- header field chars location offset
-#fcPlcfFldFtn -- footer field chars location offset
-#fcPlcfFldAtn -- comments field chars location offset
-#fcPlcfFldMcr -- undef, ignore
-#fcSttbfBkmk -- bookmarks name offset
-#fcPlcfBkf -- standard bookmark offset
-#fcPlcfBkl -- standard bookmark offset
-#fcCmds -- command customizations offset
-#fcUnused1 -- undef, ignore
-#fcSttbfMcr -- undef, ignore
-#fcPrDrvr -- printer driver info offset
-#fcPrEnvPort -- print env in portrait mode offset
-#fcPrEnvLand -- print env in landscape mode offset
-#fcWss -- last selection offset
-#fcDop -- Dop offset
-#fcSttbfAssoc -- strings offset
-#fcClx -- Clx offset
-#fcPlcfPgdFtn -- undef, ignore
-#fcAutosaveSource -- undef, ignore
-#fcGrpXstAtnOwners -- comments authors offset
-#fcSttbfAtnBkmk -- annotation bookmarks offset
-#fcUnused2 -- undef, ignore
-#fcUnused3 -- undef, ignore
-#fcPlcSpaMom -- shape info offset
-#fcPlcSpaHdr -- header shape info offset
-#fcPlcfAtnBkf -- annotation bookmark offset
-#fcPlcfAtnBkl -- annotation bookmark offset
-#fcPms -- print merge offset
+#Stshf -- StyleSheet
+#PlcffndRef -- Footnotes refs
+#PlcffndTxt -- Footnotes text
+#PlcfandRef -- Dates/Locations of comments
+#PlcfandTxt -- Text of comments
+#PlcfSed -- PropList location
+#PlcPad -- undef, ignore
+#PlcfPhe -- ver specific para height info
+#SttbfGlsy -- autotext
+#PlcfGlsy -- autotext
+#PlcfHdd -- header/footer locations
+#PlcfBteChpx -- PlcBteChpx
+#PlcfBtePapx -- PlcfBtePapx
+#PlcfSea -- undef, ignore
+#SttbfFfn -- fonts spec
+#PlcfFldMom -- field chars location
+#PlcfFldHdr -- header field chars location
+#PlcfFldFtn -- footer field chars location
+#PlcfFldAtn -- comments field chars location
+#PlcfFldMcr -- undef, ignore
+#SttbfBkmk -- bookmarks name
+#PlcfBkf -- standard bookmark
+#PlcfBkl -- standard bookmark
+#Cmds -- command customizations
+#Unused1 -- undef, ignore
+#SttbfMcr -- undef, ignore
+#PrDrvr -- printer driver info
+#PrEnvPort -- print env in portrait mode
+#PrEnvLand -- print env in landscape mode
+#Wss -- last selection
+#Dop -- Dop
+#SttbfAssoc -- strings
+#Clx -- Clx
+#PlcfPgdFtn -- undef, ignore
+#AutosaveSource -- undef, ignore
+#GrpXstAtnOwners -- comments authors
+#SttbfAtnBkmk -- annotation bookmarks
+#Unused2 -- undef, ignore
+#Unused3 -- undef, ignore
+#PlcSpaMom -- shape info
+#PlcSpaHdr -- header shape info
+#PlcfAtnBkf -- annotation bookmark
+#PlcfAtnBkl -- annotation bookmark
+#Pms -- print merge
 #FormFldSttbs
 #PlcfendRef 
 #PlcfFldEdn
@@ -307,6 +307,20 @@ def fib_RgFcLcbBlob (hd, data):
 fclcb2nfib = {0x5d:(0xc1,FcLcb97),0x6c:(0xd9,FcLcb2k),0x88:(0x101,FcLcb2k2),0xa4:(0x10c,FcLcb2k3),0xb7:(0x112,FcLcb2k7)}
 recs = {"base":fib_base,"fibRgW":fib_RgW,"fibRgLw":fib_RgLw, "fibRgFcLcbBlob":fib_RgFcLcbBlob}
 
+ptable_unsd = {0:"",7:"",14:"",20:"",25:"",26:"",34:"",35:"",38:"",39:"",45:"",49:"",64:"",65:"",66:"",67:"",68:"",77:"",78:"",79:"",80:"",
+  81:"",82:"",86:""}
+
+def parse_table (page, data, parent):
+	offset = 0
+	fclcb = page.model.get_value(page.wdoc,3)
+	for i in range(len(fclcb97recs1)):
+		if not ptable_unsd.has_key(i):
+		  recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+		  reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+		  if reclen != 0:
+			add_pgiter (page,fclcb97recs1[i],"doc","table",data[recoff:recoff+reclen],parent)
+
+
 def parse (page, data, parent):
 	offset = 0
 	type = "DOC"
@@ -319,7 +333,7 @@ def parse (page, data, parent):
 	add_pgiter (page,"fibRgLw","doc","fibRgLw",data[offset:offset+2+cslw*4],parent)
 	offset += 2+cslw*4
 	cbRgFcLcb = struct.unpack("<H",data[offset:offset+2])[0]
-	add_pgiter (page,"fibRgFcLcbBlob","doc","fibRgFcLcbBlob",data[offset:offset+2+cbRgFcLcb*8],parent)
+	page.wdoc = add_pgiter (page,"fibRgFcLcbBlob","doc","fibRgFcLcbBlob",data[offset:offset+2+cbRgFcLcb*8],parent)
 	offset += 2+cbRgFcLcb*8
 	cswNew = struct.unpack("<H",data[offset:offset+2])[0]
 	add_pgiter (page,"fibRgCswNew","doc","fibRgCswNew",data[offset:offset+2+cswNew*2],parent)

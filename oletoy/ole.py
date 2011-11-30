@@ -99,6 +99,8 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			ftype = "doc"
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 			doc.parse (page, data, iter1)
+		if infname == "1Table" or infname == "0Table":
+			doc.parse_table (page, data, iter1)
 		if infname == "Book" or infname == "Workbook":
 			page.model.set_value(iter1,1,("xls",dirflag))
 			ftype = xls.parse (page, data, iter1)
