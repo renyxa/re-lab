@@ -70,8 +70,8 @@ def loda_rot(hd,data,offset,l_type):
 	add_iter (hd, "[0x2efe] Rotate","%u"%round(rot/1000000.0,2),offset,4,"txt")
 
 def loda_name(hd,data,offset,l_type):
-	if hd.version > 12:
-		layrname = unicode(data[offset:],'utf-16').encode('utf-8')
+	if hd.version > 11:
+		layrname = unicode(data[offset:],'utf-16')
 	else:
 		layrname = data[offset:]
 	add_iter (hd,"[0x03e8] Layer name",layrname,offset,len(data[offset:]),"txt")
@@ -143,7 +143,7 @@ def loda_coords3 (hd,data,offset,l_type):
 			x -= 0x100000000
 		if y > 0x7FFFFFFF:
 			y -= 0x100000000
-		add_iter (hd,"[0x001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,9,"txt")
+		add_iter (hd,"[0x001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt")
 
 
 
@@ -203,7 +203,35 @@ def trfd (hd,size,data):
 		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
 
-cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda}
+def disp_expose (da, event,pixbuf):
+	ctx = da.window.cairo_create()
+	ctx.set_source_pixbuf(pixbuf,0,0)
+	ctx.paint()
+	ctx.stroke()
+
+def disp (hd,size,data):
+	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
+	bmpoff = struct.pack("<I",len(data)+10-bmp)
+	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
+#	f = open("test.bmp",'w')
+#	f.write(img)
+#	f.close()
+	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader.write(img)
+	pixbufloader.close()
+	pixbuf = pixbufloader.get_pixbuf()
+	imgw=pixbuf.get_width()
+	imgh=pixbuf.get_height()
+
+	win = gtk.Window()
+	win.connect('destroy', gtk.main_quit)
+	win.set_default_size(imgw, imgh)
+	da = gtk.DrawingArea()
+	win.add(da)
+	da.connect('expose_event', disp_expose,pixbuf)
+	win.show_all()
+
+cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda,"DISP":disp}
 
 def cdr_open (buf,page):
 	# Path, Name, ID
