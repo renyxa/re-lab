@@ -270,7 +270,6 @@ def disp (hd,size,data):
 	imgh=pixbuf.get_height()
 
 	win = gtk.Window()
-	win.connect('destroy', gtk.main_quit)
 	win.set_default_size(imgw, imgh)
 	da = gtk.DrawingArea()
 	win.add(da)
