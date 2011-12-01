@@ -36,6 +36,54 @@ outl_caps_type =('Normal', 'Rounded', 'Out Square')
 fild_pal_type = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 0xb:'Texture'} # FIXME! names are guessed by frob
 fild_grad_type = ('Unknown', 'Linear', 'Radial', 'Conical', 'Squared') #FIXME! gussed
 
+def arrw (hd, size, data):
+	add_iter (hd,"Arrow ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
+	add_iter (hd,"???","%02x"%struct.unpack('<I', data[4:8])[0],4,4,"<I")
+	pnum = struct.unpack('<H', data[8:10])[0]
+	add_iter (hd,"#ofPts","%02x"%pnum,8,2,"<H")
+	coff = 8+struct.unpack('<I', data[10:14])[0]
+	add_iter (hd,"Pnt Types","",14,pnum,"txt")
+	for i in range (pnum):
+		x = struct.unpack('<L', data[coff+i*8:coff+4+i*8])[0]
+		y = struct.unpack('<L', data[coff+4+i*8:coff+8+i*8])[0]
+		Type = ord(data[14+i])
+		NodeType = ''
+		# FIXME! Lazy to learn dictionary right now, will fix later
+		if Type&2 == 2:
+			NodeType = '    Char. start'
+		if Type&4 == 4:
+			NodeType = NodeType+'  Can modify'
+		if Type&8 == 8:
+			NodeType = NodeType+'  Closed path'
+		if Type&0x10 == 0 and Type&0x20 == 0:
+			NodeType = NodeType+'  Discontinued'
+		if Type&0x10 == 0x10:
+			NodeType = NodeType+'  Smooth'
+		if Type&0x20 == 0x20:
+			NodeType = NodeType+'  Symmetric'
+		if Type&0x40 == 0 and Type&0x80 == 0:
+			NodeType = NodeType+'  START'
+		if Type&0x40 == 0x40 and Type&0x80 == 0:
+			NodeType = NodeType+'  Line'
+		if Type&0x40 == 0 and Type&0x80 == 0x80:
+			NodeType = NodeType+'  Curve'
+		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
+			NodeType = NodeType+'  Arc'
+		if x > 0x7FFFFFFF:
+			x -= 0x100000000
+		if y > 0x7FFFFFFF:
+			y -= 0x100000000
+		add_iter (hd,"X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,coff+i*8,8,"txt")
+
+def outl (hd,size,data):
+	add_iter (hd,"Outline ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
+
+	add_iter (hd,"LineWidth","%.2f mm"%round(struct.unpack('<I', data[12:16])[0]/10000.0,2),12,4,"<I")
+
+	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[80:84])[0],80,4,"<I")
+	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[84:88])[0],84,4,"<I")
+
+
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
 	fill_type = struct.unpack('<h', data[4:6])[0]
@@ -145,8 +193,6 @@ def loda_coords3 (hd,data,offset,l_type):
 			y -= 0x100000000
 		add_iter (hd,"[0x001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt")
 
-
-
 def loda_coords (hd,data,offset,l_type):
 	if l_type < 5 and l_type != 3:
 		loda_coords124 (hd,data,offset,l_type)
@@ -231,7 +277,7 @@ def disp (hd,size,data):
 	da.connect('expose_event', disp_expose,pixbuf)
 	win.show_all()
 
-cdr_ids = {"fild":fild,"ftil":ftil,"trfd":trfd,"loda":loda,"DISP":disp}
+cdr_ids = {"arrw":arrw,"fild":fild,"ftil":ftil,"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp}
 
 def cdr_open (buf,page):
 	# Path, Name, ID
@@ -310,7 +356,7 @@ class cdrChunk:
 		page.model.set_value(f_iter,2,self.rawsize)
 		page.model.set_value(f_iter,3,self.data)
 		page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
-		if self.name == "outl" or self.name == "fild":
+		if self.name == "outl" or self.name == "fild" or self.name == "arrw":
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_path(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))

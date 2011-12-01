@@ -1,6 +1,7 @@
 2011-11-30  Valek Filippov
 
 		* CDR: fix layer names, loda coords and DISP
+		* CDR: start to parse 'arrw' and 'outl'
 
 2011-11-29  Valek Filippov
 
