@@ -1,3 +1,7 @@
+2011-12-07  Valek Filippov
+
+		* CDR: bbox and obbx, initial parsing
+
 2011-11-30  Valek Filippov
 
 		* CDR: fix layer names, loda coords and DISP

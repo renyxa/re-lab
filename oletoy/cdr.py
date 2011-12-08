@@ -75,6 +75,28 @@ def arrw (hd, size, data):
 			y -= 0x100000000
 		add_iter (hd,"X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,coff+i*8,8,"txt")
 
+def bbox (hd,size,data):
+	offset = 0
+	for i in range(2):
+		[varX] = struct.unpack('<L', data[offset+i*8:offset+4+i*8])
+		[varY] = struct.unpack('<L', data[offset+4+i*8:offset+8+i*8])
+		if varX > 0x7FFFFFFF:
+			varX = varX - 0x100000000
+		if varY > 0x7FFFFFFF:
+			varY = varY - 0x100000000
+		add_iter (hd,"X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
+
+def obbx (hd,size,data):
+	offset = 0
+	for i in range(4):
+		[varX] = struct.unpack('<L', data[offset+i*8:offset+4+i*8])
+		[varY] = struct.unpack('<L', data[offset+4+i*8:offset+8+i*8])
+		if varX > 0x7FFFFFFF:
+			varX = varX - 0x100000000
+		if varY > 0x7FFFFFFF:
+			varY = varY - 0x100000000
+		add_iter (hd,"X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
+
 def outl (hd,size,data):
 	add_iter (hd,"Outline ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
 
@@ -276,7 +298,7 @@ def disp (hd,size,data):
 	da.connect('expose_event', disp_expose,pixbuf)
 	win.show_all()
 
-cdr_ids = {"arrw":arrw,"fild":fild,"ftil":ftil,"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp}
+cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp}
 
 def cdr_open (buf,page):
 	# Path, Name, ID
