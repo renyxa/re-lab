@@ -23,6 +23,7 @@ import inflate
 import vsdchunks,vsdstream4
 import ole
 import ctypes
+from utils import *
 
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 

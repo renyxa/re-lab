@@ -15,19 +15,7 @@
 #
 
 import sys,struct,gtk,gobject
-
-def add_iter (hd,name,value,offset,length,vtype):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
-
-def add_pgiter (page, name, data, stype, parent = None):
-	iter1 = page.model.append (parent,None)
-	page.model.set_value(iter1,0,name)
-	page.model.set_value(iter1,1,("mdb",stype))
-	page.model.set_value(iter1,2,len(data))
-	page.model.set_value(iter1,3,data)
-	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-	return iter1
+from utils import *
 
 
 def hd_data_hdr(hd,buf):

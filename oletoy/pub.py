@@ -20,7 +20,7 @@ import gtk
 import tree
 import hexdump
 import pubblock
-
+from utils import *
 
 # parse "Contents" part of the OLE container
 def parse(model,data,parent):

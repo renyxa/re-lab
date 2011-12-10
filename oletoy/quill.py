@@ -20,6 +20,7 @@ import gtk
 import tree
 import hexdump
 import pubblock
+from utils import *
 
 def parse_fdpc (model,data,offset,fdpciter):
 	[num] = struct.unpack('<H', data[offset:offset+2])

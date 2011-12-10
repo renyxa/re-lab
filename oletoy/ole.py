@@ -22,23 +22,11 @@ import hexdump
 import pub, pubblock, escher, quill
 import vsd, xls, ppt, vba, doc
 import ctypes
+from utils import *
 
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
-
-def add_hditer (hd,name,value,offset,length,vtype):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
-
-def add_pgiter (page, name, data, stype, parent = None):
-	iter1 = page.model.append (parent,None)
-	page.model.set_value(iter1,0,name)
-	page.model.set_value(iter1,1,("ole",stype))
-	page.model.set_value(iter1,2,len(data))
-	page.model.set_value(iter1,3,data)
-	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-	return iter1
 
 def open (buf,page,iter=None):
 	cgsf.gsf_init()
@@ -132,36 +120,36 @@ def cfb_hdr (hd,data):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "HdrCLSID",2,off,3,16,4,"txt")
 	off += 16
-	add_hditer (hd,"MinVer",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter (hd,"MinVer",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer (hd,"MajVer",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter (hd,"MajVer",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer (hd,"ByteOrder",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter (hd,"ByteOrder",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer (hd,"Sec. Shift",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter (hd,"Sec. Shift",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer (hd,"Mini Sec. Shift",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter (hd,"Mini Sec. Shift",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Reserved",2,off,3,6,4,"txt")
 	off += 6
-	add_hditer (hd,"# Of Dir Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"# Of Dir Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"# Of FAT Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"# Of FAT Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"1st Dir Sec. Loc",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"1st Dir Sec. Loc",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"Transaction Sig.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"Transaction Sig.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"Mini Cut-off Size.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"Mini Cut-off Size.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"1st Mini Sec. Loc",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"1st Mini Sec. Loc",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"# Of Mini Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"# Of Mini Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"1st DIFAT Loc",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"1st DIFAT Loc",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer (hd,"# Of DIFAT Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter (hd,"# Of DIFAT Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
 
 # +436 DIFAT
@@ -173,31 +161,31 @@ def cfb_dir (hd,data):
 	name = unicode(data[0:namelen],"utf-16")
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Dir Entry Name",1, name, 2,0,3,0x40,4,"txt")
-	add_hditer (hd,"NameLen",namelen,off,2,"<H")
+	add_iter (hd,"NameLen",namelen,off,2,"<H")
 	off += 2
 	objtype = ord(data[off])
 	objname = "%02x"%objtype
 	if objtype_ids.has_key(objtype):
 		objname += " (%s)"%objtype_ids[objtype]
-	add_hditer (hd,"Obj Type",objname,off,1,"<B")
+	add_iter (hd,"Obj Type",objname,off,1,"<B")
 	off += 1
 	clrflag = ord(data[off])
-	add_hditer (hd,"Color Flag",clrflag,off,1,"<B")
+	add_iter (hd,"Color Flag",clrflag,off,1,"<B")
 	off += 1
 	lsib = struct.unpack("<i",data[off:off+4])[0]
-	add_hditer (hd,"Left Sibling",lsib,off,4,"<i")
+	add_iter (hd,"Left Sibling",lsib,off,4,"<i")
 	off += 4
 	rsib = struct.unpack("<i",data[off:off+4])[0]
-	add_hditer (hd,"Right Sibling",rsib,off,4,"<i")
+	add_iter (hd,"Right Sibling",rsib,off,4,"<i")
 	off += 4
 	child = struct.unpack("<i",data[off:off+4])[0]
-	add_hditer (hd,"Child ID",child,off,4,"<i")
+	add_iter (hd,"Child ID",child,off,4,"<i")
 	off += 4
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "CLSID",2,off,3,0x10,4,"txt")
 	off += 16
 	stbits = struct.unpack("<I",data[off:off+4])[0]
-	add_hditer (hd,"State Bits",stbits,off,4,"<I")
+	add_iter (hd,"State Bits",stbits,off,4,"<I")
 	off += 4
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Cr. Time",2,off,3,8,4,"txt")
@@ -206,11 +194,8 @@ def cfb_dir (hd,data):
 	hd.hdmodel.set (iter, 0, "Mod. Time",2,off,3,8,4,"txt")
 	off += 8
 	stsize = struct.unpack("<Q",data[off:off+8])[0]
-	add_hditer (hd,"Stream Size",stbits,off,8,"<Q")
+	add_iter (hd,"Stream Size",stbits,off,8,"<Q")
 	off += 8
-	
-
-
 
 
 def cfb_mini (hd,data):
@@ -228,13 +213,13 @@ def parse (buf,page,iter=None):
 		print "No OLE signature found"
 		return
 		
-	oiter = add_pgiter (page,"CFB",buf,None)
+	oiter = add_pgiter (page,"CFB","ole",None,buf)
 	majver = struct.unpack("<H",buf[0x1a:0x1c])[0]
 	if majver == 3:
 		hdrsize = 512
 	else:
 		hdrsize = 4096
-	add_pgiter (page,"CF Header",buf[0:hdrsize],0,oiter)
+	add_pgiter (page,"CF Header","ole",0,buf[0:hdrsize],oiter)
 	ndirsec = struct.unpack("<I",buf[0x28:0x2c])[0]
 	nfatsec = struct.unpack("<I",buf[0x2c:0x30])[0]
 	dirsecloc = struct.unpack("<I",buf[0x30:0x34])[0]
@@ -249,15 +234,15 @@ def parse (buf,page,iter=None):
 		sname = "Sector %02x"%i
 		if i == dirsecloc:
 			sname += " (Dir)"
-			add_pgiter (page,sname,buf[off:off+hdrsize],1,oiter)
+			add_pgiter (page,sname,"ole",1,buf[off:off+hdrsize],oiter)
 		elif i == minisecloc:
 			sname += " (Mini)"
-			add_pgiter (page,sname,buf[off:off+hdrsize],2,oiter)
+			add_pgiter (page,sname,"ole",2,buf[off:off+hdrsize],oiter)
 		elif i == difatloc:
 			sname += " (Difat)"
-			add_pgiter (page,sname,buf[off:off+hdrsize],3,oiter)
+			add_pgiter (page,sname,"ole",3,buf[off:off+hdrsize],oiter)
 		else:
-			add_pgiter (page,sname,buf[off:off+hdrsize],4,oiter)
+			add_pgiter (page,sname,"ole",4,buf[off:off+hdrsize],oiter)
 		i += 1
 		off += hdrsize
 

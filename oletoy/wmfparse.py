@@ -19,6 +19,7 @@ import gobject
 import gtk
 import tree
 import hexdump
+from utils import *
 
 def PointS (hd, value, offset, i=""):
 	iter = hd.hdmodel.append(None, None)

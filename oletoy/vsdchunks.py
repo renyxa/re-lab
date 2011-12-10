@@ -17,6 +17,8 @@
 import struct
 import datetime
 import vsd,vsdblock
+from utils import *
+
 
 chunknoshift = {
 		0x15:'Page',\

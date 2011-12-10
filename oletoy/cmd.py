@@ -17,20 +17,7 @@
 import sys,struct
 import tree, gtk, gobject,zlib
 import ole, escher, rx2
-
-def hex2d(data):
-	res = ''
-	data = data.replace(" ","")
-	for i in range(len(data)/2):
-		num = int(data[i*2:i*2+2],16)
-		res += struct.pack("B",num)
-	return res
-
-def d2hex(data):
-	s = ""
-	for i in range(len(data)):
-		s += "%02x"%ord(data[i])
-	return s
+from utils import *
 
 def arg_conv (ctype,carg):
 	data = ''

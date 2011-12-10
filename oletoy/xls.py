@@ -21,6 +21,7 @@ import tree
 import hexdump
 import escher
 import ctypes
+from utils import *
 
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
@@ -216,10 +217,6 @@ def gentree():
 		niter = model.append (iter, None)
 		model.set(niter, 0, i[1], 1, i[0], 2, "0")
 	return model,view
-
-def add_iter (hd,name,value,offset,length,vtype):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
 
 def XLUnicodeRichExtendedString (hd,data,offset):
 	cch = struct.unpack("<H",data[0+offset:2+offset])[0]

@@ -21,6 +21,7 @@ import tree
 import hexdump
 import inflate
 import ctypes
+from utils import *
 
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
@@ -35,20 +36,6 @@ charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
 
 underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Double accounting"}
-
-def add_hditer (hd,name,value,offset,length,vtype):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
-
-def add_pgiter (page, name, ftype, stype, data, parent = None):
-	iter1 = page.model.append (parent,None)
-	page.model.set_value(iter1,0,name)
-	page.model.set_value(iter1,1,(ftype,stype))
-	page.model.set_value(iter1,2,len(data))
-	page.model.set_value(iter1,3,data)
-	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-	return iter1
-
 
 def fib_base (hd, data):
 	off = 0

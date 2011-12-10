@@ -25,6 +25,7 @@ import escher
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
+from utils import *
 
 version = "0.5.70"
 
@@ -60,9 +61,6 @@ def register_stock_icons():
 	# Add our custom icon factory to the list of defaults
 	factory = gtk.IconFactory()
 	factory.add_default()
-
-def d2hex(data):
-	return "%02x%02x%02x%02x"%(ord(data[0]),ord(data[1]),ord(data[2]),ord(data[3]))
 
 class ApplicationMainWindow(gtk.Window):
 	def __init__(self, parent=None):

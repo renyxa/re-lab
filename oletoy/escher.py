@@ -19,6 +19,8 @@ import gobject
 import gtk
 import tree
 import hexdump
+from utils import *
+
 
 escher_opids = {
 0x0000:'left',0x0001:'top',0x0002:'right',0x0003:'bottom',0x0004:'rotation',

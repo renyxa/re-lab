@@ -1,5 +1,6 @@
 2011-12-10  Valek Filippov
 
+		* Move some common functions to "utils".
 		* CDR: loda-specific search (?rloda#d007), highligh tooltip if 4 bytes match with dict ID.
 
 2011-12-09  Valek Filippov

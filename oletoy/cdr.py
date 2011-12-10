@@ -14,14 +14,8 @@
 # USA
 #
 
-import sys,struct,gtk,gobject, zlib
-
-def add_iter (hd,name,value,offset,length,vtype):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
-
-def d2hex(data):
-	return "%02x%02x%02x%02x"%(ord(data[0]),ord(data[1]),ord(data[2]),ord(data[3]))
+import sys,struct,gtk,gobject,zlib
+from utils import *
 
 fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
 clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
@@ -147,28 +141,28 @@ def ftil (hd,size,data):
 		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
 def loda_outl (hd,data,offset,l_type):
-	add_iter (hd, "[0x000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_fild (hd,data,offset,l_type):
-	add_iter (hd, "[0x0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_stlt (hd,data,offset,l_type):
-	add_iter (hd, "[0x00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_rot(hd,data,offset,l_type):
 	[rot] = struct.unpack('<L', data[offset:offset+4])
-	add_iter (hd, "[0x2efe] Rotate","%u"%round(rot/1000000.0,2),offset,4,"txt")
+	add_iter (hd, "[2efe] Rotate","%u"%round(rot/1000000.0,2),offset,4,"txt")
 
 def loda_name(hd,data,offset,l_type):
 	if hd.version > 11:
 		layrname = unicode(data[offset:],'utf-16')
 	else:
 		layrname = data[offset:]
-	add_iter (hd,"[0x03e8] Layer name",layrname,offset,len(data[offset:]),"txt")
+	add_iter (hd,"[03e8] Layer name",layrname,offset,len(data[offset:]),"txt")
 
 def loda_polygon (hd,data,offset,l_type):
 	num = struct.unpack('<L', data[offset+4:offset+8])[0]
-	add_iter (hd,"[0x2af8] # of angles",num,offset,4,"<I")
+	add_iter (hd,"[2af8] # of angles",num,offset,4,"<I")
 	for i in range(4):
 		[varX] = struct.unpack('<L', data[offset+0x10+i*8:offset+0x14+i*8])
 		[varY] = struct.unpack('<L', data[offset+0x14+i*8:offset+0x18+i*8])
@@ -176,7 +170,7 @@ def loda_polygon (hd,data,offset,l_type):
 			varX = varX - 0x100000000
 		if varY > 0x7FFFFFFF:
 			varY = varY - 0x100000000
-		add_iter (hd,"[0x2af8] X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x10+i*8,8,"txt")
+		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x10+i*8,8,"txt")
 
 def loda_coords124 (hd,data,offset,l_type):
 # rectangle or ellipse or text
@@ -186,20 +180,20 @@ def loda_coords124 (hd,data,offset,l_type):
 		x1 -= 0x100000000
 	if y1 > 0x7FFFFFFF:
 		y1 -= 0x100000000
-	add_iter (hd,"[0x001e] x1/y1","%u/%u mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
+	add_iter (hd,"[001e] x1/y1","%u/%u mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
 
 	if l_type == 1:
 		R1 = struct.unpack('<L', data[offset+8:offset+12])[0]
 		R2 = struct.unpack('<L', data[offset+12:offset+16])[0]
 		R3 = struct.unpack('<L', data[offset+16:offset+20])[0]
 		R4 = struct.unpack('<L', data[offset+20:offset+24])[0]
-		add_iter (hd,"[0x001e] R1 R2 R3 R4","%u %u %u %u mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+8,16,"txt")
+		add_iter (hd,"[001e] R1 R2 R3 R4","%u %u %u %u mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+8,16,"txt")
 
 	if l_type == 2:
 		a1 = struct.unpack('<L', data[offset+8:offset+12])[0]
 		a2 = struct.unpack('<L', data[offset+12:offset+16])[0]
 		a3 = struct.unpack('<L', data[offset+16:offset+20])[0]
-		add_iter (hd,"[0x001e] Start/End/Rot angles","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
+		add_iter (hd,"[001e] Start/End/Rot angles","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
 
 def loda_coords3 (hd,data,offset,l_type):
 	[pointnum] = struct.unpack('<L', data[offset:offset+4])
@@ -233,22 +227,23 @@ def loda_coords3 (hd,data,offset,l_type):
 			x -= 0x100000000
 		if y > 0x7FFFFFFF:
 			y -= 0x100000000
-		add_iter (hd,"[0x001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt")
+		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt")
 
 def loda_coords (hd,data,offset,l_type):
 	if l_type < 5 and l_type != 3:
 		loda_coords124 (hd,data,offset,l_type)
 	elif l_type == 3:
 		loda_coords3 (hd,data,offset,l_type)
+# insert calls to specific coords parsing here
+
 
 def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
 loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x25:"0x25 ???"}
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
-									0xc8:loda_stlt, 0x2af8:loda_polygon,
-									0x3e8:loda_name,
-									0x2efe:loda_rot, 0x7d0:loda_palt#, 0x1f40:loda_lens, 0x1f45:loda_contnr
+									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
+									0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr
 									}
 
 def loda (hd,size,data):
@@ -279,6 +274,8 @@ def loda (hd,size,data):
 			if loda_type_func.has_key(argtype):
 				loda_type_func[argtype](hd,data,offset,l_type)
 			else:
+				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+			if argtype == 0x1e and l_type >=5:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 #				print 'Unknown argtype: %x'%argtype                             
 

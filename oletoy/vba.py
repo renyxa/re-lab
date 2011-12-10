@@ -19,6 +19,8 @@ import gtk
 import tree
 import hexdump
 import inflate
+from utils import *
+
 
 def rt_0 (data):
 	return ""
