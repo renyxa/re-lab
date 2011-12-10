@@ -1,3 +1,11 @@
+2011-12-10  Valek Filippov
+
+		* CDR: loda-specific search (?rloda#d007), highligh tooltip if 4 bytes match with dict ID.
+
+2011-12-09  Valek Filippov
+
+		* CDR: improved loda and outl parsing
+
 2011-12-07  Valek Filippov
 
 		* CDR: bbox and obbx, initial parsing

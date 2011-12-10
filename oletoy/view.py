@@ -26,7 +26,7 @@ import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 
-version = "0.5.68"
+version = "0.5.70"
 
 ui_info = \
 '''<ui>
@@ -60,6 +60,9 @@ def register_stock_icons():
 	# Add our custom icon factory to the list of defaults
 	factory = gtk.IconFactory()
 	factory.add_default()
+
+def d2hex(data):
+	return "%02x%02x%02x%02x"%(ord(data[0]),ord(data[1]),ord(data[2]),ord(data[3]))
 
 class ApplicationMainWindow(gtk.Window):
 	def __init__(self, parent=None):
@@ -216,9 +219,11 @@ Entry line:\n\
 	?aSTRING - search for ASCII string\n\
 	?uSTRING - search for Unicode string\n\
 	?x0123 - search for hex value\n\
-	?rREC{:[aux]STRING} - search for record with REC in the name and STRING in data.\n\n\
+	?rREC{:[aux]STRING} - search for record with REC in the name and STRING in data.\n\
+	?rloda#{arg} - search for args in 'loda' records in CDR\n\n\
 Hexdump selection:\n\
-	Select 2,3,4 or 8 bytes - check tooltip in statusbar.\n"
+	Select 2,3,4 or 8 bytes - check tooltip in statusbar.\n\
+	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow."
 		tb.insert(iter_txt, mytxt)
 		w.set_title("OLE Toy Manual")
 		w.set_default_size(520, 300)
@@ -818,6 +823,13 @@ Hexdump selection:\n\
 				v1 = struct.unpack(">H",buf[0:2])[0]
 				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt = "BE: %s\tX: %.4f\tY: %.4f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.)
+			if type[0:3] == "CDR":
+				dictm = self.das[pn].dictmod
+				bstr = d2hex(buf)
+				for i in range(dictm.iter_n_children(None)):
+					if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
+						txt = '<span background="#FFFF00">'+txt+'</span>  '
+						break
 
 			self.update_statusbar(txt)
 		if len(buf) == 8:

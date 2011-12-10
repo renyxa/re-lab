@@ -97,14 +97,34 @@ def obbx (hd,size,data):
 			varY = varY - 0x100000000
 		add_iter (hd,"X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
 
+def clr_model(hd,data,offset):
+	cmid = struct.unpack('<H', data[offset:offset+2])[0]
+	cmod = "%02x  "%cmid
+	if clr_models.has_key(cmid):
+		cmod += clr_models[cmid]
+	add_iter (hd,"Color Model",cmod,offset,2,"txt")
+	clr = "#%02x%02x%02x%02x"%(ord(data[offset+8]),ord(data[offset+9]),ord(data[offset+10]),ord(data[offset+11]))
+	add_iter (hd,"  Color",clr,offset+8,4,"txt")
+
 def outl (hd,size,data):
 	add_iter (hd,"Outline ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
-
+	add_iter (hd,"Line Type","%02x"%struct.unpack('<H', data[4:6])[0],4,2,"<H")
+	add_iter (hd,"Caps Type","%02x"%struct.unpack('<H', data[6:8])[0],6,2,"<H")
+	add_iter (hd,"???? ","%02x"%struct.unpack('<H', data[8:0xa])[0],8,2,"<H")
 	add_iter (hd,"LineWidth","%.2f mm"%round(struct.unpack('<I', data[12:16])[0]/10000.0,2),12,4,"<I")
 
-	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[80:84])[0],80,4,"<I")
-	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[84:88])[0],84,4,"<I")
-
+	add_iter (hd, "?? x0", "%u"%(struct.unpack('<d', data[16:24])[0]/10000),16,8,"<d")
+	add_iter (hd, "?? y0", "%u"%(struct.unpack('<d', data[40:48])[0]/10000),40,8,"<d")
+	for i in (0,1,3,4):                     
+		var = struct.unpack('<d', data[24+i*8:32+i*8])[0]
+		add_iter (hd, "?? var%d"%(i+1), "%f"%var,24+i*8,8,"<d")
+	clr_model(hd,data,0x4c)
+	dnum = struct.unpack('<H', data[0x68:0x6a])[0]
+	add_iter (hd,"Dash num","%02x"%(dnum/2),0x68,2,"<H")
+	for i in range(dnum/2):
+		add_iter (hd," Dash/Space","%02x/%02x"%(struct.unpack('<H', data[0x6a+i*4:0x6c+i*4])[0],struct.unpack('<H',data[0x6c+i*4:0x6e+i*4])[0]),0x6a+i*4,4,"txt")
+	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[0x80:0x84])[0],0x80,4,"<I")
+	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[0x84:0x88])[0],0x84,4,"<I")
 
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
@@ -221,11 +241,14 @@ def loda_coords (hd,data,offset,l_type):
 	elif l_type == 3:
 		loda_coords3 (hd,data,offset,l_type)
 
-loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon"}
+def loda_palt (hd,data,offset,l_type):
+	clr_model(hd,data,offset)
+
+loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x25:"0x25 ???"}
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0xc8:loda_stlt, 0x2af8:loda_polygon,
 									0x3e8:loda_name,
-									0x2efe:loda_rot	#, 0x7d0:loda_palt, 0x1f40:loda_lens, 0x1f45:loda_contnr
+									0x2efe:loda_rot, 0x7d0:loda_palt#, 0x1f40:loda_lens, 0x1f45:loda_contnr
 									}
 
 def loda (hd,size,data):

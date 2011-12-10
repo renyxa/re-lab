@@ -26,6 +26,12 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
+def d2hex(data):
+	s = ""
+	for i in range(len(data)):
+		s += "%02x"%ord(data[i])
+	return s
+
 def arg_conv (ctype,carg):
 	data = ''
 	if ctype == 'x' or ctype == 'X':
@@ -58,25 +64,64 @@ def xlsfind (model,path,iter,(page,rowaddr,coladdr)):
 
 def recfind (model,path,iter,(page,data)):
 	rec = model.get_value(iter,0)
-	arg = data.find(":")
-	rdata1 = data
-	if arg != -1:
-		rdata1 = data[:arg]
-		ctype = data[arg+1]
-		rdata2 = arg_conv(ctype,data[arg+2:])
+	# for CDR only
+	# ?rloda#hexarg
+	# means 'search for record "loda" with hexarg equals some arg ID
+	# show value for this hexarg
+	# without hexarg -- show list of all hexargs in all loda-s
+	carg = data.find("#")
+	arg = -1
+	if page.type[0:3] == "CDR" and carg != -1:
+		rdata1 = data[:carg]
+		rdata2 = data[carg+1:]
 
+	else:
+	# ?rRECORD:uUNITEXT
+	# data -> "RECORD:uUNITEXT"
+		arg = data.find(":")
+		rdata1 = data
+		if arg != -1:
+			# rdata1 -> "RECORD"
+			# rdata2 -> "uUNITEXT" -> converted to "UNITEXT"
+			rdata1 = data[:arg]
+			ctype = data[arg+1]
+			rdata2 = arg_conv(ctype,data[arg+2:])
 	pos = rec.find(rdata1)
 	if pos != -1:
+		# found record, looks for value in normal case
 		if arg != -1:
 			recdata = model.get_value(iter,3)
 			pos2 = recdata.find(rdata2)
 			if pos2 == -1:
 				return
-		s_iter = page.search.append(None,None)
-		page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
-		page.search.set_value(s_iter,2,"%s (%d)"%(rec,model.get_value(iter,2)))
+		if carg == -1:
+			s_iter = page.search.append(None,None)
+			page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+			page.search.set_value(s_iter,2,"%s (%d)"%(rec,model.get_value(iter,2)))
+		# looks for args in CDR record
+		else:
+			recdata = model.get_value(iter,3)
+			n_args = struct.unpack('<i', recdata[4:8])[0]
+			s_args = struct.unpack('<i', recdata[8:0xc])[0]
+			s_types = struct.unpack('<i', recdata[0xc:0x10])[0]
+
+			for i in range(n_args, 0, -1):
+				off1 = struct.unpack('<L',recdata[s_args+i*4-4:s_args+i*4])[0]
+				off2 = struct.unpack('<L',recdata[s_args+i*4:s_args+i*4+4])[0]
+				argtype = "%04x"%(struct.unpack('<L',recdata[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0])
+				argvalue = d2hex(recdata[off1:off2])
+				if rdata2 != "":
+					if rdata2 == argtype:
+						s_iter = page.search.append(None,None)
+						page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+						page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtype,argvalue))
+				else:
+					s_iter = page.search.append(None,None)
+					page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+					page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtype,argvalue))
 
 def cmdfind (model,path,iter,(page,data)):
+	# in cdr look for leaf chunks only, avoid duplication
 	if page.type[0:3] == "CDR" and model.iter_n_children(iter)>0:
 		return
 	buf = model.get_value(iter,3)
@@ -148,6 +193,7 @@ def parse (cmd, entry, page):
 	elif cmd[0] == "?":
 		ctype = cmd[1]
 		carg = cmd[2:]
+		# convert line to hex or unicode if required
 		data = arg_conv(ctype,carg)
 		model = page.view.get_model()
 		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
