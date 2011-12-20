@@ -19,6 +19,10 @@ import tree, gtk, gobject,zlib
 import ole, escher, rx2
 from utils import *
 
+cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
+					0x2af8:"Polygon",0x3e8:"Name",0x2efe:"Rotation",0x7d0:"Palette",
+					0x1f40:"Lens",0x1f45:"Container"}
+
 def arg_conv (ctype,carg):
 	data = ''
 	if ctype == 'x' or ctype == 'X':
@@ -95,17 +99,22 @@ def recfind (model,path,iter,(page,data)):
 			for i in range(n_args, 0, -1):
 				off1 = struct.unpack('<L',recdata[s_args+i*4-4:s_args+i*4])[0]
 				off2 = struct.unpack('<L',recdata[s_args+i*4:s_args+i*4+4])[0]
-				argtype = "%04x"%(struct.unpack('<L',recdata[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0])
+				argtype = struct.unpack('<L',recdata[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
+				argtxt = "%04x"%argtype
 				argvalue = d2hex(recdata[off1:off2])
 				if rdata2 != "":
-					if rdata2 == argtype:
+					if rdata2 == argtxt:
+						if cdrloda.has_index(argtype):
+							argtxt = cdrloda[argtype]
 						s_iter = page.search.append(None,None)
 						page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
-						page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtype,argvalue))
+						page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtxt,argvalue))
 				else:
+					if cdrloda.has_key(argtype):
+						argtxt = cdrloda[argtype]
 					s_iter = page.search.append(None,None)
 					page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
-					page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtype,argvalue))
+					page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtxt,argvalue))
 
 def cmdfind (model,path,iter,(page,data)):
 	# in cdr look for leaf chunks only, avoid duplication

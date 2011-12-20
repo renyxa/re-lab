@@ -241,6 +241,9 @@ def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
 loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x25:"0x25 ???"}
+
+# loda_container 1st 4 bytes -- matches with SPND of the group
+
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
 									0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr

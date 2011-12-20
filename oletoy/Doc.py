@@ -158,57 +158,10 @@ class Page:
 		addr = model1.get_value(iter1,1)
 		self.view.expand_to_path(goto)
 		self.view.set_cursor_on_cell(goto)
+		intCol = self.view.get_column(0)
+		self.view.row_activated(goto,intCol)
+
 		hd = self.hd
-# FIXME! copy-pasted from view.py
-# check why need double activation to scroll to addr
-		hd.version = self.version
-		treeSelection = self.view.get_selection()
-		model, siter = treeSelection.get_selected()
-		ntype = model.get_value(siter,1)
-		size = model.get_value(siter,2)
-		data = model.get_value(siter,3)
-		hd.data = data
-		str_addr = ''
-		str_hex = ''
-		str_asc = ''
-		if data != None:
-			for line in range(0, len(data), 16):
-				str_addr+="%07x: "%line
-				end = min(16, len(data) - line)
-				for byte in range(0, 15):
-					if byte < end:
-						str_hex+="%02x " % ord(data[line + byte])
-						if ord(data[line + byte]) < 32 or 126<ord(data[line + byte]):
-							str_asc +='.'
-						else:
-							str_asc += data[line + byte]
-				if end > 15:			
-					str_hex+="%02x" % ord(data[line + 15])
-					if ord(data[line + 15]) < 32 or 126<ord(data[line + 15]):
-						str_asc += '.'
-					else:
-						str_asc += data[line + 15]
-					str_hex+='\n'
-					str_asc+='\n'
-					str_addr+='\n'
-			if len(str_hex) < 47:
-				str_hex += " "*(47-len(str_hex))
-	
-			buffer_addr = hd.txtdump_addr.get_buffer()
-			iter_addr = buffer_addr.get_iter_at_offset(0)
-			iter_addr_end = buffer_addr.get_iter_at_offset(buffer_addr.get_char_count())
-			buffer_addr.delete(iter_addr, iter_addr_end)
-			buffer_addr.insert_with_tags_by_name(iter_addr, str_addr,"monospace")
-			buffer_asc = hd.txtdump_asc.get_buffer()
-			iter_asc = buffer_asc.get_iter_at_offset(0)
-			iter_asc_end = buffer_asc.get_iter_at_offset(buffer_asc.get_char_count())
-			buffer_hex = hd.txtdump_hex.get_buffer()
-			iter_hex = buffer_hex.get_iter_at_offset(0)
-			iter_hex_end = buffer_hex.get_iter_at_offset(buffer_hex.get_char_count())
-			buffer_hex.delete(iter_hex, iter_hex_end)
-			buffer_hex.insert_with_tags_by_name(iter_hex, str_hex,"monospace")
-			buffer_asc.delete(iter_asc, iter_asc_end)
-			buffer_asc.insert_with_tags_by_name(iter_asc, str_asc,"monospace")
 		try:
 			buffer_hex = hd.txtdump_hex.get_buffer()
 			vadj = hd.vscroll2.get_vadjustment()
