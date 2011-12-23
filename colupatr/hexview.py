@@ -1,4 +1,19 @@
 #!/usr/bin/env python
+# Copyright (C) 2011	Valek Filippov (frob@df.ru)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of version 3 or later of the GNU General Public
+# License as published by the Free Software Foundation.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
+# USA
+
 import gtk
 import cairo
 import struct
@@ -333,13 +348,11 @@ class HexView():
 				if self.curr == self.prer: # in the same line
 					if r1 == r2:
 						if self.curc > self.prec: # move right
-							print 'r',
 							if c2 <= self.curc:
 								c2 = self.curc+1
 							else:
 								c1 = self.curc
 						else: # move left
-							print 'l',
 							if c1 == self.prec:
 								c1 = self.curc
 							else:
@@ -379,8 +392,8 @@ class HexView():
 				self.sel = r1,c1,r2,c2
 				self.mode = ""
 				expose = 1
-				y = (r2-self.offnum+1)*self.tht
-				x = (self.curc*3+11)*self.tdx
+				y = (r2-self.offnum+1.5)*self.tht # +1
+				x = (self.curc*3+11.5)*self.tdx
 				
 				s = c2 - c1
 				if r1 != r2:
@@ -566,7 +579,7 @@ class HexView():
 					# old hex char
 					ctx.rectangle(self.tdx*(10+3*self.prec),(self.prer-self.offnum+1)*self.tht+6.5,self.tdx*2+1,self.tht)
 					# old asc char
-					ctx.rectangle(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+1)*self.tht+7,self.tdx+1,self.tht)
+					ctx.rectangle(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+1)*self.tht+6.5,self.tdx+1,self.tht)
 					ctx.fill()
 				ctx.set_source_rgb(0,0,0)
 				if self.prec > -1 and self.prec < (self.lines[self.prer+1]-self.lines[self.prer]):
@@ -598,12 +611,14 @@ class HexView():
 						elif self.curr > self.sel[0] and self.curr < self.sel[2]:
 							ctx.set_source_rgb(0.7,0.9,0.8)
 				ctx.fill()
-				ctx.rectangle(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+1)*self.tht+7,self.tdx,self.tht)
+				ctx.rectangle(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+1)*self.tht+6.5,self.tdx,self.tht)
 				ctx.set_source_rgb(0.75,0.75,1)
 				ctx.fill()
 				ctx.set_source_rgb(0,0,1)
 				ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
+				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 				ctx.show_text("%02x "%ord(self.data[self.lines[self.curr]+self.curc]))
+				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 				ctx.set_source_rgb(0,0,0)
 				ctx.move_to(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+2)*self.tht+4)
 				ch = self.data[self.lines[self.curr]+self.curc]
@@ -638,12 +653,15 @@ class HexView():
 				elif self.mtt[2] > 9:
 					sh = 1
 
-				ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4)
-				ctx.set_source_rgb(0.9,0.95,0.95)
+				ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
+				ctx.set_source_rgba(0.9,0.95,0.95,0.85)
 				ctx.fill()
 				ctx.set_source_rgb(0.5,0,0)
-				ctx.move_to(self.mtt[0],self.mtt[1]-6)
+				ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
+				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 				ctx.show_text("%d"%self.mtt[2])
+				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+
 		else:
 			# clear top address lane
 			ctx.rectangle(0,0,width,self.tht+4)

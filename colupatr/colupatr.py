@@ -1,4 +1,19 @@
 #!/usr/bin/env python
+# Copyright (C) 2011	Valek Filippov (frob@df.ru)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of version 3 or later of the GNU General Public
+# License as published by the Free Software Foundation.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
+# USA
+
 import sys,struct
 import gtk,gobject
 import hexview
@@ -132,7 +147,7 @@ class ApplicationMainWindow(gtk.Window):
 
 			( "About", None,							 # name, stock id
 				"About", "",					# label, accelerator
-				"About relabed",								   # tooltip
+				"About colupatr",								   # tooltip
 				self.activate_about ),
 		);
 
@@ -145,7 +160,7 @@ class ApplicationMainWindow(gtk.Window):
 		dialog = gtk.AboutDialog()
 		dialog.set_name("colupatr v"+version)
 		dialog.set_copyright("\302\251 Copyright 2011 frob")
-		dialog.set_website("http://www.gnome.ru/")
+		dialog.set_website("http://www.gimp.ru/")
 		## Close dialog on user response
 		dialog.connect ("response", lambda d, r: d.destroy())
 		dialog.show()
@@ -276,7 +291,7 @@ class ApplicationMainWindow(gtk.Window):
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
 		if dlen > 3:
 			try:
-				txt += '\t<span background="#DDFFDD">'+unicode(buf,'cp1251').replace("\n","\\n")+'</span>'
+				txt += '\t<span background="#DDFFDD">'+unicode(buf,'cp1251').replace("\n","\\n")[:32]+'</span>'
 			except:
 				pass
 		self.update_statusbar(txt)

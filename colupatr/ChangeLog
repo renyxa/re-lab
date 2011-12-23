@@ -1,3 +1,10 @@
+2011-12-23  Valek Filippov <frob@df.ru>
+
+	* Bold for hex cursor and selection size,
+	  semitransparent selection size BG,
+	  better place for selection size,
+	  small visual glitch with selection fix.
+
 2011-12-22  Valek Filippov <frob@df.ru>
 
 	* "Start making this into a real package." (c) Jody
