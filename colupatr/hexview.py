@@ -650,6 +650,11 @@ class HexView():
 				ctx.set_source_rgb(1,0,0.8)
 				ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.curr-self.offnum+2)+5.5)
 				ctx.stroke()
+			if self.lines[self.prer-self.offnum][1] == 1:
+				ctx.move_to(self.tdx*10+0.5,(self.prer-self.offnum+2)*self.tht+5.5)
+				ctx.set_source_rgb(1,0,0.8)
+				ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.prer-self.offnum+2)+5.5)
+				ctx.stroke()
 
 					
 			if self.mtt:
