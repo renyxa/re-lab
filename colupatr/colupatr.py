@@ -192,7 +192,8 @@ class ApplicationMainWindow(gtk.Window):
 				# save content here
 				f.write(struct.pack("<I",len(doc.lines)))
 				for i in doc.lines:
-					f.write(struct.pack("<I",i))
+					f.write(struct.pack("<I",i[0]))
+					f.write(struct.pack("B",i[1]))
 				f.write(doc.data)
 				f.close()
 
@@ -217,8 +218,10 @@ class ApplicationMainWindow(gtk.Window):
 					rbuf = f.read()
 					llen = struct.unpack("<I",rbuf[0:4])[0]
 					for i in range(llen):
-						lines.append(struct.unpack("<I",rbuf[4+i*4:8+i*4])[0])
-					buf = rbuf[4+llen*4:]
+						l1 = struct.unpack("<I",rbuf[4+i*5:8+i*5])[0]
+						l2 = ord(rbuf[8+i*5])
+						lines.append((l1,l2))
+					buf = rbuf[4+llen*5:]
 				else:
 					buf = f.read()
 				f.close()

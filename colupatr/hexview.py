@@ -81,6 +81,9 @@ class HexView():
 		if lines == []:
 			self.init_lines()				# init as a standard "all 0x10 wide" lines
 		else:
+			for i in range(len(lines)):
+				self.hvlines.append("")
+				self.bkhvlines.append("")
 			self.set_maxaddr()
 
 
@@ -108,10 +111,10 @@ class HexView():
 
 	def init_lines(self):
 		for i in range(len(self.data)/16+1):
-			self.lines.append((i*16,))
+			self.lines.append((i*16,0))
 			self.hvlines.append("")
 			self.bkhvlines.append("")
-		self.lines.append((len(self.data),))
+		self.lines.append((len(self.data),0))
 
 	def set_maxaddr (self):
 		# check and update maxaddr to the value of the longest line
@@ -300,7 +303,7 @@ class HexView():
 			self.bkhvlines += self.hvlines
 			if self.curr < len(self.lines)-1 and self.curc > 0:
 				self.split_string()
-				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,))
+				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,0))
 				self.set_maxaddr()
 				self.curc -= 1
 				self.tdx = -1 # force to recalculate in expose
@@ -641,6 +644,13 @@ class HexView():
 					ctx.set_source_rgb(0,0,0.8)
 					ctx.move_to(0,(self.curr-self.offnum+2)*self.tht+4)
 					ctx.show_text("%08x"%(self.lines[self.curr][0]))
+			# redraw break line
+			if self.lines[self.curr-self.offnum][1] == 1:
+				ctx.move_to(self.tdx*10+0.5,(self.curr-self.offnum+2)*self.tht+5.5)
+				ctx.set_source_rgb(1,0,0.8)
+				ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.curr-self.offnum+2)+5.5)
+				ctx.stroke()
+
 					
 			if self.mtt:
 				sh = 0
@@ -731,6 +741,12 @@ class HexView():
 				ctx.show_text(hex)
 				ctx.move_to(self.tdx*(10+1+self.maxaddr*3),self.tht*(i+2)+4)
 				ctx.show_text(asc)
+				# draw break line
+				if self.lines[i][1] == 1:
+					ctx.move_to(self.tdx*10+0.5,(i+2)*self.tht+5.5)
+					ctx.set_source_rgb(1,0,0.8)
+					ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(i+2)+5.5)
+					ctx.stroke()
 			self.mode = "c"
 			self.expose(widget, event)
 
