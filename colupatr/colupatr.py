@@ -18,7 +18,7 @@ import sys,struct
 import gtk,gobject
 import hexview
 
-version = "0.1"
+version = "0.2"
 
 ui_info = \
 '''<ui>
@@ -189,11 +189,13 @@ class ApplicationMainWindow(gtk.Window):
 			if fname:
 				f = open(fname,"w")
 				doc = self.das[pn]
-				# save content here
 				f.write(struct.pack("<I",len(doc.lines)))
 				for i in doc.lines:
 					f.write(struct.pack("<I",i[0]))
 					f.write(struct.pack("B",i[1]))
+					if i[1] > 1:
+						f.write(struct.pack("B",len(i[2])))
+						f.write(i[2])
 				f.write(doc.data)
 				f.close()
 
@@ -217,11 +219,18 @@ class ApplicationMainWindow(gtk.Window):
 					print 'Re-Lab project file'
 					rbuf = f.read()
 					llen = struct.unpack("<I",rbuf[0:4])[0]
+					shift = 0
 					for i in range(llen):
-						l1 = struct.unpack("<I",rbuf[4+i*5:8+i*5])[0]
-						l2 = ord(rbuf[8+i*5])
-						lines.append((l1,l2))
-					buf = rbuf[4+llen*5:]
+						l1 = struct.unpack("<I",rbuf[4+i*5+shift:8+i*5+shift])[0]
+						l2 = ord(rbuf[8+i*5+shift])
+						if l2 > 1:
+							l3len = ord(rbuf[9+i*5+shift])
+							l3 = rbuf[10+i*5+shift:10+i*5+shift+l3len]
+							shift += l3len+1
+							lines.append((l1,l2,l3))
+						else:
+							lines.append((l1,l2))
+					buf = rbuf[4+llen*5+shift+1:]
 				else:
 					buf = f.read()
 				f.close()

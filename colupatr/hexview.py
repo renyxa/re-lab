@@ -22,10 +22,7 @@ class HexView():
 	def __init__(self,data=None,lines=[],offset=0):
 		# UI related onjects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
-		self.hdr = gtk.DrawingArea()	# header with column address and real offset of the cursor
-		self.addr = gtk.DrawingArea()	# leftmost column with line addresses
 		self.hv = gtk.DrawingArea()		# middle column with the main hex context
-		self.av = gtk.DrawingArea()		# right column with ASCII representation
 		self.vadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
 		self.hadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
 		self.vs = gtk.VScrollbar(self.vadj)
@@ -40,6 +37,15 @@ class HexView():
 		self.table.attach(self.hbox2,2,3,2,3,0,0)
 		self.table.attach(self.hbox3,3,4,0,1,0,0)
 		self.table.attach(self.vs,3,4,1,2,0)
+		self.ewin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		self.ewin.connect ("focus-out-event", lambda d, r: d.hide())
+		self.ewin.set_resizable(True)
+		self.ewin.set_modal(False)
+		self.ewin.set_decorated(False)
+		self.ewin.set_border_width(0)
+		self.entry = gtk.Entry()
+		self.entry.connect("key-press-event",self.entry_key_pressed)
+		self.ewin.add(self.entry)
 
 		# variables to store things
 		self.data = data				# data presented in the widget
@@ -69,6 +75,7 @@ class HexView():
 		
 		# connect signals and call some init functions
 		self.hv.set_can_focus(True)
+		self.hv.set_app_paintable(True)
 		self.hv.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
 		self.hv.connect("button_press_event",self.on_button_press)
 		self.hv.connect("button_release_event",self.on_button_release)
@@ -85,7 +92,6 @@ class HexView():
 				self.hvlines.append("")
 				self.bkhvlines.append("")
 			self.set_maxaddr()
-
 
 	def on_vadj_changed (self, vadj):
 		if int(vadj.value) != self.offnum:
@@ -125,6 +131,20 @@ class HexView():
 				ma = ta
 		self.maxaddr = ma
 
+	def entry_key_pressed(self, entry, event):
+		if event.keyval == 65307: # Esc
+			self.ewin.hide()
+			entry.set_text("")
+		elif event.keyval == 65293: # Enter
+			self.ewin.hide()
+			if entry.get_text():
+				mode = self.lines[self.curr][1]
+				if self.lines[self.curr][1] < 2:
+					mode += 2
+				self.lines[self.curr] = (self.lines[self.curr][0],mode,entry.get_text())
+			else:
+				self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
+
 	def on_key_release (self, view, event):
 		if event.keyval == 65505 or event.keyval == 65506:
 			self.kdrag = 0
@@ -142,6 +162,7 @@ class HexView():
 			if self.kdrag == 0:
 				self.sel = (self.curr,self.curc,self.curr,self.curc)
 				self.kdrag = 1
+
 		if event.keyval == 65362: # Up
 			flag = 1
 			self.mode = "c"
@@ -156,9 +177,11 @@ class HexView():
 			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
 			if self.curc > maxc:
 				self.curc = maxc
+
 		elif event.keyval == 100: # "d" for debug
 			self.debug *= -1
 			pass
+
 		elif event.keyval == 65365: # PgUp
 			flag = 1
 			self.mode = "c"
@@ -175,6 +198,7 @@ class HexView():
 			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
 			if self.curc > maxc:
 				self.curc = maxc
+
 		elif event.keyval == 65364: # Down
 			flag = 2
 			self.mode = "c"
@@ -189,6 +213,7 @@ class HexView():
 			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
 			if self.curc > maxc:
 				self.curc = maxc
+
 		elif event.keyval == 65366: # PgDn
 			flag = 2
 			self.mode = "c"
@@ -205,6 +230,7 @@ class HexView():
 			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
 			if self.curc > maxc:
 				self.curc = maxc
+
 		elif event.keyval == 65361: # Left
 			if self.debug == 1:
 				print self.curc,self.curr
@@ -219,7 +245,6 @@ class HexView():
 				else:
 					self.curc = 0
 			self.shift = 1
-			
 			
 		elif event.keyval == 65363: # Right
 			flag = 1
@@ -241,6 +266,7 @@ class HexView():
 				else:
 					self.curc = maxc
 			self.shift = -1
+
 		elif event.keyval == 65360: # Home
 			flag = 1
 			self.mode = "c"
@@ -250,6 +276,7 @@ class HexView():
 				self.curr = 0
 				self.offnum = 0
 				self.mode = ""
+
 		elif event.keyval == 65367: # End
 			flag = 2
 			self.mode = "c"
@@ -261,6 +288,7 @@ class HexView():
 			self.curc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
 			if self.curc == -1:
 				self.curc = 0
+
 		elif event.keyval == 65535: # Del
 		# join next row to the current one
 			self.bklines = []
@@ -268,14 +296,20 @@ class HexView():
 			self.bklines += self.lines
 			self.bkhvlines += self.hvlines
 			if self.curr != len(self.lines)-2: # not in the last row
-				self.curr += 1
-				self.curc = 0
-				self.join_string()
-				self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
-				self.lines.pop(self.curr)
-				self.curr -= 1
-				self.set_maxaddr()
-				self.tdx = -1 # force to recalculate in expose
+				if self.curc == self.lines[self.curr+1][0] - self.lines[self.curr][0]-1 and self.lines[self.curr][1] != 0:
+					self.lines[self.curr] = (self.lines[self.curr][0],0)
+					expose = 1
+				else:
+					self.curr += 1
+					self.curc = 0
+					self.join_string()
+					self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
+					self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr][1])
+					self.lines.pop(self.curr)
+					self.curr -= 1
+					self.set_maxaddr()
+					self.tdx = -1 # force to recalculate in expose
+
 		elif event.keyval == 65288: # Backspace
 		# at start of the row it joins full row to the previous one
 		# any other position -- join left part to the previous row
@@ -284,17 +318,24 @@ class HexView():
 			self.bklines += self.lines
 			self.bkhvlines += self.hvlines
 			if self.curr > 0:
-				self.join_string()
 				if self.curc == 0: #  join full row
-					self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
-					self.lines.pop(self.curr)
-					self.curr -= 1
+					if self.lines[self.curr-1][1] == 0:
+						self.join_string()
+						self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
+						self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr][1])
+						self.lines.pop(self.curr)
+						self.curr -= 1
+					else:
+						self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr-1][1]-1)
+						expose = 1
 				else:
-					self.lines[self.curr][0] += self.curc
+					self.join_string()
+					self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1])
 					self.curc = 0
 				self.set_maxaddr()
 				self.tdx = -1 # force to recalculate in expose
 				self.sel = None
+
 		elif event.keyval == 65293: # Enter
 			# split row, move everything right to the next (new) one pushing everything down
 			self.bklines = []
@@ -303,14 +344,30 @@ class HexView():
 			self.bkhvlines += self.hvlines
 			if self.curr < len(self.lines)-1 and self.curc > 0:
 				self.split_string()
-				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,0))
+				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1]))
+				self.lines[self.curr] = (self.lines[self.curr][0],0)
 				self.set_maxaddr()
 				self.curc -= 1
 				self.tdx = -1 # force to recalculate in expose
 				self.prec = self.curc - 1
 				self.sel = None
+			elif self.curr > 0 and self.curc == 0 and (self.lines[self.curr-1][1] == 0 or self.lines[self.curr-1][1] == 2):
+				self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr-1][1]+1)
+				expose = 1
+
+		elif event.keyval == 65379: # Insert
+			xw,yw = self.hv.get_parent_window().get_position()
+			xv,yv = self.hv.window.get_position()
+			ys = yw+ yv+int((self.curr+0.5)*self.tht)
+			xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
+			if self.lines[self.curr][1] == 2:
+				self.entry.set_text(self.lines[self.curr][2])
+			self.ewin.show_all()
+			self.ewin.move(xs,ys)
+			
 		elif event.keyval == 97 and event.state == gtk.gdk.CONTROL_MASK: # ^A
 			self.sel = 0,0,self.numtl,self.lines[self.numtl-1][0]
+
 		elif event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK: # ^C
 			#FIXME: this doesn't work
 			clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
@@ -521,6 +578,7 @@ class HexView():
 		return self.hvlines[num]
 
 	def expose (self, widget, event):
+#		print "exp",event
 		ctx = self.hv.window.cairo_create()
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
@@ -539,145 +597,7 @@ class HexView():
 		else:
 			self.hs.show()
 
-		if self.mode == "c":
-			# clear prev hdr cursor
-			ctx.set_source_rgb(0.9,0.9,0.9)
-			ctx.move_to(self.tdx*(10+self.prec*3),self.tht+1.5)
-			ctx.line_to(self.tdx*(12+self.prec*3),self.tht+1.5)
-			ctx.stroke()
-			# clear prev hdr address
-			ctx.rectangle(self.tdx*(11+self.maxaddr*3),0,self.tdx*8,self.tht+1.5)
-			ctx.fill()
-			# draw new hdr cursor
-			ctx.set_source_rgb(0,0,0.8)
-			ctx.move_to(self.tdx*(10+self.curc*3),self.tht+1.5)
-			ctx.line_to(self.tdx*(12+self.curc*3),self.tht+1.5)
-			ctx.stroke()
-			
-			#draw haddr
-			haddr = "%02x"%(self.lines[self.curr][0]+self.curc)
-			ctx.move_to(self.tdx*(11+self.maxaddr*3),self.tht)
-			ctx.show_text(haddr)
-
-			#clear old and new hex and asc
-			if self.debug == 1:
-				print "mode c",self.prer,self.prec,self.curr,self.curc,self.offnum,self.maxaddr,self.lines[self.prer]
-			if self.prer-self.offnum > -1:
-				ctx.set_source_rgb(1,1,1)
-				if self.sel:
-					if self.sel[0] == self.sel[2]:
-						if self.prer == self.sel[0] and self.prec >= self.sel[1] and self.prec < self.sel[3]:
-							ctx.set_source_rgb(0.7,0.9,0.8)
-					else:
-						#1st row
-						if self.prer == self.sel[0]:
-							if self.prec >= self.sel[1] and self.prec <= self.lines[self.prer][0]:
-								ctx.set_source_rgb(0.7,0.9,0.8)
-						elif self.prer == self.sel[2]:
-							if self.prec < self.sel[3]:
-								ctx.set_source_rgb(0.7,0.9,0.8)
-						elif self.prer > self.sel[0] and self.prer < self.sel[2]:
-							ctx.set_source_rgb(0.7,0.9,0.8)
-				if self.prec > -1 and self.prec < (self.lines[self.prer+1][0]-self.lines[self.prer][0]):
-					# old hex char
-					ctx.rectangle(self.tdx*(10+3*self.prec),(self.prer-self.offnum+1)*self.tht+6.5,self.tdx*2+1,self.tht)
-					# old asc char
-					ctx.rectangle(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+1)*self.tht+6,self.tdx+1,self.tht+1.5)
-					ctx.fill()
-				ctx.set_source_rgb(0,0,0)
-				if self.prec > -1 and self.prec < (self.lines[self.prer+1][0]-self.lines[self.prer][0]):
-					# location of hex
-					ctx.move_to(self.tdx*(10+3*self.prec),(self.prer-self.offnum+2)*self.tht+4)
-					ctx.show_text("%02x "%ord(self.data[self.lines[self.prer][0]+self.prec]))
-				# location of asc
-					ctx.move_to(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+2)*self.tht+4)
-					ch = self.data[self.lines[self.prer][0]+self.prec]
-					if ord(ch) < 32 or ord(ch) > 126:
-						ch = "."
-					ctx.show_text(ch)
-
-			if self.curr-self.offnum > -1:
-				ctx.rectangle(self.tdx*(10+3*self.curc),(self.curr-self.offnum+1)*self.tht+6.5,self.tdx*2+1,self.tht)
-				ctx.set_source_rgb(1,1,1)
-				if self.sel:
-					if self.sel[0] == self.sel[2]:
-						if self.curr == self.sel[0] and self.curc >= self.sel[1] and self.curc < self.sel[3]:
-							ctx.set_source_rgb(0.7,0.9,0.8)
-					else:
-						#1st row
-						if self.curr == self.sel[0]:
-							if self.curc >= self.sel[1] and self.curc <= self.lines[self.curr][0]:
-								ctx.set_source_rgb(0.7,0.9,0.8)
-						elif self.curr == self.sel[2]:
-							if self.curc < self.sel[3]:
-								ctx.set_source_rgb(0.7,0.9,0.8)
-						elif self.curr > self.sel[0] and self.curr < self.sel[2]:
-							ctx.set_source_rgb(0.7,0.9,0.8)
-				ctx.fill()
-				ctx.rectangle(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+1)*self.tht+6,self.tdx,self.tht+1)
-				ctx.set_source_rgb(0.75,0.75,1)
-				ctx.fill()
-				ctx.set_source_rgb(0,0,1)
-				ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
-				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-				ctx.show_text("%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]))
-				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-				ctx.set_source_rgb(0,0,0)
-				ctx.move_to(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+2)*self.tht+4)
-				ch = self.data[self.lines[self.curr][0]+self.curc]
-				if ord(ch) < 32 or ord(ch) > 126:
-					ch = "."
-				ctx.show_text(ch)
-
-			if self.prer != self.curr: # need to clear/draw addr
-				if self.prer-self.offnum > -1:
-					ctx.rectangle(0,(self.prer-self.offnum+1)*self.tht+4,self.tdx*8,self.tht)
-					ctx.set_source_rgb(1,1,1)
-					ctx.fill()
-					ctx.set_source_rgb(0,0,0)
-					ctx.move_to(0,(self.prer-self.offnum+2)*self.tht+4)
-					ctx.show_text("%08x"%(self.lines[self.prer][0]))
-				if self.curr-self.offnum > -1:
-					ctx.rectangle(0,(self.curr-self.offnum+1)*self.tht+4,self.tdx*8,self.tht)
-					ctx.set_source_rgb(1,1,1)
-					ctx.fill()
-					ctx.set_source_rgb(0,0,0.8)
-					ctx.move_to(0,(self.curr-self.offnum+2)*self.tht+4)
-					ctx.show_text("%08x"%(self.lines[self.curr][0]))
-			# redraw break line
-			if self.lines[self.curr-self.offnum][1] == 1:
-				ctx.move_to(self.tdx*10+0.5,(self.curr-self.offnum+2)*self.tht+5.5)
-				ctx.set_source_rgb(1,0,0.8)
-				ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.curr-self.offnum+2)+5.5)
-				ctx.stroke()
-			if self.lines[self.prer-self.offnum][1] == 1:
-				ctx.move_to(self.tdx*10+0.5,(self.prer-self.offnum+2)*self.tht+5.5)
-				ctx.set_source_rgb(1,0,0.8)
-				ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.prer-self.offnum+2)+5.5)
-				ctx.stroke()
-
-					
-			if self.mtt:
-				sh = 0
-				if self.mtt[2] > 9999:
-					sh = 4
-				elif self.mtt[2] > 999:
-					sh = 3
-				elif self.mtt[2] > 99:
-					sh = 2
-				elif self.mtt[2] > 9:
-					sh = 1
-
-				ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
-				ctx.set_source_rgba(0.9,0.95,0.95,0.85)
-				ctx.fill()
-				ctx.set_source_rgb(0.5,0,0)
-				ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
-				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-				ctx.show_text("%d"%self.mtt[2])
-				ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-
-		else:
+		if self.mode == "":
 			# clear top address lane
 			ctx.rectangle(0,0,width,self.tht+4)
 			ctx.set_source_rgb(0.9,0.9,0.9)
@@ -692,6 +612,8 @@ class HexView():
 			ctx.line_to(self.tdx*9+0.5,height)
 			ctx.move_to(self.tdx*(10+self.maxaddr*3)+0.5,0)
 			ctx.line_to(self.tdx*(10+self.maxaddr*3)+0.5,height)
+			ctx.move_to(self.tdx*(12+self.maxaddr*4)+0.5,0)
+			ctx.line_to(self.tdx*(12+self.maxaddr*4)+0.5,height)
 			ctx.stroke()
 			
 			if self.sel and (self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl):
@@ -747,14 +669,154 @@ class HexView():
 				ctx.move_to(self.tdx*(10+1+self.maxaddr*3),self.tht*(i+2)+4)
 				ctx.show_text(asc)
 				# draw break line
-				if self.lines[i][1] == 1:
+				if self.lines[i][1] == 1 or self.lines[i][1] == 3:
 					ctx.move_to(self.tdx*10+0.5,(i+2)*self.tht+5.5)
 					ctx.set_source_rgb(1,0,0.8)
 					ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(i+2)+5.5)
 					ctx.stroke()
-			self.mode = "c"
-			self.expose(widget, event)
+				if self.lines[i][1] > 1:
+					ctx.move_to(self.tdx*(13+self.maxaddr*4),self.tht*(i+2)+4)
+					ctx.set_source_rgb(0.9,0,0)
+					ctx.show_text(self.lines[i][2])
+
+		# clear prev hdr cursor
+		ctx.set_source_rgb(0.9,0.9,0.9)
+		ctx.move_to(self.tdx*(10+self.prec*3),self.tht+1.5)
+		ctx.line_to(self.tdx*(12+self.prec*3),self.tht+1.5)
+		ctx.stroke()
+		# clear prev hdr address
+		ctx.rectangle(self.tdx*(11+self.maxaddr*3),0,self.tdx*8,self.tht+1.5)
+		ctx.fill()
+		# draw new hdr cursor
+		ctx.set_source_rgb(0,0,0.8)
+		ctx.move_to(self.tdx*(10+self.curc*3),self.tht+1.5)
+		ctx.line_to(self.tdx*(12+self.curc*3),self.tht+1.5)
+		ctx.stroke()
+		
+		#draw haddr
+		haddr = "%02x"%(self.lines[self.curr][0]+self.curc)
+		ctx.move_to(self.tdx*(11+self.maxaddr*3),self.tht)
+		ctx.show_text(haddr)
+
+		#clear old and new hex and asc
+		if self.debug == 1:
+			print "mode c",self.prer,self.prec,self.curr,self.curc,self.offnum,self.maxaddr,self.lines[self.prer]
+		if self.prer-self.offnum > -1:
+			ctx.set_source_rgb(1,1,1)
+			if self.sel:
+				if self.sel[0] == self.sel[2]:
+					if self.prer == self.sel[0] and self.prec >= self.sel[1] and self.prec < self.sel[3]:
+						ctx.set_source_rgb(0.7,0.9,0.8)
+				else:
+					#1st row
+					if self.prer == self.sel[0]:
+						if self.prec >= self.sel[1] and self.prec <= self.lines[self.prer][0]:
+							ctx.set_source_rgb(0.7,0.9,0.8)
+					elif self.prer == self.sel[2]:
+						if self.prec < self.sel[3]:
+							ctx.set_source_rgb(0.7,0.9,0.8)
+					elif self.prer > self.sel[0] and self.prer < self.sel[2]:
+						ctx.set_source_rgb(0.7,0.9,0.8)
+			if self.prec > -1 and self.prec < (self.lines[self.prer+1][0]-self.lines[self.prer][0]):
+				# old hex char
+				ctx.rectangle(self.tdx*(10+3*self.prec),(self.prer-self.offnum+1)*self.tht+6.5,self.tdx*2+1,self.tht)
+				# old asc char
+				ctx.rectangle(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+1)*self.tht+6,self.tdx+1,self.tht+1.5)
+				ctx.fill()
+			ctx.set_source_rgb(0,0,0)
+			if self.prec > -1 and self.prec < (self.lines[self.prer+1][0]-self.lines[self.prer][0]):
+				# location of hex
+				ctx.move_to(self.tdx*(10+3*self.prec),(self.prer-self.offnum+2)*self.tht+4)
+				ctx.show_text("%02x "%ord(self.data[self.lines[self.prer][0]+self.prec]))
+				# location of asc
+				ctx.move_to(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+2)*self.tht+4)
+				ch = self.data[self.lines[self.prer][0]+self.prec]
+				if ord(ch) < 32 or ord(ch) > 126:
+					ch = "."
+				ctx.show_text(ch)
+
+		if self.curr-self.offnum > -1:
+			ctx.rectangle(self.tdx*(10+3*self.curc),(self.curr-self.offnum+1)*self.tht+6.5,self.tdx*2+1,self.tht)
+			ctx.set_source_rgb(1,1,1)
+			if self.sel:
+				if self.sel[0] == self.sel[2]:
+					if self.curr == self.sel[0] and self.curc >= self.sel[1] and self.curc < self.sel[3]:
+						ctx.set_source_rgb(0.7,0.9,0.8)
+				else:
+					#1st row
+					if self.curr == self.sel[0]:
+						if self.curc >= self.sel[1] and self.curc <= self.lines[self.curr][0]:
+							ctx.set_source_rgb(0.7,0.9,0.8)
+					elif self.curr == self.sel[2]:
+						if self.curc < self.sel[3]:
+							ctx.set_source_rgb(0.7,0.9,0.8)
+					elif self.curr > self.sel[0] and self.curr < self.sel[2]:
+						ctx.set_source_rgb(0.7,0.9,0.8)
+			ctx.fill()
+			ctx.rectangle(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+1)*self.tht+6,self.tdx,self.tht+1)
+			ctx.set_source_rgb(0.75,0.75,1)
+			ctx.fill()
+			ctx.set_source_rgb(0,0,1)
+			ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
+			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+			ctx.show_text("%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]))
+			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+			ctx.set_source_rgb(0,0,0)
+			ctx.move_to(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+2)*self.tht+4)
+			ch = self.data[self.lines[self.curr][0]+self.curc]
+			if ord(ch) < 32 or ord(ch) > 126:
+				ch = "."
+			ctx.show_text(ch)
+
+		if self.prer != self.curr: # need to clear/draw addr
+			if self.prer-self.offnum > -1:
+				ctx.rectangle(0,(self.prer-self.offnum+1)*self.tht+4,self.tdx*8,self.tht)
+				ctx.set_source_rgb(1,1,1)
+				ctx.fill()
+				ctx.set_source_rgb(0,0,0)
+				ctx.move_to(0,(self.prer-self.offnum+2)*self.tht+4)
+				ctx.show_text("%08x"%(self.lines[self.prer][0]))
+			if self.curr-self.offnum > -1:
+				ctx.rectangle(0,(self.curr-self.offnum+1)*self.tht+4,self.tdx*8,self.tht)
+				ctx.set_source_rgb(1,1,1)
+				ctx.fill()
+				ctx.set_source_rgb(0,0,0.8)
+				ctx.move_to(0,(self.curr-self.offnum+2)*self.tht+4)
+				ctx.show_text("%08x"%(self.lines[self.curr][0]))
+		# redraw break line
+		if self.lines[self.curr-self.offnum][1] == 1 or self.lines[self.curr-self.offnum][1] == 3:
+			ctx.move_to(self.tdx*10+0.5,(self.curr-self.offnum+2)*self.tht+5.5)
+			ctx.set_source_rgb(1,0,0.8)
+			ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.curr-self.offnum+2)+5.5)
+			ctx.stroke()
+		if self.lines[self.prer-self.offnum][1] == 1 or self.lines[self.prer-self.offnum][1] == 3:
+			ctx.move_to(self.tdx*10+0.5,(self.prer-self.offnum+2)*self.tht+5.5)
+			ctx.set_source_rgb(1,0,0.8)
+			ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.prer-self.offnum+2)+5.5)
+			ctx.stroke()
+
+				
+		if self.mtt:
+			sh = 0
+			if self.mtt[2] > 9999:
+				sh = 4
+			elif self.mtt[2] > 999:
+				sh = 3
+			elif self.mtt[2] > 99:
+				sh = 2
+			elif self.mtt[2] > 9:
+				sh = 1
+
+			ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
+			ctx.set_source_rgba(0.9,0.95,0.95,0.85)
+			ctx.fill()
+			ctx.set_source_rgb(0.5,0,0)
+			ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
+			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+			ctx.show_text("%d"%self.mtt[2])
+			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+
 
 		self.mode = ""
 
-		return False
+		return True
