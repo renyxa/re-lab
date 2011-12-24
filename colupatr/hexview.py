@@ -296,15 +296,28 @@ class HexView():
 			self.bklines += self.lines
 			self.bkhvlines += self.hvlines
 			if self.curr != len(self.lines)-2: # not in the last row
-				if self.curc == self.lines[self.curr+1][0] - self.lines[self.curr][0]-1 and self.lines[self.curr][1] != 0:
-					self.lines[self.curr] = (self.lines[self.curr][0],0)
+				if self.curc == self.lines[self.curr+1][0] - self.lines[self.curr][0]-1 and self.lines[self.curr][1]%2 == 1:
+					if self.lines[self.curr][1] == 1:
+						self.lines[self.curr] = (self.lines[self.curr][0],0)
+					else:
+						self.lines[self.curr] = (self.lines[self.curr][0],2,self.lines[self.curr][2])
 					expose = 1
 				else:
+					mode = max(self.lines[self.curr][1],self.lines[self.curr+1][1])
+					comment = ""
+					if mode > 1:
+						if	self.lines[self.curr][1] > 1:
+							comment = self.lines[self.curr][2] + " "
+						if	self.lines[self.curr+1][1] > 1:
+							comment += self.lines[self.curr+1][2]
+						self.lines[self.curr] = (self.lines[self.curr][0],mode,comment)
+					else:
+						self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr+1][1])
+
 					self.curr += 1
 					self.curc = 0
 					self.join_string()
 					self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
-					self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr][1])
 					self.lines.pop(self.curr)
 					self.curr -= 1
 					self.set_maxaddr()
@@ -318,20 +331,35 @@ class HexView():
 			self.bklines += self.lines
 			self.bkhvlines += self.hvlines
 			if self.curr > 0:
+				mode = (self.lines[self.curr][1] | self.lines[self.curr-1][1])
+				comment = ""
+				if mode > 1:
+					if self.lines[self.curr-1][1] > 1:
+						comment = self.lines[self.curr-1][2] + " "
+					if self.lines[self.curr][1] > 1:
+						comment += self.lines[self.curr][2]
 				if self.curc == 0: #  join full row
-					if self.lines[self.curr-1][1] == 0:
-						self.join_string()
-						self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
-						self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr][1])
-						self.lines.pop(self.curr)
-						self.curr -= 1
+					if self.lines[self.curr][1] == 0 and self.lines[self.curr-1][1]%2 == 1:
+						if self.lines[self.curr-1][1] == 3:
+							self.lines[self.curr-1] = (self.lines[self.curr-1][0],2,self.lines[self.curr-1][2])
+						else:
+							self.lines[self.curr-1] = (self.lines[self.curr-1][0],0)
 					else:
-						self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr-1][1]-1)
-						expose = 1
-				else:
+						self.join_string()
+						if mode > 1:
+							self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode,comment)
+						else:
+							self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode)
+						self.lines.pop(self.curr)
+
+				else: # join part of the row
 					self.join_string()
-					self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1])
+					if self.lines[self.curr][1] > 1:
+						self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2])
+					else:
+						self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1])
 					self.curc = 0
+				expose = 1
 				self.set_maxaddr()
 				self.tdx = -1 # force to recalculate in expose
 				self.sel = None
@@ -344,21 +372,27 @@ class HexView():
 			self.bkhvlines += self.hvlines
 			if self.curr < len(self.lines)-1 and self.curc > 0:
 				self.split_string()
-				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1]))
+				if self.lines[self.curr][1] > 1:
+					self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2]))
+				else:
+					self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1]))
 				self.lines[self.curr] = (self.lines[self.curr][0],0)
 				self.set_maxaddr()
 				self.curc -= 1
 				self.tdx = -1 # force to recalculate in expose
 				self.prec = self.curc - 1
 				self.sel = None
-			elif self.curr > 0 and self.curc == 0 and (self.lines[self.curr-1][1] == 0 or self.lines[self.curr-1][1] == 2):
-				self.lines[self.curr-1] = (self.lines[self.curr-1][0],self.lines[self.curr-1][1]+1)
+			elif self.curr > 0 and self.curc == 0:
+				if self.lines[self.curr-1][1] == 0:
+					self.lines[self.curr-1] = (self.lines[self.curr-1][0],1)
+				elif self.lines[self.curr-1][1] == 2:
+					self.lines[self.curr-1] = (self.lines[self.curr-1][0],3,self.lines[self.curr-1][2])
 				expose = 1
 
 		elif event.keyval == 65379: # Insert
 			xw,yw = self.hv.get_parent_window().get_position()
 			xv,yv = self.hv.window.get_position()
-			ys = yw+ yv+int((self.curr+0.5)*self.tht)
+			ys = yw+ yv+int((self.curr+0.5-self.offnum)*self.tht)
 			xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
 			if self.lines[self.curr][1] == 2:
 				self.entry.set_text(self.lines[self.curr][2])
@@ -477,8 +511,8 @@ class HexView():
 		# helper to handle 'backspace'
 		if self.curc != 0:
 			self.split_string()
-		ph,pa = self.hvlines[self.curr]
 		nh,na = self.hvlines[self.curr-1]
+		ph,pa = self.hvlines[self.curr]
 		self.hvlines[self.curr-1] = nh+ph,na+pa
 		self.hvlines.pop(self.curr)
 
@@ -669,15 +703,15 @@ class HexView():
 				ctx.move_to(self.tdx*(10+1+self.maxaddr*3),self.tht*(i+2)+4)
 				ctx.show_text(asc)
 				# draw break line
-				if self.lines[i][1] == 1 or self.lines[i][1] == 3:
+				if self.lines[i+self.offnum][1] == 1 or self.lines[i+self.offnum][1] == 3:
 					ctx.move_to(self.tdx*10+0.5,(i+2)*self.tht+5.5)
 					ctx.set_source_rgb(1,0,0.8)
 					ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(i+2)+5.5)
 					ctx.stroke()
-				if self.lines[i][1] > 1:
+				if self.lines[i+self.offnum][1] > 1:
 					ctx.move_to(self.tdx*(13+self.maxaddr*4),self.tht*(i+2)+4)
 					ctx.set_source_rgb(0.9,0,0)
-					ctx.show_text(self.lines[i][2])
+					ctx.show_text(self.lines[i+self.offnum][2])
 
 		# clear prev hdr cursor
 		ctx.set_source_rgb(0.9,0.9,0.9)
@@ -784,12 +818,12 @@ class HexView():
 				ctx.move_to(0,(self.curr-self.offnum+2)*self.tht+4)
 				ctx.show_text("%08x"%(self.lines[self.curr][0]))
 		# redraw break line
-		if self.lines[self.curr-self.offnum][1] == 1 or self.lines[self.curr-self.offnum][1] == 3:
+		if self.lines[self.curr][1] == 1 or self.lines[self.curr][1] == 3:
 			ctx.move_to(self.tdx*10+0.5,(self.curr-self.offnum+2)*self.tht+5.5)
 			ctx.set_source_rgb(1,0,0.8)
 			ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.curr-self.offnum+2)+5.5)
 			ctx.stroke()
-		if self.lines[self.prer-self.offnum][1] == 1 or self.lines[self.prer-self.offnum][1] == 3:
+		if self.lines[self.prer][1] == 1 or self.lines[self.prer][1] == 3:
 			ctx.move_to(self.tdx*10+0.5,(self.prer-self.offnum+2)*self.tht+5.5)
 			ctx.set_source_rgb(1,0,0.8)
 			ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.prer-self.offnum+2)+5.5)
