@@ -276,7 +276,10 @@ class ApplicationMainWindow(gtk.Window):
 			self.notebook.show_all()
 
 	def update_statusbar(self, buffer):
-		self.label.set_markup("%s"%buffer)
+		try:
+			self.label.set_markup("%s"%buffer)
+		except:
+			pass
 
 	def calc_status(self,buf,dlen):
 		txt = ""
@@ -303,7 +306,8 @@ class ApplicationMainWindow(gtk.Window):
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
 		if dlen > 3:
 			try:
-				txt += '\t<span background="#DDFFDD">'+unicode(buf,'cp1251').replace("\n","\\n")[:32]+'</span>'
+#				txt += '\t<span background="#DDFFDD">'+unicode(buf,'cp1251').replace("\n","\\n")[:32]+'</span>'
+				txt += '\t<span background="#DDFFDD">'+unicode(buf,'utf16').replace("\n","\\n")[:32]+'</span>'
 			except:
 				pass
 		self.update_statusbar(txt)
@@ -315,12 +319,13 @@ class ApplicationMainWindow(gtk.Window):
 				self.cmdhistory.append(cmdline)
 				self.curcmd = -1
 			pn = self.notebook.get_current_page()
+			data = ''
 			if pn != -1:
 				# try to take current selection
 				doc = self.das[pn]
 				if doc.sel:
-					r1,c1,r2,c2 = doc.sel
-					data = doc.data[doc.lines[r1]+c1:doc.lines[r2]+c2]
+						r1,c1,r2,c2 = doc.sel
+						data = doc.data[doc.lines[r1][0]+c1:doc.lines[r2]+c2]
 				cmd = cmdline.split()
 				if cmd[0].lower() == "goto":
 					if len(cmd) > 1:
@@ -339,34 +344,32 @@ class ApplicationMainWindow(gtk.Window):
 					
 					# try to validate/scroll
 					llast = len(doc.lines)
-					if addr < doc.lines[len(doc.lines)-1]:
+					if addr < doc.lines[len(doc.lines)-1][0]:
 						lnum = addr/16
 						while True:
-							if doc.lines[lnum] < addr:
-								if doc.lines[lnum+1] > addr:
+							if doc.lines[lnum][0] < addr:
+								if doc.lines[lnum+1][0] > addr:
 									break
-								elif doc.lines[lnum+1] == addr:
+								elif doc.lines[lnum+1][0] == addr:
 									lnum += 1
 								else:
-									lnum += (addr - doc.lines[lnum+1])/16
-							elif  doc.lines[lnum] == addr:
+									lnum += (addr - doc.lines[lnum+1][0])/16
+							elif  doc.lines[lnum][0] == addr:
 								break
 							else:
-								lnum -= (doc.lines[lnum] - addr)/16
+								lnum -= (doc.lines[lnum][0] - addr)/16
 							if lnum < 0:
 								break
-						print "Lnum found",lnum,"%x %x"%(doc.lines[lnum],doc.lines[lnum+1])
+						print "Lnum found",lnum,"%x %x"%(doc.lines[lnum][0],doc.lines[lnum+1][0])
 						doc.offnum = min(lnum,llast-doc.numtl)
-						doc.offset = doc.lines[lnum]
+						doc.offset = doc.lines[lnum][0]
 
 					else:
 						print "Address after end of file"
 						doc.offnum = llast-doc.numtl
-						doc.offset = doc.lines[llast-1]
+						doc.offset = doc.lines[llast-1][0]
 					doc.vadj.value = doc.offnum
 					doc.expose(doc.hv,action)
-						
-
 
 	def get_clp_text(self, clipboard, text, data):
 		txtlist = text.split()
