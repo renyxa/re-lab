@@ -55,8 +55,8 @@ def make_view():
    return model,view,scrolled
 
 def make_view2():
-   # Create the model.  Name/Value/Offset/Length/Format
-   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_INT, gobject.TYPE_STRING)
+   # Create the model.  Name/Value/Offset/Length/Format/(optional) 2nd Offset/2nd Len
+   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_INT)
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_enable_tree_lines(True)

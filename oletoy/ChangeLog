@@ -1,3 +1,8 @@
+2012-01-02  Valek Filippov
+
+		* Added second HEX highlight (useful for Quill and CDR).
+		* PUB: Quill/FDPC hex highlighting started.
+
 2011-12-19  Valek Filippov
 
 		* Backported 'search list dbl-click' improvement from my other tool.

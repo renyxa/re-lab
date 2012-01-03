@@ -21,7 +21,7 @@ import gtk
 import tree
 import hexdump
 import Doc, cmd
-import escher
+import escher,quill
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
@@ -572,6 +572,8 @@ Hexdump selection:\n\
 		iter1 = model.get_iter(path)
 		offset = model.get_value(iter1,2)
 		size = model.get_value(iter1,3)
+		offset2 = model.get_value(iter1,5)
+		size2 = model.get_value(iter1,6)
 		buffer_hex = hd.txtdump_hex.get_buffer()
 		try:
 			tag = buffer_hex.create_tag("hl",background="yellow")
@@ -592,6 +594,14 @@ Hexdump selection:\n\
 			off2 = 0
 		iter_hex_end = buffer_hex.get_iter_at_offset(off2)
 		buffer_hex.apply_tag_by_name("hl",iter_hex,iter_hex_end)
+		if size2 > 0:
+			iter_hex2 = buffer_hex.get_iter_at_offset(offset2*3)
+			off2 = offset2*3+size2*3-1
+			if off2 < 0:
+				off2 = 0
+			iter_hex2_end = buffer_hex.get_iter_at_offset(off2)
+			buffer_hex.apply_tag_by_name("hl",iter_hex2,iter_hex2_end)
+
 
 	def edited_cb (self, cell, path, new_text):
 		pn = self.notebook.get_current_page()
@@ -691,6 +701,9 @@ Hexdump selection:\n\
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
 							escher.odraw_ids[ntype[2]](hd, size, data)
+				elif ntype[0] == "quill":
+					if quill.sub_ids.has_key(ntype[1]):
+						quill.sub_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "vsd":
 					if ntype[1] == "chnk":
 						if vsdchunks.chnk_func.has_key(ntype[2]):

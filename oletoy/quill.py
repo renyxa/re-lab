@@ -22,6 +22,18 @@ import hexdump
 import pubblock
 from utils import *
 
+def fdpc (hd, size, data):
+	offset = 0
+	num = struct.unpack('<H', data[offset:offset+2])[0]
+	add_iter (hd, "num", num,0,2,"<H")
+	offset = 8
+	for i in range(num):
+		txt_off = struct.unpack('<I', data[offset+i*4:offset+i*4+4])[0]
+		fmt_off = struct.unpack('<H', data[offset+i*2+num*4:offset+i*2+num*4+2])[0]
+		add_iter (hd, "txt/format offsets %d"%i, "%02x / %02x"%(txt_off,fmt_off),offset+i*4,4,"txt",offset+i*2+num*4,2)
+
+sub_ids = {"FDPC":fdpc,"FDPP":fdpc}
+
 def parse_fdpc (model,data,offset,fdpciter):
 	[num] = struct.unpack('<H', data[offset:offset+2])
 	for i in range (num):
@@ -29,7 +41,7 @@ def parse_fdpc (model,data,offset,fdpciter):
 		[tflag] = struct.unpack('<H', data[offset+8+num*4+i*2:offset+8+2+num*4+i*2])
 		iter1 = model.append(fdpciter,None)
 		model.set_value(iter1,0,"[%02x] %02x"%(toff,tflag))
-		model.set_value(iter1,1,0)
+		model.set_value(iter1,1,("quill","fdpc"))
 		model.set_value(iter1,2,4)
 		model.set_value(iter1,3,data[offset+8+i*4:offset+12+i*4])
 		[nlen] = struct.unpack('<I', data[offset+tflag:offset+tflag+4])
@@ -43,7 +55,7 @@ def parse_syid (model,data,offset,syiditer,txtiter,j):
 		for i in range(num):
 			[id] = struct.unpack('<I', data[offset+8+i*4:offset+12+i*4])
 			iter = model.append(syiditer,None)
-			model.set(iter,0,"TXid: %02x"%id,1,0,2,4,3,data[offset+8+i*4:offset+12+i*4])
+			model.set(iter,0,"TXid: %02x"%id,1,("quill","syid"),2,4,3,data[offset+8+i*4:offset+12+i*4])
 		return i+j
 	except:
 		print "Failed in parse_syid"
@@ -61,7 +73,7 @@ def parse_stsh (model,data,parent,flag):
 		if flag == "1": # and i/2.>i/2:
 			iter1 = model.append(parent,None)
 			model.set_value(iter1,0,"Ch %02x Pr %02x"%(i,struct.unpack("<H",data[20+off1:20+off1+2])[0]))
-			model.set_value(iter1,1,0)
+			model.set_value(iter1,1,("quill","stsh"))
 			model.set_value(iter1,2,2)
 			model.set_value(iter1,3,data[20+off1:20+off1+2])
 			[dlen] = struct.unpack('<I', data[20+off1+2:20+off1+6])
@@ -95,7 +107,7 @@ def parse_strs(model,data,parent,txtiter):
 		tstart += nlen*2
 		iter1 = model.append(parent,None)
 		model.set_value(iter1,0,"TX %02x length (0x%02x)"%(i,nlen))
-		model.set_value(iter1,1,0)
+		model.set_value(iter1,1,("quill","strs"))
 		model.set_value(iter1,2,4)
 		model.set_value(iter1,3,data[12+i*4:16+i*4])
 
@@ -105,7 +117,7 @@ def parse_tcd(model,data,parent,txtiter):
 		[nlen] = struct.unpack('<I',data[12+i*4:16+i*4])
 		iter1 = model.append(parent,None)
 		model.set_value(iter1,0,"TX %02x end offset (0x%02x)"%(i,nlen*2))
-		model.set_value(iter1,1,0)
+		model.set_value(iter1,1,("quill","tcd"))
 		model.set_value(iter1,2,4)
 		model.set_value(iter1,3,data[12+i*4:16+i*4])
 
@@ -117,7 +129,7 @@ def parse_pl(model,data,parent):
 			[nlen] = struct.unpack('<I',data[off:off+4])
 			iter1 = model.append(parent,None)
 			model.set_value(iter1,0,"PL %02x"%i)
-			model.set_value(iter1,1,0)
+			model.set_value(iter1,1,("quill","pl"))
 			model.set_value(iter1,2,nlen)
 			model.set_value(iter1,3,data[off:off+nlen])
 			pubblock.parse (model,data[off+4:off+nlen],iter1,i)
@@ -134,7 +146,7 @@ def parse_font(model,data,parent):
 			[fid] = struct.unpack('<I', data[20+off+2+nlen*2:20+off+2+nlen*2+4])
 			iter1 = model.append(parent,None)
 			model.set_value(iter1,0,"(%02x) %s"%(fid,fname))
-			model.set_value(iter1,1,0)
+			model.set_value(iter1,1,("quill","font"))
 			model.set_value(iter1,2,nlen*2+4)
 			model.set_value(iter1,3,data[20+off:20+off+nlen*2+6])
 
@@ -144,7 +156,7 @@ def parse_mcld(model,data,parent):
 		for i in range(num):
 			iter1 = model.append(parent,None)
 			model.set_value(iter1,0,"(%02x) %02x"%(i,struct.unpack("<I",data[8+i*4:12+i*4])[0]))
-			model.set_value(iter1,1,0)
+			model.set_value(iter1,1,("quill","mcld"))
 			model.set_value(iter1,2,4)
 			model.set_value(iter1,3,data[8+i*4:12+i*4])
 			iter2 = model.append(iter1,None)
@@ -181,8 +193,8 @@ def parse (model,data,parent):
 	txtnum = -1
 	txtid = 0
 	for i in range(ch_num):
-		[doffset] = struct.unpack('<I', data[off+16:off+20])
-		[dlen] = struct.unpack('<I', data[off+20:off+24])
+		[doffset] = struct.unpack('<I', data[off+16:off+20])	# offset to "sub-stream" data
+		[dlen] = struct.unpack('<I', data[off+20:off+24])			# length of "sub-stream" data
 		name = data[off+2:off+6]+"/"+data[off+12:off+16]+str(struct.unpack('<H', data[off+6:off+8])[0])+" [%02x:%02x]"%(doffset,doffset+dlen)
 		iter1 = model.append(parent,None)
 		if name[0:4] == "TEXT":
@@ -205,7 +217,12 @@ def parse (model,data,parent):
 			parse_mcld (model,data[doffset:doffset+dlen],iter1)
 
 		model.set_value(iter1,0,name)
-		model.set_value(iter1,1,0)
+		model.set_value(iter1,1,("quill",name[0:4]))
 		model.set_value(iter1,2,dlen)
 		model.set_value(iter1,3,data[doffset:doffset+dlen])
 		off += 24
+	iter1 = model.append(parent,None)
+	model.set_value(iter1,0,"Tail")
+	model.set_value(iter1,1,0)
+	model.set_value(iter1,2,len(data[doffset+dlen:]))
+	model.set_value(iter1,3,data[doffset+dlen:])

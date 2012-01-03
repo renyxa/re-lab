@@ -50,11 +50,11 @@ def parse (model,data,parent,i,j=-1):
 			if type == 0x10 or type == 0x12 or type == 0x18 or type == 0x1a:
 				value = data[off:off+2]
 				dlen = 2
-				name += " (%02x)"%struct.unpack("<h",value)[0]
+				name += " (%02d)"%struct.unpack("<H",value)[0]
 			if type == 0x20 or type == 0x22 or type == 0x28 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
 				value = data[off:off+4]
 				dlen = 4
-				name += " (%02x)"%struct.unpack("<i",value)[0]
+				name += " (%02d)"%struct.unpack("<I",value)[0]
 				if id == 5 and type == 0x68:
 					pname = model.get_value(parent,0)
 					model.set_value(parent,0,pname+"\t\t%02x"%struct.unpack("<i",value)[0])
