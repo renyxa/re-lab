@@ -312,6 +312,40 @@ class ApplicationMainWindow(gtk.Window):
 				pass
 		self.update_statusbar(txt)
 
+	def wrap_helper(self, doc, cmd, row, flag):
+		nxt = doc.lines[row + len(cmd) + 1][0]-doc.lines[row + len(cmd)][0]
+		for i in range(len(cmd)-1):
+			doc.lines[row + i + 1] = (doc.lines[row + i][0] + int(cmd[i+1]),doc.lines[row + i + 1][1])
+			doc.hvlines[row+i] = ""
+			doc.get_string(row+i)
+			if int(cmd[i+1]) > doc.maxaddr:
+				doc.maxaddr = int(cmd[i+1])
+		doc.hvlines[row+i+1] = ""
+		doc.get_string(row+i+1)
+			
+		if flag:
+			newnxt = doc.lines[row + i + 2][0] - doc.lines[row + i + 1][0]
+			if newnxt > nxt:
+				j = 0
+				while newnxt > nxt:
+					doc.lines.insert(row+i+2+j,(doc.lines[row+i+1+j][0] + doc.maxaddr,doc.lines[row+i+1+j][1]))
+					doc.hvlines[row+i+1+j] = ""
+					doc.get_string(row+i+1+j)
+					j += 1
+					newnxt -= doc.maxaddr
+				if newnxt-nxt > doc.maxaddr:
+					doc.hvlines[row+i+1+j] = ""
+					doc.get_string(row+i+1+j)
+			else:
+				lim = doc.lines[row+i+1][0]
+				while doc.lines[row + i + 2][0] <= lim:
+					doc.lines.pop(row + i + 2)
+					doc.hvlines.pop(row + i + 2)
+
+#					i += 1
+			doc.hvlines[row+i+1] = ""
+			doc.get_string(row+i+1)
+
 	def on_entry_activate (self,action):
 		cmdline = self.entry.get_text()
 		if len(cmdline) > 0:
@@ -327,7 +361,25 @@ class ApplicationMainWindow(gtk.Window):
 						r1,c1,r2,c2 = doc.sel
 						data = doc.data[doc.lines[r1][0]+c1:doc.lines[r2]+c2]
 				cmd = cmdline.split()
-				if cmd[0].lower() == "goto":
+				if  cmd[0].lower() == "fmt":
+					mpos = cmdline.find("*")
+					if mpos == -1:
+						# wrap lines starting from current to provided lengths
+						self.wrap_helper(doc,cmd,doc.curr,1)
+					elif mpos == len(cmdline):
+						# repeat wrapping till end
+						print "Rpt to end"
+					else:
+						#repeat wrapping last arg times
+						rpt = int(cmd[len(cmd)-1])
+						print "Rpt",rpt,"times"
+						for i in range(rpt-1):
+							self.wrap_helper(doc,cmd[:len(cmd)-2],doc.curr+(len(cmd)-3)*i,0)
+						self.wrap_helper(doc,cmd[:len(cmd)-2],doc.curr+(len(cmd)-3)*(rpt-1),1)
+
+					doc.set_maxaddr()
+					doc.expose(None,None)
+				elif cmd[0].lower() == "goto":
 					if len(cmd) > 1:
 						try:
 							addr = int(cmd[1][:8],16)
@@ -360,6 +412,7 @@ class ApplicationMainWindow(gtk.Window):
 								lnum -= (doc.lines[lnum][0] - addr)/16
 							if lnum < 0:
 								break
+								
 						print "Lnum found",lnum,"%x %x"%(doc.lines[lnum][0],doc.lines[lnum+1][0])
 						doc.offnum = min(lnum,llast-doc.numtl)
 						doc.offset = doc.lines[lnum][0]

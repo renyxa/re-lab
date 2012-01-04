@@ -545,7 +545,7 @@ class HexView():
 			if rownum > len(self.lines)-2:
 				rownum = len(self.lines)
 			if event.x > self.tdx*10:
-				maxc = self.lines[rownum+1] - self.lines[rownum] -1
+				maxc = self.lines[rownum+1][0] - self.lines[rownum][0] -1
 				if event.x < self.tdx*(10+maxc*3): # hex
 					colnum = int((event.x-self.tdx*8.5)/self.tdx/3)
 				elif event.x < self.tdx*(11+maxc*4): #ascii

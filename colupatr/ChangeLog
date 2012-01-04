@@ -1,3 +1,7 @@
+2012-01-04  Valek Filippov <frob@df.ru>
+
+	* Start to implement 'fmt'.
+
 2012-01-03  Valek Filippov <frob@df.ru>
 
 	* Fix 'goto'.
