@@ -1,3 +1,8 @@
+2012-01-03  Valek Filippov
+
+		* Fixes for search in PUB.
+		* Attempt to implement 'compare'.
+
 2012-01-02  Valek Filippov
 
 		* Added second HEX highlight (useful for Quill and CDR).

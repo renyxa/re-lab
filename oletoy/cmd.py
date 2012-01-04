@@ -122,15 +122,64 @@ def cmdfind (model,path,iter,(page,data)):
 		return
 	buf = model.get_value(iter,3)
 	test = 0
-	while test < len(buf):
-		test = buf.find(data,test+1)
-		if test != -1:
-			s_iter = page.search.append(None,None)
-			page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
-			page.search.set_value(s_iter,1,test)
-			page.search.set_value(s_iter,2,"%04x (%s)"%(test,model.get_value(iter,0)))
+	try:
+		while test < len(buf):
+			test = buf.find(data,test+1)
+			if test != -1:
+				s_iter = page.search.append(None,None)
+				page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
+				page.search.set_value(s_iter,1,test)
+				page.search.set_value(s_iter,2,"%04x (%s)"%(test,model.get_value(iter,0)))
+			else:
+				return
+	except:
+		pass
+
+def cmp_children (page1, model1, model2, it1, it2, carg):
+	for i in range(model1.iter_n_children(it1)):
+		iter1 = model1.iter_nth_child(it1,i)
+		iter2 = model2.iter_nth_child(it2,i)
+		if model1.iter_n_children(iter1) > 0:
+			try:
+				cmp_children (page1, model1, model2, iter1, iter2, carg)
+			except:
+				pass
 		else:
-			return
+			data1 = model1.get_value(iter1,3)
+			data2 = model2.get_value(iter2,3)
+			if len(data1) == len(data2):
+				for j in range(len(data1)):
+					if ord(data1[j])+carg == ord(data2[j]):
+						s_iter = page1.search.append(None,None)
+						page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+						page1.search.set_value(s_iter,1,j)
+						page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+
+def compare (cmd, entry, page1, page2):
+	model1 = page1.view.get_model()
+	model2 = page2.view.get_model()
+	carg = int(cmd[1:])
+	page1.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+
+	for i in range(model1.iter_n_children(None)):
+		iter1 = model1.iter_nth_child(None,i)
+		iter2 = model2.iter_nth_child(None,i)
+		if model1.iter_n_children(iter1) > 0:
+			try:
+				cmp_children (page1, model1, model2, iter1, iter2, carg)
+			except:
+				pass
+		else:
+			data1 = model1.get_value(iter1,3)
+			data2 = model2.get_value(iter2,3)
+			if len(data1) == len(data2):
+				for j in range(len(data1)):
+					if ord(data1[j])+carg == ord(data2[j]):
+						s_iter = page1.search.append(None,None)
+						page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+						page1.search.set_value(s_iter,1,j)
+						page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+	page1.show_search("Diff %s"%carg)
 
 def parse (cmd, entry, page):
 	if cmd[0] == "$":
@@ -198,4 +247,5 @@ def parse (cmd, entry, page):
 		else:
 			model.foreach(cmdfind,(page,data))
 		page.show_search(carg)
+
 
