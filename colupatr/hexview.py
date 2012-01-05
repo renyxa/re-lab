@@ -793,6 +793,9 @@ class HexView():
 			ctx.set_source_rgb(0,0,1)
 			ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+			if "%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]) != self.hvlines[self.curr][0][self.curc]:
+				self.hvlines[self.curr] = ""
+				self.get_string(self.curr)
 			ctx.show_text("%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]))
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 			ctx.set_source_rgb(0,0,0)

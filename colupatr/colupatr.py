@@ -320,9 +320,6 @@ class ApplicationMainWindow(gtk.Window):
 			doc.get_string(row+i)
 			if int(cmd[i+1]) > doc.maxaddr:
 				doc.maxaddr = int(cmd[i+1])
-		doc.hvlines[row+i+1] = ""
-		doc.get_string(row+i+1)
-			
 		if flag:
 			newnxt = doc.lines[row + i + 2][0] - doc.lines[row + i + 1][0]
 			if newnxt > nxt:
@@ -342,9 +339,8 @@ class ApplicationMainWindow(gtk.Window):
 					doc.lines.pop(row + i + 2)
 					doc.hvlines.pop(row + i + 2)
 
-#					i += 1
-			doc.hvlines[row+i+1] = ""
-			doc.get_string(row+i+1)
+		doc.hvlines[row+i+1] = ""
+		doc.get_string(row+i+1)
 
 	def on_entry_activate (self,action):
 		cmdline = self.entry.get_text()
@@ -361,11 +357,20 @@ class ApplicationMainWindow(gtk.Window):
 						r1,c1,r2,c2 = doc.sel
 						data = doc.data[doc.lines[r1][0]+c1:doc.lines[r2]+c2]
 				cmd = cmdline.split()
+				doc.bklines = []
+				doc.bkhvlines = []
+				doc.bklines += doc.lines
+				doc.bkhvlines += doc.hvlines
+
 				if  cmd[0].lower() == "fmt":
 					mpos = cmdline.find("*")
 					if mpos == -1:
 						# wrap lines starting from current to provided lengths
 						self.wrap_helper(doc,cmd,doc.curr,1)
+						for i in range(len(doc.hvlines)-doc.curr-len(cmd)):
+							if doc.hvlines[doc.curr+len(cmd)-1+i] == "":
+								break
+							doc.hvlines[doc.curr+len(cmd)-1+i] = ""
 					elif mpos == len(cmdline):
 						# repeat wrapping till end
 						print "Rpt to end"
@@ -376,6 +381,12 @@ class ApplicationMainWindow(gtk.Window):
 						for i in range(rpt-1):
 							self.wrap_helper(doc,cmd[:len(cmd)-2],doc.curr+(len(cmd)-3)*i,0)
 						self.wrap_helper(doc,cmd[:len(cmd)-2],doc.curr+(len(cmd)-3)*(rpt-1),1)
+						for i in range(len(doc.hvlines)-doc.curr-rpt-1):
+							if doc.hvlines[doc.curr+rpt-2+i] == "":
+								break
+							doc.hvlines[doc.curr+rpt-2+i] = ""
+
+					
 
 					doc.set_maxaddr()
 					doc.expose(None,None)
