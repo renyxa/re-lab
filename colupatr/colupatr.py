@@ -333,6 +333,10 @@ class ApplicationMainWindow(gtk.Window):
 				if newnxt-nxt > doc.maxaddr:
 					doc.hvlines[row+i+1+j] = ""
 					doc.get_string(row+i+1+j)
+				lim = doc.lines[row+i+1+j][0]
+				while doc.lines[row+i+2+j][0] <= lim:
+					doc.lines.pop(row+i+2+j)
+					doc.hvlines.pop(row+i+2+j)
 			else:
 				lim = doc.lines[row+i+1][0]
 				while doc.lines[row + i + 2][0] <= lim:
@@ -385,8 +389,6 @@ class ApplicationMainWindow(gtk.Window):
 							if doc.hvlines[doc.curr+rpt-2+i] == "":
 								break
 							doc.hvlines[doc.curr+rpt-2+i] = ""
-
-					
 
 					doc.set_maxaddr()
 					doc.expose(None,None)
