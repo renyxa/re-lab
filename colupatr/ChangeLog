@@ -1,3 +1,7 @@
+2012-01-08  Valek Filippov <frob@df.ru>
+
+	* 'fmt' mostly fixed.
+
 2012-01-04  Valek Filippov <frob@df.ru>
 
 	* Start to implement 'fmt'.

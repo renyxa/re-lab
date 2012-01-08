@@ -507,24 +507,93 @@ class HexView():
 #		print event.keyval,event.state
 		return True
 
-	def join_string(self):
+	def join_string (self, r = -1, c = -1):
+		if r == -1:
+			r = self.curr
+		if c == -1:
+			c = self.curc
 		# helper to handle 'backspace'
-		if self.curc != 0:
+		if c != 0:
 			self.split_string()
-		nh,na = self.hvlines[self.curr-1]
-		ph,pa = self.hvlines[self.curr]
-		self.hvlines[self.curr-1] = nh+ph,na+pa
-		self.hvlines.pop(self.curr)
+		self.hvlines[r-1] = ""
+		self.hvlines[r] = ""
+		self.get_string(r-1)
+		self.get_string(r)
+		if self.debug == 1:
+			print "Upd",r-1,"(%02x) and"%self.lines[r-1][0],r,"(%02x)"%self.lines[r][0]
+		nh,na = self.hvlines[r-1]
+		ph,pa = self.hvlines[r]
+		self.hvlines[r-1] = nh+ph,na+pa
+		self.hvlines.pop(r)
 
-	def split_string(self):
+	def split_string(self, r = -1, c = -1):
+		if r == -1:
+			r = self.curr
+		if c == -1:
+			c = self.curc
 		# helper to handle 'enter' and 'delete'
-		prehex,preasc = self.hvlines[self.curr]
-		lhex = prehex[:self.curc*3]
-		rhex = prehex[self.curc*3:]
-		lasc = preasc[:self.curc]
-		rasc = preasc[self.curc:]
-		self.hvlines[self.curr] = lhex,lasc
-		self.hvlines.insert(self.curr+1,(rhex,rasc))
+		if self.debug == 1:
+			print "Upd",r,"(%02x)"%self.lines[r][0],self.line_size(r),c
+		prehex,preasc = self.hvlines[r]
+		lhex = prehex[:c*3]
+		rhex = prehex[c*3:]
+		lasc = preasc[:c]
+		rasc = preasc[c:]
+		self.hvlines[r] = lhex,lasc
+		self.hvlines.insert(r+1,(rhex,rasc))
+		if self.debug == 1:
+			print "Upd2",r,"(%02x) and"%self.lines[r][0],r+1,"(%02x)"%self.lines[r+1][0]
+
+	def line_size(self,row):
+		# returns size of line or -1 if 'row' is behind
+		# acceptable range
+		if row < len(self.lines)-1:
+			return self.lines[row+1][0]-self.lines[row][0]
+		else:
+			return 0
+
+	def attach_next(self,row):
+		# attach next line to one pointed by 'row'
+		# and return 0
+		# or -1 if 'row' is the last line or after
+#		print " AN",row,
+		if row < len(self.lines)-2:
+			self.lines.pop(row+1)
+			self.join_string(row+1,0)
+			return 1
+		else:
+			return 0
+
+	def break_line(self,row,col):
+		# breaks line 'row' at 'col' position
+		# 'abcd' + col=0 -> a/bcd
+		rs = self.line_size(row)
+
+#		print " BL",row,col,rs,
+		if rs > 1 and col < rs-1:
+			self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
+			self.split_string(row,col+1)
+
+	def wrap_helper(self,row,cmd,flag):
+		# join and split do not deal with self.lines -- make similar wrappers for it
+		if self.debug == 1:
+			print "\nWH",row,cmd
+		for i in range(len(cmd)):
+			rs = self.line_size(row+i)
+			if self.debug == 1:
+				print " WH2",rs,cmd[i],
+			res = 1
+			while rs <= int(cmd[i]) and res:
+				if self.debug == 1:
+					print " WH3",rs,cmd[i],
+				res = self.attach_next(row+i)
+				rs = self.line_size(row+i)
+			if rs > int(cmd[i]):
+				if self.debug == 1:
+					print " WH4",rs,cmd[i],
+				self.break_line(row+i,int(cmd[i])-1)
+		if self.debug == 1:
+			print "WHe"
 
 	def on_button_release (self, widget, event):
 		self.drag = 0
@@ -542,6 +611,8 @@ class HexView():
 			else:
 				r1o,c1o,r2o,c2o = 0,0,0,0
 			rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
+			if event.y - self.tht - 4 < 0:
+				rownum = self.curr
 			if rownum > len(self.lines)-2:
 				rownum = len(self.lines)
 			if event.x > self.tdx*10:
@@ -553,6 +624,10 @@ class HexView():
 				else:
 					colnum = self.lines[rownum][0]
 			else:
+				colnum = 0
+			if colnum > self.lines[rownum][0]:
+				colnum = self.lines[rownum][0]
+			if colnum < 0:
 				colnum = 0
 			c2 = colnum
 			c1 = self.curc
@@ -579,15 +654,23 @@ class HexView():
 
 	def on_button_press (self, widget, event):
 		rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
+		if event.y - self.tht - 4 < 0:
+			rownum = self.curr
+		if rownum > len(self.lines)-1:
+			rownum = len(self.lines)-1
 		if event.x > self.tdx*10:
 			if event.x < self.tdx*(10+self.maxaddr*3): # hex
 				colnum = int((event.x-self.tdx*8.5)/self.tdx/3)
 			elif event.x < self.tdx*(11+self.maxaddr*4): #ascii
 				colnum = int((event.x-self.tdx*(11+self.maxaddr*3))/self.tdx)
 			else:
-				colnum = 16
+				colnum = self.line_size(rownum)-1
 		else:
-			colnum = 0
+			colnum = self.curc
+		if colnum > self.line_size(rownum)-1:
+			colnum = self.line_size(rownum)-1
+		if colnum < 0:
+			colnum = self.curc
 		self.prer = self.curr
 		self.prec = self.curc
 		self.curr = rownum
@@ -602,7 +685,8 @@ class HexView():
 		hex = ""
 		asc = ""
 		if self.hvlines[num] == "":
-			for j in range(self.lines[num+1][0]-self.lines[num][0]):
+			ls = self.line_size(num)
+			for j in range(ls):
 				ch = self.data[self.lines[num][0]+j]
 				hex += "%02x "%ord(ch)
 				if ord(ch) < 32 or ord(ch) > 126:
@@ -793,9 +877,9 @@ class HexView():
 			ctx.set_source_rgb(0,0,1)
 			ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-			if "%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]) != self.hvlines[self.curr][0][self.curc]:
-				self.hvlines[self.curr] = ""
-				self.get_string(self.curr)
+#			if "%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]) != self.hvlines[self.curr][0][self.curc]:
+#				self.hvlines[self.curr] = ""
+#				self.get_string(self.curr)
 			ctx.show_text("%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]))
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 			ctx.set_source_rgb(0,0,0)

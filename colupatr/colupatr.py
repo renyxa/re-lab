@@ -312,40 +312,6 @@ class ApplicationMainWindow(gtk.Window):
 				pass
 		self.update_statusbar(txt)
 
-	def wrap_helper(self, doc, cmd, row, flag):
-		nxt = doc.lines[row + len(cmd) + 1][0]-doc.lines[row + len(cmd)][0]
-		for i in range(len(cmd)-1):
-			doc.lines[row + i + 1] = (doc.lines[row + i][0] + int(cmd[i+1]),doc.lines[row + i + 1][1])
-			doc.hvlines[row+i] = ""
-			doc.get_string(row+i)
-			if int(cmd[i+1]) > doc.maxaddr:
-				doc.maxaddr = int(cmd[i+1])
-		if flag:
-			newnxt = doc.lines[row + i + 2][0] - doc.lines[row + i + 1][0]
-			if newnxt > nxt:
-				j = 0
-				while newnxt > nxt:
-					doc.lines.insert(row+i+2+j,(doc.lines[row+i+1+j][0] + doc.maxaddr,doc.lines[row+i+1+j][1]))
-					doc.hvlines[row+i+1+j] = ""
-					doc.get_string(row+i+1+j)
-					j += 1
-					newnxt -= doc.maxaddr
-				if newnxt-nxt > doc.maxaddr:
-					doc.hvlines[row+i+1+j] = ""
-					doc.get_string(row+i+1+j)
-				lim = doc.lines[row+i+1+j][0]
-				while doc.lines[row+i+2+j][0] <= lim:
-					doc.lines.pop(row+i+2+j)
-					doc.hvlines.pop(row+i+2+j)
-			else:
-				lim = doc.lines[row+i+1][0]
-				while doc.lines[row + i + 2][0] <= lim:
-					doc.lines.pop(row + i + 2)
-					doc.hvlines.pop(row + i + 2)
-
-		doc.hvlines[row+i+1] = ""
-		doc.get_string(row+i+1)
-
 	def on_entry_activate (self,action):
 		cmdline = self.entry.get_text()
 		if len(cmdline) > 0:
@@ -367,28 +333,41 @@ class ApplicationMainWindow(gtk.Window):
 				doc.bkhvlines += doc.hvlines
 
 				if  cmd[0].lower() == "fmt":
+					cmd = cmd[1:]
 					mpos = cmdline.find("*")
+					curpos = doc.lines[doc.curr][0]
 					if mpos == -1:
 						# wrap lines starting from current to provided lengths
-						self.wrap_helper(doc,cmd,doc.curr,1)
-						for i in range(len(doc.hvlines)-doc.curr-len(cmd)):
-							if doc.hvlines[doc.curr+len(cmd)-1+i] == "":
+						cmdacc = 0
+						for k in cmd:
+							cmdacc += int(k)
+							if cmdacc + curpos > len(doc.data):
+								cmd = cmd[:k]
 								break
-							doc.hvlines[doc.curr+len(cmd)-1+i] = ""
-					elif mpos == len(cmdline):
+						doc.wrap_helper(doc.curr,cmd,1)
+
+					elif mpos == len(cmdline)-1:
 						# repeat wrapping till end
 						print "Rpt to end"
+
 					else:
-						#repeat wrapping last arg times
-						rpt = int(cmd[len(cmd)-1])
-						print "Rpt",rpt,"times"
-						for i in range(rpt-1):
-							self.wrap_helper(doc,cmd[:len(cmd)-2],doc.curr+(len(cmd)-3)*i,0)
-						self.wrap_helper(doc,cmd[:len(cmd)-2],doc.curr+(len(cmd)-3)*(rpt-1),1)
-						for i in range(len(doc.hvlines)-doc.curr-rpt-1):
-							if doc.hvlines[doc.curr+rpt-2+i] == "":
+						cmd = cmdline[4:mpos].split()
+						rpt = int(cmdline[mpos+1:].strip())
+						cmdacc = 0
+						for k in cmd:
+							cmdacc += int(k)
+							if cmdacc + curpos > len(doc.data):
+								cmd = cmd[:k]
+								rpt = 1
 								break
-							doc.hvlines[doc.curr+rpt-2+i] = ""
+								
+						if cmdacc*rpt > doc.lines[len(doc.lines)-1][0]-doc.lines[doc.curr][0]:
+							rpt = 1+(doc.lines[len(doc.lines)-1][0]-doc.lines[doc.curr][0])/cmdacc
+
+						#repeat wrapping last arg times
+						print "Rpt",rpt,"times",cmd
+						for i in range(rpt):
+							doc.wrap_helper(doc.curr+i*len(cmd),cmd,0)
 
 					doc.set_maxaddr()
 					doc.expose(None,None)
