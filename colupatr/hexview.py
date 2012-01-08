@@ -614,11 +614,11 @@ class HexView():
 			if event.y - self.tht - 4 < 0:
 				rownum = self.curr
 			if rownum > len(self.lines)-2:
-				rownum = len(self.lines)
+				rownum = len(self.lines)-2
 			if event.x > self.tdx*10:
 				maxc = self.lines[rownum+1][0] - self.lines[rownum][0] -1
 				if event.x < self.tdx*(10+maxc*3): # hex
-					colnum = int((event.x-self.tdx*8.5)/self.tdx/3)
+					colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
 				elif event.x < self.tdx*(11+maxc*4): #ascii
 					colnum = int((event.x-self.tdx*(11+maxc*3))/self.tdx)+1
 				else:
@@ -656,11 +656,11 @@ class HexView():
 		rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
 		if event.y - self.tht - 4 < 0:
 			rownum = self.curr
-		if rownum > len(self.lines)-1:
-			rownum = len(self.lines)-1
+		if rownum > len(self.lines)-2:
+			rownum = len(self.lines)-2
 		if event.x > self.tdx*10:
 			if event.x < self.tdx*(10+self.maxaddr*3): # hex
-				colnum = int((event.x-self.tdx*8.5)/self.tdx/3)
+				colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
 			elif event.x < self.tdx*(11+self.maxaddr*4): #ascii
 				colnum = int((event.x-self.tdx*(11+self.maxaddr*3))/self.tdx)
 			else:
@@ -704,7 +704,7 @@ class HexView():
 		if self.tdx == -1:
 			self.set_dxdy()
 		x,y,width,height = self.hv.allocation
-		self.numtl = int((height - self.tht-4)/self.tht)+1
+		self.numtl = min(int((height - self.tht-4)/self.tht)+1,len(self.lines))
 		self.hbox2.set_size_request(max(width-self.tdx*(10+self.maxaddr*3),0),0)
 		if self.numtl >= len(self.lines):
 			self.vs.hide()

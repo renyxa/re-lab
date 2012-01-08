@@ -1,5 +1,11 @@
 2012-01-08  Valek Filippov <frob@df.ru>
 
+	* Fix selection outside of dump
+	* Improve column selection
+	* Fix short files issue
+
+2012-01-08  Valek Filippov <frob@df.ru>
+
 	* 'fmt' mostly fixed.
 
 2012-01-04  Valek Filippov <frob@df.ru>
