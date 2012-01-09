@@ -345,6 +345,7 @@ class ApplicationMainWindow(gtk.Window):
 								cmd = cmd[:k]
 								break
 						doc.wrap_helper(doc.curr,cmd,1)
+						lrow = doc.curr+len(cmd)
 
 					elif mpos == len(cmdline)-1:
 						# repeat wrapping till end
@@ -369,6 +370,9 @@ class ApplicationMainWindow(gtk.Window):
 						for i in range(rpt):
 							doc.wrap_helper(doc.curr+i*len(cmd),cmd,0)
 
+						lrow = doc.curr+i*len(cmd)+1
+
+					doc.hvlines[lrow] = ""
 					doc.set_maxaddr()
 					doc.expose(None,None)
 				elif cmd[0].lower() == "goto":
