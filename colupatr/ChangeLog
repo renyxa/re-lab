@@ -3,6 +3,7 @@
 	* Fix selection outside of dump
 	* Improve column selection
 	* Fix short files issue
+	* Fix selection to left and multiline
 
 2012-01-08  Valek Filippov <frob@df.ru>
 

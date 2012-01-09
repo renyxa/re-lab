@@ -616,17 +616,16 @@ class HexView():
 			if rownum > len(self.lines)-2:
 				rownum = len(self.lines)-2
 			if event.x > self.tdx*10:
-				maxc = self.lines[rownum+1][0] - self.lines[rownum][0] -1
-				if event.x < self.tdx*(10+maxc*3): # hex
-					colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
-				elif event.x < self.tdx*(11+maxc*4): #ascii
-					colnum = int((event.x-self.tdx*(11+maxc*3))/self.tdx)+1
+				if event.x < self.tdx*(10+self.maxaddr*3): # hex
+					colnum = int(((event.x-self.tdx*9.5)/self.tdx+1.5)/3)
+				elif event.x < self.tdx*(11+self.maxaddr*4): #ascii
+					colnum = int((event.x-self.tdx*(11+self.maxaddr*3))/self.tdx)+1
 				else:
-					colnum = self.lines[rownum][0]
+					colnum = self.line_size(rownum)
 			else:
-				colnum = 0
-			if colnum > self.lines[rownum][0]:
-				colnum = self.lines[rownum][0]
+				colnum = self.curc
+			if colnum > self.line_size(rownum):
+				colnum = self.line_size(rownum)
 			if colnum < 0:
 				colnum = 0
 			c2 = colnum
@@ -635,19 +634,22 @@ class HexView():
 				r1 = rownum
 				r2 = self.curr
 				c1 = colnum
-				c2 = self.curc
+				c2 = self.curc+1
 			else:
 				r2 = rownum
 				r1 = self.curr
-				
-			if r1 == r2 and c2 < c1:
+			if r1 == r2 and c2 <= c1:
+				c = c1
 				c1 = c2
-				c2 = self.curc
+				c2 = c+1
 			self.sel = r1,c1,r2,c2
 			s = c2-c1
 			if r1 != r2:
 				s = self.lines[r2][0]+ c2 - self.lines[r1][0]-c1
-			self.mtt = event.x,event.y,s
+			if s > 0:
+				self.mtt = event.x,event.y,s
+			else:
+				self.mtt = None
 			if c1 != c1o or c2 != c2o or r1 != r1o or r2 != r2o:
 				self.expose(widget,event)
 			self.parent.calc_status(self.data[self.lines[r1][0]+c1:self.lines[r2][0]+c2],s)
@@ -662,7 +664,7 @@ class HexView():
 			if event.x < self.tdx*(10+self.maxaddr*3): # hex
 				colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
 			elif event.x < self.tdx*(11+self.maxaddr*4): #ascii
-				colnum = int((event.x-self.tdx*(11+self.maxaddr*3))/self.tdx)
+				colnum = int((event.x-self.tdx*(12+self.maxaddr*3))/self.tdx)
 			else:
 				colnum = self.line_size(rownum)-1
 		else:
