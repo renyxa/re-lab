@@ -1,6 +1,7 @@
 2012-01-08  Valek Filippov <frob@df.ru>
 
 	* Fix 'fmt' > maxaddr for not whole file
+	* Implement 'fmt *'.
 
 2012-01-08  Valek Filippov <frob@df.ru>
 

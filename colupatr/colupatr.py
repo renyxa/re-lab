@@ -350,7 +350,22 @@ class ApplicationMainWindow(gtk.Window):
 					elif mpos == len(cmdline)-1:
 						# repeat wrapping till end
 						print "Rpt to end"
+						cmd = cmdline[4:mpos].split()
+						cmdacc = 0
+						rpt = 0
+						for k in cmd:
+							cmdacc += int(k)
+							if cmdacc + curpos > len(doc.data):
+								cmd = cmd[:k]
+								rpt = 1
+								break
+						if rpt == 0:
+							rpt = 1+(doc.lines[len(doc.lines)-1][0]-doc.lines[doc.curr][0])/cmdacc
+						for i in range(rpt):
+							doc.wrap_helper(doc.curr+i*len(cmd),cmd,0)
 
+						lrow = doc.curr+i*len(cmd)
+						
 					else:
 						cmd = cmdline[4:mpos].split()
 						rpt = int(cmdline[mpos+1:].strip())
