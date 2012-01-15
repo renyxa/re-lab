@@ -27,7 +27,7 @@ import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 from utils import *
 
-version = "0.5.70"
+version = "0.5.74"
 
 ui_info = \
 '''<ui>

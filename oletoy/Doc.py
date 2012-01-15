@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp,rx2,fh,mdb
+import ole,mf,svm,cdr,clp,rx2,fh,mdb,cpt
 
 class Page:
 	def __init__(self):
@@ -42,6 +42,10 @@ class Page:
 		offset = 0
 		f = open(self.fname)
 		buf = f.read()
+
+		if buf[0:8] == "CPT9FILE":
+			self.type = cpt.open(buf, self)
+			return 0
 
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 			self.type = ole.open(buf, self)
