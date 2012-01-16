@@ -1,3 +1,7 @@
+2012-01-16  Valek Filippov <frob@df.ru>
+
+	* Code reorg for on_key_pressed.
+
 2012-01-08  Valek Filippov <frob@df.ru>
 
 	* Fix 'fmt' > maxaddr for not whole file

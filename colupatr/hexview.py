@@ -20,7 +20,7 @@ import struct
 
 class HexView():
 	def __init__(self,data=None,lines=[],offset=0):
-		# UI related onjects
+		# UI related objects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
 		self.hv = gtk.DrawingArea()		# middle column with the main hex context
 		self.vadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
@@ -37,6 +37,8 @@ class HexView():
 		self.table.attach(self.hbox2,2,3,2,3,0,0)
 		self.table.attach(self.hbox3,3,4,0,1,0,0)
 		self.table.attach(self.vs,3,4,1,2,0)
+
+		# UI to insert comment
 		self.ewin = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		self.ewin.connect ("focus-out-event", lambda d, r: d.hide())
 		self.ewin.set_resizable(True)
@@ -85,6 +87,19 @@ class HexView():
 		self.hv.connect("motion_notify_event",self.on_motion_notify)
 		self.vadj.connect("value_changed", self.on_vadj_changed)
 
+		# functions to handle kbd input
+		self.okp = {65362:self.okp_up , 65365:self.okp_pgup, 65364:self.okp_down,
+			65366:self.okp_pgdn, 65361:self.okp_left, 65363:self.okp_right,
+			65360:self.okp_home, 65367:self.okp_end, 65535:self.okp_del,
+			#65288:self.okp_bkspc, 65293:self.okp_enter,
+			65379:self.okp_ins,
+			#100:self.okp_d, # "d" for debug
+			97:self.okp_selall, # ^A for 'select all'
+			99:self.okp_copy, # ^C for 'copy'
+			122:self.okp_undo # ^Z for 'undo'
+			}
+
+
 		if lines == []:
 			self.init_lines()				# init as a standard "all 0x10 wide" lines
 		else:
@@ -93,7 +108,260 @@ class HexView():
 				self.bkhvlines.append("")
 			self.set_maxaddr()
 
+	def okp_up(self,event):
+		self.mode = "c"
+		if self.offnum > 0 and self.curr < self.offnum+1:
+			self.offnum -= 1
+			self.mode = ""
+		self.curr -= 1
+		if self.curr < 0:
+			self.curr = 0
+		if self.curr > self.offnum + self.numtl:
+			self.curr = self.offnum
+		maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+		if self.curc > maxc:
+			self.curc = maxc
+		return 1
+
+	def okp_pgup(self,event):
+		self.mode = "c"
+		self.curr -= (self.numtl+3)
+		if self.curr < 0:
+			self.curr = 0
+		if self.offnum > 0 and self.curr < self.offnum+1:
+			self.offnum -= (self.numtl+3)
+			self.mode = ""
+		if self.offnum < 0:
+			self.offnum = 0
+		if self.curr > self.offnum + self.numtl:
+			self.curr = self.offnum
+		maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+		if self.curc > maxc:
+			self.curc = maxc
+		return 1
+
+	def okp_down(self,event):
+		self.mode = "c"
+		if self.offnum < len(self.lines)-self.numtl and self.curr >= self.offnum+self.numtl-3:
+			self.offnum += 1
+			self.mode = ""
+		self.curr += 1
+		if self.curr > len(self.lines)-2:
+			self.curr = len(self.lines)-2
+		if self.curr < self.offnum:
+			self.curr = self.offnum
+		maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+		if self.curc > maxc:
+			self.curc = maxc
+		return 2
+
+	def okp_pgdn(self,event):
+		self.mode = "c"
+		self.curr += (self.numtl+3)
+		if self.curr > len(self.lines)-2:
+			self.curr = len(self.lines)-2
+		if self.offnum < len(self.lines)-self.numtl and self.curr >= self.offnum+self.numtl-3:
+			self.offnum += (self.numtl+3)
+			self.mode = ""
+		if self.offnum > len(self.lines)-self.numtl:
+			self.offnum = len(self.lines)-self.numtl
+		if self.curr < self.offnum:
+			self.curr = self.offnum
+		maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+		if self.curc > maxc:
+			self.curc = maxc
+		return 2
+
+	def okp_left(self,event):
+		self.mode = "c"
+		self.curc -= 1
+		if self.curc < 0:
+			if self.curr > 0:
+				self.curr -= 1
+				self.curc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+				self.mode = ""
+			else:
+				self.curc = 0
+		self.shift = 1
+		return 1
+
+	def okp_right(self,event):
+		self.mode = "c"
+		self.curc += 1
+		maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+		if self.curc > maxc:
+			if self.curr < len(self.lines)-2:
+				self.curc = 0
+				flag = 2
+				if self.offnum < len(self.lines)-self.numtl and self.curr >= self.offnum+self.numtl-3:
+					self.offnum += 1
+				self.curr += 1
+				if self.curr > len(self.lines)-2:
+					self.curr = len(self.lines)-2
+				if self.curr < self.offnum:
+					self.curr = self.offnum
+				self.mode = ""
+			else:
+				self.curc = maxc
+		self.shift = -1
+		return 1
+
+	def okp_home(self,event):
+		self.mode = "c"
+		self.shift -= self.curc
+		self.curc = 0
+		if event.state == gtk.gdk.CONTROL_MASK:
+			self.curr = 0
+			self.offnum = 0
+			self.mode = ""
+		return 1
+
+	def okp_end(self,event):
+		self.mode = "c"
+		self.shift = self.curc
+		if event.state == gtk.gdk.CONTROL_MASK:
+			self.curr = len(self.lines)-2
+			self.offnum = len(self.lines)-self.numtl
+			self.mode = ""
+		self.curc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
+		if self.curc == -1:
+			self.curc = 0
+		return 2
+
+	def okp_del(self,event):
+		expose = 0
+		self.bklines = []
+		self.bkhvlines = []
+		self.bklines += self.lines
+		self.bkhvlines += self.hvlines
+		if self.curr != len(self.lines)-2: # not in the last row
+			if self.curc == self.lines[self.curr+1][0] - self.lines[self.curr][0]-1 and self.lines[self.curr][1]%2 == 1:
+				if self.lines[self.curr][1] == 1:
+					self.lines[self.curr] = (self.lines[self.curr][0],0)
+				else:
+					self.lines[self.curr] = (self.lines[self.curr][0],2,self.lines[self.curr][2])
+				expose = 1
+			else:
+				mode = max(self.lines[self.curr][1],self.lines[self.curr+1][1])
+				comment = ""
+				if mode > 1:
+					if	self.lines[self.curr][1] > 1:
+						comment = self.lines[self.curr][2] + " "
+					if	self.lines[self.curr+1][1] > 1:
+						comment += self.lines[self.curr+1][2]
+					self.lines[self.curr] = (self.lines[self.curr][0],mode,comment)
+				else:
+					self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr+1][1])
+					self.curr += 1
+				self.curc = 0
+				self.join_string()
+				self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
+				self.lines.pop(self.curr)
+				self.curr -= 1
+				self.set_maxaddr()
+				self.tdx = -1 # force to recalculate in expose
+		return expose
+
+	def okp_ins(self,event):
+		xw,yw = self.hv.get_parent_window().get_position()
+		xv,yv = self.hv.window.get_position()
+		ys = yw+ yv+int((self.curr+0.5-self.offnum)*self.tht)
+		xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
+		if self.lines[self.curr][1] == 2:
+			self.entry.set_text(self.lines[self.curr][2])
+		self.ewin.show_all()
+		self.ewin.move(xs,ys)
+
+	def okp_selall(self,event):
+		self.sel = 0,0,self.numtl,self.lines[self.numtl-1][0]
+
+	def okp_copy(self,event):
+			#FIXME: this doesn't work
+			clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+			clp.set_text("test")
+			#	copy selection to clipboard
+
+	def okp_undo(self,event):
+		self.lines = self.bklines
+		self.hvlines = self.bkhvlines
+		self.set_maxaddr()
+		return 1
+
+	def okp_bksp(self,event):
+		# at start of the row it joins full row to the previous one
+		# any other position -- join left part to the previous row
+		expose = 0
+		self.bklines = []
+		self.bkhvlines = []
+		self.bklines += self.lines
+		self.bkhvlines += self.hvlines
+		if self.curr > 0:
+			mode = (self.lines[self.curr][1] | self.lines[self.curr-1][1])
+			comment = ""
+			if mode > 1:
+				if self.lines[self.curr-1][1] > 1:
+					comment = self.lines[self.curr-1][2] + " "
+				if self.lines[self.curr][1] > 1:
+					comment += self.lines[self.curr][2]
+			if self.curc == 0: #  join full row
+				if self.lines[self.curr][1] == 0 and self.lines[self.curr-1][1]%2 == 1:
+					if self.lines[self.curr-1][1] == 3:
+						self.lines[self.curr-1] = (self.lines[self.curr-1][0],2,self.lines[self.curr-1][2])
+					else:
+						self.lines[self.curr-1] = (self.lines[self.curr-1][0],0)
+				else:
+					self.join_string()
+					if mode > 1:
+						self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode,comment)
+					else:
+						self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode)
+					self.lines.pop(self.curr)
+			else: # join part of the row
+				self.join_string()
+				if self.lines[self.curr][1] > 1:
+					self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2])
+				else:
+					self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1])
+				self.curc = 0
+			expose = 1
+			self.set_maxaddr()
+			self.tdx = -1 # force to recalculate in expose
+			self.sel = None
+
+		return expose
+
+	def okp_enter(self,event):
+		# split row, move everything right to the next (new) one pushing everything down
+		expose = 0
+		self.bklines = []
+		self.bkhvlines = []
+		self.bklines += self.lines
+		self.bkhvlines += self.hvlines
+		if self.curr < len(self.lines)-1 and self.curc > 0:
+			self.split_string()
+			if self.lines[self.curr][1] > 1:
+				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2]))
+			else:
+				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1]))
+			self.lines[self.curr] = (self.lines[self.curr][0],0)
+			self.set_maxaddr()
+			self.curc -= 1
+			self.tdx = -1 # force to recalculate in expose
+			self.prec = self.curc - 1
+			self.sel = None
+		elif self.curr > 0 and self.curc == 0:
+			if self.lines[self.curr-1][1] == 0:
+				self.lines[self.curr-1] = (self.lines[self.curr-1][0],1)
+			elif self.lines[self.curr-1][1] == 2:
+				self.lines[self.curr-1] = (self.lines[self.curr-1][0],3,self.lines[self.curr-1][2])
+			expose = 1
+		return expose
+
+	def okp_d(self,event):
+		self.debug *= -1
+
 	def on_vadj_changed (self, vadj):
+		# vertical scroll line
 		if int(vadj.value) != self.offnum:
 			self.offnum = int(vadj.value)
 			self.vadj.upper = len(self.lines)-self.numtl+1
@@ -102,6 +370,7 @@ class HexView():
 		return True
 
 	def set_dxdy(self):
+		# calculate character extents
 		ctx = self.hv.window.cairo_create()
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
@@ -116,6 +385,7 @@ class HexView():
 		self.vadj.value = self.offnum
 
 	def init_lines(self):
+		# set initial line lengths
 		for i in range(len(self.data)/16+1):
 			self.lines.append((i*16,0))
 			self.hvlines.append("")
@@ -132,6 +402,7 @@ class HexView():
 		self.maxaddr = ma
 
 	def entry_key_pressed(self, entry, event):
+		# inserting comment
 		if event.keyval == 65307: # Esc
 			self.ewin.hide()
 			entry.set_text("")
@@ -146,12 +417,14 @@ class HexView():
 				self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
 
 	def on_key_release (self, view, event):
+		# part of the data selection from keyboard
 		if event.keyval == 65505 or event.keyval == 65506:
 			self.kdrag = 0
 			self.mtt = None
 			self.expose(view,event)
 
 	def on_key_press (self, view, event):
+		# handle keyboard input
 		flag = 0
 		expose = 0
 		self.mode = ""
@@ -164,255 +437,54 @@ class HexView():
 				self.kdrag = 1
 
 		if event.keyval == 65362: # Up
-			flag = 1
-			self.mode = "c"
-			if self.offnum > 0 and self.curr < self.offnum+1:
-				self.offnum -= 1
-				self.mode = ""
-			self.curr -= 1
-			if self.curr < 0:
-				self.curr = 0
-			if self.curr > self.offnum + self.numtl:
-				self.curr = self.offnum
-			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-			if self.curc > maxc:
-				self.curc = maxc
+			flag = self.okp_up(event)
 
 		elif event.keyval == 100: # "d" for debug
-			self.debug *= -1
-			pass
+			self.okp_d(event)
 
 		elif event.keyval == 65365: # PgUp
-			flag = 1
-			self.mode = "c"
-			self.curr -= (self.numtl+3)
-			if self.curr < 0:
-				self.curr = 0
-			if self.offnum > 0 and self.curr < self.offnum+1:
-				self.offnum -= (self.numtl+3)
-				self.mode = ""
-			if self.offnum < 0:
-				self.offnum = 0
-			if self.curr > self.offnum + self.numtl:
-				self.curr = self.offnum
-			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-			if self.curc > maxc:
-				self.curc = maxc
+			flag = self.okp_pgup(event)
 
 		elif event.keyval == 65364: # Down
-			flag = 2
-			self.mode = "c"
-			if self.offnum < len(self.lines)-self.numtl and self.curr >= self.offnum+self.numtl-3:
-				self.offnum += 1
-				self.mode = ""
-			self.curr += 1
-			if self.curr > len(self.lines)-2:
-				self.curr = len(self.lines)-2
-			if self.curr < self.offnum:
-				self.curr = self.offnum
-			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-			if self.curc > maxc:
-				self.curc = maxc
+			flag = self.okp_down(event)
 
 		elif event.keyval == 65366: # PgDn
-			flag = 2
-			self.mode = "c"
-			self.curr += (self.numtl+3)
-			if self.curr > len(self.lines)-2:
-				self.curr = len(self.lines)-2
-			if self.offnum < len(self.lines)-self.numtl and self.curr >= self.offnum+self.numtl-3:
-				self.offnum += (self.numtl+3)
-				self.mode = ""
-			if self.offnum > len(self.lines)-self.numtl:
-				self.offnum = len(self.lines)-self.numtl
-			if self.curr < self.offnum:
-				self.curr = self.offnum
-			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-			if self.curc > maxc:
-				self.curc = maxc
+			flag = self.okp_pgdn(event)
 
 		elif event.keyval == 65361: # Left
-			if self.debug == 1:
-				print self.curc,self.curr
-			flag = 1
-			self.mode = "c"
-			self.curc -= 1
-			if self.curc < 0:
-				if self.curr > 0:
-					self.curr -= 1
-					self.curc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-					self.mode = ""
-				else:
-					self.curc = 0
-			self.shift = 1
-			
+			flag = self.okp_left(event)
+
 		elif event.keyval == 65363: # Right
-			flag = 1
-			self.mode = "c"
-			self.curc += 1
-			maxc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-			if self.curc > maxc:
-				if self.curr < len(self.lines)-2:
-					self.curc = 0
-					flag = 2
-					if self.offnum < len(self.lines)-self.numtl and self.curr >= self.offnum+self.numtl-3:
-						self.offnum += 1
-					self.curr += 1
-					if self.curr > len(self.lines)-2:
-						self.curr = len(self.lines)-2
-					if self.curr < self.offnum:
-						self.curr = self.offnum
-					self.mode = ""
-				else:
-					self.curc = maxc
-			self.shift = -1
+			flag = self.okp_right(event)
 
 		elif event.keyval == 65360: # Home
-			flag = 1
-			self.mode = "c"
-			self.shift -= self.curc
-			self.curc = 0
-			if event.state == gtk.gdk.CONTROL_MASK:
-				self.curr = 0
-				self.offnum = 0
-				self.mode = ""
+			flag = self.okp_home(event)
 
 		elif event.keyval == 65367: # End
-			flag = 2
-			self.mode = "c"
-			self.shift = self.curc
-			if event.state == gtk.gdk.CONTROL_MASK:
-				self.curr = len(self.lines)-2
-				self.offnum = len(self.lines)-self.numtl
-				self.mode = ""
-			self.curc = self.lines[self.curr+1][0] - self.lines[self.curr][0] -1
-			if self.curc == -1:
-				self.curc = 0
+			flag = self.okp_end(event)
 
 		elif event.keyval == 65535: # Del
 		# join next row to the current one
-			self.bklines = []
-			self.bkhvlines = []
-			self.bklines += self.lines
-			self.bkhvlines += self.hvlines
-			if self.curr != len(self.lines)-2: # not in the last row
-				if self.curc == self.lines[self.curr+1][0] - self.lines[self.curr][0]-1 and self.lines[self.curr][1]%2 == 1:
-					if self.lines[self.curr][1] == 1:
-						self.lines[self.curr] = (self.lines[self.curr][0],0)
-					else:
-						self.lines[self.curr] = (self.lines[self.curr][0],2,self.lines[self.curr][2])
-					expose = 1
-				else:
-					mode = max(self.lines[self.curr][1],self.lines[self.curr+1][1])
-					comment = ""
-					if mode > 1:
-						if	self.lines[self.curr][1] > 1:
-							comment = self.lines[self.curr][2] + " "
-						if	self.lines[self.curr+1][1] > 1:
-							comment += self.lines[self.curr+1][2]
-						self.lines[self.curr] = (self.lines[self.curr][0],mode,comment)
-					else:
-						self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr+1][1])
-
-					self.curr += 1
-					self.curc = 0
-					self.join_string()
-					self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
-					self.lines.pop(self.curr)
-					self.curr -= 1
-					self.set_maxaddr()
-					self.tdx = -1 # force to recalculate in expose
+			expose = self.okp_del(event)
 
 		elif event.keyval == 65288: # Backspace
-		# at start of the row it joins full row to the previous one
-		# any other position -- join left part to the previous row
-			self.bklines = []
-			self.bkhvlines = []
-			self.bklines += self.lines
-			self.bkhvlines += self.hvlines
-			if self.curr > 0:
-				mode = (self.lines[self.curr][1] | self.lines[self.curr-1][1])
-				comment = ""
-				if mode > 1:
-					if self.lines[self.curr-1][1] > 1:
-						comment = self.lines[self.curr-1][2] + " "
-					if self.lines[self.curr][1] > 1:
-						comment += self.lines[self.curr][2]
-				if self.curc == 0: #  join full row
-					if self.lines[self.curr][1] == 0 and self.lines[self.curr-1][1]%2 == 1:
-						if self.lines[self.curr-1][1] == 3:
-							self.lines[self.curr-1] = (self.lines[self.curr-1][0],2,self.lines[self.curr-1][2])
-						else:
-							self.lines[self.curr-1] = (self.lines[self.curr-1][0],0)
-					else:
-						self.join_string()
-						if mode > 1:
-							self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode,comment)
-						else:
-							self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode)
-						self.lines.pop(self.curr)
-
-				else: # join part of the row
-					self.join_string()
-					if self.lines[self.curr][1] > 1:
-						self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2])
-					else:
-						self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1])
-					self.curc = 0
-				expose = 1
-				self.set_maxaddr()
-				self.tdx = -1 # force to recalculate in expose
-				self.sel = None
+			expose = self.okp_bksp(event)
 
 		elif event.keyval == 65293: # Enter
-			# split row, move everything right to the next (new) one pushing everything down
-			self.bklines = []
-			self.bkhvlines = []
-			self.bklines += self.lines
-			self.bkhvlines += self.hvlines
-			if self.curr < len(self.lines)-1 and self.curc > 0:
-				self.split_string()
-				if self.lines[self.curr][1] > 1:
-					self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2]))
-				else:
-					self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1]))
-				self.lines[self.curr] = (self.lines[self.curr][0],0)
-				self.set_maxaddr()
-				self.curc -= 1
-				self.tdx = -1 # force to recalculate in expose
-				self.prec = self.curc - 1
-				self.sel = None
-			elif self.curr > 0 and self.curc == 0:
-				if self.lines[self.curr-1][1] == 0:
-					self.lines[self.curr-1] = (self.lines[self.curr-1][0],1)
-				elif self.lines[self.curr-1][1] == 2:
-					self.lines[self.curr-1] = (self.lines[self.curr-1][0],3,self.lines[self.curr-1][2])
-				expose = 1
+			expose = self.okp_enter(event)
 
 		elif event.keyval == 65379: # Insert
-			xw,yw = self.hv.get_parent_window().get_position()
-			xv,yv = self.hv.window.get_position()
-			ys = yw+ yv+int((self.curr+0.5-self.offnum)*self.tht)
-			xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
-			if self.lines[self.curr][1] == 2:
-				self.entry.set_text(self.lines[self.curr][2])
-			self.ewin.show_all()
-			self.ewin.move(xs,ys)
-			
+			self.okp_ins(event)
+
 		elif event.keyval == 97 and event.state == gtk.gdk.CONTROL_MASK: # ^A
-			self.sel = 0,0,self.numtl,self.lines[self.numtl-1][0]
+			self.okp_selall(event)
 
 		elif event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK: # ^C
-			#FIXME: this doesn't work
-			clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-			clp.set_text("test")
-#			copy selection to clipboard
+			self.okp_copy(event)
 
 		elif event.keyval == 122 and event.state == gtk.gdk.CONTROL_MASK: # ^Z
-			self.lines = self.bklines
-			self.hvlines = self.bkhvlines
-			self.set_maxaddr()
-			expose = 1
+			expose = self.okp_undo(event)
+
 		if self.curr < self.offnum:
 			# Left/Right/BS/Enter 												 -- scroll back to cursor   (flag 0)
 			# cursor upper than position and Up/PgUp/Home  -- scroll back to cursor   (flag 1)
@@ -498,13 +570,12 @@ class HexView():
 
 		self.vadj.upper = len(self.lines)-self.numtl+1
 		self.vadj.value = self.offnum
-		if self.curr != self.prer or self.curc != self.prec:
-			expose = 1
-		if expose == 1:
+		if self.curr != self.prer or self.curc != self.prec or expose == 1:
 			self.expose(view,event)
-			
+
 #		to quickly check what keyval value is for any new key I would like to add
 #		print event.keyval,event.state
+
 		return True
 
 	def join_string (self, r = -1, c = -1):
@@ -556,7 +627,6 @@ class HexView():
 		# attach next line to one pointed by 'row'
 		# and return 0
 		# or -1 if 'row' is the last line or after
-#		print " AN",row,
 		if row < len(self.lines)-2:
 			self.lines.pop(row+1)
 			self.join_string(row+1,0)
@@ -568,32 +638,20 @@ class HexView():
 		# breaks line 'row' at 'col' position
 		# 'abcd' + col=0 -> a/bcd
 		rs = self.line_size(row)
-
-#		print " BL",row,col,rs,
 		if rs > 1 and col < rs-1:
 			self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
 			self.split_string(row,col+1)
 
 	def wrap_helper(self,row,cmd,flag):
 		# join and split do not deal with self.lines -- make similar wrappers for it
-		if self.debug == 1:
-			print "\nWH",row,cmd
 		for i in range(len(cmd)):
 			rs = self.line_size(row+i)
-			if self.debug == 1:
-				print " WH2",rs,cmd[i],
 			res = 1
 			while rs <= int(cmd[i]) and res:
-				if self.debug == 1:
-					print " WH3",rs,cmd[i],
 				res = self.attach_next(row+i)
 				rs = self.line_size(row+i)
 			if rs > int(cmd[i]):
-				if self.debug == 1:
-					print " WH4",rs,cmd[i],
 				self.break_line(row+i,int(cmd[i])-1)
-		if self.debug == 1:
-			print "WHe"
 
 	def on_button_release (self, widget, event):
 		self.drag = 0
@@ -698,7 +756,7 @@ class HexView():
 		return self.hvlines[num]
 
 	def expose (self, widget, event):
-#		print "exp",event
+	#	print "exp",event
 		ctx = self.hv.window.cairo_create()
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)

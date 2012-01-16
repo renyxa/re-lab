@@ -18,7 +18,7 @@ import sys,struct
 import gtk,gobject
 import hexview
 
-version = "0.2.1"
+version = "0.2.2"
 
 ui_info = \
 '''<ui>
