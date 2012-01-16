@@ -1,3 +1,7 @@
+2012-01-15  Valek Filippov
+
+		* Escher: temporary changes to look into file from fdo#43193
+
 2012-01-14  Valek Filippov
 
 		* CPT: ported support from cptre.

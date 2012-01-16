@@ -427,27 +427,41 @@ def parse (model,data,parent):
 			contflag = ord(data[offset])
 			newT = struct.unpack('<H', data[offset+2:offset+4])[0]
 			newL = struct.unpack('<I', data[offset+4:offset+8])[0]
-			if newT == 0xF011:
-				shapeid = struct.unpack("<I",data[offset+14:offset+18])[0]
-				pname = model.get_value(parent,0)
-				model.set_value(parent,0,pname+" (%02x)"%shapeid)
+
+# for PUB
+
+#			if newT == 0xF011:
+#				shapeid = struct.unpack("<I",data[offset+14:offset+18])[0]
+#				pname = model.get_value(parent,0)
+#				model.set_value(parent,0,pname+" (%02x)"%shapeid)
+
+# end for PUB
+
 			if newL > 0:
 				iter1 = model.append(parent,None)
 				if odraw_id_names.has_key(newT):
 					name = odraw_id_names[newT]
 				else:
 					name = "%02x"%newT
-				if newT == 0xF118 or newT == 0xF11E: #or newT == 0xF11A
-					newL += 4
-				if newT == 0xF004 or newT == 0xF003:
-					newL -= 4
+				#if newT == 0xF118: # or newT == 0xF11E: #or newT == 0xF11A
+				# 0xf118,0xf11e in Doc (don't need +4) and Pub (do I??)
+				#	newL += 4
+
+				#if newT == 0xF004 or newT == 0xF003:
+				#	newL -= 4
+				#in Doc (don't need -4) and Pub (do I??)
+				
 				model.set_value(iter1,0,name)
 				model.set_value(iter1,1,("escher","odraw",newT))
 				if contflag == 0xF:
-					model.set_value(iter1,2,newL+12)
-					model.set_value(iter1,3,data[offset:offset+newL+12])
-					parse (model,data[offset+8:offset+12+newL],iter1)
-					offset += newL + 12
+					#model.set_value(iter1,2,newL+12)
+					#model.set_value(iter1,3,data[offset:offset+newL+12])
+					#parse (model,data[offset+8:offset+12+newL],iter1)
+					#offset += newL + 12
+					model.set_value(iter1,2,newL+8)
+					model.set_value(iter1,3,data[offset:offset+newL+8])
+					parse (model,data[offset+8:offset+newL+8],iter1)
+					offset += newL + 8
 				else:
 					model.set_value(iter1,2,newL+8)
 					model.set_value(iter1,3,data[offset:offset+newL+8])

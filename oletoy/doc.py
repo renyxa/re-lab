@@ -39,62 +39,62 @@ underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Doubl
 
 def fib_base (hd, data):
 	off = 0
-	add_hditer(hd,"wIdent",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"wIdent",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"nFib",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"nFib",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"unused",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"unused",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"lid",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"lid",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"pnNext",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"pnNext",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
 	# FIXME
-	add_hditer(hd,"FixMe (flags)",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"FixMe (flags)",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"nFibBack",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"nFibBack",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"iKey",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"iKey",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"envr",ord(data[off]),off,1,"B")
+	add_iter(hd,"envr",ord(data[off]),off,1,"B")
 
 def fib_RgW (hd, data):
 	off = 0
-	add_hditer(hd,"csw",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"csw",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
 	for i in range(13):
-		add_hditer(hd,"rsrv%d"%(i+1),struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+		add_iter(hd,"rsrv%d"%(i+1),struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 		off += 2
-	add_hditer(hd,"lidFE",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"lidFE",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 
 def fib_RgLw (hd, data):
 	off = 0
-	add_hditer(hd,"cslw",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	add_iter(hd,"cslw",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	add_hditer(hd,"cbMac",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"cbMac",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"rsrv1",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"rsrv1",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"rsrv2",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"rsrv2",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpText",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpText",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpFtn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpFtn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpHdd",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpHdd",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"rsrv3",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"rsrv3",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpAtn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpAtn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpEdn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpEdn",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpTxbx",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpTxbx",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"ccpHdrTxbx",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"ccpHdrTxbx",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
 	for i in range(11):
-		add_hditer(hd,"rsrv%d"%(i+4),struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"rsrv%d"%(i+4),struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
 #Stshf -- StyleSheet
@@ -211,18 +211,18 @@ fclcb97recs2 = ["PlcfLvcPre10","PlcfAsumy","PlcfGram","SttbListNames","SttbfUssr
 def FcLcb97 (hd,data):
 	off = 2
 	for i in fclcb97recs1:
-		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-	add_hditer(hd,"dwLowDateTime",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"dwLowDateTime",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
-	add_hditer(hd,"dwHighDateTime",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+	add_iter(hd,"dwHighDateTime",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
 	for i in fclcb97recs2:
-		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
 fclcb2krecs = ["PlcfTch","RmdThreading","Mid","SttbRgtplc","MsoEnvelope",
@@ -233,9 +233,9 @@ def FcLcb2k (hd,data):
 	FcLcb97 (hd,data)
 	off = 746
 	for i in fclcb2krecs:
-		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
 fclcb2k2recs = ["Unused1","PlcfPgp","Plcfuim","PlfguidUim","AtrdExtra",
@@ -249,9 +249,9 @@ def FcLcb2k2 (hd,data):
 	FcLcb2k (hd,data)
 	off = 866
 	for i in fclcb2k2recs:
-		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
 fclcb2k3recs = ["Hplxsdr","SttbfBkmkSdt","PlcfBkfSdt","PlcfBklSdt","CustomXForm",
@@ -264,9 +264,9 @@ def FcLcb2k3 (hd,data):
 	FcLcb2k2 (hd,data)
 	off = 1090
 	for i in fclcb2k3recs:
-		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
 fclcb2k7recs = ["Plcfmthd","SttbfBkmkMoveFrom","PlcfBkfMoveFrom","PlcfBklMoveFrom",
@@ -278,15 +278,15 @@ def FcLcb2k7 (hd,data):
 	FcLcb2k3 (hd,data)
 	off = 1314
 	for i in fclcb2k7recs:
-		add_hditer(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"fc%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
-		add_hditer(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
+		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
 def fib_RgFcLcbBlob (hd, data):
 	off = 0
 	cb = struct.unpack("<H",data[off:off+2])[0]
-	add_hditer(hd,"cbRgFcLcb",cb,off,2,"<H")
+	add_iter(hd,"cbRgFcLcb",cb,off,2,"<H")
 	off += 2
 	if fclcb2nfib.has_key(cb):
 	  fclcb2nfib[cb][1](hd,data)
