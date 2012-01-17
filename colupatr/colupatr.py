@@ -18,7 +18,7 @@ import sys,struct
 import gtk,gobject
 import hexview
 
-version = "0.2.2"
+version = "0.2.3"
 
 ui_info = \
 '''<ui>
@@ -344,7 +344,7 @@ class ApplicationMainWindow(gtk.Window):
 							if cmdacc + curpos > len(doc.data):
 								cmd = cmd[:k]
 								break
-						doc.wrap_helper(doc.curr,cmd,1)
+						doc.fmt_row(doc.curr,cmd)
 						lrow = doc.curr+len(cmd)
 
 					elif mpos == len(cmdline)-1:
@@ -362,7 +362,7 @@ class ApplicationMainWindow(gtk.Window):
 						if rpt == 0:
 							rpt = 1+(doc.lines[len(doc.lines)-1][0]-doc.lines[doc.curr][0])/cmdacc
 						for i in range(rpt):
-							doc.wrap_helper(doc.curr+i*len(cmd),cmd,0)
+							doc.fmt_row(doc.curr+i*len(cmd),cmd)
 
 						lrow = doc.curr+i*len(cmd)
 						
@@ -383,13 +383,14 @@ class ApplicationMainWindow(gtk.Window):
 						#repeat wrapping last arg times
 						print "Rpt",rpt,"times",cmd
 						for i in range(rpt):
-							doc.wrap_helper(doc.curr+i*len(cmd),cmd,0)
+							doc.fmt_row(doc.curr+i*len(cmd),cmd)
 
 						lrow = doc.curr+i*len(cmd)+1
 
 					doc.hvlines[lrow] = ""
 					doc.set_maxaddr()
 					doc.expose(None,None)
+
 				elif cmd[0].lower() == "goto":
 					if len(cmd) > 1:
 						try:

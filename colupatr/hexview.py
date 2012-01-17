@@ -73,6 +73,7 @@ class HexView():
 		self.mtt = None					# mx, my, num -- to show how many bytes selected
 		self.bklines = []				# previous state of the lines to support one step undo
 		self.bkhvlines = []			# previous state of the hvlines to support one step undo
+		self.exposed = 0
 		self.debug = -1					# -1 -- debug off, 1 -- debug on
 		
 		# connect signals and call some init functions
@@ -91,9 +92,9 @@ class HexView():
 		self.okp = {65362:self.okp_up , 65365:self.okp_pgup, 65364:self.okp_down,
 			65366:self.okp_pgdn, 65361:self.okp_left, 65363:self.okp_right,
 			65360:self.okp_home, 65367:self.okp_end, 65535:self.okp_del,
-			#65288:self.okp_bkspc, 65293:self.okp_enter,
+			65288:self.okp_bksp, 65293:self.okp_enter,
 			65379:self.okp_ins,
-			#100:self.okp_d, # "d" for debug
+			100:self.okp_d, # "d" for debug
 			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, # ^C for 'copy'
 			122:self.okp_undo # ^Z for 'undo'
@@ -229,38 +230,14 @@ class HexView():
 		return 2
 
 	def okp_del(self,event):
-		expose = 0
+		self.exposed = 0
 		self.bklines = []
 		self.bkhvlines = []
 		self.bklines += self.lines
 		self.bkhvlines += self.hvlines
 		if self.curr != len(self.lines)-2: # not in the last row
-			if self.curc == self.lines[self.curr+1][0] - self.lines[self.curr][0]-1 and self.lines[self.curr][1]%2 == 1:
-				if self.lines[self.curr][1] == 1:
-					self.lines[self.curr] = (self.lines[self.curr][0],0)
-				else:
-					self.lines[self.curr] = (self.lines[self.curr][0],2,self.lines[self.curr][2])
-				expose = 1
-			else:
-				mode = max(self.lines[self.curr][1],self.lines[self.curr+1][1])
-				comment = ""
-				if mode > 1:
-					if	self.lines[self.curr][1] > 1:
-						comment = self.lines[self.curr][2] + " "
-					if	self.lines[self.curr+1][1] > 1:
-						comment += self.lines[self.curr+1][2]
-					self.lines[self.curr] = (self.lines[self.curr][0],mode,comment)
-				else:
-					self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr+1][1])
-					self.curr += 1
-				self.curc = 0
-				self.join_string()
-				self.curc = self.lines[self.curr][0] - self.lines[self.curr-1][0]
-				self.lines.pop(self.curr)
-				self.curr -= 1
-				self.set_maxaddr()
-				self.tdx = -1 # force to recalculate in expose
-		return expose
+				self.fmt(self.curr,[self.line_size(self.curr)+self.line_size(self.curr+1)])
+				self.prec = self.curc - 1
 
 	def okp_ins(self,event):
 		xw,yw = self.hv.get_parent_window().get_position()
@@ -277,20 +254,20 @@ class HexView():
 
 	def okp_copy(self,event):
 			#FIXME: this doesn't work
+			#	copy selection to clipboard
 			clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
 			clp.set_text("test")
-			#	copy selection to clipboard
 
 	def okp_undo(self,event):
 		self.lines = self.bklines
 		self.hvlines = self.bkhvlines
 		self.set_maxaddr()
-		return 1
+		self.exposed = 1
 
 	def okp_bksp(self,event):
 		# at start of the row it joins full row to the previous one
 		# any other position -- join left part to the previous row
-		expose = 0
+		self.exposed = 0
 		self.bklines = []
 		self.bkhvlines = []
 		self.bklines += self.lines
@@ -303,59 +280,40 @@ class HexView():
 					comment = self.lines[self.curr-1][2] + " "
 				if self.lines[self.curr][1] > 1:
 					comment += self.lines[self.curr][2]
-			if self.curc == 0: #  join full row
-				if self.lines[self.curr][1] == 0 and self.lines[self.curr-1][1]%2 == 1:
-					if self.lines[self.curr-1][1] == 3:
-						self.lines[self.curr-1] = (self.lines[self.curr-1][0],2,self.lines[self.curr-1][2])
-					else:
-						self.lines[self.curr-1] = (self.lines[self.curr-1][0],0)
-				else:
-					self.join_string()
-					if mode > 1:
-						self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode,comment)
-					else:
-						self.lines[self.curr-1] = (self.lines[self.curr-1][0],mode)
-					self.lines.pop(self.curr)
-			else: # join part of the row
-				self.join_string()
-				if self.lines[self.curr][1] > 1:
-					self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2])
-				else:
-					self.lines[self.curr] = (self.lines[self.curr][0]+self.curc,self.lines[self.curr][1])
+			if self.curc == 0:
+				#  join full row
+				cc = self.line_size(self.curr-1)
+				self.fmt(self.curr-1,[self.line_size(self.curr)+self.line_size(self.curr-1)])
+				self.curc = cc
+				self.curr -= 1
+				self.prec = self.curc - 1
+			else:
+				# join part of the row
+				self.fmt(self.curr-1,[self.curc+self.line_size(self.curr-1)])
 				self.curc = 0
-			expose = 1
-			self.set_maxaddr()
-			self.tdx = -1 # force to recalculate in expose
-			self.sel = None
-
-		return expose
+				self.prec = self.curc + 1
+			self.exposed = 1
 
 	def okp_enter(self,event):
 		# split row, move everything right to the next (new) one pushing everything down
-		expose = 0
+		self.exposed = 0
 		self.bklines = []
 		self.bkhvlines = []
 		self.bklines += self.lines
 		self.bkhvlines += self.hvlines
 		if self.curr < len(self.lines)-1 and self.curc > 0:
-			self.split_string()
-			if self.lines[self.curr][1] > 1:
-				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1],self.lines[self.curr][2]))
-			else:
-				self.lines.insert(self.curr+1,(self.lines[self.curr][0]+self.curc,self.lines[self.curr][1]))
-			self.lines[self.curr] = (self.lines[self.curr][0],0)
-			self.set_maxaddr()
-			self.curc -= 1
-			self.tdx = -1 # force to recalculate in expose
+			# wrap at curc
+			self.fmt(self.curr,[self.curc])
+			self.curc = 0
+			self.curr += 1
 			self.prec = self.curc - 1
-			self.sel = None
 		elif self.curr > 0 and self.curc == 0:
+			# insert separator
 			if self.lines[self.curr-1][1] == 0:
 				self.lines[self.curr-1] = (self.lines[self.curr-1][0],1)
 			elif self.lines[self.curr-1][1] == 2:
 				self.lines[self.curr-1] = (self.lines[self.curr-1][0],3,self.lines[self.curr-1][2])
-			expose = 1
-		return expose
+			self.exposed = 1
 
 	def okp_d(self,event):
 		self.debug *= -1
@@ -426,7 +384,7 @@ class HexView():
 	def on_key_press (self, view, event):
 		# handle keyboard input
 		flag = 0
-		expose = 0
+		self.exposed = 0
 		self.mode = ""
 		self.shift = 0
 		self.prer = self.curr
@@ -436,54 +394,10 @@ class HexView():
 				self.sel = (self.curr,self.curc,self.curr,self.curc)
 				self.kdrag = 1
 
-		if event.keyval == 65362: # Up
-			flag = self.okp_up(event)
-
-		elif event.keyval == 100: # "d" for debug
-			self.okp_d(event)
-
-		elif event.keyval == 65365: # PgUp
-			flag = self.okp_pgup(event)
-
-		elif event.keyval == 65364: # Down
-			flag = self.okp_down(event)
-
-		elif event.keyval == 65366: # PgDn
-			flag = self.okp_pgdn(event)
-
-		elif event.keyval == 65361: # Left
-			flag = self.okp_left(event)
-
-		elif event.keyval == 65363: # Right
-			flag = self.okp_right(event)
-
-		elif event.keyval == 65360: # Home
-			flag = self.okp_home(event)
-
-		elif event.keyval == 65367: # End
-			flag = self.okp_end(event)
-
-		elif event.keyval == 65535: # Del
-		# join next row to the current one
-			expose = self.okp_del(event)
-
-		elif event.keyval == 65288: # Backspace
-			expose = self.okp_bksp(event)
-
-		elif event.keyval == 65293: # Enter
-			expose = self.okp_enter(event)
-
-		elif event.keyval == 65379: # Insert
-			self.okp_ins(event)
-
-		elif event.keyval == 97 and event.state == gtk.gdk.CONTROL_MASK: # ^A
-			self.okp_selall(event)
-
-		elif event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK: # ^C
-			self.okp_copy(event)
-
-		elif event.keyval == 122 and event.state == gtk.gdk.CONTROL_MASK: # ^Z
-			expose = self.okp_undo(event)
+		if self.okp.has_key(event.keyval):
+			tmp = self.okp[event.keyval](event)
+			if tmp:
+				flag = tmp
 
 		if self.curr < self.offnum:
 			# Left/Right/BS/Enter 												 -- scroll back to cursor   (flag 0)
@@ -570,32 +484,13 @@ class HexView():
 
 		self.vadj.upper = len(self.lines)-self.numtl+1
 		self.vadj.value = self.offnum
-		if self.curr != self.prer or self.curc != self.prec or expose == 1:
+		if self.curr != self.prer or self.curc != self.prec or self.exposed == 1:
 			self.expose(view,event)
 
 #		to quickly check what keyval value is for any new key I would like to add
 #		print event.keyval,event.state
 
 		return True
-
-	def join_string (self, r = -1, c = -1):
-		if r == -1:
-			r = self.curr
-		if c == -1:
-			c = self.curc
-		# helper to handle 'backspace'
-		if c != 0:
-			self.split_string()
-		self.hvlines[r-1] = ""
-		self.hvlines[r] = ""
-		self.get_string(r-1)
-		self.get_string(r)
-		if self.debug == 1:
-			print "Upd",r-1,"(%02x) and"%self.lines[r-1][0],r,"(%02x)"%self.lines[r][0]
-		nh,na = self.hvlines[r-1]
-		ph,pa = self.hvlines[r]
-		self.hvlines[r-1] = nh+ph,na+pa
-		self.hvlines.pop(r)
 
 	def split_string(self, r = -1, c = -1):
 		if r == -1:
@@ -625,11 +520,20 @@ class HexView():
 
 	def attach_next(self,row):
 		# attach next line to one pointed by 'row'
-		# and return 0
-		# or -1 if 'row' is the last line or after
+		# and return 1
+		# or 0 if 'row' is the last line or after
 		if row < len(self.lines)-2:
 			self.lines.pop(row+1)
-			self.join_string(row+1,0)
+			self.hvlines[row] = ""
+			self.hvlines[row+1] = ""
+			self.get_string(row)
+			self.get_string(row+1)
+			if self.debug == 1:
+				print "Upd",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
+			nh,na = self.hvlines[row]
+			ph,pa = self.hvlines[row+1]
+			self.hvlines[row] = nh+ph,na+pa
+			self.hvlines.pop(row+1)
 			return 1
 		else:
 			return 0
@@ -640,9 +544,19 @@ class HexView():
 		rs = self.line_size(row)
 		if rs > 1 and col < rs-1:
 			self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
-			self.split_string(row,col+1)
+		if self.debug == 1:
+			print "Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1
+		prehex,preasc = self.hvlines[row]
+		lhex = prehex[:col*3+3]
+		rhex = prehex[col*3+3:]
+		lasc = preasc[:col+1]
+		rasc = preasc[col+1:]
+		self.hvlines[row] = lhex,lasc
+		self.hvlines.insert(row+1,(rhex,rasc))
+		if self.debug == 1:
+			print "Upd2",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
 
-	def wrap_helper(self,row,cmd,flag):
+	def fmt_row(self,row,cmd):
 		# join and split do not deal with self.lines -- make similar wrappers for it
 		for i in range(len(cmd)):
 			rs = self.line_size(row+i)
@@ -652,6 +566,14 @@ class HexView():
 				rs = self.line_size(row+i)
 			if rs > int(cmd[i]):
 				self.break_line(row+i,int(cmd[i])-1)
+
+	def fmt(self,row,col):
+		self.fmt_row(row, col)
+		self.hvlines[row+1] = ""
+		self.set_maxaddr()
+		self.tdx = -1 # force to recalculate in expose
+		self.sel = None
+
 
 	def on_button_release (self, widget, event):
 		self.drag = 0
@@ -750,7 +672,7 @@ class HexView():
 				ch = self.data[self.lines[num][0]+j]
 				hex += "%02x "%ord(ch)
 				if ord(ch) < 32 or ord(ch) > 126:
-					ch = "."
+					ch = unicode("\xC2\xB7","utf8")
 				asc += ch
 			self.hvlines[num] = (hex,asc)
 		return self.hvlines[num]
@@ -910,7 +832,7 @@ class HexView():
 				ctx.move_to(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+2)*self.tht+4)
 				ch = self.data[self.lines[self.prer][0]+self.prec]
 				if ord(ch) < 32 or ord(ch) > 126:
-					ch = "."
+					ch = unicode("\xC2\xB7","utf8")
 				ctx.show_text(ch)
 
 		if self.curr-self.offnum > -1:
@@ -946,7 +868,7 @@ class HexView():
 			ctx.move_to(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+2)*self.tht+4)
 			ch = self.data[self.lines[self.curr][0]+self.curc]
 			if ord(ch) < 32 or ord(ch) > 126:
-				ch = "."
+				ch = unicode("\xC2\xB7","utf8")
 			ctx.show_text(ch)
 
 		if self.prer != self.curr: # need to clear/draw addr
