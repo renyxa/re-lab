@@ -19,7 +19,7 @@ import cairo
 import struct
 
 class HexView():
-	def __init__(self,data=None,lines=[],offset=0):
+	def __init__(self,data=None,lines=[],comments={},offset=0):
 		# UI related objects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
 		self.hv = gtk.DrawingArea()		# middle column with the main hex context
@@ -56,7 +56,8 @@ class HexView():
 		self.tdx = -1						# width of one glyph
 		self.tht = 0						# height of one glyph
 		self.numtl = 0					# number of lines
-		self.lines = lines			# offsets of lines in dump 
+		self.lines = lines			# offsets of lines in dump (offset,mode,comment idx)
+		self.comments = comments	# hash of offset:length/text
 		self.maxaddr = 16				# current length of the longest line
 		self.hvlines = []				# cached text of lines
 		self.selr = None
@@ -97,7 +98,8 @@ class HexView():
 			100:self.okp_d, # "d" for debug
 			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, # ^C for 'copy'
-			122:self.okp_undo # ^Z for 'undo'
+			122:self.okp_undo, # ^Z for 'undo'
+			105:self.okp_ins	# i for Insert
 			}
 
 
@@ -244,8 +246,9 @@ class HexView():
 		xv,yv = self.hv.window.get_position()
 		ys = yw+ yv+int((self.curr+0.5-self.offnum)*self.tht)
 		xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
-		if self.lines[self.curr][1] == 2:
-			self.entry.set_text(self.lines[self.curr][2])
+		if self.lines[self.curr][1] > 1:
+			if self.comments.has_key(self.lines[self.curr][2]):
+				self.entry.set_text(self.comments[self.lines[self.curr][2]][1])
 		self.ewin.show_all()
 		self.ewin.move(xs,ys)
 
@@ -273,13 +276,6 @@ class HexView():
 		self.bklines += self.lines
 		self.bkhvlines += self.hvlines
 		if self.curr > 0:
-			mode = (self.lines[self.curr][1] | self.lines[self.curr-1][1])
-			comment = ""
-			if mode > 1:
-				if self.lines[self.curr-1][1] > 1:
-					comment = self.lines[self.curr-1][2] + " "
-				if self.lines[self.curr][1] > 1:
-					comment += self.lines[self.curr][2]
 			if self.curc == 0:
 				#  join full row
 				cc = self.line_size(self.curr-1)
@@ -366,13 +362,23 @@ class HexView():
 			entry.set_text("")
 		elif event.keyval == 65293: # Enter
 			self.ewin.hide()
+			cmnt_offset = self.lines[self.curr][0]+self.curc
 			if entry.get_text():
 				mode = self.lines[self.curr][1]
 				if self.lines[self.curr][1] < 2:
 					mode += 2
-				self.lines[self.curr] = (self.lines[self.curr][0],mode,entry.get_text())
+					old_coff = -1
+				else:
+					old_coff = self.lines[self.curr][2]
+				self.lines[self.curr] = (self.lines[self.curr][0],mode,cmnt_offset)
+				self.comments[cmnt_offset] = (0,entry.get_text())
+				if old_coff != cmnt_offset:
+					if self.comments.has_key(old_coff):
+						del self.comments[old_coff]
 			else:
 				self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
+				if self.comments.has_key(cmnt_offset):
+					del self.comments[cmnt_offset]
 
 	def on_key_release (self, view, event):
 		# part of the data selection from keyboard
@@ -523,6 +529,9 @@ class HexView():
 		# and return 1
 		# or 0 if 'row' is the last line or after
 		if row < len(self.lines)-2:
+			if self.lines[row+1][1] > 1:
+				if self.lines[row][1] < 2:
+					self.lines[row] = (self.lines[row][0],self.lines[row+1][1],self.lines[row+1][2])
 			self.lines.pop(row+1)
 			self.hvlines[row] = ""
 			self.hvlines[row+1] = ""
@@ -543,7 +552,20 @@ class HexView():
 		# 'abcd' + col=0 -> a/bcd
 		rs = self.line_size(row)
 		if rs > 1 and col < rs-1:
-			self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
+			if self.lines[row][1] > 1:
+				if self.lines[row][2] > self.lines[row][0]+col:
+					self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1],self.lines[row][2]))
+					self.lines[row] = (self.lines[row][0],0,None)
+				else:
+					mode = self.lines[row][1]
+					cmnt = self.lines[row][2]
+					self.lines[row] = (self.lines[row][0],2,cmnt)
+					self.lines.insert(row+1,(self.lines[row][0]+col+1,mode-2,None))
+			else:
+				self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
+				if self.lines[row][1] == 1:
+					self.lines[row] = (self.lines[row][0],0,None)
+
 		if self.debug == 1:
 			print "Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1
 		prehex,preasc = self.hvlines[row]
@@ -683,6 +705,7 @@ class HexView():
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
 		ctx.set_line_width(1)
+		cmnt_off = (-1,-1)
 		if self.tdx == -1:
 			self.set_dxdy()
 		x,y,width,height = self.hv.allocation
@@ -774,10 +797,15 @@ class HexView():
 					ctx.set_source_rgb(1,0,0.8)
 					ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(i+2)+5.5)
 					ctx.stroke()
+				# show comment
 				if self.lines[i+self.offnum][1] > 1:
-					ctx.move_to(self.tdx*(13+self.maxaddr*4),self.tht*(i+2)+4)
-					ctx.set_source_rgb(0.9,0,0)
-					ctx.show_text(self.lines[i+self.offnum][2])
+					if len(self.lines[i+self.offnum]) > 2:
+						if self.comments.has_key(self.lines[i+self.offnum][2]):
+							ctx.move_to(self.tdx*(13+self.maxaddr*4),self.tht*(i+2)+4)
+							ctx.set_source_rgb(0.9,0,0)
+							ctx.show_text(self.comments[self.lines[i+self.offnum][2]][1])
+					else:
+						self.lines[i+self.offnum] = (self.lines[i+self.offnum][0],self.lines[i+self.offnum][0]-2)
 
 		# clear prev hdr cursor
 		ctx.set_source_rgb(0.9,0.9,0.9)
@@ -859,9 +887,6 @@ class HexView():
 			ctx.set_source_rgb(0,0,1)
 			ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-#			if "%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]) != self.hvlines[self.curr][0][self.curc]:
-#				self.hvlines[self.curr] = ""
-#				self.get_string(self.curr)
 			ctx.show_text("%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]))
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 			ctx.set_source_rgb(0,0,0)
@@ -919,6 +944,14 @@ class HexView():
 			ctx.show_text("%d"%self.mtt[2])
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
+		ctx.set_source_rgb(1,0,0.5)
+		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
+			if self.lines[i+self.offnum][1] > 1:
+				if len(self.lines[i+self.offnum]) > 2:
+					cmnt_off = self.lines[i+self.offnum][2]-self.lines[i+self.offnum][0]
+					ctx.move_to(self.tdx*(10+cmnt_off*3-0.7),self.tht*(i+2)+4)
+					ctx.show_text("[")
 
 		self.mode = ""
 

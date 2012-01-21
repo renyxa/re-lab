@@ -234,7 +234,9 @@ class ApplicationMainWindow(gtk.Window):
 				else:
 					buf = f.read()
 				f.close()
-			doc = hexview.HexView(buf,lines)
+			# temporary, before write/read implemented
+			comments = {}
+			doc = hexview.HexView(buf,lines,comments)
 			doc.parent = self
 			dnum = len(self.das)
 			self.das[dnum] = doc

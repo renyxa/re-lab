@@ -1,3 +1,7 @@
+2012-01-20  Valek Filippov <frob@df.ru>
+
+	* Comments fixes and improvements
+
 2012-01-16  Valek Filippov <frob@df.ru>
 
 	* Code reorg for on_key_pressed.
