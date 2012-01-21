@@ -190,12 +190,18 @@ class ApplicationMainWindow(gtk.Window):
 				f = open(fname,"w")
 				doc = self.das[pn]
 				f.write(struct.pack("<I",len(doc.lines)))
+				f.write(struct.pack("<I",len(doc.comments)))
 				for i in doc.lines:
 					f.write(struct.pack("<I",i[0]))
 					f.write(struct.pack("B",i[1]))
 					if i[1] > 1:
-						f.write(struct.pack("B",len(i[2])))
-						f.write(i[2])
+						f.write(struct.pack("I",i[2]))
+
+				for i in doc.comments.items():
+					f.write(struct.pack("<I",i[0]))
+					f.write(struct.pack("B",doc.comments[i[0]][0]))
+					f.write(struct.pack("B",len(doc.comments[i[0]][1])))
+					f.write(doc.comments[i[0]][1])
 				f.write(doc.data)
 				f.close()
 
@@ -213,29 +219,38 @@ class ApplicationMainWindow(gtk.Window):
 		print fname
 		if fname:
 			lines = []
+			comments = {}
 			if buf == None:
 				f = open(fname)
 				if fname[len(fname)-3:] == "rlp":
 					print 'Re-Lab project file'
 					rbuf = f.read()
 					llen = struct.unpack("<I",rbuf[0:4])[0]
+					clen = struct.unpack("<I",rbuf[4:8])[0]
 					shift = 0
 					for i in range(llen):
-						l1 = struct.unpack("<I",rbuf[4+i*5+shift:8+i*5+shift])[0]
-						l2 = ord(rbuf[8+i*5+shift])
+						l1 = struct.unpack("<I",rbuf[8+i*5+shift:12+i*5+shift])[0]
+						l2 = ord(rbuf[12+i*5+shift])
 						if l2 > 1:
-							l3len = ord(rbuf[9+i*5+shift])
-							l3 = rbuf[10+i*5+shift:10+i*5+shift+l3len]
-							shift += l3len+1
+							shift += 4
+							l3 = struct.unpack("<I",rbuf[9+i*5+shift:13+i*5+shift])[0]
 							lines.append((l1,l2,l3))
 						else:
 							lines.append((l1,l2))
-					buf = rbuf[4+llen*5+shift+1:]
+
+					shift = 8+llen*5+shift
+					for i in range(clen):
+						c1 = struct.unpack("<I",rbuf[shift:shift+4])[0]
+						c2 = ord(rbuf[shift+4])
+						c3 = ord(rbuf[shift+5])
+						c4 = rbuf[shift+6:shift+6+c3]
+						comments[c1] = (c2,c4)
+						shift += 6 + c3
+					buf = rbuf[shift:]
+
 				else:
 					buf = f.read()
 				f.close()
-			# temporary, before write/read implemented
-			comments = {}
 			doc = hexview.HexView(buf,lines,comments)
 			doc.parent = self
 			dnum = len(self.das)
