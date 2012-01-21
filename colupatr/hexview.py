@@ -240,6 +240,8 @@ class HexView():
 		if self.curr != len(self.lines)-2: # not in the last row
 				self.fmt(self.curr,[self.line_size(self.curr)+self.line_size(self.curr+1)])
 				self.prec = self.curc - 1
+				self.prer = self.curr - 1
+				self.exposed = 1
 
 	def okp_ins(self,event):
 		xw,yw = self.hv.get_parent_window().get_position()
@@ -355,6 +357,44 @@ class HexView():
 				ma = ta
 		self.maxaddr = ma
 
+	def cursor_in_sel(self):
+		# checks if cursor is in the selection
+		if self.sel == None:
+			return 0
+		elif self.curr > self.sel[2] or self.curr < self.sel[0]:
+			return 0
+		elif self.curr == self.sel[0] and self.curc < self.sel[1]:
+			return 0
+		elif self.curr == self.sel[2] and self.curc > self.sel[3]:
+			return 0
+		return 1
+
+	def get_sel_len(self):
+		# calculates length of selection
+		rs,cs,re,ce = self.sel
+		if rs == re:
+			return ce-cs
+		else:
+			l = self.line_size(rs)-cs+ce
+			for i in range(re-rs-1):
+				l += self.line_size(rs+i)
+			return l
+
+	def get_sel_end(self,row,offset):
+		# calulates r,c for the offset
+		roff = self.lines[row+1][0]
+		i = 0
+		while offset > roff:
+			i += 1
+			roff = self.lines[row+i+1][0]
+			if row+i == len(self.lines):
+				break
+				
+		c = self.line_size(row+i)
+		if roff + self.line_size(row+i) > offset:
+			c += offset-roff
+		return row+i,c-1
+
 	def entry_key_pressed(self, entry, event):
 		# inserting comment
 		if event.keyval == 65307: # Esc
@@ -370,8 +410,20 @@ class HexView():
 					old_coff = -1
 				else:
 					old_coff = self.lines[self.curr][2]
-				self.lines[self.curr] = (self.lines[self.curr][0],mode,cmnt_offset)
-				self.comments[cmnt_offset] = (0,entry.get_text())
+
+				s = 1
+				if self.cursor_in_sel():
+					for i in range(self.sel[2]-self.sel[0]-1):
+						l = self.sel[0]+i+1
+						self.lines[l] = (self.lines[l][0],0)
+					l = self.sel[0]
+					cmnt_offset = self.lines[self.sel[0]][0]+self.sel[1]
+					self.lines[l] = (self.lines[l][0],2,cmnt_offset)
+					s = self.get_sel_len()
+				else:
+					self.lines[self.curr] = (self.lines[self.curr][0],mode,cmnt_offset)
+				self.comments[cmnt_offset] = (s,entry.get_text())	
+
 				if old_coff != cmnt_offset:
 					if self.comments.has_key(old_coff):
 						del self.comments[old_coff]
@@ -422,8 +474,10 @@ class HexView():
 			else:
 				self.curr = self.offnum
 
-		if self.offnum > len(self.lines)-self.numtl:
+		if self.offnum > max(len(self.lines)-self.numtl,0):
 			self.offnum = len(self.lines)-self.numtl
+
+
 
 		if event.state == gtk.gdk.SHIFT_MASK:
 			if self.sel != None:
@@ -477,7 +531,7 @@ class HexView():
 
 				self.sel = r1,c1,r2,c2
 				self.mode = ""
-				expose = 1
+				self.exposed = 1
 				y = (r2-self.offnum+1.5)*self.tht # +1
 				x = (self.curc*3+11.5)*self.tdx
 				
@@ -579,7 +633,6 @@ class HexView():
 			print "Upd2",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
 
 	def fmt_row(self,row,cmd):
-		# join and split do not deal with self.lines -- make similar wrappers for it
 		for i in range(len(cmd)):
 			rs = self.line_size(row+i)
 			res = 1
@@ -591,7 +644,8 @@ class HexView():
 
 	def fmt(self,row,col):
 		self.fmt_row(row, col)
-		self.hvlines[row+1] = ""
+		if row < len(self.hvlines)-1:
+			self.hvlines[row+1] = ""
 		self.set_maxaddr()
 		self.tdx = -1 # force to recalculate in expose
 		self.sel = None
@@ -700,7 +754,6 @@ class HexView():
 		return self.hvlines[num]
 
 	def expose (self, widget, event):
-	#	print "exp",event
 		ctx = self.hv.window.cairo_create()
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
@@ -944,14 +997,28 @@ class HexView():
 			ctx.show_text("%d"%self.mtt[2])
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
-		ctx.set_source_rgb(1,0,0.5)
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
 			if self.lines[i+self.offnum][1] > 1:
 				if len(self.lines[i+self.offnum]) > 2:
 					cmnt_off = self.lines[i+self.offnum][2]-self.lines[i+self.offnum][0]
-					ctx.move_to(self.tdx*(10+cmnt_off*3-0.7),self.tht*(i+2)+4)
+					ctx.set_source_rgb(1,1,1)
+					ctx.rectangle(self.tdx*(10+cmnt_off*3-1),self.tht*(i+1)+6,self.tdx,self.tht)
+					ctx.fill()
+					ctx.set_source_rgb(1,0,0.5)
+					ctx.move_to(self.tdx*(10+cmnt_off*3-1),self.tht*(i+2)+4)
 					ctx.show_text("[")
+					clen = self.comments[self.lines[i+self.offnum][2]][0]
+					r,c = self.get_sel_end(i+self.offnum,self.lines[i+self.offnum][2]+clen)
+					if r <= min(len(self.lines)-self.offnum-1,self.numtl):
+						ctx.set_source_rgb(1,1,1)
+						ctx.rectangle(self.tdx*(10+c*3+2),self.tht*(r+1)+6,self.tdx,self.tht)
+						ctx.fill()
+
+						ctx.move_to(self.tdx*(10+c*3+2),self.tht*(r+2)+4)
+						ctx.set_source_rgb(1,0,0.5)
+						ctx.show_text("]")
+					
 
 		self.mode = ""
 
