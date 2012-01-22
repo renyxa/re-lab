@@ -1,6 +1,7 @@
 2012-01-22  Valek Filippov
 
 		* PUB: Some improvements in  representation an parsing of blocks.
+		* VSD: Small improvement in Stylesheet for ver5 parsing
 
 2012-01-15  Valek Filippov
 

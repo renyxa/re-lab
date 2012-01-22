@@ -16,7 +16,7 @@
 
 import struct
 import datetime
-import vsd,vsdblock
+import vsd,vsdblock,vsdchunks5
 from utils import *
 
 
@@ -155,6 +155,9 @@ chunktype = {
 		0xd1:'Shape Data'}
 
 def List (hd, size, value):
+	if hd.version < 6:
+		vsdchunks5.List(hd,size,value)
+		return
 	iter1 = hd.hdmodel.append(None, None)
 	shl = struct.unpack("<I",value[19:19+4])[0]
 	hd.hdmodel.set (iter1, 0, "SubHdrLen", 1, "%2x"%shl,2,19,3,4,4,"<I")
@@ -196,6 +199,9 @@ def Page (hd, size, value):
 
 def Shape (hd, size, value):
 	List (hd, size, value)
+	if hd.version < 6:
+		vsdchunks5.Shape(hd,size,value)
+		return
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Parent", 1, "%2x"%struct.unpack("<I",value[0x1d:0x21])[0],2,0x1d,3,4,4,"<I")
 	iter1 = hd.hdmodel.append(None, None)
