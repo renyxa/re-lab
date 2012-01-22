@@ -70,7 +70,7 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 		if (infname == "EscherStm" or infname == "EscherDelayStm"): # and infchild.size()>0:
 			ftype = "escher"
 			page.model.set_value(iter1,1,("escher",dirflag))
-			escher.parse (page.model,data,iter1)
+			escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
 		if infname == "CONTENTS":
 			ftype = "quill"
 			page.model.set_value(iter1,1,("quill",dirflag))

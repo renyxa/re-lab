@@ -27,7 +27,7 @@ import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
 from utils import *
 
-version = "0.5.74"
+version = "0.5.75"
 
 ui_info = \
 '''<ui>
@@ -834,8 +834,9 @@ Hexdump selection:\n\
 		if len(buf) == 4:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])
 			txt += "\tLEF: %s\tBEF: %s"%(struct.unpack("<f",buf)[0],struct.unpack(">f",buf)[0])
-			if type == "PUB":
-				txt += "\t%s"%struct.unpack("<i",buf)[0]/12700.
+			if type == "pub":
+				v = struct.unpack("<i",buf)[0]
+				txt = "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],v/12700.,v/360000.,v/914400.)
 			if type == "FH":
 				v1 = struct.unpack(">H",buf[0:2])[0]
 				v2 = struct.unpack(">H",buf[2:4])[0]

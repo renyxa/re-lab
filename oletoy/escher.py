@@ -380,14 +380,16 @@ def FOPT (hd, size, value):
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
 
+clanchor = {1:"Xs",2:"Ys",3:"Xe",4:"Ye"}
 def ClientAnchor (hd, size, value):
 	off = 12
 	while off < size:
 		iter1 = hd.hdmodel.append(None, None)
 		id = ord(value[off])
 		ntype = ord(value[off+1])
-		[val] = struct.unpack("<I",value[off+2:off+6])
-		hd.hdmodel.set (iter1, 0, "%02x %02x"%(id,ntype), 1,"%2x"%val ,2,off+2,3,4,4,"<i")
+		val = struct.unpack("<i",value[off+2:off+6])[0]/12700
+		name = clanchor[id]
+		hd.hdmodel.set (iter1, 0, name, 1,"%2d pt"%val ,2,off+2,3,4,4,"<i")
 		off +=6
 
 def ClientData (hd, size, value):
@@ -420,7 +422,7 @@ odraw_ids = {
 	0xF121:FOPT,0xF122:FOPT
 }
 
-def parse (model,data,parent):
+def parse (model,data,parent,doctype=""):
 #	try:
 		offset = 0
 		while offset < len(data) - 8:
@@ -428,14 +430,11 @@ def parse (model,data,parent):
 			newT = struct.unpack('<H', data[offset+2:offset+4])[0]
 			newL = struct.unpack('<I', data[offset+4:offset+8])[0]
 
-# for PUB
-
-#			if newT == 0xF011:
-#				shapeid = struct.unpack("<I",data[offset+14:offset+18])[0]
-#				pname = model.get_value(parent,0)
-#				model.set_value(parent,0,pname+" (%02x)"%shapeid)
-
-# end for PUB
+			if doctype == "pub":
+				if newT == 0xF011:
+					shapeid = struct.unpack("<I",data[offset+14:offset+18])[0]
+					pname = model.get_value(parent,0)
+					model.set_value(parent,0,pname+" (%02x)"%shapeid)
 
 			if newL > 0:
 				iter1 = model.append(parent,None)
@@ -443,25 +442,26 @@ def parse (model,data,parent):
 					name = odraw_id_names[newT]
 				else:
 					name = "%02x"%newT
-				#if newT == 0xF118: # or newT == 0xF11E: #or newT == 0xF11A
-				# 0xf118,0xf11e in Doc (don't need +4) and Pub (do I??)
-				#	newL += 4
-
-				#if newT == 0xF004 or newT == 0xF003:
-				#	newL -= 4
-				#in Doc (don't need -4) and Pub (do I??)
+				if doctype == "pub":
+					if newT == 0xF118 or newT == 0xF11E: #or newT == 0xF11A
+						newL += 4
+					if newT == 0xF004 or newT == 0xF003:
+						newL -= 4
 				
 				model.set_value(iter1,0,name)
 				model.set_value(iter1,1,("escher","odraw",newT))
+
 				if contflag == 0xF:
-					#model.set_value(iter1,2,newL+12)
-					#model.set_value(iter1,3,data[offset:offset+newL+12])
-					#parse (model,data[offset+8:offset+12+newL],iter1)
-					#offset += newL + 12
-					model.set_value(iter1,2,newL+8)
-					model.set_value(iter1,3,data[offset:offset+newL+8])
-					parse (model,data[offset+8:offset+newL+8],iter1)
-					offset += newL + 8
+					if doctype == "pub":
+						model.set_value(iter1,2,newL+12)
+						model.set_value(iter1,3,data[offset:offset+newL+12])
+						parse (model,data[offset+8:offset+12+newL],iter1)
+						offset += newL + 12
+					else:
+						model.set_value(iter1,2,newL+8)
+						model.set_value(iter1,3,data[offset:offset+newL+8])
+						parse (model,data[offset+8:offset+newL+8],iter1)
+						offset += newL + 8
 				else:
 					model.set_value(iter1,2,newL+8)
 					model.set_value(iter1,3,data[offset:offset+newL+8])

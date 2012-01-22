@@ -51,10 +51,24 @@ def parse (model,data,parent,i,j=-1):
 				value = data[off:off+2]
 				dlen = 2
 				name += " (%02d)"%struct.unpack("<H",value)[0]
-			if type == 0x20 or type == 0x22 or type == 0x28 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
+			if type == 0x20:
 				value = data[off:off+4]
 				dlen = 4
-				name += " (%02d)"%struct.unpack("<I",value)[0]
+				v = struct.unpack("<I",value)[0]
+				if v > 12700 and v < 220370400:
+					# couldn't be EMU if less than 1 point or more than 241 inch
+					name += " (%.2f pt)"%(v/12700.)
+				else:
+					name += " (%02d)"%v
+
+			if type == 0x22 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
+				value = data[off:off+4]
+				dlen = 4
+				if type != 0x70:
+					name += " (%02d)"%struct.unpack("<I",value)[0]
+				else:
+					name += " (0x%02x)"%struct.unpack("<I",value)[0]
+				
 				if id == 5 and type == 0x68:
 					pname = model.get_value(parent,0)
 					model.set_value(parent,0,pname+"\t\t%02x"%struct.unpack("<i",value)[0])
@@ -62,6 +76,11 @@ def parse (model,data,parent,i,j=-1):
 				value = data[off:off+16]
 				dlen = 16
 				name += " ()"
+			if type == 0xb or type == 0x7 or type == 0x28:
+				value = data[off:off+8]
+				dlen = 8
+				name += " ()"
+
 			if type == 0xb8:
 				value = data[off:off+4]
 				dlen = 4
@@ -73,7 +92,7 @@ def parse (model,data,parent,i,j=-1):
 					btype = block_types[id2_value]
 				else:
 					btype = "%02x"%id2_value
-				if model.get_value(parent,0)[0:7] != "Block 0":
+				if model.get_value(parent,0)[0:7] != "Block A":
 					model.set_value(parent,0,"(%02x) Type: %s"%(j,btype))
 
 			if type == 0x80 or type == 0x82 or type == 0x88 or type == 0x8a or type == 0x90 or type == 0x98 or type == 0xa0:
@@ -85,13 +104,20 @@ def parse (model,data,parent,i,j=-1):
 				try:
 					name += " %s"%unicode(value,'utf-16')
 				except:
+					name += value
 					print "UCode failed"
 			if type == 0xFF: # current len just to pass parsing
 				value = ord(data[off+1])
 				dlen = 1
 			j += 1
 			if dlen == -1:
-				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off)
+				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off),
+				iter1 = model.append(parent,None)
+				print "Path",model.get_path(iter1)
+				model.set_value(iter1,0,"Unkn block")
+				model.set_value(iter1,1,0)
+				model.set_value(iter1,2,0)
+				model.set_value(iter1,5,"#FF0000")
 				return
 			else:
 				if type != 0x78 or j > 0xFF:
@@ -100,7 +126,7 @@ def parse (model,data,parent,i,j=-1):
 					model.set_value(iter1,1,0)
 					model.set_value(iter1,2,dlen)
 					model.set_value(iter1,3,value)
-					if dlen > 4 and type != 0xc0 and type != 0x38:
+					if dlen > 4 and type != 0xc0 and type != 0x38 and type != 0x28:
 						parse (model,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:

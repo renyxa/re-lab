@@ -37,7 +37,7 @@ def parse(model,data,parent):
 	# Parse the 1st block after header
 		[dlen] = struct.unpack('<I', data[off:off+4])
 		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Block %d [%02x]"%(0,off))
+		model.set_value(iter1,0,"Block A [%02x]"%off)
 		model.set_value(iter1,1,0)
 		model.set_value(iter1,2,dlen)
 		model.set_value(iter1,3,data[off:off+dlen])
@@ -46,7 +46,7 @@ def parse(model,data,parent):
 		[off] = struct.unpack('<I', data[0x1e:0x22])
 		[dlen] = struct.unpack('<I', data[off:off+4])
 		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Block %d [%02x]"%(1,off))
+		model.set_value(iter1,0,"Block B [%02x]"%off)
 		model.set_value(iter1,1,0)
 		model.set_value(iter1,2,dlen)
 		model.set_value(iter1,3,data[off:off+dlen])
@@ -55,7 +55,7 @@ def parse(model,data,parent):
 		off = struct.unpack('<I', data[0x1a:0x1e])[0]
 		[dlen] = struct.unpack('<I', data[off:off+4])
 		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"List of blocks   [%02x]"%(off))
+		model.set_value(iter1,0,"Trailer   [%02x]"%(off))
 		model.set_value(iter1,1,0)
 		model.set_value(iter1,2,dlen)
 		model.set_value(iter1,3,data[off:off+dlen])
