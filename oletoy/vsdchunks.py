@@ -969,19 +969,19 @@ def parse(model, version, parent, pntr):
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
 
 			if chnk.type == 0xd: #OLE_List
-				olelist = iter1
+				olelist = model.append(iter1, None)
 				olenum = chnk.list
 				oledata = ""
 			if chnk.type == 0x1f: #OLE_Data
 				oledata += ptr.data[ch_hdr_len:]
 				olenum -= 1
 				if olenum == 0:
-					iter1 = model.append(olelist, None)
-					model.set_value(iter1,0,"Collected OLE data")
-					model.set_value(iter1,1,("vsd","chnk",0)) # fix to OLE?
-					model.set_value(iter1,2,len(oledata))
-					model.set_value(iter1,3,oledata)
-					model.set_value(iter1,6,model.get_string_from_iter(iter1))
+					model.set_value(olelist,0,"Collected OLE data")
+					model.set_value(olelist,1,("vsd","chnk",0)) # fix to run OLE parse?
+					model.set_value(olelist,2,len(oledata))
+					model.set_value(olelist,3,oledata)
+					model.set_value(olelist,5,"#96dfcf")
+					model.set_value(olelist,6,model.get_string_from_iter(olelist))
 					olelist = None
 					oledata = ""
 					
