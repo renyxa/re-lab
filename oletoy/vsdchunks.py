@@ -876,6 +876,8 @@ def parse(model, version, parent, pntr):
 	offset = 0
 	tmppntr = vsd.pointer()
 	tmppntr2 = vsd.pointer()
+	olelist = None
+	oledata = ""
 	path = parent
 	path0 =  parent
 	path1 =  parent
@@ -965,6 +967,24 @@ def parse(model, version, parent, pntr):
 			model.set_value(iter1,3,ptr.data)
 			model.set_value(iter1,4,ptr)
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+
+			if chnk.type == 0xd: #OLE_List
+				olelist = iter1
+				olenum = chnk.list
+				oledata = ""
+			if chnk.type == 0x1f: #OLE_Data
+				oledata += ptr.data[ch_hdr_len:]
+				olenum -= 1
+				if olenum == 0:
+					iter1 = model.append(olelist, None)
+					model.set_value(iter1,0,"Collected OLE data")
+					model.set_value(iter1,1,("vsd","chnk",0)) # fix to OLE?
+					model.set_value(iter1,2,len(oledata))
+					model.set_value(iter1,3,oledata)
+					model.set_value(iter1,6,model.get_string_from_iter(iter1))
+					olelist = None
+					oledata = ""
+					
 
 			if chnk.level ==0:
 				path0 = iter1

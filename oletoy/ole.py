@@ -76,9 +76,10 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("quill",dirflag))
 			quill.parse (page.model,data,iter1)
 		if infname == "Contents":
-			ftype = "pub"
-			page.model.set_value(iter1,1,("pub",dirflag))
-			pub.parse (page.model,data,iter1)
+			if data[:2] == "\xe8\xac": # take signature into account
+				ftype = "pub"
+				page.model.set_value(iter1,1,("pub",dirflag))
+				pub.parse (page.model,data,iter1)
 		if infname == "VisioDocument":
 			ftype = "vsd"
 			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
