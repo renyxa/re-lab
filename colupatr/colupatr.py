@@ -204,6 +204,14 @@ class ApplicationMainWindow(gtk.Window):
 					f.write(doc.comments[i[0]][1])
 				f.write(doc.data)
 				f.close()
+				doc.fname = fname
+				pos = fname.rfind('/')
+				if pos !=-1:
+					pname = fname[pos+1:]
+				else:
+					pname = fname
+				self.notebook.set_tab_label_text(doc.table, pname)
+
 
 	def activate_reload(self, action):
 		print "Reload: not implemented yet"
@@ -253,6 +261,7 @@ class ApplicationMainWindow(gtk.Window):
 				f.close()
 			doc = hexview.HexView(buf,lines,comments)
 			doc.parent = self
+			doc.fname = fname
 			dnum = len(self.das)
 			self.das[dnum] = doc
 			pos = fname.rfind('/')

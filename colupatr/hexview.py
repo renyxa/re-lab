@@ -51,6 +51,7 @@ class HexView():
 
 		# variables to store things
 		self.data = data				# data presented in the widget
+		self.fname = ""					# to store filename
 		self.offset = offset		# current cursor offset
 		self.offnum = 0					# offset in lines
 		self.tdx = -1						# width of one glyph
