@@ -298,32 +298,37 @@ class ApplicationMainWindow(gtk.Window):
 		except:
 			pass
 
+	def d2hex(self,data):
+		s = ""
+		for i in range(len(data)):
+			s += "%02x"%ord(data[i])
+		return s
+
 	def calc_status(self,buf,dlen):
 		txt = ""
-		if self.lebe == 0:
-			if dlen == 2:
-				if self.lebe == 0:
-					txt = "LE: %s"%(struct.unpack("<h",buf)[0])
-				else:
-					txt = "BE: %s"%(struct.unpack(">h",buf)[0])
-			if dlen == 4:
-				if self.lebe == 0:
-					txt = "LE: %s"%(struct.unpack("<i",buf)[0])
-					txt += "\tLEF: %s"%(struct.unpack("<f",buf)[0])
-				else:
-					txt = "BE: %s"%(struct.unpack(">i",buf)[0])
-					txt += "BEF: %s"%(struct.unpack(">f",buf)[0])
-			if dlen == 8:
-				if self.lebe == 0:
-					txt = "LE: %s"%(struct.unpack("<d",buf)[0])
-				else:
-					txt = "BE: %s"%(struct.unpack(">d",buf)[0])
+		txt2 = ""
+		if dlen == 2:
+			if self.lebe == 0:
+				txt = "LE: %s"%(struct.unpack("<h",buf)[0])
+			else:
+				txt = "BE: %s"%(struct.unpack(">h",buf)[0])
+		if dlen == 4:
+			if self.lebe == 0:
+				txt = "LE: %s"%(struct.unpack("<i",buf)[0])
+				txt += "\tLEF: %s"%(struct.unpack("<f",buf)[0])
+			else:
+				txt = "BE: %s"%(struct.unpack(">i",buf)[0])
+				txt += "BEF: %s"%(struct.unpack(">f",buf)[0])
+		if dlen == 8:
+			if self.lebe == 0:
+				txt = "LE: %s"%(struct.unpack("<d",buf)[0])
+			else:
+				txt = "BE: %s"%(struct.unpack(">d",buf)[0])
 		if dlen == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-		if dlen > 3:
+		if dlen > 3 and dlen != 4 and dlen != 8:
 			try:
-#				txt += '\t<span background="#DDFFDD">'+unicode(buf,'cp1251').replace("\n","\\n")[:32]+'</span>'
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,'utf16').replace("\n","\\n")[:32]+'</span>'
 			except:
 				pass

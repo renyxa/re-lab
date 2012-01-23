@@ -58,6 +58,7 @@ class HexView():
 		self.numtl = 0					# number of lines
 		self.lines = lines			# offsets of lines in dump (offset,mode,comment idx)
 		self.comments = comments	# hash of offset:length/text
+		self.keep_cmnt = 0			# to keep comment len
 		self.maxaddr = 16				# current length of the longest line
 		self.hvlines = []				# cached text of lines
 		self.selr = None
@@ -251,6 +252,11 @@ class HexView():
 		if self.lines[self.curr][1] > 1:
 			if self.comments.has_key(self.lines[self.curr][2]):
 				self.entry.set_text(self.comments[self.lines[self.curr][2]][1])
+				cpos = self.lines[self.curr][0]+self.curc
+				cstart = self.lines[self.curr][2]
+				cend = cstart + self.comments[self.lines[self.curr][2]][0]
+				if cpos >= cstart and cpos <= cend:
+					self.keep_cmnt = 1
 		self.ewin.show_all()
 		self.ewin.move(xs,ys)
 
@@ -411,22 +417,26 @@ class HexView():
 				else:
 					old_coff = self.lines[self.curr][2]
 
-				s = 1
-				if self.cursor_in_sel():
-					for i in range(self.sel[2]-self.sel[0]-1):
-						l = self.sel[0]+i+1
-						self.lines[l] = (self.lines[l][0],0)
-					l = self.sel[0]
-					cmnt_offset = self.lines[self.sel[0]][0]+self.sel[1]
-					self.lines[l] = (self.lines[l][0],2,cmnt_offset)
-					s = self.get_sel_len()
+				if self.keep_cmnt:
+					self.comments[self.lines[self.curr][2]] = (self.comments[self.lines[self.curr][2]][0],entry.get_text())
+					self.keep_cmnt = 0
 				else:
-					self.lines[self.curr] = (self.lines[self.curr][0],mode,cmnt_offset)
-				self.comments[cmnt_offset] = (s,entry.get_text())	
+					s = 1
+					if self.cursor_in_sel():
+						for i in range(self.sel[2]-self.sel[0]-1):
+							l = self.sel[0]+i+1
+							self.lines[l] = (self.lines[l][0],0)
+						l = self.sel[0]
+						cmnt_offset = self.lines[self.sel[0]][0]+self.sel[1]
+						self.lines[l] = (self.lines[l][0],2,cmnt_offset)
+						s = self.get_sel_len()
+					else:
+						self.lines[self.curr] = (self.lines[self.curr][0],mode,cmnt_offset)
+					self.comments[cmnt_offset] = (s,entry.get_text())	
 
-				if old_coff != cmnt_offset:
-					if self.comments.has_key(old_coff):
-						del self.comments[old_coff]
+					if old_coff != cmnt_offset:
+						if self.comments.has_key(old_coff):
+							del self.comments[old_coff]
 			else:
 				self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
 				if self.comments.has_key(cmnt_offset):
