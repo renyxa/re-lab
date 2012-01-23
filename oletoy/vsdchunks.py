@@ -332,6 +332,10 @@ def Ellipse (hd, size, value):
 		vsdblock.parse(hd, size, value, 0x4b)
 
 def NameID (hd, size, value):
+	if hd.version < 6:
+		vsdchunks5.NameID(hd,size,value)
+		return
+
 	iter1 = hd.hdmodel.append(None, None)
 	numofrec = struct.unpack("<I",value[19:19+4])[0]
 	hd.hdmodel.set (iter1, 0, "#ofRecords", 1, "%2x"%numofrec,2,19,3,4,4,"<I")

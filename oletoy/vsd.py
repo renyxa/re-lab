@@ -262,7 +262,7 @@ def ptr_search (page, data, version, parent):
 				print "ptr_search failed in %02x"%pntr.type
 		  if pntr.type == 0x16:
 			  get_colors (page, res, version, iter1)
-		  if pntr.format >>4 == 0xd:
+		  if pntr.format >>4 == 0xd or pntr.format >>4 == 0xc:
 			  vsdchunks.parse (model, version, iter1, pntr)
 	if vbaflag == 1:
 	  ole.open (vbadata, page, parent)

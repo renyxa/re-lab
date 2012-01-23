@@ -33,3 +33,12 @@ def Shape (hd, size, value):
 	add_iter (hd, "FillStyle", "%2x"%struct.unpack("<H",value[0x16:0x18])[0],0x16,2,"<H")
 	add_iter (hd, "LineStyle", "%2x"%struct.unpack("<H",value[0x18:0x1a])[0],0x18,2,"<H")
 	add_iter (hd, "TextStyle", "%2x"%struct.unpack("<H",value[0x1a:0x1c])[0],0x1a,2,"<H")
+
+def NameID (hd, size, value):
+	numofrec = struct.unpack("<H",value[12:12+2])[0]
+	add_iter (hd, "#ofRecords","%2x"%numofrec,12,2,"<H")
+	for i in range(numofrec):
+		n1 = struct.unpack("<H",value[14+i*4:16+i*4])[0]
+		n2 = struct.unpack("<H",value[16+i*4:18+i*4])[0]
+		add_iter (hd, "Rec #%d"%i,"%2x %2x"%(n1,n2),14+i*4,4,"txt")
+
