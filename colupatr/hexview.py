@@ -96,6 +96,7 @@ class HexView():
 			65366:self.okp_pgdn, 65361:self.okp_left, 65363:self.okp_right,
 			65360:self.okp_home, 65367:self.okp_end, 65535:self.okp_del,
 			65288:self.okp_bksp, 65293:self.okp_enter,
+			65289:self.okp_tab,
 			65379:self.okp_ins,
 			100:self.okp_d, # "d" for debug
 			97:self.okp_selall, # ^A for 'select all'
@@ -112,6 +113,20 @@ class HexView():
 				self.hvlines.append("")
 				self.bkhvlines.append("")
 			self.set_maxaddr()
+
+	def okp_tab(self,event):
+		self.exposed = 0
+		self.bklines = []
+		self.bkhvlines = []
+		self.bklines += self.lines
+		self.bkhvlines += self.hvlines
+		if self.curr >  0:
+			# wrap at curc
+			self.fmt(self.curr,[self.line_size(self.curr-1)])
+			self.curr += 1
+			self.prec = self.curc
+			self.exposed = 1
+
 
 	def okp_up(self,event):
 		self.mode = "c"

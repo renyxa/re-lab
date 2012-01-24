@@ -478,11 +478,19 @@ class ApplicationMainWindow(gtk.Window):
 			print "Not a copy of hexdump"
 
 	def on_entry_keypressed (self, view, event):
-		if event.keyval == 118 and event.state == gtk.gdk.CONTROL_MASK: # ^V
-			clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-			clipboard.request_text(self.get_clp_text)
-			self.entry.set_text("")
-			return True
+		if event.state == gtk.gdk.CONTROL_MASK and event.keyval == 118 : # ^V
+				clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+				clipboard.request_text(self.get_clp_text)
+				self.entry.set_text("")
+				return True
+		elif event.state&gtk.gdk.MOD1_MASK == gtk.gdk.MOD1_MASK:
+				event.state = event.state&0x3ff7 # exclude Alt
+				pn = self.notebook.get_current_page()
+				if pn != -1:
+					doc = self.das[pn]
+					if doc.okp.has_key(event.keyval):
+						doc.on_key_press(None,event)
+						return True
 		elif len(self.cmdhistory) > 0:
 			if event.keyval == 65362:
 				if self.curcmd == -1:
