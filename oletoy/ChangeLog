@@ -1,3 +1,7 @@
+2012-01-24  Valek Filippov
+
+		* VSD: cosmetic fix for OLE in stencils.
+
 2012-01-22  Valek Filippov
 
 		* PUB: Some improvements in  representation an parsing of blocks.
