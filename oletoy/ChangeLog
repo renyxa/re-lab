@@ -1,3 +1,7 @@
+2012-01-25  Valek Filippov
+
+		* PUB: start to parse 'Contents' from pub98/2k files.
+
 2012-01-24  Valek Filippov
 
 		* VSD: cosmetic fix for OLE in stencils.
