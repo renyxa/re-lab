@@ -47,7 +47,7 @@ def parse (model,data,parent,i,j=-1):
 				value = None
 				dlen = 0
 				name = "(%02x) ID78"%j
-			if type == 0x10 or type == 0x12 or type == 0x18 or type == 0x1a:
+			if type == 0x10 or type == 0x12 or type == 0x18 or type == 0x19 or type == 0x1a:
 				value = data[off:off+2]
 				dlen = 2
 				name += " (%02d)"%struct.unpack("<H",value)[0]

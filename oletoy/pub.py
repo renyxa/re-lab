@@ -22,7 +22,9 @@ import hexdump
 import pubblock
 from utils import *
 
-pub98_types = {0x15:"Document",0x5:"Shape",0x14:"Page",0x28:"(pub2k3 0x4a)",
+pub98_types = {0x15:"Document",
+	0x5:"Shape",0x8:"Text block",
+	0x14:"Page",0x28:"(pub2k3 0x4a)",
 	0x29:"Printers",0x47:"ColorSchemes"}
 
 
@@ -32,6 +34,7 @@ def parse98 (page,data,parent):
 		tr_start = struct.unpack("<I",data[0x16:0x1a])[0]
 		add_pgiter (page,"Blocks A/B","pub",0,data[0x22:tr_start],parent)
 		blocks = {}
+		reorder = []
 		n_blocks = struct.unpack("<H",data[tr_start:tr_start+2])[0]
 		tr_end = tr_start + n_blocks*10+2
 		tr_iter = add_pgiter (page,"Trailer","pub",0,data[tr_start:tr_end],parent)
@@ -47,14 +50,14 @@ def parse98 (page,data,parent):
 			blk_offset = struct.unpack("<I",data[off+i*10+6:off+i*10+10])[0]
 			add_pgiter (page,"Ptr %02x\t[Fmt: %02x %02x ID: %02x Parent: %02x Offset: %02x]"%(i,fmt1,fmt2,blk_id,par_id,blk_offset),"pub",0,data[off+i*10:off+i*10+10],tr_iter)
 			blocks[blk_id] = [blk_offset,par_id]
+			reorder.append(blk_id)
 			if i > 0:
 				blocks[prev_id].append(blk_offset)
 			prev_id = blk_id
 
 		blocks[prev_id].append(len(data))
-		
 		p_iter = doc_iter
-		for i in blocks.keys():
+		for i in reorder:
 			start = blocks[i][0]
 			end = blocks[i][2]
 			par = blocks[i][1]
@@ -63,10 +66,9 @@ def parse98 (page,data,parent):
 				b_txt = pub98_types[b_type]
 			else:
 				b_txt = "%02x"%b_type
-			if par != 0xff:
+			if blocks.has_key(par):
 				p_iter = blocks[par][3]
 			blocks[i].append(add_pgiter (page,"Block %02x (%s)"%(i,b_txt),"pub98",b_type,data[start:end],p_iter))
-		
 	except:
 		print 'Failed in parsing pub98/2k "Contents"'
 
@@ -74,7 +76,8 @@ def parse98 (page,data,parent):
 # parse "Contents" part of the OLE container
 def parse(page,data,parent):
 	model = page.model
-	try:
+#	try:
+	if 1:
 		hdrsize = struct.unpack("<H",data[2:4])[0]
 		iter1 = model.append(parent,None)
 		model.set_value(iter1,0,"Header")
@@ -186,6 +189,6 @@ def parse(page,data,parent):
 				else:
 					print "Failed to add reordered item %02x"%parid
 		return
-	except:
-		print "Failed in parsing Contents"
+#	except:
+#		print "Failed in parsing Contents"
 
