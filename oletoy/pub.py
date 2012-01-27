@@ -23,7 +23,8 @@ import pubblock
 from utils import *
 
 pub98_types = {0x15:"Document",
-	0x5:"Shape",0x8:"Text block",
+	0x2:"Image",0x5:"Shape",0x8:"Text block",0xa:"Table",0xb:"Bookmark",
+	0x21:"ImgData",0x54:"Filename",
 	0x14:"Page",0x28:"(pub2k3 0x4a)",
 	0x29:"Printers",0x47:"ColorSchemes"}
 
