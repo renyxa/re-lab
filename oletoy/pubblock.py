@@ -19,6 +19,7 @@ import gobject
 import gtk
 import tree
 import hexdump
+from utils import *
 
 block_types = {
 	0x01:"Shape",
@@ -29,10 +30,12 @@ block_types = {
 	0x60:'PageName', 0x63:"Cells",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
 
 # parses semi-standard "block" structures in MS Pub files.
-def parse (model,data,parent,i,j=-1):
+def parse (page,data,parent,i,j=-1):
+	model = page.model
 	off = 0
 	value = None
 	try:
+#	if 1:
 		while off < len(data) - 2:
 			id = ord(data[off])
 			type = ord(data[off+1])
@@ -112,22 +115,15 @@ def parse (model,data,parent,i,j=-1):
 			j += 1
 			if dlen == -1:
 				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off),
-				iter1 = model.append(parent,None)
-				print "Path",model.get_path(iter1)
-				model.set_value(iter1,0,"Unkn block")
-				model.set_value(iter1,1,0)
-				model.set_value(iter1,2,0)
+				iter1 = add_pgiter (page,"Unkn block","pub",0,"",parent)
 				model.set_value(iter1,5,"#FF0000")
+				print "Path",model.get_path(iter1)
 				return
 			else:
 				if type != 0x78 or j > 0xFF:
-					iter1 = model.append(parent,None)
-					model.set_value(iter1,0,name)
-					model.set_value(iter1,1,0)
-					model.set_value(iter1,2,dlen)
-					model.set_value(iter1,3,value)
+					iter1 = add_pgiter (page,name,"pub",0,value,parent)
 					if dlen > 4 and type != 0xc0 and type != 0x38 and type != 0x28:
-						parse (model,data[off+4:off+dlen],iter1,i,j-2)
+						parse (page,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:
 		print "Failed at parsing block %d "%i,"val: ",value," off: ",off

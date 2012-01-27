@@ -77,14 +77,10 @@ def parse98 (page,data,parent):
 # parse "Contents" part of the OLE container
 def parse(page,data,parent):
 	model = page.model
-#	try:
-	if 1:
+	try:
+#	if 1:
 		hdrsize = struct.unpack("<H",data[2:4])[0]
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Header")
-		model.set_value(iter1,1,0)
-		model.set_value(iter1,2,hdrsize)
-		model.set_value(iter1,3,data[0:hdrsize])
+		add_pgiter (page,"Header","pub",0,data[0:hdrsize],parent)
 		if hdrsize == 0x22:
 			parse98 (page,data,parent)
 			return
@@ -93,30 +89,18 @@ def parse(page,data,parent):
 		off = hdrsize
 	# Parse the 1st block after header
 		[dlen] = struct.unpack('<I', data[off:off+4])
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Block A [%02x]"%off)
-		model.set_value(iter1,1,0)
-		model.set_value(iter1,2,dlen)
-		model.set_value(iter1,3,data[off:off+dlen])
-		pubblock.parse (model,data[off+4:off+dlen],iter1,0)
+		iter1 = add_pgiter (page,"Block A [%02x]"%off,"pub",0,data[off:off+dlen],parent)
+		pubblock.parse (page,data[off+4:off+dlen],iter1,0)
 	# Parse the dummy list block (the 2nd after header)
 		[off] = struct.unpack('<I', data[0x1e:0x22])
 		[dlen] = struct.unpack('<I', data[off:off+4])
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Block B [%02x]"%off)
-		model.set_value(iter1,1,0)
-		model.set_value(iter1,2,dlen)
-		model.set_value(iter1,3,data[off:off+dlen])
-		pubblock.parse (model,data[off+4:off+dlen],iter1,1)
+		iter1 = add_pgiter (page,"Block B [%02x]"%off,"pub",0,data[off:off+dlen],parent)
+		pubblock.parse (page,data[off+4:off+dlen],iter1,1)
 	# Parse the list of blocks block
 		off = struct.unpack('<I', data[0x1a:0x1e])[0]
 		[dlen] = struct.unpack('<I', data[off:off+4])
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Trailer   [%02x]"%(off))
-		model.set_value(iter1,1,0)
-		model.set_value(iter1,2,dlen)
-		model.set_value(iter1,3,data[off:off+dlen])
-		pubblock.parse (model,data[off+4:off+dlen],iter1,2)
+		iter1 = add_pgiter (page,"Trailer [%02x]"%off,"pub",0,data[off:off+dlen],parent)
+		pubblock.parse (page,data[off+4:off+dlen],iter1,2)
 		list_iter = model.iter_nth_child(iter1,2)
 		j = 255
 		for k in range (model.iter_n_children(list_iter)):
@@ -138,30 +122,22 @@ def parse(page,data,parent):
 				[dlen] = struct.unpack('<I', data[offset:offset+4])
 				if parid != None:
 					if blocks.has_key(parid):
-						iter1 = model.append(blocks[parid],None)
 						if pubblock.block_types.has_key(type):
 							name = "(%02x) %s"%(j,pubblock.block_types[type])
 						else:
 							name = "(%02x) Type: %02x"%(j,type)
-						model.set_value(iter1,0,name)
-						model.set_value(iter1,1,0)
-						model.set_value(iter1,2,dlen)
-						model.set_value(iter1,3,data[offset:offset+dlen])
-						pubblock.parse (model,data[offset+4:offset+dlen],iter1,i+3)
+						iter1 = add_pgiter (page,name,"pub",0,data[offset:offset+dlen],blocks[parid])
+						pubblock.parse (page,data[offset+4:offset+dlen],iter1,i+3)
 						blocks[k+255] = iter1
 					else:
 						reorders.append(k+255)
 				else:
-					iter1 = model.append(parent,None)
 					if pubblock.block_types.has_key(type):
 						name = "(%02x) %s"%(j,pubblock.block_types[type])
 					else:
 						name = "(%02x) Type: %02x"%(j,type)
-					model.set_value(iter1,0,name)
-					model.set_value(iter1,1,0)
-					model.set_value(iter1,2,dlen)
-					model.set_value(iter1,3,data[offset:offset+dlen])
-					pubblock.parse (model,data[offset+4:offset+dlen],iter1,i+3)
+					iter1 = add_pgiter (page,name,"pub",0,data[offset:offset+dlen],parent)
+					pubblock.parse (page,data[offset+4:offset+dlen],iter1,i+3)
 					blocks[k+255] = iter1
 			j += 1
 		for k in reorders:
@@ -177,19 +153,15 @@ def parse(page,data,parent):
 					[parid] = struct.unpack("<I",model.get_value(child,3))
 				[dlen] = struct.unpack('<I', data[offset:offset+4])
 				if blocks.has_key(parid):
-					iter1 = model.append(blocks[parid],None)
 					if pubblock.block_types.has_key(type):
 						name = "(%02x) %s"%(j,pubblock.block_types[type])
 					else:
 						name = "(%02x) Type: %02x"%(j,type)
-					model.set_value(iter1,0,name)
-					model.set_value(iter1,1,0)
-					model.set_value(iter1,2,dlen)
-					model.set_value(iter1,3,data[offset:offset+dlen])
-					pubblock.parse (model,data[offset+4:offset+dlen],iter1,i)
+					iter1 = add_pgiter (page,name,"pub",0,data[offset:offset+dlen],blocks[parid])
+					pubblock.parse (page,data[offset+4:offset+dlen],iter1,i)
 				else:
 					print "Failed to add reordered item %02x"%parid
 		return
-#	except:
-#		print "Failed in parsing Contents"
+	except:
+		print "Failed in parsing Contents"
 

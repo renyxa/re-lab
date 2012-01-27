@@ -74,7 +74,7 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 		if infname == "CONTENTS":
 			ftype = "quill"
 			page.model.set_value(iter1,1,("quill",dirflag))
-			quill.parse (page.model,data,iter1)
+			quill.parse (page,data,iter1)
 		if infname == "Contents":
 			if data[:2] == "\xe8\xac": # take signature into account
 				ftype = "pub"

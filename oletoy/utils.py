@@ -24,8 +24,9 @@ def add_pgiter (page, name, ftype, stype, data, parent = None):
 	iter1 = page.model.append (parent,None)
 	page.model.set_value(iter1,0,name)
 	page.model.set_value(iter1,1,(ftype,stype))
-	page.model.set_value(iter1,2,len(data))
-	page.model.set_value(iter1,3,data)
+	if data != None:
+		page.model.set_value(iter1,2,len(data))
+		page.model.set_value(iter1,3,data)
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 	return iter1
 

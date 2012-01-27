@@ -34,21 +34,19 @@ def fdpc (hd, size, data):
 
 sub_ids = {"FDPC":fdpc,"FDPP":fdpc}
 
-def parse_fdpc (model,data,offset,fdpciter):
+def parse_fdpc (page,data,offset,fdpciter):
+	model = page.model
 	[num] = struct.unpack('<H', data[offset:offset+2])
 	for i in range (num):
 		[toff] = struct.unpack('<I', data[offset+8+i*4:offset+12+i*4])
 		[tflag] = struct.unpack('<H', data[offset+8+num*4+i*2:offset+8+2+num*4+i*2])
-		iter1 = model.append(fdpciter,None)
-		model.set_value(iter1,0,"[%02x] %02x"%(toff,tflag))
-		model.set_value(iter1,1,("quill","fdpc"))
-		model.set_value(iter1,2,4)
-		model.set_value(iter1,3,data[offset+8+i*4:offset+12+i*4])
+		iter1 = add_pgiter (page,"[%02x] %02x"%(toff,tflag),"quill","fdpc",data[offset+8+i*4:offset+12+i*4],fdpciter)
 		[nlen] = struct.unpack('<I', data[offset+tflag:offset+tflag+4])
-		pubblock.parse (model,data[offset+tflag+4:offset+tflag+nlen],iter1,0,0)
+		pubblock.parse (page,data[offset+tflag+4:offset+tflag+nlen],iter1,0,0)
 	return
 
-def parse_syid (model,data,offset,syiditer,txtiter,j):
+def parse_syid (page,data,offset,syiditer,txtiter,j):
+	model = page.model
 	try:
 		[num] = struct.unpack('<I', data[offset+4:offset+8])
 		i = 0
@@ -60,7 +58,8 @@ def parse_syid (model,data,offset,syiditer,txtiter,j):
 	except:
 		print "Failed in parse_syid"
 
-def parse_stsh (model,data,parent,flag):
+def parse_stsh (page,data,parent,flag):
+	model = page.model
 	[num] = struct.unpack('<I', data[4:8])
 	[off1] = struct.unpack('<I', data[20:24])
 	i = 1
@@ -71,122 +70,81 @@ def parse_stsh (model,data,parent,flag):
 			[off2] = struct.unpack('<I', data[20+i*4:24+i*4])
 #		print "Offsets: %d %02x %02x"%(i,off1,off2)
 		if flag == "1": # and i/2.>i/2:
-			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"Ch %02x Pr %02x"%(i,struct.unpack("<H",data[20+off1:20+off1+2])[0]))
-			model.set_value(iter1,1,("quill","stsh"))
-			model.set_value(iter1,2,2)
-			model.set_value(iter1,3,data[20+off1:20+off1+2])
+			iter1 = add_pgiter (page,"Ch %02x Pr %02x"%(i,struct.unpack("<H",data[20+off1:20+off1+2])[0]),"quill","stsh",data[20+off1:20+off1+2],parent)
 			[dlen] = struct.unpack('<I', data[20+off1+2:20+off1+6])
-			pubblock.parse (model,data[20+off1+6:20+off1+dlen+2],iter1,i)
+			pubblock.parse (page,data[20+off1+6:20+off1+dlen+2],iter1,i)
 			off1 += dlen+2
 			if off1 < off2:
-				iter = model.append(iter1,None)
-				model.set_value(iter,0,"Ps")
-				model.set_value(iter,1,0)
-				model.set_value(iter,2,off2-off1)
-				model.set_value(iter,3,data[20+off1:20+off2])
+				add_pgiter (page,"Ps","quill",0,data[20+off1:20+off2],iter1)
 		else:
-			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"Ch %02x"%i)
-			model.set_value(iter1,1,0)
-			model.set_value(iter1,2,off2-off1)
-			model.set_value(iter1,3,data[20+off1:20+off2])
+			add_pgiter (page,"Ch %02x"%i,"quill",0,data[20+off1:20+off2],parent)
 		off1 = off2
 		i += 1
 
-def parse_strs(model,data,parent,txtiter):
+def parse_strs(page,data,parent,txtiter):
+	model = page.model
 	[num] = struct.unpack('<I', data[0:4])
 	tstart = 0
 	for i in range(num):
 		[nlen] = struct.unpack('<I',data[12+i*4:16+i*4])
-		iter1 = model.append(txtiter,None)
-		model.set_value(iter1,0,"TX %02x length (%02x)"%(i,nlen))
+		iter1 = add_pgiter (page,"TX %02x length (0x%02x)"%(i,nlen),"global",0,model.get_value(txtiter,3)[tstart:tstart+nlen*2-2],txtiter)
 		model.set_value(iter1,1,("global"," ",0xff))
-		model.set_value(iter1,2,nlen*2-2)
-		model.set_value(iter1,3,model.get_value(txtiter,3)[tstart:tstart+nlen*2-2])
 		tstart += nlen*2
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"TX %02x length (0x%02x)"%(i,nlen))
-		model.set_value(iter1,1,("quill","strs"))
-		model.set_value(iter1,2,4)
-		model.set_value(iter1,3,data[12+i*4:16+i*4])
+		add_pgiter (page,"TX %02x length (0x%02x)"%(i,nlen),"quill","strs",data[12+i*4:16+i*4],parent)
 
-def parse_tcd(model,data,parent,txtiter):
+
+def parse_tcd(page,data,parent,txtiter):
+	model = page.model
 	[num] = struct.unpack('<I', data[0:4])
 	for i in range(num+1):
 		[nlen] = struct.unpack('<I',data[12+i*4:16+i*4])
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"TX %02x end offset (0x%02x)"%(i,nlen*2))
-		model.set_value(iter1,1,("quill","tcd"))
-		model.set_value(iter1,2,4)
-		model.set_value(iter1,3,data[12+i*4:16+i*4])
+		add_pgiter (page,"TX %02x end offset (0x%02x)"%(i,nlen*2),"quill","tcd",data[12+i*4:16+i*4],parent)
 
-def parse_pl(model,data,parent):
+def parse_pl(page,data,parent):
+	model = page.model
 	try:
 		[num] = struct.unpack('<I', data[0:4])
 		off = 12
 		for i in range(num):
 			[nlen] = struct.unpack('<I',data[off:off+4])
-			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"PL %02x"%i)
-			model.set_value(iter1,1,("quill","pl"))
-			model.set_value(iter1,2,nlen)
-			model.set_value(iter1,3,data[off:off+nlen])
-			pubblock.parse (model,data[off+4:off+nlen],iter1,i)
+			iter1 = add_pgiter (page,"PL %02x"%i,"quill","pl",data[off:off+nlen],parent)
+			pubblock.parse (page,data[off+4:off+nlen],iter1,i)
 			off += nlen
 	except:
 		print "Failed at PL parsing"
 
-def parse_font(model,data,parent):
+def parse_font(page,data,parent):
+		model = page.model
 		[num] = struct.unpack('<I', data[4:8])
 		for i in range(num):
 			[off] = struct.unpack('<I', data[20+i*4:24+i*4])
 			[nlen] = struct.unpack('<H', data[20+off:20+off+2])
 			fname = unicode(data[20+off+2:20+off+2+nlen*2],"utf-16")
 			[fid] = struct.unpack('<I', data[20+off+2+nlen*2:20+off+2+nlen*2+4])
-			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"(%02x) %s"%(fid,fname))
-			model.set_value(iter1,1,("quill","font"))
-			model.set_value(iter1,2,nlen*2+4)
-			model.set_value(iter1,3,data[20+off:20+off+nlen*2+6])
+			add_pgiter (page,"(%02x) %s"%(fid,fname),"quill","font",data[20+off:20+off+nlen*2+6],parent)
 
-def parse_mcld(model,data,parent):
+def parse_mcld(page,data,parent):
+		model = page.model
 		[num] = struct.unpack('<I', data[4:8])
 		off = num*4 + 8
 		for i in range(num):
-			iter1 = model.append(parent,None)
-			model.set_value(iter1,0,"(%02x) %02x"%(i,struct.unpack("<I",data[8+i*4:12+i*4])[0]))
-			model.set_value(iter1,1,("quill","mcld"))
-			model.set_value(iter1,2,4)
-			model.set_value(iter1,3,data[8+i*4:12+i*4])
-			iter2 = model.append(iter1,None)
+			iter1 = add_pgiter (page,"(%02x) %02x"%(i,struct.unpack("<I",data[8+i*4:12+i*4])[0]),"quill",0,data[8+i*4:12+i*4],parent)
 			[nlen] = struct.unpack("<I",data[off:off+4])
-			model.set_value(iter2,0,"Hdr")
-			model.set_value(iter2,1,0)
-			model.set_value(iter2,2,nlen)
-			model.set_value(iter2,3,data[off:off+nlen])
-			pubblock.parse (model,data[off+4:off+nlen],iter2,i,0)
+			iter2 = add_pgiter (page,"Hdr","quill",0,data[off:off+nlen],iter1)
+			pubblock.parse (page,data[off+4:off+nlen],iter2,i,0)
 			off += nlen
 			[num2] = struct.unpack('<I', data[off:off+4])
 			off += 4
 			for k in range(num2):
 				[nlen2] = struct.unpack('<I', data[off:off+4])
-				iter3 = model.append(iter1,None)
-				model.set_value(iter3,0,"Ch %02x"%k)
-				model.set_value(iter3,1,0)
-				model.set_value(iter3,2,nlen2)
-				model.set_value(iter3,3,data[off:off+nlen2])
-				pubblock.parse (model,data[off+4:off+nlen2],iter3,k,0)
+				iter3 = add_pgiter (page,"Ch %02x"%k,"quill",0,data[off:off+nlen2],iter1)
+				pubblock.parse (page,data[off+4:off+nlen2],iter3,k,0)
 				off += nlen2
 
-
-def parse (model,data,parent):
+def parse (page,data,parent):
+	model = page.model
 	off = 0
-	iter1 = model.append(parent,None)
-	model.set_value(iter1,0,"Header")
-	model.set_value(iter1,1,0)
-	model.set_value(iter1,2,32)
-	model.set_value(iter1,3,data[off:off+32])
+	add_pgiter (page,"Header","quill",0,data[off:off+32],parent)
 	[ch_num] = struct.unpack('<H', data[off+26:off+28])
 	off += 32
 	txtiter = None
@@ -200,29 +158,27 @@ def parse (model,data,parent):
 		if name[0:4] == "TEXT":
 			txtiter = iter1 # assume for now that I won't have "TEXT/TEXT<num>" with <num> greater than 0
 		if name[0:4] == "FDPC" or name[0:4] == "FDPP":
-			parse_fdpc (model,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
+			parse_fdpc (page,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
 		if name[0:4] == "SYID":
-			txtid = parse_syid(model,data,doffset,iter1,txtiter,txtid)
+			txtid = parse_syid(page,data,doffset,iter1,txtiter,txtid)
 		if name[0:4] == "STSH":
-			parse_stsh (model,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
+			parse_stsh (page,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
 		if name[0:4] == "STRS":
-			parse_strs (model,data[doffset:doffset+dlen],iter1,txtiter)
+			parse_strs (page,data[doffset:doffset+dlen],iter1,txtiter)
 		if name[0:4] == "TCD ":
-			parse_tcd (model,data[doffset:doffset+dlen],iter1,txtiter)
+			parse_tcd (page,data[doffset:doffset+dlen],iter1,txtiter)
 		if name[0:4] == "PL  ":
-			parse_pl (model,data[doffset:doffset+dlen],iter1)
+			parse_pl (page,data[doffset:doffset+dlen],iter1)
 		if name[0:4] == "FONT":
-			parse_font (model,data[doffset:doffset+dlen],iter1)
+			parse_font (page,data[doffset:doffset+dlen],iter1)
 		if name[0:4] == "MCLD":
-			parse_mcld (model,data[doffset:doffset+dlen],iter1)
+			parse_mcld (page,data[doffset:doffset+dlen],iter1)
 
 		model.set_value(iter1,0,name)
 		model.set_value(iter1,1,("quill",name[0:4]))
 		model.set_value(iter1,2,dlen)
 		model.set_value(iter1,3,data[doffset:doffset+dlen])
+		model.set_value(iter1,6,model.get_string_from_iter(iter1))
+
 		off += 24
-	iter1 = model.append(parent,None)
-	model.set_value(iter1,0,"Tail")
-	model.set_value(iter1,1,0)
-	model.set_value(iter1,2,len(data[doffset+dlen:]))
-	model.set_value(iter1,3,data[doffset+dlen:])
+	add_pgiter (page,"Tail","quill",0,data[doffset+dlen:],parent)
