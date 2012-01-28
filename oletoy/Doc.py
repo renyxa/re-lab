@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp,rx2,fh,mdb,cpt
+import ole,mf,svm,cdr,clp,rx2,fh,mdb,cpt,cdw
 
 class Page:
 	def __init__(self):
@@ -84,7 +84,13 @@ class Page:
 			print "Probably EMF"
 			mf.mf_open(buf,self)
 			return 0
-			
+
+		if buf[0:4] =="KF\x08\x00":
+			self.type = "CDW"
+			print "Probably CDW"
+			cdw.open(buf,self)
+			return 0
+
 		if buf[0:4] == "CAT " and buf[0x8:0xc] == "REX2":
 			self.type = "REX2"
 			print "Probably REX2"
