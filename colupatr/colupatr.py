@@ -19,7 +19,7 @@ import gtk,gobject
 import hexview
 import utils
 
-version = "0.2.3"
+version = "0.3.3"
 
 ui_info = \
 '''<ui>
@@ -201,6 +201,18 @@ class ApplicationMainWindow(gtk.Window):
 			entry.set_text("%d"%self.options_div)
 		print "Div set to",self.options_div
 
+	def on_option_toggled (self,button):
+		lt = button.get_label()
+		if lt == "LE":
+			self.options_le = abs(self.options_le-1)
+		if lt == "BE":
+			self.options_be = abs(self.options_be-1)
+		if lt == "Txt":
+			self.options_txt = abs(self.options_txt-1)
+		if self.statbuffer != "":
+			self.calc_status(self.statbuffer,len(self.statbuffer))
+
+
 	def activate_options (self, action):
 		# le, be, txt, div, enc
 		vbox = gtk.VBox()
@@ -214,6 +226,10 @@ class ApplicationMainWindow(gtk.Window):
 			be_chkb.set_active(True)
 		if self.options_txt:
 			txt_chkb.set_active(True)
+
+		le_chkb.connect("toggled",self.on_option_toggled)
+		be_chkb.connect("toggled",self.on_option_toggled)
+		txt_chkb.connect("toggled",self.on_option_toggled)
 
 		hbox0 = gtk.HBox()
 		hbox0.pack_start(le_chkb)
@@ -422,7 +438,7 @@ class ApplicationMainWindow(gtk.Window):
 		if dlen == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-		if dlen > 3 and dlen != 4 and dlen != 8:
+		if dlen > 3 and dlen != 4 and dlen != 8 and self.options_txt == 1:
 			try:
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
