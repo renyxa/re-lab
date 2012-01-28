@@ -29,6 +29,7 @@ ui_info = \
 		<menuitem action='Open'/>
 		<menuitem action='Reload'/>
 		<menuitem action='Save'/>
+		<menuitem action='Options'/>
 		<menuitem action='Close'/>
 		<separator/>
 		<menuitem action='Quit'/>
@@ -111,6 +112,13 @@ class ApplicationMainWindow(gtk.Window):
 		self.cmdhistory = []
 		self.curcmd = -1
 		self.search = None
+		# configuration options
+		self.options_le = 1
+		self.options_be = 0
+		self.options_txt = 1
+		self.options_div = 1
+		self.options_enc = "utf-16"
+		self.statbuffer = ""
 
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
@@ -138,6 +146,11 @@ class ApplicationMainWindow(gtk.Window):
 				"_Save","<control>S",                      # label, accelerator
 				"Save the file",                             # tooltip
 				self.activate_save),
+			( "Options", None,                    # name, stock id
+				"Op_tions","<control>T",                      # label, accelerator
+				"Configuration options",                             # tooltip
+				self.activate_options),
+
 			( "Close", gtk.STOCK_CLOSE,                    # name, stock id
 				"Close","",                      # label, accelerator
 				"Close the file",                             # tooltip
@@ -166,6 +179,76 @@ class ApplicationMainWindow(gtk.Window):
 		## Close dialog on user response
 		dialog.connect ("response", lambda d, r: d.destroy())
 		dialog.show()
+
+	def on_enc_entry_activate (self,entry):
+		enc = entry.get_text()
+		try:
+			unicode("test",enc)
+			self.options_enc = enc
+			if self.statbuffer != "":
+				self.calc_status(self.statbuffer,len(self.statbuffer))
+		except:
+			entry.set_text(self.options_enc)
+		print "Enc set to",self.options_enc
+
+	def on_div_entry_activate (self,entry):
+		n = entry.get_text()
+		try:
+			self.options_div = int(n)
+			if self.statbuffer != "":
+				self.calc_status(self.statbuffer,len(self.statbuffer))
+		except:
+			entry.set_text("%d"%self.options_div)
+		print "Div set to",self.options_div
+
+	def activate_options (self, action):
+		# le, be, txt, div, enc
+		vbox = gtk.VBox()
+		le_chkb = gtk.CheckButton("LE")
+		be_chkb = gtk.CheckButton("BE")
+		txt_chkb = gtk.CheckButton("Txt")
+		
+		if self.options_le:
+			le_chkb.set_active(True)
+		if self.options_be:
+			be_chkb.set_active(True)
+		if self.options_txt:
+			txt_chkb.set_active(True)
+
+		hbox0 = gtk.HBox()
+		hbox0.pack_start(le_chkb)
+		hbox0.pack_start(be_chkb)
+		hbox0.pack_start(txt_chkb)
+		
+		hbox1 = gtk.HBox()
+		div_lbl = gtk.Label("Div")
+		div_entry = gtk.Entry()
+		div_entry.connect("activate",self.on_div_entry_activate)
+		div_entry.set_text("%d"%self.options_div)
+		hbox1.pack_start(div_lbl)
+		hbox1.pack_start(div_entry)
+
+		hbox2 = gtk.HBox()
+		enc_lbl = gtk.Label("Enc")
+		enc_entry = gtk.Entry()
+		enc_entry.connect("activate",self.on_enc_entry_activate)
+		hbox2.pack_start(enc_lbl)
+		hbox2.pack_start(enc_entry)
+		enc_entry.set_text(self.options_enc)
+#		ok_btn = gtk.Button("OK")
+
+		vbox.pack_start(hbox0)
+		vbox.pack_start(hbox1)
+		vbox.pack_start(hbox2)
+#		vbox.pack_start(ok_btn)
+		
+		optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		optwin.set_resizable(False)
+		optwin.set_border_width(0)
+		optwin.add(vbox)
+		optwin.set_title("Colupatr Options")
+		optwin.show_all()
+
 
 	def activate_quit(self, action):
 		 gtk.main_quit()
@@ -316,31 +399,32 @@ class ApplicationMainWindow(gtk.Window):
 		return s
 
 	def calc_status(self,buf,dlen):
+		self.statbuffer = buf
 		txt = ""
 		txt2 = ""
 		if dlen == 2:
-			if self.lebe == 0:
-				txt = "LE: %s"%(struct.unpack("<h",buf)[0])
-			else:
-				txt = "BE: %s"%(struct.unpack(">h",buf)[0])
+			if self.options_le == 1:
+				txt = "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
+			if self.options_be == 1:
+				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
 		if dlen == 4:
-			if self.lebe == 0:
-				txt = "LE: %s"%(struct.unpack("<i",buf)[0])
-				txt += "\tLEF: %s"%(struct.unpack("<f",buf)[0])
-			else:
-				txt = "BE: %s"%(struct.unpack(">i",buf)[0])
-				txt += "BEF: %s"%(struct.unpack(">f",buf)[0])
+			if self.options_le == 1:
+				txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
+				txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
+			if self.options_be == 1:
+				txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
+				txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
 		if dlen == 8:
-			if self.lebe == 0:
-				txt = "LE: %s"%(struct.unpack("<d",buf)[0])
-			else:
-				txt = "BE: %s"%(struct.unpack(">d",buf)[0])
+			if self.options_le == 1:
+				txt = "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
+			if self.options_be == 1:
+				txt += "BE: %s"%((struct.unpack(">d",buf)[0])/self.options_div)
 		if dlen == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
 		if dlen > 3 and dlen != 4 and dlen != 8:
 			try:
-				txt += '\t<span background="#DDFFDD">'+unicode(buf,'utf16').replace("\n","\\n")[:32]+'</span>'
+				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
 				pass
 		self.update_statusbar(txt)
