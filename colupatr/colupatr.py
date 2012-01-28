@@ -17,6 +17,7 @@
 import sys,struct
 import gtk,gobject
 import hexview
+import utils
 
 version = "0.2.3"
 
@@ -109,6 +110,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.selection = None
 		self.cmdhistory = []
 		self.curcmd = -1
+		self.search = None
 
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
@@ -343,8 +345,9 @@ class ApplicationMainWindow(gtk.Window):
 				pass
 		self.update_statusbar(txt)
 
-	def on_entry_activate (self,action):
-		cmdline = self.entry.get_text()
+	def on_entry_activate (self,action,cmdline=""):
+		if cmdline == "":
+			cmdline = self.entry.get_text()
 		if len(cmdline) > 0:
 			if self.curcmd == -1 or self.cmdhistory[self.curcmd] != cmdline:
 				self.cmdhistory.append(cmdline)
@@ -356,7 +359,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc = self.das[pn]
 				if doc.sel:
 						r1,c1,r2,c2 = doc.sel
-						data = doc.data[doc.lines[r1][0]+c1:doc.lines[r2]+c2]
+						data = doc.data[doc.lines[r1][0]+c1:doc.lines[r2][0]+c2]
 				cmd = cmdline.split()
 				doc.bklines = []
 				doc.bkhvlines = []
@@ -440,8 +443,10 @@ class ApplicationMainWindow(gtk.Window):
 					# try to validate/scroll
 					llast = len(doc.lines)
 					if addr < doc.lines[len(doc.lines)-1][0]:
+						lno = 0
 						lnum = addr/16
-						while True:
+						while lnum < len(doc.lines) and lno != lnum:
+							lno = lnum
 							if doc.lines[lnum][0] < addr:
 								if doc.lines[lnum+1][0] > addr:
 									break
@@ -466,6 +471,45 @@ class ApplicationMainWindow(gtk.Window):
 						doc.offset = doc.lines[llast-1][0]
 					doc.vadj.value = doc.offnum
 					doc.expose(doc.hv,action)
+				elif cmdline[0] == "?":
+					utils.cmd_parse(cmdline,self,doc)
+
+	def on_search_row_activated(self, view, path, column):
+		treeSelection = view.get_selection()
+		model1, iter1 = treeSelection.get_selected()
+		goto = model1.get_value(iter1,2)
+#		addr = model1.get_value(iter1,1)
+		self.on_entry_activate (None,"goto %s"%goto)
+
+
+	def show_search(self,carg):
+		view = gtk.TreeView(self.search)
+		view.set_reorderable(True)
+		view.set_enable_tree_lines(True)
+		cell1 = gtk.CellRendererText()
+		cell1.set_property('family-set',True)
+		cell1.set_property('font','monospace 10')
+		cell2 = gtk.CellRendererText()
+		cell2.set_property('family-set',True)
+		cell2.set_property('font','monospace 10')
+		column1 = gtk.TreeViewColumn('Type', cell1, text=0)
+		column2 = gtk.TreeViewColumn('Value', cell2, text=2)
+		view.append_column(column1)
+		view.append_column(column2)
+		view.show()
+		view.connect("row-activated", self.on_search_row_activated)
+		scrolled = gtk.ScrolledWindow()
+		scrolled.add(view)
+		scrolled.set_size_request(400,400)
+		scrolled.show()
+		searchwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		searchwin.set_resizable(True)
+		searchwin.set_border_width(0)
+		scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		searchwin.add(scrolled)
+		searchwin.set_title("Search: %s"%carg)
+		searchwin.show_all()
+
 
 	def get_clp_text(self, clipboard, text, data):
 		txtlist = text.split()
