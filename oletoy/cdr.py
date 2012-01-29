@@ -120,6 +120,7 @@ def outl (hd,size,data):
 	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[0x80:0x84])[0],0x80,4,"<I")
 	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[0x84:0x88])[0],0x84,4,"<I")
 
+
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
 	fill_type = struct.unpack('<h', data[4:6])[0]
@@ -133,7 +134,46 @@ def fild (hd,size,data):
 		if clr_models.has_key(clr_model):
 			clrm_txt += " " + clr_models[clr_model]
 		add_iter (hd, "Color Model", clrm_txt,8,2,"txt")
-		add_iter (hd, "Color", "%02x"%struct.unpack('<i', data[0x10:0x14])[0],0x10,4,"<i")
+		if fill_type == 1:
+			add_iter (hd, "Color", "%02x"%struct.unpack('<i', data[0x10:0x14])[0],0x10,4,"<i")
+
+		if fill_type == 2:
+			grd_offset = 0x8
+			rot_offset = 0x20
+			mid_offset = 0x32
+			pal_len = 16
+			pal_off = 0
+			prcnt_off = 0
+			if hd.version >= 13:
+				grd_offset = 0x16
+				mid_offset = 0x3c
+				pal_len = 24
+				pal_off = 3
+				prcnt_off = 8
+			grdmode = ord(data[grd_offset])
+			midpoint = ord(data[mid_offset])
+			pal_num = ord(data[mid_offset+2])								
+			rot = struct.unpack('<L', data[rot_offset:rot_offset+4])[0]
+
+			if grdmode < len(fild_grad_type):
+				gr_type = "%s"%fild_grad_type[grdmode]
+			else:
+				gr_type = "Unknown (%X)"%clrmode
+			add_iter (hd, "Gradient type",gr_type, grd_offset,1,"B")
+			add_iter (hd, "Rotation",rot/1000000, rot_offset,4,"<L")
+			add_iter (hd, "Midpoint",midpoint, mid_offset,1,"B")
+
+			for i in range(pal_num):
+				clrmode = ord(data[mid_offset+6+pal_off+i*pal_len])
+																# RGB           CMYK
+				col0=ord(data[mid_offset+14+pal_off+i*pal_len])          #       BB              CC
+				col1=ord(data[mid_offset+15+pal_off+i*pal_len])          #       GG              MM
+				col2=ord(data[mid_offset+16+pal_off+i*pal_len])          #       RR              YY
+				col3=ord(data[mid_offset+17+pal_off+i*pal_len])          #       ??              KK
+				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
+				add_iter (hd, "Color:","%02x %02x %02x %02x\t%u"%(col0,col1,col2,col3,prcnt),mid_offset+14+pal_off+i*pal_len,5,"txt")
+
+
 
 def ftil (hd,size,data):
 	for i in range(6):
