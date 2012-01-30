@@ -85,7 +85,7 @@ class Page:
 			mf.mf_open(buf,self)
 			return 0
 
-		if buf[0:4] =="KF\x08\x00":
+		if buf[0:2] =="KF" and buf[2] != "\x00":
 			self.type = "CDW"
 			print "Probably CDW"
 			cdw.open(buf,self)

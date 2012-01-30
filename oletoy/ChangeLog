@@ -1,3 +1,7 @@
+2012-01-29  Valek Filippov
+
+		* CDW: parse last record.
+
 2012-01-27  Valek Filippov
 
 		* CDR: parse gradients part of 'fild'
