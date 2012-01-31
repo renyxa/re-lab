@@ -36,6 +36,7 @@ def parse_lastrec (page, data,parent):
 	try:
 		while chtype != "\x00\x00":
 			off_st = off
+			bflag = ord(data[off+0xb])
 			tflag = ord(data[off+0xd+shift])
 			if tflag == 1:
 				tlen = struct.unpack("<H",data[off+0xe+shift:off+0x10+shift])[0]
@@ -63,7 +64,7 @@ def parse_lastrec (page, data,parent):
 					recs += "%02x"%(struct.unpack("<H",data[off+1+i*2:off+3+i*2])[0])
 				off += recid_len*2+1
 			chtype = data[off+4:off+6]
-			add_pgiter(page,"%s (%s)"%(tdata,recs),"cdw",0,data[off_st:off],parent)
+			add_pgiter(page,"%s [%02x] (%s)"%(tdata,bflag,recs),"cdw",0,data[off_st:off],parent)
 	except:
 		print 'Failed in parseing last record'
 
