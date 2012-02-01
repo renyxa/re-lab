@@ -1,3 +1,8 @@
+2012-01-31  Valek Filippov
+
+		* ZIP: support for PKZIP and recursive load.
+		* CDR: initial support for ver 14 and 15.
+
 2012-01-29  Valek Filippov
 
 		* CDW: parse last record.

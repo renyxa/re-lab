@@ -134,8 +134,8 @@ def blk_hdr(page, buf, offset, p_iter):
 
 
 
-def open (buf,page):
-	parent = add_pgiter (page, "File CPT", "CPT", "ALL", buf)
+def open (buf,page,piter):
+	parent = add_pgiter (page, "File CPT", "CPT", "ALL", buf,piter)
 	data = buf[0:8]
 	name = "CPT Signature"
 	add_pgiter (page, name, "CPT", "Sig", data, parent)

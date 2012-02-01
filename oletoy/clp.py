@@ -16,10 +16,10 @@
 
 import sys,struct,gtk,gobject
 
-def open (buf,page):
+def open (buf,page,parent):
 	offset = 2
 	cnt = struct.unpack('<H', buf[offset:offset+2])[0]
-	iter1 = page.model.append(None,None)
+	iter1 = page.model.append(parent,None)
 	page.model.set_value(iter1,0,"CLP_Header")
 	page.model.set_value(iter1,1,("clp",0))
 	page.model.set_value(iter1,2,4)
@@ -28,7 +28,7 @@ def open (buf,page):
 	offset += 2
 	
 	for i in range(cnt):
-		iter1 = page.model.append(None,None)
+		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,"FormatRecord %d"%i)
 		page.model.set_value(iter1,1,("clp",1))
 		page.model.set_value(iter1,2,0x59)

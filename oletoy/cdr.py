@@ -344,9 +344,6 @@ def disp (hd,size,data):
 	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
 	bmpoff = struct.pack("<I",len(data)+10-bmp)
 	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
-#	f = open("test.bmp",'w')
-#	f.write(img)
-#	f.close()
 	pixbufloader = gtk.gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
@@ -363,11 +360,11 @@ def disp (hd,size,data):
 
 cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp}
 
-def cdr_open (buf,page):
+def cdr_open (buf,page,parent):
 	# Path, Name, ID
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	chunk = cdrChunk()
-	chunk.load (buf,page,None)
+	chunk.load (buf,page,parent)
 
 class cdrChunk:
 	fourcc = '????'

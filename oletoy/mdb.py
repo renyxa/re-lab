@@ -196,11 +196,11 @@ def usage_bmp (buf,page,offset,parent):
 block_types = {0x100:('DB',db),0x101:('Data',data),0x102:('Table',table),0x103:('IntMed IDX',int_idx),
 	0x104:('Leaf IDX',leaf_idx),0x105:('Pg Usage Bitmaps',usage_bmp)}
 
-def parse (buf,page):
+def parse (buf,page,parent):
 	offset = 0
 	i = 0
 	while offset < len(buf):
-		iter1 = page.model.append(None,None)
+		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,"Block %02x"%i)
 		page.model.set_value(iter1,1,("mdb",0))
 		page.model.set_value(iter1,2,0x1000)

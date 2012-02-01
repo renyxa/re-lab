@@ -117,9 +117,9 @@ def fh_save (page, fname):
 
 
 
-def fh_open (buf,page):
+def fh_open (buf,page,parent):
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
-	iter1 = page.model.append(None,None)
+	iter1 = page.model.append(parent,None)
 	page.model.set_value(iter1,0,"FH file")
 	page.model.set_value(iter1,1,("fh","file"))
 	page.model.set_value(iter1,2,len(buf))
@@ -132,14 +132,14 @@ def fh_open (buf,page):
 	print 'Offset: \t%x'%offset
 	[size] = struct.unpack('>L', buf[offset+8:offset+12])
 	print 'Size:\t\t%x'%size
-	iter1 = page.model.append(None,None)
+	iter1 = page.model.append(parent,None)
 	page.model.set_value(iter1,0,"FH Header")
 	page.model.set_value(iter1,1,("fh","header"))
 	page.model.set_value(iter1,2,offset+12)
 	page.model.set_value(iter1,3,buf[:offset+12])
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 
-	dditer = page.model.append(None,None)
+	dditer = page.model.append(parent,None)
 	page.model.set_value(dditer,1,("fh","data"))
 	if page.version > 8:
 		output = zlib.decompress(buf[offset+14:offset+14+size],-15)
@@ -155,7 +155,7 @@ def fh_open (buf,page):
 	page.model.set_value(dditer,3,output)
 	page.model.set_value(dditer,6,page.model.get_string_from_iter(dditer))
 
-	dictiter = page.model.append(None,None)
+	dictiter = page.model.append(parent,None)
 	page.model.set_value(dictiter,0,"FH Dictionary")
 	page.model.set_value(dictiter,1,("fh","dict"))
 	page.model.set_value(dictiter,6,page.model.get_string_from_iter(dictiter))
@@ -199,6 +199,7 @@ def fh_open (buf,page):
 	length = 0
 	brflag = 0
 	prkey = 0
+	# FIXME! migrate to generator
 	for i in range(size):
 		if i/2000 == i/2000. and i > 0:
 			print '\rRecord #%d'%i,items[key][0],len(parser.data)-agdoffset
@@ -207,12 +208,12 @@ def fh_open (buf,page):
 		if chunks.has_key(items[key][0]):
 			if brflag == 0:
 				try:
-					length = chunks[items[key][0]](parser,agdoffset, key)
+					length = chunks[items[key][0]](parser,agdoffset,key,i)
 					if length < 0:
 						length = len(output)-agdoffset
 						brflag = 1
 				except:
-					print "Failed to parse. Chunk: %02x 2:%s"%(i,i-1)
+					print "Failed to parse. Chunk: %02x 2:%s"%(i,i)
 					return
 			else:
 				length = 0

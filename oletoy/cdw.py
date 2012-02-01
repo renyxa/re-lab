@@ -69,8 +69,8 @@ def parse_lastrec (page, data,parent):
 		print 'Failed in parseing last record'
 
 
-def open (data,page):
-	f_iter = add_pgiter(page,"CDW file","cdw",0,data)
+def open (data,page,parent):
+	f_iter = add_pgiter(page,"CDW file","cdw",0,data,parent)
 	add_pgiter(page,"Header","cdw",0,data[:0x18],f_iter)
 	tr_off = struct.unpack("<I",data[0x8:0xc])[0]
 	tr_num = struct.unpack("<I",data[0xc:0x10])[0]

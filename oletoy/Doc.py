@@ -16,7 +16,8 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp,rx2,fh,mdb,cpt,cdw
+import ole,mf,svm,cdr,clp
+import rx2,fh,mdb,cpt,cdw,pkzip
 
 class Page:
 	def __init__(self):
@@ -33,74 +34,82 @@ class Page:
 		self.wdoc = None  # need to store 'WordDocument' stream
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 
-	def fload(self):
-		pos = self.fname.rfind('/')
-		if pos !=-1:
-			self.pname = self.fname[pos+1:]
-		else:
-			self.pname = self.fname
-		offset = 0
-		f = open(self.fname)
-		buf = f.read()
+	def fload(self,buf="",parent=None):
+		if buf == "":
+			pos = self.fname.rfind('/')
+			if pos !=-1:
+				self.pname = self.fname[pos+1:]
+			else:
+				self.pname = self.fname
+			offset = 0
+			f = open(self.fname)
+			buf = f.read()
 
 		if buf[0:8] == "CPT9FILE":
-			self.type = cpt.open(buf, self)
+			self.type = cpt.open(buf, self, parent)
 			return 0
 
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-			self.type = ole.open(buf, self)
+			self.type = ole.open(buf, self, parent)
 			return 0
 
 		if buf[0:2] == "\x50\xc3":
 			self.type = "CLP"
-			clp.open (buf,self)
+			clp.open (buf,self, parent)
 			return 0
 
 		if buf[0:6] == "VCLMTF":
 			self.type = "SVM"
-			svm.open (buf,self)
+			svm.open (buf,self, parent)
 			return 0
 
 		if buf[0:4] == "RIFF" and buf[8:11] == "CDR":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
 			print 'Probably CDR %x'%(ord(buf[11])-0x30)
-			cdr.cdr_open(buf,self)
+			cdr.cdr_open(buf,self, parent)
 			return 0
 
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
-			mf.mf_open(buf,self)
+			mf.mf_open(buf,self, parent)
 			print "Aldus Placeable WMF"
 			return 0
 
 		if buf[0:6] == "\x01\x00\x09\x00\x00\x03":
 			self.type = "WMF"
 			print "Probably WMF"
-			mf.mf_open(buf,self)
+			mf.mf_open(buf,self, parent)
 			return 0
 
 		if buf[40:44] == "\x20\x45\x4d\x46":
 			self.type = "EMF"
 			print "Probably EMF"
-			mf.mf_open(buf,self)
+			mf.mf_open(buf,self, parent)
 			return 0
 
 		if buf[0:2] =="KF" and buf[2] != "\x00":
 			self.type = "CDW"
 			print "Probably CDW"
-			cdw.open(buf,self)
+			cdw.open(buf,self, parent)
 			return 0
 
 		if buf[0:4] == "CAT " and buf[0x8:0xc] == "REX2":
 			self.type = "REX2"
 			print "Probably REX2"
-			rx2.open(buf,self)
+			rx2.open(buf,self, parent)
 			return 0
 		
 		if buf[4:19] == "Standard Jet DB" or buf[4:19] == "Standard ACE DB":
 			self.type = "MDB"
 			print "Probably MDB"
-			mdb.parse (buf,self)
+			mdb.parse (buf,self, parent)
+			return 0
+		
+		if buf[0:4] == "\x50\x4b\x03\x04":
+			self.type = "PKZIP"
+			print "Probably PK-ZIP"
+			f.close()
+			pkzip.open (self.fname,self, parent)
 			return 0
 		
 		fh_off = buf.find('FreeHand')
@@ -121,16 +130,17 @@ class Page:
 				self.type = "FH"
 				print "Probably Freehand 9+"
 				try:
-					fh.fh_open(buf,self)
+					fh.fh_open(buf,self, parent)
 					return 0
 				except:
 					print 'Failed to parse as FH9+'
 
-		iter1 = self.model.append(None, None)
-		self.model.set_value(iter1, 0, "File")
-		self.model.set_value(iter1, 1, 0)
-		self.model.set_value(iter1, 2, len(buf))
-		self.model.set_value(iter1, 3, buf)
+		if parent == None:
+			iter1 = self.model.append(None, None)
+			self.model.set_value(iter1, 0, "File")
+			self.model.set_value(iter1, 1, 0)
+			self.model.set_value(iter1, 2, len(buf))
+			self.model.set_value(iter1, 3, buf)
 		return 0
 
 	def show_search(self,carg):

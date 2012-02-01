@@ -78,9 +78,9 @@ svm_actions = { 0x0:"NULL",
 0x96:"TextLanguage", 0x97:"OverlineColor",
 0x200:"Comment"}
 
-def open (buf,page):
+def open (buf,page,parent):
 	offset = 0
-	iter1 = page.model.append(None,None)
+	iter1 = page.model.append(parent,None)
 	page.model.set_value(iter1,0,'Signature')
 	page.model.set(iter1,1,("svm",-2),2,6,3,buf[0:6])
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
@@ -88,7 +88,7 @@ def open (buf,page):
 
 	[hver] = struct.unpack("<h",buf[offset:offset+2])
 	[hsize] = struct.unpack("<I",buf[offset+2:offset+6])
-	iter1 = page.model.append(None,None)
+	iter1 = page.model.append(parent,None)
 	page.model.set(iter1,0,'Header')
 	page.model.set(iter1,1,("svm",-1),2,6+hsize,3,buf[offset:offset+6+hsize])
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
@@ -101,7 +101,7 @@ def open (buf,page):
 		cmdname = "Cmd %02x"%cmd
 		if svm_actions.has_key(cmd):
 			cmdname = svm_actions[cmd]+ " "*(21-len(svm_actions[cmd]))
-		iter1 = page.model.append(None,None)
+		iter1 = page.model.append(parent,None)
 		page.model.set(iter1,0,cmdname,1,("svm",cmd),2,size+8,3,buf[offset:offset+size+8])
 		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		offset += size + 8

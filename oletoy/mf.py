@@ -271,7 +271,7 @@ def parse_gdiplus (buf, offset, model, piter):
 	  print "Oops"
 	  return 4
 
-def mf_open (buf,page):
+def mf_open (buf,page,parent):
 	offset = 0
 	if page.type == 'EMF':
 	  while offset < len(buf) - 8:
@@ -280,7 +280,7 @@ def mf_open (buf,page):
 		newV = buf[offset:offset+newL]
 		rname = emr_ids[newT]
 		if newT: # == 0x46: # to play with EMF+
-		  iter1 = page.model.append(None,None)
+		  iter1 = page.model.append(parent,None)
 		  page.model.set_value(iter1,0,rname)
 		  page.model.set_value(iter1,1,("emf",newT))
 		  page.model.set_value(iter1,2,newL)
@@ -299,14 +299,14 @@ def mf_open (buf,page):
 
 	elif page.type == 'APWMF' or page.type == 'WMF':
 		if page.type == 'APWMF':
-		  iter1 = page.model.append(None,None)
+		  iter1 = page.model.append(parent,None)
 		  page.model.set_value(iter1,0,'AP Header')
 		  page.model.set_value(iter1,1,("wmf",1))
 		  page.model.set_value(iter1,2,22)
 		  page.model.set_value(iter1,3,buf[0:22])
 		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 		  offset = 22
-		iter1 = page.model.append(None,None)
+		iter1 = page.model.append(parent,None)
 		page.model.set_value(iter1,0,'WMF Header')
 		page.model.set_value(iter1,1,("wmf",4))
 		page.model.set_value(iter1,2,18)
@@ -319,7 +319,7 @@ def mf_open (buf,page):
 			[newT] = struct.unpack('<H', buf[offset+4:offset+6])
 			newV = buf[offset:offset+newL*2]
 			rname = wmr_ids[newT]
-			iter1 = page.model.append(None,None)
+			iter1 = page.model.append(parent,None)
 			page.model.set_value(iter1,0,rname)
 			page.model.set_value(iter1,1,("wmf",newT))
 			page.model.set_value(iter1,2,newL*2)
@@ -327,7 +327,7 @@ def mf_open (buf,page):
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 			offset = offset + newL*2
 			if rname == 'Unknown':
-				iter1 = page.model.append(None,None)
+				iter1 = page.model.append(parent,None)
 				page.model.set_value(iter1,0,'Leftover')
 				page.model.set_value(iter1,1,("wmf",'-1'))
 				nlen = len(buf)-offset
