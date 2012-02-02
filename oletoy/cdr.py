@@ -173,11 +173,14 @@ def loda_outl (hd,data,offset,l_type):
 def loda_fild (hd,data,offset,l_type):
 	add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
+def loda_trfd (hd,data,offset,l_type):
+	add_iter (hd, "[0064] Trfd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+
 def loda_stlt (hd,data,offset,l_type):
 	add_iter (hd, "[00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 def loda_rot(hd,data,offset,l_type):
-	[rot] = struct.unpack('<L', data[offset:offset+4])
+	rot = struct.unpack('<l', data[offset:offset+4])[0]
 	add_iter (hd, "[2efe] Rotate","%u"%round(rot/1000000.0,2),offset,4,"txt")
 
 def loda_rot_center (hd,data,offset,l_type):
@@ -227,7 +230,7 @@ def loda_coords124 (hd,data,offset,l_type):
 		add_iter (hd,"[001e] Start/End Rot angles; Pie flag","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
 
 def loda_coords3 (hd,data,offset,l_type):
-	[pointnum] = struct.unpack('<L', data[offset:offset+4])
+	pointnum = struct.unpack('<L', data[offset:offset+4])[0]
 	for i in range (pointnum):
 		x = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
 		y = struct.unpack('<l', data[offset+8+i*8:offset+12+i*8])[0]
@@ -254,13 +257,23 @@ def loda_coords3 (hd,data,offset,l_type):
 			NodeType = NodeType+'  Curve'
 		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
 			NodeType = NodeType+'  Arc'
-		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt")
+		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt",offset+4+pointnum*8+i,1)
+	return pointnum
+
+def loda_coords_poly (hd,data,offset,l_type):
+	pn = loda_coords3 (hd,data,offset,l_type)
+	x = struct.unpack('<l', data[offset+4+pn*9:offset+4+pn*9+4])[0]
+	y = struct.unpack('<l', data[offset+4+pn*9+4:offset+4+pn*9+8])[0]
+	add_iter (hd,"[001e] var1/var2 ?","%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2)),offset+4+pn*9,8,"txt")
+
 
 def loda_coords (hd,data,offset,l_type):
 	if l_type < 5 and l_type != 3:
 		loda_coords124 (hd,data,offset,l_type)
 	elif l_type == 3:
 		loda_coords3 (hd,data,offset,l_type)
+	elif l_type == 0x14:
+		loda_coords_poly(hd,data,offset,l_type)
 # insert calls to specific coords parsing here
 
 
@@ -272,7 +285,7 @@ loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bit
 # loda_container 1st 4 bytes -- matches with SPND of the group
 
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
-									0x28:loda_rot_center,
+									0x28:loda_rot_center,0x64:loda_trfd,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
 									0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr
 									}
@@ -306,7 +319,7 @@ def loda (hd,size,data):
 				loda_type_func[argtype](hd,data,offset,l_type)
 			else:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
-			if argtype == 0x1e and l_type >=5:
+			if argtype == 0x1e and l_type >=5 and l_type != 0x14:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 #				print 'Unknown argtype: %x'%argtype                             
 
