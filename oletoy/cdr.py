@@ -38,8 +38,8 @@ def arrw (hd, size, data):
 	coff = 8+struct.unpack('<I', data[10:14])[0]
 	add_iter (hd,"Pnt Types","",14,pnum,"txt")
 	for i in range (pnum):
-		x = struct.unpack('<L', data[coff+i*8:coff+4+i*8])[0]
-		y = struct.unpack('<L', data[coff+4+i*8:coff+8+i*8])[0]
+		x = struct.unpack('<l', data[coff+i*8:coff+4+i*8])[0]
+		y = struct.unpack('<l', data[coff+4+i*8:coff+8+i*8])[0]
 		Type = ord(data[14+i])
 		NodeType = ''
 		# FIXME! Lazy to learn dictionary right now, will fix later
@@ -63,32 +63,20 @@ def arrw (hd, size, data):
 			NodeType = NodeType+'  Curve'
 		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
 			NodeType = NodeType+'  Arc'
-		if x > 0x7FFFFFFF:
-			x -= 0x100000000
-		if y > 0x7FFFFFFF:
-			y -= 0x100000000
 		add_iter (hd,"X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,coff+i*8,8,"txt")
 
 def bbox (hd,size,data):
 	offset = 0
 	for i in range(2):
-		[varX] = struct.unpack('<L', data[offset+i*8:offset+4+i*8])
-		[varY] = struct.unpack('<L', data[offset+4+i*8:offset+8+i*8])
-		if varX > 0x7FFFFFFF:
-			varX = varX - 0x100000000
-		if varY > 0x7FFFFFFF:
-			varY = varY - 0x100000000
+		varX = struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]
+		varY = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
 		add_iter (hd,"X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
 
 def obbx (hd,size,data):
 	offset = 0
 	for i in range(4):
-		[varX] = struct.unpack('<L', data[offset+i*8:offset+4+i*8])
-		[varY] = struct.unpack('<L', data[offset+4+i*8:offset+8+i*8])
-		if varX > 0x7FFFFFFF:
-			varX = varX - 0x100000000
-		if varY > 0x7FFFFFFF:
-			varY = varY - 0x100000000
+		varX = struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]
+		varY = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
 		add_iter (hd,"X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
 
 def clr_model(hd,data,offset):
@@ -174,7 +162,6 @@ def fild (hd,size,data):
 				add_iter (hd, "Color:","%02x %02x %02x %02x\t%u"%(col0,col1,col2,col3,prcnt),mid_offset+14+pal_off+i*pal_len,5,"txt")
 
 
-
 def ftil (hd,size,data):
 	for i in range(6):
 		[var] = struct.unpack('<d', data[i*8:i*8+8]) 
@@ -193,6 +180,11 @@ def loda_rot(hd,data,offset,l_type):
 	[rot] = struct.unpack('<L', data[offset:offset+4])
 	add_iter (hd, "[2efe] Rotate","%u"%round(rot/1000000.0,2),offset,4,"txt")
 
+def loda_rot_center (hd,data,offset,l_type):
+	rotX = struct.unpack('<l', data[offset:offset+4])[0]
+	rotY = struct.unpack('<l', data[offset+4:offset+8])[0]
+	add_iter (hd, "[0028] RotCenter X/Y","%u/%u"%(round(rotX/10000.0,2),round(rotY/10000.0,2)),offset,8,"txt")
+
 def loda_name(hd,data,offset,l_type):
 	if hd.version > 11:
 		layrname = unicode(data[offset:],'utf-16')
@@ -202,24 +194,23 @@ def loda_name(hd,data,offset,l_type):
 
 def loda_polygon (hd,data,offset,l_type):
 	num = struct.unpack('<L', data[offset+4:offset+8])[0]
-	add_iter (hd,"[2af8] # of angles",num,offset,4,"<I")
-	for i in range(4):
-		[varX] = struct.unpack('<L', data[offset+0x10+i*8:offset+0x14+i*8])
-		[varY] = struct.unpack('<L', data[offset+0x14+i*8:offset+0x18+i*8])
-		if varX > 0x7FFFFFFF:
-			varX = varX - 0x100000000
-		if varY > 0x7FFFFFFF:
-			varY = varY - 0x100000000
-		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x10+i*8,8,"txt")
+	add_iter (hd,"[2af8] # of angles",num,offset+4,4,"<I")
+	num = struct.unpack('<L', data[offset+8:offset+0xc])[0]
+	add_iter (hd,"[2af8] next point?",num,offset+8,4,"<I")
+	var = struct.unpack('<d', data[offset+0x10:offset+0x10+8])[0]
+	add_iter (hd,"[2af8] var1 ?",var,offset+0x10,8,"<d")
+	var = struct.unpack('<d', data[offset+0x18:offset+0x18+8])[0]
+	add_iter (hd,"[2af8] var2 ?",var,offset+0x18,8,"<d")
+	
+	for i in range(2):
+		varX = struct.unpack('<l', data[offset+0x18+i*8:offset+0x1c+i*8])[0]
+		varY = struct.unpack('<l', data[offset+0x1c+i*8:offset+0x20+i*8])[0]
+		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x18+i*8,8,"txt")
 
 def loda_coords124 (hd,data,offset,l_type):
 # rectangle or ellipse or text
-	x1 = struct.unpack('<L', data[offset:offset+4])[0]
-	y1 = struct.unpack('<L', data[offset+4:offset+8])[0]
-	if x1 > 0x7FFFFFFF:
-		x1 -= 0x100000000
-	if y1 > 0x7FFFFFFF:
-		y1 -= 0x100000000
+	x1 = struct.unpack('<l', data[offset:offset+4])[0]
+	y1 = struct.unpack('<l', data[offset+4:offset+8])[0]
 	add_iter (hd,"[001e] x1/y1","%u/%u mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
 
 	if l_type == 1:
@@ -233,13 +224,13 @@ def loda_coords124 (hd,data,offset,l_type):
 		a1 = struct.unpack('<L', data[offset+8:offset+12])[0]
 		a2 = struct.unpack('<L', data[offset+12:offset+16])[0]
 		a3 = struct.unpack('<L', data[offset+16:offset+20])[0]
-		add_iter (hd,"[001e] Start/End/Rot angles","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
+		add_iter (hd,"[001e] Start/End Rot angles; Pie flag","%u %u %u"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
 
 def loda_coords3 (hd,data,offset,l_type):
 	[pointnum] = struct.unpack('<L', data[offset:offset+4])
 	for i in range (pointnum):
-		x = struct.unpack('<L', data[offset+4+i*8:offset+8+i*8])[0]
-		y = struct.unpack('<L', data[offset+8+i*8:offset+12+i*8])[0]
+		x = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
+		y = struct.unpack('<l', data[offset+8+i*8:offset+12+i*8])[0]
 		Type = ord(data[offset+4+pointnum*8+i])
 		NodeType = ''
 		# FIXME! Lazy to learn dictionary right now, will fix later
@@ -263,10 +254,6 @@ def loda_coords3 (hd,data,offset,l_type):
 			NodeType = NodeType+'  Curve'
 		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
 			NodeType = NodeType+'  Arc'
-		if x > 0x7FFFFFFF:
-			x -= 0x100000000
-		if y > 0x7FFFFFFF:
-			y -= 0x100000000
 		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt")
 
 def loda_coords (hd,data,offset,l_type):
@@ -285,6 +272,7 @@ loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bit
 # loda_container 1st 4 bytes -- matches with SPND of the group
 
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
+									0x28:loda_rot_center,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
 									0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr
 									}

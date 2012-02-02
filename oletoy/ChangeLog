@@ -1,3 +1,9 @@
+2012-02-01  Valek Filippov
+
+		* CDR: Added rotation centre in loda (thanks to AP);
+		fixed 0x1e loda for ellipse (thanks Fridrich);
+		fixed and improved 0x2af8 loda for polygon.
+
 2012-01-31  Valek Filippov
 
 		* ZIP: support for PKZIP and recursive load.
