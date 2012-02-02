@@ -267,6 +267,38 @@ def loda_coords_poly (hd,data,offset,l_type):
 	add_iter (hd,"[001e] var1/var2 ?","%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2)),offset+4+pn*9,8,"txt")
 
 
+def loda_coords_0x25(hd,data,offset,l_type):
+	numpts = 3+struct.unpack("<H",data[offset+4:offset+6])[0]
+	off = offset +8
+	for i in range (numpts):
+		x = struct.unpack('<l', data[off+i*8:off+4+i*8])[0]
+		y = struct.unpack('<l', data[off+4+i*8:off+8+i*8])[0]
+		Type = ord(data[off+numpts*8+i])
+		NodeType = ''
+		# FIXME! Lazy to learn dictionary right now, will fix later
+		if Type&2 == 2:
+			NodeType = '    Char. start'
+		if Type&4 == 4:
+			NodeType = NodeType+'  Can modify'
+		if Type&8 == 8:
+			NodeType = NodeType+'  Closed path'
+		if Type&0x10 == 0 and Type&0x20 == 0:
+			NodeType = NodeType+'  Discontinued'
+		if Type&0x10 == 0x10:
+			NodeType = NodeType+'  Smooth'
+		if Type&0x20 == 0x20:
+			NodeType = NodeType+'  Symmetric'
+		if Type&0x40 == 0 and Type&0x80 == 0:
+			NodeType = NodeType+'  START'
+		if Type&0x40 == 0x40 and Type&0x80 == 0:
+			NodeType = NodeType+'  Line'
+		if Type&0x40 == 0 and Type&0x80 == 0x80:
+			NodeType = NodeType+'  Curve'
+		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
+			NodeType = NodeType+'  Arc'
+		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,off+i*8,8,"txt",off+numpts*8+i,1)
+ 
+
 def loda_coords (hd,data,offset,l_type):
 	if l_type < 5 and l_type != 3:
 		loda_coords124 (hd,data,offset,l_type)
@@ -274,13 +306,18 @@ def loda_coords (hd,data,offset,l_type):
 		loda_coords3 (hd,data,offset,l_type)
 	elif l_type == 0x14:
 		loda_coords_poly(hd,data,offset,l_type)
+	elif l_type == 0x25:
+		loda_coords_0x25(hd,data,offset,l_type)
 # insert calls to specific coords parsing here
+	else:
+		add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+
 
 
 def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
-loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x25:"0x25 ???"}
+loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x25:"Path ??"}
 
 # loda_container 1st 4 bytes -- matches with SPND of the group
 
@@ -318,8 +355,6 @@ def loda (hd,size,data):
 			if loda_type_func.has_key(argtype):
 				loda_type_func[argtype](hd,data,offset,l_type)
 			else:
-				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
-			if argtype == 0x1e and l_type >=5 and l_type != 0x14:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 #				print 'Unknown argtype: %x'%argtype                             
 

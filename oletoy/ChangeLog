@@ -3,7 +3,8 @@
 		* CDR: Added rotation centre in loda (thanks to AP);
 		fixed 0x1e loda for ellipse (thanks Fridrich);
 		fixed and improved 0x2af8 loda for polygon;
-		fixed 0x1e for polygon.
+		fixed 0x1e for polygon;
+		0x25 is path?
 
 2012-01-31  Valek Filippov
 
