@@ -735,7 +735,10 @@ Hexdump selection:\n\
 						svm.svm_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cdr":
 					if cdr.cdr_ids.has_key(ntype[1]):
-						cdr.cdr_ids[ntype[1]](hd,size,data)
+						if ntype[1] == 'DISP':
+							cdr.cdr_ids[ntype[1]](hd,size,data,self.das[pn])
+						else:
+							cdr.cdr_ids[ntype[1]](hd,size,data)
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)

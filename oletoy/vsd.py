@@ -60,90 +60,70 @@ streamtype = {
 	0xd7:'FontFace',0xd8:'FontFaces'}
 
 def hdr (hd, data):
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Sig", 1, data[0:0x12],2,0,3,0x12,4,"txt")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Version", 1, "%d"%ord(data[0x1a]),2,0x1a,3,1,4,"<B")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "Size", 1, "0x%02x"%struct.unpack("<I",data[0x1c:0x20]),2,0x1c,3,4,4,"<I")
+	# display pat of header in hd_view
+	add_iter(hd,"Sig",data[0:0x12],0,0x12,"txt")
+	add_iter(hd,"Version", "%d"%ord(data[0x1a]),0x1a,1,"<B")
+	add_iter(hd,"Size","0x%02x"%struct.unpack("<I",data[0x1c:0x20]),0x1c,4,"<I")
 
 def parse (page, data, parent):
-		ver_offset = 0x1a
-		size_offset = 0x1c
-		trlr_offset = 0x24
+	ver_offset = 0x1a
+	size_offset = 0x1c
+	trlr_offset = 0x24
 
-		model = page.model
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Header")
-		model.set_value(iter1,1,("vsd","hdr"))
-		model.set_value(iter1,2,0x24)
-		model.set_value(iter1,3,data[0:0x24])
-		model.set_value(iter1,6,model.get_string_from_iter(iter1))
+	model = page.model
+	add_pgiter(page,"Header","vsd","hdr",data[0:0x24],parent)
 
-		version = ord(data[ver_offset])
-		page.version = version
-		print "Version: %d"%version
-		print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
-		if version > 6:
-		  lenhdr2 = 74
-		else:
-		  lenhdr2 = 4  
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Header part2")
-		model.set_value(iter1,1,("vsd","hdr2"))
-		model.set_value(iter1,2,0x36)
-		model.set_value(iter1,3,data[0x36:0x36+lenhdr2])
-		model.set_value(iter1,6,model.get_string_from_iter(iter1))
+	version = ord(data[ver_offset])
+	page.version = version
+	print "Version: %d"%version
+	print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
+	if version > 6:
+	  lenhdr2 = 74
+	else:
+	  lenhdr2 = 4
+	add_pgiter(page,"Header part2","vsd","hdr2",data[0x36:0x36+lenhdr2],parent)
+	tr_pntr = pointer()
+	if version < 6:
+		pdata = data[trlr_offset:trlr_offset+16]
+		plen = 16
+		[tr_pntr.type] = struct.unpack('<h', pdata[0:2])
+		[tr_pntr.format] = struct.unpack('<h', pdata[2:4])
+		[tr_pntr.address] = struct.unpack('<L', pdata[4:8])
+		[tr_pntr.offset] = struct.unpack('<L', pdata[8:12])
+		[tr_pntr.length] = struct.unpack('<L', pdata[12:16])
+	else:
+		pdata = data[trlr_offset:trlr_offset+18]
+		plen = 18
+		[tr_pntr.type] = struct.unpack('<L', pdata[0:4])
+		[tr_pntr.address] = struct.unpack('<L', pdata[4:8])
+		[tr_pntr.offset] = struct.unpack('<L', pdata[8:12])
+		[tr_pntr.length] = struct.unpack('<L', pdata[12:16])
+		[tr_pntr.format] = struct.unpack('<h', pdata[16:18])
 
-		
-		tr_pntr = pointer()
-		if version < 6:
-			pdata = data[trlr_offset:trlr_offset+16]
-			plen = 16
-			[tr_pntr.type] = struct.unpack('<h', pdata[0:2])
-			[tr_pntr.format] = struct.unpack('<h', pdata[2:4])
-			[tr_pntr.address] = struct.unpack('<L', pdata[4:8])
-			[tr_pntr.offset] = struct.unpack('<L', pdata[8:12])
-			[tr_pntr.length] = struct.unpack('<L', pdata[12:16])
-		else:
-			pdata = data[trlr_offset:trlr_offset+18]
-			plen = 18
-			[tr_pntr.type] = struct.unpack('<L', pdata[0:4])
-			[tr_pntr.address] = struct.unpack('<L', pdata[4:8])
-			[tr_pntr.offset] = struct.unpack('<L', pdata[8:12])
-			[tr_pntr.length] = struct.unpack('<L', pdata[12:16])
-			[tr_pntr.format] = struct.unpack('<h', pdata[16:18])
+	if tr_pntr.format&2 == 2 : #compressed
+		res = inflate.inflate(tr_pntr, data)
+		tr_pntr.shift = 4
+	else:
+		res = data[tr_pntr.offset:tr_pntr.offset+tr_pntr.length]
+		tr_pntr.shift = 0
+	tr_pntr.data = res
+	# FIXME!!! Need to change add_pgiter to deal with "("vsd","pntr",tr_pntr.type)"
+	iter1 = model.append(parent,None)
+	model.set_value(iter1,0,"Trailer\t\t  %04x\t"%(tr_pntr.length))
+	model.set_value(iter1,1,("vsd","pntr",tr_pntr.type))
+	model.set_value(iter1,2,plen)
+	model.set_value(iter1,3,pdata)
+	model.set_value(iter1,4,tr_pntr)
+	model.set_value(iter1,6,model.get_string_from_iter(iter1))
+	if tr_pntr.format != 0:
+		model.set_value(iter1,7,"%02x"%tr_pntr.format)
+	iter2 = add_pgiter(page,"[Data referenced by trailer]","vsd","str5",res,iter1)
+	model.set_value(iter2,5,"#96dfcf")
+	try:
+	  ptr_search (page, data, version, iter1)
+	except:
+	  print "ptr_search failed in trailer"
 
-		if tr_pntr.format&2 == 2 : #compressed
-			res = inflate.inflate(tr_pntr, data)
-			tr_pntr.shift = 4
-		else:
-			res = data[tr_pntr.offset:tr_pntr.offset+tr_pntr.length]
-			tr_pntr.shift = 0
-		tr_pntr.data = res
-		iter1 = model.append(parent,None)
-		model.set_value(iter1,0,"Trailer\t\t  %04x\t"%(tr_pntr.length))
-		model.set_value(iter1,1,("vsd","pntr",tr_pntr.type))
-		model.set_value(iter1,2,plen)
-		model.set_value(iter1,3,pdata)
-		model.set_value(iter1,4,tr_pntr)
-		model.set_value(iter1,6,model.get_string_from_iter(iter1))
-		if tr_pntr.format != 0:
-			model.set_value(iter1,7,"%02x"%tr_pntr.format)
-
-		iter2 = model.append(iter1,None)
-		model.set_value(iter2,0,"[Data referenced by trailer]")
-		model.set_value(iter2,1,("vsd","str5"))
-		model.set_value(iter2,2,len(res))
-		model.set_value(iter2,3,res)
-		model.set_value(iter2,6,model.get_string_from_iter(iter2))
-		model.set_value(iter2,5,"#96dfcf")
-
-		try:
-		  ptr_search (page, data, version, iter1)
-		except:
-		  print "ptr_search failed in trailer"
-		  
 def ptr_search (page, data, version, parent):
 	model = page.model
 	namelist = 0
@@ -229,6 +209,7 @@ def ptr_search (page, data, version, parent):
 			  res = data[pntr.offset:pntr.offset+pntr.length]
 			  pntr.shift = 0
 		  pntr.data = res
+		  # FIXME!!! same change for add_pgiter required to take "pntr.type"
 		  iter1 = model.append(parent,None)
 		  model.set_value(iter1,0,itername)
 		  model.set_value(iter1,1,("vsd","pntr",pntr.type))

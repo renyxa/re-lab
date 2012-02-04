@@ -1,3 +1,8 @@
+2012-02-03  Valek Filippov
+
+		* CDR: impove "DISP" handling
+		* VSD: some clean-up
+
 2012-02-01  Valek Filippov
 
 		* CDR: Added rotation centre in loda (thanks to AP);

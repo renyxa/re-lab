@@ -33,6 +33,7 @@ class Page:
 		self.search = None
 		self.wdoc = None  # need to store 'WordDocument' stream
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
+		self.win = None # for preview
 
 	def fload(self,buf="",parent=None):
 		if buf == "":

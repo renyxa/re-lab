@@ -376,7 +376,7 @@ def disp_expose (da, event,pixbuf):
 	ctx.paint()
 	ctx.stroke()
 
-def disp (hd,size,data):
+def disp (hd,size,data,page):
 	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
 	bmpoff = struct.pack("<I",len(data)+10-bmp)
 	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
@@ -386,13 +386,14 @@ def disp (hd,size,data):
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-
-	win = gtk.Window()
-	win.set_default_size(imgw, imgh)
+	if page.win != None:
+		page.win.destroy()
+	page.win = gtk.Window()
+	page.win.set_default_size(imgw, imgh)
 	da = gtk.DrawingArea()
-	win.add(da)
+	page.win.add(da)
 	da.connect('expose_event', disp_expose,pixbuf)
-	win.show_all()
+	page.win.show_all()
 
 cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp}
 
@@ -467,12 +468,7 @@ class cdrChunk:
 			self.rawsize += 1
 
 		self.name = self.chunk_name()
-		f_iter = page.model.append(parent,None)
-		page.model.set_value(f_iter,0,self.name+" %02x"%id)
-		page.model.set_value(f_iter,1,("cdr",self.name))
-		page.model.set_value(f_iter,2,self.rawsize)
-		page.model.set_value(f_iter,3,self.data)
-		page.model.set_value(f_iter,6,page.model.get_string_from_iter(f_iter))
+		f_iter = add_pgiter(page,self.name+" %02x"%id,"cdr",self.name,self.data,parent)
 		if self.name == "outl" or self.name == "fild" or self.name == "arrw":
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_path(f_iter))
