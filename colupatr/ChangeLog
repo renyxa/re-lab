@@ -1,3 +1,7 @@
+2012-02-04  Valek Filippov <frob@df.ru>
+
+	* Improvements for 'goto'.
+
 2012-01-27  Valek Filippov <frob@df.ru>
 
 	* Fixed 'goto'

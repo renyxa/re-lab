@@ -19,7 +19,7 @@ import gtk,gobject
 import hexview
 import utils
 
-version = "0.3.3"
+version = "0.3.5"
 
 ui_info = \
 '''<ui>
@@ -194,11 +194,11 @@ class ApplicationMainWindow(gtk.Window):
 	def on_div_entry_activate (self,entry):
 		n = entry.get_text()
 		try:
-			self.options_div = int(n)
+			self.options_div = float(n)
 			if self.statbuffer != "":
 				self.calc_status(self.statbuffer,len(self.statbuffer))
 		except:
-			entry.set_text("%d"%self.options_div)
+			entry.set_text("%.2f"%self.options_div)
 		print "Div set to",self.options_div
 
 	def on_option_toggled (self,button):
@@ -240,7 +240,7 @@ class ApplicationMainWindow(gtk.Window):
 		div_lbl = gtk.Label("Div")
 		div_entry = gtk.Entry()
 		div_entry.connect("activate",self.on_div_entry_activate)
-		div_entry.set_text("%d"%self.options_div)
+		div_entry.set_text("%.2f"%self.options_div)
 		hbox1.pack_start(div_lbl)
 		hbox1.pack_start(div_entry)
 
@@ -526,9 +526,28 @@ class ApplicationMainWindow(gtk.Window):
 					doc.expose(None,None)
 
 				elif cmd[0].lower() == "goto":
+					addr = 0
+					addrflag = 0
 					if len(cmd) > 1:
 						try:
-							addr = int(cmd[1][:8],16)
+							goto = cmdline[4:]
+							pos = goto.find("+")
+							if pos != -1:
+								if pos == 1:
+									addr = doc.lines[doc.curr][0]+doc.curc+int(goto[pos+1:],16)
+									addrflag = 1
+								else:
+									addr = int(goto[1:pos],16)+int(goto[pos+1:],16)
+							else:
+								pos = goto.find("-")
+								if pos != -1:
+									if pos == 1:
+										addr = doc.lines[doc.curr][0]+doc.curc-int(goto[pos+1:],16)
+										addrflag = 1
+									else:
+										addr = int(goto[1:pos],16)-int(goto[pos+1:],16)
+								else:
+									addr = int(goto[1:], 16)
 							print "Addr: ",addr
 						except:
 							print "Wrong string for Hex address"
@@ -562,6 +581,10 @@ class ApplicationMainWindow(gtk.Window):
 								break
 								
 						print "Lnum found",lnum,"%x %x"%(doc.lines[lnum][0],doc.lines[lnum+1][0])
+						if addrflag == 0:
+							self.entry.set_text("goto %x"%addr)
+						doc.curr = lnum
+						doc.curc = doc.lines[lnum][0] - addr
 						doc.offnum = min(lnum,llast-doc.numtl)
 						doc.offset = doc.lines[lnum][0]
 
