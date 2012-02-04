@@ -208,7 +208,7 @@ def loda_polygon (hd,data,offset,l_type):
 	for i in range(2):
 		varX = struct.unpack('<l', data[offset+0x18+i*8:offset+0x1c+i*8])[0]
 		varY = struct.unpack('<l', data[offset+0x1c+i*8:offset+0x20+i*8])[0]
-		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x18+i*8,8,"txt")
+		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x18+8+i*8,8,"txt")
 
 def loda_coords124 (hd,data,offset,l_type):
 # rectangle or ellipse or text
