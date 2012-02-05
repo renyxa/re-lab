@@ -17,6 +17,7 @@
 import gtk
 import cairo
 import struct
+import utils
 
 class HexView():
 	def __init__(self,data=None,lines=[],comments={},offset=0):
@@ -417,6 +418,49 @@ class HexView():
 			c += offset-roff
 		return row+i,c-1
 
+	def insert_comment(self,text="",offset=None,length=1,auto=0):
+		if offset == None:
+			offset = self.lines[self.curr][0]+self.curc
+		if text:
+			mode = self.lines[self.curr][1]
+			if self.lines[self.curr][1] < 2:
+				mode += 2
+				old_coff = -1
+			else:
+				old_coff = self.lines[self.curr][2]
+
+			if self.keep_cmnt:
+				self.comments[self.lines[self.curr][2]] = (self.comments[self.lines[self.curr][2]][0],text)
+				self.keep_cmnt = 0
+			else:
+				s = 1
+				if auto == 0:
+					if self.cursor_in_sel():
+						for i in range(self.sel[2]-self.sel[0]-1):
+							l = self.sel[0]+i+1
+							self.lines[l] = (self.lines[l][0],0)
+						l = self.sel[0]
+						offset = self.lines[self.sel[0]][0]+self.sel[1]
+						self.lines[l] = (self.lines[l][0],2,offset)
+						s = self.get_sel_len()
+					else:
+						self.lines[self.curr] = (self.lines[self.curr][0],mode,offset)
+				else:
+					l = utils.find_line(self,offset)
+					self.lines[l] = (self.lines[l][0],2,offset)
+					s = length
+				self.comments[offset] = (s,text)
+
+				if auto == 0 and old_coff != offset:
+					if self.comments.has_key(old_coff):
+						del self.comments[old_coff]
+		else:
+			self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
+			if self.comments.has_key(offset):
+				del self.comments[offset]
+		if auto:
+			self.expose(None,None)
+
 	def entry_key_pressed(self, entry, event):
 		# inserting comment
 		if event.keyval == 65307: # Esc
@@ -424,39 +468,8 @@ class HexView():
 			entry.set_text("")
 		elif event.keyval == 65293: # Enter
 			self.ewin.hide()
-			cmnt_offset = self.lines[self.curr][0]+self.curc
-			if entry.get_text():
-				mode = self.lines[self.curr][1]
-				if self.lines[self.curr][1] < 2:
-					mode += 2
-					old_coff = -1
-				else:
-					old_coff = self.lines[self.curr][2]
-
-				if self.keep_cmnt:
-					self.comments[self.lines[self.curr][2]] = (self.comments[self.lines[self.curr][2]][0],entry.get_text())
-					self.keep_cmnt = 0
-				else:
-					s = 1
-					if self.cursor_in_sel():
-						for i in range(self.sel[2]-self.sel[0]-1):
-							l = self.sel[0]+i+1
-							self.lines[l] = (self.lines[l][0],0)
-						l = self.sel[0]
-						cmnt_offset = self.lines[self.sel[0]][0]+self.sel[1]
-						self.lines[l] = (self.lines[l][0],2,cmnt_offset)
-						s = self.get_sel_len()
-					else:
-						self.lines[self.curr] = (self.lines[self.curr][0],mode,cmnt_offset)
-					self.comments[cmnt_offset] = (s,entry.get_text())	
-
-					if old_coff != cmnt_offset:
-						if self.comments.has_key(old_coff):
-							del self.comments[old_coff]
-			else:
-				self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
-				if self.comments.has_key(cmnt_offset):
-					del self.comments[cmnt_offset]
+			txt = entry.get_text()
+			self.insert_comment(txt)
 
 	def on_key_release (self, view, event):
 		# part of the data selection from keyboard

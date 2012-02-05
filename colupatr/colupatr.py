@@ -562,29 +562,12 @@ class ApplicationMainWindow(gtk.Window):
 					# try to validate/scroll
 					llast = len(doc.lines)
 					if addr < doc.lines[len(doc.lines)-1][0]:
-						lno = 0
-						lnum = addr/16
-						while lnum < len(doc.lines) and lno != lnum:
-							lno = lnum
-							if doc.lines[lnum][0] < addr:
-								if doc.lines[lnum+1][0] > addr:
-									break
-								elif doc.lines[lnum+1][0] == addr:
-									lnum += 1
-								else:
-									lnum += (addr - doc.lines[lnum+1][0])/16
-							elif  doc.lines[lnum][0] == addr:
-								break
-							else:
-								lnum -= (doc.lines[lnum][0] - addr)/16
-							if lnum < 0:
-								break
-								
+						lnum = utils.find_line(doc,addr)
 						print "Lnum found",lnum,"%x %x"%(doc.lines[lnum][0],doc.lines[lnum+1][0])
 						if addrflag == 0:
 							self.entry.set_text("goto %x"%addr)
 						doc.curr = lnum
-						doc.curc = doc.lines[lnum][0] - addr
+						doc.curc = addr - doc.lines[lnum][0]
 						doc.offnum = min(lnum,llast-doc.numtl)
 						doc.offset = doc.lines[lnum][0]
 
@@ -596,6 +579,24 @@ class ApplicationMainWindow(gtk.Window):
 					doc.expose(doc.hv,action)
 				elif cmdline[0] == "?":
 					utils.cmd_parse(cmdline,self,doc)
+				elif cmdline[0] == "!":
+					args = cmdline[1:].split(";")
+					arg0 = None
+					arg1 = None
+					arg2 = 1
+					if len(args) > 2 and len(args[2])>0:
+						try:
+							arg2 = int(args[2],16)
+						except:
+							arg2 = 1
+					if len(args) > 1 and len(args[1])>0:
+						try:
+							arg1 = int(args[1],16)
+						except:
+							arg1 = None
+					if len(args) > 0:
+						arg0 = args[0]
+					doc.insert_comment(arg0,arg1,arg2,1)
 
 	def on_search_row_activated(self, view, path, column):
 		treeSelection = view.get_selection()

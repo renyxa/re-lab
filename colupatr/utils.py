@@ -41,12 +41,39 @@ def arg_conv (ctype,carg):
 		data = carg
 	return data
 
+def find_line (doc,addr):
+	if addr < doc.lines[len(doc.lines)-1][0]:
+		lno = 0
+		lnum = addr/16
+		while lnum < len(doc.lines) and lno != lnum:
+			lno = lnum
+			if doc.lines[lnum][0] < addr:
+				if doc.lines[lnum+1][0] > addr:
+					break
+				elif doc.lines[lnum+1][0] == addr:
+					lnum += 1
+				else:
+					lnum += (addr - doc.lines[lnum+1][0])/16
+			elif  doc.lines[lnum][0] == addr:
+				break
+			else:
+				lnum -= (doc.lines[lnum][0] - addr)/16
+			if lnum < 0:
+				break
+		return lnum
+
+
 def cmd_parse(cmd, app,doc):
 	if cmd[0] == "?":
-		ctype = cmd[1]
-		carg = cmd[2:]
+		if len(cmd) > 1:
+			ctype = cmd[1]
+			carg = cmd[2:]
 		# convert line to hex or unicode if required
-		data = arg_conv(ctype,carg)
+			data = arg_conv(ctype,carg)
+		elif doc.sel:
+			r1,c1,r2,c2 = doc.sel
+			data = doc.data[doc.lines[r1][0]+c1:doc.lines[r2][0]+c2]
+			carg = "Selection"
 		app.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
 		sflag = 0
 		p = doc.data.find(data)

@@ -1,6 +1,8 @@
 2012-02-04  Valek Filippov <frob@df.ru>
 
 	* Improvements for 'goto'.
+	* Search for selection.
+	* Add "!" for "insert/remove comment"
 
 2012-01-27  Valek Filippov <frob@df.ru>
 
