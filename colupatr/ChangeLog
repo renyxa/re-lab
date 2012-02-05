@@ -2,7 +2,8 @@
 
 	* Improvements for 'goto'.
 	* Search for selection.
-	* Add "!" for "insert/remove comment"
+	* Add "!" for "insert/remove comment".
+	* Add "/" for "insert separator".
 
 2012-01-27  Valek Filippov <frob@df.ru>
 

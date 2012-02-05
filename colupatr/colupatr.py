@@ -597,6 +597,30 @@ class ApplicationMainWindow(gtk.Window):
 					if len(args) > 0:
 						arg0 = args[0]
 					doc.insert_comment(arg0,arg1,arg2,1)
+				elif cmdline[0] == "/":
+					if len(cmdline) > 1:
+						arg = cmdline[1:]
+						try:
+							addr = int(arg,16)
+							lnum = utils.find_line (doc,addr)
+							cnum = addr - doc.lines[lnum][0]
+						except:
+							print "Invalid offset"
+					else:
+						lnum = doc.curr
+						cnum = doc.curc
+					if lnum > 0:
+						if cnum > 0:
+							doc.fmt(lnum,[cnum])
+							lnum += 1
+							doc.curr = lnum
+							doc.curc = 0
+						if doc.lines[lnum-1][1] == 0:
+							doc.lines[lnum-1] = (doc.lines[lnum-1][0],1)
+						elif doc.lines[lnum-1][1] == 2:
+							doc.lines[lnum-1] = (doc.lines[lnum-1][0],3,doc.lines[lnum-1][2])
+						doc.expose(None,None)
+
 
 	def on_search_row_activated(self, view, path, column):
 		treeSelection = view.get_selection()
