@@ -19,7 +19,7 @@ import gtk,gobject
 import hexview
 import utils
 
-version = "0.3.5"
+version = "0.4.2"
 
 ui_info = \
 '''<ui>
@@ -675,6 +675,12 @@ class ApplicationMainWindow(gtk.Window):
 				clipboard.request_text(self.get_clp_text)
 				self.entry.set_text("")
 				return True
+		elif event.state == gtk.gdk.CONTROL_MASK and event.keyval == 32 : # ^Space
+			pn = self.notebook.get_current_page()
+			if pn != -1:
+				doc = self.das[pn]
+				doc.hv.grab_focus()
+			return True
 		elif event.state&gtk.gdk.MOD1_MASK == gtk.gdk.MOD1_MASK:
 				event.state = event.state&0x3ff7 # exclude Alt
 				pn = self.notebook.get_current_page()

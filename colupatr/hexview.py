@@ -103,7 +103,8 @@ class HexView():
 			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, # ^C for 'copy'
 			122:self.okp_undo, # ^Z for 'undo'
-			105:self.okp_ins	# i for Insert
+			105:self.okp_ins,	# i for Insert
+			32:self.okp_switch	# space to switch focus
 			}
 
 
@@ -114,6 +115,10 @@ class HexView():
 				self.hvlines.append("")
 				self.bkhvlines.append("")
 			self.set_maxaddr()
+
+	def okp_switch(self,event):
+		if event.state == gtk.gdk.CONTROL_MASK:
+			self.parent.entry.grab_focus()
 
 	def okp_tab(self,event):
 		self.exposed = 0
@@ -278,19 +283,31 @@ class HexView():
 		self.ewin.move(xs,ys)
 
 	def okp_selall(self,event):
-		self.sel = 0,0,self.numtl,self.lines[self.numtl-1][0]
+		if event.state == gtk.gdk.CONTROL_MASK:
+			self.sel = 0,0,self.numtl,self.lines[self.numtl-1][0]
+			self.expose(None,event)
 
 	def okp_copy(self,event):
-			#FIXME: this doesn't work
 			#	copy selection to clipboard
-			clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-			clp.set_text("test")
+			if event.state == gtk.gdk.CONTROL_MASK and self.sel:
+				clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+				r1,c1,r2,c2 = self.sel
+				if r1 == r2:
+					text = self.hvlines[r1][0][c1*3:c2*3]
+				else:
+					text = self.hvlines[r1][0][c1*3:] + "\n"
+					for i in range(r2-r1-1):
+						text += self.hvlines[r1+i+1][0] + "\n"
+					text += self.hvlines[r2][0][:c2*3]
+				clp.set_text(text)
+				clp.store()
 
 	def okp_undo(self,event):
-		self.lines = self.bklines
-		self.hvlines = self.bkhvlines
-		self.set_maxaddr()
-		self.exposed = 1
+		if event.state == gtk.gdk.CONTROL_MASK:
+			self.lines = self.bklines
+			self.hvlines = self.bkhvlines
+			self.set_maxaddr()
+			self.exposed = 1
 
 	def okp_bksp(self,event):
 		# at start of the row it joins full row to the previous one
@@ -515,8 +532,6 @@ class HexView():
 
 		if self.offnum > max(len(self.lines)-self.numtl,0):
 			self.offnum = len(self.lines)-self.numtl
-
-
 
 		if event.state == gtk.gdk.SHIFT_MASK:
 			if self.sel != None:

@@ -4,6 +4,8 @@
 	* Search for selection.
 	* Add "!" for "insert/remove comment".
 	* Add "/" for "insert separator".
+	* Fix 'copy to clipboard'
+	* Switch focus by ^Space.
 
 2012-01-27  Valek Filippov <frob@df.ru>
 
