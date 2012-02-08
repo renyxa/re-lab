@@ -116,7 +116,7 @@ def fild (hd,size,data):
 	if fill_types.has_key(fill_type):
 		ft_txt += " "+fill_types[fill_type]
 	add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
-	if fill_type > 0:
+	if fill_type > 0 and fill_type != 7:
 		clr_model = struct.unpack('<h', data[8:0xa])[0]
 		clrm_txt = "%d"%clr_model
 		if clr_models.has_key(clr_model):
@@ -160,6 +160,12 @@ def fild (hd,size,data):
 				col3=ord(data[mid_offset+17+pal_off+i*pal_len])          #       ??              KK
 				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
 				add_iter (hd, "Color:","%02x %02x %02x %02x\t%u"%(col0,col1,col2,col3,prcnt),mid_offset+14+pal_off+i*pal_len,5,"txt")
+	elif fild_type == 7:
+		add_iter (hd,"Pattern ID", struct.unpack('<I', data[8:12])[0],8,4,"txt")
+		# Colors (model + color) started at 0x1c and 0x28
+
+def bmpf (hd,size,data):
+	add_iter (hd,"Pattern ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
 
 
 def ftil (hd,size,data):
@@ -469,7 +475,7 @@ class cdrChunk:
 
 		self.name = self.chunk_name()
 		f_iter = add_pgiter(page,self.name+" %02x"%id,"cdr",self.name,self.data,parent)
-		if self.name == "outl" or self.name == "fild" or self.name == "arrw":
+		if self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf":
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_path(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
