@@ -167,6 +167,8 @@ def fild (hd,size,data):
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
 
+def bmp (hd,size,data):
+	add_iter (hd,"Image ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
 
 def ftil (hd,size,data):
 	for i in range(6):
@@ -266,6 +268,22 @@ def loda_coords3 (hd,data,offset,l_type):
 		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt",offset+4+pointnum*8+i,1)
 	return pointnum
 
+def loda_coords5 (hd,data,offset,l_type):
+	for i in range (4):
+		x = struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]
+		y = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
+		add_iter (hd,"[001e] X%u/Y%u"%(i+1,i+1),"%u/%u mm"%(round(x/10000.0,2),round(y/10000.0,2)),offset+i*8,8,"txt")
+	offset += 32
+	add_iter (hd,"[001e] var1?",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
+	add_iter (hd,"[001e] BPP?",struct.unpack("<H",data[offset+2:offset+4])[0],offset+2,2,"<H")
+	add_iter (hd,"[001e] Img Width (px)",struct.unpack("<I",data[offset+4:offset+8])[0],offset+4,4,"<I")
+	add_iter (hd,"[001e] Img Height (px)",struct.unpack("<I",data[offset+8:offset+12])[0],offset+8,4,"<I")
+	offset += 16
+	add_iter (hd,"[001e] Image ID",struct.unpack("<I",data[offset:offset+4])[0],offset,4,"<I")
+	offset += 24
+	loda_coords3 (hd,data,offset,l_type)
+
+
 def loda_coords_poly (hd,data,offset,l_type):
 	pn = loda_coords3 (hd,data,offset,l_type)
 	x = struct.unpack('<l', data[offset+4+pn*9:offset+4+pn*9+4])[0]
@@ -314,6 +332,8 @@ def loda_coords (hd,data,offset,l_type):
 		loda_coords_poly(hd,data,offset,l_type)
 	elif l_type == 0x25:
 		loda_coords_0x25(hd,data,offset,l_type)
+	elif l_type == 5:
+		loda_coords5 (hd,data,offset,l_type)
 # insert calls to specific coords parsing here
 	else:
 		add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
@@ -383,6 +403,7 @@ def disp_expose (da, event,pixbuf):
 	ctx.stroke()
 
 def disp (hd,size,data,page):
+	# naive version, not always works as needed
 	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
 	bmpoff = struct.pack("<I",len(data)+10-bmp)
 	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
@@ -401,7 +422,9 @@ def disp (hd,size,data,page):
 	da.connect('expose_event', disp_expose,pixbuf)
 	page.win.show_all()
 
-cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp}
+cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,
+	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp
+	}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
