@@ -49,8 +49,17 @@ def fib_base (hd, data):
 	off += 2
 	add_iter(hd,"pnNext",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	# FIXME
-	add_iter(hd,"FixMe (flags)",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
+	flags = struct.unpack("<H",data[off:off+2])[0]
+	fdict = {0:"fDot",1:"fGlsy",2:"fComplex",3:"fHasPic",
+		8:"fEncrypted",9:"fWhichTblStm",10:"fReadOnlyRecommended",11:"fWriteReservation",
+		12:"fExtChar",13:"fLoadOverride",14:"fFarEast",15:"fObfuscated"}
+	fnames = []
+	for i in range(0, 4):
+		fnames.append("%s: %d" % (fdict[i], bool(flags&(2**i))))
+	fnames.append("cQuickSaves: %d" % (flags >> 4 & (2**4)-1))
+	for i in range(8, 16):
+		fnames.append("%s: %d" % (fdict[i], bool(flags&(2**i))))
+	add_iter(hd,"Flags",", ".join(fnames),off,2,"<H")
 	off += 2
 	add_iter(hd,"nFibBack",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
