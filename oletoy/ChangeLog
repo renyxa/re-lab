@@ -1,3 +1,11 @@
+2012-02-11  Valek Filippov
+
+		* CDR: write down some 'txsm' findings.
+
+2012-02-10  Valek Filippov
+
+		* DOC: Commit vmiklos patch.
+
 2012-02-08  Valek Filippov
 
 		* CDR: bmpf, bmp, 0x1e for bitmaps.

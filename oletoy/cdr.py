@@ -422,9 +422,80 @@ def disp (hd,size,data,page):
 	da.connect('expose_event', disp_expose,pixbuf)
 	page.win.show_all()
 
+def txsm (hd,size,data):
+	add_iter (hd, "???", d2hex(data[0x28:0x2c]),0x28,4,"txt")
+	for i in range(6):
+		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
+		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
+	# skip two dwords (values are 0 and 1)
+	off = 0x64
+	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
+	# skip 1 byte
+	off = 0x69
+	num = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "Num of recs", num,off,4,"<I")
+	off = 0x6d
+	for i in range(num):
+		id = ord(data[off])
+		flag1 = ord(data[off+1])
+		flag2 = ord(data[off+2])
+		flag3 = ord(data[off+3]) # seems to be 8 all the time
+		add_iter (hd, "id?", id,off,1,"B")
+		add_iter (hd, "\tflag1", flag1,off+1,1,"B")
+		add_iter (hd, "\tflag2", flag2,off+2,1,"B")
+		add_iter (hd, "\tflag3", flag3,off+3,1,"B")
+		off += 4
+		if flag2&1 == 1:
+			# looks like lang code
+			add_iter (hd, "\tunkn1???", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&2 == 2:
+			# assumption
+			add_iter (hd, "\tunkn2???", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&4 == 4:
+			# assumption
+			add_iter (hd, "\tunkn4???", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&8 == 8:
+			# assumption
+			add_iter (hd, "\tunkn8???", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&0x10 == 0x10:
+			# assumption
+			add_iter (hd, "\tunkn10?", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&0x20 == 0x20:
+			# assumption
+			add_iter (hd, "\tunkn20?", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&0x40 == 0x40:
+			add_iter (hd, "\tOutl ID?", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+		if flag2&0x80 == 0x80:
+			add_iter (hd, "\tFild ID?", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+			
+		enc = data[off:off+2]
+		add_iter (hd, "\tEnc ?", enc,off,2,"txt")
+		off += 4
+
+	num2 = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "Num of recs2", num,off,4,"<I")
+	off += 4
+	for i in range(num2):
+		add_iter (hd, "Rec? %u"%i, d2hex(data[off:off+8]),off,8,"txt")
+		off += 8
+
+	txtlen = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "Text length", txtlen,off,4,"<I")
+	off += 4
+	add_iter (hd, "Text", "",off,txtlen,"txt")
+
+
 cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,
-	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp
-	}
+	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp,
+	"txsm":txsm}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
