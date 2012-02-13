@@ -423,7 +423,7 @@ def disp (hd,size,data,page):
 	page.win.show_all()
 
 def txsm (hd,size,data):
-	add_iter (hd, "???", d2hex(data[0x28:0x2c]),0x28,4,"txt")
+	add_iter (hd, "txtj id?", d2hex(data[0x28:0x2c]),0x28,4,"txt")
 	for i in range(6):
 		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
@@ -433,17 +433,14 @@ def txsm (hd,size,data):
 	# skip 1 byte
 	off = 0x69
 	num = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Num of recs", num,off,4,"<I")
+	add_iter (hd, "Num of recs (Para?)", num,off,4,"<I")
 	off = 0x6d
 	for i in range(num):
 		id = ord(data[off])
 		flag1 = ord(data[off+1])
 		flag2 = ord(data[off+2])
 		flag3 = ord(data[off+3]) # seems to be 8 all the time
-		add_iter (hd, "id?", id,off,1,"B")
-		add_iter (hd, "\tflag1", flag1,off+1,1,"B")
-		add_iter (hd, "\tflag2", flag2,off+2,1,"B")
-		add_iter (hd, "\tflag3", flag3,off+3,1,"B")
+		add_iter (hd, "fl0 fl1 fl2 fl3", "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
 		off += 4
 		if flag2&1 == 1:
 			# looks like lang code
@@ -481,10 +478,10 @@ def txsm (hd,size,data):
 		off += 4
 
 	num2 = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Num of recs2", num,off,4,"<I")
+	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 	off += 4
 	for i in range(num2):
-		add_iter (hd, "Rec? %u"%i, d2hex(data[off:off+8]),off,8,"txt")
+		add_iter (hd, "Char %u"%i, d2hex(data[off:off+8]),off,8,"txt")
 		off += 8
 
 	txtlen = struct.unpack('<I', data[off:off+4])[0]
@@ -512,6 +509,94 @@ class cdrChunk:
 	size= 0
 	cmpr = False
 	number=0
+
+	def stlt(self,page,parent,data):
+		offset = 4
+		d1 = struct.unpack("<I",data[offset:offset+4])[0]
+		add_pgiter(page,"unkn1 [%d]"%d1,"cdr","stlt_d1",data[offset:offset+4],parent)
+		offset += 4
+
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set0 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s0",data[offset:offset+12],s_iter)
+			offset += 12
+
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set1 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s1",data[offset:offset+12],s_iter)
+			offset += 12
+
+		size = 60
+		if page.version < 10:
+			size = 44
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set2 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s2",data[offset:offset+size],s_iter)
+			offset += size
+
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set3 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s3",data[offset:offset+12],s_iter)
+			offset += 12
+
+		size = 52
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set4 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s4",data[offset:offset+size],s_iter)
+			offset += size
+
+		size = 152
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set5 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s5",data[offset:offset+size],s_iter)
+			offset += size
+
+		size = 784
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set6 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s6",data[offset:offset+size],s_iter)
+			offset += size
+
+		size = 80
+		if page.version < 10:  # VERIFY in what version it was changed
+			size = 72
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set7 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			# FIXME! seems to have another place to check
+			flag = struct.unpack("<I",data[offset+8:offset+12])[0]
+			if flag:
+				inc = 8
+			else:
+				inc = 0
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s7",data[offset:offset+size+inc],s_iter)
+			offset += size + inc
+
+		size = 28
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set8 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
+			offset += size
+
+		add_pgiter(page,"Tail","cdr","stlt_tail",data[offset:],parent)
+
 
 	def load_pack(self,page,parent):
 		self.cmpr=True
@@ -591,6 +676,7 @@ class cdrChunk:
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
 				#pass     # dunno what's up with these, but they're not lists
+				self.stlt(page,parent,self.data)
 			elif self.listtype == 'cmpr':
 				self.loadcompressed(page,parent)
 			else:
