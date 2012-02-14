@@ -721,7 +721,10 @@ class cdrChunk:
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
 				#pass     # dunno what's up with these, but they're not lists
-				self.stlt(page,parent,self.data)
+				try:
+					self.stlt(page,parent,self.data)
+				except:
+					print "Something failed in 'stlt'."
 			elif self.listtype == 'cmpr':
 				self.loadcompressed(page,parent)
 			else:
