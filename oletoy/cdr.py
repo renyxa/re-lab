@@ -594,6 +594,51 @@ class cdrChunk:
 		for i in range(d2):
 			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
 			offset += size
+		
+		add_pgiter(page,"set9","cdr","stlt_s9",data[offset:offset+72],parent)
+		offset += 72
+
+		# size before/after name
+		# dword 4:   0      1      2      3
+		# ver <10: 48/32  32/8   32/12  32/32
+		# ver 10+:   ?    32/8   32/16  32/36
+
+		s_iter = add_pgiter(page,"set10","cdr","","",parent)
+		# I only have files with 9 entities here
+		for i in range(9):
+			id = d2hex(data[offset:offset+4])
+			flag = struct.unpack("<I",data[offset+12:offset+16])[0]
+			size_bn = 32
+			size_an = 36
+			if page.version < 10:
+				size_an = 32
+			if flag == 2:
+				size_an -= 20
+			elif flag == 1:
+				size_an = 8
+			elif flag == 0:
+				size_bn = 48  # need to check for ver 10+
+			namelen = struct.unpack("<I",data[offset+size_bn:offset+4+size_bn])[0]
+			if page.version < 10:
+				# ended with \0
+				name = data[offset+size_bn+4:offset+size_bn+4+namelen-1]
+			else:
+				name = unicode(data[offset+size_bn+4:offset+4+size_bn+namelen*2],"utf16")
+				namelen *= 2
+			add_pgiter(page,"ID %s (flag: %02x) [%s]"%(id,flag,name),"cdr","stlt_s10",data[offset:offset+size_bn+4+size_an+namelen],s_iter)
+			offset += size_bn+4+size_an+namelen
+
+		if page.version > 9:
+			i = 0
+			size = 24
+			while offset < len(data):
+				s_iter = add_pgiter(page,"set11 [%u]"%i,"cdr","","",parent)
+				i += 1
+				num = struct.unpack("<I",data[offset:offset+4])[0]
+				offset += 4
+				for j in range(num):
+					add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
+					offset += 24
 
 		add_pgiter(page,"Tail","cdr","stlt_tail",data[offset:],parent)
 
