@@ -169,6 +169,30 @@ def bmpf (hd,size,data):
 
 def bmp (hd,size,data):
 	add_iter (hd,"Image ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
+	add_iter (hd,"Hdr 1", "",4,0x24,"txt")
+	hlen = struct.unpack('<I', data[0x32:0x36])[0]
+	add_iter (hd,"Hdr 2", "",0x28,hlen,"txt")
+	add_iter (hd,"\tHdr 2 size", hlen,0x32,4,"<I")
+	pal = struct.unpack('<I', data[0x36:0x3a])[0]
+	bplt = "Unknown"
+	if pal < 12:
+		bplt = bmp_clr_models[pal]
+	add_iter (hd,"\tPallete (%02x) %s"%(pal,bplt), struct.unpack('<I', data[0x36:0x3a])[0],0x36,4,"<I")
+	add_iter (hd,"\tWidth", struct.unpack('<I', data[0x3e:0x42])[0],0x3e,4,"<I")
+	add_iter (hd,"\tHeight", struct.unpack('<I', data[0x42:0x46])[0],0x42,4,"<I")
+	bpp = struct.unpack('<I', data[0x4a:0x4e])[0]
+	add_iter (hd,"\tBPP", bpp,0x4a,4,"<I")
+
+	bmpsize = struct.unpack('<I', data[0x52:0x56])[0]
+	add_iter (hd,"\tSize of BMP data", bmpsize,0x52,4,"<I")
+	if bpp < 24 and pal != 5 and pal != 6:
+		palsize = struct.unpack('<H', data[0x78:0x7a])[0]
+		add_iter (hd,"Palette Size", palsize,0x78,2,"<H")
+		add_iter (hd,"Palette", "",0x7a,palsize*3,"txt")
+		add_iter (hd,"BMP data", "",0x7a+palsize*3,bmpsize,"<I")
+	else:
+		add_iter (hd,"BMP data", "",0x76,bmpsize,"<I")
+
 
 def ftil (hd,size,data):
 	for i in range(6):
