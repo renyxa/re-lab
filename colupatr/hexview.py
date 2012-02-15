@@ -1069,7 +1069,7 @@ class HexView():
 						ctx.rectangle(self.tdx*(10+c*3+2),self.tht*(r+1)+6,self.tdx,self.tht)
 						ctx.fill()
 
-						ctx.move_to(self.tdx*(10+c*3+2),self.tht*(r+2)+4)
+						ctx.move_to(self.tdx*(10+c*3+2),self.tht*(i+2)+4)
 						ctx.set_source_rgb(1,0,0.5)
 						ctx.show_text("]")
 					
