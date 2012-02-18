@@ -30,6 +30,14 @@ outl_caps_type =('Normal', 'Rounded', 'Out Square')
 fild_pal_type = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 0xb:'Texture'} # FIXME! names are guessed by frob
 fild_grad_type = ('Unknown', 'Linear', 'Radial', 'Conical', 'Squared') #FIXME! gussed
 
+charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
+	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
+	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
+	161:"Greek",162:"Turkish",163:"Vietnamese",177:"Hebrew",178:"Arabic",
+	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
+	255:"OEM Latin I"}
+
+
 def arrw (hd, size, data):
 	add_iter (hd,"Arrow ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
 	add_iter (hd,"???","%02x"%struct.unpack('<I', data[4:8])[0],4,4,"<I")
@@ -108,6 +116,19 @@ def outl (hd,size,data):
 	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[0x80:0x84])[0],0x80,4,"<I")
 	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[0x84:0x88])[0],0x84,4,"<I")
 
+
+def font (hd,size,data):
+	add_iter (hd,"Font ID","%02x"%struct.unpack('<H', data[0:2])[0],0,2,"<H")
+	enc = struct.unpack('<H', data[2:4])[0]
+	enctxt = "Unknown"
+	if charsets.has_key(enc):
+		enctxt = charsets[enc]
+	add_iter (hd,"Encoding","%s (%02x)"%(enctxt,enc),2,2,"<H")
+	add_iter (hd,"Flags",d2hex(data[8:18]," "),8,10,"txt")
+	fontname = data[18:52]
+	if hd.version > 9:
+		fontname = unicode(fontname,"utf16")
+	add_iter (hd,"FontName",fontname,18,34,"txt")
 
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
@@ -530,7 +551,7 @@ def txsm (hd,size,data):
 	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 
-cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,
+cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"font":font,
 	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp,
 	"txsm":txsm,"guid":guid}
 

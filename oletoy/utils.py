@@ -40,8 +40,8 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
-def d2hex(data):
+def d2hex(data,space=""):
 	s = ""
 	for i in range(len(data)):
-		s += "%02x"%ord(data[i])
+		s += "%02x%s"%(ord(data[i]),space)
 	return s
