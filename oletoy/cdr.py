@@ -167,6 +167,21 @@ def fild (hd,size,data):
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
 
+
+def guid (hd,size,data):
+	# very EXPERIMENTAL
+	num1 = struct.unpack('<I', data[0:4])[0]
+	num2 = struct.unpack('<I', data[0:4])[0]
+	add_iter (hd,"Num 1", num1,0,4,"<I")
+	add_iter (hd,"Num 2", num2,4,4,"<I")
+	offset = 8
+	for i in range(num1):
+		piter = add_iter (hd,"Rec %02x"%i, d2hex(data[offset+i*40+12:offset+i*40+16]),offset+40*i,40,"txt")
+		add_iter (hd,"\tNums", "%d\t%d"%(struct.unpack("<i",data[offset+i*40+16:offset+i*40+20])[0]/10000,struct.unpack("<i",data[offset+i*40+20:offset+i*40+24])[0]/10000),offset+40*i+16,8,"txt",0,0,piter)
+		add_iter (hd,"\tNums", "%d\t%d"%(struct.unpack("<i",data[offset+i*40+24:offset+i*40+28])[0]/10000,struct.unpack("<i",data[offset+i*40+28:offset+i*40+32])[0]/10000),offset+40*i+16,8,"txt",0,0,piter)
+		add_iter (hd,"\tNums", "%d\t%d"%(struct.unpack("<i",data[offset+i*40+32:offset+i*40+36])[0]/10000,struct.unpack("<i",data[offset+i*40+36:offset+i*40+40])[0]/10000),offset+40*i+16,8,"txt",0,0,piter)
+
+
 def bmp (hd,size,data):
 	add_iter (hd,"Image ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
 	add_iter (hd,"Hdr 1", "",4,0x24,"txt")
@@ -182,6 +197,7 @@ def bmp (hd,size,data):
 	add_iter (hd,"\tHeight", struct.unpack('<I', data[0x42:0x46])[0],0x42,4,"<I")
 	bpp = struct.unpack('<I', data[0x4a:0x4e])[0]
 	add_iter (hd,"\tBPP", bpp,0x4a,4,"<I")
+	# for bpp = 1, cdr aligns by 4 bytes, bits after width are crap
 
 	bmpsize = struct.unpack('<I', data[0x52:0x56])[0]
 	add_iter (hd,"\tSize of BMP data", bmpsize,0x52,4,"<I")
@@ -516,7 +532,7 @@ def txsm (hd,size,data):
 
 cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,
 	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp,
-	"txsm":txsm}
+	"txsm":txsm,"guid":guid}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
