@@ -505,8 +505,14 @@ def txsm (hd,size,data):
 		off += 4
 		if flag2&1 == 1:
 			# looks like lang code
-			add_iter (hd, "\tunkn1???", d2hex(data[off:off+4]),off,4,"txt")
-			off += 4
+			add_iter (hd, "\tFont ID", d2hex(data[off:off+2]),off,2,"txt")
+			off += 2
+			enctxt = "Unknown"
+			enc = struct.unpack("<H",data[off:off+2])[0]
+			if charsets.has_key(enc):
+				enctxt = charsets[enc]
+			add_iter (hd,"\tCharset","%s (%02x)"%(enctxt,enc),off,2,"<H")
+			off += 2
 		if flag2&2 == 2:
 			# assumption
 			add_iter (hd, "\tunkn2???", d2hex(data[off:off+4]),off,4,"txt")
@@ -535,7 +541,7 @@ def txsm (hd,size,data):
 			off += 4
 			
 		enc = data[off:off+2]
-		add_iter (hd, "\tEnc ?", enc,off,2,"txt")
+		add_iter (hd, "\tEncoding", enc,off,2,"txt")
 		off += 4
 
 	num2 = struct.unpack('<I', data[off:off+4])[0]

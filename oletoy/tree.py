@@ -62,6 +62,7 @@ def make_view2():
    view.set_enable_tree_lines(True)
    renderer = gtk.CellRendererText()
    renderer2 = gtk.CellRendererText()
+   renderer3 = gtk.CellRendererText()
    renderer2.set_property('editable', True)
    column = gtk.TreeViewColumn('Name', renderer, text=0)
    column2 = gtk.TreeViewColumn('Value', renderer2, text=1)
