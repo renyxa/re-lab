@@ -484,7 +484,7 @@ def disp (hd,size,data,page):
 	page.win.show_all()
 
 def txsm (hd,size,data):
-	add_iter (hd, "txtj id?", d2hex(data[0x28:0x2c]),0x28,4,"txt")
+	add_iter (hd, "txt ID", d2hex(data[0x28:0x2c]),0x28,4,"txt")
 	for i in range(6):
 		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
@@ -494,7 +494,7 @@ def txsm (hd,size,data):
 	# skip 1 byte
 	off = 0x69
 	num = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Num of recs (Para?)", num,off,4,"<I")
+	add_iter (hd, "Num of recs (Style)", num,off,4,"<I")
 	off = 0x6d
 	for i in range(num):
 		id = ord(data[off])
@@ -503,23 +503,26 @@ def txsm (hd,size,data):
 		flag3 = ord(data[off+3]) # seems to be 8 all the time
 		add_iter (hd, "fl0 fl1 fl2 fl3", "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
 		off += 4
+		if flag3&8 == 8:
+			enc = data[off:off+2]
+			add_iter (hd, "\tEncoding", enc,off,2,"txt")
+			off += 4
+			
 		if flag2&1 == 1:
-			# looks like lang code
-			add_iter (hd, "\tFont ID", d2hex(data[off:off+2]),off,2,"txt")
-			off += 2
+			# Font
 			enctxt = "Unknown"
-			enc = struct.unpack("<H",data[off:off+2])[0]
+			enc = struct.unpack("<H",data[off+2:off+4])[0]
 			if charsets.has_key(enc):
 				enctxt = charsets[enc]
-			add_iter (hd,"\tCharset","%s (%02x)"%(enctxt,enc),off,2,"<H")
-			off += 2
+			add_iter (hd, "\tFont ID, Charset", "%s, %s (%02x)"%(d2hex(data[off:off+2]),enctxt,enc),off,4,"txt")
+			off += 4
 		if flag2&2 == 2:
-			# assumption
-			add_iter (hd, "\tunkn2???", d2hex(data[off:off+4]),off,4,"txt")
+			# Bold/Italic etc
+			add_iter (hd, "\tFont Style", d2hex(data[off:off+4]),off,4,"txt")
 			off += 4
 		if flag2&4 == 4:
-			# assumption
-			add_iter (hd, "\tunkn4???", d2hex(data[off:off+4]),off,4,"txt")
+			# Font Size
+			add_iter (hd, "\tFont Size", struct.unpack("<I",data[off:off+4])[0]*72/254000,off,4,"txt")
 			off += 4
 		if flag2&8 == 8:
 			# assumption
@@ -534,15 +537,13 @@ def txsm (hd,size,data):
 			add_iter (hd, "\tunkn20?", d2hex(data[off:off+4]),off,4,"txt")
 			off += 4
 		if flag2&0x40 == 0x40:
-			add_iter (hd, "\tOutl ID?", d2hex(data[off:off+4]),off,4,"txt")
+			# Fild ID (font colour)
+			add_iter (hd, "\tFild ID", d2hex(data[off:off+4]),off,4,"txt")
 			off += 4
 		if flag2&0x80 == 0x80:
-			add_iter (hd, "\tFild ID?", d2hex(data[off:off+4]),off,4,"txt")
+			# Outl ID (colour of the text outline)
+			add_iter (hd, "\tOutl ID", d2hex(data[off:off+4]),off,4,"txt")
 			off += 4
-			
-		enc = data[off:off+2]
-		add_iter (hd, "\tEncoding", enc,off,2,"txt")
-		off += 4
 
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
