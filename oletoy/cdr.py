@@ -580,7 +580,8 @@ class cdrChunk:
 	def stlt(self,page,parent,data):
 		offset = 4
 		d1 = struct.unpack("<I",data[offset:offset+4])[0]
-		add_pgiter(page,"unkn1 [%d]"%d1,"cdr","stlt_d1",data[offset:offset+4],parent)
+		# this num matches with num of (un)named records in "set 11" below
+		add_pgiter(page,"Num of style entries [%d]"%d1,"cdr","stlt_d1",data[offset:offset+4],parent)
 		offset += 4
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
@@ -663,53 +664,66 @@ class cdrChunk:
 			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
 			offset += size
 		
-		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		size = 68
-		if d2 == 2:  # temporary, only 1 file atm
-			size += 28
-		add_pgiter(page,"set9","cdr","stlt_s9",data[offset:offset+size],parent)
-		offset += size
+		bkpoff = offset
+		try:
+			d2 = struct.unpack("<I",data[offset:offset+4])[0]
+			size = 32
+			s_iter = add_pgiter(page,"set9 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+			offset += 4
+			for i in range(d2):
+				add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s9",data[offset:offset+size],s_iter)
+				offset += size
 
-		size = 12
-		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"set10 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
-		offset += 4
-		for i in range(d2):
-			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
-			offset += size
+			d2 = struct.unpack("<I",data[offset:offset+4])[0]
+			size = 28
+			if page.version < 10:
+				size = 24
+			s_iter = add_pgiter(page,"set10 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+			offset += 4
+			for i in range(d2):
+				add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
+				offset += size
 
+			size = 12
+			d2 = struct.unpack("<I",data[offset:offset+4])[0]
+			s_iter = add_pgiter(page,"set11 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+			offset += 4
+			for i in range(d2):
+				add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s11",data[offset:offset+size],s_iter)
+				offset += size
 
 		# size after name
 		# dword 1:	3		2		1
 		# ver <10:	44	24	8
 		# ver 10+:	48	28	8
 
-		s_iter = add_pgiter(page,"set11","cdr","","",parent)
-		# based on latest idea -- parse to end
+			s_iter = add_pgiter(page,"set12","cdr","","",parent)
+			# based on latest idea -- parse to end
 		
-		while offset < len(data):
-			num = struct.unpack("<I",data[offset:offset+4])[0]
-			add_pgiter(page,"num %d ID %s (pID %s)"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s11",data[offset:offset+20],s_iter)
-			if num == 3:
-				asize = 48
-			elif num == 2:
-				asize = 28
-			else: # num == 1
-				asize = 8
-			offset += 20
-			if page.version < 10 and num > 1: # FIXME! check starting from which version
-				asize -= 4
-			namelen = struct.unpack("<I",data[offset:offset+4])[0]
-			if page.version < 10:
-				# ended with \0
-				# FIXME! I don't know there to take encoding for style names, set Russian just for now
-				name = unicode(data[offset+4:offset+4+namelen-1],"cp1251")
-			else:
-				name = unicode(data[offset+4:offset+4+namelen*2],"utf16")
-				namelen *= 2
-			add_pgiter(page,"\t[%s]"%name,"cdr","",data[offset:offset+4+namelen+asize],s_iter)
-			offset += 4+asize+namelen
-
+			while offset < len(data):
+				num = struct.unpack("<I",data[offset:offset+4])[0]
+				add_pgiter(page,"num %d ID %s (pID %s)"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
+				if num == 3:
+					asize = 48
+				elif num == 2:
+					asize = 28
+				else: # num == 1
+					asize = 8
+				offset += 20
+				if page.version < 10 and num > 1: # FIXME! check starting from which version
+					asize -= 4
+				namelen = struct.unpack("<I",data[offset:offset+4])[0]
+				if page.version < 10:
+					# ended with \0
+					# FIXME! I don't know where to take encoding for style names, set Russian just for now
+					name = unicode(data[offset+4:offset+4+namelen-1],"cp1251")
+				else:
+					name = unicode(data[offset+4:offset+4+namelen*2],"utf16")
+					namelen *= 2
+				add_pgiter(page,"\t[%s]"%name,"cdr","",data[offset:offset+4+namelen+asize],s_iter)
+				offset += 4+asize+namelen
+		except:
+				add_pgiter(page,"Tail","cdr","",data[bkpoff:],parent)
 
 	def load_pack(self,page,parent):
 		self.cmpr=True

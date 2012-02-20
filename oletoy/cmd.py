@@ -121,7 +121,7 @@ def cmdfind (model,path,iter,(page,data)):
 	if page.type[0:3] == "CDR" and model.iter_n_children(iter)>0:
 		return
 	buf = model.get_value(iter,3)
-	test = 0
+	test = -1
 	try:
 		while test < len(buf):
 			test = buf.find(data,test+1)
