@@ -489,13 +489,23 @@ def txsm (hd,size,data):
 		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
 	# skip two dwords (values are 0 and 1)
-	off = 0x64
+	
+	
+	off = 0x5c
+	num = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "num of ?", num,off,4,"<I")
+	off += 4
+	for i in range(num):
+		add_iter (hd, "??", "",off,32,"txt")
+		off += 32
+	add_iter (hd, "num2 of ?", num,off,4,"<I")
+	off += 4
 	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
 	# skip 1 byte
-	off = 0x69
+	off += 5
 	num = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of recs (Style)", num,off,4,"<I")
-	off = 0x6d
+	off += 4
 	for i in range(num):
 		id = ord(data[off])
 		flag1 = ord(data[off+1])
@@ -529,12 +539,12 @@ def txsm (hd,size,data):
 			add_iter (hd, "\tunkn8???", d2hex(data[off:off+4]),off,4,"txt")
 			off += 4
 		if flag2&0x10 == 0x10:
-			# assumption
-			add_iter (hd, "\tunkn10?", d2hex(data[off:off+4]),off,4,"txt")
+			# Offset X
+			add_iter (hd, "\tOffsetX", struct.unpack("<I",data[off:off+4])[0]/10000,off,4,"txt")
 			off += 4
 		if flag2&0x20 == 0x20:
-			# assumption
-			add_iter (hd, "\tunkn20?", d2hex(data[off:off+4]),off,4,"txt")
+			# Offset Y
+			add_iter (hd, "\tOffsetY", struct.unpack("<I",data[off:off+4])[0]/10000,off,4,"txt")
 			off += 4
 		if flag2&0x40 == 0x40:
 			# Fild ID (font colour)
