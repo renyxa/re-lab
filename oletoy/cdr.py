@@ -513,10 +513,6 @@ def txsm (hd,size,data):
 		flag3 = ord(data[off+3]) # seems to be 8 all the time
 		add_iter (hd, "fl0 fl1 fl2 fl3", "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
 		off += 4
-		if flag3&8 == 8:
-			enc = data[off:off+2]
-			add_iter (hd, "\tEncoding", enc,off,2,"txt")
-			off += 4
 			
 		if flag2&1 == 1:
 			# Font
@@ -536,15 +532,15 @@ def txsm (hd,size,data):
 			off += 4
 		if flag2&8 == 8:
 			# assumption
-			add_iter (hd, "\tunkn8???", d2hex(data[off:off+4]),off,4,"txt")
+			add_iter (hd, "\tRotate", struct.unpack("<i",data[off:off+4])[0]/1000000,off,4,"txt")
 			off += 4
 		if flag2&0x10 == 0x10:
 			# Offset X
-			add_iter (hd, "\tOffsetX", struct.unpack("<I",data[off:off+4])[0]/10000,off,4,"txt")
+			add_iter (hd, "\tOffsetX", struct.unpack("<i",data[off:off+4])[0],off,4,"txt")
 			off += 4
 		if flag2&0x20 == 0x20:
 			# Offset Y
-			add_iter (hd, "\tOffsetY", struct.unpack("<I",data[off:off+4])[0]/10000,off,4,"txt")
+			add_iter (hd, "\tOffsetY", struct.unpack("<i",data[off:off+4])[0],off,4,"txt")
 			off += 4
 		if flag2&0x40 == 0x40:
 			# Fild ID (font colour)
@@ -553,6 +549,11 @@ def txsm (hd,size,data):
 		if flag2&0x80 == 0x80:
 			# Outl ID (colour of the text outline)
 			add_iter (hd, "\tOutl ID", d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+
+		if flag3&8 == 8:
+			enc = data[off:off+2]
+			add_iter (hd, "\tEncoding", enc,off,2,"txt")
 			off += 4
 
 	num2 = struct.unpack('<I', data[off:off+4])[0]
