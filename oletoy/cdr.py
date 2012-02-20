@@ -124,7 +124,7 @@ def font (hd,size,data):
 	if charsets.has_key(enc):
 		enctxt = charsets[enc]
 	add_iter (hd,"Encoding","%s (%02x)"%(enctxt,enc),2,2,"<H")
-	add_iter (hd,"Flags",d2hex(data[8:18]," "),8,10,"txt")
+	add_iter (hd,"Flags",d2hex(data[4:18]," "),4,14,"txt")
 	fontname = data[18:52]
 	if hd.version > 9:
 		fontname = unicode(fontname,"utf16")
@@ -639,14 +639,15 @@ class cdrChunk:
 			offset += size
 
 		size = 80
+		shift = 0
 		if page.version < 10:  # VERIFY in what version it was changed
 			size = 72
+			shift = -8
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
 		s_iter = add_pgiter(page,"set7 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
-			# FIXME! seems to have another place to check
-			flag = struct.unpack("<I",data[offset+8:offset+12])[0]
+			flag = struct.unpack("<I",data[offset+68+shift:offset+72+shift])[0] # for ver > 10
 			if flag:
 				inc = 8
 			else:
@@ -662,52 +663,52 @@ class cdrChunk:
 			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
 			offset += size
 		
-		add_pgiter(page,"set9","cdr","stlt_s9",data[offset:offset+72],parent)
-		offset += 72
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		size = 68
+		if d2 == 2:  # temporary, only 1 file atm
+			size += 28
+		add_pgiter(page,"set9","cdr","stlt_s9",data[offset:offset+size],parent)
+		offset += size
 
-		# size before/after name
-		# dword 4:   0      1      2      3
-		# ver <10: 48/32  32/8   32/12  32/32
-		# ver 10+:   ?    32/8   32/16  32/36
+		size = 12
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"set10 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+		for i in range(d2):
+			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
+			offset += size
 
-		s_iter = add_pgiter(page,"set10","cdr","","",parent)
-		# I only have files with 9 entities here
-		for i in range(9):
-			id = d2hex(data[offset:offset+4])
-			flag = struct.unpack("<I",data[offset+12:offset+16])[0]
-			size_bn = 32
-			size_an = 36
-			if page.version < 10:
-				size_an = 32
-			if flag == 2:
-				size_an -= 20
-			elif flag == 1:
-				size_an = 8
-			elif flag == 0:
-				size_bn = 48  # need to check for ver 10+
-			namelen = struct.unpack("<I",data[offset+size_bn:offset+4+size_bn])[0]
+
+		# size after name
+		# dword 1:	3		2		1
+		# ver <10:	44	24	8
+		# ver 10+:	48	28	8
+
+		s_iter = add_pgiter(page,"set11","cdr","","",parent)
+		# based on latest idea -- parse to end
+		
+		while offset < len(data):
+			num = struct.unpack("<I",data[offset:offset+4])[0]
+			add_pgiter(page,"num %d ID %s (pID %s)"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s11",data[offset:offset+20],s_iter)
+			if num == 3:
+				asize = 48
+			elif num == 2:
+				asize = 28
+			else: # num == 1
+				asize = 8
+			offset += 20
+			if page.version < 10 and num > 1: # FIXME! check starting from which version
+				asize -= 4
+			namelen = struct.unpack("<I",data[offset:offset+4])[0]
 			if page.version < 10:
 				# ended with \0
-				name = data[offset+size_bn+4:offset+size_bn+4+namelen-1]
+				# FIXME! I don't know there to take encoding for style names, set Russian just for now
+				name = unicode(data[offset+4:offset+4+namelen-1],"cp1251")
 			else:
-				name = unicode(data[offset+size_bn+4:offset+4+size_bn+namelen*2],"utf16")
+				name = unicode(data[offset+4:offset+4+namelen*2],"utf16")
 				namelen *= 2
-			add_pgiter(page,"ID %s (flag: %02x) [%s]"%(id,flag,name),"cdr","stlt_s10",data[offset:offset+size_bn+4+size_an+namelen],s_iter)
-			offset += size_bn+4+size_an+namelen
-
-		if page.version > 9:
-			i = 0
-			size = 24
-			while offset < len(data):
-				s_iter = add_pgiter(page,"set11 [%u]"%i,"cdr","","",parent)
-				i += 1
-				num = struct.unpack("<I",data[offset:offset+4])[0]
-				offset += 4
-				for j in range(num):
-					add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
-					offset += 24
-
-		add_pgiter(page,"Tail","cdr","stlt_tail",data[offset:],parent)
+			add_pgiter(page,"\t[%s]"%name,"cdr","",data[offset:offset+4+namelen+asize],s_iter)
+			offset += 4+asize+namelen
 
 
 	def load_pack(self,page,parent):
@@ -787,11 +788,10 @@ class cdrChunk:
 			parent = f_iter
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
-				#pass     # dunno what's up with these, but they're not lists
-				try:
-					self.stlt(page,parent,self.data)
-				except:
-					print "Something failed in 'stlt'."
+				#try:
+				self.stlt(page,parent,self.data)
+				#except:
+				#	print "Something failed in 'stlt'."
 			elif self.listtype == 'cmpr':
 				self.loadcompressed(page,parent)
 			else:
