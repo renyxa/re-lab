@@ -2,6 +2,7 @@
 
 		* Fix search.
 		* CDR: more 'stlt', more 'txsm'.
+		* CDR: 'stlt' and 'txsm' for ver > 12.
 
 2012-02-19  Valek Filippov
 

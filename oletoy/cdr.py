@@ -484,13 +484,11 @@ def disp (hd,size,data,page):
 	page.win.show_all()
 
 def txsm (hd,size,data):
+	# FIXME! ver 13 and newer is different
 	add_iter (hd, "txt ID", d2hex(data[0x28:0x2c]),0x28,4,"txt")
 	for i in range(6):
 		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
-	# skip two dwords (values are 0 and 1)
-	
-	
 	off = 0x5c
 	num = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "num of ?", num,off,4,"<I")
@@ -503,6 +501,8 @@ def txsm (hd,size,data):
 	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
 	# skip 1 byte
 	off += 5
+	if hd.version > 12: # skip one more byte for version 13
+		off += 1
 	num = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of recs (Style)", num,off,4,"<I")
 	off += 4
@@ -552,9 +552,15 @@ def txsm (hd,size,data):
 			off += 4
 
 		if flag3&8 == 8:
-			enc = data[off:off+2]
-			add_iter (hd, "\tEncoding", enc,off,2,"txt")
-			off += 4
+			if hd.version > 12:
+				tlen = struct.unpack("<I",data[off:off+4])[0]
+				txt = unicode(data[off+4:off+4+tlen*2],"utf16")
+				add_iter (hd, "\tEncoding", txt,off,4+tlen*2,"txt")
+				off += 4 + tlen*2
+			else:
+				enc = data[off:off+2]
+				add_iter (hd, "\tEncoding", enc,off,2,"txt")
+				off += 4
 
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
@@ -590,6 +596,7 @@ class cdrChunk:
 	number=0
 
 	def stlt(self,page,parent,data):
+		# FIXME! ver 13 and newer is different
 		offset = 4
 		d1 = struct.unpack("<I",data[offset:offset+4])[0]
 		# this num matches with num of (un)named records in "set 11" below
@@ -602,6 +609,9 @@ class cdrChunk:
 		for i in range(d2):
 			add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s0",data[offset:offset+12],s_iter)
 			offset += 12
+			if page.version > 12:
+				add_pgiter(page,"\tTrafo?","cdr","stlt_d1",data[offset:offset+48],s_iter)
+				offset += 48
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
 		s_iter = add_pgiter(page,"set1 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
@@ -651,35 +661,43 @@ class cdrChunk:
 			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s6",data[offset:offset+size],s_iter)
 			offset += size
 
-		size = 80
-		shift = 0
-		if page.version < 10:  # VERIFY in what version it was changed
-			size = 72
-			shift = -8
-		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"set7 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
-		offset += 4
-		for i in range(d2):
-			flag = struct.unpack("<I",data[offset+68+shift:offset+72+shift])[0] # for ver > 10
-			if flag:
-				inc = 8
-			else:
-				inc = 0
-			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s7",data[offset:offset+size+inc],s_iter)
-			offset += size + inc
-
-		size = 28
-		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"set8 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
-		offset += 4
-		for i in range(d2):
-			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
-			offset += size
-		
 		bkpoff = offset
+
 		try:
+			size = 80
+			shift = 0
+			if page.version < 10:  # VERIFY in what version it was changed
+				size = 72
+				shift = -8
+			d2 = struct.unpack("<I",data[offset:offset+4])[0]
+			s_iter = add_pgiter(page,"set7 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+			offset += 4
+			for i in range(d2):
+				flag = struct.unpack("<I",data[offset+68+shift:offset+72+shift])[0] # for ver > 10
+				if flag:
+					inc = 8
+				else:
+					inc = 0
+				if page.version > 12:
+					if struct.unpack("<I",data[offset+8:offset+12])[0]:
+						inc = 32
+					else:
+						inc = -24
+				add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s7",data[offset:offset+size+inc],s_iter)
+				offset += size + inc
+	
+			size = 28
+			d2 = struct.unpack("<I",data[offset:offset+4])[0]
+			s_iter = add_pgiter(page,"set8 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+			offset += 4
+			for i in range(d2):
+				add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
+				offset += size
+
 			d2 = struct.unpack("<I",data[offset:offset+4])[0]
 			size = 32
+			if page.version > 12:
+				size = 36
 			s_iter = add_pgiter(page,"set9 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 			offset += 4
 			for i in range(d2):
