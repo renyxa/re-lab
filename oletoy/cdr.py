@@ -18,6 +18,7 @@ import sys,struct,gtk,gobject,zlib
 from utils import *
 
 fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
+
 clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
 							6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"LAB",12:'Unknown0xc',
 							13:'Unknown0xd',14:'Unknown0xe',15:'Unknown0xf',16:'Unknown0x10',
@@ -25,6 +26,7 @@ clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
 
 bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
 								'HLS', 'PAL8', 'Unknown9', 'RGB', 'LAB')
+
 outl_corn_type =('Normal', 'Rounded', 'Cant')
 outl_caps_type =('Normal', 'Rounded', 'Out Square')
 fild_pal_type = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 0xb:'Texture'} # FIXME! names are guessed by frob
@@ -181,7 +183,7 @@ def fild (hd,size,data):
 				col3=ord(data[mid_offset+17+pal_off+i*pal_len])          #       ??              KK
 				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
 				add_iter (hd, "Color:","%02x %02x %02x %02x\t%u"%(col0,col1,col2,col3,prcnt),mid_offset+14+pal_off+i*pal_len,5,"txt")
-	elif fild_type == 7:
+	elif fill_type == 7:
 		add_iter (hd,"Pattern ID", struct.unpack('<I', data[8:12])[0],8,4,"txt")
 		# Colors (model + color) started at 0x1c and 0x28
 
