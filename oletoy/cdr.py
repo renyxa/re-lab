@@ -19,11 +19,28 @@ from utils import *
 
 fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
 
-clr_models = {0:"Invalid",1:"PANTONE",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
-							6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"YIQ",12:'Unknown0xc',
-							13:'Unknown0xd',14:'Unknown0xe',15:'Unknown0xf',16:'Unknown0x10',
-							17:'CMYK255',18:'LAB',19:'Unknown0x13',20:'Registration Color',
-							21:"PANTONE"}
+clr_models = {0:"Invalid",
+	1:"PANTONE",
+	2:"CMYK",
+	3:"CMYK255",
+	4:"CMY",
+	5:"RGB",
+	6:"HSB",
+	7:"HLS",
+	8:"BW",
+	9:"Gray",
+	10:"YIQ255",
+	11:"YIQ",
+	12:'Unknown0xc',
+	13:'Unknown0xd',
+	14:'Unknown0xe',
+	15:'Unknown0xf',
+	16:'Unknown0x10',
+	17:'CMYK255',
+	18:'LAB',
+	19:'Unknown0x13',
+	20:'Registration Color',
+	21:"PANTONE"}
 
 bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
 								'HLS', 'PAL8', 'Unknown9', 'RGB', 'LAB')
@@ -96,7 +113,7 @@ def clr_model(hd,data,offset):
 	if clr_models.has_key(cmid):
 		cmod += clr_models[cmid]
 	add_iter (hd,"Color Model",cmod,offset,2,"txt")
-	clr = "#%02x%02x%02x%02x"%(ord(data[offset+8]),ord(data[offset+9]),ord(data[offset+10]),ord(data[offset+11]))
+	clr = d2hex(data[offset+8:offset+11])
 	add_iter (hd,"  Color",clr,offset+8,4,"txt")
 
 def outl (hd,size,data):
@@ -151,7 +168,7 @@ def fild (hd,size,data):
 			if clr_models.has_key(clr_model):
 				clrm_txt += " " + clr_models[clr_model]
 			add_iter (hd, "Color Model", clrm_txt,8,2,"txt")
-			add_iter (hd, "Color", "%02x"%struct.unpack('<i', data[0x10:0x14])[0],0x10,4,"<i")
+			add_iter (hd, "Color", d2hex(data[0x10:0x14]),0x10,4,"<i")
 
 		if fill_type == 2:
 			grd_offset = 0x8
