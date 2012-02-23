@@ -19,10 +19,11 @@ from utils import *
 
 fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
 
-clr_models = {0:"Invalid",1:"Pantone",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
-							6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"LAB",12:'Unknown0xc',
+clr_models = {0:"Invalid",1:"PANTONE",2:"CMYK",3:"CMYK255",4:"CMY", 5:"RGB",
+							6:"HSB",7:"HLS",8:"BW",9:"Gray",10:"YIQ255",11:"YIQ",12:'Unknown0xc',
 							13:'Unknown0xd',14:'Unknown0xe',15:'Unknown0xf',16:'Unknown0x10',
-							17:'CMYK255',18:'Unknown0x12',19:'Unknown0x13',20:'Registration Color'}
+							17:'CMYK255',18:'LAB',19:'Unknown0x13',20:'Registration Color',
+							21:"PANTONE"}
 
 bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
 								'HLS', 'PAL8', 'Unknown9', 'RGB', 'LAB')
