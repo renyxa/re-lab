@@ -31,16 +31,12 @@ clr_models = {0:"Invalid",
 	9:"Gray",
 	10:"YIQ255",
 	11:"YIQ",
-	12:'Unknown0xc',
-	13:'Unknown0xd',
-	14:'Unknown0xe',
-	15:'Unknown0xf',
-	16:'Unknown0x10',
-	17:'CMYK255',
-	18:'LAB',
-	19:'Unknown0x13',
+	17:'CMYK', #? verify
+	18:'LAB', # AP
 	20:'Registration Color',
-	21:"PANTONE"}
+	21:"Roland/PANTONE", # AP
+	25:"HKS"   #AP
+	}
 
 bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
 								'HLS', 'PAL8', 'Unknown9', 'RGB', 'LAB')
