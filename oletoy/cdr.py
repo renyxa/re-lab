@@ -177,9 +177,9 @@ def fild (hd,size,data):
 			add_iter (hd, "Gradient type",gr_type, grd_offset,1,"B")
 			add_iter (hd, "Rotation",rot/1000000, rot_offset,4,"<L")
 			add_iter (hd, "Midpoint",midpoint, mid_offset,1,"B")
-			add_iter (hd, "Edge offset",struct.unpack('<I', data[0x1c:0x20])[0], 0x1c,4,"<I")
-			add_iter (hd, "Center X offset",struct.unpack('<I', data[0x24:0x28])[0], 0x24,4,"<I")
-			add_iter (hd, "Center Y offset",struct.unpack('<I', data[0x28:0x2c])[0], 0x2c,4,"<I")
+			add_iter (hd, "Edge offset",struct.unpack('<i', data[0x1c:0x20])[0], 0x1c,4,"<i")
+			add_iter (hd, "Center X offset",struct.unpack('<i', data[0x24:0x28])[0], 0x24,4,"<i")
+			add_iter (hd, "Center Y offset",struct.unpack('<i', data[0x28:0x2c])[0], 0x28,4,"<i")
 
 			for i in range(pal_num):
 				clrmode = ord(data[mid_offset+6+pal_off+i*pal_len])
