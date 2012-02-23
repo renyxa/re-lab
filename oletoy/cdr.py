@@ -99,7 +99,7 @@ def clr_model(hd,data,offset):
 	add_iter (hd,"  Color",clr,offset+8,4,"txt")
 
 def outl (hd,size,data):
-	add_iter (hd,"Outline ID","%02x"%d2hex(data[0:4]),0,4,"<I")
+	add_iter (hd,"Outline ID",d2hex(data[0:4]),0,4,"<I")
 	ltype = struct.unpack('<H', data[4:6])[0]
 	ltxt = "Non-scalable"
 	if ltype&0x20 == 0x20:
