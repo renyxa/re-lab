@@ -109,7 +109,7 @@ def clr_model(hd,data,offset):
 	if clr_models.has_key(cmid):
 		cmod += clr_models[cmid]
 	add_iter (hd,"Color Model",cmod,offset,2,"txt")
-	clr = d2hex(data[offset+8:offset+11])
+	clr = d2hex(data[offset+8:offset+12])
 	add_iter (hd,"  Color",clr,offset+8,4,"txt")
 
 def outl (hd,size,data):
@@ -118,6 +118,9 @@ def outl (hd,size,data):
 	ltxt = "Non-scalable"
 	if ltype&0x20 == 0x20:
 		ltxt = "Scalable"
+	if ltype&0x10 == 0x10:
+		ltxt += ", Behind fill"
+
 	add_iter (hd,"Line Type","%02x %s"%(ltype,ltxt),4,2,"<H")
 	add_iter (hd,"Caps Type","%02x"%struct.unpack('<H', data[6:8])[0],6,2,"<H")
 	add_iter (hd,"???? ","%02x"%struct.unpack('<H', data[8:0xa])[0],8,2,"<H")
@@ -150,6 +153,16 @@ def font (hd,size,data):
 		fontname = unicode(fontname,"utf16")
 	add_iter (hd,"FontName",fontname,18,34,"txt")
 
+def user (hd,size,data):
+	add_iter (hd,"PS fill ID",d2hex(data[0:2]),0,2,"<H")
+	if hd.version > 9:
+		psname = unicode(data[2:],"utf16")
+		pslen = len(psname)*2
+	else:
+		psname = unicode(data[2:])
+		pslen = len(psname)
+	add_iter (hd,"PS fill name",psname,2,pslen,"txt")
+
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
 	fill_type = struct.unpack('<h', data[4:6])[0]
@@ -159,14 +172,14 @@ def fild (hd,size,data):
 	add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
 	if fill_type > 0 and fill_type != 7:
 		if fill_type == 1:
-			clr_model = struct.unpack('<h', data[8:0xa])[0]
-			clrm_txt = "%d"%clr_model
-			if clr_models.has_key(clr_model):
-				clrm_txt += " " + clr_models[clr_model]
+			clr_model_id = struct.unpack('<h', data[8:0xa])[0]
+			clrm_txt = "%d"%clr_model_id
+			if clr_models.has_key(clr_model_id):
+				clrm_txt += " " + clr_models[clr_model_id]
 			add_iter (hd, "Color Model", clrm_txt,8,2,"txt")
 			add_iter (hd, "Color", d2hex(data[0x10:0x14]),0x10,4,"<i")
 
-		if fill_type == 2:
+		elif fill_type == 2:
 			grd_offset = 0x8
 			rot_offset = 0x20
 			mid_offset = 0x32
@@ -196,14 +209,12 @@ def fild (hd,size,data):
 			add_iter (hd, "Center Y offset",struct.unpack('<i', data[0x28:0x2c])[0], 0x28,4,"<i")
 
 			for i in range(pal_num):
-				clrmode = ord(data[mid_offset+6+pal_off+i*pal_len])
-																# RGB           CMYK
-				col0=ord(data[mid_offset+14+pal_off+i*pal_len])          #       BB              CC
-				col1=ord(data[mid_offset+15+pal_off+i*pal_len])          #       GG              MM
-				col2=ord(data[mid_offset+16+pal_off+i*pal_len])          #       RR              YY
-				col3=ord(data[mid_offset+17+pal_off+i*pal_len])          #       ??              KK
+				clr_model(hd,data,mid_offset+6+pal_off+i*pal_len)
 				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
-				add_iter (hd, "Color:","%02x %02x %02x %02x\t%u"%(col0,col1,col2,col3,prcnt),mid_offset+14+pal_off+i*pal_len,5,"txt")
+				add_iter (hd, "  Percent","%u"%prcnt,mid_offset+14+pal_off+i*pal_len,1,"B")
+				
+		elif fill_type == 6:
+			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
 	elif fill_type == 7:
 		add_iter (hd,"Pattern ID", struct.unpack('<I', data[8:12])[0],8,4,"txt")
 		# Colors (model + color) started at 0x1c and 0x28
@@ -612,7 +623,7 @@ def txsm (hd,size,data):
 
 cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"font":font,
 	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp,
-	"txsm":txsm,"guid":guid}
+	"txsm":txsm,"guid":guid, "user":user}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
