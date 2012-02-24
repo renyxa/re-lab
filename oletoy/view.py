@@ -845,6 +845,17 @@ Hexdump selection:\n\
 				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt = "BE: %s\tX: %.4f\tY: %.4f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.)
 			if type[0:3] == "CDR":
+				c1 = ord(buf[0])/255.
+				m1 = ord(buf[1])/255.
+				y1 = ord(buf[2])/255.
+				k1 = ord(buf[3])/255.
+				c = (c1 * (1 - k1) + k1)
+				m = (m1 * (1 - k1) + k1)
+				y = (y1 * (1 - k1) + k1)
+				r = 255*(1 - c)
+				g = 255*(1 - m)
+				b = 255*(1 - y)
+				txt = '<span background="#%02x%02x%02x">CMYK</span>  '%(r,g,b)
 				dictm = self.das[pn].dictmod
 				bstr = d2hex(buf)
 				for i in range(dictm.iter_n_children(None)):
