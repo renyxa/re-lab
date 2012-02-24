@@ -114,30 +114,52 @@ def clr_model(hd,data,offset):
 
 def outl (hd,size,data):
 	add_iter (hd,"Outline ID",d2hex(data[0:4]),0,4,"<I")
-	ltype = struct.unpack('<H', data[4:6])[0]
+
+	lt = 0x4
+	ct = 0x6
+	jt = 0x8
+	lw = 0xc
+	varo = 0x14
+	lc = 0x4c
+	dash = 0x68
+	arrw = 0x80
+
+	if hd.version >= 13:
+		flag = struct.unpack('<I', data[4:8])[0]
+		off = 0
+		if flag == 5:
+			off = 107
+		lt = 0x18+off
+		ct = 0x1a+off
+		jt = 0x1c+off
+		lw = 0x1e+off
+		varo = 0x28+off
+		lc = 0x58+off # another place -- 0x55
+		dash = 0x74+off
+		arrw = 0x8a+off
+
+	ltype = struct.unpack('<H', data[lt:lt+2])[0]
 	ltxt = "Non-scalable"
 	if ltype&0x20 == 0x20:
 		ltxt = "Scalable"
 	if ltype&0x10 == 0x10:
 		ltxt += ", Behind fill"
 
-	add_iter (hd,"Line Type","%02x %s"%(ltype,ltxt),4,2,"<H")
-	add_iter (hd,"Caps Type","%02x"%struct.unpack('<H', data[6:8])[0],6,2,"<H")
-	add_iter (hd,"???? ","%02x"%struct.unpack('<H', data[8:0xa])[0],8,2,"<H")
-	add_iter (hd,"LineWidth","%.2f mm"%round(struct.unpack('<I', data[12:16])[0]/10000.0,2),12,4,"<I")
+	add_iter (hd,"Line Type","%02x %s"%(ltype,ltxt),lt,2,"<H")
+	add_iter (hd,"Caps Type","%02x"%struct.unpack('<H', data[ct:ct+2])[0],ct,2,"<H")
+	add_iter (hd,"Join Type","%02x"%struct.unpack('<H', data[jt:jt+2])[0],jt,2,"<H")
+	add_iter (hd,"LineWidth","%.2f mm"%round(struct.unpack('<I', data[lw:lw+4])[0]/10000.0,2),lw,4,"<I")
 
-	add_iter (hd, "?? x0", "%u"%(struct.unpack('<d', data[16:24])[0]/10000),16,8,"<d")
-	add_iter (hd, "?? y0", "%u"%(struct.unpack('<d', data[40:48])[0]/10000),40,8,"<d")
-	for i in (0,1,3,4):                     
-		var = struct.unpack('<d', data[24+i*8:32+i*8])[0]
-		add_iter (hd, "?? var%d"%(i+1), "%f"%var,24+i*8,8,"<d")
-	clr_model(hd,data,0x4c)
-	dnum = struct.unpack('<H', data[0x68:0x6a])[0]
-	add_iter (hd,"Dash num","%02x"%(dnum/2),0x68,2,"<H")
+	for i in range(6):                     
+		var = struct.unpack('<d', data[varo+i*8:varo+8+i*8])[0]
+		add_iter (hd, "?? var%d"%(i+1), "%f"%var,varo+i*8,8,"<d")
+	clr_model(hd,data,lc)
+	dnum = struct.unpack('<H', data[dash:dash+2])[0]
+	add_iter (hd,"Dash num","%02x"%(dnum/2),dash,2,"<H")
 	for i in range(dnum/2):
-		add_iter (hd," Dash/Space","%02x/%02x"%(struct.unpack('<H', data[0x6a+i*4:0x6c+i*4])[0],struct.unpack('<H',data[0x6c+i*4:0x6e+i*4])[0]),0x6a+i*4,4,"txt")
-	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[0x80:0x84])[0],0x80,4,"<I")
-	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[0x84:0x88])[0],0x84,4,"<I")
+		add_iter (hd," Dash/Space","%02x/%02x"%(struct.unpack('<H', data[dash+2+i*4:dash+4+i*4])[0],struct.unpack('<H',data[dash+4+i*4:dash+6+i*4])[0]),dash+2+i*4,4,"txt")
+	add_iter (hd,"StartArrow ID","%02x"%struct.unpack('<I', data[arrw:arrw+4])[0],arrw,4,"<I")
+	add_iter (hd,"EndArrow ID","%02x"%struct.unpack('<I', data[arrw+4:arrw+8])[0],arrw+4,4,"<I")
 
 
 def font (hd,size,data):
@@ -878,10 +900,11 @@ class cdrChunk:
 			parent = f_iter
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
-				#try:
-				self.stlt(page,parent,self.data)
-				#except:
-				#	print "Something failed in 'stlt'."
+				try:
+					print 'stlt'
+#					self.stlt(page,parent,self.data)
+				except:
+					print "Something failed in 'stlt'."
 			elif self.listtype == 'cmpr':
 				self.loadcompressed(page,parent)
 			else:

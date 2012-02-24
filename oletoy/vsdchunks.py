@@ -162,7 +162,7 @@ def List (hd, size, value):
 	add_iter(hd,"SubHdrLen", "%2x"%shl,19,4,"<I")
 	ch_list_len = struct.unpack("<I",value[23:23+4])[0]
 	add_iter(hd, "ChldLstLen", "%2x"%ch_list_len,23,4,"<I")
-	add_iter("SubHdr","",27,shl,"txt")
+	add_iter(hd,"SubHdr","",27,shl,"txt")
 
 	ch_list = ""
 	for i in range(ch_list_len/4):
