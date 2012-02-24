@@ -238,11 +238,11 @@ def fild (hd,size,data):
 		elif fill_type == 6:
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
 	elif fill_type == 7:
-		add_iter (hd,"Pattern ID", struct.unpack('<I', data[8:12])[0],8,4,"txt")
+		add_iter (hd,"Pattern ID", d2hex(data[8:12]),8,4,"txt")
 		# Colors (model + color) started at 0x1c and 0x28
 
 def bmpf (hd,size,data):
-	add_iter (hd,"Pattern ID", struct.unpack('<I', data[0:4])[0],0,4,"txt")
+	add_iter (hd,"Pattern ID", d2hex(data[0:4]),0,4,"txt")
 
 
 def guid (hd,size,data):

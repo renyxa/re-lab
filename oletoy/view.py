@@ -845,17 +845,31 @@ Hexdump selection:\n\
 				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt = "BE: %s\tX: %.4f\tY: %.4f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.)
 			if type[0:3] == "CDR":
-				c1 = ord(buf[0])/255.
-				m1 = ord(buf[1])/255.
-				y1 = ord(buf[2])/255.
-				k1 = ord(buf[3])/255.
-				c = (c1 * (1 - k1) + k1)
-				m = (m1 * (1 - k1) + k1)
-				y = (y1 * (1 - k1) + k1)
-				r = 255*(1 - c)
-				g = 255*(1 - m)
-				b = 255*(1 - y)
-				txt = '<span background="#%02x%02x%02x">CMYK</span>  '%(r,g,b)
+				c2 = ord(buf[0])/255.
+				m2 = ord(buf[1])/255.
+				y2 = ord(buf[2])/255.
+				k2 = ord(buf[3])/255.
+				c22 = (c2 * (1 - k2) + k2)
+				m22 = (m2 * (1 - k2) + k2)
+				y22 = (y2 * (1 - k2) + k2)
+				c1 = ord(buf[0])/100.
+				m1 = ord(buf[1])/100.
+				y1 = ord(buf[2])/100.
+				k1 = ord(buf[3])/100.
+				if c1 <= 1 and m1 <= 1 and y1 <= 1 and k1 <= 1:
+					c = (c1 * (1 - k1) + k1)
+					m = (m1 * (1 - k1) + k1)
+					y = (y1 * (1 - k1) + k1)
+					r1 = 255*(1 - c)
+					g1 = 255*(1 - m)
+					b1 = 255*(1 - y)
+					txt = '<span background="#%02x%02x%02x">CMYK100</span>'%(r1,g1,b1)
+					print r1,g1,b1
+				r2 = 255*(1 - c22)
+				g2 = 255*(1 - m22)
+				b2 = 255*(1 - y22)
+				print r2,g2,b2
+				txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
 				dictm = self.das[pn].dictmod
 				bstr = d2hex(buf)
 				for i in range(dictm.iter_n_children(None)):
@@ -867,6 +881,7 @@ Hexdump selection:\n\
 		if len(buf) == 8:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<d",buf)[0],struct.unpack(">d",buf)[0])
 			self.update_statusbar(txt)
+							
 		if len(buf) == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
