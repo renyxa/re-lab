@@ -17,8 +17,6 @@
 import sys,struct,gtk,gobject,zlib
 from utils import *
 
-fill_types = {0:"Transparency",1:"Solid",2:"Gradient"}
-
 clr_models = {0:"Invalid",
 	1:"PANTONE",
 	2:"CMYK",
@@ -43,8 +41,9 @@ bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
 
 outl_corn_type =('Normal', 'Rounded', 'Cant')
 outl_caps_type =('Normal', 'Rounded', 'Out Square')
-fild_pal_type = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 0xb:'Texture'} # FIXME! names are guessed by frob
+fild_types = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 9:'Bitmap', 10:"Full colour",11:'Texture'}
 fild_grad_type = ('Unknown', 'Linear', 'Radial', 'Conical', 'Squared')
+grad_subtypes = {0:"Line",1:"CW",2:"CCW"}
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -199,8 +198,8 @@ def fild (hd,size,data):
 	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
 	fill_type = struct.unpack('<h', data[4:6])[0]
 	ft_txt = "%d"%fill_type
-	if fill_types.has_key(fill_type):
-		ft_txt += " "+fill_types[fill_type]
+	if fild_types.has_key(fill_type):
+		ft_txt += " "+fild_types[fill_type]
 	add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
 	if fill_type > 0 and fill_type != 7:
 		if fill_type == 1:
@@ -239,6 +238,12 @@ def fild (hd,size,data):
 			add_iter (hd, "Edge offset",struct.unpack('<i', data[0x1c:0x20])[0], 0x1c,4,"<i")
 			add_iter (hd, "Center X offset",struct.unpack('<i', data[0x24:0x28])[0], 0x24,4,"<i")
 			add_iter (hd, "Center Y offset",struct.unpack('<i', data[0x28:0x2c])[0], 0x28,4,"<i")
+			add_iter (hd, "Steps",struct.unpack('<H', data[0x2c:0x2e])[0], 0x2c,2,"<H")
+			stid = struct.unpack('<H', data[0x2e:0x30])[0]
+			st = "Unknown"
+			if grad_subtypes.has_key(stid):
+				st = grad_subtypes[stid]
+			add_iter (hd, "Sub-type",st, 0x2e,2,"<H")
 
 			for i in range(pal_num):
 				clr_model(hd,data,mid_offset+6+pal_off+i*pal_len)
@@ -247,6 +252,24 @@ def fild (hd,size,data):
 				
 		elif fill_type == 6:
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
+
+		elif fill_type == 9:
+			# Bitmap pattern fill
+			pass
+			
+		elif fill_type == 10:
+			# Full Colour pattern fill
+			#<H, 0x1a, &4 -- Xform fill with obj
+			#<H, 0x18, &f + <H, 0x1a, &7 -- Xform + Mirror
+			#<H, 0x1a, &4 -- Xform fill with obj
+			#<H, 0x18, &f + <H, 0x1a, &6 -- Xform + Mirror + Row 15%
+			#<H, 0x18, &f + <H, 0x1a, &7 -- Xform + Mirror + Col 15%
+			pass
+			
+		elif fill_type == 11:
+			# Texture pattern fill
+			pass
+			
 	elif fill_type == 7:
 		add_iter (hd,"Pattern ID", d2hex(data[8:12]),8,4,"txt")
 		# Colors (model + color) started at 0x1c and 0x28

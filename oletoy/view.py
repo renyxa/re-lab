@@ -864,11 +864,11 @@ Hexdump selection:\n\
 					g1 = 255*(1 - m)
 					b1 = 255*(1 - y)
 					txt = '<span background="#%02x%02x%02x">CMYK100</span>'%(r1,g1,b1)
-					print r1,g1,b1
+					#print r1,g1,b1
 				r2 = 255*(1 - c22)
 				g2 = 255*(1 - m22)
 				b2 = 255*(1 - y22)
-				print r2,g2,b2
+				#print r2,g2,b2
 				txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
 				dictm = self.das[pn].dictmod
 				bstr = d2hex(buf)
