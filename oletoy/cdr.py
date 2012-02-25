@@ -119,7 +119,9 @@ def outl (hd,size,data):
 	ct = 0x6
 	jt = 0x8
 	lw = 0xc
-	varo = 0x14
+	st = 0x10
+	ang = 0x14
+	varo = 0x1c
 	lc = 0x4c
 	dash = 0x68
 	arrw = 0x80
@@ -133,6 +135,8 @@ def outl (hd,size,data):
 		ct = 0x1a+off
 		jt = 0x1c+off
 		lw = 0x1e+off
+		st = 0x22+off
+		ang = 0x24+off
 		varo = 0x28+off
 		lc = 0x58+off # another place -- 0x55
 		dash = 0x74+off
@@ -144,11 +148,17 @@ def outl (hd,size,data):
 		ltxt = "Scalable"
 	if ltype&0x10 == 0x10:
 		ltxt += ", Behind fill"
+	if ltype&0x80 == 0x80:
+		ltxt += ", Share Attrs"
+	if ltype&0x4 == 0x4:
+		ltxt += ", Dashed"
 
 	add_iter (hd,"Line Type","%02x %s"%(ltype,ltxt),lt,2,"<H")
 	add_iter (hd,"Caps Type","%02x"%struct.unpack('<H', data[ct:ct+2])[0],ct,2,"<H")
 	add_iter (hd,"Join Type","%02x"%struct.unpack('<H', data[jt:jt+2])[0],jt,2,"<H")
 	add_iter (hd,"LineWidth","%.2f mm"%round(struct.unpack('<I', data[lw:lw+4])[0]/10000.0,2),lw,4,"<I")
+	add_iter (hd,"Stretch","%02x"%struct.unpack('<H', data[st:st+2])[0],st,2,"<H")
+	add_iter (hd,"Angle","%.2f"%round(struct.unpack('<i', data[ang:ang+4])[0]/1000000.0,2),ang,4,"<I")
 
 	for i in range(6):                     
 		var = struct.unpack('<d', data[varo+i*8:varo+8+i*8])[0]
