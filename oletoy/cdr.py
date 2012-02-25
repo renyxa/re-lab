@@ -255,8 +255,8 @@ def fild (hd,size,data):
 
 		elif fill_type == 9:
 			# Bitmap pattern fill
-			pass
-			
+			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
+
 		elif fill_type == 10:
 			# Full Colour pattern fill
 			#<H, 0x1a, &4 -- Xform fill with obj
@@ -264,12 +264,12 @@ def fild (hd,size,data):
 			#<H, 0x1a, &4 -- Xform fill with obj
 			#<H, 0x18, &f + <H, 0x1a, &6 -- Xform + Mirror + Row 15%
 			#<H, 0x18, &f + <H, 0x1a, &7 -- Xform + Mirror + Col 15%
-			pass
-			
+			add_iter (hd,"Vect ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
+
 		elif fill_type == 11:
 			# Texture pattern fill
-			pass
-			
+			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
+
 	elif fill_type == 7:
 		add_iter (hd,"Pattern ID", d2hex(data[8:12]),8,4,"txt")
 		# Colors (model + color) started at 0x1c and 0x28
@@ -584,6 +584,9 @@ def disp (hd,size,data,page):
 	da.connect('expose_event', disp_expose,pixbuf)
 	page.win.show_all()
 
+def vpat (hd,size,data):
+	add_iter (hd, "Vect ID", struct.unpack("<I",data[0:4])[0],0,4,"<I")
+
 def txsm (hd,size,data):
 	# FIXME! ver 13 and newer is different
 	add_iter (hd, "txt ID", d2hex(data[0x28:0x2c]),0x28,4,"txt")
@@ -678,7 +681,7 @@ def txsm (hd,size,data):
 
 cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"font":font,
 	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp,
-	"txsm":txsm,"guid":guid, "user":user}
+	"txsm":txsm,"guid":guid, "user":user, "vpat":vpat}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
@@ -931,6 +934,9 @@ class cdrChunk:
 			page.model.set_value(f_iter,1,("cdr",self.name))
 
 			parent = f_iter
+			if self.listtype == 'vect':
+				chunk = cdrChunk()
+				chunk.load(self.data[16:],page,parent)
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
 				try:
