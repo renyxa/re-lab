@@ -1,3 +1,7 @@
+2012-02-26  Valek Filippov
+
+		* CDR: initial support for pics rendering for 'bmp '.
+
 2012-02-22  Valek Filippov
 
 		* CDR: 'outl' more flags.

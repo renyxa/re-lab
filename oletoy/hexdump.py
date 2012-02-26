@@ -23,7 +23,10 @@ class hexdump:
 		self.vpaned = gtk.VPaned()
 		self.data = None
 		self.hdmodel, self.hdview, self.hdscrolled, self.hdrend = tree.make_view2()
-		self.vpaned.add1(self.hdscrolled)
+		self.hbox0 =gtk.HBox()
+		self.da = None
+		self.hbox0.pack_start(self.hdscrolled)
+		self.vpaned.add1(self.hbox0)
 		self.hdscrolled.set_size_request(300, 300)
 		self.version = None # to support vsdchunks for different versions
 		

@@ -734,6 +734,8 @@ Hexdump selection:\n\
 					if svm.svm_ids.has_key(ntype[1]):
 						svm.svm_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cdr":
+					if hd.da != None:
+						hd.da.destroy()
 					if cdr.cdr_ids.has_key(ntype[1]):
 						if ntype[1] == 'DISP':
 							cdr.cdr_ids[ntype[1]](hd,size,data,self.das[pn])

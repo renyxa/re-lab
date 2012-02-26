@@ -303,21 +303,50 @@ def bmp (hd,size,data):
 	if pal < 12:
 		bplt = bmp_clr_models[pal]
 	add_iter (hd,"\tPallete (%02x) %s"%(pal,bplt), struct.unpack('<I', data[0x36:0x3a])[0],0x36,4,"<I")
-	add_iter (hd,"\tWidth", struct.unpack('<I', data[0x3e:0x42])[0],0x3e,4,"<I")
-	add_iter (hd,"\tHeight", struct.unpack('<I', data[0x42:0x46])[0],0x42,4,"<I")
+	imgw = struct.unpack('<I', data[0x3e:0x42])[0]
+	add_iter (hd,"\tWidth", imgw,0x3e,4,"<I")
+	imgh = struct.unpack('<I', data[0x42:0x46])[0]
+	add_iter (hd,"\tHeight", imgh,0x42,4,"<I")
 	bpp = struct.unpack('<I', data[0x4a:0x4e])[0]
 	add_iter (hd,"\tBPP", bpp,0x4a,4,"<I")
 	# for bpp = 1, cdr aligns by 4 bytes, bits after width are crap
 
 	bmpsize = struct.unpack('<I', data[0x52:0x56])[0]
+	palsize = 0
 	add_iter (hd,"\tSize of BMP data", bmpsize,0x52,4,"<I")
 	if bpp < 24 and pal != 5 and pal != 6:
 		palsize = struct.unpack('<H', data[0x78:0x7a])[0]
 		add_iter (hd,"Palette Size", palsize,0x78,2,"<H")
 		add_iter (hd,"Palette", "",0x7a,palsize*3,"txt")
 		add_iter (hd,"BMP data", "",0x7a+palsize*3,bmpsize,"<I")
+		bmpoff = 0x7a+palsize*3
 	else:
 		add_iter (hd,"BMP data", "",0x76,bmpsize,"<I")
+		bmpoff = 0x76
+
+	img = 'BM'+struct.pack("<I",bmpsize+palsize+54)+'\x00\x00\x00\x00'+struct.pack("<I",54+palsize*3)
+	img += '\x28\x00\x00\x00'+struct.pack("<I",imgw)+struct.pack("<I",imgh)+'\x01\x00'
+	img += struct.pack("<H",bpp)+'\x00\x00\x00\x00'+struct.pack("<I",bmpsize)+'\x00\x00\x00\x00'+'\x00\x00\x00\x00'
+	img += struct.pack("<I",palsize)+'\x00\x00\x00\x00'
+	if bpp == 24:
+		img += data[bmpoff:]
+	else:
+		img += data[0x7a:palsize*3] + data[bmpoff:]
+
+	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader.write(img)
+	pixbufloader.close()
+	pixbuf = pixbufloader.get_pixbuf()
+	imgw=pixbuf.get_width()
+	imgh=pixbuf.get_height()
+	hd.da = gtk.DrawingArea()
+	hd.hbox0.pack_start(hd.da)
+	hd.da.connect('expose_event', disp_expose,pixbuf)
+	ctx = hd.da.window.cairo_create()
+	ctx.set_source_pixbuf(pixbuf,0,0)
+	ctx.paint()
+	ctx.stroke()
+	hd.da.show()
 
 
 def ftil (hd,size,data):
