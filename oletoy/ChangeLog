@@ -1,3 +1,7 @@
+2012-02-27  Valek Filippov
+
+		* ICC: initial support.
+
 2012-02-26  Valek Filippov
 
 		* CDR: initial support for pics rendering for 'bmp '.

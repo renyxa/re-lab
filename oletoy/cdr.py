@@ -15,6 +15,7 @@
 #
 
 import sys,struct,gtk,gobject,zlib
+import icc
 from utils import *
 
 clr_models = {0:"Invalid",
@@ -952,6 +953,8 @@ class cdrChunk:
 
 		if self.fourcc == 'vrsn':	
 			page.version = struct.unpack("<h",self.data)[0]/100
+		if self.fourcc == 'iccd':
+			icc.parse(page,self.data,f_iter)
 		if self.fourcc == 'pack':	
 			self.load_pack(page,f_iter)
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
