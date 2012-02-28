@@ -24,7 +24,7 @@ import Doc, cmd
 import escher,quill
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb
-import emfparse,svm,mf,wmfparse,cdr,emfplus,rx2,fh,fhparse
+import emfparse,svm,mf,wmfparse,cdr,cmx,emfplus,rx2,fh,fhparse
 from utils import *
 
 version = "0.5.75"
@@ -733,6 +733,9 @@ Hexdump selection:\n\
 				elif ntype[0] == "svm":
 					if svm.svm_ids.has_key(ntype[1]):
 						svm.svm_ids[ntype[1]](hd,size,data)
+				elif ntype[0] == "cmx":
+					if cmx.cmx_ids.has_key(ntype[1]):
+						cmx.cmx_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cdr":
 					if hd.da != None:
 						hd.da.destroy()

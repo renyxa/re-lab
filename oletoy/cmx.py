@@ -19,24 +19,22 @@ import gobject
 import gtk
 from utils import *
 
-def header (hd,size,data):
-	pass
-
-def element (hd,size,data):
-	pass
-
-def parse (page, data, parent):
+# CMX header
+def cont (hd,size,data):
 	off = 0
-	add_pgiter(page,"Header","icc","hdr",data[0:0x80],parent)
-	off = 0x80
-	num = struct.unpack(">I",data[off:off+4])[0]
-	ttiter = add_pgiter(page,"Tag Table","icc","tagtable",data[off:off+4],parent)
+	# "{Corel Binary Meta File}"
+	add_iter (hd, "ID", data[0:24],0,32,"txt")
+	off += 32
+	# "Windows 3.1" or "Macintosh"
+	add_iter (hd, "OS", data[off:off+11],off,16,"txt")
+	off += 16
+	# byte order: "2" - LE, "4" - BE
+	bo = data[off]
+	add_iter (hd, "Byte Order", data[off:off+4],off,4,"<I")
 	off += 4
-	eliter = add_pgiter(page,"Elements","icc","elems",data[off+num*12:],parent)
+	# coord size: "2" - 16 bits, "4" - 32 bits
+	add_iter (hd, "Coord Size", data[off:off+2],off,2,"<H")
+	off += 2
 
-	for i in range(num):
-		toff = struct.unpack(">I",data[off+4:off+8])[0]
-		tlen = struct.unpack(">I",data[off+8:off+12])[0]
-		add_pgiter(page,"%s [%02x %02x]"%(data[off:off+4],toff,tlen),"icc","tag",data[off:off+12],ttiter)
-		off += 12
-		add_pgiter(page,data[off:off+4],"icc","elem",data[toff:toff+tlen],eliter)
+cmx_ids = {"cont":cont}
+

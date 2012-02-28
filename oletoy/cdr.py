@@ -900,7 +900,7 @@ class cdrChunk:
 			chunk.load(self.uncompresseddata, page, f_iter,offset)
 			offset += 8 + chunk.rawsize
 
-	def loadcompressed(self,page,parent):
+	def loadcompressed(self,page,parent,fmttype="cdr"):
 		if self.data[0:4] != 'cmpr':
 			raise Exception("can't happen")
 		self.cmpr=True
@@ -929,10 +929,10 @@ class cdrChunk:
 		while offset < len(self.uncmprdata):
 			chunk = cdrChunk()
 			chunk.cmpr = True
-			chunk.load(self.uncmprdata, page,parent,offset, blocksizes)
+			chunk.load(self.uncmprdata, page,parent,offset, blocksizes,fmttype)
 			offset += 8 + chunk.rawsize
 
-	def load(self, buf, page, parent, offset=0, blocksizes=()):
+	def load(self, buf, page, parent, offset=0, blocksizes=(),fmttype="cdr"):
 		self.hdroffset = offset
 		self.fourcc = buf[offset:offset+4]
 		self.rawsize = struct.unpack('<I', buf[offset+4:offset+8])[0]
@@ -944,7 +944,7 @@ class cdrChunk:
 			self.rawsize += 1
 
 		self.name = self.chunk_name()
-		f_iter = add_pgiter(page,self.name+" %02x"%id,"cdr",self.name,self.data,parent)
+		f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
 		if self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf":
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_path(f_iter))
@@ -963,12 +963,12 @@ class cdrChunk:
 			if self.cmpr == True:
 				name += " %02x"%id
 			page.model.set_value(f_iter,0,name)
-			page.model.set_value(f_iter,1,("cdr",self.name))
+			page.model.set_value(f_iter,1,(fmttype,self.name))
 
 			parent = f_iter
 			if self.listtype == 'vect':
 				chunk = cdrChunk()
-				chunk.load(self.data[16:],page,parent)
+				chunk.load(self.data[16:],page,parent,0,(),"cmx")
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
 				try:
@@ -977,12 +977,12 @@ class cdrChunk:
 				except:
 					print "Something failed in 'stlt'."
 			elif self.listtype == 'cmpr':
-				self.loadcompressed(page,parent)
+				self.loadcompressed(page,parent,fmttype)
 			else:
 				offset += 12
 				while offset < self.hdroffset + 8 + self.rawsize:
 					chunk = cdrChunk()
-					chunk.load(buf,page,parent,offset, blocksizes)
+					chunk.load(buf,page,parent,offset, blocksizes,fmttype)
 					offset += 8 + chunk.rawsize
 
 	def chunk_name(self):
