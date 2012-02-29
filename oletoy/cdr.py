@@ -249,7 +249,7 @@ def fild (hd,size,data):
 			for i in range(pal_num):
 				clr_model(hd,data,mid_offset+6+pal_off+i*pal_len)
 				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
-				add_iter (hd, "  Percent","%u"%prcnt,mid_offset+14+pal_off+i*pal_len,1,"B")
+				add_iter (hd, "  Percent","%u"%prcnt,mid_offset+18+pal_off+i*pal_len,1,"B")
 				
 		elif fill_type == 6:
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
