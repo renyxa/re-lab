@@ -274,6 +274,9 @@ def fild (hd,size,data):
 	elif fill_type == 7:
 		add_iter (hd,"Pattern ID", d2hex(data[8:12]),8,4,"txt")
 		# Colors (model + color) started at 0x1c and 0x28
+		clr_model(hd,data,0x1c)
+		clr_model(hd,data,0x28)
+		
 
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", d2hex(data[0:4]),0,4,"txt")
