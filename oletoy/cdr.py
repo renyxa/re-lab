@@ -200,6 +200,7 @@ def fild (hd,size,data):
 	ftype_off = 4
 	if hd.version > 12:
 		ftype_off = 12
+		v13flag = struct.unpack('<h', data[8:10])[0]
 	fill_type = struct.unpack('<h', data[ftype_off:ftype_off+2])[0]
 	ft_txt = "%d"%fill_type
 	if fild_types.has_key(fill_type):
@@ -235,9 +236,12 @@ def fild (hd,size,data):
 				steps_off = 0x36
 				mode_off = 0x38
 				mid_offset = 0x3c
-				pal_len = 45
+				pal_len = 24
 				pal_off = 3
-				prcnt_off = 29
+				prcnt_off = 8
+				if v13flag == 0x9e:
+					prcnt_off = 29
+					pal_len = 45
 			grdmode = ord(data[grd_offset])
 			midpoint = ord(data[mid_offset])
 			rot = struct.unpack('<l', data[rot_offset:rot_offset+4])[0]
@@ -294,6 +298,23 @@ def fild (hd,size,data):
 
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", d2hex(data[0:4]),0,4,"txt")
+	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
+	bmpoff = struct.pack("<I",len(data)+10-bmp)
+	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
+	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader.write(img)
+	pixbufloader.close()
+	pixbuf = pixbufloader.get_pixbuf()
+	imgw=pixbuf.get_width()
+	imgh=pixbuf.get_height()
+	hd.da = gtk.DrawingArea()
+	hd.hbox0.pack_start(hd.da)
+	hd.da.connect('expose_event', disp_expose,pixbuf)
+	ctx = hd.da.window.cairo_create()
+	ctx.set_source_pixbuf(pixbuf,0,0)
+	ctx.paint()
+	ctx.stroke()
+	hd.da.show()
 
 
 def guid (hd,size,data):
