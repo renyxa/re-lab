@@ -44,7 +44,7 @@ outl_corn_type =('Normal', 'Rounded', 'Cant')
 outl_caps_type =('Normal', 'Rounded', 'Out Square')
 fild_types = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern', 9:'Bitmap', 10:"Full colour",11:'Texture'}
 fild_grad_type = ('Unknown', 'Linear', 'Radial', 'Conical', 'Squared')
-grad_subtypes = {0:"Line",1:"CW",2:"CCW"}
+grad_subtypes = {0:"Line",1:"CW",2:"CCW",3:"Custom"}
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -197,14 +197,14 @@ def user (hd,size,data):
 
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
+	ftype_off = 4
 	if hd.version > 12:
-		fill_type = struct.unpack('<h', data[12:14])[0]
-	else:
-		fill_type = struct.unpack('<h', data[4:6])[0]
+		ftype_off = 12
+	fill_type = struct.unpack('<h', data[ftype_off:ftype_off+2])[0]
 	ft_txt = "%d"%fill_type
 	if fild_types.has_key(fill_type):
 		ft_txt += " "+fild_types[fill_type]
-	add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
+	add_iter (hd,"Fill Type", ft_txt,ftype_off,2,"txt")
 	if fill_type > 0 and fill_type != 7:
 		if fill_type == 1:
 			clr_model_id = struct.unpack('<h', data[8:0xa])[0]
