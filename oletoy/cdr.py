@@ -197,7 +197,10 @@ def user (hd,size,data):
 
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
-	fill_type = struct.unpack('<h', data[4:6])[0]
+	if hd.version > 12:
+		fill_type = struct.unpack('<h', data[12:14])[0]
+	else:
+		fill_type = struct.unpack('<h', data[4:6])[0]
 	ft_txt = "%d"%fill_type
 	if fild_types.has_key(fill_type):
 		ft_txt += " "+fild_types[fill_type]
@@ -213,43 +216,54 @@ def fild (hd,size,data):
 
 		elif fill_type == 2:
 			grd_offset = 0x8
+			edge_off = 0x1c
 			rot_offset = 0x20
+			cx_off = 0x24
+			cy_off = 0x28
+			steps_off = 0x2c
+			mode_off = 0x2e
 			mid_offset = 0x32
 			pal_len = 16
 			pal_off = 0
 			prcnt_off = 0
 			if hd.version >= 13:
 				grd_offset = 0x16
+				edge_off = 0x28
+				rot_offset = 0x2a
+				cx_off = 0x2e
+				cy_off = 0x32
+				steps_off = 0x36
+				mode_off = 0x38
 				mid_offset = 0x3c
-				pal_len = 24
+				pal_len = 45
 				pal_off = 3
-				prcnt_off = 8
+				prcnt_off = 29
 			grdmode = ord(data[grd_offset])
 			midpoint = ord(data[mid_offset])
-			pal_num = ord(data[mid_offset+2])								
-			rot = struct.unpack('<L', data[rot_offset:rot_offset+4])[0]
+			rot = struct.unpack('<l', data[rot_offset:rot_offset+4])[0]
 
 			if grdmode < len(fild_grad_type):
 				gr_type = "%s"%fild_grad_type[grdmode]
 			else:
 				gr_type = "Unknown (%X)"%clrmode
 			add_iter (hd, "Gradient type",gr_type, grd_offset,1,"B")
-			add_iter (hd, "Rotation",rot/1000000, rot_offset,4,"<L")
-			add_iter (hd, "Midpoint",midpoint, mid_offset,1,"B")
-			add_iter (hd, "Edge offset",struct.unpack('<i', data[0x1c:0x20])[0], 0x1c,4,"<i")
-			add_iter (hd, "Center X offset",struct.unpack('<i', data[0x24:0x28])[0], 0x24,4,"<i")
-			add_iter (hd, "Center Y offset",struct.unpack('<i', data[0x28:0x2c])[0], 0x28,4,"<i")
-			add_iter (hd, "Steps",struct.unpack('<H', data[0x2c:0x2e])[0], 0x2c,2,"<H")
-			stid = struct.unpack('<H', data[0x2e:0x30])[0]
+			add_iter (hd, "Edge offset",struct.unpack('<h', data[edge_off:edge_off+2])[0], edge_off,2,"<h")
+			add_iter (hd, "Rotation",rot/1000000, rot_offset,4,"<l")
+			add_iter (hd, "Center X offset",struct.unpack('<i', data[cx_off:cx_off+4])[0], cx_off,4,"<i")
+			add_iter (hd, "Center Y offset",struct.unpack('<i', data[cy_off:cy_off+4])[0], cy_off,4,"<i")
+			add_iter (hd, "Steps",struct.unpack('<H', data[steps_off:steps_off+2])[0], steps_off,2,"<H")
+			stid = struct.unpack('<H', data[mode_off:mode_off+2])[0]
 			st = "Unknown"
 			if grad_subtypes.has_key(stid):
 				st = grad_subtypes[stid]
-			add_iter (hd, "Sub-type",st, 0x2e,2,"<H")
+			add_iter (hd, "Sub-type",st, mode_off,2,"<H")
+			add_iter (hd, "Midpoint",midpoint, mid_offset,1,"B")
 
+			pal_num = ord(data[mid_offset+2])
 			for i in range(pal_num):
 				clr_model(hd,data,mid_offset+6+pal_off+i*pal_len)
 				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
-				add_iter (hd, "  Percent","%u"%prcnt,mid_offset+18+pal_off+i*pal_len,1,"B")
+				add_iter (hd, "  Percent","%u"%prcnt,mid_offset+18+prcnt_off+i*pal_len,1,"B")
 				
 		elif fill_type == 6:
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
