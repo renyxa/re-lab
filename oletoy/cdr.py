@@ -696,14 +696,14 @@ def disp (hd,size,data,page):
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	if page.win != None:
-		page.win.destroy()
-	page.win = gtk.Window()
-	page.win.set_default_size(imgw, imgh)
-	da = gtk.DrawingArea()
-	page.win.add(da)
-	da.connect('expose_event', disp_expose,pixbuf)
-	page.win.show_all()
+	hd.da = gtk.DrawingArea()
+	hd.hbox0.pack_start(hd.da)
+	hd.da.connect('expose_event', disp_expose,pixbuf)
+	ctx = hd.da.window.cairo_create()
+	ctx.set_source_pixbuf(pixbuf,0,0)
+	ctx.paint()
+	ctx.stroke()
+	hd.da.show()
 
 def vpat (hd,size,data):
 	add_iter (hd, "Vect ID", struct.unpack("<I",data[0:4])[0],0,4,"<I")
