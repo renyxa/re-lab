@@ -206,7 +206,7 @@ def fild (hd,size,data):
 	if fild_types.has_key(fill_type):
 		ft_txt += " "+fild_types[fill_type]
 	add_iter (hd,"Fill Type", ft_txt,ftype_off,2,"txt")
-	if fill_type > 0 and fill_type != 7:
+	if fill_type > 0:
 		if fill_type == 1:
 			clr_model_id = struct.unpack('<h', data[8:0xa])[0]
 			clrm_txt = "%d"%clr_model_id
@@ -272,29 +272,78 @@ def fild (hd,size,data):
 		elif fill_type == 6:
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
 
+		elif fill_type == 7:
+			patt_off = 8
+			w_off = 0xc
+			h_off = 0x10
+			rcp_off = 0x18
+			fl_off = 0x1a
+			clr1_off = 0x1c
+			clr2_off = 0x28
+			if hd.version > 12:
+				patt_off = 0x16
+				w_off = 0x1a
+				h_off = 0x1e
+				rcp_off = 0x26
+				fl_off = 0x28
+				clr1_off = 0x2f
+				pal_len = 22
+				if v13flag == 0x94:
+					pal_len = 43
+				clr2_off = clr1_off + pal_len
+
+			add_iter (hd,"Pattern ID", d2hex(data[patt_off:patt_off+4]),patt_off,4,"txt")
+			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
+			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
+			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
+			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
+
+			# Colors (model + color) started at 0x1c and 0x28
+			
+			clr_model(hd,data,clr1_off)
+			clr_model(hd,data,clr2_off)
+
 		elif fill_type == 9:
 			# Bitmap pattern fill
+			patt_off = 8
+			w_off = 0xc
+			h_off = 0x10
+			rcp_off = 0x18
+			fl_off = 0x1a
+			if hd.version > 12:
+				patt_off = 0x16
+				w_off = 0x1a
+				h_off = 0x1e
+				rcp_off = 0x26
+				fl_off = 0x28
+			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
+			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
+			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
+			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
 			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
 
 		elif fill_type == 10:
-			# Full Colour pattern fill
-			#<H, 0x1a, &4 -- Xform fill with obj
-			#<H, 0x18, &f + <H, 0x1a, &7 -- Xform + Mirror
-			#<H, 0x1a, &4 -- Xform fill with obj
-			#<H, 0x18, &f + <H, 0x1a, &6 -- Xform + Mirror + Row 15%
-			#<H, 0x18, &f + <H, 0x1a, &7 -- Xform + Mirror + Col 15%
+			patt_off = 8
+			w_off = 0xc
+			h_off = 0x10
+			rcp_off = 0x18
+			fl_off = 0x1a
+			if hd.version > 12:
+				patt_off = 0x16
+				w_off = 0x1a
+				h_off = 0x1e
+				rcp_off = 0x26
+				fl_off = 0x28
+			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
+			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
+			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
+			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
 			add_iter (hd,"Vect ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
 
 		elif fill_type == 11:
 			# Texture pattern fill
 			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
 
-	elif fill_type == 7:
-		add_iter (hd,"Pattern ID", d2hex(data[8:12]),8,4,"txt")
-		# Colors (model + color) started at 0x1c and 0x28
-		clr_model(hd,data,0x1c)
-		clr_model(hd,data,0x28)
-		
 
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", d2hex(data[0:4]),0,4,"txt")
