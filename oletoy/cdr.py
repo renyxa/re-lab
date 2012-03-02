@@ -18,7 +18,10 @@ import sys,struct,gtk,gobject,zlib
 import icc
 from utils import *
 
-clr_models = {0:"Invalid",
+ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
+
+clr_models = {
+	0:"Invalid",
 	1:"PANTONE",
 	2:"CMYK",
 	3:"CMYK255",
@@ -30,6 +33,7 @@ clr_models = {0:"Invalid",
 	9:"Gray",
 	10:"YIQ255",
 	11:"YIQ",
+	12:"LAB",
 	17:'CMYK', #? verify
 	18:'LAB', # AP
 	20:'Registration Color',
