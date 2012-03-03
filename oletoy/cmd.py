@@ -104,7 +104,7 @@ def recfind (model,path,iter,(page,data)):
 				argvalue = d2hex(recdata[off1:off2])
 				if rdata2 != "":
 					if rdata2 == argtxt:
-						if cdrloda.has_index(argtype):
+						if cdrloda.has_key(argtype):
 							argtxt = cdrloda[argtype]
 						s_iter = page.search.append(None,None)
 						page.search.set_value(s_iter,0,model.get_string_from_iter(iter))

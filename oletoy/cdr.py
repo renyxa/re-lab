@@ -327,6 +327,7 @@ def fild (hd,size,data):
 			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
 
 		elif fill_type == 10:
+			# Full colour pattern
 			patt_off = 8
 			w_off = 0xc
 			h_off = 0x10
@@ -346,8 +347,19 @@ def fild (hd,size,data):
 
 		elif fill_type == 11:
 			# Texture pattern fill
-			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
-
+			imgid_off = 0x30
+			v1_off = 0xc
+			v3_off = 0x20
+			if hd.version > 12:
+				imgid_off = 0x3e
+				v1_off = 0x1e
+				v2_off = 0x32
+			add_iter (hd,"v1",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
+			add_iter (hd,"v2",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
+			add_iter (hd,"v3",struct.unpack("<I",data[v2_off:v2_off+4])[0]/10000.,v2_off,4,"<I")
+			add_iter (hd,"v4",struct.unpack("<I",data[v2_off+4:v2_off+8])[0]/10000.,v2_off+4,4,"<I")
+			add_iter (hd,"Image ID",struct.unpack("<I",data[imgid_off:imgid_off+4])[0],imgid_off,4,"<I")
+				
 
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", d2hex(data[0:4]),0,4,"txt")
@@ -457,6 +469,17 @@ def loda_trfd (hd,data,offset,l_type):
 
 def loda_stlt (hd,data,offset,l_type):
 	add_iter (hd, "[00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+
+def loda_grad (hd,data,offset,l_type):
+	startx = struct.unpack('<i', data[offset+8:offset+12])[0]
+	starty = struct.unpack('<i', data[offset+12:offset+16])[0]
+	endx = struct.unpack('<i', data[offset+16:offset+20])[0]
+	endy = struct.unpack('<i', data[offset+20:offset+24])[0]
+	add_iter (hd, "[2eea] Gradient Start X","%.2f"%round(startx/10000.,2),offset+8,4,"<i")
+	add_iter (hd, "[2eea] Gradient Start Y","%.2f"%round(starty/10000.,2),offset+12,4,"<i")
+	add_iter (hd, "[2eea] Gradient End X","%.2f"%round(endx/10000.,2),offset+16,4,"<i")
+	add_iter (hd, "[2eea] Gradient End Y","%.2f"%round(endy/10000.,2),offset+20,4,"<i")
+
 
 def loda_rot(hd,data,offset,l_type):
 	rot = struct.unpack('<l', data[offset:offset+4])[0]
@@ -633,7 +656,7 @@ loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bit
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x28:loda_rot_center,0x64:loda_trfd,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
-									0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr
+									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr
 									}
 
 def loda (hd,size,data):
