@@ -382,8 +382,12 @@ class HexView():
 
 	def init_lines(self):
 		# set initial line lengths
-		for i in range(len(self.data)/16+1):
+		for i in range(len(self.data)/16):
 			self.lines.append((i*16,0))
+			self.hvlines.append("")
+			self.bkhvlines.append("")
+		if len(self.data)%16 != 0:
+			self.lines.append((i*16+16,0))
 			self.hvlines.append("")
 			self.bkhvlines.append("")
 		self.lines.append((len(self.data),0))
@@ -438,7 +442,7 @@ class HexView():
 	def insert_comment(self,text="",offset=None,length=1,auto=0):
 		if offset == None:
 			offset = self.lines[self.curr][0]+self.curc
-		if text:
+		if text != "":
 			mode = self.lines[self.curr][1]
 			if self.lines[self.curr][1] < 2:
 				mode += 2
@@ -446,7 +450,7 @@ class HexView():
 			else:
 				old_coff = self.lines[self.curr][2]
 
-			if self.keep_cmnt:
+			if self.keep_cmnt and len(self.lines[self.curr]) > 2:
 				self.comments[self.lines[self.curr][2]] = (self.comments[self.lines[self.curr][2]][0],text)
 				self.keep_cmnt = 0
 			else:
@@ -471,10 +475,12 @@ class HexView():
 				if auto == 0 and old_coff != offset:
 					if self.comments.has_key(old_coff):
 						del self.comments[old_coff]
+						self.keep_cmnt = 0
 		else:
 			self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
 			if self.comments.has_key(offset):
 				del self.comments[offset]
+				self.keep_cmnt = 0
 		if auto:
 			self.expose(None,None)
 

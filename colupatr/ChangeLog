@@ -1,3 +1,7 @@
+2012-03-02  Valek Filippov <frob@df.ru>
+
+	* Fix comment remove/insert, fix off by 1 for files with %16 length.
+
 2012-02-04  Valek Filippov <frob@df.ru>
 
 	* Improvements for 'goto'.
