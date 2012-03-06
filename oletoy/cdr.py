@@ -212,12 +212,10 @@ def fild (hd,size,data):
 	add_iter (hd,"Fill Type", ft_txt,ftype_off,2,"txt")
 	if fill_type > 0:
 		if fill_type == 1:
-			clr_model_id = struct.unpack('<h', data[8:0xa])[0]
-			clrm_txt = "%d"%clr_model_id
-			if clr_models.has_key(clr_model_id):
-				clrm_txt += " " + clr_models[clr_model_id]
-			add_iter (hd, "Color Model", clrm_txt,8,2,"txt")
-			add_iter (hd, "Color", d2hex(data[0x10:0x14]),0x10,4,"<i")
+			clrm_off = 8
+			if hd.version > 12:
+				clrm_off = 0x1b
+			clr_model(hd,data,clrm_off)
 
 		elif fill_type == 2:
 			grd_offset = 0x8
@@ -243,7 +241,7 @@ def fild (hd,size,data):
 				pal_len = 24
 				pal_off = 3
 				prcnt_off = 8
-				if v13flag == 0x9e:
+				if v13flag >= 0x9e:
 					prcnt_off = 29
 					pal_len = 45
 			grdmode = ord(data[grd_offset])
@@ -328,22 +326,23 @@ def fild (hd,size,data):
 
 		elif fill_type == 10:
 			# Full colour pattern
-			patt_off = 8
+			
 			w_off = 0xc
 			h_off = 0x10
 			rcp_off = 0x18
 			fl_off = 0x1a
+			patt_off = 0x30
 			if hd.version > 12:
-				patt_off = 0x16
-				w_off = 0x1a
-				h_off = 0x1e
-				rcp_off = 0x26
-				fl_off = 0x28
+				w_off = 0x16
+				h_off = 0x1a
+				rcp_off = 0x22
+				fl_off = 0x24
+				patt_off = 0x36
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
 			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
-			add_iter (hd,"Vect ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
+			add_iter (hd,"Vect ID",struct.unpack("<I",data[patt_off:patt_off+4])[0],patt_off,4,"<I")
 
 		elif fill_type == 11:
 			# Texture pattern fill
@@ -513,17 +512,30 @@ def loda_polygon (hd,data,offset,l_type):
 		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%.2f/%.2f mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x18+8+i*8,8,"txt")
 
 def loda_coords124 (hd,data,offset,l_type):
-# rectangle or ellipse or text
-	x1 = struct.unpack('<l', data[offset:offset+4])[0]
-	y1 = struct.unpack('<l', data[offset+4:offset+8])[0]
-	add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
+	# rectangle or ellipse or text
+	if hd.version > 14:
+		x1 = struct.unpack('<d', data[offset:offset+8])[0]
+		y1 = struct.unpack('<d', data[offset+8:offset+16])[0]
+		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,16,"txt")
 
-	if l_type == 1:
-		R1 = struct.unpack('<L', data[offset+8:offset+12])[0]
-		R2 = struct.unpack('<L', data[offset+12:offset+16])[0]
-		R3 = struct.unpack('<L', data[offset+16:offset+20])[0]
-		R4 = struct.unpack('<L', data[offset+20:offset+24])[0]
-		add_iter (hd,"[001e] R1 R2 R3 R4","%.2f %.2f %.2f %.2f mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+8,16,"txt")
+		if l_type == 1:
+			R1 = struct.unpack('<d', data[offset+16:offset+24])[0]
+			R2 = struct.unpack('<d', data[offset+24:offset+32])[0]
+			R3 = struct.unpack('<d', data[offset+32:offset+40])[0]
+			R4 = struct.unpack('<d', data[offset+40:offset+48])[0]
+			add_iter (hd,"[001e] R1 R2 R3 R4","%.2f %.2f %.2f %.2f mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+16,32,"txt")
+		offset += 8
+	else:
+		x1 = struct.unpack('<l', data[offset:offset+4])[0]
+		y1 = struct.unpack('<l', data[offset+4:offset+8])[0]
+		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
+
+		if l_type == 1:
+			R1 = struct.unpack('<l', data[offset+8:offset+12])[0]
+			R2 = struct.unpack('<l', data[offset+12:offset+16])[0]
+			R3 = struct.unpack('<l', data[offset+16:offset+20])[0]
+			R4 = struct.unpack('<l', data[offset+20:offset+24])[0]
+			add_iter (hd,"[001e] R1 R2 R3 R4","%.2f %.2f %.2f %.2f mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+8,16,"txt")
 
 	if l_type == 2:
 		a1 = struct.unpack('<L', data[offset+8:offset+12])[0]
@@ -692,15 +704,18 @@ def loda (hd,size,data):
 
 def trfd (hd,size,data):
 	start = 32
-	if hd.version == 13:
+	if hd.version > 12:
 		start = 40
 	if hd.version == 5:
 		start = 18
-	add_iter (hd, "x0", "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),start+16,8,"<d")
-	add_iter (hd, "y0", "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),start+40,8,"<d")
-	for i in (0,1,3,4):                     
+	for i in (0,1):                     
 		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
+	add_iter (hd, "x0", "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),start+16,8,"<d")
+	for i in (3,4):
+		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
+		add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
+	add_iter (hd, "y0", "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),start+40,8,"<d")
 
 def disp_expose (da, event,pixbuf):
 	ctx = da.window.cairo_create()
