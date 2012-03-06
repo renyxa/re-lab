@@ -307,26 +307,25 @@ def fild (hd,size,data):
 
 		elif fill_type == 9:
 			# Bitmap pattern fill
-			patt_off = 8
 			w_off = 0xc
 			h_off = 0x10
 			rcp_off = 0x18
 			fl_off = 0x1a
+			patt_off = 0x30
 			if hd.version > 12:
 				patt_off = 0x16
-				w_off = 0x1a
-				h_off = 0x1e
-				rcp_off = 0x26
-				fl_off = 0x28
+				w_off = 0x16
+				h_off = 0x1a
+				rcp_off = 0x22
+				fl_off = 0x36
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
 			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
-			add_iter (hd,"Image ID",struct.unpack("<I",data[0x30:0x34])[0],0x30,4,"<I")
+			add_iter (hd,"Image ID",struct.unpack("<I",data[patt_off:patt_off+4])[0],patt_off,4,"<I")
 
 		elif fill_type == 10:
 			# Full colour pattern
-			
 			w_off = 0xc
 			h_off = 0x10
 			rcp_off = 0x18
@@ -646,7 +645,7 @@ def loda_coords (hd,data,offset,l_type):
 		loda_coords124 (hd,data,offset,l_type)
 	elif l_type == 3:
 		loda_coords3 (hd,data,offset,l_type)
-	elif l_type == 0x14:
+	elif l_type == 0x14 or l_type == 0x20:
 		loda_coords_poly(hd,data,offset,l_type)
 	elif l_type == 0x25:
 		loda_coords_0x25(hd,data,offset,l_type)
@@ -661,7 +660,7 @@ def loda_coords (hd,data,offset,l_type):
 def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
-loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x25:"Path ??"}
+loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x20:"Mesh",0x25:"Path ??"}
 
 # loda_container 1st 4 bytes -- matches with SPND of the group
 
@@ -694,8 +693,8 @@ def loda (hd,size,data):
 
 	if loda_types.has_key(l_type):
 		for i in range(n_args, 0, -1):
-			[offset] = struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])
-			[argtype] = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])
+			offset = struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
+			argtype = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
 			if loda_type_func.has_key(argtype):
 				loda_type_func[argtype](hd,data,offset,l_type)
 			else:
