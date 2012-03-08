@@ -317,7 +317,8 @@ def fild (hd,size,data):
 				w_off = 0x16
 				h_off = 0x1a
 				rcp_off = 0x22
-				fl_off = 0x36
+				fl_off = 0x24
+				patt_off = 0x36
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
@@ -347,7 +348,7 @@ def fild (hd,size,data):
 			# Texture pattern fill
 			imgid_off = 0x30
 			v1_off = 0xc
-			v3_off = 0x20
+			v2_off = 0x20
 			if hd.version > 12:
 				imgid_off = 0x3e
 				v1_off = 0x1e
