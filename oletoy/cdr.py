@@ -492,8 +492,8 @@ def loda_rot_center (hd,data,offset,l_type):
 	rotX = struct.unpack('<l', data[offset:offset+4])[0]
 	rotY = struct.unpack('<l', data[offset+4:offset+8])[0]
 	rx = round(rotX/10000.0,2)
-	ry = round(rotX\Y/10000.0,2)
-	add_iter (hd, "[0028] RotCenter X/Y","%.2f/%.2f   (corr. %.2f/%.2f"%(rx,ry,rx+hd.width/2,ry+hd.height/2),offset,8,"txt")
+	ry = round(rotY/10000.0,2)
+	add_iter (hd, "[0028] RotCenter X/Y","%.2f/%.2f   (corr. %.2f/%.2f)"%(rx,ry,rx+hd.width/2,ry+hd.height/2),offset,8,"txt")
 
 def loda_name(hd,data,offset,l_type):
 	if hd.version > 11:
