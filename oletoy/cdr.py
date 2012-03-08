@@ -473,10 +473,10 @@ def loda_grad (hd,data,offset,l_type):
 	starty = struct.unpack('<i', data[offset+12:offset+16])[0]
 	endx = struct.unpack('<i', data[offset+16:offset+20])[0]
 	endy = struct.unpack('<i', data[offset+20:offset+24])[0]
-	add_iter (hd, "[2eea] Gradient Start X","%.2f"%round(startx/10000.,2),offset+8,4,"<i")
-	add_iter (hd, "[2eea] Gradient Start Y","%.2f"%round(starty/10000.,2),offset+12,4,"<i")
-	add_iter (hd, "[2eea] Gradient End X","%.2f"%round(endx/10000.,2),offset+16,4,"<i")
-	add_iter (hd, "[2eea] Gradient End Y","%.2f"%round(endy/10000.,2),offset+20,4,"<i")
+	add_iter (hd, "[2eea] Gradient Start X","%.2f"%(round(startx/10000.,2)+hd.width/2),offset+8,4,"<i")
+	add_iter (hd, "[2eea] Gradient Start Y","%.2f"%(round(starty/10000.,2)+hd.height/2),offset+12,4,"<i")
+	add_iter (hd, "[2eea] Gradient End X","%.2f"%(round(endx/10000.,2)+hd.width/2),offset+16,4,"<i")
+	add_iter (hd, "[2eea] Gradient End Y","%.2f"%(round(endy/10000.,2)+hd.height/2),offset+20,4,"<i")
 
 
 def loda_rot(hd,data,offset,l_type):
@@ -486,7 +486,7 @@ def loda_rot(hd,data,offset,l_type):
 def loda_rot_center (hd,data,offset,l_type):
 	rotX = struct.unpack('<l', data[offset:offset+4])[0]
 	rotY = struct.unpack('<l', data[offset+4:offset+8])[0]
-	add_iter (hd, "[0028] RotCenter X/Y","%.2f/%.2f"%(round(rotX/10000.0,2),round(rotY/10000.0,2)),offset,8,"txt")
+	add_iter (hd, "[0028] RotCenter X/Y","%.2f/%.2f"%(round(rotX/10000.0,2)+hd.width/2,round(rotY/10000.0,2)+hd.height/2),offset,8,"txt")
 
 def loda_name(hd,data,offset,l_type):
 	if hd.version > 11:
@@ -508,14 +508,14 @@ def loda_polygon (hd,data,offset,l_type):
 	for i in range(2):
 		varX = struct.unpack('<l', data[offset+0x18+8+i*8:offset+0x1c+8+i*8])[0]
 		varY = struct.unpack('<l', data[offset+0x1c+8+i*8:offset+0x20+8+i*8])[0]
-		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%.2f/%.2f mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+0x18+8+i*8,8,"txt")
+		add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%.2f/%.2f mm"%(round(varX/10000.0,2)+hd.width/2,round(varY/10000.0,2)+hd.height/2),offset+0x18+8+i*8,8,"txt")
 
 def loda_coords124 (hd,data,offset,l_type):
 	# rectangle or ellipse or text
 	if hd.version > 14:
 		x1 = struct.unpack('<d', data[offset:offset+8])[0]
 		y1 = struct.unpack('<d', data[offset+8:offset+16])[0]
-		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,16,"txt")
+		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2)+hd.width/2,round(y1/10000.0,2)+hd.height/2),offset,16,"txt")
 
 		if l_type == 1:
 			R1 = struct.unpack('<d', data[offset+16:offset+24])[0]
@@ -527,7 +527,7 @@ def loda_coords124 (hd,data,offset,l_type):
 	else:
 		x1 = struct.unpack('<l', data[offset:offset+4])[0]
 		y1 = struct.unpack('<l', data[offset+4:offset+8])[0]
-		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2),round(y1/10000.0,2)),offset,8,"txt")
+		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm"%(round(x1/10000.0,2)+hd.width/2,round(y1/10000.0,2)+hd.height/2),offset,8,"txt")
 
 		if l_type == 1:
 			R1 = struct.unpack('<l', data[offset+8:offset+12])[0]
@@ -542,7 +542,7 @@ def loda_coords124 (hd,data,offset,l_type):
 		a3 = struct.unpack('<L', data[offset+16:offset+20])[0]
 		add_iter (hd,"[001e] Start/End Rot angles; Pie flag","%.2f %.2f %.2f"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
 
-def loda_coords3 (hd,data,offset,l_type):
+def loda_coords3 (hd,data,offset,l_type,lt2="001e"):
 	pointnum = struct.unpack('<L', data[offset:offset+4])[0]
 	for i in range (pointnum):
 		x = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
@@ -570,14 +570,14 @@ def loda_coords3 (hd,data,offset,l_type):
 			NodeType = NodeType+'  Curve'
 		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
 			NodeType = NodeType+'  Arc'
-		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%.2f/%.2f mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,offset+4+i*8,8,"txt",offset+4+pointnum*8+i,1)
+		add_iter (hd,"[%s] X%u/Y%u/Type"%(lt2,i+1,i+1),"%.2f/%.2f mm"%(round(x/10000.0,2)+hd.width/2,round(y/10000.0,2)+hd.height/2)+NodeType,offset+4+i*8,8,"txt",offset+4+pointnum*8+i,1)
 	return pointnum
 
 def loda_coords5 (hd,data,offset,l_type):
 	for i in range (4):
 		x = struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]
 		y = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
-		add_iter (hd,"[001e] X%u/Y%u"%(i+1,i+1),"%.2f/%.2f mm"%(round(x/10000.0,2),round(y/10000.0,2)),offset+i*8,8,"txt")
+		add_iter (hd,"[001e] X%u/Y%u"%(i+1,i+1),"%.2f/%.2f mm"%(round(x/10000.0,2)+hd.width/2,round(y/10000.0,2)+hd.height/2),offset+i*8,8,"txt")
 	offset += 32
 	add_iter (hd,"[001e] var1?",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
 	add_iter (hd,"[001e] BPP?",struct.unpack("<H",data[offset+2:offset+4])[0],offset+2,2,"<H")
@@ -593,7 +593,7 @@ def loda_coords_poly (hd,data,offset,l_type):
 	pn = loda_coords3 (hd,data,offset,l_type)
 	x = struct.unpack('<l', data[offset+4+pn*9:offset+4+pn*9+4])[0]
 	y = struct.unpack('<l', data[offset+4+pn*9+4:offset+4+pn*9+8])[0]
-	add_iter (hd,"[001e] var1/var2 ?","%.2f/%.2f mm"%(round(x/10000.0,2),round(y/10000.0,2)),offset+4+pn*9,8,"txt")
+	add_iter (hd,"[001e] var1/var2 ?","%.2f/%.2f mm"%(round(x/10000.0,2)+hd.width/2,round(y/10000.0,2)+hd.height/2),offset+4+pn*9,8,"txt")
 
 
 def loda_coords_0x25(hd,data,offset,l_type):
@@ -608,8 +608,8 @@ def loda_coords_0x25(hd,data,offset,l_type):
 	ys = struct.unpack('<l', data[off+4:off+8])[0]
 	xe = struct.unpack('<l', data[off+8:off+12])[0]
 	ye = struct.unpack('<l', data[off+12:off+16])[0]
-	add_iter (hd,"[001e] Xs/Ys","%.2f/%.2f mm"%(round(xs/10000.0,2),round(ys/10000.0,2)),off,8,"txt")
-	add_iter (hd,"[001e] Xe/Ye","%.2f/%.2f mm"%(round(xe/10000.0,2),round(ye/10000.0,2)),off+8,8,"txt")
+	add_iter (hd,"[001e] Xs/Ys","%.2f/%.2f mm"%(round(xs/10000.0,2)+hd.width/2,round(ys/10000.0,2)+hd.height/2),off,8,"txt")
+	add_iter (hd,"[001e] Xe/Ye","%.2f/%.2f mm"%(round(xe/10000.0,2)+hd.width/2,round(ye/10000.0,2)+hd.height/2),off+8,8,"txt")
 	off += 16
 	for i in range (numpts):
 		x = struct.unpack('<l', data[off+i*8:off+4+i*8])[0]
@@ -637,7 +637,7 @@ def loda_coords_0x25(hd,data,offset,l_type):
 			NodeType = NodeType+'  Curve'
 		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
 			NodeType = NodeType+'  Arc'
-		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%.2f/%.2f mm"%(round(x/10000.0,2),round(y/10000.0,2))+NodeType,off+i*8,8,"txt",off+numpts*8+i,1)
+		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%.2f/%.2f mm"%(round(x/10000.0,2)+hd.width/2,round(y/10000.0,2)+hd.height/2)+NodeType,off+i*8,8,"txt",off+numpts*8+i,1)
  
 
 def loda_coords (hd,data,offset,l_type):
@@ -656,19 +656,43 @@ def loda_coords (hd,data,offset,l_type):
 		add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 
 
-
 def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
-loda_types = {0:"Layer",1:"Rectangle",2:"Ellipse",3:"Line/Curve",4:"Text",5:"Bitmap",0xb:"Grid",0xc:"Guides",0x11:"Desktop",0x14:"Polygon",0x20:"Mesh",0x25:"Path ??"}
+
+def loda_mesh (hd,data,offset,l_type):
+	add_iter (hd,"[4ace]","",offset,len(data),"txt")
+	off = 0
+	nrow = struct.unpack("<I",data[offset+8:offset+12])[0]
+	ncol = struct.unpack("<I",data[offset+12:offset+16])[0]
+	add_iter (hd,"[4ace] Num row",nrow,offset+8,4,"<I")
+	add_iter (hd,"[4ace] Num col",ncol,offset+12,4,"<I")
+	off = 20
+	loda_coords3 (hd,data,offset+off,l_type,"4ace set 1")
+
+
+loda_types = {
+	0:"Layer",
+	1:"Rectangle",
+	2:"Ellipse",
+	3:"Line/Curve",
+	4:"Text",
+	5:"Bitmap",
+	0xb:"Grid",
+	0xc:"Guides",
+	0x11:"Desktop",
+	0x14:"Polygon",
+	0x20:"Mesh",
+	0x25:"Path ??",
+	0x26:"B-Spline"}
 
 # loda_container 1st 4 bytes -- matches with SPND of the group
 
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x28:loda_rot_center,0x64:loda_trfd,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
-									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt #, 0x1f40:loda_lens, 0x1f45:loda_contnr
-									}
+									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt, # 0x1f40:loda_lens, 0x1f45:loda_contnr
+									0x4ace:loda_mesh}
 
 def loda (hd,size,data):
 	n_args = struct.unpack('<i', data[4:8])[0]
@@ -837,9 +861,23 @@ def txsm (hd,size,data):
 	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 
-cdr_ids = {"arrw":arrw,"bbox":bbox,"obbx":obbx,"fild":fild,"ftil":ftil,"font":font,
-	"outl":outl,"trfd":trfd,"loda":loda,"DISP":disp,"bmpf":bmpf,"bmp ":bmp,
-	"txsm":txsm,"guid":guid, "user":user, "vpat":vpat}
+cdr_ids = {
+	"arrw":arrw,
+	"bbox":bbox,
+	"bmp ":bmp,
+	"bmpf":bmpf,
+	"DISP":disp,
+	"fild":fild,
+	"font":font,
+	"ftil":ftil,
+	"guid":guid,
+	"loda":loda,
+	"obbx":obbx,
+	"outl":outl,
+	"trfd":trfd,
+	"txsm":txsm,
+	"user":user,
+	"vpat":vpat}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
@@ -1079,11 +1117,14 @@ class cdrChunk:
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
 			page.dictmod.set_value(d_iter,1,self.name)
 
-		if self.fourcc == 'vrsn':	
+		if self.fourcc == 'vrsn':
 			page.version = struct.unpack("<h",self.data)[0]/100
+		if self.fourcc == 'mcfg':
+			page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
+			page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
 		if self.fourcc == 'iccd':
 			icc.parse(page,self.data,f_iter)
-		if self.fourcc == 'pack':	
+		if self.fourcc == 'pack':
 			self.load_pack(page,f_iter)
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			self.listtype = buf[offset+8:offset+12]

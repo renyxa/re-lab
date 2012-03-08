@@ -29,6 +29,8 @@ class hexdump:
 		self.vpaned.add1(self.hbox0)
 		self.hdscrolled.set_size_request(300, 300)
 		self.version = None # to support vsdchunks for different versions
+		self.width = 0
+		self.height = 0
 		
 		vbox =gtk.VBox()
 		hbox1 =gtk.HBox()
