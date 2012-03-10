@@ -737,6 +737,15 @@ def loda (hd,size,data):
 dtypes = {1:"Push",2:"Zip",3:"Twist"}
 dstflags = {0:"None",1:"Smooth",2:"Random",4:"Local"}
 
+def lnkt (hd,size,data):
+	n_args = struct.unpack('<i', data[4:8])[0]
+	s_args = struct.unpack('<i', data[8:0xc])[0]
+	for j in range(n_args):
+		start = struct.unpack('<L',data[s_args+j*4:s_args+j*4+4])[0]
+		add_iter (hd, "???", "%02x"%struct.unpack('<L',data[start:start+4])[0],start,4,"<I")
+		add_iter (hd, "spnd ID1", d2hex(data[start+4:start+8]),start+4,4,"<I")
+		add_iter (hd, "spnd ID2", d2hex(data[start+8:start+12]),start+8,4,"<I")
+
 def trfd (hd,size,data):
 	n_args = struct.unpack('<i', data[4:8])[0]
 	s_args = struct.unpack('<i', data[8:0xc])[0]
@@ -748,11 +757,11 @@ def trfd (hd,size,data):
 #		start = 18
 	for j in range(n_args):
 		start = struct.unpack('<L',data[s_args+j*4:s_args+j*4+4])[0]
+		if hd.version > 12:
+			start +=8
 		switch = struct.unpack('<H', data[start:start+2])[0]
+		start += 8
 		if switch == 8:
-			start += 8
-			if hd.version > 12:
-				start +=8
 			for i in (0,1):                     
 				var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
 				add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
@@ -761,10 +770,7 @@ def trfd (hd,size,data):
 				var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
 				add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
 			add_iter (hd, "y0", "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),start+40,8,"<d")
-		else: # switch == 10
-			start += 8
-			if hd.version > 12:
-				start +=8
+		elif switch == 0x10:
 			# Distortion type
 			dtype = struct.unpack('<H', data[start:start+2])[0]
 			dtt = "Unknown"
@@ -796,6 +802,8 @@ def trfd (hd,size,data):
 			dopt2 = struct.unpack('<i', data[start+18:start+22])[0]
 			add_iter (hd, "Distortion Option 1", "%d"%dopt1,start+14,4,"<i")
 			add_iter (hd, "Distortion Option 2", "%d"%dopt2,start+18,4,"<i")
+		else:
+			add_iter (hd, "Unknown Type", "",start,2,"txt")
 
 def disp_expose (da, event,pixbuf):
 	ctx = da.window.cairo_create()
@@ -928,10 +936,12 @@ cdr_ids = {
 	"font":font,
 	"ftil":ftil,
 	"guid":guid,
+	"lnkt":lnkt,
 	"loda":loda,
 	"obbx":obbx,
 	"outl":outl,
 	"trfd":trfd,
+	"ttil":ftil,
 	"txsm":txsm,
 	"user":user,
 	"vpat":vpat}
