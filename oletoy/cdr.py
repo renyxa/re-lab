@@ -734,20 +734,68 @@ def loda (hd,size,data):
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 #				print 'Unknown argtype: %x'%argtype                             
 
+dtypes = {1:"Push",2:"Zip",3:"Twist"}
+dstflags = {0:"None",1:"Smooth",2:"Random",4:"Local"}
+
 def trfd (hd,size,data):
-	start = 32
-	if hd.version > 12:
-		start = 40
-	if hd.version == 5:
-		start = 18
-	for i in (0,1):                     
-		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
-		add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
-	add_iter (hd, "x0", "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),start+16,8,"<d")
-	for i in (3,4):
-		var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
-		add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
-	add_iter (hd, "y0", "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),start+40,8,"<d")
+	n_args = struct.unpack('<i', data[4:8])[0]
+	s_args = struct.unpack('<i', data[8:0xc])[0]
+	s_types = struct.unpack('<i', data[0xc:0x10])[0]
+#	start = 32
+#	if hd.version > 12:
+#		start = 40
+#	if hd.version == 5:
+#		start = 18
+	for j in range(n_args):
+		start = struct.unpack('<L',data[s_args+j*4:s_args+j*4+4])[0]
+		switch = struct.unpack('<H', data[start:start+2])[0]
+		if switch == 8:
+			start += 8
+			if hd.version > 12:
+				start +=8
+			for i in (0,1):                     
+				var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
+				add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
+			add_iter (hd, "x0", "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),start+16,8,"<d")
+			for i in (3,4):
+				var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
+				add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
+			add_iter (hd, "y0", "%u"%(struct.unpack('<d', data[start+40:start+48])[0]/10000),start+40,8,"<d")
+		else: # switch == 10
+			start += 8
+			if hd.version > 12:
+				start +=8
+			# Distortion type
+			dtype = struct.unpack('<H', data[start:start+2])[0]
+			dtt = "Unknown"
+			if dtypes.has_key(dtype):
+				dtt = dtypes[dtype]
+			add_iter (hd, "Distortion type", "%02x (%s)"%(dtype,dtt),start,2,"<H")
+			
+			# Coords of the distortion
+			Xd = round(struct.unpack('<i', data[start+2:start+6])[0]/10000.,2)
+			Yd = round(struct.unpack('<i', data[start+6:start+10])[0]/10000.,2)
+			add_iter (hd, "Distortion Coords", "%.2f/%.2f   (corr. %.2f/%.2f)"%(Xd,Yd,Xd+hd.width/2,Yd+hd.height/2),start+2,8,"<txt")
+			
+			# Distiortion sub-type
+			dstype = struct.unpack('<I', data[start+10:start+14])[0]
+			dstt = ""
+			if dstype == 0:
+				dstt = "None"
+			else:
+				if dstype&1 == 1:
+					dstt = "Smooth "
+				if dstype&2 == 2:
+					dstt += "Random "
+				if dstype&4 == 4:
+					dstt = "Local"
+			add_iter (hd, "Distortion Subtype", "%02x (%s)"%(dstype,dstt),start+10,4,"<I")
+			
+			# Options
+			dopt1 = struct.unpack('<i', data[start+14:start+18])[0]
+			dopt2 = struct.unpack('<i', data[start+18:start+22])[0]
+			add_iter (hd, "Distortion Option 1", "%d"%dopt1,start+14,4,"<i")
+			add_iter (hd, "Distortion Option 2", "%d"%dopt2,start+18,4,"<i")
 
 def disp_expose (da, event,pixbuf):
 	ctx = da.window.cairo_create()
