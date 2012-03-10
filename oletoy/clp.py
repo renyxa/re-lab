@@ -15,6 +15,7 @@
 #
 
 import sys,struct,gtk,gobject
+from utils import *
 
 def open (buf,page,parent):
 	offset = 2

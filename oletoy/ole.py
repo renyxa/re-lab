@@ -20,7 +20,7 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt, vba, doc
+import vsd, xls, ppt, vba, doc, qpw
 import ctypes
 from utils import *
 
@@ -97,6 +97,11 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			ftype = "ppt"
 			page.model.set_value(iter1,1,("ppt",dirflag))
 			ppt.parse (page, data, iter1)
+		if infname == "NativeContent_MAIN":
+			ftype = "qpw"
+			page.model.set_value(iter1,1,("qpw",dirflag))
+			qpw.parse (page, data, iter1)
+		
 		if infname == "VBA":
 			page.type = ftype
 			ftype = "vba"
