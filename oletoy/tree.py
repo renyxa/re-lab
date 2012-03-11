@@ -23,6 +23,7 @@ def make_view():
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_reorderable(True)
+   view.columns_autosize()
    view.set_enable_tree_lines(True)
    cell = gtk.CellRendererText()
    cell.set_property('family-set',True)

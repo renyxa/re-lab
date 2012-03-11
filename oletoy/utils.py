@@ -54,6 +54,9 @@ def key2txt(key,data,txt="Unknown"):
 
 def bflag2txt(flag,data,txt=""):
 	if flag != 0:
-		for i in range(1,2,4,8,0x10,0x20,0x40,0x80):
+		for i in (1,2,4,8,0x10,0x20,0x40,0x80):
 			if flag&i == i:
-				txt += key2txt(i,data,"")
+				txt += key2txt(i,data,"") + "/"
+		if len(txt) > 0:
+			txt = txt[:len(txt)-1]
+	return txt

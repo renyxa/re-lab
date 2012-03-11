@@ -298,7 +298,9 @@ def fild (hd,size,data):
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
-			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
+			flag = ord(data[fl_off])
+			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
+			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
 
 			# Colors (model + color) started at 0x1c and 0x28
 			
@@ -322,7 +324,9 @@ def fild (hd,size,data):
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
-			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
+			flag = ord(data[fl_off])
+			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
+			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
 			add_iter (hd,"Image ID",struct.unpack("<I",data[patt_off:patt_off+4])[0],patt_off,4,"<I")
 
 		elif fill_type == 10:
@@ -341,7 +345,9 @@ def fild (hd,size,data):
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
-			add_iter (hd,"Flags", ord(data[fl_off]),fl_off,1,"B")
+			flag = ord(data[fl_off])
+			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
+			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
 			add_iter (hd,"Vect ID",struct.unpack("<I",data[patt_off:patt_off+4])[0],patt_off,4,"<I")
 
 		elif fill_type == 11:
