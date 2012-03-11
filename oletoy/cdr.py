@@ -459,9 +459,11 @@ def ftil (hd,size,data):
 
 def loda_outl (hd,data,offset,l_type):
 	add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 
 def loda_fild (hd,data,offset,l_type):
-	add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	iter = add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 
 def loda_trfd (hd,data,offset,l_type):
 	add_iter (hd, "[0064] Trfd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
@@ -1180,7 +1182,7 @@ class cdrChunk:
 		f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
 		if self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf":
 			d_iter = page.dictmod.append(None,None)
-			page.dictmod.set_value(d_iter,0,page.model.get_path(f_iter))
+			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
 			page.dictmod.set_value(d_iter,1,self.name)
 

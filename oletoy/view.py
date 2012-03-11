@@ -234,6 +234,7 @@ Hexdump selection:\n\
 		if pn != -1:
 			if self.das[pn].type[0:3] == "CDR":
 				view = gtk.TreeView(self.das[pn].dictmod)
+				view.connect("row-activated", self.das[pn].on_dict_row_activated)
 				view.set_reorderable(True)
 				view.set_enable_tree_lines(True)
 				cell1 = gtk.CellRendererText()
@@ -565,11 +566,31 @@ Hexdump selection:\n\
 		treeSelection = view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		if iter1:
-			intPath = model.get_path(iter1)
-			self.on_hdrow_activated(view, intPath, 0)
-			if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
-				val = model.get_value(iter1,1)
-				self.entry.set_text("#%s"%val)
+			if event.type == gtk.gdk.KEY_RELEASE and event.keyval == 65363:
+				val = model.get_value(iter1,7)
+				if val != None:
+					if val[0] == "cdr goto":
+						pn = self.notebook.get_current_page()
+						dm = self.das[pn].dictmod
+						print "Go to:",val[1]
+						for i in range(dm.iter_n_children(None)):
+							ci = dm.iter_nth_child(None,i)
+							v2 = dm.get_value(ci,2)
+							if v2 == val[1]:
+								goto = dm.get_value(ci,0)
+								try:
+									self.das[pn].view.expand_to_path(goto)
+									self.das[pn].view.set_cursor_on_cell(goto)
+								except:
+									print "No such path"
+
+					
+			else:
+				intPath = model.get_path(iter1)
+				self.on_hdrow_activated(view, intPath, 0)
+				if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
+					val = model.get_value(iter1,1)
+					self.entry.set_text("#%s"%val)
 
 	def on_hdrow_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()

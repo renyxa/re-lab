@@ -172,21 +172,25 @@ class Page:
 		searchwin.set_title("Search: %s"%carg)
 		searchwin.show_all()
 
-	def on_search_row_activated(self, view, path, column):
+	def on_dict_row_activated(self, view, path, column):
+		self.on_search_row_activated(view, path, column, 0)
+
+	def on_search_row_activated(self, view, path, column, dflag = 1):
 		treeSelection = view.get_selection()
 		model1, iter1 = treeSelection.get_selected()
 		goto = model1.get_value(iter1,0)
-		addr = model1.get_value(iter1,1)
 		self.view.expand_to_path(goto)
 		self.view.set_cursor_on_cell(goto)
 		intCol = self.view.get_column(0)
 		self.view.row_activated(goto,intCol)
 
-		hd = self.hd
-		try:
-			buffer_hex = hd.txtdump_hex.get_buffer()
-			vadj = hd.vscroll2.get_vadjustment()
-			newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
-			vadj.set_value(newval)
-		except:
-			print "Wrong address"
+		if dflag:
+			addr = model1.get_value(iter1,1)
+			hd = self.hd
+			try:
+				buffer_hex = hd.txtdump_hex.get_buffer()
+				vadj = hd.vscroll2.get_vadjustment()
+				newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
+				vadj.set_value(newval)
+			except:
+				print "Wrong address"
