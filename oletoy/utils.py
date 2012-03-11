@@ -45,3 +45,15 @@ def d2hex(data,space=""):
 	for i in range(len(data)):
 		s += "%02x%s"%(ord(data[i]),space)
 	return s
+
+def key2txt(key,data,txt="Unknown"):
+	if data.has_key(key):
+		return data[key]
+	else:
+		return txt
+
+def bflag2txt(flag,data,txt=""):
+	if flag != 0:
+		for i in range(1,2,4,8,0x10,0x20,0x40,0x80):
+			if flag&i == i:
+				txt += key2txt(i,data,"")
