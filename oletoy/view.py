@@ -164,7 +164,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.activate_reload),
 			( "Dict", gtk.STOCK_INDEX,					# name, stock id
 				"_Dictionary","<control>D",					  # label, accelerator
-				"Show typoe dependant dictionary",							 # tooltip
+				"Show type dependant dictionary",							 # tooltip
 				self.activate_dict),
 
 			( "Save", gtk.STOCK_SAVE,                    # name, stock id
@@ -245,8 +245,10 @@ Hexdump selection:\n\
 				cell2.set_property('font','monospace 10')
 				column1 = gtk.TreeViewColumn('Type', cell1, text=1)
 				column2 = gtk.TreeViewColumn('Value', cell2, text=2)
+				column3 = gtk.TreeViewColumn('Value', cell2, text=3)
 				view.append_column(column1)
 				view.append_column(column2)
+				view.append_column(column3)
 				view.show()
 				scrolled = gtk.ScrolledWindow()
 				scrolled.add(view)

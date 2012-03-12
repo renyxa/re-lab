@@ -956,7 +956,7 @@ cdr_ids = {
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
-	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
+	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	chunk = cdrChunk()
 	chunk.load (buf,page,parent)
 
@@ -1174,6 +1174,7 @@ class cdrChunk:
 			offset += 8 + chunk.rawsize
 
 	def load(self, buf, page, parent, offset=0, blocksizes=(),fmttype="cdr"):
+		print offset
 		self.hdroffset = offset
 		self.fourcc = buf[offset:offset+4]
 		self.rawsize = struct.unpack('<I', buf[offset+4:offset+8])[0]
@@ -1185,13 +1186,21 @@ class cdrChunk:
 			self.rawsize += 1
 
 		self.name = self.chunk_name()
+#		if self.name != "clo " and self.name != "cloa" and self.name != "clof" and self.name != "cloo":
 		f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
+			
 		if self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf":
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
 			page.dictmod.set_value(d_iter,1,self.name)
-
+			if self.name == "fild":
+				off = 4
+				if page.version > 12:
+					off = 12
+				t = struct.unpack("<H",self.data[off:off+2])[0]
+				ttxt = key2txt(t,fild_types)
+				page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
 		if self.fourcc == 'vrsn':
 			page.version = struct.unpack("<h",self.data)[0]/100
 		if self.fourcc == 'mcfg':
