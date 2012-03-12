@@ -677,6 +677,10 @@ def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
 
+def loda_contnr (hd,data,offset,l_type):
+	add_iter (hd,"[1f45] Spnd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+
+
 def loda_mesh (hd,data,offset,l_type):
 	add_iter (hd,"[4ace]","",offset,len(data),"txt")
 	off = 0
@@ -708,7 +712,8 @@ loda_types = {
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x28:loda_rot_center,0x64:loda_trfd,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
-									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt, # 0x1f40:loda_lens, 0x1f45:loda_contnr
+									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt, # 0x1f40:loda_lens, 
+									0x1f45:loda_contnr,
 									0x4ace:loda_mesh}
 
 def loda (hd,size,data):
