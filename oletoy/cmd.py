@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject,zlib
-import ole, escher, rx2
+import ole, escher, rx2, cdr
 from utils import *
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
@@ -207,6 +207,8 @@ def parse (cmd, entry, page):
 				print "OLE stream not found at ",chaddr
 		elif "esc" == chtype.lower():
 			escher.parse (model,buf[int(chaddr,16):],iter1)
+		elif "cmx" == chtype.lower():
+			cdr.cdr_open (buf[int(chaddr,16):],page,iter1)
 		elif "xls" == chtype.lower():
 			ch2 = chaddr[1]
 			if ch2.isdigit():
