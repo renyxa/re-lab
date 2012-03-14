@@ -946,6 +946,7 @@ cdr_ids = {
 	"bmpf":bmpf,
 	"DISP":disp,
 	"fild":fild,
+	"fill":fild,
 	"font":font,
 	"ftil":ftil,
 	"guid":guid,
