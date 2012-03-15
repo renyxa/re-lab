@@ -700,27 +700,80 @@ lens1_subtypes = {
 	7:"Heat Map",
 	8:"Custom Colour Map"}
 
+lens5_types = {
+	0:"Uniform",
+	1:"Linear grad",
+	2:"Radial grad",
+	3:"Conical grad",
+	4:"Square grad",
+	7:"Two Colour Patt",
+	9:"Bitmap Patt",
+	0xa:"Full Colour Patt",
+	0xb:"Texture"
+}
+
+lens5_ops = {
+	0:"Normal",
+	1:"And",
+	2:"Or",
+	3:"Xor",
+	6:"Invert",
+	7:"Add",
+	8:"Sub",
+	9:"Mult",
+	0xa:"Div",
+	0xb:"If lighter",
+	0xc:"If darker",
+	0xd:"Texturize",
+	0xf:"Hue",
+	0x10:"Sat",
+	0x11:"Lightness",
+	0x12:"Red",
+	0x13:"Green",
+	0x14:"Blue",
+	0x18:"Diff"}
+
+lens5_targets = {0:"Fill",1:"Outl",2:"All"}
+
+
 def loda_lens (hd,data,offset,l_type):
 	lens_type = struct.unpack("<I",data[offset:offset+4])[0]
-	add_iter (hd,"[1f40] Lens Type",lens_type,offset,4,"<I")
+	add_iter (hd," [1f40] Lens Type",lens_type,offset,4,"<I")
 	lens_id = d2hex(data[offset+4:offset+8])
-	add_iter (hd,"[1f40] Lens ID",lens_id,offset+4,4,"txt")
+	add_iter (hd," [1f40] Lens ID",lens_id,offset+4,4,"txt")
 
 	if lens_type == 1:
 		sub_type = struct.unpack("<H",data[offset+8:offset+10])[0]
-		add_iter (hd,"[1f40] Lens SubType","%02x (%s)"%(sub_type,key2txt(sub_type,lens1_subtypes)),offset+8,2,"<H")
+		add_iter (hd," [1f40] Lens SubType","%02x (%s)"%(sub_type,key2txt(sub_type,lens1_subtypes)),offset+8,2,"<H")
 		if sub_type != 3 and sub_type != 5 and sub_type != 8:
 			val =  struct.unpack("<h",data[offset+10:offset+12])[0]/10.
-			add_iter (hd,"[1f40] Value",val,offset+10,2,"<h")
+			add_iter (hd," [1f40] Value",val,offset+10,2,"<h")
 	elif lens_type == 2:
 		val = struct.unpack("<h",data[offset+8:offset+10])[0]/10.
-		add_iter (hd,"[1f40] Magnify Value",value,offset+8,2,"<h")
+		add_iter (hd," [1f40] Magnify Value",value,offset+8,2,"<h")
 	elif lens_type == 3:
 		val = struct.unpack("<h",data[offset+8:offset+10])[0]/10.
-		add_iter (hd,"[1f40] Fish Eye Value",value,offset+8,2,"<h")
+		add_iter (hd," [1f40] Fish Eye Value",value,offset+8,2,"<h")
 	elif lens_type == 4:
-		#val = struct.unpack("<h",data[offset+8:offset+10])[0]/10.
-		add_iter (hd,"[1f40] WireFrame","",offset+8,2,"")
+		add_iter (hd," [1f40] WireFrame","",offset+8,2,"")
+	elif lens_type == 5:
+		# offsets for version 12
+		xy1_off = 0x10  # only for linear?
+		xtype_off = 0x28
+		xy2_off = 0x2c
+		xpar_off = 0x40
+		op_off = 0x50
+		trg_off = 0x54
+		frz_off = 0x58
+		fild_off = 0x70
+		xt = struct.unpack("<I",data[offset+xtype_off:offset+xtype_off+4])[0]
+		add_iter (hd," [1f40] Xparency Type","%02x (%s)"%(xt,key2txt(xt,lens5_types)),offset+xtype_off,4,"<I")
+		op = struct.unpack("<I",data[offset+op_off:offset+op_off+4])[0]
+		add_iter (hd," [1f40] Xparency Operation","%02x (%s)"%(op,key2txt(op,lens5_ops)),offset+op_off,4,"<I")
+		xpar_start = struct.unpack("<d",data[offset+xpar_off:offset+xpar_off+8])[0]
+		xpar_end = struct.unpack("<d",data[offset+xpar_off+8:offset+xpar_off+16])[0]
+		add_iter (hd," [1f40] Xparency Start","%02d%%"%xpar_start,offset+xpar_off,8,"<d")
+		add_iter (hd," [1f40] Xparency End","%02d%%"%xpar_end,offset+xpar_off+8,8,"<d")
 
 
 def loda_contnr (hd,data,offset,l_type):
@@ -1239,8 +1292,10 @@ class cdrChunk:
 			self.rawsize += 1
 
 		self.name = self.chunk_name()
-#		if self.name != "clo " and self.name != "cloa" and self.name != "clof" and self.name != "cloo":
-		f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
+		
+		# skip garbage
+		if self.name != "clo " and self.name != "cloa" and self.name != "clof" and self.name != "cloo":
+			f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
 			
 		if self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf":
 			d_iter = page.dictmod.append(None,None)
