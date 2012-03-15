@@ -464,7 +464,7 @@ def ftil (hd,size,data):
 		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
 def loda_outl (hd,data,offset,l_type):
-	add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	iter = add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 	hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 
 def loda_fild (hd,data,offset,l_type):
@@ -690,6 +690,38 @@ def loda_coords (hd,data,offset,l_type):
 def loda_palt (hd,data,offset,l_type):
 	clr_model(hd,data,offset)
 
+lens1_subtypes = {
+	0:"Opacity",
+	1:"Colour Limit",
+	2:"Colour Add",
+	3:"Inverse",
+	4:"Brighten",
+	5:"Tinted Greyscale",
+	7:"Heat Map",
+	8:"Custom Colour Map"}
+
+def loda_lens (hd,data,offset,l_type):
+	lens_type = struct.unpack("<I",data[offset:offset+4])[0]
+	add_iter (hd,"[1f40] Lens Type",lens_type,offset,4,"<I")
+	lens_id = d2hex(data[offset+4:offset+8])
+	add_iter (hd,"[1f40] Lens ID",lens_id,offset+4,4,"txt")
+
+	if lens_type == 1:
+		sub_type = struct.unpack("<H",data[offset+8:offset+10])[0]
+		add_iter (hd,"[1f40] Lens SubType","%02x (%s)"%(sub_type,key2txt(sub_type,lens1_subtypes)),offset+8,2,"<H")
+		if sub_type != 3 and sub_type != 5 and sub_type != 8:
+			val =  struct.unpack("<h",data[offset+10:offset+12])[0]/10.
+			add_iter (hd,"[1f40] Value",val,offset+10,2,"<h")
+	elif lens_type == 2:
+		val = struct.unpack("<h",data[offset+8:offset+10])[0]/10.
+		add_iter (hd,"[1f40] Magnify Value",value,offset+8,2,"<h")
+	elif lens_type == 3:
+		val = struct.unpack("<h",data[offset+8:offset+10])[0]/10.
+		add_iter (hd,"[1f40] Fish Eye Value",value,offset+8,2,"<h")
+	elif lens_type == 4:
+		#val = struct.unpack("<h",data[offset+8:offset+10])[0]/10.
+		add_iter (hd,"[1f40] WireFrame","",offset+8,2,"")
+
 
 def loda_contnr (hd,data,offset,l_type):
 	add_iter (hd,"[1f45] Spnd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
@@ -726,7 +758,8 @@ loda_types = {
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x28:loda_rot_center,0x64:loda_trfd,
 									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
-									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt, # 0x1f40:loda_lens, 
+									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt,
+									0x1f40:loda_lens, 
 									0x1f45:loda_contnr,
 									0x4ace:loda_mesh}
 
