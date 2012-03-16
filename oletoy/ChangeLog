@@ -1,5 +1,9 @@
 2012-03-10  Valek Filippov
 
+		* CDR: initial 'loda' for ver5.
+
+2012-03-10  Valek Filippov
+
 		* CDR: parse 'fild' flags.
 
 2012-03-10  Valek Filippov

@@ -569,12 +569,39 @@ def loda_coords124 (hd,data,offset,l_type):
 		a3 = struct.unpack('<L', data[offset+16:offset+20])[0]
 		add_iter (hd,"[001e] Start/End Rot angles; Pie flag","%.2f %.2f %.2f"%(round(a1/1000000.0,2),round(a2/1000000.0,2),round(a3/1000000.0,2)),offset+8,12,"txt")
 
+nodetypes = {
+	2:"\tChar. start",
+	4:"\tCan modify",
+	8:"\tClosed path",
+	0x10:"\tSmooth",
+	0x20:"\tSymmetric"
+	}
+
 def loda_coords3 (hd,data,offset,l_type,lt2="001e"):
 	pointnum = struct.unpack('<L', data[offset:offset+4])[0]
 	poffset = 4
 	if hd.version < 7:
 		pointnum = struct.unpack('<H', data[offset:offset+2])[0]
 		poffset = 4
+	if hd.version < 6:
+		for i in range (pointnum):
+			x = 0.02540164*struct.unpack('<h', data[offset+poffset+i*4:offset+poffset+2+i*4])[0]
+			y = 0.02540164*struct.unpack('<h', data[offset+poffset+2+i*4:offset+poffset+4+i*4])[0]
+			Type = ord(data[offset+poffset+pointnum*4+i])
+			ntype = bflag2txt(Type,nodetypes)
+			if Type&0x10 == 0 and Type&0x20 == 0:
+				ntype += '  Discontinued'
+			if Type&0x40 == 0 and Type&0x80 == 0:
+				ntype += '  START'
+			if Type&0x40 == 0x40 and Type&0x80 == 0:
+				ntype += '  Line'
+			if Type&0x40 == 0 and Type&0x80 == 0x80:
+				ntype += '  Curve'
+			if Type&0x40 == 0x40 and Type&0x80 == 0x80:
+				ntype +='  Arc'
+			add_iter (hd,"[%s] X%u/Y%u/Type"%(lt2,i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2)+ntype,offset+poffset+i*4,4,"txt",offset+poffset+pointnum*4+i,1)
+		return pointnum
+
 	for i in range (pointnum):
 		x = round(struct.unpack('<l', data[offset+poffset+i*8:offset+poffset+4+i*8])[0]/10000.,2)
 		y = round(struct.unpack('<l', data[offset+poffset+4+i*8:offset+poffset+8+i*8])[0]/10000.,2)
@@ -816,18 +843,49 @@ loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x1f45:loda_contnr,
 									0x4ace:loda_mesh}
 
-def loda (hd,size,data):
-	n_args = struct.unpack('<i', data[4:8])[0]
-	s_args = struct.unpack('<i', data[8:0xc])[0]
-	s_types = struct.unpack('<i', data[0xc:0x10])[0]
-	l_type = struct.unpack('<i', data[0x10:0x14])[0]
-	add_iter (hd, "# of args", n_args,4,4,"<i")
-	add_iter (hd, "Start of args offsets", "%02x"%s_args,8,4,"<i")
-	add_iter (hd, "Start of arg types", "%02x"%s_types,0xc,4,"<i")
+def loda_v5 (hd,size,data):
+	n_args = struct.unpack('<H', data[2:4])[0]
+	s_args = struct.unpack('<H', data[4:6])[0]
+	s_types = struct.unpack('<H', data[6:8])[0]
+	l_type = struct.unpack('<H', data[8:10])[0]
+	add_iter (hd, "# of args", n_args,2,2,"<H")
+	add_iter (hd, "Start of args offsets", "%02x"%s_args,4,2,"<H")
+	add_iter (hd, "Start of arg types", "%02x"%s_types,6,2,"<H")
 	t_txt = "%02x"%l_type
 	if loda_types.has_key(l_type):
 		t_txt += " " + loda_types[l_type]
-	add_iter (hd, "Type", t_txt,0x10,2,"txt")
+	add_iter (hd, "Type", t_txt,8,2,"<H")
+	a_txt = ""
+	t_txt = ""
+	for i in range(n_args,0,-1):
+		a_txt += " %02x"%struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
+		t_txt += " %02x"%struct.unpack('<H',data[s_types+(n_args-i)*2:s_types+(n_args-i)*2+2])[0]
+	add_iter (hd, "Args offsets",a_txt,s_args,n_args*2,"<H")
+	add_iter (hd, "Args types",t_txt,s_types,n_args*2,"<H")
+	if loda_types.has_key(l_type):
+		for i in range(n_args, 0, -1):
+			offset = struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
+			argtype = struct.unpack('<H',data[s_types + (n_args-i)*2:s_types + (n_args-i)*2+2])[0]
+			if loda_type_func.has_key(argtype):
+				loda_type_func[argtype](hd,data,offset,l_type)
+			else:
+				add_iter (hd,"[%02x]"%(argtype),"???",offset,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
+
+def loda (hd,size,data):
+	if hd.version < 6:
+		loda_v5 (hd,size,data)
+		return
+	n_args = struct.unpack('<I', data[4:8])[0]
+	s_args = struct.unpack('<I', data[8:0xc])[0]
+	s_types = struct.unpack('<I', data[0xc:0x10])[0]
+	l_type = struct.unpack('<I', data[0x10:0x14])[0]
+	add_iter (hd, "# of args", n_args,4,4,"<I")
+	add_iter (hd, "Start of args offsets", "%02x"%s_args,8,4,"<I")
+	add_iter (hd, "Start of arg types", "%02x"%s_types,0xc,4,"<I")
+	t_txt = "%02x"%l_type
+	if loda_types.has_key(l_type):
+		t_txt += " " + loda_types[l_type]
+	add_iter (hd, "Type", t_txt,0x10,2,"<I")
 
 	a_txt = ""
 	t_txt = ""
