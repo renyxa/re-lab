@@ -75,6 +75,49 @@ pal_types = {
 	6:"Custom Fixed"
 }
 
+cmds = {
+	0x58:"AddClippingRegion",
+	0x5E:"AddGlobalTransform",
+	0x16:"BeginEmbedded",
+	0xD:"BeginGroup",
+	0xB:"BeginLayer",
+	0x9:"BeginPage",
+	0x63:"BeginParagraph",
+	0x11:"BeginProcedure",
+	0x48:"BeginTextGroup",
+	0x46:"BeginTextObject",
+	0x14:"BeginTextStream",
+	0x65:"CharInfo",
+	0x66:"Characters",
+	0x5A:"ClearClipping",
+	0x2:"Comment",
+	0x45:"DrawImage",
+	0x41:"DrawChars",
+	0x42:"Ellipse",
+	0x17:"EndEmbedded",
+	0xE:"EndGroup",
+	0xC:"EndLayer",
+	0xA:"EndPage",
+	0x64:"EndParagraph",
+	0x12:"EndSection",
+	0x49:"EndTextGroup",
+	0x47:"EndTextObject",
+	0x15:"EndTextStream",
+	0x6F:"JumpAbsolute",
+	0x43:"PolyCurve",
+	0x5C:"PopMappingMode",
+	0x68:"PopTint",
+	0x5B:"PushMappingMode",
+	0x67:"PushTint",
+	0x44:"Rectangle",
+	0x59:"RemoveLastClippingRegion",
+	0x5F:"RestoreLastGlobalTransfo",
+	0x55:"SetCharStyle",
+	0x5D:"SetGlobalTransfo",
+	0x56:"SimpleWideText",
+	0x62:"TextFrame"
+}
+
 # Master Idx Table
 def ixmr (hd,size,data):
 	off = 0
@@ -304,7 +347,27 @@ def cont (hd,size,data):
 	add_iter (hd, "Reserved", "",off,64,"txt")
 	off += 64
 
+grps = {
+	0x16:0,0xd:0,0xb:0,0x9:0,0x63:0,0x11:0,0x48:0,0x46:0,0x14:0,
+	0x17:1,0xe:1,0xc:1,0xa:1,0x64:1,0x12:1,0x49:1,0x47:1,0x15:1
+	}
 
+def parse_page(page,data,f_iter):
+	offset = 0
+	p_iter = f_iter
+	while offset < len(data) - 4:
+		csize = struct.unpack("<H",data[offset:offset+2])[0]
+		ctype = struct.unpack("<H",data[offset+2:offset+4])[0]
+		c_iter = add_pgiter(page,"%s (%02x)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+4:offset+csize],p_iter)
+		if grps.has_key(ctype):
+			if grps[ctype] == 1:
+				# Ends
+				p_iter = t_iter
+			else:
+				t_iter = p_iter
+				p_iter = c_iter
+				
+		offset += csize
 
 cmx_ids = {
 	"cont":cont,

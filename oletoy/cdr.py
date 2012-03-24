@@ -15,7 +15,7 @@
 #
 
 import sys,struct,gtk,gobject,zlib
-import icc
+import icc,cmx
 from utils import *
 
 ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
@@ -1338,7 +1338,7 @@ class cdrChunk:
 			offset += 8 + chunk.rawsize
 
 	def load(self, buf, page, parent, offset=0, blocksizes=(),fmttype="cdr"):
-		print offset
+#		print offset
 		self.hdroffset = offset
 		self.fourcc = buf[offset:offset+4]
 		self.rawsize = struct.unpack('<I', buf[offset+4:offset+8])[0]
@@ -1376,6 +1376,9 @@ class cdrChunk:
 			icc.parse(page,self.data,f_iter)
 		if self.fourcc == 'pack':
 			self.load_pack(page,f_iter)
+		if self.fourcc == 'page' and fmttype == "cmx":
+			cmx.parse_page(page,self.data,f_iter)
+
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			self.listtype = buf[offset+8:offset+12]
 			name = self.chunk_name()
