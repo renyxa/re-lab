@@ -108,7 +108,7 @@ def blk_hdr(page, buf, offset, p_iter):
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter)
 	offset += 4
 	data = buf[offset:offset+4]
-	[plt_size] = struct.unpack('<I',sig)
+#	plt_size = struct.unpack('<I',data)[0]
 	name = "Palette size"
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter)
 	offset += 4
