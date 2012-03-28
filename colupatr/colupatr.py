@@ -84,6 +84,7 @@ class ApplicationMainWindow(gtk.Window):
 		
 		self.notebook =gtk.Notebook()
 		self.notebook.set_tab_pos(gtk.POS_BOTTOM)
+		self.notebook.set_scrollable(True)
 		table.attach(self.notebook,
 			# X direction #		  # Y direction
 			0, 1,					  1, 2,
