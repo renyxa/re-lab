@@ -561,9 +561,21 @@ Hexdump selection:\n\
 		model, iter1 = treeSelection.get_selected()
 		if iter1:
 			intPath = model.get_path(iter1)
+			val = model.get_value(iter1,8)
 			self.on_row_activated(view, intPath, 0)
 			if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
 				self.entry.set_text(model.get_string_from_iter(iter1))
+			elif event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 2:
+				if val[0] == "path" and val[1] != None:
+					pn = self.notebook.get_current_page()
+					dm = self.das[pn].dictmod
+					print "Go to iter:",val[1]
+					try:
+						self.das[pn].view.expand_to_path(val[1])
+						self.das[pn].view.set_cursor_on_cell(val[1])
+					except:
+						print "No such path"
+
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()

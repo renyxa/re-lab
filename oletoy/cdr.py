@@ -1358,8 +1358,10 @@ class cdrChunk:
 		
 		# skip garbage
 		if self.name != "clo " and self.name != "cloa" and self.name != "clof" and self.name != "cloo":
-			f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
-			
+			if page.version < 16:
+				f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
+			else:
+				f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,"idx16%s"%self.name,self.data,parent)
 		if page.version < 16 and (self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf"):
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
@@ -1372,7 +1374,7 @@ class cdrChunk:
 				t = struct.unpack("<H",self.data[off:off+2])[0]
 				ttxt = key2txt(t,fild_types)
 				page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
-		if self.fourcc == 'mcfg':
+		if page.version < 16 and self.fourcc == 'mcfg':
 			page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
 			page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
 		if self.fourcc == 'iccd':
@@ -1422,6 +1424,8 @@ class cdrChunk:
 					ci = page.model.iter_nth_child(None,strid)
 					data = page.model.get_value(ci,3)[off1:off2]
 					p_iter = add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data,ci)
+					page.model.set_value(p_iter,8,("path",page.model.get_string_from_iter(f_iter)))
+					page.model.set_value(f_iter,8,("path",page.model.get_string_from_iter(p_iter)))
 
 					if self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "arrx" or self.fourcc == "bmpf":
 						d_iter = page.dictmod.append(None,None)

@@ -18,8 +18,8 @@ import gobject
 import gtk
 
 def make_view():
-   # Create the model. Name/Type/Length/Value/Value2//Color//Path//VSD_Stream_Format
-   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,gobject.TYPE_STRING,gobject.TYPE_STRING,gobject.TYPE_STRING)
+   # Create the model. Name/Type/Length/Value/Value2//Color//Path//VSD_Stream_Format//Command
+   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,gobject.TYPE_STRING,gobject.TYPE_STRING,gobject.TYPE_STRING,gobject.TYPE_PYOBJECT)
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_reorderable(True)
