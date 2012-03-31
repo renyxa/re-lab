@@ -206,6 +206,7 @@ def user (hd,size,data):
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
 	ftype_off = 4
+	print "Fild",hd.version
 	if hd.version > 12:
 		ftype_off = 12
 		v13flag = struct.unpack('<h', data[8:10])[0]
@@ -294,7 +295,7 @@ def fild (hd,size,data):
 				fl_off = 0x28
 				clr1_off = 0x2f
 				pal_len = 22
-				if v13flag == 0x94:
+				if v13flag == 0x94 or (hd.version > 15 and v13flag == 0x8c):
 					pal_len = 43
 				clr2_off = clr1_off + pal_len
 
@@ -325,6 +326,7 @@ def fild (hd,size,data):
 				rcp_off = 0x22
 				fl_off = 0x24
 				patt_off = 0x36
+			
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
@@ -1385,7 +1387,7 @@ class cdrChunk:
 			cmx.parse_page(page,self.data,f_iter)
 
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
-			if self.fourcc == 'RIFF':
+			if self.fourcc == 'RIFF' and fmttype == "cdr":
 				page.version = ord(self.data[3])-55
 			self.listtype = buf[offset+8:offset+12]
 			name = self.chunk_name()
