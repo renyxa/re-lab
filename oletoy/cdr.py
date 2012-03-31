@@ -135,6 +135,8 @@ def outl (hd,size,data):
 		off = 0
 		if flag == 5:
 			off = 107
+		elif hd.version >= 16:
+				off = 51
 		lt = 0x18+off
 		ct = 0x1a+off
 		jt = 0x1c+off
@@ -145,6 +147,8 @@ def outl (hd,size,data):
 		lc = 0x58+off # another place -- 0x55
 		dash = 0x74+off
 		arrw = 0x8a+off
+
+
 
 	ltype = struct.unpack('<H', data[lt:lt+2])[0]
 	ltxt = "Non-scalable"
@@ -1116,7 +1120,8 @@ cdr_ids = {
 	"ttil":ftil,
 	"txsm":txsm,
 	"user":user,
-	"vpat":vpat}
+	"vpat":vpat
+	}
 
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
@@ -1367,8 +1372,6 @@ class cdrChunk:
 				t = struct.unpack("<H",self.data[off:off+2])[0]
 				ttxt = key2txt(t,fild_types)
 				page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
-		if self.fourcc == 'vrsn':
-			page.version = struct.unpack("<h",self.data)[0]/100
 		if self.fourcc == 'mcfg':
 			page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
 			page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
@@ -1380,6 +1383,8 @@ class cdrChunk:
 			cmx.parse_page(page,self.data,f_iter)
 
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
+			if self.fourcc == 'RIFF':
+				page.version = ord(self.data[3])-55
 			self.listtype = buf[offset+8:offset+12]
 			name = self.chunk_name()
 			if self.cmpr == True:
@@ -1406,6 +1411,21 @@ class cdrChunk:
 					chunk = cdrChunk()
 					chunk.load(buf,page,parent,offset, blocksizes,fmttype)
 					offset += 8 + chunk.rawsize
+		elif page.version == 16:
+#			print self.fourcc
+			try:
+				strid = struct.unpack("<i",self.data[:4])[0]
+				off1 = struct.unpack("<I",self.data[8:12])[0]
+				off2 = off1 + struct.unpack("<I",self.data[4:8])[0]
+				if strid != -1:
+#					print "stream ID",strid,"off %04x"%off1,"off %04x"%off2
+					ci = page.model.iter_nth_child(None,strid)
+					data = page.model.get_value(ci,3)
+					add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data[off1:off2],ci)
+			except:
+				print 'Failed in v16 dat'
+				
+			
 
 	def chunk_name(self):
 		if self.fourcc == 'RIFF':

@@ -66,7 +66,7 @@ class Page:
 
 		if buf[0:4] == "RIFF" and buf[8:11] == "CDR":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
-			print 'Probably CDR %x'%(ord(buf[11])-0x30)
+			print 'Probably CDR %x'%(ord(buf[11])-0x31)
 			cdr.cdr_open(buf,self, parent)
 			return 0
 
