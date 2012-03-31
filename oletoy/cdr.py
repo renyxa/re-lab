@@ -245,7 +245,7 @@ def fild (hd,size,data):
 				pal_len = 24
 				pal_off = 3
 				prcnt_off = 8
-				if v13flag >= 0x9e:
+				if v13flag >= 0x9e or (hd.version == 16 and v13flag >= 0x96):
 					prcnt_off = 29
 					pal_len = 45
 			grdmode = ord(data[grd_offset])
@@ -1360,7 +1360,7 @@ class cdrChunk:
 		if self.name != "clo " and self.name != "cloa" and self.name != "clof" and self.name != "cloo":
 			f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
 			
-		if self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf":
+		if page.version < 16 and (self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf"):
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
@@ -1420,8 +1420,25 @@ class cdrChunk:
 				if strid != -1:
 #					print "stream ID",strid,"off %04x"%off1,"off %04x"%off2
 					ci = page.model.iter_nth_child(None,strid)
-					data = page.model.get_value(ci,3)
-					add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data[off1:off2],ci)
+					data = page.model.get_value(ci,3)[off1:off2]
+					p_iter = add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data,ci)
+
+					if self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "arrx" or self.fourcc == "bmpf":
+						d_iter = page.dictmod.append(None,None)
+						page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(p_iter))
+						page.dictmod.set_value(d_iter,2,d2hex(data[0:4]))
+						page.dictmod.set_value(d_iter,1,self.name)
+						if self.name == "fild":
+							off = 4
+							if page.version > 12:
+								off = 12
+							t = struct.unpack("<H",data[off:off+2])[0]
+							ttxt = key2txt(t,fild_types)
+							page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
+					if self.fourcc == 'mcfg':
+						page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
+						page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
+
 			except:
 				print 'Failed in v16 dat'
 				
