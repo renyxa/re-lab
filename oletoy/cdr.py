@@ -50,6 +50,16 @@ fild_types = {0:'Transparent', 1:'Solid', 2:'Gradient',6:'Postscript',7:'Pattern
 fild_grad_type = ('Unknown', 'Linear', 'Radial', 'Conical', 'Squared')
 grad_subtypes = {0:"Line",1:"CW",2:"CCW",3:"Custom"}
 
+wrap_txt_style = {
+	0:"Contour Txt Flow Left",
+	1:"Contour Txt Flow Right",
+	2:"Contour Straddle Txt",
+	3:"Square Txt Flow Left",
+	4:"Square Txt Flow Right",
+	5:"Square Straddle Txt",
+	6:"Square Above/Below"
+	}
+
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
 	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
@@ -206,7 +216,6 @@ def user (hd,size,data):
 def fild (hd,size,data):
 	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
 	ftype_off = 4
-	print "Fild",hd.version
 	if hd.version > 12:
 		ftype_off = 12
 		v13flag = struct.unpack('<h', data[8:10])[0]
@@ -542,6 +551,11 @@ def loda_polygon (hd,data,offset,l_type):
 			vy = round(varY/10000.0,2)
 			add_iter (hd,"[2af8] X%u/Y%u"%(i,i),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(vx,vy,vx+hd.width/2,vy+hd.height/2),offset+0x18+4+i*4,4,"txt")
 
+corner_types = {
+	0:"Round",
+	1:"Scalloped",
+	2:"Clamfered"
+	}
 
 def loda_coords124 (hd,data,offset,l_type):
 	# rectangle or ellipse or text
@@ -551,12 +565,22 @@ def loda_coords124 (hd,data,offset,l_type):
 		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm  (corr %.2f/%.2f)"%(x1,y1,x1+hd.width/2,y1+hd.height/2),offset,16,"txt")
 
 		if l_type == 1:
-			R1 = struct.unpack('<d', data[offset+16:offset+24])[0]
-			R2 = struct.unpack('<d', data[offset+24:offset+32])[0]
-			R3 = struct.unpack('<d', data[offset+32:offset+40])[0]
-			R4 = struct.unpack('<d', data[offset+40:offset+48])[0]
-			add_iter (hd,"[001e] R1 R2 R3 R4","%.2f %.2f %.2f %.2f mm"%(round(R1/10000.0,2),round(R2/10000.0,2),round(R3/10000.0,2),round(R4/10000.0,2)),offset+16,32,"txt")
-		offset += 8
+			scx = struct.unpack('<d', data[offset+16:offset+24])[0]
+			scy = struct.unpack('<d', data[offset+24:offset+32])[0]
+			add_iter (hd,"[001e] Scale X/Y","%.2f %.2f "%(round(scx,2),round(scy,2)),offset+16,16,"txt")
+			for i in range(4):
+				Ri = struct.unpack('<d', data[offset+40+i*24:offset+48+i*24])[0]
+				crnscale = ord(data[offset+32+i*24])
+				cs = "Yes"
+				if crnscale:
+					cs = "No"
+					Ri = round(Ri/10000.,2)
+				ctype = ord(data[offset+48+i*24])
+				ct = key2txt(ctype,corner_types)
+
+				add_iter (hd,"[001e] R%d"%(i+1),"Scale with shape: %s"%cs,offset+32+i*24,1,"B")
+				add_iter (hd,"[001e] R%d"%(i+1),"%.2f"%Ri,offset+40+i*24,8,"<d")
+				add_iter (hd,"[001e] R%d"%(i+1),"Corner type: %s"%ct,offset+48+i*24,1,"B")
 	else:
 		x1 = round(struct.unpack('<l', data[offset:offset+4])[0]/10000.,2)
 		y1 = round(struct.unpack('<l', data[offset+4:offset+8])[0]/10000.,2)
@@ -823,6 +847,13 @@ def loda_mesh (hd,data,offset,l_type):
 	off = 20
 	loda_coords3 (hd,data,offset+off,l_type,"4ace set 1")
 
+def loda_wroff (hd,data,offset,l_type):
+	add_iter (hd,"[32c8] Txt Wrap Offset (mm)",struct.unpack("<i",data[offset:offset+4])[0]/10000.,offset,4,"<i")
+
+def loda_wrstyle (hd,data,offset,l_type):
+	ws = struct.unpack("<I",data[offset:offset+4])[0]
+	add_iter (hd,"[32c9] Txt Wrap Style","%d (%s)"%(ws,key2txt(ws,wrap_txt_style)),offset,4,"<I")
+
 
 loda_types = {
 	0:"Layer",
@@ -843,10 +874,12 @@ loda_types = {
 
 loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x28:loda_rot_center,0x64:loda_trfd,
-									0xc8:loda_stlt,0x2af8:loda_polygon,0x3e8:loda_name,
-									0x2eea:loda_grad,0x2efe:loda_rot,0x7d0:loda_palt,
-									0x1f40:loda_lens, 
-									0x1f45:loda_contnr,
+									0xc8:loda_stlt,#0xc9 loda_description,
+									0x3e8:loda_name,
+									0x7d0:loda_palt,
+									0x1f40:loda_lens,0x1f45:loda_contnr,
+									0x2af8:loda_polygon,0x2eea:loda_grad,0x2efe:loda_rot,
+									0x32c8:loda_wroff,0x32c9:loda_wrstyle,
 									0x4ace:loda_mesh}
 
 def loda_v5 (hd,size,data):
