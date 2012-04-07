@@ -1445,7 +1445,11 @@ class cdrChunk:
 
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			if self.fourcc == 'RIFF' and fmttype == "cdr":
-				page.version = ord(self.data[3])-55
+				v = ord(self.data[3])
+				if v < 0x41:
+					page.version = v - 48
+				else:
+					page.version = v - 55
 			self.listtype = buf[offset+8:offset+12]
 			name = self.chunk_name()
 			if self.cmpr == True:
