@@ -376,14 +376,22 @@ def fild (hd,size,data):
 			maxtw_off = 0x3a
 			
 			if hd.version > 12:
-				v1_off = 0x36 # 0x1e
-				rcp_off = 0x42 # 0x22
-				fl_off = 0x44  #0x24
-				v2_off = 0x4a  # 0x32
-				imgid_off = 0x56  #0x3e
-				bmpres_off = 0x66  # 0x46
-				maxtw_off = 0x68   # 0x48
-				
+				v1_off = 0x1e
+				rcp_off = 0x22
+				fl_off = 0x24
+				v2_off = 0x32
+				imgid_off = 0x3e
+				bmpres_off = 0x4e
+				maxtw_off = 0x50
+				if v13flag == 0x18e:
+					v1_off = 0x36
+					rcp_off = 0x42
+					fl_off = 0x44
+					v2_off = 0x4a
+					imgid_off = 0x56
+					bmpres_off = 0x66
+					maxtw_off = 0x68
+
 			add_iter (hd,"Width",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
 			add_iter (hd,"Height",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
