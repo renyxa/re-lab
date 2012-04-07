@@ -27,7 +27,7 @@ import xls, vba, ole, doc, mdb
 import emfparse,svm,mf,wmfparse,cdr,cmx,emfplus,rx2,fh,fhparse
 from utils import *
 
-version = "0.5.75"
+version = "0.5.77"
 
 ui_info = \
 '''<ui>
@@ -904,7 +904,7 @@ Hexdump selection:\n\
 					r1 = 255*(1 - c)
 					g1 = 255*(1 - m)
 					b1 = 255*(1 - y)
-					txt = '<span background="#%02x%02x%02x">CMYK100</span>'%(r1,g1,b1)
+					txt += '<span background="#%02x%02x%02x">CMYK100</span> '%(r1,g1,b1)
 					#print r1,g1,b1
 				r2 = 255*(1 - c22)
 				g2 = 255*(1 - m22)

@@ -367,18 +367,34 @@ def fild (hd,size,data):
 
 		elif fill_type == 11:
 			# Texture pattern fill
-			imgid_off = 0x30
 			v1_off = 0xc
+			rcp_off = 0x18
+			fl_off = 0x1a
 			v2_off = 0x20
+			imgid_off = 0x30
+			bmpres_off = 0x38
+			maxtw_off = 0x3a
+			
 			if hd.version > 12:
-				imgid_off = 0x3e
-				v1_off = 0x1e
-				v2_off = 0x32
-			add_iter (hd,"v1",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
-			add_iter (hd,"v2",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
+				v1_off = 0x36 # 0x1e
+				rcp_off = 0x42 # 0x22
+				fl_off = 0x44  #0x24
+				v2_off = 0x4a  # 0x32
+				imgid_off = 0x56  #0x3e
+				bmpres_off = 0x66  # 0x46
+				maxtw_off = 0x68   # 0x48
+				
+			add_iter (hd,"Width",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
+			add_iter (hd,"Height",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
+			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
+			flag = ord(data[fl_off])
+			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
+			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
 			add_iter (hd,"v3",struct.unpack("<I",data[v2_off:v2_off+4])[0]/10000.,v2_off,4,"<I")
 			add_iter (hd,"v4",struct.unpack("<I",data[v2_off+4:v2_off+8])[0]/10000.,v2_off+4,4,"<I")
 			add_iter (hd,"Image ID",struct.unpack("<I",data[imgid_off:imgid_off+4])[0],imgid_off,4,"<I")
+			add_iter (hd,"BMP resolution",struct.unpack("<h",data[bmpres_off:bmpres_off+2])[0],bmpres_off,2,"<h")
+			add_iter (hd,"Max tile width",struct.unpack("<h",data[maxtw_off:maxtw_off+2])[0],maxtw_off,2,"<h")
 				
 
 def bmpf (hd,size,data):
