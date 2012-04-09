@@ -1464,8 +1464,8 @@ class cdrChunk:
 			if self.listtype == 'stlt':
 				self.name = '<stlt>'
 				try:
-					print 'stlt'
-#					self.stlt(page,parent,self.data)
+#					print 'stlt'
+					self.stlt(page,parent,self.data)
 				except:
 					print "Something failed in 'stlt'."
 			elif self.listtype == 'cmpr':

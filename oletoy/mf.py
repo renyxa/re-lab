@@ -251,6 +251,55 @@ def emf_gentree ():
 
 	return model,view
 
+
+def wmf_gentree ():
+	#					Record/Group Name		Rec. Type		Min. Length		Template
+	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
+	view = gtk.TreeView(model)
+	renderer = gtk.CellRendererText()
+	column = gtk.TreeViewColumn('Group/Record', renderer, text=0)
+	column2 = gtk.TreeViewColumn('Length', renderer, text=2)
+	view.append_column(column)
+	view.append_column(column2)
+
+	# Drawing Record Types
+	# 2610:ExtTextOut,
+	
+	drawrec = (
+	  (0x213,10,"\x05\x00\x00\x00\x13\x02\x00\x00\x00\x00"), #LineTo
+	  (0x214,10,"\x05\x00\x00\x00\x14\x02\x00\x00\x00\x00"), #MoveTo
+	  (0x324,20,"\x0a\x00\x00\x00\x24\x03\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #Polygon
+	  (0x325,20,"\x0a\x00\x00\x00\x25\x03\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #Polyline
+	  (0x418,14,"\x07\x00\x00\x00\x18\x04\x00\x00\x00\x00\x00\x00\x00\x00"), #Ellipse
+	  (0x41b,14,"\x07\x00\x00\x00\x1b\x04\x00\x00\x00\x00\x00\x00\x00\x00"), #Rectangle
+	  (0x538,22,"\x0b\x00\x00\x00\x38\x05\x01\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #PolyPolygon
+	  (0x61c,18,"\x09\x00\x00\x00\x1c\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #RoundRect
+	  (0x817,22,"\x0b\x00\x00\x00\x17\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #Arc
+	  (0x81a,22,"\x0b\x00\x00\x00\x1a\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #Pie
+	  (0x830,22,"\x0b\x00\x00\x00\x30\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), #Chord
+	)
+
+	# Object Creation Record Types
+	objcrec = ((0x5d,32),  (0x5e,32), (0x5f,32), (0x7a,20), (0x26,28), (0x27,24), (0x31,12), (0x52,16), (0x63,12))
+	
+	# Object Manipulation Record Types
+	objmrec = (0x25, 0x28, 0x30, 0x32, 0x33, 0x64, 0x65, 0x6f)
+	
+	# State Record Types
+	staterec = (0xa, 0xb, 0xc, 0xd, 0x17, 0x1b, 0x1f, 0x9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,\
+				0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x34, 0x39, 0x3a, 0x49, 0x62, 0x68, 0x6d,\
+				0x70, 0x71, 0x73, 0x77, 0x78, 0x79)
+
+
+
+	iter = model.append(None, None)
+	model.set(iter, 0, "Drawing Records", 1, -1, 2, "")
+	for i in range (len(drawrec)):
+		niter = model.append (iter, None)
+		model.set(niter, 0, wmr_ids[drawrec[i][0]], 1, drawrec[i][0], 2, drawrec[i][1],3,drawrec[i][2])
+
+	return model,view
+
 def parse_gdiplus (buf, offset, model, piter):
 	try:
 	  eprid = struct.unpack('<H',buf[offset+0x10:offset+0x12])[0]

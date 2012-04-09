@@ -299,6 +299,8 @@ Hexdump selection:\n\
 		if pn != -1:
 			if self.das[pn].type == "EMF":
 				dictmod, dictview = mf.emf_gentree()
+			elif self.das[pn].type == "APWMF" or self.das[pn].type == "WMF":
+				dictmod, dictview = mf.wmf_gentree()
 			elif self.das[pn].type[:3] == "XLS":
 				dictmod, dictview = xls.gentree()
 			else:
@@ -398,6 +400,29 @@ Hexdump selection:\n\
 					model.set_value(iter1,6,model.get_string_from_iter(iter1))
 					self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
 					print "Insert:",rname,size
+
+		elif self.das[pn].type == "APWMF" or self.das[pn].type == "WMF":
+			if type != -1:
+				size = int(dictmodel.get_value(iter,2))
+				if iter2:
+					iter1 = model.insert_after(None,iter2)
+				else:
+					iter1 = model.append(None,None)
+
+				rname = mf.wmr_ids[type]
+				model.set_value(iter1,0,rname)
+				model.set_value(iter1,1,("wmf",type))
+				model.set_value(iter1,2,size)
+				val = dictmodel.get_value(iter,3)
+				if val != "":
+					model.set_value(iter1,3,val)
+				else:
+					model.set_value(iter1,3,struct.pack("<I",size/2)+struct.pack("<H",type)+"\x00"*(size-6))
+				model.set_value(iter1,6,model.get_string_from_iter(iter1))
+				self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
+				print "Insert:",rname,size
+
+
 
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
