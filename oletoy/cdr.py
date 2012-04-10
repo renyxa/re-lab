@@ -157,8 +157,13 @@ def outl (hd,size,data):
 		lc = 0x58+off # another place -- 0x55
 		dash = 0x74+off
 		arrw = 0x8a+off
-
-
+	elif hd.version < 6:
+		lw = 0xa
+		st = 0xc
+		ang = 0xe
+		lc = 0x10
+		dash = 0x26
+		
 
 	ltype = struct.unpack('<H', data[lt:lt+2])[0]
 	ltxt = "Non-scalable"
@@ -176,11 +181,15 @@ def outl (hd,size,data):
 	add_iter (hd,"Join Type","%02x"%struct.unpack('<H', data[jt:jt+2])[0],jt,2,"<H")
 	add_iter (hd,"LineWidth","%.2f mm"%round(struct.unpack('<I', data[lw:lw+4])[0]/10000.0,2),lw,4,"<I")
 	add_iter (hd,"Stretch","%02x"%struct.unpack('<H', data[st:st+2])[0],st,2,"<H")
-	add_iter (hd,"Angle","%.2f"%round(struct.unpack('<i', data[ang:ang+4])[0]/1000000.0,2),ang,4,"<I")
+	if hd.version > 5:
+		add_iter (hd,"Angle","%.2f"%round(struct.unpack('<i', data[ang:ang+4])[0]/1000000.0,2),ang,4,"<i")
+	else:
+		add_iter (hd,"Angle","%.2f"%round(struct.unpack('<h', data[ang:ang+2])[0]/1000000.0,2),ang,2,"<h")
 
-	for i in range(6):                     
-		var = struct.unpack('<d', data[varo+i*8:varo+8+i*8])[0]
-		add_iter (hd, "?? var%d"%(i+1), "%f"%var,varo+i*8,8,"<d")
+	if hd.version > 5:
+		for i in range(6):                     
+			var = struct.unpack('<d', data[varo+i*8:varo+8+i*8])[0]
+			add_iter (hd, "?? var%d"%(i+1), "%f"%var,varo+i*8,8,"<d")
 	clr_model(hd,data,lc)
 	dnum = struct.unpack('<H', data[dash:dash+2])[0]
 	add_iter (hd,"Dash num","%02x"%(dnum/2),dash,2,"<H")
@@ -618,6 +627,11 @@ def loda_coords124 (hd,data,offset,l_type):
 				add_iter (hd,"[001e] R%d"%(i+1),"Scale with shape: %s"%cs,offset+32+i*24,1,"B")
 				add_iter (hd,"[001e] R%d"%(i+1),"%.2f"%Ri,offset+40+i*24,8,"<d")
 				add_iter (hd,"[001e] R%d"%(i+1),"Corner type: %s"%ct,offset+48+i*24,1,"B")
+	elif hd.version < 6:
+		x1 = round(struct.unpack('<h', data[offset:offset+2])[0]*0.0254,2)
+		y1 = round(struct.unpack('<h', data[offset+2:offset+4])[0]*0.0254,2)
+		add_iter (hd,"[001e] x1/y1","%.2f/%.2f mm  (corr %.2f/%.2f)"%(x1,y1,x1+hd.width/2,y1+hd.height/2),offset,4,"txt")
+
 	else:
 		x1 = round(struct.unpack('<l', data[offset:offset+4])[0]/10000.,2)
 		y1 = round(struct.unpack('<l', data[offset+4:offset+8])[0]/10000.,2)
@@ -698,20 +712,36 @@ def loda_coords3 (hd,data,offset,l_type,lt2="001e"):
 		add_iter (hd,"[%s] X%u/Y%u/Type"%(lt2,i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2)+NodeType,offset+poffset+i*8,8,"txt",offset+poffset+pointnum*8+i,1)
 	return pointnum
 
-def loda_coords5 (hd,data,offset,l_type):
-	for i in range (4):
-		x = round(struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]/10000.,2)
-		y = round(struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]/10000.,2)
-		add_iter (hd,"[001e] X%u/Y%u"%(i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2),offset+i*8,8,"txt")
-	offset += 32
+def loda_coords5v5 (hd,data,offset,l_type):
+	x = round(struct.unpack('<h', data[offset:offset+2])[0]*0.0254,2)
+	y = round(struct.unpack('<h', data[offset+2:offset+4])[0]*0.0254,2)
+	add_iter (hd,"[001e] X0/Y0","%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2),offset,4,"txt")
+	offset += 4
 	add_iter (hd,"[001e] var1?",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
 	add_iter (hd,"[001e] BPP?",struct.unpack("<H",data[offset+2:offset+4])[0],offset+2,2,"<H")
-	add_iter (hd,"[001e] Img Width (px)",struct.unpack("<I",data[offset+4:offset+8])[0],offset+4,4,"<I")
-	add_iter (hd,"[001e] Img Height (px)",struct.unpack("<I",data[offset+8:offset+12])[0],offset+8,4,"<I")
-	offset += 16
-	add_iter (hd,"[001e] Image ID",struct.unpack("<I",data[offset:offset+4])[0],offset,4,"<I")
-	offset += 24
-	loda_coords3 (hd,data,offset,l_type)
+	add_iter (hd,"[001e] Img Width (px)",struct.unpack("<H",data[offset+4:offset+6])[0],offset+4,2,"<H")
+	add_iter (hd,"[001e] Img Height (px)",struct.unpack("<H",data[offset+6:offset+8])[0],offset+6,2,"<H")
+	offset += 8
+	add_iter (hd,"[001e] Image ID",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
+
+
+def loda_coords5 (hd,data,offset,l_type):
+	if hd.version < 6:
+		loda_coords5v5 (hd,data,offset,l_type)
+	else:
+		for i in range (4):
+			x = round(struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]/10000.,2)
+			y = round(struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]/10000.,2)
+			add_iter (hd,"[001e] X%u/Y%u"%(i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2),offset+i*8,8,"txt")
+		offset += 32
+		add_iter (hd,"[001e] var1?",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
+		add_iter (hd,"[001e] BPP?",struct.unpack("<H",data[offset+2:offset+4])[0],offset+2,2,"<H")
+		add_iter (hd,"[001e] Img Width (px)",struct.unpack("<I",data[offset+4:offset+8])[0],offset+4,4,"<I")
+		add_iter (hd,"[001e] Img Height (px)",struct.unpack("<I",data[offset+8:offset+12])[0],offset+8,4,"<I")
+		offset += 16
+		add_iter (hd,"[001e] Image ID",struct.unpack("<I",data[offset:offset+4])[0],offset,4,"<I")
+		offset += 24
+		loda_coords3 (hd,data,offset,l_type)
 
 
 def loda_coords_poly (hd,data,offset,l_type):
@@ -1483,8 +1513,8 @@ class record:
 							page.hd.width = struct.unpack("<I",data[0x1c:0x20])[0]/10000
 							page.hd.height = struct.unpack("<I",data[0x20:0x24])[0]/10000
 						elif page.version < 6:
-							page.hd.width = struct.unpack("<H",data[0x1c:0x20])[0]*0.254
-							page.hd.height = struct.unpack("<H",data[0x20:0x24])[0]*0.254
+							page.hd.width = struct.unpack("<H",data[0x1c:0x20])[0]*0.0254
+							page.hd.height = struct.unpack("<H",data[0x20:0x24])[0]*0.0254
 						else:
 							page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
 							page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
