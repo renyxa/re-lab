@@ -196,8 +196,11 @@ def font (hd,size,data):
 	enctxt = "Unknown"
 	if charsets.has_key(enc):
 		enctxt = charsets[enc]
-	add_iter (hd,"Encoding","%s (%02x)"%(enctxt,enc),2,2,"<H")
-	add_iter (hd,"Flags",d2hex(data[4:18]," "),4,14,"txt")
+	shift = 0
+	if hd.version > 5:
+		add_iter (hd,"Encoding","%s (%02x)"%(enctxt,enc),2,2,"<H")
+		shift = 2
+	add_iter (hd,"Flags",d2hex(data[2+shift:18]," "),2+shift,16-shift,"txt")
 	fontname = data[18:52]
 	if hd.version > 9:
 		fontname = unicode(fontname,"utf16")
@@ -289,6 +292,7 @@ def fild (hd,size,data):
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
 
 		elif fill_type == 7:
+			# Pattern
 			patt_off = 8
 			w_off = 0xc
 			h_off = 0x10
@@ -309,8 +313,14 @@ def fild (hd,size,data):
 				clr2_off = clr1_off + pal_len
 
 			add_iter (hd,"Pattern ID", d2hex(data[patt_off:patt_off+4]),patt_off,4,"txt")
-			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
-			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
+			if hd.version < 6:
+				h_off = 0x1c
+				add_iter (hd,"Width", struct.unpack("<H",data[w_off:w_off+2])[0]/10000.,w_off,2,"<I")
+				add_iter (hd,"Height", struct.unpack("<H",data[h_off:h_off+2])[0]/10000.,h_off,2,"<I")
+
+			else:
+				add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
+				add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
 			flag = ord(data[fl_off])
 			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
@@ -451,17 +461,20 @@ def bmp (hd,size,data):
 	if pal < 12:
 		bplt = bmp_clr_models[pal]
 	add_iter (hd,"\tPallete (%02x) %s"%(pal,bplt), struct.unpack('<I', data[0x36:0x3a])[0],0x36,4,"<I")
-	imgw = struct.unpack('<I', data[0x3e:0x42])[0]
-	add_iter (hd,"\tWidth", imgw,0x3e,4,"<I")
-	imgh = struct.unpack('<I', data[0x42:0x46])[0]
-	add_iter (hd,"\tHeight", imgh,0x42,4,"<I")
-	bpp = struct.unpack('<I', data[0x4a:0x4e])[0]
-	add_iter (hd,"\tBPP", bpp,0x4a,4,"<I")
+	shift = 0
+	if hd.version < 7:
+		shift = 4
+	imgw = struct.unpack('<I', data[0x3e-shift:0x42-shift])[0]
+	add_iter (hd,"\tWidth", imgw,0x3e-shift,4,"<I")
+	imgh = struct.unpack('<I', data[0x42-shift:0x46-shift])[0]
+	add_iter (hd,"\tHeight", imgh,0x42-shift,4,"<I")
+	bpp = struct.unpack('<I', data[0x4a-shift:0x4e-shift])[0]
+	add_iter (hd,"\tBPP", bpp,0x4a-shift,4,"<I")
 	# for bpp = 1, cdr aligns by 4 bytes, bits after width are crap
 
-	bmpsize = struct.unpack('<I', data[0x52:0x56])[0]
+	bmpsize = struct.unpack('<I', data[0x52-shift:0x56-shift])[0]
 	palsize = 0
-	add_iter (hd,"\tSize of BMP data", bmpsize,0x52,4,"<I")
+	add_iter (hd,"\tSize of BMP data", bmpsize,0x52-shift,4,"<I")
 	if bpp < 24 and pal != 5 and pal != 6:
 		palsize = struct.unpack('<H', data[0x78:0x7a])[0]
 		add_iter (hd,"Palette Size", palsize,0x78,2,"<H")
@@ -469,8 +482,8 @@ def bmp (hd,size,data):
 		add_iter (hd,"BMP data", "",0x7a+palsize*3,bmpsize,"<I")
 		bmpoff = 0x7a+palsize*3
 	else:
-		add_iter (hd,"BMP data", "",0x76,bmpsize,"<I")
-		bmpoff = 0x76
+		add_iter (hd,"BMP data", "",0x76-shift,bmpsize,"<I")
+		bmpoff = 0x76-shift
 
 	img = 'BM'+struct.pack("<I",bmpsize+palsize+54)+'\x00\x00\x00\x00'+struct.pack("<I",54+palsize*3)
 	img += '\x28\x00\x00\x00'+struct.pack("<I",imgw)+struct.pack("<I",imgh)+'\x01\x00'
@@ -1421,7 +1434,7 @@ class cdrChunk:
 				f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,self.name,self.data,parent)
 			else:
 				f_iter = add_pgiter(page,self.name+" %02x"%id,fmttype,"idx16%s"%self.name,self.data,parent)
-		if page.version < 16 and (self.name == "outl" or self.name == "fild" or self.name == "arrw" or self.name == "bmpf"):
+		if page.version < 16 and (self.name == "outl" or self.name == "fild" or self.name == "fill" or self.name == "arrw" or self.name == "bmpf"):
 			d_iter = page.dictmod.append(None,None)
 			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
@@ -1503,8 +1516,15 @@ class cdrChunk:
 							ttxt = key2txt(t,fild_types)
 							page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
 					if self.fourcc == 'mcfg':
-						page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
-						page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
+						if page.version == 6:
+							page.hd.width = struct.unpack("<I",data[0x1c:0x20])[0]/10000
+							page.hd.height = struct.unpack("<I",data[0x20:0x24])[0]/10000
+						elif page.version < 6:
+							page.hd.width = struct.unpack("<H",data[0x1c:0x20])[0]*0.254
+							page.hd.height = struct.unpack("<H",data[0x20:0x24])[0]*0.254
+						else:
+							page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
+							page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
 
 			except:
 				print 'Failed in v16 dat'
