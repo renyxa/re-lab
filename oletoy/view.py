@@ -222,7 +222,8 @@ Entry line:\n\
 	?rloda#{arg} - search for args in 'loda' records in CDR\n\n\
 Hexdump selection:\n\
 	Select 2,3,4 or 8 bytes - check tooltip in statusbar.\n\
-	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow."
+	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\n\
+	For CDR select outl/fild ID and press arrow right to scroll to it."
 		tb.insert(iter_txt, mytxt)
 		w.set_title("OLE Toy Manual")
 		w.set_default_size(520, 300)

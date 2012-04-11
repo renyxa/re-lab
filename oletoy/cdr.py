@@ -1374,6 +1374,7 @@ cdr_ids = {
 	"ftil":ftil,
 	"guid":guid,
 	"lnkt":lnkt,
+	"lobj":loda,
 	"loda":loda,
 	"obbx":obbx,
 	"outl":outl,
@@ -1391,8 +1392,8 @@ def cdr_open (buf,page,parent):
 	chunk.load (buf,page,parent)
 
 class record:
-	fourcc = '????'
-	hdroffset = 0
+	fourcc = ''
+	offset = 0
 	size = 0
 	data = ''
 
@@ -1416,7 +1417,7 @@ class record:
 		self.pack(page, parent, blocksizes, "cdr", 28)
 
 	def load(self, buf, page, parent, offset=0, blocksizes=(),fmttype="cdr"):
-		self.hdroffset = offset
+		self.offset = offset
 		self.fourcc = buf[offset:offset+4]
 		self.size = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		if len(blocksizes):
@@ -1456,7 +1457,9 @@ class record:
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			if self.fourcc == 'RIFF' and fmttype == "cdr":
 				v = ord(self.data[3])
-				if v < 0x41:
+				if v < 0x21:
+					page.version = 3
+				elif v < 0x41:
 					page.version = v - 48
 				else:
 					page.version = v - 55
@@ -1478,7 +1481,7 @@ class record:
 				self.cmpr(page,parent,fmttype)
 			else:
 				offset += 12
-				while offset < self.hdroffset + 8 + self.size:
+				while offset < self.offset + 8 + self.size:
 					chunk = record()
 					chunk.load(buf, page, parent, offset, blocksizes, fmttype)
 					offset += 8 + chunk.size
