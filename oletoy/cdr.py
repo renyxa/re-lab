@@ -600,12 +600,14 @@ def loda_trfd (hd,data,offset,l_type,length):
 		add_iter (hd, "[0064] Trfd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 	else:
 		add_iter (hd, "[0064] Trafo","",offset,length,"txt")
-		add_iter (hd, "\tvar1",readfrac(data[offset+14:offset+18]),offset+14,4,"frac")
-		add_iter (hd, "\tvar2",readfrac(data[offset+18:offset+22]),offset+18,4,"frac")
-		add_iter (hd, "\tX0",struct.unpack("<i",data[offset+22:offset+26])[0]*0.0254,offset+22,4,"<i")
-		add_iter (hd, "\tvar3",readfrac(data[offset+26:offset+30]),offset+26,4,"frac")
-		add_iter (hd, "\tvar4",readfrac(data[offset+30:offset+34]),offset+30,4,"frac")
-		add_iter (hd, "\tY0",struct.unpack("<i",data[offset+34:offset+38])[0]*0.0254,offset+34,4,"<i")
+		t_off = struct.unpack("<h",data[offset+0xa:offset+0xc])[0]
+		add_iter (hd, "\tOffset to values","%02x"%t_off,offset+0xa,2,"<h")
+		add_iter (hd, "\tvar1",readfrac(data[offset+t_off:offset+t_off+4]),offset+t_off,4,"frac")
+		add_iter (hd, "\tvar2",readfrac(data[offset+t_off+4:offset+t_off+8]),offset+t_off+4,4,"frac")
+		add_iter (hd, "\tX0",struct.unpack("<i",data[offset+t_off+8:offset+t_off+12])[0]*0.0254,offset+t_off+8,4,"<i")
+		add_iter (hd, "\tvar3",readfrac(data[offset+t_off+12:offset+t_off+16]),offset+t_off+12,4,"frac")
+		add_iter (hd, "\tvar4",readfrac(data[offset+t_off+16:offset+t_off+20]),offset+t_off+16,4,"frac")
+		add_iter (hd, "\tY0",struct.unpack("<i",data[offset+t_off+20:offset+t_off+24])[0]*0.0254,offset+t_off+20,4,"<i")
 
 def loda_stlt (hd,data,offset,l_type,length):
 	add_iter (hd, "[00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
