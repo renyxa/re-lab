@@ -67,6 +67,10 @@ charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
 	255:"OEM Latin I"}
 
+def readfrac(data):
+	intp = struct.unpack("<H",data[2:4])[0]
+	frp =  struct.unpack("<H",data[0:2])[0]/0xffff
+	return intp+frp
 
 def arrw (hd, size, data):
 	add_iter (hd,"Arrow ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
@@ -524,21 +528,76 @@ def ftil (hd,size,data):
 		[var] = struct.unpack('<d', data[i*8:i*8+8]) 
 		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
-def loda_outl (hd,data,offset,l_type):
-	iter = add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
-	hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
+def loda_outl (hd,data,offset,l_type,length):
+	if hd.version > 3:
+		iter = add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+		hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
+	else:
+		iter = add_iter (hd, "[000a] Outl","",offset,length,"txt")
+		add_iter (hd, "\ttype/flag",ord(data[offset]),offset,1,"B")
+		add_iter (hd, "\twidth",struct.unpack("<h",data[offset+1:offset+3])[0]*0.0254,offset,1,"<h")
+		add_iter (hd, "\tcolour",d2hex(data[offset+7:offset+12]),offset+7,5,"txt")
+		add_iter (hd, "\tdashes",d2hex(data[offset+19:offset+24]),offset+19,5,"txt")
+		add_iter (hd, "\tjoin type",ord(data[offset+30]),offset+30,1,"B")
+		add_iter (hd, "\tcaps type",ord(data[offset+32]),offset+32,1,"B")
+		add_iter (hd, "\tstart arrow",d2hex(data[offset+34:offset+38]),offset+34,4,"txt")
+		add_iter (hd, "\tend arrow",d2hex(data[offset+38:offset+42]),offset+38,4,"txt")
 
-def loda_fild (hd,data,offset,l_type):
-	iter = add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
-	hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
+def loda_fild (hd,data,offset,l_type,length):
+	if hd.version > 3:
+		iter = add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+		hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
+	else:
+		iter = add_iter (hd, "[0014] Fild","",offset,length,"txt")
+		ftype = ord(data[offset])
+		# 0 - xparent, 1 - solid, 2 - lin grad, 4 - rad grad, 6 - ps, 7 - pattern, a - bitmap/texture/full clr
+		add_iter (hd, "\ttype/flag","%02x (%s)"%(ftype,key2txt(ftype,{0:"Xparent",1:"Solid",2:"Linear grad",4:"Radial Grad",6:"PS",7:"Pattern",10:"Bitmap"})),offset,1,"B")
+		if ftype == 1:
+			add_iter (hd, "\tcolour",d2hex(data[offset+1:offset+6]),offset+1,5,"txt")
+		elif ftype == 2:
+			add_iter (hd, "\trotation",struct.unpack("<h",data[offset+1:offset+3])[0]/10.,offset,2,"<h")
+			add_iter (hd, "\tcolour 1",d2hex(data[offset+3:offset+8]),offset+3,5,"txt")
+			add_iter (hd, "\tcolour 2",d2hex(data[offset+8:offset+13]),offset+8,5,"txt")
+			add_iter (hd, "\tsteps?",struct.unpack("<h",data[offset+18:offset+20])[0],offset+18,2,"<h")
+			add_iter (hd, "\tedge offset",struct.unpack("<h",data[offset+20:offset+22])[0],offset+20,2,"<h")
+		elif ftype == 4:
+			add_iter (hd, "\trotation",struct.unpack("<h",data[offset+1:offset+3])[0]/10.,offset,2,"<h")
+			add_iter (hd, "\tcolour 1",d2hex(data[offset+3:offset+8]),offset+3,5,"txt")
+			add_iter (hd, "\tcolour 2",d2hex(data[offset+8:offset+13]),offset+8,5,"txt")
+			add_iter (hd, "\tsteps?",struct.unpack("<h",data[offset+18:offset+20])[0],offset+18,2,"<h")
+			add_iter (hd, "\tedge offset",struct.unpack("<h",data[offset+20:offset+22])[0],offset+20,2,"<h")
+			add_iter (hd, "\tcenter X offset",struct.unpack("<h",data[offset+22:offset+24])[0],offset+22,2,"<h")
+			add_iter (hd, "\tcenter Y offset",struct.unpack("<h",data[offset+24:offset+26])[0],offset+24,2,"<h")
+		elif ftype == 6:
+			add_iter (hd, "\tPS ID (usdn)",d2hex(data[offset+1:offset+3]),offset+1,2,"txt")
+			add_iter (hd, "\tPS options",d2hex(data[offset+3:offset+13]),offset+3,10,"txt")
+		elif ftype == 7:
+			add_iter (hd, "\twidth",struct.unpack("<h",data[offset+5:offset+7])[0]*0.0254,offset+5,2,"<h")
+			add_iter (hd, "\theight",struct.unpack("<h",data[offset+7:offset+9])[0]*0.0254,offset+7,2,"<h")
+			add_iter (hd, "\tcolour 1",d2hex(data[offset+16:offset+21]),offset+16,5,"txt")
+			add_iter (hd, "\tcolour 2",d2hex(data[offset+21:offset+26]),offset+21,5,"txt")
+		elif ftype == 10:
+			add_iter (hd, "\tImage ID (spnd)",d2hex(data[offset+1:offset+3]),offset+1,2,"txt")
+			add_iter (hd, "\twidth",struct.unpack("<h",data[offset+3:offset+5])[0]*0.0254,offset+3,2,"<h")
+			add_iter (hd, "\theight",struct.unpack("<h",data[offset+5:offset+7])[0]*0.0254,offset+5,2,"<h")
 
-def loda_trfd (hd,data,offset,l_type):
-	add_iter (hd, "[0064] Trfd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
-def loda_stlt (hd,data,offset,l_type):
+def loda_trfd (hd,data,offset,l_type,length):
+	if hd.version > 3:
+		add_iter (hd, "[0064] Trfd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	else:
+		add_iter (hd, "[0064] Trafo","",offset,length,"txt")
+		add_iter (hd, "\tvar1",readfrac(data[offset+14:offset+18]),offset+14,4,"frac")
+		add_iter (hd, "\tvar2",readfrac(data[offset+18:offset+22]),offset+18,4,"frac")
+		add_iter (hd, "\tX0",struct.unpack("<i",data[offset+22:offset+26])[0]*0.0254,offset+22,4,"<i")
+		add_iter (hd, "\tvar3",readfrac(data[offset+26:offset+30]),offset+26,4,"frac")
+		add_iter (hd, "\tvar4",readfrac(data[offset+30:offset+34]),offset+30,4,"frac")
+		add_iter (hd, "\tY0",struct.unpack("<i",data[offset+34:offset+38])[0]*0.0254,offset+34,4,"<i")
+
+def loda_stlt (hd,data,offset,l_type,length):
 	add_iter (hd, "[00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
-def loda_grad (hd,data,offset,l_type):
+def loda_grad (hd,data,offset,l_type,length):
 	startx = struct.unpack('<i', data[offset+8:offset+12])[0]
 	starty = struct.unpack('<i', data[offset+12:offset+16])[0]
 	endx = struct.unpack('<i', data[offset+16:offset+20])[0]
@@ -553,25 +612,25 @@ def loda_grad (hd,data,offset,l_type):
 	add_iter (hd, "[2eea] Gradient End Y","%.2f  (corr. %.2f)"%(ey,ey+hd.height/2),offset+20,4,"<i")
 
 
-def loda_rot(hd,data,offset,l_type):
+def loda_rot(hd,data,offset,l_type,length):
 	rot = struct.unpack('<l', data[offset:offset+4])[0]
 	add_iter (hd, "[2efe] Rotate","%.2f"%round(rot/1000000.0,2),offset,4,"txt")
 
-def loda_rot_center (hd,data,offset,l_type):
+def loda_rot_center (hd,data,offset,l_type,length):
 	rotX = struct.unpack('<l', data[offset:offset+4])[0]
 	rotY = struct.unpack('<l', data[offset+4:offset+8])[0]
 	rx = round(rotX/10000.0,2)
 	ry = round(rotY/10000.0,2)
 	add_iter (hd, "[0028] RotCenter X/Y","%.2f/%.2f   (corr. %.2f/%.2f)"%(rx,ry,rx+hd.width/2,ry+hd.height/2),offset,8,"txt")
 
-def loda_name(hd,data,offset,l_type):
+def loda_name(hd,data,offset,l_type,length):
 	if hd.version > 11:
 		layrname = unicode(data[offset:],'utf-16')
 	else:
 		layrname = data[offset:]
 	add_iter (hd,"[03e8] Layer name",layrname,offset,len(data[offset:]),"txt")
 
-def loda_polygon (hd,data,offset,l_type):
+def loda_polygon (hd,data,offset,l_type,length):
 	num = struct.unpack('<L', data[offset+4:offset+8])[0]
 	add_iter (hd,"[2af8] # of angles",num,offset+4,4,"<I")
 	num = struct.unpack('<L', data[offset+8:offset+0xc])[0]
@@ -795,7 +854,7 @@ def loda_coords_0x25(hd,data,offset,l_type):
 		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2)+NodeType,off+i*8,8,"txt",off+numpts*8+i,1)
  
 
-def loda_coords (hd,data,offset,l_type):
+def loda_coords (hd,data,offset,l_type,length):
 	if l_type < 5 and l_type != 3:
 		loda_coords124 (hd,data,offset,l_type)
 	elif l_type == 3:
@@ -811,7 +870,7 @@ def loda_coords (hd,data,offset,l_type):
 		add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 
 
-def loda_palt (hd,data,offset,l_type):
+def loda_palt (hd,data,offset,l_type,length):
 	clr_model(hd,data,offset)
 
 lens1_subtypes = {
@@ -860,7 +919,7 @@ lens5_ops = {
 lens5_targets = {0:"Fill",1:"Outl",2:"All"}
 
 
-def loda_lens (hd,data,offset,l_type):
+def loda_lens (hd,data,offset,l_type,length):
 	lens_type = struct.unpack("<I",data[offset:offset+4])[0]
 	add_iter (hd," [1f40] Lens Type",lens_type,offset,4,"<I")
 	lens_id = d2hex(data[offset+4:offset+8])
@@ -900,11 +959,11 @@ def loda_lens (hd,data,offset,l_type):
 		add_iter (hd," [1f40] Xparency End","%02d%%"%xpar_end,offset+xpar_off+8,8,"<d")
 
 
-def loda_contnr (hd,data,offset,l_type):
+def loda_contnr (hd,data,offset,l_type,length):
 	add_iter (hd,"[1f45] Spnd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
 
 
-def loda_mesh (hd,data,offset,l_type):
+def loda_mesh (hd,data,offset,l_type,length):
 	add_iter (hd,"[4ace]","",offset,len(data),"txt")
 	off = 0
 	nrow = struct.unpack("<I",data[offset+8:offset+12])[0]
@@ -971,9 +1030,10 @@ def loda_v5 (hd,size,data):
 	if loda_types.has_key(l_type):
 		for i in range(n_args, 0, -1):
 			offset = struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
+			length = struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset
 			argtype = struct.unpack('<H',data[s_types + (n_args-i)*2:s_types + (n_args-i)*2+2])[0]
 			if loda_type_func.has_key(argtype):
-				loda_type_func[argtype](hd,data,offset,l_type)
+				loda_type_func[argtype](hd,data,offset,l_type,length)
 			else:
 				add_iter (hd,"[%02x]"%(argtype),"???",offset,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
 
@@ -995,7 +1055,7 @@ def loda (hd,size,data):
 
 	a_txt = ""
 	t_txt = ""
-	for i in range(n_args,0,-1):
+	for i in range(n_args+1,0,-1):
 		a_txt += " %04x"%struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
 		t_txt += " %04x"%struct.unpack('<L',data[s_types+(n_args-i)*4:s_types+(n_args-i)*4+4])[0]
 	add_iter (hd, "Args offsets",a_txt,s_args,n_args*4,"txt")
@@ -1004,9 +1064,10 @@ def loda (hd,size,data):
 	if loda_types.has_key(l_type):
 		for i in range(n_args, 0, -1):
 			offset = struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
+			length = struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset
 			argtype = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
 			if loda_type_func.has_key(argtype):
-				loda_type_func[argtype](hd,data,offset,l_type)
+				loda_type_func[argtype](hd,data,offset,l_type,length)
 			else:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 #				print 'Unknown argtype: %x'%argtype                             
