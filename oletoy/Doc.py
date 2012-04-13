@@ -17,7 +17,7 @@
 import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp
-import rx2,fh,mdb,cpt,cdw,pkzip
+import rx2,fh,mdb,cpt,cdw,pkzip,wld
 
 class Page:
 	def __init__(self):
@@ -69,6 +69,12 @@ class Page:
 			print 'Probably CDR %x'%(ord(buf[11])-0x31)
 			cdr.cdr_open(buf,self, parent)
 			return 0
+
+		if buf[0:3] == "WLl":
+			self.type = "CDR2"
+			wld.open (buf,self, parent)
+			return 0
+
 
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
