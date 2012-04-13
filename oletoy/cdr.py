@@ -327,9 +327,14 @@ def fild (hd,size,data):
 
 			add_iter (hd,"Pattern ID", d2hex(data[patt_off:patt_off+4]),patt_off,4,"txt")
 			if hd.version < 6:
-				h_off = 0x1c
-				add_iter (hd,"Width", struct.unpack("<H",data[w_off:w_off+2])[0]/10000.,w_off,2,"<I")
-				add_iter (hd,"Height", struct.unpack("<H",data[h_off:h_off+2])[0]/10000.,h_off,2,"<I")
+				w_off = 0xc
+				h_off = 0xe
+				rcp_off = 0x14 # FIXME!
+				fl_off = 0x16 # FIXME!
+				clr1_off = 0x18
+				clr2_off = 0x24
+				add_iter (hd,"Width", struct.unpack("<H",data[w_off:w_off+2])[0]*0.0254,w_off,2,"<I")
+				add_iter (hd,"Height", struct.unpack("<H",data[h_off:h_off+2])[0]*0.0254,h_off,2,"<I")
 
 			else:
 				add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
@@ -369,64 +374,77 @@ def fild (hd,size,data):
 
 		elif fill_type == 10:
 			# Full colour pattern
-			w_off = 0xc
-			h_off = 0x10
-			rcp_off = 0x18
-			fl_off = 0x1a
-			patt_off = 0x30
-			if hd.version > 12:
-				w_off = 0x16
-				h_off = 0x1a
-				rcp_off = 0x22
-				fl_off = 0x24
-				patt_off = 0x36
-			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
-			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
-			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
-			flag = ord(data[fl_off])
-			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
-			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
-			add_iter (hd,"Vect ID",struct.unpack("<I",data[patt_off:patt_off+4])[0],patt_off,4,"<I")
+			if hd.version < 6:
+				patt_off = 8
+				w_off = 0xa
+				h_off = 0xc
+				add_iter (hd,"Image ID",struct.unpack("<H",data[patt_off:patt_off+2])[0],patt_off,2,"<H")
+				add_iter (hd,"Width", struct.unpack("<H",data[w_off:w_off+2])[0]*0.0254,w_off,2,"<H")
+				add_iter (hd,"Height", struct.unpack("<H",data[h_off:h_off+2])[0]*0.0254,h_off,2,"<H")
+				
+			else:
+				w_off = 0xc
+				h_off = 0x10
+				rcp_off = 0x18
+				fl_off = 0x1a
+				patt_off = 0x30
+				if hd.version > 12:
+					w_off = 0x16
+					h_off = 0x1a
+					rcp_off = 0x22
+					fl_off = 0x24
+					patt_off = 0x36
+				add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
+				add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
+				add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
+				flag = ord(data[fl_off])
+				ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
+				add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
+				add_iter (hd,"Vect ID",struct.unpack("<I",data[patt_off:patt_off+4])[0],patt_off,4,"<I")
 
 		elif fill_type == 11:
 			# Texture pattern fill
-			v1_off = 0xc
-			rcp_off = 0x18
-			fl_off = 0x1a
-			v2_off = 0x20
-			imgid_off = 0x30
-			bmpres_off = 0x38
-			maxtw_off = 0x3a
-			
-			if hd.version > 12:
-				v1_off = 0x1e
-				rcp_off = 0x22
-				fl_off = 0x24
-				v2_off = 0x32
-				imgid_off = 0x3e
-				bmpres_off = 0x4e
-				maxtw_off = 0x50
-				if v13flag == 0x18e:
-					v1_off = 0x36
-					rcp_off = 0x42
-					fl_off = 0x44
-					v2_off = 0x4a
-					imgid_off = 0x56
-					bmpres_off = 0x66
-					maxtw_off = 0x68
-
-			add_iter (hd,"Width",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
-			add_iter (hd,"Height",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
-			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
-			flag = ord(data[fl_off])
-			ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
-			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
-			add_iter (hd,"v3",struct.unpack("<I",data[v2_off:v2_off+4])[0]/10000.,v2_off,4,"<I")
-			add_iter (hd,"v4",struct.unpack("<I",data[v2_off+4:v2_off+8])[0]/10000.,v2_off+4,4,"<I")
-			add_iter (hd,"Image ID",struct.unpack("<I",data[imgid_off:imgid_off+4])[0],imgid_off,4,"<I")
-			add_iter (hd,"BMP resolution",struct.unpack("<h",data[bmpres_off:bmpres_off+2])[0],bmpres_off,2,"<h")
-			add_iter (hd,"Max tile width",struct.unpack("<h",data[maxtw_off:maxtw_off+2])[0],maxtw_off,2,"<h")
+			if hd.version < 6:
+				patt_off = 8
+				add_iter (hd,"Image ID",struct.unpack("<H",data[patt_off:patt_off+2])[0],patt_off,2,"<H")
 				
+			else:
+				v1_off = 0xc
+				rcp_off = 0x18
+				fl_off = 0x1a
+				v2_off = 0x20
+				imgid_off = 0x30
+				bmpres_off = 0x38
+				maxtw_off = 0x3a
+				
+				if hd.version > 12:
+					v1_off = 0x1e
+					rcp_off = 0x22
+					fl_off = 0x24
+					v2_off = 0x32
+					imgid_off = 0x3e
+					bmpres_off = 0x4e
+					maxtw_off = 0x50
+					if v13flag == 0x18e:
+						v1_off = 0x36
+						rcp_off = 0x42
+						fl_off = 0x44
+						v2_off = 0x4a
+						imgid_off = 0x56
+						bmpres_off = 0x66
+						maxtw_off = 0x68
+	
+				add_iter (hd,"Width",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
+				add_iter (hd,"Height",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
+				add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
+				flag = ord(data[fl_off])
+				ftxt = bflag2txt(flag,{1:"Column",2:"Mirror",4:"Transform with object"})
+				add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
+				add_iter (hd,"v3",struct.unpack("<I",data[v2_off:v2_off+4])[0]/10000.,v2_off,4,"<I")
+				add_iter (hd,"v4",struct.unpack("<I",data[v2_off+4:v2_off+8])[0]/10000.,v2_off+4,4,"<I")
+				add_iter (hd,"Image ID",struct.unpack("<I",data[imgid_off:imgid_off+4])[0],imgid_off,4,"<I")
+				add_iter (hd,"BMP resolution",struct.unpack("<h",data[bmpres_off:bmpres_off+2])[0],bmpres_off,2,"<h")
+				add_iter (hd,"Max tile width",struct.unpack("<h",data[maxtw_off:maxtw_off+2])[0],maxtw_off,2,"<h")
 
 def bmpf (hd,size,data):
 	add_iter (hd,"Pattern ID", d2hex(data[0:4]),0,4,"txt")
@@ -1063,8 +1081,12 @@ def loda_v5 (hd,size,data):
 	add_iter (hd, "Start of args offsets", "%02x"%s_args,4,2,"<H")
 	add_iter (hd, "Start of arg types", "%02x"%s_types,6,2,"<H")
 	t_txt = "%02x"%l_type
-	if loda_types_v3.has_key(l_type):
-		t_txt += " " + loda_types_v3[l_type]
+	if hd.version == 3:
+		if loda_types_v3.has_key(l_type):
+			t_txt += " " + loda_types_v3[l_type]
+	else:
+		if loda_types.has_key(l_type):
+			t_txt += " " + loda_types[l_type]
 	add_iter (hd, "Type", t_txt,8,2,"<H")
 	a_txt = ""
 	t_txt = ""
@@ -1545,7 +1567,7 @@ class record:
 			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
 			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
 			page.dictmod.set_value(d_iter,1,self.fourcc)
-			if self.fourcc == "fild":
+			if self.fourcc == "fild" or self.fourcc == "fill":
 				off = 4
 				if page.version > 12:
 					off = 12
