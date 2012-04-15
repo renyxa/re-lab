@@ -24,6 +24,7 @@ def t2chn (hd, size, data):
 	l_off = struct.unpack('<H', data[0x21:0x23])[0]+4
 	o_off = struct.unpack('<H', data[0x23:0x25])[0]+4
 	f_off = struct.unpack('<H', data[0x25:0x27])[0]+4
+	add_iter (hd,"Type","0x%02x (%s)"%(l_type,key2txt(l_type,cdr.loda_types_v3)),0x20,1,"B")
 	add_iter (hd,"Offsets","0x%02x/0x%02x/0x%02x"%(l_off,o_off,f_off),0x21,6,"<HHH")
 	cdr.loda_type_func[0xa](hd,data,o_off,"",38)
 	cdr.loda_type_func[0x14](hd,data,f_off,"",31)
