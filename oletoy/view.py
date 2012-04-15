@@ -24,7 +24,8 @@ import Doc, cmd
 import escher,quill
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb
-import emfparse,svm,mf,wmfparse,cdr,cmx,emfplus,rx2,fh,fhparse
+import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
+import cdr,cmx,wld
 from utils import *
 
 version = "0.5.77"
@@ -45,6 +46,8 @@ ui_info = \
 		<menuitem action='Insert'/>
 		<menuitem action='More'/>
 		<menuitem action='Less'/>
+		<separator/>
+		<menuitem action='Dump'/>
 	</menu>
 	<menu action='ViewMenu'>
 		<menuitem action='Dict'/>
@@ -140,8 +143,8 @@ class ApplicationMainWindow(gtk.Window):
 			( "ViewMenu", None, "_View" ),			   # name, stock id, label
 			( "HelpMenu", None, "_Help" ),			   # name, stock id, label
 			( "Insert", gtk.STOCK_ADD,					# name, stock id
-				"Insert _Record","<control>R",					  # label, accelerator
-				"Insert EMF Record after the current one",							 # tooltip
+				"_Insert Record","<control>I",					# label, accelerator
+				"Insert MF Record after the current one",							 # tooltip
 				self.activate_add),
 			( "More", gtk.STOCK_ADD,					# name, stock id
 				"_More bytes","<control>M",					  # label, accelerator
@@ -151,6 +154,10 @@ class ApplicationMainWindow(gtk.Window):
 				"_Less bytes","<control>L",					  # label, accelerator
 				"Remove some bytes at the end of the current record",							 # tooltip
 				self.activate_less),
+			( "Dump", gtk.STOCK_SAVE,						# name, stock id
+				"D_ump","<control>U",					  # label, accelerator
+				"Dump record to file",							 # tooltip
+				self.activate_dump),
 			( "New", gtk.STOCK_NEW,					# name, stock id
 				"_New","<control>N",					  # label, accelerator
 				"Create file",							 # tooltip
@@ -356,6 +363,24 @@ Hexdump selection:\n\
 			model.set_value(iter1,2,size-1)
 			model.set_value(iter1,3,value[:2]+struct.pack("<H",size-1)+value[4:3+size])
 
+	def activate_dump (self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			treeSelection = self.das[pn].view.get_selection()
+			model, iter1 = treeSelection.get_selected()
+			data = model.get_value(iter1,3)
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				nlen = model.get_value(iter1,2)
+				value = model.get_value(iter1,3)
+				if nlen != None:
+					f = open(fname,'w')
+					f.write(value)
+					f.close()
+				else:
+					print "Nothing to save"
+
+
 	def on_dict_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
@@ -423,8 +448,6 @@ Hexdump selection:\n\
 				self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
 				print "Insert:",rname,size
 
-
-
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
 		ftype = self.das[pn].type
@@ -449,23 +472,12 @@ Hexdump selection:\n\
 			if fname:
 				fh.fh_save(self.das[pn],fname)
 		else:
-			treeSelection = self.das[pn].view.get_selection()
-			model, iter1 = treeSelection.get_selected()
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
-			if fname:
-				nlen = model.get_value(iter1,2)
-				value = model.get_value(iter1,3)
-				if nlen != None:
-					f = open(fname,'w')
-					f.write(value)
-					f.close()
-				else:
-					print "Nothing to save"
+			self.active_dump(self,action)
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
 		dialog.set_name("OLE toy v"+version)
-		dialog.set_copyright("\302\251 Copyright 2010-2011 V.F.")
+		dialog.set_copyright("\302\251 Copyright 2010-2012 V.F.")
 		dialog.set_website("http://www.gnome.ru/")
 		## Close dialog on user response
 		dialog.connect ("response", lambda d, r: d.destroy())
@@ -806,6 +818,10 @@ Hexdump selection:\n\
 							cdr.cdr_ids[ntype[1]](hd,size,data,self.das[pn])
 						else:
 							cdr.cdr_ids[ntype[1]](hd,size,data)
+				elif ntype[0] == "wld":
+					if wld.wld_ids.has_key(ntype[1]):
+							wld.wld_ids[ntype[1]](hd,size,data)
+
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)

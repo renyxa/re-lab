@@ -15,7 +15,34 @@
 #
 
 import sys,struct,gtk,gobject
+import cdr
 from utils import *
+
+def t2chn (hd, size, data):
+	add_iter (hd,"Size","0x%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
+	l_type = ord(data[0x20])
+	l_off = struct.unpack('<H', data[0x21:0x23])[0]+4
+	o_off = struct.unpack('<H', data[0x23:0x25])[0]+4
+	f_off = struct.unpack('<H', data[0x25:0x27])[0]+4
+	add_iter (hd,"Offsets","0x%02x/0x%02x/0x%02x"%(l_off,o_off,f_off),0x21,6,"<HHH")
+	cdr.loda_type_func[0xa](hd,data,o_off,"",38)
+	cdr.loda_type_func[0x14](hd,data,f_off,"",31)
+	cdr.loda_type_func[0x1e](hd,data,l_off,l_type,len(data)-l_off)
+
+wld_ids = {
+	"t2chn":t2chn,
+	}
+
+off_names = {
+	0:"mcfg",
+	1:"start",
+	2:"end",
+	3:"type1",
+	5:"type2",
+	6:"disp",
+	7:"dend?",
+	11:"type7",
+	}
 
 def open(buf,page,parent):
 	iter1 = page.model.append(None, None)
@@ -24,16 +51,68 @@ def open(buf,page,parent):
 	page.model.set_value(iter1, 2, len(buf))
 	page.model.set_value(iter1, 3, buf)
 
-	off = struct.unpack("<I",buf[4:8])[0]
-	add_pgiter(page,"\"mcfg\" [%04x]"%off,"cdr2","rec",buf[off:off+275],iter1)
-	off += 275
+	hiter = add_pgiter(page,"Header","wld","hdr",buf[4:45],iter1)
+	offsets = []
+	off = 4
+	for i in range(7):
+		offsets.append(struct.unpack("<I",buf[off+i*4:off+i*4+4])[0])
+		offn = key2txt(i,off_names,"OFF %x"%i)
+		add_pgiter(page,"%s\t[%04x]"%(offn,offsets[i]),"wld","off",buf[off+i*4:off+i*4+4],hiter)
 
-	i = 0
-	while off < len(buf)-4:
-		size = struct.unpack("<I",buf[off:off+4])[0]
-		off += 4
-		data = buf[off:off+size]
-		#page, name, ftype, stype, data, parent = None
-		add_pgiter(page,"rec %02x [%04x]"%(i,off),"cdr2","rec",data,iter1)
-		off += size
-		i += 1
+	flag = ord(buf[32])
+	add_pgiter(page,"FLAG [%x]"%flag,"wld","flg",buf[32],hiter)
+
+	off = 33
+	for i in range(9):
+		offsets.append(struct.unpack("<I",buf[off+i*4:off+i*4+4])[0])
+		offn = key2txt(i+7,off_names,"OFF %x"%(i+7))
+		add_pgiter(page,"%s\t[%04x]"%(offn,offsets[i+7]),"wld","off",buf[off+i*4:off+i*4+4],hiter)
+
+	add_pgiter(page,"mcfg [%04x]"%offsets[0],"cdr","mcfg",buf[offsets[0]:offsets[1]],iter1)
+	diter = add_pgiter(page,"data [%04x]"%offsets[1],"cdr2","rec",buf[offsets[1]:offsets[2]],iter1)
+	
+	t1_len = struct.unpack("<H",buf[offsets[3]:offsets[3]+2])[0]
+	t1_size = 2+9*t1_len
+	t1iter = add_pgiter(page,"type1 [%04x]"%offsets[3],"wld","type",buf[offsets[3]:offsets[3]+t1_size],iter1)
+	t1diter = add_pgiter(page,"type1","wld","","",diter)
+	for i in range(t1_len):
+		t = ord(buf[offsets[3]+i*9+2])  # +2 for num of records
+		dw1 = struct.unpack("<I",buf[offsets[3]+i*9+3:offsets[3]+i*9+7])[0]
+		dw2 = struct.unpack("<I",buf[offsets[3]+i*9+7:offsets[3]+i*9+11])[0]
+		add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[3]+i*9+2:offsets[3]+i*9+11],t1iter)
+		# chunk "data"
+		rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
+		id = struct.unpack("<H",buf[dw2+8:dw2+10])[0]
+		add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
+	
+	t2_len = struct.unpack("<H",buf[offsets[5]:offsets[5]+2])[0]
+	t2_size = 2+9*t2_len
+	t2iter = add_pgiter(page,"type2 [%04x]"%offsets[5],"wld","type",buf[offsets[5]:offsets[5]+t2_size],iter1)
+	t2diter = add_pgiter(page,"type2","wld","","",diter)
+	for i in range(t2_len):
+		t = ord(buf[offsets[5]+i*9+2])
+		dw1 = struct.unpack("<I",buf[offsets[5]+i*9+3:offsets[5]+i*9+7])[0]
+		dw2 = struct.unpack("<I",buf[offsets[5]+i*9+7:offsets[5]+i*9+11])[0]
+		add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[5]+i*9+2:offsets[5]+i*9+11],t2iter)
+		# chunk "data"
+		rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
+		add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t2chn",buf[dw2:dw2+rlen],t2diter)
+	
+	add_pgiter(page,"disp [%04x]"%offsets[6],"wld","disp",buf[offsets[6]:offsets[7]],iter1)
+	
+	t7_len = struct.unpack("<H",buf[offsets[7]:offsets[7]+2])[0]
+	t7_size = 2+9*t7_len
+	t7iter = add_pgiter(page,"type7 [%04x]"%offsets[5],"wld","type",buf[offsets[7]:offsets[7]+t2_size],iter1)
+	t7diter = add_pgiter(page,"type7","wld","","",diter)
+
+# FIXME!
+# NEED TO VERIFY "TYPE7"
+
+#	for i in range(t7_len):
+#		t = ord(buf[offsets[7]+i*9+2])
+#		dw1 = struct.unpack("<I",buf[offsets[7]+i*9+3:offsets[7]+i*9+7])[0]
+#		dw2 = struct.unpack("<I",buf[offsets[7]+i*9+7:offsets[7]+i*9+11])[0]
+#		add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[7]+i*9+2:offsets[7]+i*9+11],t7iter)
+#		# chunk "data"
+#		rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
+#		add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t7chn",buf[dw2:dw2+rlen],t2diter)

@@ -70,7 +70,7 @@ class Page:
 			cdr.cdr_open(buf,self, parent)
 			return 0
 
-		if buf[0:3] == "WLl":
+		if buf[0:2] == "WL":
 			self.type = "CDR2"
 			wld.open (buf,self, parent)
 			return 0

@@ -561,8 +561,13 @@ def loda_outl (hd,data,offset,l_type,length):
 		add_iter (hd, "\tdashes",d2hex(data[offset+19:offset+30]),offset+19,11,"txt",0,0,iter)
 		add_iter (hd, "\tjoin type",ord(data[offset+30]),offset+30,1,"B",0,0,iter)
 		add_iter (hd, "\tcaps type",ord(data[offset+32]),offset+32,1,"B",0,0,iter)
-		add_iter (hd, "\tstart arrow",d2hex(data[offset+34:offset+38]),offset+34,4,"txt",0,0,iter)
-		add_iter (hd, "\tend arrow",d2hex(data[offset+38:offset+42]),offset+38,4,"txt",0,0,iter)
+		if hd.version == 3:
+			add_iter (hd, "\tstart arrow",d2hex(data[offset+34:offset+38]),offset+34,4,"txt",0,0,iter)
+			add_iter (hd, "\tend arrow",d2hex(data[offset+38:offset+42]),offset+38,4,"txt",0,0,iter)
+		else:
+			# VERIFY!
+			add_iter (hd, "\tstart arrow",d2hex(data[offset+34:offset+36]),offset+34,2,"txt",0,0,iter)
+			add_iter (hd, "\tend arrow",d2hex(data[offset+36:offset+38]),offset+36,2,"txt",0,0,iter)
 
 def loda_fild (hd,data,offset,l_type,length):
 	if hd.version > 3:
@@ -811,8 +816,8 @@ def loda_coords5v5 (hd,data,offset,l_type):
 	offset += 4
 	add_iter (hd,"[001e] var1?",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
 	add_iter (hd,"[001e] BPP?",struct.unpack("<H",data[offset+2:offset+4])[0],offset+2,2,"<H")
-	add_iter (hd,"[001e] Img Width (px)",struct.unpack("<H",data[offset+4:offset+6])[0],offset+4,2,"<H")
-	add_iter (hd,"[001e] Img Height (px)",struct.unpack("<H",data[offset+6:offset+8])[0],offset+6,2,"<H")
+	add_iter (hd,"[001e] Img Width (px)",struct.unpack("<h",data[offset+4:offset+6])[0],offset+4,2,"<h")
+	add_iter (hd,"[001e] Img Height (px)",struct.unpack("<h",data[offset+6:offset+8])[0],offset+6,2,"<h")
 	offset += 8
 	add_iter (hd,"[001e] Image ID",struct.unpack("<H",data[offset:offset+2])[0],offset,2,"<H")
 
