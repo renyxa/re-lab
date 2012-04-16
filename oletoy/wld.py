@@ -76,28 +76,34 @@ def open(buf,page,parent):
 	t1_size = 2+9*t1_len
 	t1iter = add_pgiter(page,"type1 [%04x]"%offsets[3],"wld","type",buf[offsets[3]:offsets[3]+t1_size],iter1)
 	t1diter = add_pgiter(page,"type1","wld","","",diter)
-	for i in range(t1_len):
-		t = ord(buf[offsets[3]+i*9+2])  # +2 for num of records
-		dw1 = struct.unpack("<I",buf[offsets[3]+i*9+3:offsets[3]+i*9+7])[0]
-		dw2 = struct.unpack("<I",buf[offsets[3]+i*9+7:offsets[3]+i*9+11])[0]
-		add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[3]+i*9+2:offsets[3]+i*9+11],t1iter)
-		# chunk "data"
-		rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
-		id = struct.unpack("<H",buf[dw2+8:dw2+10])[0]
-		add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
+	try:
+		for i in range(t1_len):
+			t = ord(buf[offsets[3]+i*9+2])  # +2 for num of records
+			dw1 = struct.unpack("<I",buf[offsets[3]+i*9+3:offsets[3]+i*9+7])[0]
+			dw2 = struct.unpack("<I",buf[offsets[3]+i*9+7:offsets[3]+i*9+11])[0]
+			add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[3]+i*9+2:offsets[3]+i*9+11],t1iter)
+			# chunk "data"
+			rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
+			id = struct.unpack("<H",buf[dw2+8:dw2+10])[0]
+			add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
+	except:
+		print "Something failed in type1"
 	
 	t2_len = struct.unpack("<H",buf[offsets[5]:offsets[5]+2])[0]
 	t2_size = 2+9*t2_len
 	t2iter = add_pgiter(page,"type2 [%04x]"%offsets[5],"wld","type",buf[offsets[5]:offsets[5]+t2_size],iter1)
 	t2diter = add_pgiter(page,"type2","wld","","",diter)
-	for i in range(t2_len):
-		t = ord(buf[offsets[5]+i*9+2])
-		dw1 = struct.unpack("<I",buf[offsets[5]+i*9+3:offsets[5]+i*9+7])[0]
-		dw2 = struct.unpack("<I",buf[offsets[5]+i*9+7:offsets[5]+i*9+11])[0]
-		add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[5]+i*9+2:offsets[5]+i*9+11],t2iter)
-		# chunk "data"
-		rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
-		add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t2chn",buf[dw2:dw2+rlen],t2diter)
+	try:
+		for i in range(t2_len):
+			t = ord(buf[offsets[5]+i*9+2])
+			dw1 = struct.unpack("<I",buf[offsets[5]+i*9+3:offsets[5]+i*9+7])[0]
+			dw2 = struct.unpack("<I",buf[offsets[5]+i*9+7:offsets[5]+i*9+11])[0]
+			add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[5]+i*9+2:offsets[5]+i*9+11],t2iter)
+			# chunk "data"
+			rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
+			add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t2chn",buf[dw2:dw2+rlen],t2diter)
+	except:
+		print "Something failed in type2"
 	
 	add_pgiter(page,"disp [%04x]"%offsets[6],"wld","disp",buf[offsets[6]:offsets[7]],iter1)
 	
