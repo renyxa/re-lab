@@ -20,6 +20,16 @@ from utils import *
 
 ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 
+#19	08	FOCOLTONE
+#19	09	SpectraMaster
+#19	0a	Toyo
+#19	0b	DIC Colors
+#19	17	HKS Colors
+#19	1a	HKS K
+#19	1b	HKS N
+#19	1c	HKS Z
+#19	1d	HKS E
+
 clr_models = {
 	0:"Invalid",
 	1:"PANTONE",
