@@ -91,6 +91,8 @@ def open(buf,page,parent):
 			
 			if t == 2:
 				add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t2chn",buf[dw2:dw2+rlen],t1diter)
+			elif t == 4:
+				add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t4chn","",t1diter)
 			else:
 				add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
 			print "%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2)
