@@ -84,8 +84,13 @@ def open(buf,page,parent):
 			add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[3]+i*9+2:offsets[3]+i*9+11],t1iter)
 			# chunk "data"
 			rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
-			id = struct.unpack("<H",buf[dw2+8:dw2+10])[0]
-			add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
+			id1 = struct.unpack("<H",buf[dw2+4:dw2+6])[0]
+			id2 = struct.unpack("<H",buf[dw2+6:dw2+8])[0]
+			id3 = struct.unpack("<H",buf[dw2+8:dw2+10])[0]
+			id4 = struct.unpack("<H",buf[dw2+10:dw2+12])[0]
+			
+			add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
+			print "%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2)
 	except:
 		print "Something failed in type1"
 	
@@ -101,7 +106,7 @@ def open(buf,page,parent):
 			add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t1rec",buf[offsets[5]+i*9+2:offsets[5]+i*9+11],t2iter)
 			# chunk "data"
 			rlen = struct.unpack("<I",buf[dw2:dw2+4])[0]+4
-			add_pgiter(page,"%d [%04x] [%04x] [%04x/%04x]"%(t,id,dw1,dw2,dw2-offsets[1]),"wld","t2chn",buf[dw2:dw2+rlen],t2diter)
+			add_pgiter(page,"%d [%04x] [%04x/%04x]"%(t,dw1,dw2,dw2-offsets[1]),"wld","t2chn",buf[dw2:dw2+rlen],t2diter)
 	except:
 		print "Something failed in type2"
 	
