@@ -89,7 +89,10 @@ def open(buf,page,parent):
 			id3 = struct.unpack("<H",buf[dw2+8:dw2+10])[0]
 			id4 = struct.unpack("<H",buf[dw2+10:dw2+12])[0]
 			
-			add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
+			if t == 2:
+				add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t2chn",buf[dw2:dw2+rlen],t1diter)
+			else:
+				add_pgiter(page,"%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2),"wld","t1chn",buf[dw2:dw2+rlen],t1diter)
 			print "%d [%04x] %04x %04x %04x %04x (%04x)"%(t,dw1,id1,id2,id3,id4,dw2)
 	except:
 		print "Something failed in type1"
