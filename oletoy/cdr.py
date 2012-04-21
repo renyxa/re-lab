@@ -41,6 +41,11 @@ ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 #19	24	Spot PANT PrevVer Solid Coat
 #19	25	Spot PANT PrevVer Solid UnCoat
 
+#0e	22	Proc PANT PrevVer Hexachrome UnCoat
+#0e	21	Proc PANT PrevVer Hexachrome Coat
+#0e	18	Proc PANT PrevVer Hexachrome UnCoat Corel 10
+#0e	0c	Proc PANT PrevVer Hexachrome Coat Corel 10
+
 clr_models = {
 	0:"Invalid",
 	1:"PANTONE",
@@ -55,6 +60,7 @@ clr_models = {
 	10:"YIQ255",
 	11:"YIQ",
 	12:"LAB",
+	14:"Proc PANTONE Hexachrome",
 	17:'CMYK', #? verify
 	18:'LAB', # AP
 	20:'Registration Color',
