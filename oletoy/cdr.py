@@ -24,11 +24,22 @@ ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 #19	09	SpectraMaster
 #19	0a	Toyo
 #19	0b	DIC Colors
+#19	11	Spot PANT PrevVer Match Sys Coat Corel 10
+#19	12	Spot PANT PrevVer Match Sys Coat Corel 10
+#19	14	Spot PANT PrevVer Metall Clrs Unvarn Corel 10
+#19	15	Spot PANT PrevVer Pastel Clr Coat Corel 10
+#19	16	Spot PANT PrevVer Pastel Clr UnCoat Corel 10
 #19	17	HKS Colors
 #19	1a	HKS K
 #19	1b	HKS N
 #19	1c	HKS Z
 #19	1d	HKS E
+#19	1e	Spot PANT PrevVer Metalic Coat
+#19	1f	Spot PANT PrevVer Pastel Coat
+#19	20	Spot PANT PrevVer Pastel UnCoat
+#19	23	Spot PANT PrevVer Solid Matte
+#19	24	Spot PANT PrevVer Solid Coat
+#19	25	Spot PANT PrevVer Solid UnCoat
 
 clr_models = {
 	0:"Invalid",
