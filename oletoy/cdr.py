@@ -60,12 +60,15 @@ clr_models = {
 	10:"YIQ255",
 	11:"YIQ",
 	12:"LAB",
-	14:"Proc PANTONE Hexachrome",
+	14:"PANTONE Hex",
 	17:'CMYK', #? verify
 	18:'LAB', # AP
 	20:'Registration Color',
 	21:"Roland/PANTONE", # AP
-	25:"HKS"   #AP
+	22:"User ink",
+	25:"Spot",   #AP
+	26:"Multi-channel",
+	99:"Mixed"
 	}
 
 bmp_clr_models = ('Invalid', 'RGB', 'CMY', 'CMYK255', 'HSB', 'Gray', 'Mono',
@@ -87,12 +90,27 @@ wrap_txt_style = {
 	6:"Square Above/Below"
 	}
 
-charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
-	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
-	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
-	161:"Greek",162:"Turkish",163:"Vietnamese",177:"Hebrew",178:"Arabic",
-	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
-	255:"OEM Latin I"}
+charsets = {
+	0:"Latin",
+	1:"System default",
+	2:"Symbol",
+	77:"Apple Roman",
+	128:"Japanese Shift-JIS",
+	129:"Korean (Hangul)",
+	130:"Korean (Johab)",
+	134:"Chinese Simplified GBK",
+	136:"Chinese Traditional BIG5",
+	161:"Greek",
+	162:"Turkish",
+	163:"Vietnamese",
+	177:"Hebrew",
+	178:"Arabic",
+	186:"Baltic",
+	204:"Cyrillic",
+	222:"Thai",
+	238:"Latin II (Central European)",
+	255:"OEM Latin I"
+	}
 
 def readfrac(data):
 	intp = struct.unpack("<H",data[2:4])[0]

@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject
-import ole,mf,svm,cdr,clp
+import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld
 
 class Page:
@@ -73,6 +73,11 @@ class Page:
 		if buf[0:2] == "WL":
 			self.type = "CDR2"
 			wld.open (buf,self, parent)
+			return 0
+
+		if buf[0:2] == "\xcc\xdc":
+			self.type = "CPL"
+			cpl.open (buf,self, parent)
 			return 0
 
 
