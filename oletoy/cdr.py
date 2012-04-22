@@ -25,8 +25,8 @@ ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 #19	0a	Toyo
 #19	0b	DIC Colors
 #19	11	Spot PANT PrevVer Match Sys Coat Corel 10
-#19	12	Spot PANT PrevVer Match Sys Coat Corel 10
-#19	14	Spot PANT PrevVer Metall Clrs Unvarn Corel 10
+#19	12	Spot PANT PrevVer Match Sys UnCoat Corel 10
+#19	14	Spot PANT PrevVer Metall Clr Unvarn Corel 10
 #19	15	Spot PANT PrevVer Pastel Clr Coat Corel 10
 #19	16	Spot PANT PrevVer Pastel Clr UnCoat Corel 10
 #19	17	HKS Colors
