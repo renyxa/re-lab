@@ -171,9 +171,11 @@ def clr_model(hd,data,offset):
 	cmod = "%02x  "%cmid
 	if clr_models.has_key(cmid):
 		cmod += clr_models[cmid]
-	add_iter (hd,"Color Model",cmod,offset,2,"txt")
+	cpal = struct.unpack('<H', data[offset+2:offset+4])[0]
+	add_iter (hd,"Color Model",cmod,offset,2,"<H")
+	add_iter (hd,"Color Palette",cpal,offset+2,2,"<H")
 	clr = d2hex(data[offset+8:offset+12])
-	add_iter (hd,"  Color",clr,offset+8,4,"txt")
+	add_iter (hd,"  Color",clr,offset+8,4,"<I")
 
 def outl (hd,size,data):
 	add_iter (hd,"Outline ID",d2hex(data[0:4]),0,4,"<I")
@@ -266,7 +268,7 @@ def font (hd,size,data):
 
 def user (hd,size,data):
 	add_iter (hd,"PS fill ID",d2hex(data[0:2]),0,2,"<H")
-	if hd.version > 9:
+	if hd.version > 11:
 		psname = unicode(data[2:],"utf16")
 		pslen = len(psname)*2
 	else:
@@ -1565,6 +1567,97 @@ cdr_ids = {
 	"vpat":vpat
 	}
 
+
+def collect_cmpr(model,parent,idx):
+	ic = model.iter_n_children(parent)
+	blk = []
+	data = ""
+	cbs = 0
+	if ic == 0:
+		t = model.get_value(parent,1)[1]
+		d = model.get_value(parent,3)
+		data = t + struct.pack("<I",idx)+d
+		blksize = len(data)-8
+		if len(data) & 1:
+			data += "\x00"
+		blk.append(blksize)
+		idx += 1
+	else:
+		data = "LIST"+struct.pack("<I",idx)+model.get_value(parent,0)
+		idx += 1
+		for i in range(ic):
+			iter = model.iter_nth_child(parent,i)
+			lt = model.get_value(iter,1)[1]
+			tmpdata, tmpblocks,bs,idx = collect_cmpr(model,iter,idx)
+			data += tmpdata
+			blk += tmpblocks
+			cbs += bs+8
+		if cbs & 1:
+			cbs += 1
+		blksize = cbs + 4
+		blk.insert(0,blksize)
+	return data,blk,blksize,idx
+
+def pack_cmpr(model,parent):
+	blocks = []
+	data = ""
+	idx = 0
+	nc = model.iter_n_children(parent)
+	for i in range(nc):
+		iter = model.iter_nth_child(parent,i)
+		tmpdata, tmpblocks, bs, idx = collect_cmpr(model,iter, idx)
+		data += tmpdata
+		blocks += tmpblocks
+	zdata = zlib.compress(data)
+	sblocks = ""
+	for i in range(len(blocks)):
+		sblocks += struct.pack("<I",blocks[i])
+	zblk = zlib.compress(sblocks)
+	
+	res = "cmpr"+struct.pack("<I",len(zdata)+8) + struct.pack("<I",len(data))
+	res += struct.pack("<I",len(zblk)+8) + struct.pack("<I",len(blocks)*4)
+	res += "CPng\x01\x00\x04\x00"+zdata + "CPng\x01\x00\x04\x00"+ zblk
+	if len(res) & 1:
+		res += "\x00"
+	return "LIST"+struct.pack("<I",len(res))+res
+
+
+def dump_chunk(model, parent):
+	nc = model.iter_n_children(parent)
+	tmpbuf = ""
+	t = model.get_value(parent,1)[1]
+	s = model.get_value(parent,2)
+	pad = ""
+	if s & 1:
+		pad = "\x00"
+	s = struct.pack("<I",s)
+	if nc == 0:
+		return t+s+model.get_value(parent,3)+pad
+	else:
+		lt = model.get_value(parent,0)
+		if lt == "cmpr" and s > 52:
+			return pack_cmpr(model,parent)
+		else:
+			tmpbuf += t + s + lt
+			for i in range(nc):
+				iter = model.iter_nth_child(parent,i)
+				tmpbuf += dump_chunk (model, iter)
+			return tmpbuf
+
+def save (page,fname):
+	model = page.view.get_model()
+	print "Save request. Stub. To be continued..."
+#	return
+	buf = ""
+	if page.version > 6 and page.version < 14:
+		parent = model.iter_nth_child(None,0)
+		buf += dump_chunk(model,parent)
+	s = struct.pack("<I",len(buf)-8)
+	buf = buf[0:4] +s +buf[8:]
+	f = open(fname,"w")
+	f.write(buf)
+	f.close()
+
 def cdr_open (buf,page,parent):
 	# Path, Name, ID
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
@@ -1577,7 +1670,7 @@ class record:
 	size = 0
 	data = ''
 
-	def pack(self, page, parent, blocksizes=(), fmttype="cdr", offset=12):
+	def unpack(self, page, parent, blocksizes=(), fmttype="cdr", offset=12):
 		decomp = zlib.decompressobj()
 		self.uncmprdata = decomp.decompress(self.data[offset:])
 		offset = 0
@@ -1594,7 +1687,7 @@ class record:
 		blocksizes = []
 		for i in range(0, len(blcksdata), 4):
 			blocksizes.append(struct.unpack('<I', blcksdata[i:i+4])[0])
-		self.pack(page, parent, blocksizes, "cdr", 28)
+		self.unpack(page, parent, blocksizes, "cdr", 28)
 
 	def load(self, buf, page, parent, offset=0, blocksizes=(),fmttype="cdr"):
 		self.offset = offset
@@ -1645,7 +1738,7 @@ class record:
 					page.version = v - 55
 			name = buf[offset+8:offset+12]
 			page.model.set_value(f_iter,0,name)
-			page.model.set_value(f_iter,1,(fmttype,name))
+			page.model.set_value(f_iter,1,(fmttype,self.fourcc))
 
 			parent = f_iter
 			if name == 'vect':
@@ -1666,13 +1759,11 @@ class record:
 					chunk.load(buf, page, parent, offset, blocksizes, fmttype)
 					offset += 8 + chunk.size
 		elif page.version == 16:
-#			print self.fourcc
 			try:
 				strid = struct.unpack("<i",self.data[:4])[0]
 				off1 = struct.unpack("<I",self.data[8:12])[0]
 				off2 = off1 + struct.unpack("<I",self.data[4:8])[0]
 				if strid != -1:
-#					print "stream ID",strid,"off %04x"%off1,"off %04x"%off2
 					ci = page.model.iter_nth_child(None,strid)
 					data = page.model.get_value(ci,3)[off1:off2]
 					p_iter = add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data,ci)

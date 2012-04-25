@@ -40,10 +40,13 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
-def d2hex(data,space=""):
+def d2hex(data,space="",ln=0):
 	s = ""
 	for i in range(len(data)):
 		s += "%02x%s"%(ord(data[i]),space)
+		if ln != 0 and (i % ln) == 0:
+			s += "\n"
+			
 	return s
 
 def key2txt(key,data,txt="Unknown"):

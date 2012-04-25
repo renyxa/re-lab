@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld
 from utils import *
 
-version = "0.5.77"
+version = "0.5.80"
 
 ui_info = \
 '''<ui>
@@ -221,6 +221,8 @@ Entry line:\n\
 	#addr+shift, #addr-shift - calculate new addr and scroll hexdump\n\
 	$esc{@addr} - try to parse record as Escher starting from addr (or 0)\n\
 	$ole{@addr} - try to parse record as OLE starting from addr (or 0)\n\
+	$cmx{@addr} - try to parse record as CMX starting from addr (or 0)\n\
+	$icc{@addr} - try to parse record as ICC starting from addr (or 0)\n\
 	$xls@RC - search XLS file for record related to cell RC\n\
 	?aSTRING - search for ASCII string\n\
 	?uSTRING - search for Unicode string\n\
@@ -471,6 +473,10 @@ Hexdump selection:\n\
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				fh.fh_save(self.das[pn],fname)
+		elif ftype[0:3] == "CDR":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				cdr.save(self.das[pn],fname)
 		else:
 			self.active_dump(self,action)
 
