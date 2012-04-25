@@ -1587,13 +1587,15 @@ def collect_cmpr(model,parent,idx):
 		idx += 1
 		for i in range(ic):
 			iter = model.iter_nth_child(parent,i)
-			lt = model.get_value(iter,1)[1]
-			tmpdata, tmpblocks,bs,idx = collect_cmpr(model,iter,idx)
-			data += tmpdata
-			blk += tmpblocks
-			cbs += bs+8
-		if cbs & 1:
-			cbs += 1
+			lt = model.get_value(iter,0)
+			if lt != "CMX1":
+				tmpdata, tmpblocks,bs,idx = collect_cmpr(model,iter,idx)
+				data += tmpdata
+				blk += tmpblocks
+				cbs += bs+8
+				if cbs & 1:
+					cbs += 1
+				
 		blksize = cbs + 4
 		blk.insert(0,blksize)
 	return data,blk,blksize,idx
@@ -1631,10 +1633,10 @@ def dump_chunk(model, parent):
 	if s & 1:
 		pad = "\x00"
 	s = struct.pack("<I",s)
-	if nc == 0:
+	lt = model.get_value(parent,0)
+	if nc == 0 or lt == "iccp":
 		return t+s+model.get_value(parent,3)+pad
 	else:
-		lt = model.get_value(parent,0)
 		if lt == "cmpr" and s > 52:
 			return pack_cmpr(model,parent)
 		else:
@@ -1674,10 +1676,16 @@ class record:
 		decomp = zlib.decompressobj()
 		self.uncmprdata = decomp.decompress(self.data[offset:])
 		offset = 0
+#		print "------------"
+#		print d2hex(self.uncmprdata," ",16)
+#		print "------------"
+		
+##		add_pgiter(page,"Uncompressed data",fmttype,"",self.uncmprdata,parent)
 		while offset < len(self.uncmprdata):
 			chunk = record()
 			chunk.load(self.uncmprdata, page, parent, offset, blocksizes, fmttype)
 			offset += 8 + chunk.size
+			print offset
 
 	def cmpr(self,page,parent,fmttype="cdr"):
 		cmprsize = struct.unpack('<I', self.data[4:8])[0]
@@ -1687,6 +1695,9 @@ class record:
 		blocksizes = []
 		for i in range(0, len(blcksdata), 4):
 			blocksizes.append(struct.unpack('<I', blcksdata[i:i+4])[0])
+
+#		print len(blocksizes),blocksizes
+
 		self.unpack(page, parent, blocksizes, "cdr", 28)
 
 	def load(self, buf, page, parent, offset=0, blocksizes=(),fmttype="cdr"):
@@ -1694,6 +1705,7 @@ class record:
 		self.fourcc = buf[offset:offset+4]
 		self.size = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		if len(blocksizes):
+			print "SS",self.size,blocksizes[self.size]
 			self.size = blocksizes[self.size]
 		self.data = buf[offset+8:offset+8+self.size]
 		if self.size & 1:

@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld
 from utils import *
 
-version = "0.5.80"
+version = "0.5.82"
 
 ui_info = \
 '''<ui>
