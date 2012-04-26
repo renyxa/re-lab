@@ -153,7 +153,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.activate_options),
 
 			( "Close", gtk.STOCK_CLOSE,                    # name, stock id
-				"Close","",                      # label, accelerator
+				"Close","<control>E",                      # label, accelerator
 				"Close the file",                             # tooltip
 				self.activate_close),
 			( "Quit", gtk.STOCK_QUIT,					# name, stock id
@@ -318,6 +318,13 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_reload(self, action):
 		print "Reload: not implemented yet"
 
+	def on_lbl_press (self, view, event,label):
+		if event.type == gtk.gdk._2BUTTON_PRESS:
+			print "will edit the label"
+		else:
+			print label.get_selection_bounds()
+
+
 	def activate_open(self,parent=None,buf=None):
 		if self.fname !='':
 			fname = self.fname
@@ -373,7 +380,13 @@ class ApplicationMainWindow(gtk.Window):
 				pname = fname
 
 			label = gtk.Label(pname)
-			self.notebook.append_page(doc.table, label)
+			label.set_selectable(True)
+			ebox = gtk.EventBox()
+			ebox.add(label)
+#			ebox.connect("button-press-event",self.on_lbl_press)
+#			ebox.connect("key-press-event",self.on_lbl_press,label)
+			ebox.show_all()
+			self.notebook.append_page(doc.table, ebox)
 			self.notebook.show_tabs = True
 			self.notebook.show_all()
 			doc.hv.grab_focus()
