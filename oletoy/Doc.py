@@ -30,6 +30,7 @@ class Page:
 		self.dict = None
 		self.dictmod = None
 		self.dictview = None
+		self.dictwin = None
 		self.search = None
 		self.wdoc = None  # need to store 'WordDocument' stream
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None

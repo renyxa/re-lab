@@ -1685,7 +1685,6 @@ class record:
 			chunk = record()
 			chunk.load(self.uncmprdata, page, parent, offset, blocksizes, fmttype)
 			offset += 8 + chunk.size
-			print offset
 
 	def cmpr(self,page,parent,fmttype="cdr"):
 		cmprsize = struct.unpack('<I', self.data[4:8])[0]
@@ -1705,7 +1704,6 @@ class record:
 		self.fourcc = buf[offset:offset+4]
 		self.size = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		if len(blocksizes):
-			print "SS",self.size,blocksizes[self.size]
 			self.size = blocksizes[self.size]
 		self.data = buf[offset+8:offset+8+self.size]
 		if self.size & 1:

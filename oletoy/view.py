@@ -239,40 +239,50 @@ Hexdump selection:\n\
 		w.add(t)
 		w.show_all()
 
+	def del_dictwin (self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			self.das[pn].dictwin = None
 
 	def activate_dict (self, action):
 		pn = self.notebook.get_current_page()
 		if pn != -1:
 			if self.das[pn].type[0:3] == "CDR":
-				view = gtk.TreeView(self.das[pn].dictmod)
-				view.connect("row-activated", self.das[pn].on_dict_row_activated)
-				view.set_reorderable(True)
-				view.set_enable_tree_lines(True)
-				cell1 = gtk.CellRendererText()
-				cell1.set_property('family-set',True)
-				cell1.set_property('font','monospace 10')
-				cell2 = gtk.CellRendererText()
-				cell2.set_property('family-set',True)
-				cell2.set_property('font','monospace 10')
-				column1 = gtk.TreeViewColumn('Type', cell1, text=1)
-				column2 = gtk.TreeViewColumn('Value', cell2, text=2)
-				column3 = gtk.TreeViewColumn('Value', cell2, text=3)
-				view.append_column(column1)
-				view.append_column(column2)
-				view.append_column(column3)
-				view.show()
-				scrolled = gtk.ScrolledWindow()
-				scrolled.add(view)
-				scrolled.set_size_request(400,400)
-				scrolled.show()
-				dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-				dictwin.set_resizable(True)
-				dictwin.set_border_width(0)
-				scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-				dictwin.add(scrolled)
-				dictwin.set_title("CDR Dictionary")
-				dictwin.show_all()
-			if self.das[pn].type == "FH" and self.das[pn].version < 9:
+				if self.das[pn].dictwin != None:
+					print "already"
+					self.das[pn].dictwin.show_all()
+				else:
+					view = gtk.TreeView(self.das[pn].dictmod)
+					view.connect("row-activated", self.das[pn].on_dict_row_activated)
+					view.set_reorderable(True)
+					view.set_enable_tree_lines(True)
+					cell1 = gtk.CellRendererText()
+					cell1.set_property('family-set',True)
+					cell1.set_property('font','monospace 10')
+					cell2 = gtk.CellRendererText()
+					cell2.set_property('family-set',True)
+					cell2.set_property('font','monospace 10')
+					column1 = gtk.TreeViewColumn('Type', cell1, text=1)
+					column2 = gtk.TreeViewColumn('Value', cell2, text=2)
+					column3 = gtk.TreeViewColumn('Value', cell2, text=3)
+					view.append_column(column1)
+					view.append_column(column2)
+					view.append_column(column3)
+					view.show()
+					scrolled = gtk.ScrolledWindow()
+					scrolled.add(view)
+					scrolled.set_size_request(400,400)
+					scrolled.show()
+					dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+					dictwin.set_resizable(True)
+					dictwin.set_border_width(0)
+					scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+					dictwin.add(scrolled)
+					dictwin.set_title("CDR Dictionary")
+					dictwin.connect ("destroy", self.del_dictwin)
+					dictwin.show_all()
+					self.das[pn].dictwin = dictwin
+			elif self.das[pn].type == "FH" and self.das[pn].version < 9:
 				view = gtk.TreeView(self.das[pn].dictmod)
 				view.set_reorderable(True)
 				view.set_enable_tree_lines(True)
@@ -619,7 +629,6 @@ Hexdump selection:\n\
 						self.das[pn].view.set_cursor_on_cell(val[1])
 					except:
 						print "No such path"
-
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
@@ -1059,7 +1068,10 @@ Hexdump selection:\n\
 				hpaned.add1(scrolled)
 				hpaned.add2(vpaned)
 				label = gtk.Label(doc.pname)
-				self.notebook.append_page(hpaned, label)
+				eventbox = gtk.EventBox()
+				eventbox.add(label)
+				eventbox.show_all()
+				self.notebook.append_page(hpaned, eventbox)
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
 			else:
