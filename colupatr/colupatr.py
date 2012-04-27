@@ -387,6 +387,7 @@ class ApplicationMainWindow(gtk.Window):
 #			ebox.connect("key-press-event",self.on_lbl_press,label)
 			ebox.show_all()
 			self.notebook.append_page(doc.table, ebox)
+			self.notebook.set_tab_reorderable(doc.table, True)
 			self.notebook.show_tabs = True
 			self.notebook.show_all()
 			doc.hv.grab_focus()

@@ -249,8 +249,8 @@ Hexdump selection:\n\
 		if pn != -1:
 			if self.das[pn].type[0:3] == "CDR":
 				if self.das[pn].dictwin != None:
-					print "already"
 					self.das[pn].dictwin.show_all()
+					self.das[pn].dictwin.present()
 				else:
 					view = gtk.TreeView(self.das[pn].dictmod)
 					view.connect("row-activated", self.das[pn].on_dict_row_activated)
@@ -1072,6 +1072,7 @@ Hexdump selection:\n\
 				eventbox.add(label)
 				eventbox.show_all()
 				self.notebook.append_page(hpaned, eventbox)
+				self.notebook.set_tab_reorderable(hpaned, True)
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
 			else:
