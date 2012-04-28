@@ -117,6 +117,59 @@ def readfrac(data):
 	frp =  struct.unpack("<H",data[0:2])[0]/0xffff
 	return intp+frp
 
+
+def stlt_s0(hd, size, data):
+	return
+
+def stlt_s1(hd, size, data):
+	return
+
+def stlt_s2(hd, size, data):
+	off = 8
+	for i in range((len(data)-8)/4):
+		fid = struct.unpack("<i",data[off+i*4:off+4+i*4])[0]
+		if fid > 5000 or fid < -5000:
+			fid /= 10000.
+		add_iter(hd,"var %2d"%i,fid,off+i*4,4,"<I")
+
+def stlt_s3(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s4(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s5(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s6(hd, size, data):
+	return
+
+def stlt_s7(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s8(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s9(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s10(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt_s11(hd, size, data):
+	stlt_s2(hd, size, data)
+
+def stlt12_p2(hd, size, data):
+	n = struct.unpack("<I",data[0:4])[0]
+	if hd.version > 10:
+		off = 4 + n*2
+	else:
+		off = 4 + n +1
+	for i in range((len(data)-off)/4):
+		fid = d2hex(data[off+i*4:off+4+i*4])
+		add_iter(hd,"ID %d"%i,fid,off+i*4,4,"<I")
+
+
 def arrw (hd, size, data):
 	add_iter (hd,"Arrow ID","%02x"%struct.unpack('<I', data[0:4])[0],0,4,"<I")
 	add_iter (hd,"???","%02x"%struct.unpack('<I', data[4:8])[0],4,4,"<I")
@@ -1393,7 +1446,7 @@ def stlt(data,page,parent):
 	offset += 4
 
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
-	s_iter = add_pgiter(page,"set0 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+	s_iter = add_pgiter(page,"fild list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
 		add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s0",data[offset:offset+12],s_iter)
@@ -1403,7 +1456,7 @@ def stlt(data,page,parent):
 			offset += 48
 
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
-	s_iter = add_pgiter(page,"set1 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+	s_iter = add_pgiter(page,"outl list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
 		add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s1",data[offset:offset+12],s_iter)
@@ -1413,14 +1466,14 @@ def stlt(data,page,parent):
 	if page.version < 10:
 		size = 44
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
-	s_iter = add_pgiter(page,"set2 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+	s_iter = add_pgiter(page,"font list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
 		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s2",data[offset:offset+size],s_iter)
 		offset += size
 
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
-	s_iter = add_pgiter(page,"set3 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+	s_iter = add_pgiter(page,"align list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
 		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s3",data[offset:offset+12],s_iter)
@@ -1428,7 +1481,7 @@ def stlt(data,page,parent):
 
 	size = 52
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
-	s_iter = add_pgiter(page,"set4 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+	s_iter = add_pgiter(page,"interval list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
 		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s4",data[offset:offset+size],s_iter)
@@ -1444,7 +1497,7 @@ def stlt(data,page,parent):
 
 	size = 784
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
-	s_iter = add_pgiter(page,"set6 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+	s_iter = add_pgiter(page,"Tabs list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
 		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s6",data[offset:offset+size],s_iter)
@@ -1459,7 +1512,7 @@ def stlt(data,page,parent):
 			size = 72
 			shift = -8
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"set7 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		s_iter = add_pgiter(page,"bullet list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
 			flag = struct.unpack("<I",data[offset+68+shift:offset+72+shift])[0] # for ver > 10
@@ -1477,7 +1530,7 @@ def stlt(data,page,parent):
 
 		size = 28
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"set8 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		s_iter = add_pgiter(page,"Indent list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
 			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
@@ -1487,7 +1540,7 @@ def stlt(data,page,parent):
 		size = 32
 		if page.version > 12:
 			size = 36
-		s_iter = add_pgiter(page,"set9 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		s_iter = add_pgiter(page,"Hypen list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
 			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s9",data[offset:offset+size],s_iter)
@@ -1497,7 +1550,7 @@ def stlt(data,page,parent):
 		size = 28
 		if page.version < 10:
 			size = 24
-		s_iter = add_pgiter(page,"set10 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		s_iter = add_pgiter(page,"Dropcap list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
 			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
@@ -1539,7 +1592,7 @@ def stlt(data,page,parent):
 			else:
 				name = unicode(data[offset+4:offset+4+namelen*2],"utf16")
 				namelen *= 2
-			add_pgiter(page,"\t[%s]"%name,"cdr","",data[offset:offset+4+namelen+asize],s_iter)
+			add_pgiter(page,"\t[%s]"%name,"cdr","stlt_s12_p2",data[offset:offset+4+namelen+asize],s_iter)
 			offset += 4+asize+namelen
 	except:
 			add_pgiter(page,"Tail","cdr","",data[bkpoff:],parent)
@@ -1564,7 +1617,20 @@ cdr_ids = {
 	"ttil":ftil,
 	"txsm":txsm,
 	"user":user,
-	"vpat":vpat
+	"vpat":vpat,
+	"stlt_s0":stlt_s0,
+	"stlt_s1":stlt_s1,
+	"stlt_s2":stlt_s2,
+	"stlt_s3":stlt_s3,
+	"stlt_s4":stlt_s4,
+	"stlt_s5":stlt_s5,
+	"stlt_s6":stlt_s6,
+	"stlt_s7":stlt_s7,
+	"stlt_s8":stlt_s8,
+	"stlt_s9":stlt_s9,
+	"stlt_s10":stlt_s10,
+	"stlt_s11":stlt_s11,
+	"stlt_s12_p2":stlt12_p2
 	}
 
 
@@ -1756,8 +1822,8 @@ class record:
 				chunk.load(self.data[16:],page,parent,0,(),"cmx")
 			if name == 'stlt':
 				try:
-					print 'stlt'
-#					stlt(self.data,page,parent)
+#					print 'stlt'
+					stlt(self.data,page,parent)
 				except:
 					print "Something failed in 'stlt'."
 			elif name == 'cmpr':
