@@ -208,7 +208,7 @@ def fh_open (buf,page,parent):
 		if chunks.has_key(items[key][0]):
 			if brflag == 0:
 				try:
-					length = chunks[items[key][0]](parser,agdoffset,key,i)
+					length = chunks[items[key][0]](parser,agdoffset,key)
 					if length < 0:
 						length = len(output)-agdoffset
 						brflag = 1

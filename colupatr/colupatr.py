@@ -19,7 +19,7 @@ import gtk,gobject
 import hexview
 import utils
 
-version = "0.4.2"
+version = "0.4.3"
 
 ui_info = \
 '''<ui>
@@ -119,6 +119,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_txt = 1
 		self.options_div = 1
 		self.options_enc = "utf-16"
+		self.options_win = None
 		self.statbuffer = ""
 
 		if len(sys.argv) > 1:
@@ -213,59 +214,67 @@ class ApplicationMainWindow(gtk.Window):
 		if self.statbuffer != "":
 			self.calc_status(self.statbuffer,len(self.statbuffer))
 
+	def del_optwin (self, action):
+		self.options_win = None
 
 	def activate_options (self, action):
-		# le, be, txt, div, enc
-		vbox = gtk.VBox()
-		le_chkb = gtk.CheckButton("LE")
-		be_chkb = gtk.CheckButton("BE")
-		txt_chkb = gtk.CheckButton("Txt")
-		
-		if self.options_le:
-			le_chkb.set_active(True)
-		if self.options_be:
-			be_chkb.set_active(True)
-		if self.options_txt:
-			txt_chkb.set_active(True)
-
-		le_chkb.connect("toggled",self.on_option_toggled)
-		be_chkb.connect("toggled",self.on_option_toggled)
-		txt_chkb.connect("toggled",self.on_option_toggled)
-
-		hbox0 = gtk.HBox()
-		hbox0.pack_start(le_chkb)
-		hbox0.pack_start(be_chkb)
-		hbox0.pack_start(txt_chkb)
-		
-		hbox1 = gtk.HBox()
-		div_lbl = gtk.Label("Div")
-		div_entry = gtk.Entry()
-		div_entry.connect("activate",self.on_div_entry_activate)
-		div_entry.set_text("%.2f"%self.options_div)
-		hbox1.pack_start(div_lbl)
-		hbox1.pack_start(div_entry)
-
-		hbox2 = gtk.HBox()
-		enc_lbl = gtk.Label("Enc")
-		enc_entry = gtk.Entry()
-		enc_entry.connect("activate",self.on_enc_entry_activate)
-		hbox2.pack_start(enc_lbl)
-		hbox2.pack_start(enc_entry)
-		enc_entry.set_text(self.options_enc)
-#		ok_btn = gtk.Button("OK")
-
-		vbox.pack_start(hbox0)
-		vbox.pack_start(hbox1)
-		vbox.pack_start(hbox2)
-#		vbox.pack_start(ok_btn)
-		
-		optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-		optwin.set_resizable(False)
-		optwin.set_border_width(0)
-		optwin.add(vbox)
-		optwin.set_title("Colupatr Options")
-		optwin.show_all()
-
+		if self.options_win != None:
+			self.options_win.show_all()
+			self.options_win.present()
+		else:
+			# le, be, txt, div, enc
+			vbox = gtk.VBox()
+			le_chkb = gtk.CheckButton("LE")
+			be_chkb = gtk.CheckButton("BE")
+			txt_chkb = gtk.CheckButton("Txt")
+			
+			if self.options_le:
+				le_chkb.set_active(True)
+			if self.options_be:
+				be_chkb.set_active(True)
+			if self.options_txt:
+				txt_chkb.set_active(True)
+	
+			le_chkb.connect("toggled",self.on_option_toggled)
+			be_chkb.connect("toggled",self.on_option_toggled)
+			txt_chkb.connect("toggled",self.on_option_toggled)
+	
+			hbox0 = gtk.HBox()
+			hbox0.pack_start(le_chkb)
+			hbox0.pack_start(be_chkb)
+			hbox0.pack_start(txt_chkb)
+			
+			hbox1 = gtk.HBox()
+			div_lbl = gtk.Label("Div")
+			div_entry = gtk.Entry()
+			div_entry.connect("activate",self.on_div_entry_activate)
+			div_entry.set_text("%.2f"%self.options_div)
+			hbox1.pack_start(div_lbl)
+			hbox1.pack_start(div_entry)
+	
+			hbox2 = gtk.HBox()
+			enc_lbl = gtk.Label("Enc")
+			enc_entry = gtk.Entry()
+			enc_entry.connect("activate",self.on_enc_entry_activate)
+			hbox2.pack_start(enc_lbl)
+			hbox2.pack_start(enc_entry)
+			enc_entry.set_text(self.options_enc)
+	#		ok_btn = gtk.Button("OK")
+	
+			vbox.pack_start(hbox0)
+			vbox.pack_start(hbox1)
+			vbox.pack_start(hbox2)
+	#		vbox.pack_start(ok_btn)
+			
+			optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			optwin.set_resizable(False)
+			optwin.set_border_width(0)
+			optwin.add(vbox)
+			optwin.set_title("Colupatr Options")
+			optwin.connect ("destroy", self.del_optwin)
+			optwin.show_all()
+			self.options_win = optwin
+			
 
 	def activate_quit(self, action):
 		 gtk.main_quit()
@@ -380,7 +389,7 @@ class ApplicationMainWindow(gtk.Window):
 				pname = fname
 
 			label = gtk.Label(pname)
-			label.set_selectable(True)
+#			label.set_selectable(True)
 			ebox = gtk.EventBox()
 			ebox.add(label)
 #			ebox.connect("button-press-event",self.on_lbl_press)

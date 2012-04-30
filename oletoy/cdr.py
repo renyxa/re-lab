@@ -1026,7 +1026,7 @@ def loda_coords (hd,data,offset,l_type,length):
 			loda_coords5 (hd,data,offset,l_type)
 	# insert calls to specific coords parsing here
 		else:
-			add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+			add_iter (hd,"[001e]","???",offset,length,"txt")
 
 
 def loda_palt (hd,data,offset,l_type,length):
@@ -1145,8 +1145,9 @@ loda_types = {
 	1:"Rectangle",
 	2:"Ellipse",
 	3:"Line/Curve",
-	4:"Text",
+	4:"Artistic Text",
 	5:"Bitmap",
+	6:"Paragraph Text",
 	0xb:"Grid",
 	0xc:"Guides",
 	0x11:"Desktop",
@@ -1244,7 +1245,7 @@ def loda (hd,size,data):
 				loda_type_func[argtype](hd,data,offset,l_type,length)
 			else:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
-#				print 'Unknown argtype: %x'%argtype                             
+#				print 'Unknown argtype: %x'%argtype
 
 dtypes = {1:"Push",2:"Zip",3:"Twist"}
 dstflags = {0:"None",1:"Smooth",2:"Random",4:"Local"}
