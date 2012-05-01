@@ -71,6 +71,12 @@ class Page:
 			cdr.cdr_open(buf,self, parent)
 			return 0
 
+		if buf[0:4] == "RIFF" and buf[8:11] == "CMX":
+			self.type = "CMX"
+			cdr.cdr_open(buf,self, parent,"cmx")
+			return 0
+
+
 		if buf[0:2] == "WL":
 			self.type = "CDR2"
 			wld.open (buf,self, parent)

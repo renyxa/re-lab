@@ -355,10 +355,11 @@ grps = {
 def parse_page(page,data,f_iter):
 	offset = 0
 	p_iter = f_iter
+#	print "CMX parse page"
 	while offset < len(data) - 4:
 		csize = struct.unpack("<H",data[offset:offset+2])[0]
-		ctype = struct.unpack("<H",data[offset+2:offset+4])[0]
-		c_iter = add_pgiter(page,"%s (%02x)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+4:offset+csize],p_iter)
+		ctype = struct.unpack("<h",data[offset+2:offset+4])[0]
+		c_iter = add_pgiter(page,"%s (%d)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+4:offset+csize],p_iter)
 		if grps.has_key(ctype):
 			if grps[ctype] == 1:
 				# Ends

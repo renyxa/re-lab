@@ -1727,11 +1727,11 @@ def save (page,fname):
 	f.write(buf)
 	f.close()
 
-def cdr_open (buf,page,parent):
+def cdr_open (buf,page,parent,fmttype="CDR"):
 	# Path, Name, ID
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	chunk = record()
-	chunk.load (buf,page,parent)
+	chunk.load (buf,page,parent,0,(),fmttype)
 
 class record:
 	fourcc = ''
