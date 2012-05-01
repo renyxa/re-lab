@@ -359,6 +359,8 @@ def parse_page(page,data,f_iter):
 	while offset < len(data) - 4:
 		csize = struct.unpack("<H",data[offset:offset+2])[0]
 		ctype = struct.unpack("<h",data[offset+2:offset+4])[0]
+		if ctype < 0:
+			ctype = - ctype
 		c_iter = add_pgiter(page,"%s (%d)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+4:offset+csize],p_iter)
 		if grps.has_key(ctype):
 			if grps[ctype] == 1:
