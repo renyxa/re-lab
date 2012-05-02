@@ -1212,6 +1212,7 @@ def loda_v5 (hd,size,data):
 				add_iter (hd,"[%02x]"%(argtype),"???",offset,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
 
 def loda (hd,size,data):
+	print "LODA: ",hd.version
 	if hd.version < 6:
 		loda_v5 (hd,size,data)
 		return
@@ -1727,7 +1728,7 @@ def save (page,fname):
 	f.write(buf)
 	f.close()
 
-def cdr_open (buf,page,parent,fmttype="CDR"):
+def cdr_open (buf,page,parent,fmttype="cdr"):
 	# Path, Name, ID
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	chunk = record()
@@ -1869,6 +1870,5 @@ class record:
 						else:
 							page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
 							page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
-
 			except:
 				print 'Failed in v16 dat'
