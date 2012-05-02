@@ -1212,7 +1212,6 @@ def loda_v5 (hd,size,data):
 				add_iter (hd,"[%02x]"%(argtype),"???",offset,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
 
 def loda (hd,size,data):
-	print "LODA: ",hd.version
 	if hd.version < 6:
 		loda_v5 (hd,size,data)
 		return
