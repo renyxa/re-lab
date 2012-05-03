@@ -1365,15 +1365,25 @@ def txsm (hd,size,data):
 	for i in range(6):
 		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
+
 	off = 0x5c
-	num = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "num of ?", num,off,4,"<I")
+	num1 = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "num1", num1,off,4,"<I")
 	off += 4
-	for i in range(num):
-		add_iter (hd, "??", "",off,32,"txt")
-		off += 32
-	add_iter (hd, "num2 of ?", num,off,4,"<I")
+	num2 = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "num2", num2,off,4,"<I")
 	off += 4
+	if num2 == 0:
+		num3 = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "num3", num2,off,4,"<I")
+		off += 4
+		for i in range(6):
+			v = struct.unpack('<i', data[off:off+4])[0]
+			add_iter (hd, "v%d"%i,v,off,4,"<i")
+			off += 4
+		num4 = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "num4", num2,off,4,"<I")
+		off += 4
 	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
 	# skip 1 byte
 	off += 5
