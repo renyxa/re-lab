@@ -1821,7 +1821,7 @@ class record:
 			if name == 'vect':
 				chunk = record()
 				chunk.load(self.data[16:],page,parent,0,(),"cmx")
-			if name == 'stlt':
+			if name == 'stlt' and page.version >= 7:
 				try:
 #					print 'stlt'
 					stlt(self.data,page,parent)
