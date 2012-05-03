@@ -91,24 +91,24 @@ wrap_txt_style = {
 	}
 
 charsets = {
-	0:"Latin",
+	0:"Latin", #cp1252
 	1:"System default",
 	2:"Symbol",
-	77:"Apple Roman",
-	128:"Japanese Shift-JIS",
-	129:"Korean (Hangul)",
-	130:"Korean (Johab)",
-	134:"Chinese Simplified GBK",
-	136:"Chinese Traditional BIG5",
-	161:"Greek",
-	162:"Turkish",
-	163:"Vietnamese",
-	177:"Hebrew",
-	178:"Arabic",
-	186:"Baltic",
-	204:"Cyrillic",
-	222:"Thai",
-	238:"Latin II (Central European)",
+	77:"Apple Roman", #cp10000 ?
+	128:"Japanese Shift-JIS", #cp932
+	129:"Korean (Hangul)", #cp949
+	130:"Korean (Johab)", #cp1361
+	134:"Chinese Simplified GBK", #cp936
+	136:"Chinese Traditional BIG5", #cp950
+	161:"Greek", #cp1253
+	162:"Turkish", #cp1254
+	163:"Vietnamese", #cp1258
+	177:"Hebrew", #cp1255
+	178:"Arabic", #cp1256
+	186:"Baltic", #cp1257
+	204:"Cyrillic", #cp1251
+	222:"Thai", #cp874
+	238:"Latin II (Central European)", #cp1250
 	255:"OEM Latin I"
 	}
 
@@ -1414,10 +1414,10 @@ def txsm (hd,size,data):
 		flag2 = ord(data[off+2])
 		if hd.version > 7:
 			flag3 = ord(data[off+3]) # seems to be 8 all the time
-			add_iter (hd, "fl0 fl1 fl2 fl3", "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
+			add_iter (hd, "fl0 fl1 fl2 fl3 [%d]"%(i*2), "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
 			off += 4
 		else:
-			add_iter (hd, "fl0 fl1 fl2", "%02x %02x %02x"%(id,flag1,flag2),off,3,"txt")
+			add_iter (hd, "fl0 fl1 fl2 [%d]"%(i*2), "%02x %02x %02x"%(id,flag1,flag2),off,3,"txt")
 			off += 3
 			
 		if flag2&1 == 1:
@@ -1478,10 +1478,10 @@ def txsm (hd,size,data):
 		
 	for i in range(num2):
 		if hd.version >= 12:
-			add_iter (hd, "Char %u"%i, d2hex(data[off:off+8]),off,8,"txt")
+			add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
 			off += 8
 		else:
-			add_iter (hd, "char %u"%i, d2hex(data[off:off+4]),off,4,"txt")
+			add_iter (hd, "char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+4])),off,4,"txt")
 			off += 4
 	txtlen = num2
 	if hd.version >= 12:
