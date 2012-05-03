@@ -1376,6 +1376,9 @@ def txsm (hd,size,data):
 		num1 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num1", num1,off,4,"<I")
 		off += 4
+	if hd.version > 14:
+		off += 12
+	
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "num2", num2,off,4,"<I")
 	off += 4
