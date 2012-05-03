@@ -1353,34 +1353,43 @@ def txsm (hd,size,data):
 	# 9 -- 4; 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
 	
 	# txtid
-	# ver7 0x1c
+	# ver7 0x2c
 	# ver8-14 0x28
 	# ver15 0x29
 	
 	if hd.version == 15:
 		add_iter (hd, "txt ID", d2hex(data[0x29:0x2d]),0x29,4,"<I")
+		off = 0x29+4
+	elif hd.version < 8:
+		add_iter (hd, "txt ID", d2hex(data[0x2c:0x30]),0x2c,4,"<I")
+		off = 0x2c+4
 	elif hd.version < 15:
 		add_iter (hd, "txt ID", d2hex(data[0x28:0x2c]),0x28,4,"<I")
-
+		off = 0x28+4
+	
 	for i in range(6):
-		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
-		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
+		var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
 
-	off = 0x5c
-	num1 = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "num1", num1,off,4,"<I")
-	off += 4
+	off += 48
+	if hd.version > 7:
+		num1 = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "num1", num1,off,4,"<I")
+		off += 4
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "num2", num2,off,4,"<I")
 	off += 4
 	if num2 == 0:
-		num3 = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "num3", num2,off,4,"<I")
-		off += 4
+		if hd.version > 7:
+			num3 = struct.unpack('<I', data[off:off+4])[0]
+			add_iter (hd, "num3", num2,off,4,"<I")
+			off += 4
 		for i in range(6):
 			v = struct.unpack('<i', data[off:off+4])[0]
 			add_iter (hd, "v%d"%i,v,off,4,"<i")
 			off += 4
+		if hd.version < 8:
+			off += 8
 		num4 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num4", num2,off,4,"<I")
 		off += 4
@@ -1396,9 +1405,13 @@ def txsm (hd,size,data):
 		id = ord(data[off])
 		flag1 = ord(data[off+1])
 		flag2 = ord(data[off+2])
-		flag3 = ord(data[off+3]) # seems to be 8 all the time
-		add_iter (hd, "fl0 fl1 fl2 fl3", "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
-		off += 4
+		if hd.version > 7:
+			flag3 = ord(data[off+3]) # seems to be 8 all the time
+			add_iter (hd, "fl0 fl1 fl2 fl3", "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
+			off += 4
+		else:
+			add_iter (hd, "fl0 fl1 fl2", "%02x %02x %02x"%(id,flag1,flag2),off,3,"txt")
+			off += 3
 			
 		if flag2&1 == 1:
 			# Font
@@ -1437,20 +1450,25 @@ def txsm (hd,size,data):
 			add_iter (hd, "\tOutl ID", d2hex(data[off:off+4]),off,4,"txt")
 			off += 4
 
-		if flag3&8 == 8:
-			if hd.version > 12:
-				tlen = struct.unpack("<I",data[off:off+4])[0]
-				txt = unicode(data[off+4:off+4+tlen*2],"utf16")
-				add_iter (hd, "\tEncoding", txt,off,4+tlen*2,"txt")
-				off += 4 + tlen*2
-			else:
-				enc = data[off:off+2]
-				add_iter (hd, "\tEncoding", enc,off,2,"txt")
-				off += 4
+		if hd.version > 7:
+			if flag3&8 == 8:
+				if hd.version > 12:
+					tlen = struct.unpack("<I",data[off:off+4])[0]
+					txt = unicode(data[off+4:off+4+tlen*2],"utf16")
+					add_iter (hd, "\tEncoding", txt,off,4+tlen*2,"txt")
+					off += 4 + tlen*2
+				else:
+					enc = data[off:off+2]
+					add_iter (hd, "\tEncoding", enc,off,2,"txt")
+					off += 4
 
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 	off += 4
+	if num2 > 100:
+		print 'num2 > 100',num2
+		return
+		
 	for i in range(num2):
 		if hd.version >= 12:
 			add_iter (hd, "Char %u"%i, d2hex(data[off:off+8]),off,8,"txt")
@@ -1602,7 +1620,8 @@ def stlt(data,page,parent):
 	
 		while offset < len(data):
 			num = struct.unpack("<I",data[offset:offset+4])[0]
-			add_pgiter(page,"num %d ID %s (pID %s)"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
+			num2 = struct.unpack("<I",data[offset+12:offset+16])[0]
+			add_pgiter(page,"num %d ID %s (pID %s) %s"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12]),d2hex(data[offset+12:offset+16])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
 			if num == 3:
 				asize = 48
 			elif num == 2:
