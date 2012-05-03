@@ -315,7 +315,7 @@ def font (hd,size,data):
 		shift = 2
 	add_iter (hd,"Flags",d2hex(data[2+shift:18]," "),2+shift,16-shift,"txt")
 	fontname = data[18:52]
-	if hd.version > 9:
+	if hd.version > 11:
 		fontname = unicode(fontname,"utf16")
 	add_iter (hd,"FontName",fontname,18,34,"txt")
 
@@ -1348,8 +1348,20 @@ def vpat (hd,size,data):
 	add_iter (hd, "Vect ID", struct.unpack("<I",data[0:4])[0],0,4,"<I")
 
 def txsm (hd,size,data):
-	# FIXME! ver 13 and newer is different
-	add_iter (hd, "txt ID", d2hex(data[0x28:0x2c]),0x28,4,"txt")
+	# ver16 -- add '40 06' parsing (seems to be different '40 06').
+	# 8 vs 8bidi -- 0x14 is 3 vs 4
+	# 9 -- 4; 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
+	
+	# txtid
+	# ver7 0x1c
+	# ver8-14 0x28
+	# ver15 0x29
+	
+	if hd.version == 15:
+		add_iter (hd, "txt ID", d2hex(data[0x29:0x2d]),0x29,4,"<I")
+	elif hd.version < 15:
+		add_iter (hd, "txt ID", d2hex(data[0x28:0x2c]),0x28,4,"<I")
+
 	for i in range(6):
 		var = struct.unpack('<d', data[0x2c+i*8:0x2c+8+i*8])[0]
 		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),0x2c+i*8,8,"<d")
