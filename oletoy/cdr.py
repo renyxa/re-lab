@@ -1442,12 +1442,17 @@ def txsm (hd,size,data):
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 	off += 4
 	for i in range(num2):
-		add_iter (hd, "Char %u"%i, d2hex(data[off:off+8]),off,8,"txt")
-		off += 8
-
-	txtlen = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Text length", txtlen,off,4,"<I")
-	off += 4
+		if hd.version >= 12:
+			add_iter (hd, "Char %u"%i, d2hex(data[off:off+8]),off,8,"txt")
+			off += 8
+		else:
+			add_iter (hd, "char %u"%i, d2hex(data[off:off+4]),off,4,"txt")
+			off += 4
+	txtlen = num2
+	if hd.version >= 12:
+		txtlen = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "Text length", txtlen,off,4,"<I")
+		off += 4
 	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 def stlt(data,page,parent):
