@@ -1349,8 +1349,8 @@ def vpat (hd,size,data):
 
 def txsm (hd,size,data):
 	# ver16 -- add '40 06' parsing (seems to be different '40 06').
-	# 8 vs 8bidi -- 0x14 is 3 vs 4
-	# 9 -- 4; 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
+	# 6,7,8 -- 3, 8bidi,9 -- 4
+	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
 	
 	# txtid
 	# ver7 0x2c
@@ -1382,8 +1382,12 @@ def txsm (hd,size,data):
 	if num2 == 0:
 		if hd.version > 7:
 			num3 = struct.unpack('<I', data[off:off+4])[0]
-			add_iter (hd, "num3", num2,off,4,"<I")
+			add_iter (hd, "num3", num3,off,4,"<I")
 			off += 4
+			if hd.version > 8: #( txsm ver4+)
+				off += 2
+			if hd.version > 13:
+				off += 2
 		for i in range(6):
 			v = struct.unpack('<i', data[off:off+4])[0]
 			add_iter (hd, "v%d"%i,v,off,4,"<i")
@@ -1391,12 +1395,12 @@ def txsm (hd,size,data):
 		if hd.version < 8:
 			off += 8
 		num4 = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "num4", num2,off,4,"<I")
+		add_iter (hd, "num4", num4,off,4,"<I")
 		off += 4
 	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
 	# skip 1 byte
 	off += 5
-	if hd.version > 12: # skip one more byte for version 13
+	if hd.version > 12 and num2 != 0: # skip one more byte for version 13
 		off += 1
 	num = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of recs (Style)", num,off,4,"<I")
