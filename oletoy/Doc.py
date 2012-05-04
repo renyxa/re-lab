@@ -18,6 +18,7 @@ import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld
+import abr
 
 class Page:
 	def __init__(self):
@@ -76,7 +77,6 @@ class Page:
 			cdr.cdr_open(buf,self, parent,"cmx")
 			return 0
 
-
 		if buf[0:2] == "WL":
 			self.type = "CDR2"
 			wld.open (buf,self, parent)
@@ -85,6 +85,11 @@ class Page:
 		if buf[0:2] == "\xcc\xdc":
 			self.type = "CPL"
 			cpl.open (buf,self, parent)
+			return 0
+
+		if buf[0:4] == "8BGR" or buf[0:4] == "8BIM":
+			self.type = "ABR" # or GRD
+			abr.abr_open(buf,self, parent)
 			return 0
 
 
