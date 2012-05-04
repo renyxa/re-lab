@@ -158,9 +158,16 @@ def parse_entry(page,buf,offset,parent):
 	return offset
 	
 
-def abr_open (buf,page,parent):
-	f_iter = add_pgiter(page,"File","abr","",buf,parent)
-	add_pgiter(page,"Hdr","abr","hdr",buf[0:28],f_iter)
-	off = 28
+def open (buf,page,parent,ftype):
+	f_iter = add_pgiter(page,"File","","",buf,parent)
+	if ftype == "bgr":
+		add_pgiter(page,"Hdr",ftype,"hdr",buf[0:28],f_iter)
+		off = 28
+	else:
+		vmaj = struct.unpack(">H",buf[0:2])[0]
+		vmin = struct.unpack(">H",buf[2:4])[0]
+		add_pgiter(page,"Version %d.%d"%(vmaj,vmin),ftype,"vrsn",buf[0:4],f_iter)
+		
+
 	while off < len(buf): 
 		off  = parse_entry(page,buf,off,f_iter)

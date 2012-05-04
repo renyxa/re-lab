@@ -87,11 +87,15 @@ class Page:
 			cpl.open (buf,self, parent)
 			return 0
 
-		if buf[0:4] == "8BGR" or buf[0:4] == "8BIM":
-			self.type = "ABR" # or GRD
-			abr.abr_open(buf,self, parent)
+		if buf[0:4] == "8BGR":
+			self.type = "BGR"
+			abr.open(buf,self, parent,"bgr")
 			return 0
 
+		if buf[4:8] == "8BIM":
+			self.type = "ABR"
+			abr.open(buf,self, parent,"abr")
+			return 0
 
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
