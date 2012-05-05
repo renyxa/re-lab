@@ -92,7 +92,7 @@ class Page:
 			abr.open(buf,self, parent,"bgr")
 			return 0
 
-		if buf[4:8] == "8BIM":
+		if buf[0:4] == "8BIM":
 			self.type = "ABR"
 			abr.open(buf,self, parent,"abr")
 			return 0
@@ -183,6 +183,8 @@ class Page:
 		cell2.set_property('font','monospace 10')
 		column1 = gtk.TreeViewColumn('Type', cell1, text=0)
 		column2 = gtk.TreeViewColumn('Value', cell2, text=2)
+		column3 = gtk.TreeViewColumn('#', cell2, text=3)
+		view.append_column(column3)
 		view.append_column(column1)
 		view.append_column(column2)
 		view.show()

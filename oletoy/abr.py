@@ -156,17 +156,41 @@ def parse_entry(page,buf,offset,parent):
 		print "Unknown key:\t",name,type
 		p_unkn(page,buf,offset,name,parent)
 	return offset
-	
+
+def read_8bim(buf,page,parent,off):
+	tag = buf[off:off+4]
+	if tag != "8BIM":
+		print "Something wrong with 8BIM offsets"
+		return len(buf)
+	else:
+		off += 4
+		btype = buf[off:off+4]
+		off += 4
+		blen = struct.unpack(">I",buf[off:off+4])[0]
+		off += 4
+		adj = blen % 4
+		if adj != 0:
+			blen += 4 - adj
+		add_pgiter(page,btype,"abr",btype,buf[off:off+blen],parent)
+		off += blen
+		return off
+
+
 
 def open (buf,page,parent,ftype):
 	f_iter = add_pgiter(page,"File","","",buf,parent)
+	off = 0
 	if ftype == "bgr":
 		add_pgiter(page,"Hdr",ftype,"hdr",buf[0:28],f_iter)
 		off = 28
 	else:
 		vmaj = struct.unpack(">H",buf[0:2])[0]
 		vmin = struct.unpack(">H",buf[2:4])[0]
-		add_pgiter(page,"Version %d.%d"%(vmaj,vmin),ftype,"vrsn",buf[0:4],f_iter)
+		add_pgiter(page,"Version %d.%d [0x%x]"%(vmaj,vmin,off),ftype,"vrsn",buf[0:4],f_iter)
+		off += 4
+		while off < len(buf):
+			off = read_8bim(buf,page,parent,off)
+		
 		
 
 	while off < len(buf): 

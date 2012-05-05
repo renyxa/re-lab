@@ -89,6 +89,7 @@ def recfind (model,path,iter,(page,data)):
 			s_iter = page.search.append(None,None)
 			page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
 			page.search.set_value(s_iter,2,"%s (%d)"%(rec,model.get_value(iter,2)))
+			page.search.set_value(s_iter,3,page.search.iter_n_children(None))
 		# looks for args in CDR record
 		else:
 			recdata = model.get_value(iter,3)
@@ -115,6 +116,7 @@ def recfind (model,path,iter,(page,data)):
 					s_iter = page.search.append(None,None)
 					page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
 					page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtxt,argvalue))
+					page.search.set_value(s_iter,3,page.search.iter_n_children(None))
 
 def cmdfind (model,path,iter,(page,data)):
 	# in cdr look for leaf chunks only, avoid duplication
@@ -130,6 +132,7 @@ def cmdfind (model,path,iter,(page,data)):
 				page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
 				page.search.set_value(s_iter,1,test)
 				page.search.set_value(s_iter,2,"%04x (%s)"%(test,model.get_value(iter,0)))
+				page.search.set_value(s_iter,3,page.search.iter_n_children(None))
 			else:
 				return
 	except:
@@ -246,7 +249,7 @@ def parse (cmd, entry, page):
 		# convert line to hex or unicode if required
 		data = arg_conv(ctype,carg)
 		model = page.view.get_model()
-		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
 		if ctype == 'r' or ctype == 'R':
 			model.foreach(recfind,(page,data))
 		else:
