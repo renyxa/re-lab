@@ -1381,18 +1381,22 @@ def txsm (hd,size,data):
 				var = struct.unpack('<h', data[off+i*4:off+4+i*4])[0]
 				add_iter (hd, "v%d"%(i+1), "%d"%var,off+i*4,4,"<h")
 			off += 32
-			add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
-			off += 4
-			for i in range(6):
-				var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-				add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
-			off += 48
+	elif hd.version <8:
+		off += 4
 
-	if hd.version > 7 and hd.version < 15:
+	if hd.version < 8:
+		add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
+		off += 4
+		for i in range(6):
+			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
+		off += 48
+
+	if hd.version < 15:
 		num1 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num1", num1,off,4,"<I")
 		off += 4
-	if hd.version > 14:
+	else:
 		off += 12
 		num1 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num1", num1,off,4,"<I")
