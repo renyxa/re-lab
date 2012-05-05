@@ -1353,17 +1353,15 @@ def txsm (hd,size,data):
 	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
 	
 	off = 0x24
+	if hd.version == 15:
+		off += 1
 	blk_flag1 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "blk_flag1", blk_flag1,off,4,"<i")
 	off += 4
 	if blk_flag1 == 1:
 		if hd.version > 7:
-			if hd.version == 15:
-				add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
-				off += 5
-			else:
-				add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
-				off += 4
+			add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
+			off += 4
 			for i in range(6):
 				var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
 				add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
