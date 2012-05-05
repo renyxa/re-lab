@@ -1388,7 +1388,7 @@ def txsm (hd,size,data):
 				add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
 			off += 48
 
-	if hd.version > 7:
+	if hd.version > 7 and hd.version < 15:
 		num1 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num1", num1,off,4,"<I")
 		off += 4
@@ -1417,7 +1417,7 @@ def txsm (hd,size,data):
 	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
 	# skip 1 byte
 	off += 5
-	if hd.version > 12 and num2 != 0: # skip one more byte for version 13
+	if hd.version > 12 and num1 != 0: # skip one more byte for version 13
 		off += 1
 	num = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of recs (Style)", num,off,4,"<I")
