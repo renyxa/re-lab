@@ -1400,13 +1400,8 @@ def txsm (hd,size,data):
 		add_iter (hd, "num1", num1,off,4,"<I")
 		off += 4
 	
-#	num2 = struct.unpack('<I', data[off:off+4])[0]
-#	add_iter (hd, "num2", num2,off,4,"<I")
-#	off += 4
 	if num1 == 0:
 		if hd.version > 7:
-#			num3 = struct.unpack('<I', data[off:off+4])[0]
-#			add_iter (hd, "num3", num3,off,4,"<I")
 			off += 4
 			if hd.version > 8: #( txsm ver4+)
 				off += 2
@@ -1503,9 +1498,8 @@ def txsm (hd,size,data):
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 	off += 4
-	if num2 > 100:
-		print 'num2 > 100',num2
-		return
+#	if num2 > 100:
+#		print 'num2 > 100',num2
 		
 	for i in range(num2):
 		if hd.version >= 12:
