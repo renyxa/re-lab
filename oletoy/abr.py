@@ -157,6 +157,9 @@ def parse_entry(page,buf,offset,parent):
 		p_unkn(page,buf,offset,name,parent)
 	return offset
 
+bim_types = {"desc":p_desc
+	}
+
 def read_8bim(buf,page,parent,off):
 	tag = buf[off:off+4]
 	if tag != "8BIM":
@@ -171,27 +174,43 @@ def read_8bim(buf,page,parent,off):
 		adj = blen % 4
 		if adj != 0:
 			blen += 4 - adj
-		add_pgiter(page,btype,"abr",btype,buf[off:off+blen],parent)
+		piter = add_pgiter(page,btype,"abr",btype,buf[off-12:off+blen],parent)
+		if btype == "desc":
+			buf2 = buf[off-12:off+blen]
+			add_pgiter(page,"Hdr","abr","hdr",buf2[0:0x22],piter)
+			off2 = 0x22
+			while off2 < len(buf2): 
+				off2  = parse_entry(page,buf2,off2,piter)
+		elif btype == "samp":
+			off2 = off
+			while off2 < blen:
+				slen = struct.unpack(">I",buf[off2:off2+4])[0]
+				adj = slen % 4
+				if adj != 0:
+					slen += 4 - adj
+				add_pgiter(page,"Sample [%s]"%buf[off2+4:off2+4+37],"abr","samp",buf[off2:off2+slen+4],piter)
+				off2 += slen+4
+				
 		off += blen
 		return off
 
 
 
-def open (buf,page,parent,ftype):
+def abr_open (buf,page,parent,ftype):
 	f_iter = add_pgiter(page,"File","","",buf,parent)
 	off = 0
 	if ftype == "bgr":
 		add_pgiter(page,"Hdr",ftype,"hdr",buf[0:28],f_iter)
 		off = 28
+		while off < len(buf): 
+			off  = parse_entry(page,buf,off,f_iter)
 	else:
 		vmaj = struct.unpack(">H",buf[0:2])[0]
 		vmin = struct.unpack(">H",buf[2:4])[0]
 		add_pgiter(page,"Version %d.%d [0x%x]"%(vmaj,vmin,off),ftype,"vrsn",buf[0:4],f_iter)
 		off += 4
 		while off < len(buf):
-			off = read_8bim(buf,page,parent,off)
+			off = read_8bim(buf,page,f_iter,off)
 		
 		
 
-	while off < len(buf): 
-		off  = parse_entry(page,buf,off,f_iter)

@@ -89,12 +89,12 @@ class Page:
 
 		if buf[0:4] == "8BGR":
 			self.type = "BGR"
-			abr.open(buf,self, parent,"bgr")
+			abr.abr_open(buf,self, parent,"bgr")
 			return 0
 
-		if buf[0:4] == "8BIM":
+		if buf[4:8] == "8BIM":
 			self.type = "ABR"
-			abr.open(buf,self, parent,"abr")
+			abr.abr_open(buf,self, parent,"abr")
 			return 0
 
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
