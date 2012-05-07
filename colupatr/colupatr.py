@@ -19,7 +19,7 @@ import gtk,gobject
 import hexview
 import utils
 
-version = "0.4.3"
+version = "0.4.4"
 
 ui_info = \
 '''<ui>
@@ -389,7 +389,6 @@ class ApplicationMainWindow(gtk.Window):
 				pname = fname
 
 			label = gtk.Label(pname)
-#			label.set_selectable(True)
 			ebox = gtk.EventBox()
 			ebox.add(label)
 #			ebox.connect("button-press-event",self.on_lbl_press)
@@ -490,7 +489,12 @@ class ApplicationMainWindow(gtk.Window):
 				doc.bklines += doc.lines
 				doc.bkhvlines += doc.hvlines
 
-				if  cmd[0].lower() == "fmt":
+				if cmd[0].lower() == "name" and len(cmd) > 1:
+					ebox = self.notebook.get_tab_label(doc.table)
+					ebox.get_children()[0].set_text(cmd[1])
+				elif cmd[0].lower() == "bck":
+					pass
+				elif cmd[0].lower() == "fmt":
 					cmd = cmd[1:]
 					mpos = cmdline.find("*")
 					curpos = doc.lines[doc.curr][0]
