@@ -160,6 +160,34 @@ def parse_entry(page,buf,offset,parent):
 bim_types = {"desc":p_desc
 	}
 
+def unpack_samp (data,page,siter):
+	top = struct.unpack(">I",data[0x131:0x135])[0]
+	left = struct.unpack(">I",data[0x135:0x139])[0]
+	bottom = struct.unpack(">I",data[0x139:0x13d])[0]
+	right = struct.unpack(">I",data[0x13d:0x141])[0]
+	depth = struct.unpack(">H",data[0x141:0x143])[0]
+	cmpr = ord(data[143])
+	size = 0
+	for i in range(bottom-top):
+		size += struct.unpack(">H",data[0x144+i*2:0x146+i*2])[0]
+	off = 0x144+(bottom-top)*2
+	buf = ""
+	print "%02x %02x"%(size,len(data)-off)
+	while off < size:
+		flag = ord(data[off])
+		off += 1
+		if flag > 128:
+			dlen = 256 - flag
+			buf +=  data[off]*dlen
+			off += 1
+		elif flag < 128:
+			dlen = flag + 1
+			buf += data[off:off+dlen]
+			off += dlen
+		else:
+			off += 1
+	add_pgiter(page,"Uncmpr","abr","uncsamp",buf,siter)
+
 def read_8bim(buf,page,parent,off):
 	tag = buf[off:off+4]
 	if tag != "8BIM":
@@ -188,7 +216,11 @@ def read_8bim(buf,page,parent,off):
 				adj = slen % 4
 				if adj != 0:
 					slen += 4 - adj
-				add_pgiter(page,"Sample [%s]"%buf[off2+4:off2+4+37],"abr","samp",buf[off2:off2+slen+4],piter)
+				siter = add_pgiter(page,"Sample [%s]"%buf[off2+4:off2+4+37],"abr","samp",buf[off2:off2+slen+4],piter)
+#				try:
+				unpack_samp (buf[off2:off2+slen+4],page,siter)
+#				except:
+#					print 'unpack failed'
 				off2 += slen+4
 				
 		off += blen
