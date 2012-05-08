@@ -1628,7 +1628,7 @@ def stlt(data,page,parent):
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
 		size = 28
-		if page.version < 10:
+		if page.version < 9: # was < 10
 			size = 24
 		s_iter = add_pgiter(page,"Dropcap list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
@@ -1663,7 +1663,7 @@ def stlt(data,page,parent):
 			else: # num == 1
 				asize = 8
 			offset += 20
-			if page.version < 10 and num > 1: # FIXME! check starting from which version
+			if page.version < 9 and num > 1: # was PV 10
 				asize -= 4
 			namelen = struct.unpack("<I",data[offset:offset+4])[0]
 			if page.version < 12:
@@ -1677,6 +1677,7 @@ def stlt(data,page,parent):
 			offset += 4+asize+namelen
 	except:
 			add_pgiter(page,"Tail","cdr","",data[bkpoff:],parent)
+			print "stlt exception, see 'tail'"
 
 cdr_ids = {
 	"arrw":arrw,
