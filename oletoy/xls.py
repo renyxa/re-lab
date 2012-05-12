@@ -124,13 +124,17 @@ rec_ids = {
 def RgceArea (hd,data,off):
 	rf = struct.unpack("<H",data[off:off+2])[0]
 	rl = struct.unpack("<H",data[off+2:off+4])[0]
-	cf = struct.unpack("<H",data[off+4:off+6])[0]
-	cl = struct.unpack("<H",data[off+6:off+8])[0]
-	add_iter(hd,"\trowFirst",rf,off,2,"<H")
-	add_iter(hd,"\trowLast",rl,off+2,2,"<H")
-	add_iter(hd,"\tcolFirst",cf,off+4,2,"<H")
-	add_iter(hd,"\tcolLast",cl,off+6,2,"<H")
-
+	cf = struct.unpack("<H",data[off+4:off+6])[0]&0x3FFF
+	cl = struct.unpack("<H",data[off+6:off+8])[0]&0x3FFF
+	it = add_iter(hd,"\trowFirst",rf,off,2,"<H")
+	add_tip (hd,it,"0-based Idx of the 1st row in the range. UINT.")
+	it = add_iter(hd,"\trowLast",rl,off+2,2,"<H")
+	add_tip (hd,it,"0-based Idx of the last row in the range. UINT.")
+	it = add_iter(hd,"\tcolFirst",cf,off+4,2,"<H")
+	add_tip (hd,it,"14 bits, 0-based Idx of the 1st column in the range. UINT [0;255]. MSBs: colRelative, rowRelative.")
+	it = add_iter(hd,"\tcolLast",cl,off+6,2,"<H")
+	add_tip (hd,it,"14 bits, 0-based Idx of the last column in the range. UINT [0;255]. MSBs: colRelative, rowRelative")
+	
 def PtgAdd (hd,data,off):
 	add_iter(hd,"Add","",off,1,"B")
 
@@ -549,19 +553,32 @@ def biff_row (hd,data):
 	fExAsc = flags2&1
 	fExDes = (flags2&2)/2
 	fPhonetic = (flags2&4)/4
-	add_iter (hd,"rw",rw,off,2,"<H")
-	add_iter (hd,"colMic",colMic,off+2,2,"<H")
-	add_iter (hd,"colMac",colMac,off+4,2,"<H")
-	add_iter (hd,"miyRw",miyRw,off+6,2,"<H")
-	add_iter (hd,"iOutLevel",iOutLevel,12+off,1,"<B")
-	add_iter (hd,"fCollapsed",fCollapsed,12+off,1,"<B")
-	add_iter (hd,"fDyZero",fDyZero,12+off,1,"<B")
-	add_iter (hd,"fUnsync",fUnsync,12+off,1,"<B")
-	add_iter (hd,"fGhostDirty",fGhostDirty,12+off,1,"<B")
-	add_iter (hd,"ixfe_val",ixfe_val,14+off,2,"<H")
-	add_iter (hd,"fExAsc",fExAsc,15+off,1,"<B")
-	add_iter (hd,"fExDes",fExDes,15+off,1,"<B")
-	add_iter (hd,"fPhonetic",fPhonetic,15+off,1,"<B")
+	it = add_iter (hd,"rw",rw,off,2,"<H")
+	add_tip (hd,it,"0-based Idx of row. UINT [rwMic;rwMac] of the Dimensions record")
+	it = add_iter (hd,"colMic",colMic,off+2,2,"<H")
+	add_tip (hd,it,"0-based Idx of the 1st column with data/formatting-populated cell in the current row. UINT [0;255]. colMic == colMac => no cells")
+	it = add_iter (hd,"colMac",colMac,off+4,2,"<H")
+	add_tip (hd,it,"1-based Idx of the last column with data/formatting-populated cell in the current row. UINT [1;256]. colMic == colMac => no cells")
+	it = add_iter (hd,"miyRw",miyRw,off+6,2,"<H")
+	add_tip (hd,it,"Height of row in twips (1/1440 inch); UINT [2;8192]. For hidden row -- the original row height.")
+	it = add_iter (hd,"iOutLevel",iOutLevel,12+off,1,"<B")
+	add_tip (hd,it,"3 bits, UINT outline level of the row.")
+	it = add_iter (hd,"fCollapsed",fCollapsed,12+off,1,"<B")
+	add_tip (hd,it,"1 bit, include rows one level deeper than current in the collapsed outline state")
+	it = add_iter (hd,"fDyZero",fDyZero,12+off,1,"<B")
+	add_tip (hd,it,"1 bit, row is hidden.")
+	it = add_iter (hd,"fUnsync",fUnsync,12+off,1,"<B")
+	add_tip (hd,it,"1 bit, row height was manually set.")
+	it = add_iter (hd,"fGhostDirty",fGhostDirty,12+off,1,"<B")
+	add_tip (hd,it,"1 bit, row was formatted.")
+	it = add_iter (hd,"ixfe_val",ixfe_val,14+off,2,"<H")
+	add_tip (hd,it,"12 bits, UINT of XF record for the row formatting. If fGhostDirty is 0, undefined and should be ignored.")
+	it = add_iter (hd,"fExAsc",fExAsc,15+off,1,"<B")
+	add_tip (hd,it,"1 bit, any cell in the row has a thick top border, or any cell in directly above row has a thick bottom border.")
+	it = add_iter (hd,"fExDes",fExDes,15+off,1,"<B")
+	add_tip (hd,it,"1 bit, any cell in the row has a medium/thick bottom border, or any cell in directly below row has a medium/thick top border.")
+	it = add_iter (hd,"fPhonetic",fPhonetic,15+off,1,"<B")
+	add_tip (hd,it,"1 bit, any cell in the row has the 'phonetic guide feature' activated.")
 
 #0x225
 def biff_defrowh (hd,data):

@@ -1063,7 +1063,8 @@ Hexdump selection:\n\
 				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
 				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb)
 				doc.hd.txtdump_hex.connect('key-press-event',self.hdscroll_cb)
-
+				doc.hd.hdview.set_tooltip_column(8)
+				
 				hpaned = gtk.HPaned()
 				hpaned.add1(scrolled)
 				hpaned.add2(vpaned)

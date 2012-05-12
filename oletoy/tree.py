@@ -18,8 +18,20 @@ import gobject
 import gtk
 
 def make_view():
-   # Create the model. Name/Type/Length/Value/Value2//Color//Path//VSD_Stream_Format//Command
-   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_PYOBJECT, gobject.TYPE_INT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,gobject.TYPE_STRING,gobject.TYPE_STRING,gobject.TYPE_STRING,gobject.TYPE_PYOBJECT)
+   # Create the model.
+   model = gtk.TreeStore(
+    gobject.TYPE_STRING,    # Name
+    gobject.TYPE_PYOBJECT,  # Type
+    gobject.TYPE_INT,       # Length
+    gobject.TYPE_PYOBJECT,  # Value
+    gobject.TYPE_PYOBJECT,  # Value2
+    gobject.TYPE_STRING,    # Colour
+    gobject.TYPE_STRING,    # Path
+    gobject.TYPE_STRING,    # VSD_Stream_Format
+    gobject.TYPE_PYOBJECT,  # Command
+    gobject.TYPE_STRING     # Tooltip
+    )
+    
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_reorderable(True)
@@ -56,8 +68,18 @@ def make_view():
    return model,view,scrolled
 
 def make_view2():
-   # Create the model.  Name/Value/Offset/Length/Format/(optional) 2nd Offset/2nd Len
-   model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_INT,gobject.TYPE_PYOBJECT)
+   # Create the model.  Name/Value/Offset/Length/Format/(optional) 2nd Offset/2nd Len/Tip
+   model = gtk.TreeStore(
+    gobject.TYPE_STRING,    # Name
+    gobject.TYPE_STRING,    # Value
+    gobject.TYPE_INT,       # Offset
+    gobject.TYPE_INT,       # Length
+    gobject.TYPE_STRING,    # Format
+    gobject.TYPE_INT,       # 2nd Offset
+    gobject.TYPE_INT,       # 2nd Length
+    gobject.TYPE_PYOBJECT,  # Path to fild/outl in CDR
+    gobject.TYPE_STRING     # Tooltip
+    )
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_enable_tree_lines(True)
