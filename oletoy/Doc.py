@@ -18,7 +18,7 @@ import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld
-import abr
+import abr,rtf
 
 class Page:
 	def __init__(self):
@@ -51,6 +51,10 @@ class Page:
 
 		if buf[0:8] == "CPT9FILE":
 			self.type = cpt.open(buf, self, parent)
+			return 0
+
+		if buf[0:5].lower() == "{\\rtf":
+			self.type = rtf.open(buf, self, parent)
 			return 0
 
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
