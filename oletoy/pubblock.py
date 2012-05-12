@@ -64,7 +64,11 @@ def parse (page,data,parent,i,j=-1):
 				else:
 					name += " (%02d)"%v
 
-			if type == 0x22 or type == 0x48 or type == 0x58 or type == 0x68 or type == 0x70:
+			if type == 0x48:
+				value = data[off:off+24]
+				off += 24
+				dlen = 0
+			if type == 0x22 or type == 0x58 or type == 0x68 or type == 0x70:
 				value = data[off:off+4]
 				dlen = 4
 				if type != 0x70:
@@ -104,11 +108,12 @@ def parse (page,data,parent,i,j=-1):
 			if type == 0xc0:
 				[dlen] = struct.unpack('<i', data[off:off+4])
 				value = data[off+4:off+dlen]
-				try:
-					name += " %s"%unicode(value,'utf-16')
-				except:
-					name += value
-					print "UCode failed"
+				if dlen > 4:
+					try:
+						name += " %s"%unicode(value,'utf-16')
+					except:
+						name += value
+						print "UCode failed",model.get_string_from_iter(parent)
 			if type == 0xFF: # current len just to pass parsing
 				value = ord(data[off+1])
 				dlen = 1
@@ -117,7 +122,7 @@ def parse (page,data,parent,i,j=-1):
 				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off),
 				iter1 = add_pgiter (page,"Unkn block","pub",0,"",parent)
 				model.set_value(iter1,5,"#FF0000")
-				print "Path",model.get_path(iter1)
+				print "Path",model.get_string_from_iter(iter1)
 				return
 			else:
 				if type != 0x78 or j > 0xFF:
@@ -126,4 +131,4 @@ def parse (page,data,parent,i,j=-1):
 						parse (page,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:
-		print "Failed at parsing block %d "%i,"val: ",value," off: ",off
+		print "Failed at parsing block %d "%i,"val: ",value," off: ",off,model.get_string_from_iter(parent)
