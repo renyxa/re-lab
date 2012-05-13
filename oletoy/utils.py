@@ -16,6 +16,13 @@
 
 import sys,struct
 
+ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
+	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
+	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
+	161:"Greek",162:"Turkish",163:"Vietnamese",177:"Hebrew",178:"Arabic",
+	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
+	255:"OEM Latin I"}
+
 def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,tip=None):
 	iter = hd.hdmodel.append(parent, None)
 	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)

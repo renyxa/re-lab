@@ -172,6 +172,14 @@ def List (hd, size, value):
 	else:
 		add_iter(hd,"ChldList","[empty]",27+shl,ch_list_len,"txt")
 
+def Font (hd, size, value):
+	charset = ord(value[0x15])
+	chtxt = key2txt(charset,ms_charsets,"%02x"%charset)
+	add_iter(hd, "Charset", chtxt,0x15,1,"<B")
+	fontname = unicode(value[0x19:])
+	add_iter(hd, "Font name", fontname,0x19,len(fontname),"txt")
+
+
 def Text (hd, size, value):
 	# no support for LangID for v.6
 	if hd.version == 11:
@@ -641,6 +649,7 @@ def FrgnType (hd, size, value):
 chnk_func = {
 	0xe:Text,
 	0x15:Page,
+	0x19:Font,
 	0x28:ShapeStencil,
 	0xd:List,0x2c:List,
 	0x46:Shape,0x47:Shape, 0x48:Shape, 0x4a:Shape, 0x4e:Shape,0x4f:Shape,
