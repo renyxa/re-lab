@@ -2,6 +2,7 @@
 
 		* XLS: add tooltips for hd tree.
 		* RTF: initial support.
+		* Added emf/wmf to commands.
 
 2012-04-25  Valek Filippov
 

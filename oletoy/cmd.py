@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree, gtk, gobject,zlib
-import ole, escher, rx2, cdr,icc
+import ole, escher, rx2, cdr,icc,mf
 from utils import *
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
@@ -214,6 +214,16 @@ def parse (cmd, entry, page):
 			cdr.cdr_open (buf[int(chaddr,16):],page,iter1)
 		elif "icc" == chtype.lower():
 			icc.parse (page,buf[int(chaddr,16):],iter1)
+		elif "emf" == chtype.lower():
+			pt = page.type
+			page.type = "EMF"
+			mf.mf_open (buf[int(chaddr,16):],page,iter1)
+			page.type = pt
+		elif "wmf" == chtype.lower() or "apwmf" == chtype.lower():
+			pt = page.type
+			page.type = chtype.upper()
+			mf.mf_open (buf[int(chaddr,16):],page,iter1)
+			page.type = pt
 
 		elif "xls" == chtype.lower():
 			ch2 = chaddr[1]
