@@ -20,69 +20,76 @@ import gtk
 from utils import *
 
 def rtf_read (buf,off,page,parent):
-	val = ""
-	name = ""
-	value = ""
-	nflag = 0
-	flush = 0
-	pflag = 0
-	name2 = ""
-
-	while off < len(buf):
-		ch = buf[off]
-		off += 1
-
-		if ord(ch) == 0xd or ord(ch) == 0xa:
-			nflag = 0
-
-		if ch == "{":
-			nflag = 0
-			if not flush:
-				piter = add_pgiter (page,name,"rtf",name,value,parent)
-				flush = 1
-			off = rtf_read(buf,off,page,piter)
-
-		if ch == "}":
-			if not flush:
-				if name == "pict":
-					iter1 = page.model.prepend (parent,None)
-					page.model.set_value(iter1,0,name)
-					page.model.set_value(iter1,1,("rtf",name))
-					page.model.set_value(iter1,2,len(value))
-					page.model.set_value(iter1,3,value)
-					page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-
-				else:
-					add_pgiter (page,name,"rtf",name,value,parent)
-			return off
-
-		if ch == "\\":
-			if name == "" or name == "*":
-				nflag = 1
-			else:
+	try:
+		val = ""
+		name = ""
+		value = ""
+		nflag = 0
+		flush = 0
+		pflag = 0
+		name2 = ""
+	
+		while off < len(buf):
+			ch = buf[off]
+			off += 1
+	
+			if ord(ch) == 0xd or ord(ch) == 0xa:
 				nflag = 0
+	
+			if ch == "{":
+				nflag = 0
+				if not flush:
+					piter = add_pgiter (page,name,"rtf",name,value,parent)
+					flush = 1
+				off,flush = rtf_read(buf,off,page,piter)
+				name = ""
+				value = ""
 
-		if nflag and ch !="\\":
-			name += ch
-		if pflag:
-			if ch !="\\":
-				name2 += ch
-				if name2 == "bin":
-					size = struct.unpack(">H",buf[off:off+2])[0]
-					value += ch
-					add_pgiter (page,name2,"rtf",name,buf[off:off+2+size],parent)
-					off += size+2
+			if ch == "}":
+				if not flush:
+					if name == "pict":
+						iter1 = page.model.prepend (parent,None)
+						page.model.set_value(iter1,0,name)
+						page.model.set_value(iter1,1,("rtf",name))
+						page.model.set_value(iter1,2,len(value))
+						page.model.set_value(iter1,3,value)
+						page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+					else:
+						add_pgiter (page,name,"rtf",name,value,parent)
+				return off,2
+
+			if ch == "\\":
+				if name == "" or name == "*":
+					nflag = 1
+					if flush == 2:  # to handle closed rtf1 section case
+						flush = 0
 				else:
+					nflag = 0
+				
+			if nflag and ch !="\\":
+				name += ch
+			if pflag:
+				if ch !="\\":
+					name2 += ch
+					if name2 == "bin":
+						size = struct.unpack(">H",buf[off:off+2])[0]
+						value += ch
+						add_pgiter (page,name2,"rtf",name,buf[off:off+2+size],parent)
+						off += size+2
+					else:
+						value += ch
+				else:
+					name2 = ""
 					value += ch
 			else:
-				name2 = ""
 				value += ch
-		else:
-			value += ch
-		if name == "pict":
-			pflag = 1
-		else:
-			pflag = 0
+	
+			if name == "pict":
+				pflag = 1
+			else:
+				pflag = 0
+	except:
+		print "failed","%02x"%off,name
 
 def open(buf,page,parent):
 	off = 0
