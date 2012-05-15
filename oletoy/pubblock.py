@@ -68,6 +68,7 @@ def parse (page,data,parent,i,j=-1):
 				value = data[off:off+24]
 				off += 24
 				dlen = 0
+
 			if type == 0x22 or type == 0x58 or type == 0x68 or type == 0x70:
 				value = data[off:off+4]
 				dlen = 4

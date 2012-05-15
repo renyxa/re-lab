@@ -38,6 +38,9 @@ def open (buf,page,iter=None):
 
 def get_children(page,infile,parent,ftype,dirflag=0):
 	vbaiter = None
+	docdata = ""
+	docdataiter = None
+	tbliter = None
 	for i in range(cgsf.gsf_infile_num_children(infile)):
 		infchild = cgsf.gsf_infile_child_by_index(infile,i)
 		infname = ctypes.string_at(cgsf.gsf_infile_name_by_index(infile,i))
@@ -89,7 +92,10 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 			doc.parse (page, data, iter1)
 		if infname == "1Table" or infname == "0Table":
-			doc.parse_table (page, data, iter1)
+			doc.parse_table (page, data, iter1,docdata,dodataiter)
+		if infname == "Data" and page.type == "DOC":
+			docdataiter = iter1
+			docdata = data
 		if infname == "Book" or infname == "Workbook":
 			page.model.set_value(iter1,1,("xls",dirflag))
 			ftype = xls.parse (page, data, iter1)

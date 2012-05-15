@@ -26,13 +26,6 @@ from utils import *
 cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
 
-charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
-	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
-	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
-	161:"Greek",162:"Turkish",163:"Vietnamese",177:"Hebrew",178:"Arabic",
-	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
-	255:"OEM Latin I"}
-
 escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
 
 underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Double accounting"}
@@ -306,7 +299,10 @@ recs = {"base":fib_base,"fibRgW":fib_RgW,"fibRgLw":fib_RgLw, "fibRgFcLcbBlob":fi
 ptable_unsd = {0:"",7:"",14:"",20:"",25:"",26:"",34:"",35:"",38:"",39:"",45:"",49:"",64:"",65:"",66:"",67:"",68:"",77:"",78:"",79:"",80:"",
   81:"",82:"",86:""}
 
-def parse_table (page, data, parent):
+def parse_data (page, data, dataiter):
+	pass
+
+def parse_table (page, data, parent, docdata, docdataiter):
 	offset = 0
 	fclcb = page.model.get_value(page.wdoc,3)
 	for i in range(len(fclcb97recs1)):
@@ -319,7 +315,7 @@ def parse_table (page, data, parent):
 
 def parse (page, data, parent):
 	offset = 0
-	type = "DOC"
+	page.type = "DOC"
 	add_pgiter (page,"Base","doc","base",data[0:0x20],parent)
 	offset += 0x20
 	csw = struct.unpack("<H",data[offset:offset+2])[0]
