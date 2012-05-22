@@ -288,6 +288,18 @@ odraw_id_names = {
 	0xF11D:'OfficeArtFPSPL',0xF11E:'OfficeArtSplitMenuColorContainer',
 	0xF121:'OfficeArtSecondaryFOPT',0xF122:'OfficeArtTertiaryFOPT'
 }
+odraw_bliptypes = {
+	0x00:'Error',
+	0x01:'Unknown',
+	0x02:'EMF',
+	0x03:'WMF',
+	0x04:'PICT',
+	0x05:'JPEG',
+	0x06:'PNG',
+	0x07:'DIB',
+	0x11:'TIFF',
+	0x12:'CMYK JPG'
+	}
 
 def FDGGBlock (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -346,6 +358,19 @@ def FSP (hd, size, value):
 	hd.hdmodel.set (iter1, 0, "flags", 1, flagstr,2,12,3,4,4,"<I")
 
 
+
+def FBSE (hd, size, value):
+	off = 8
+	btWin32 = ord(value[off])
+	add_iter(hd,"btWin32","%02x (%s)"%(btWin32,key2txt(btWin32, odraw_bliptypes)),off,1,"<B")
+	off += 1
+	btMac =  ord(value[off])
+	add_iter(hd,"btMac","%02x (%s)"%(btMac,key2txt(btMac, odraw_bliptypes)),off,1,"<B")
+	off += 1
+	rgbUid = d2hex(value[off:off+16])
+	add_iter(hd,"rgbUid",rgbUid,off,16,"txt")
+
+
 fopt_names = {
 0xc0c0:'Text',0xc0c5:'Font',0xc105:'Name',0xc187:'bgName',
 0xc680:'bookmark',0xc681:'bookmarkName',0xc383:'wrapPoints'
@@ -402,7 +427,7 @@ odraw_ids = {
 #	0xF002:'OfficeArtDgContainer',0xF003:'OfficeArtSpgrContainer',
 #	0xF004:'OfficeArtSpContainer',0xF005:'OfficeArtSolverContainer',
 	0xF006:FDGGBlock,
-#	0xF007:'OfficeArtFBSE',
+	0xF007:FBSE,
 	0xF008:FDG,
 	0xF009:FSPGR,
 	0xF00A:FSP,
@@ -426,7 +451,7 @@ def parse (model,data,parent,doctype=""):
 #	try:
 		offset = 0
 		while offset < len(data) - 8:
-			contflag = ord(data[offset])
+			contflag = ord(data[offset])&0xF
 			newT = struct.unpack('<H', data[offset+2:offset+4])[0]
 			newL = struct.unpack('<I', data[offset+4:offset+8])[0]
 
