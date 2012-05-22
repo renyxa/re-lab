@@ -169,23 +169,25 @@ def unpack_samp (data,page,siter):
 	cmpr = ord(data[143])
 	off = 0x144+(bottom-top)*2
 	buf = ""
-	for i in range(bottom-top):
-		size = struct.unpack(">H",data[0x144+i*2:0x146+i*2])[0]
-		j = 0
-		while j < size:
-			flag = ord(data[off])
-			off += 1
-			if flag > 128:
-				dlen = 257 - flag
-				buf +=  data[off]*dlen
+	if cmpr:
+		for i in range(bottom-top):
+			size = struct.unpack(">H",data[0x144+i*2:0x146+i*2])[0]
+			j = 0
+			while j < size:
+				flag = ord(data[off])
 				off += 1
-				j += 2
-			else:
-				dlen = flag + 1
-				buf += data[off:off+dlen]
-				off += dlen
-				j += dlen + 1
-				
+				if flag > 128:
+					dlen = 257 - flag
+					buf +=  data[off]*dlen
+					off += 1
+					j += 2
+				else:
+					dlen = flag + 1
+					buf += data[off:off+dlen]
+					off += dlen
+					j += dlen + 1
+	else:
+		buf = data[0x144:]
 	add_pgiter(page,"Uncmpr","abr","uncsamp",buf,siter)
 
 def read_8bim(buf,page,parent,off):
