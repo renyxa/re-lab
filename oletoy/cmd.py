@@ -219,12 +219,15 @@ def parse (cmd, entry, page):
 			page.type = "EMF"
 			mf.mf_open (buf[int(chaddr,16):],page,iter1)
 			page.type = pt
+		elif "deflate" == chtype.lower():
+			uncmpr = zlib.decompress(buf[int(chaddr,16):])
+			add_pgiter (page,"[Decompressed data]","",0,uncmpr,iter1)
+
 		elif "wmf" == chtype.lower() or "apwmf" == chtype.lower():
 			pt = page.type
 			page.type = chtype.upper()
 			mf.mf_open (buf[int(chaddr,16):],page,iter1)
 			page.type = pt
-
 		elif "xls" == chtype.lower():
 			ch2 = chaddr[1]
 			if ch2.isdigit():

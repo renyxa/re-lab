@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld
 from utils import *
 
-version = "0.5.82"
+version = "0.5.85"
 
 ui_info = \
 '''<ui>
@@ -219,6 +219,7 @@ Entry line:\n\
 	gtk tree path - scroll/expand tree\n\
 	#addr - scroll hexdump to addr\n\
 	#addr+shift, #addr-shift - calculate new addr and scroll hexdump\n\
+	$deflate{@addr} - try to decompress starting from addr (or 0)\n\
 	$esc{@addr} - try to parse record as Escher starting from addr (or 0)\n\
 	$ole{@addr} - try to parse record as OLE starting from addr (or 0)\n\
 	$cmx{@addr} - try to parse record as CMX starting from addr (or 0)\n\
