@@ -145,40 +145,48 @@ def parse (page,data,parent):
 	model = page.model
 	off = 0
 	add_pgiter (page,"Header","quill",0,data[off:off+32],parent)
-	[ch_num] = struct.unpack('<H', data[off+26:off+28])
+	ch_num = struct.unpack('<H', data[off+26:off+28])[0]
+	nxt_chblk = struct.unpack('<I', data[off+28:off+32])[0]
 	off += 32
 	txtiter = None
 	txtnum = -1
 	txtid = 0
-	for i in range(ch_num):
-		[doffset] = struct.unpack('<I', data[off+16:off+20])	# offset to "sub-stream" data
-		[dlen] = struct.unpack('<I', data[off+20:off+24])			# length of "sub-stream" data
-		name = data[off+2:off+6]+"/"+data[off+12:off+16]+str(struct.unpack('<H', data[off+6:off+8])[0])+" [%02x:%02x]"%(doffset,doffset+dlen)
-		iter1 = model.append(parent,None)
-		if name[0:4] == "TEXT":
-			txtiter = iter1 # assume for now that I won't have "TEXT/TEXT<num>" with <num> greater than 0
-		if name[0:4] == "FDPC" or name[0:4] == "FDPP":
-			parse_fdpc (page,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
-		if name[0:4] == "SYID":
-			txtid = parse_syid(page,data,doffset,iter1,txtiter,txtid)
-		if name[0:4] == "STSH":
-			parse_stsh (page,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
-		if name[0:4] == "STRS":
-			parse_strs (page,data[doffset:doffset+dlen],iter1,txtiter)
-		if name[0:4] == "TCD ":
-			parse_tcd (page,data[doffset:doffset+dlen],iter1,txtiter)
-		if name[0:4] == "PL  ":
-			parse_pl (page,data[doffset:doffset+dlen],iter1)
-		if name[0:4] == "FONT":
-			parse_font (page,data[doffset:doffset+dlen],iter1)
-		if name[0:4] == "MCLD":
-			parse_mcld (page,data[doffset:doffset+dlen],iter1)
-
-		model.set_value(iter1,0,name)
-		model.set_value(iter1,1,("quill",name[0:4]))
-		model.set_value(iter1,2,dlen)
-		model.set_value(iter1,3,data[doffset:doffset+dlen])
-		model.set_value(iter1,6,model.get_string_from_iter(iter1))
-
-		off += 24
-	add_pgiter (page,"Tail","quill",0,data[doffset+dlen:],parent)
+	while ch_num != 0:
+		for i in range(ch_num):
+			[doffset] = struct.unpack('<I', data[off+16:off+20])	# offset to "sub-stream" data
+			[dlen] = struct.unpack('<I', data[off+20:off+24])			# length of "sub-stream" data
+			name = data[off+2:off+6]+"/"+data[off+12:off+16]+str(struct.unpack('<H', data[off+6:off+8])[0])+" [%02x:%02x]"%(doffset,doffset+dlen)
+			iter1 = model.append(parent,None)
+			if name[0:4] == "TEXT":
+				txtiter = iter1 # assume for now that I won't have "TEXT/TEXT<num>" with <num> greater than 0
+			if name[0:4] == "FDPC" or name[0:4] == "FDPP":
+				parse_fdpc (page,data,doffset,iter1) # we can have more than one "FDPC/FDPCx"
+			if name[0:4] == "SYID":
+				txtid = parse_syid(page,data,doffset,iter1,txtiter,txtid)
+			if name[0:4] == "STSH":
+				parse_stsh (page,data[doffset:doffset+dlen],iter1,name[9]) #STSH/STSH1 looks slightly different
+			if name[0:4] == "STRS":
+				parse_strs (page,data[doffset:doffset+dlen],iter1,txtiter)
+			if name[0:4] == "TCD ":
+				parse_tcd (page,data[doffset:doffset+dlen],iter1,txtiter)
+			if name[0:4] == "PL  ":
+				parse_pl (page,data[doffset:doffset+dlen],iter1)
+			if name[0:4] == "FONT":
+				parse_font (page,data[doffset:doffset+dlen],iter1)
+			if name[0:4] == "MCLD":
+				parse_mcld (page,data[doffset:doffset+dlen],iter1)
+	
+			model.set_value(iter1,0,name)
+			model.set_value(iter1,1,("quill",name[0:4]))
+			model.set_value(iter1,2,dlen)
+			model.set_value(iter1,3,data[doffset:doffset+dlen])
+			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+			off += 24
+		if nxt_chblk != 0xffFFffFF:
+			off = nxt_chblk
+			ch_num = struct.unpack('<H', data[off+2:off+4])[0]
+			nxt_chblk = struct.unpack('<I', data[off+4:off+8])[0]
+			off += 8
+		else:
+			ch_num = 0
+#	add_pgiter (page,"Tail","quill",0,data[doffset+dlen:],parent)
