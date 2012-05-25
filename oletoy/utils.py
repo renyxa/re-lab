@@ -31,16 +31,23 @@ def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,
 def add_tip (hd,iter,text):
 	hd.hdmodel.set (iter, 8, text)
 
-def add_pgiter (page, name, ftype, stype, data, parent = None):
-	iter1 = page.model.append (parent,None)
+def pgiter(page, name, ftype, stype, data, iter1):
 	page.model.set_value(iter1,0,name)
 	page.model.set_value(iter1,1,(ftype,stype))
 	if data != None:
 		page.model.set_value(iter1,2,len(data))
 		page.model.set_value(iter1,3,data)
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+
+def add_pgiter (page, name, ftype, stype, data, parent = None):
+	iter1 = page.model.append (parent,None)
+	pgiter(page, name, ftype, stype, data, iter1)
 	return iter1
 
+def prep_pgiter (page, name, ftype, stype, data, parent = None):
+	iter1 = page.model.prepend (parent,None)
+	pgiter(page, name, ftype, stype, data, iter1)
+	return iter1
 
 def hex2d(data):
 	res = ''

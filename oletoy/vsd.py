@@ -140,9 +140,11 @@ def ptr_search (page, data, version, parent):
 		[offset] = struct.unpack ('<L', pdata[shift:shift+4])
 		if offset >= len(pdata):
 			return 0
+		lnum = struct.unpack ('<L', pdata[offset+shift-4:offset+shift])[0] # FIXME! verify
 		num =  struct.unpack ('<L', pdata[offset+shift:offset+shift+4])[0]
 		offset = offset+8+shift
 	else:
+		lnum = struct.unpack ('<H', pdata[0x6+shift:0x6+shift+2])[0]
 		num = struct.unpack ('<H', pdata[0xa+shift:0xa+shift+2])[0]
 		offset = 0xa+shift+2
 		if ptr.type == 0x14:
@@ -233,7 +235,6 @@ def ptr_search (page, data, version, parent):
 			  if vbaflag == 1:
 				vbadata += res[4:len(res)]
   #			print "ptr type/fmt %02x %02x"%(pntr.type,pntr.format)
-  
 		  if (pntr.format>>4 == 5 and pntr.type != 0x16) or pntr.type == 0x40:
 			  if pntr.type == 0x1e:
 				model.set_value(iter2,1,("vsd","str4",pntr.type)) # it's not a stream4, but...
@@ -247,6 +248,9 @@ def ptr_search (page, data, version, parent):
 			  vsdchunks.parse (model, version, iter1, pntr)
 	if vbaflag == 1:
 	  ole.open (vbadata, page, iter2)
+	if ptr.format >> 4 == 5 and ptr.type != 0x45:
+	  prep_pgiter(page,"List","vsd","str5tail",pdata[offset+num*plen:],parent)
+
 
 def get_colors (page, data, version, parent):
 	model = page.model
