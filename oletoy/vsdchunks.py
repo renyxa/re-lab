@@ -465,6 +465,18 @@ def StyleProps (hd, size, value):
 
 
 def LayerIX (hd, size, value):
+	add_iter(hd,"ClrID","0x%02x"%ord(value[0x1b]),0x1b,1,"<B")
+	if ord(value[0x1b]) != 255:
+		add_iter(hd,"Colour",d2hex(value[0x1c:0x1f]),0x1c,3,"clr")
+	add_iter(hd,"Transparency","%d%%"%(ord(value[0x1f])*100/255),0x1f,1,"<B")	
+	add_iter(hd,"Visible","%d"%ord(value[0x21]),0x21,1,"<B")
+	add_iter(hd,"Print","%d"%ord(value[0x22]),0x22,1,"<B")
+	add_iter(hd,"Active","%d"%ord(value[0x23]),0x23,1,"<B")
+	add_iter(hd,"Lock","%d"%ord(value[0x24]),0x24,1,"<B")
+	add_iter(hd,"Snap","%d"%ord(value[0x25]),0x25,1,"<B")
+	add_iter(hd,"Glue","%d"%ord(value[0x26]),0x26,1,"<B")
+
+
 	if len(value)>0x34: # both 6 and 11
 		vsdblock.parse(hd, size, value, 0x34)
 
