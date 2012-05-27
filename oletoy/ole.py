@@ -92,7 +92,7 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 			doc.parse (page, data, iter1)
 		if infname == "1Table" or infname == "0Table":
-			doc.parse_table (page, data, iter1,docdata,dodataiter)
+			doc.parse_table (page, data, iter1,docdata,docdataiter)
 		if infname == "Data" and page.type == "DOC":
 			docdataiter = iter1
 			docdata = data
