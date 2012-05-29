@@ -631,6 +631,7 @@ Hexdump selection:\n\
 					except:
 						print "No such path"
 
+
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
 		model, iter1 = treeSelection.get_selected()
@@ -652,8 +653,12 @@ Hexdump selection:\n\
 									self.das[pn].view.set_cursor_on_cell(goto)
 								except:
 									print "No such path"
-
-					
+				elif model.iter_n_children(iter1)>0:
+					intPath = model.get_path(iter1)
+					view.expand_row(intPath,False)
+			elif event.type == gtk.gdk.KEY_RELEASE and event.keyval == 65361 and model.iter_n_children(iter1)>0:
+				intPath = model.get_path(iter1)
+				view.collapse_row(intPath)
 			else:
 				intPath = model.get_path(iter1)
 				self.on_hdrow_activated(view, intPath, 0)
@@ -1017,6 +1022,7 @@ Hexdump selection:\n\
 		doc.view.connect("key-release-event", self.on_row_keyreleased)
 		doc.view.connect("button-release-event", self.on_row_keyreleased)
 		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
+		doc.hd.hdview.connect("key-press-event", self.on_hdrow_keypressed)
 		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 
