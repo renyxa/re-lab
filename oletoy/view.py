@@ -23,7 +23,7 @@ import hexdump
 import Doc, cmd
 import escher,quill
 import vsd, vsdchunks,vsdstream4
-import xls, vba, ole, doc, mdb
+import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld
 from utils import *
@@ -472,6 +472,10 @@ Hexdump selection:\n\
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				vsd.save(self.das[pn],fname)
+		elif ftype == "pub":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				pub.save(self.das[pn],fname)
 		elif ftype[0:3] == "XLS":
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:

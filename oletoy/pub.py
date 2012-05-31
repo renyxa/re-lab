@@ -165,3 +165,6 @@ def parse(page,data,parent):
 	except:
 		print "Failed in parsing Contents"
 
+def save(page,fname):
+	model = page.view.get_model()
+	print "Save request. Stub. To be continued..."

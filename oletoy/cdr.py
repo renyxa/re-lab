@@ -1796,8 +1796,7 @@ def dump_chunk(model, parent):
 
 def save (page,fname):
 	model = page.view.get_model()
-	print "Save request. Stub. To be continued..."
-#	return
+	print "Save request. Ver 7 to 13 only. To be continued..."
 	buf = ""
 	if page.version > 6 and page.version < 14:
 		parent = model.iter_nth_child(None,0)
