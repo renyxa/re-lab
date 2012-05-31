@@ -545,10 +545,7 @@ Hexdump selection:\n\
 			elif goto[0] == "$" or goto[0] == "?":
 				cmd.parse (goto,self.entry,self.das[pn])
 			elif goto[0] == "=":
-#				try:
 					cmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
-#				except:
-#					print "Can't compare"
 
 			else:
 				try:

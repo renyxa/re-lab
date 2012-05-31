@@ -222,7 +222,21 @@ def parse (cmd, entry, page):
 		elif "deflate" == chtype.lower():
 			uncmpr = zlib.decompress(buf[int(chaddr,16):])
 			add_pgiter (page,"[Decompressed data]","",0,uncmpr,iter1)
-
+		elif "dump" == chtype.lower():
+			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg.set_local_only(True)
+			resp = dlg.run()
+			fname = dlg.get_filename()
+			dlg.hide()
+			if resp != gtk.RESPONSE_CANCEL:
+				nlen = model.get_value(iter1,2)
+				value = model.get_value(iter1,3)[int(chaddr,16):]
+				if nlen != None:
+					f = open(fname,'w')
+					f.write(value)
+					f.close()
+				else:
+					print "Nothing to save"
 		elif "wmf" == chtype.lower() or "apwmf" == chtype.lower():
 			pt = page.type
 			page.type = chtype.upper()
