@@ -79,6 +79,8 @@ class HexView():
 		self.bkhvlines = []			# previous state of the hvlines to support one step undo
 		self.exposed = 0
 		self.debug = -1					# -1 -- debug off, 1 -- debug on
+		self.edit = 1
+		self.edpos = 0
 		
 		# connect signals and call some init functions
 		self.hv.set_can_focus(True)
@@ -99,13 +101,16 @@ class HexView():
 			65288:self.okp_bksp, 65293:self.okp_enter,
 			65289:self.okp_tab,
 			65379:self.okp_ins,
-			100:self.okp_d, # "d" for debug
+#			100:self.okp_d, # "d" for debug
 			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, # ^C for 'copy'
 			122:self.okp_undo, # ^Z for 'undo'
 			105:self.okp_ins,	# i for Insert
 			32:self.okp_switch	# space to switch focus
 			}
+		self.edmap = {48:0,49:1,50:2,51:3,52:4,53:5,54:6,55:7,56:8,57:9,
+			97:10,98:11,99:12,100:13,101:14,102:15}
+
 
 
 		if lines == []:
@@ -119,6 +124,24 @@ class HexView():
 	def okp_switch(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
 			self.parent.entry.grab_focus()
+
+	def okp_edit(self,event):
+		pos = self.lines[self.curr][0]+self.curc
+		v = ord(self.data[pos])
+		if self.edpos == 0:
+			v1 = self.edmap[event.keyval]*16+(v&0xF)
+			self.edpos = 1
+			self.data = self.data[:pos]+chr(v1)+self.data[pos+1:]
+			self.hvlines[self.curr] = ""
+			self.get_string(self.curr)
+			self.exposed = 1
+		else:
+			v1 = (v&0xF0)+self.edmap[event.keyval]
+			self.edpos = 0
+			self.data = self.data[:pos]+chr(v1)+self.data[pos+1:]
+			self.hvlines[self.curr] = ""
+			self.get_string(self.curr)
+			self.okp_right(event)
 
 	def okp_tab(self,event):
 		self.exposed = 0
@@ -513,7 +536,10 @@ class HexView():
 			if self.kdrag == 0:
 				self.sel = (self.curr,self.curc,self.curr,self.curc)
 				self.kdrag = 1
-
+		if (event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103):
+			self.okp_edit(event)
+		else:
+			self.edpos = 0
 		if self.okp.has_key(event.keyval):
 			tmp = self.okp[event.keyval](event)
 			if tmp:

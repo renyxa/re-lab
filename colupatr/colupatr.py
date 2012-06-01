@@ -19,7 +19,7 @@ import gtk,gobject
 import hexview
 import utils
 
-version = "0.4.4"
+version = "0.4.5"
 
 ui_info = \
 '''<ui>
