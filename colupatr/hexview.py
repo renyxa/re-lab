@@ -536,7 +536,7 @@ class HexView():
 			if self.kdrag == 0:
 				self.sel = (self.curr,self.curc,self.curr,self.curc)
 				self.kdrag = 1
-		if (event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103):
+		if (event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103 and event.state != gtk.gdk.CONTROL_MASK):
 			self.okp_edit(event)
 		else:
 			self.edpos = 0

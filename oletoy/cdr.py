@@ -125,6 +125,28 @@ def stlt_s1(hd, size, data):
 	return
 
 def stlt_s2(hd, size, data):
+	off = 0x18
+	fid = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"Font ID",fid,off,2,"<H")
+	off += 2
+	enc = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"Encoding",enc,off,2,"<H")
+	off += 2
+	off += 8 # skip 2 more id/enc
+	for i in range(3):
+		fid = round(struct.unpack("<i",data[off+i*4:off+4+i*4])[0]*72/254000)
+		add_iter(hd,"Size %d"%(i+1),fid,off+i*4,4,"<I")
+	off += 12
+	for i in range(3):
+		fid = struct.unpack("<i",data[off+i*4:off+4+i*4])[0]
+		add_iter(hd,"var %2d"%i,fid,off+i*4,4,"<I")
+
+def stlt_s3(hd, size, data):
+	off = 8
+	fid = struct.unpack("<i",data[off:off+4])[0]
+	add_iter(hd,"Align", "%d (%s)"%(fid,key2txt(fid,{0:"No",1:"Left",2:"Center",3:"Right",4:"Full justify",5:"Force justify"})),off,4,"<I")
+
+def stlt_s(hd, size, data):
 	off = 8
 	for i in range((len(data)-8)/4):
 		fid = struct.unpack("<i",data[off+i*4:off+4+i*4])[0]
@@ -132,32 +154,141 @@ def stlt_s2(hd, size, data):
 			fid /= 10000.
 		add_iter(hd,"var %2d"%i,fid,off+i*4,4,"<I")
 
-def stlt_s3(hd, size, data):
-	stlt_s2(hd, size, data)
-
 def stlt_s4(hd, size, data):
-	stlt_s2(hd, size, data)
+	off = 8
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"???",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Char spacing (%)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Lang spacing (%)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Word spacing (%)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Line spacing (%)",fid,off,4,"<I")
+	off += 4
+	for i in range(2):
+		fid = struct.unpack("<i",data[off+i*4:off+4+i*4])[0]/10000.
+		add_iter(hd,"var %2d"%i,fid,off+i*4,4,"<I")
+	off += 8
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Max char spacing (%)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Min word spacing (%)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"Max word spacing (%)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<i",data[off:off+4])[0]
+	add_iter(hd,"var 2",fid,off,4,"<I")
+
 
 def stlt_s5(hd, size, data):
-	stlt_s2(hd, size, data)
+	stlt_s(hd, size, data)
 
 def stlt_s6(hd, size, data):
 	return
 
 def stlt_s7(hd, size, data):
-	stlt_s2(hd, size, data)
+	off = 8
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var0",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var1",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var2",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"[PT] Font ID",fid,off,2,"<H")
+	off += 2
+	enc = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"[PT] Encoding",enc,off,2,"<H")
+	off += 2
+	fid = round(struct.unpack("<i",data[off+i*4:off+4+i*4])[0]*72/254000)
+	add_iter(hd,"[PT] var4 (pt)",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var5",fid,off,4,"<I")
+	off += 4
+	fid = round(struct.unpack("<i",data[off+i*4:off+4+i*4])[0]*72/254000)
+	add_iter(hd,"[PT] Baseline shift (pt)",fid,off,4,"<I")
+	off += 4
+	for i in range(4):
+		fid = struct.unpack("<i",data[off+i*4:off+4+i*4])[0]
+		add_iter(hd,"var %2d"%(i+7),fid,off+i*4,4,"<I")
+	off += 16
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Glyph ID",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Bullet to Text spacing",fid,off,4,"<I")
+	off += 4
+
+
 
 def stlt_s8(hd, size, data):
-	stlt_s2(hd, size, data)
+	off = 8
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var1",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var2",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Right line indent",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] 1st line indent",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Left line indent",fid,off,4,"<I")
+	off += 4
 
 def stlt_s9(hd, size, data):
-	stlt_s2(hd, size, data)
+	off = 8
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Autohyphenate ParaText",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Break Cap words",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Break ALL CAPS",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Min word len",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Min char before",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Min char after",fid,off,4,"<I")
+	off += 4
 
 def stlt_s10(hd, size, data):
-	stlt_s2(hd, size, data)
+	off = 8
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var0",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] Use hanging indent",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] # of lines",fid,off,4,"<I")
+	off += 4
+	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
+	add_iter(hd,"[PT] Spave after",fid,off,4,"<I")
+	off += 4
 
 def stlt_s11(hd, size, data):
-	stlt_s2(hd, size, data)
+	stlt_s(hd, size, data)
 
 def stlt12_p2(hd, size, data):
 	n = struct.unpack("<I",data[0:4])[0]
@@ -1586,25 +1717,31 @@ def stlt(data,page,parent):
 	bkpoff = offset
 
 	try:
+		d2 = struct.unpack("<I",data[offset:offset+4])[0]
+		s_iter = add_pgiter(page,"bullet list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+		offset += 4
+
 		size = 80
 		shift = 0
 		if page.version < 10:  # VERIFY in what version it was changed
 			size = 72
 			shift = -8
-		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"bullet list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
-		offset += 4
+
 		for i in range(d2):
-			flag = struct.unpack("<I",data[offset+68+shift:offset+72+shift])[0] # for ver > 10
+			flag = struct.unpack("<I",data[offset+68+shift:offset+72+shift])[0]
 			if flag:
 				inc = 8
 			else:
 				inc = 0
 			if page.version > 12:
-				if struct.unpack("<I",data[offset+8:offset+12])[0]:
+				if struct.unpack("<I",data[offset+0x2c:offset+0x30])[0]:
 					inc = 32
+					if page.version > 13:
+						inc = 36
 				else:
 					inc = -24
+					if page.version > 13:
+						inc = -20
 			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s7",data[offset:offset+size+inc],s_iter)
 			offset += size + inc
 
@@ -1628,7 +1765,7 @@ def stlt(data,page,parent):
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
 		size = 28
-		if page.version < 9: # was < 10
+		if page.version <= 8: # was < 10
 			size = 24
 		s_iter = add_pgiter(page,"Dropcap list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
@@ -1655,7 +1792,9 @@ def stlt(data,page,parent):
 		while offset < len(data):
 			num = struct.unpack("<I",data[offset:offset+4])[0]
 			num2 = struct.unpack("<I",data[offset+12:offset+16])[0]
+			
 			add_pgiter(page,"num %d ID %s (pID %s) %s"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12]),d2hex(data[offset+12:offset+16])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
+			
 			if num == 3:
 				asize = 48
 			elif num == 2:
@@ -1663,7 +1802,7 @@ def stlt(data,page,parent):
 			else: # num == 1
 				asize = 8
 			offset += 20
-			if page.version < 9 and num > 1: # was PV 10
+			if page.version <= 8 and num > 1: # was PV 10
 				asize -= 4
 			namelen = struct.unpack("<I",data[offset:offset+4])[0]
 			if page.version < 12:
@@ -1883,7 +2022,10 @@ class record:
 			self.pack(page,f_iter)
 		if self.fourcc == 'page' and fmttype == "cmx":
 			cmx.parse_page(page,self.data,f_iter)
-
+		if self.fourcc == 'vrsn' and len(self.data) == 2: # ver 16
+				page.version = struct.unpack("<H",self.data)[0]/100.
+				print page.version
+	
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			if self.fourcc == 'RIFF' and fmttype == "cdr":
 				v = ord(self.data[3])
