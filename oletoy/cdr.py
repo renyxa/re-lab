@@ -211,13 +211,13 @@ def stlt_s7(hd, size, data):
 	enc = struct.unpack("<H",data[off:off+2])[0]
 	add_iter(hd,"[PT] Encoding",enc,off,2,"<H")
 	off += 2
-	fid = round(struct.unpack("<i",data[off+i*4:off+4+i*4])[0]*72/254000)
+	fid = round(struct.unpack("<i",data[off:off+4])[0]*72/254000)
 	add_iter(hd,"[PT] var4 (pt)",fid,off,4,"<I")
 	off += 4
 	fid = struct.unpack("<I",data[off:off+4])[0]
 	add_iter(hd,"[PT] var5",fid,off,4,"<I")
 	off += 4
-	fid = round(struct.unpack("<i",data[off+i*4:off+4+i*4])[0]*72/254000)
+	fid = round(struct.unpack("<i",data[off:off+4])[0]*72/254000)
 	add_iter(hd,"[PT] Baseline shift (pt)",fid,off,4,"<I")
 	off += 4
 	for i in range(4):
@@ -2014,8 +2014,15 @@ class record:
 				ttxt = key2txt(t,fild_types)
 				page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
 		if page.version < 16 and self.fourcc == 'mcfg':
-			page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
-			page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
+			if page.version == 6:
+				page.hd.width = struct.unpack("<I",self.data[0x1c:0x20])[0]/10000
+				page.hd.height = struct.unpack("<I",self.data[0x20:0x24])[0]/10000
+			elif page.version < 6:
+				page.hd.width = struct.unpack("<H",self.data[0x1c:0x20])[0]*0.0254
+				page.hd.height = struct.unpack("<H",self.data[0x20:0x24])[0]*0.0254
+			else:
+				page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
+				page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
 		if self.fourcc == 'iccd':
 			icc.parse(page,self.data,f_iter)
 		if self.fourcc == 'pack':
@@ -2025,7 +2032,7 @@ class record:
 		if self.fourcc == 'vrsn' and len(self.data) == 2: # ver 16
 				page.version = struct.unpack("<H",self.data)[0]/100.
 				print page.version
-	
+
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			if self.fourcc == 'RIFF' and fmttype == "cdr":
 				v = ord(self.data[3])
@@ -2081,6 +2088,12 @@ class record:
 							t = struct.unpack("<H",data[off:off+2])[0]
 							ttxt = key2txt(t,fild_types)
 							page.dictmod.set_value(d_iter,3,"0x%02x (%s)"%(t,ttxt))
+					if self.fourcc == 'stlt':
+						try:
+							stlt("stlt"+data,page,p_iter)
+						except:
+							print "Something failed in 'stlt'."
+
 					if self.fourcc == 'mcfg':
 						if page.version == 6:
 							page.hd.width = struct.unpack("<I",data[0x1c:0x20])[0]/10000
