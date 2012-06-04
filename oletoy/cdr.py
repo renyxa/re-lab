@@ -284,21 +284,36 @@ def stlt_s10(hd, size, data):
 	add_iter(hd,"[PT] # of lines",fid,off,4,"<I")
 	off += 4
 	fid = struct.unpack("<I",data[off:off+4])[0]/10000.
-	add_iter(hd,"[PT] Spave after",fid,off,4,"<I")
+	add_iter(hd,"[PT] Space after",fid,off,4,"<I")
 	off += 4
 
 def stlt_s11(hd, size, data):
 	stlt_s(hd, size, data)
+
+style_ids = {
+	0:"Fild",
+	1:"Outl",
+	2:"Font",
+	3:"Alignment",
+	4:"Intervals",
+	5:"Set5s",
+	6:"Set11s",
+	7:"Tabs",
+	8:"Bullets",
+	9:"Indents",
+	10:"Hypens",
+	11:"Dropcaps"
+}
 
 def stlt12_p2(hd, size, data):
 	n = struct.unpack("<I",data[0:4])[0]
 	if hd.version > 10:
 		off = 4 + n*2
 	else:
-		off = 4 + n +1
+		off = 4 + n
 	for i in range((len(data)-off)/4):
 		fid = d2hex(data[off+i*4:off+4+i*4])
-		add_iter(hd,"ID %d"%i,fid,off+i*4,4,"<I")
+		add_iter(hd,"ID %d (%s)"%(i,key2txt(i,style_ids)),fid,off+i*4,4,"<I")
 
 
 def arrw (hd, size, data):
