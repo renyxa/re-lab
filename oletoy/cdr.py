@@ -309,6 +309,7 @@ style_ids = {
 	11:"Dropcaps"
 }
 
+
 def stlt12_p2(hd, size, data):
 	n = struct.unpack("<I",data[0:4])[0]
 	if hd.version > 10:
@@ -317,7 +318,10 @@ def stlt12_p2(hd, size, data):
 		off = 4 + n
 	for i in range((len(data)-off)/4):
 		fid = d2hex(data[off+i*4:off+4+i*4])
-		add_iter(hd,"ID %d (%s)"%(i,key2txt(i,style_ids)),fid,off+i*4,4,"<I")
+		st = key2txt(i,style_ids)
+		if hd.version < 8 and i > 5:
+			st = key2txt(i+1,style_ids)
+		add_iter(hd,"ID %d (%s)"%(i,st),fid,off+i*4,4,"<I")
 
 
 def arrw (hd, size, data):
@@ -1289,6 +1293,10 @@ def loda_wrstyle (hd,data,offset,l_type):
 	ws = struct.unpack("<I",data[offset:offset+4])[0]
 	add_iter (hd,"[32c9] Txt Wrap Style","%d (%s)"%(ws,key2txt(ws,wrap_txt_style)),offset,4,"<I")
 
+
+styd_types = {
+	0xc8:"Name",
+}
 
 loda_types = {
 	0:"Layer",
