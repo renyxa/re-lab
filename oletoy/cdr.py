@@ -126,6 +126,10 @@ def stlt_s1(hd, size, data):
 
 def stlt_s2(hd, size, data):
 	off = 0x18
+	snum = 3
+	if hd.version < 10:
+		off = 0x10
+		snum = 1
 	fid = struct.unpack("<H",data[off:off+2])[0]
 	add_iter(hd,"Font ID",fid,off,2,"<H")
 	off += 2
@@ -133,10 +137,10 @@ def stlt_s2(hd, size, data):
 	add_iter(hd,"Encoding",enc,off,2,"<H")
 	off += 2
 	off += 8 # skip 2 more id/enc
-	for i in range(3):
+	for i in range(snum):
 		fid = round(struct.unpack("<i",data[off+i*4:off+4+i*4])[0]*72/254000)
 		add_iter(hd,"Size %d"%(i+1),fid,off+i*4,4,"<I")
-	off += 12
+	off += snum*4
 	for i in range(3):
 		fid = struct.unpack("<i",data[off+i*4:off+4+i*4])[0]
 		add_iter(hd,"var %2d"%i,fid,off+i*4,4,"<I")
