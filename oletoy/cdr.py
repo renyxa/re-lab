@@ -1296,6 +1296,17 @@ def loda_wrstyle (hd,data,offset,l_type):
 
 styd_types = {
 	0xc8:"Name",
+	0xcd:"Fild ID",
+	0xd2:"Outl ID",
+	0xdc:"Fonts",
+	0xe1:"Align", # FIXME! verify with non0
+	0xe6:"Bullets",
+	0xeb:"Intervals",
+	0xf0:"Tabs",
+	0xf5:"Idents",
+	0xfa:"Hypens",
+	0xff:"Set5s",
+	0x104:"Dropcaps",
 }
 
 loda_types = {
@@ -1308,6 +1319,7 @@ loda_types = {
 	6:"Paragraph Text",
 	0xb:"Grid",
 	0xc:"Guides",
+	0x10:"Style", #?? ver6-
 	0x11:"Desktop",
 	0x14:"Polygon",
 	0x20:"Mesh",
@@ -1336,14 +1348,14 @@ loda_type_func = {0xa:loda_outl,0x14:loda_fild,0x1e:loda_coords,
 									0x32c8:loda_wroff,0x32c9:loda_wrstyle,
 									0x4ace:loda_mesh}
 
-def loda_v5 (hd,size,data):
+def loda_v5 (hd,size,data,shift=0,ftype=0):
 	n_args = struct.unpack('<H', data[2:4])[0]
 	s_args = struct.unpack('<H', data[4:6])[0]
 	s_types = struct.unpack('<H', data[6:8])[0]
 	l_type = struct.unpack('<H', data[8:10])[0]
-	add_iter (hd, "# of args", n_args,2,2,"<H")
-	add_iter (hd, "Start of args offsets", "%02x"%s_args,4,2,"<H")
-	add_iter (hd, "Start of arg types", "%02x"%s_types,6,2,"<H")
+	add_iter (hd, "# of args", n_args,2+shift,2,"<H")
+	add_iter (hd, "Start of args offsets", "%02x"%s_args,4+shift,2,"<H")
+	add_iter (hd, "Start of arg types", "%02x"%s_types,6+shift,2,"<H")
 	t_txt = "%02x"%l_type
 	if hd.version == 3:
 		if loda_types_v3.has_key(l_type):
@@ -1357,52 +1369,65 @@ def loda_v5 (hd,size,data):
 	for i in range(n_args,0,-1):
 		a_txt += " %02x"%struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
 		t_txt += " %02x"%struct.unpack('<H',data[s_types+(n_args-i)*2:s_types+(n_args-i)*2+2])[0]
-	add_iter (hd, "Args offsets",a_txt,s_args,n_args*2,"<H")
-	add_iter (hd, "Args types",t_txt,s_types,n_args*2,"<H")
-	if loda_types.has_key(l_type):
-		for i in range(n_args, 0, -1):
-			offset = struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
-			length = struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset
-			argtype = struct.unpack('<H',data[s_types + (n_args-i)*2:s_types + (n_args-i)*2+2])[0]
+	add_iter (hd, "Args offsets",a_txt,s_args+shift,n_args*2,"<H")
+	add_iter (hd, "Args types",t_txt,s_types+shift,n_args*2,"<H")
+#	if loda_types.has_key(l_type):
+	for i in range(n_args, 0, -1):
+		offset = struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
+		length = struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset
+		argtype = struct.unpack('<H',data[s_types + (n_args-i)*2:s_types + (n_args-i)*2+2])[0]
+		if ftype == 0:
 			if loda_type_func.has_key(argtype):
-				loda_type_func[argtype](hd,data,offset,l_type,length)
+				loda_type_func[argtype](hd,data,offset+shift,l_type,length)
 			else:
-				add_iter (hd,"[%02x]"%(argtype),"???",offset,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
+				add_iter (hd,"[%02x]"%(argtype),"???",offset+shift,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
+		else:
+			if styd_types.has_key(argtype):
+				add_iter (hd,styd_types[argtype],"...",offset+shift,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"txt")
+			else:
+				add_iter (hd,"[%02x]"%(argtype),"???",offset+shift,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"txt")
 
-def loda (hd,size,data):
+def loda (hd,size,data,shift=0,ftype=0):
 	if hd.version < 6:
-		loda_v5 (hd,size,data)
+		loda_v5 (hd,size,data,0,ftype)
 		return
 	n_args = struct.unpack('<I', data[4:8])[0]
 	s_args = struct.unpack('<I', data[8:0xc])[0]
 	s_types = struct.unpack('<I', data[0xc:0x10])[0]
 	l_type = struct.unpack('<I', data[0x10:0x14])[0]
-	add_iter (hd, "# of args", n_args,4,4,"<I")
-	add_iter (hd, "Start of args offsets", "%02x"%s_args,8,4,"<I")
-	add_iter (hd, "Start of arg types", "%02x"%s_types,0xc,4,"<I")
+	add_iter (hd, "# of args", n_args,4+shift,4,"<I")
+	add_iter (hd, "Start of args offsets", "%02x"%s_args,8+shift,4,"<I")
+	add_iter (hd, "Start of arg types", "%02x"%s_types,0xc+shift,4,"<I")
 	t_txt = "%02x"%l_type
 	if loda_types.has_key(l_type):
 		t_txt += " " + loda_types[l_type]
 
-	add_iter (hd, "Type", t_txt,0x10,2,"<I")
+	add_iter (hd, "Type", t_txt,0x10+shift,2,"<I")
 
 	a_txt = ""
 	t_txt = ""
-	for i in range(n_args+1,0,-1):
+	for i in range(n_args,0,-1):
 		a_txt += " %04x"%struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
 		t_txt += " %04x"%struct.unpack('<L',data[s_types+(n_args-i)*4:s_types+(n_args-i)*4+4])[0]
-	add_iter (hd, "Args offsets",a_txt,s_args,n_args*4,"txt")
-	add_iter (hd, "Args types",t_txt,s_types,n_args*4,"txt")
+	add_iter (hd, "Args offsets",a_txt,s_args+shift,n_args*4,"txt")
+	add_iter (hd, "Args types",t_txt,s_types+shift,n_args*4,"txt")
 
-	if loda_types.has_key(l_type):
-		for i in range(n_args, 0, -1):
-			offset = struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
-			length = struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset
-			argtype = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
+#	if loda_types.has_key(l_type):
+	for i in range(n_args, 0, -1):
+		offset = struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
+		length = struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset
+		argtype = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
+		if ftype == 0:
 			if loda_type_func.has_key(argtype):
-				loda_type_func[argtype](hd,data,offset,l_type,length)
+				loda_type_func[argtype](hd,data,offset+shift,l_type,length)
 			else:
-				add_iter (hd,"[%04x]"%(argtype),"???",offset,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+				add_iter (hd,"[%04x]"%(argtype),"???",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+		else:
+			if styd_types.has_key(argtype):
+				add_iter (hd,styd_types[argtype],"...",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+			else:
+				add_iter (hd,"[%04x]"%(argtype),"???",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
+			
 #				print 'Unknown argtype: %x'%argtype
 
 dtypes = {1:"Push",2:"Zip",3:"Twist"}
@@ -1416,6 +1441,11 @@ def lnkt (hd,size,data):
 		add_iter (hd, "???", "%02x"%struct.unpack('<L',data[start:start+4])[0],start,4,"<I")
 		add_iter (hd, "spnd ID1", d2hex(data[start+4:start+8]),start+4,4,"<I")
 		add_iter (hd, "spnd ID2", d2hex(data[start+8:start+12]),start+8,4,"<I")
+
+def styd (hd,size,data):
+	off = 0
+	add_iter (hd, "Style ID", "%02x"%struct.unpack('<H',data[off:off+2])[0],off,2,"<H")
+	loda (hd,size,data[2:],2,1)
 
 def trfd (hd,size,data):
 	n_args = struct.unpack('<i', data[4:8])[0]
@@ -1878,7 +1908,8 @@ cdr_ids = {
 	"stlt_s9":stlt_s9,
 	"stlt_s10":stlt_s10,
 	"stlt_s11":stlt_s11,
-	"stlt_s12_p2":stlt12_p2
+	"stlt_s12_p2":stlt12_p2,
+	"styd":styd
 	}
 
 
@@ -2045,8 +2076,11 @@ class record:
 				page.hd.width = struct.unpack("<I",self.data[0x1c:0x20])[0]/10000
 				page.hd.height = struct.unpack("<I",self.data[0x20:0x24])[0]/10000
 			elif page.version < 6:
-				page.hd.width = struct.unpack("<H",self.data[0x1c:0x20])[0]*0.0254
-				page.hd.height = struct.unpack("<H",self.data[0x20:0x24])[0]*0.0254
+				try:
+					page.hd.width = struct.unpack("<H",self.data[0x1c:0x20])[0]*0.0254
+					page.hd.height = struct.unpack("<H",self.data[0x20:0x24])[0]*0.0254
+				except:
+					print "Oops"
 			else:
 				page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
 				page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
