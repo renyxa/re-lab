@@ -1389,7 +1389,7 @@ def loda_v5 (hd,size,data,shift=0,ftype=0):
 
 def loda (hd,size,data,shift=0,ftype=0):
 	if hd.version < 6:
-		loda_v5 (hd,size,data,0,ftype)
+		loda_v5 (hd,size,data,shift,ftype)
 		return
 	n_args = struct.unpack('<I', data[4:8])[0]
 	s_args = struct.unpack('<I', data[8:0xc])[0]
