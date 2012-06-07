@@ -1357,13 +1357,16 @@ def loda_v5 (hd,size,data,shift=0,ftype=0):
 	add_iter (hd, "Start of args offsets", "%02x"%s_args,4+shift,2,"<H")
 	add_iter (hd, "Start of arg types", "%02x"%s_types,6+shift,2,"<H")
 	t_txt = "%02x"%l_type
-	if hd.version == 3:
-		if loda_types_v3.has_key(l_type):
-			t_txt += " " + loda_types_v3[l_type]
+	if ftype == 0:
+		if hd.version == 3:
+			if loda_types_v3.has_key(l_type):
+				t_txt += " " + loda_types_v3[l_type]
+		else:
+			if loda_types.has_key(l_type):
+				t_txt += " " + loda_types[l_type]
+		add_iter (hd, "Type", t_txt,8,2,"<H")
 	else:
-		if loda_types.has_key(l_type):
-			t_txt += " " + loda_types[l_type]
-	add_iter (hd, "Type", t_txt,8,2,"<H")
+		add_iter (hd, "Parent ID", "%02x"%l_type,0x10+shift,2,"<H")
 	a_txt = ""
 	t_txt = ""
 	for i in range(n_args,0,-1):
@@ -1399,10 +1402,12 @@ def loda (hd,size,data,shift=0,ftype=0):
 	add_iter (hd, "Start of args offsets", "%02x"%s_args,8+shift,4,"<I")
 	add_iter (hd, "Start of arg types", "%02x"%s_types,0xc+shift,4,"<I")
 	t_txt = "%02x"%l_type
-	if loda_types.has_key(l_type):
-		t_txt += " " + loda_types[l_type]
-
-	add_iter (hd, "Type", t_txt,0x10+shift,2,"<I")
+	if ftype == 0:
+		if loda_types.has_key(l_type):
+			t_txt += " " + loda_types[l_type]
+		add_iter (hd, "Type", t_txt,0x10+shift,2,"<I")
+	else:
+		add_iter (hd, "Parent ID", "%02x"%l_type,0x10+shift,2,"<H")
 
 	a_txt = ""
 	t_txt = ""
@@ -1535,7 +1540,75 @@ def disp (hd,size,data,page):
 def vpat (hd,size,data):
 	add_iter (hd, "Vect ID", struct.unpack("<I",data[0:4])[0],0,4,"<I")
 
+def txsm16 (hd,size,data):
+	off = 0
+	frameflag = struct.unpack('<i', data[off:off+4])[0]
+	off += 4
+	flag2  = struct.unpack('<i', data[off:off+4])[0]
+	off += 4
+	flag3  = struct.unpack('<i', data[off:off+4])[0]
+	off += 4
+	flag4  = struct.unpack('<i', data[off:off+4])[0]
+	off = 0x2d
+	add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
+	off += 4
+	for i in range(6):
+		var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
+	off += 48
+	if frameflag == 0:
+		for i in range(7):
+			var = struct.unpack('<i', data[off+i*4:off+4+i*4])[0]
+			add_iter (hd, "var%d"%(i+1), "%d"%var,off+i*4,4,"<d")
+		off += 28
+		tlen = struct.unpack('<I', data[off:off+4])[0]
+		off += 4
+		frametxt = data[off:off+tlen*2]
+		add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt")
+		off += tlen*2
+		off += 4
+		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
+		off += 5 #!!! one more byte
+	else:
+		off += 16
+		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
+		off += 6 #!!! two more bytes
+	len2 = struct.unpack('<I', data[off:off+4])[0]
+	off += 4
+	txt2 = data[off:off+len2*2]
+	print "---------------------------------"
+	print txt2
+	print "---------------------------------"
+	add_iter (hd, "Txt2", unicode(txt2,"utf-16"),off,len2*2,"txt")
+	off += len2*2
+	off += 10
+	len3 = struct.unpack('<I', data[off:off+4])[0]
+	off += 4
+	txt3 = data[off:off+len3*2]
+	add_iter (hd, "Txt3", unicode(txt3,"utf-16"),off,len3*2,"txt")
+	off += len3*2
+	len4 = struct.unpack('<I', data[off:off+4])[0]
+	off += 4
+	txt4 = data[off:off+len4*2]
+	add_iter (hd, "Txt4", unicode(txt4,"utf-16"),off,len4*2,"txt")
+	off += len4*2
+	
+	num2 = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
+	off += 4
+	for i in range(num2):
+		add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
+		off += 8
+	txtlen = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "Text length", txtlen,off,4,"<I")
+	off += 4
+	add_iter (hd, "Text", "",off,txtlen,"txt")
+
+
 def txsm (hd,size,data):
+	if hd.version == 16:
+		txsm16 (hd,size,data)
+		return
 	# ver16 -- add '40 06' parsing (seems to be different '40 06').
 	# 6,7,8 -- 3, 8bidi,9 -- 4
 	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
@@ -1757,6 +1830,7 @@ def stlt(data,page,parent):
 
 	size = 152
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
+	set5d2 = d2
 	s_iter = add_pgiter(page,"set5 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
@@ -1822,21 +1896,24 @@ def stlt(data,page,parent):
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
 		size = 28
-		if page.version <= 8: # was < 10
-			size = 24
+#		if page.version <= 8: # was < 10
+#			size = 24
 		s_iter = add_pgiter(page,"Dropcap list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
 			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
 			offset += size
 
-		size = 12
-		d2 = struct.unpack("<I",data[offset:offset+4])[0]
-		s_iter = add_pgiter(page,"set11 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
-		offset += 4
-		for i in range(d2):
-			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s11",data[offset:offset+size],s_iter)
-			offset += size
+		set11flag = 0
+		if page.version > 8 or (page.version ==8 and set5d2 > 1): #struct.unpack("<I",data[offset-4:offset])[0] == 0):
+			size = 12
+			set11flag = 1
+			d2 = struct.unpack("<I",data[offset:offset+4])[0]
+			s_iter = add_pgiter(page,"set11 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
+			offset += 4
+			for i in range(d2):
+				add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s11",data[offset:offset+size],s_iter)
+				offset += size
 
 	# size after name
 	# dword 1:	3		2		1
@@ -1859,7 +1936,7 @@ def stlt(data,page,parent):
 			else: # num == 1
 				asize = 8
 			offset += 20
-			if page.version <= 8 and num > 1: # was PV 10
+			if page.version <= 8 and num > 1 and set11flag ==0: # was PV 10
 				asize -= 4
 			namelen = struct.unpack("<I",data[offset:offset+4])[0]
 			if page.version < 12:
