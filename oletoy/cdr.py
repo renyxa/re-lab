@@ -1576,23 +1576,38 @@ def txsm16 (hd,size,data):
 	len2 = struct.unpack('<I', data[off:off+4])[0]
 	off += 4
 	txt2 = data[off:off+len2*2]
-	print "---------------------------------"
-	print txt2
-	print "---------------------------------"
+#	print "---------------------------------"
+#	print txt2
+#	print "---------------------------------"
 	add_iter (hd, "Txt2", unicode(txt2,"utf-16"),off,len2*2,"txt")
 	off += len2*2
-	off += 10
+	numrec = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "#of Rec", numrec,off,4,"<I")
+	off += 4
+	add_iter (hd, "??? 0", d2hex(data[off:off+6]),off,6,"txt")
+	off += 6
+	# first record
 	len3 = struct.unpack('<I', data[off:off+4])[0]
 	off += 4
 	txt3 = data[off:off+len3*2]
-	add_iter (hd, "Txt3", unicode(txt3,"utf-16"),off,len3*2,"txt")
+	add_iter (hd, "Txt 0.0", unicode(txt3,"utf-16"),off,len3*2,"txt")
 	off += len3*2
 	len4 = struct.unpack('<I', data[off:off+4])[0]
 	off += 4
 	txt4 = data[off:off+len4*2]
-	add_iter (hd, "Txt4", unicode(txt4,"utf-16"),off,len4*2,"txt")
+	add_iter (hd, "Txt 0.1", unicode(txt4,"utf-16"),off,len4*2,"txt")
 	off += len4*2
 	
+	# other recs
+	for i in range(numrec-1):
+		add_iter (hd, "??? %d"%(i+1), d2hex(data[off:off+6]),off,6,"txt")
+		off += 6
+		rlen = struct.unpack('<I', data[off:off+4])[0]
+		off += 4
+		rtxt = data[off:off+rlen*2]
+		add_iter (hd, "Txt %d"%(i+1), unicode(rtxt,"utf-16"),off,rlen*2,"txt")
+		off += rlen*2
+
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 	off += 4
