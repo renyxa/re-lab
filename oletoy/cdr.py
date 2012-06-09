@@ -232,8 +232,8 @@ def stlt_s6(hd, size, data):
 
 def stlt_s7(hd, size, data):
 	off = 8
-	fid = struct.unpack("<I",data[off:off+4])[0]
-	add_iter(hd,"[PT] var0",fid,off,4,"<I")
+	fid0 = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"[PT] var5 flag",fid0,off,4,"<I")
 	off += 4
 	fid = struct.unpack("<I",data[off:off+4])[0]
 	add_iter(hd,"[PT] var1",fid,off,4,"<I")
@@ -2185,8 +2185,12 @@ class record:
 				f_iter = add_pgiter(page,self.fourcc,fmttype,"idx16%s"%self.fourcc,self.data,parent)
 		if self.fourcc == "sumi":
 			try:
-				lid = struct.unpack("<I",self.data[0x30:0x34])[0]
-				print key2txt(lid,langids)
+				vid = struct.unpack("<I",self.data[0x24:0x28])[0]
+				bid = struct.unpack("<I",self.data[0x28:0x2c])[0]
+				print 'Last saved: %d build %d'%(vid/100.,bid)
+				if len(self.data) >= 0x34:
+					lid = struct.unpack("<I",self.data[0x30:0x34])[0]
+					print key2txt(lid,langids)
 			except:
 				print "Failed to parse 'sumi'"
 		if page.version < 16 and (self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "fill" or self.fourcc == "arrw" or self.fourcc == "bmpf"):
