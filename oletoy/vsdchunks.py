@@ -750,11 +750,13 @@ def parse(model, version, parent, pntr):
 			ptr.data = pntr.data[offset:offset+ch_hdr_len+chnk.length+trailer]
 			offset = offset + ch_hdr_len+ chnk.length+trailer
 
+			debflag = 0
 			if chunktype.has_key(chnk.type):
 				itername = '%-24s'%chunktype[chnk.type]+'(IX: %02x  Len: %02x Lvl: %u)'%(chnk.IX, chnk.length,chnk.level)
 			else:
 				itername = 'Type: %02x \t\tI/L List/Level/u3: %02x/%02x  %02x %02x %02x'%(chnk.type,chnk.IX,chnk.length,chnk.list,chnk.level,chnk.unkn3)
-				print "!!! --------------- !!!",'%02x'%chnk.type,'%02x'%chnk.level
+				print "!!! --------------- !!!",'%02x'%chnk.type,'%02x'%chnk.level,
+				debflag = 1
 			if chnk.level ==0:
 				path = path0
 			if chnk.level ==1:
@@ -772,6 +774,8 @@ def parse(model, version, parent, pntr):
 			model.set_value(iter1,3,ptr.data)
 			model.set_value(iter1,4,ptr)
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
+			if debflag:
+				print model.get_string_from_iter(iter1)
 
 			if chnk.type == 0xd: #OLE_List
 				olelist = model.append(iter1, None)
