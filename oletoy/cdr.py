@@ -1602,7 +1602,34 @@ def txsm16 (hd,size,data):
 		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 5 #!!! one more byte
 	else:
-		off += 16
+		txtonpath = struct.unpack('<I', data[off:off+4])[0]
+		off += 4
+		if txtonpath == 1:
+			add_iter (hd, "tonp var1", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Orientation", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var2", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var3", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Offset", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var4", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Distance", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var5", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Mirror Vert", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Mirror Hor", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var6", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var7", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+		off += 4
 		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 6 #!!! two more bytes
 	len2 = struct.unpack('<I', data[off:off+4])[0]
