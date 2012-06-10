@@ -1952,7 +1952,7 @@ def stlt(data,page,parent):
 			offset += size
 
 		set11flag = 0
-		if page.version > 8 or (page.version ==8 and set5d2 > 1): #struct.unpack("<I",data[offset-4:offset])[0] == 0):
+		if page.version > 8:
 			size = 12
 			set11flag = 1
 			d2 = struct.unpack("<I",data[offset:offset+4])[0]
