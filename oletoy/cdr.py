@@ -1398,7 +1398,7 @@ def loda_v5 (hd,size,data,shift=0,ftype=0):
 				t_txt += " " + loda_types[l_type]
 		add_iter (hd, "Type", t_txt,8,2,"<H")
 	else:
-		add_iter (hd, "Parent ID", "%02x"%l_type,0x10+shift,2,"<H")
+		add_iter (hd, "Parent ID", "%02x"%l_type,8+shift,2,"<H")
 	a_txt = ""
 	t_txt = ""
 	for i in range(n_args,0,-1):
