@@ -1629,6 +1629,8 @@ def txsm16 (hd,size,data):
 			off += 4
 			add_iter (hd, "tonp var7", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
 			off += 4
+		else:
+			off += 8
 		off += 4
 		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 6 #!!! two more bytes
