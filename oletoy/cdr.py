@@ -1679,14 +1679,65 @@ def txsm16 (hd,size,data):
 	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 
+def txsm5 (hd,size,data):
+	off = 10
+	add_iter (hd, "Style ID",struct.unpack('<H', data[off:off+2])[0],off,2,"<H")
+	off += 2
+	numst = struct.unpack('<H', data[off:off+2])[0]
+	add_iter (hd, "# style recs",numst,off,2,"<H")
+	off += 2
+	for i in range(numst):
+		add_iter (hd, "style %d"%i, "...",off,36,"txt")
+		off += 36
+	numch = struct.unpack('<H', data[off:off+2])[0]
+	off += 2
+	for i in range(numch):
+		add_iter (hd, "Char %d"%i, "%s\t(%d, %d\tstyle %d)"%(data[off+4],struct.unpack("<H",data[off:off+2])[0],struct.unpack("<H",data[off+2:off+4])[0],struct.unpack("<H",data[off+6:off+8])[0]/16),off,8,"txt")
+		off += 8
+
+def txsm6 (hd,size,data):
+	if round(hd.version) == 5:
+		txsm5 (hd,size,data)
+		return
+	elif hd.version < 5:
+		return
+
+	off = 0x28
+	for i in range(6):
+		var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+		add_iter (hd, "var%d"%i, "%d"%(var/10000),off+i*8,8,"<d")
+	off += 48
+	add_iter (hd, "??? 1",struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+	off += 4
+	add_iter (hd, "Style ID",struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+	off += 4
+	numst = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "# style recs",numst,off,4,"<I")
+	off += 4
+	for i in range(numst):
+		add_iter (hd, "style %d"%i, "...",off,60,"txt")
+		off += 60
+	numch = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "# of chars",numch,off,4,"<I")
+	off += 4
+	for i in range(numch):
+		add_iter (hd, "Char %d"%i, "%s\t(%d, style %d)"%(data[off+4],struct.unpack("<I",data[off:off+4])[0],struct.unpack("<H",data[off+10:off+12])[0]),off,12,"txt")
+		off += 12
+
+
 def txsm (hd,size,data):
 	if hd.version == 16:
 		txsm16 (hd,size,data)
 		return
+	elif hd.version < 7:
+		txsm6 (hd,size,data)
+		return
+
 	# ver16 -- add '40 06' parsing (seems to be different '40 06').
 	# 6,7,8 -- 3, 8bidi,9 -- 4
 	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
-	
+
+
 	off = 0x24
 	if hd.version == 15:
 		off += 1
