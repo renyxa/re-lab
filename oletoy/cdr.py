@@ -1196,11 +1196,49 @@ def loda_coords_v3 (hd,data,offset,l_type,length):
 #		y = struct.unpack("<H",data[offset+2:offset+4])[0]*0.0254
 		add_iter (hd,"[001e] ","",offset,length,"txt")
 
+lcv4styles = {
+	1:"Underline",
+	2:"Bold",
+	4:"Italic",
+	8:"Bold/Italic",
+	0x11:"Superscript",
+	0x21:"Subscript"
+}
+
+def loda_coords_v4 (hd,data,offset,l_type,length):
+	x = struct.unpack("<h",data[offset:offset+2])[0]*0.0254
+	y = struct.unpack("<h",data[offset+2:offset+4])[0]*0.0254
+	add_iter (hd,"[001e] X/Y","%.2f  %.2f"%(x,y),offset,4,"<hh")
+	off = 4
+	clen = struct.unpack("<h",data[offset+off:offset+off+2])[0]
+	off += 2
+	while off < clen - 3:
+		flag = ord(data[offset+off])
+		ch = data[offset+off+1]
+		chdesc = ""
+		chlen = 3
+		if flag:
+			chlen = 25
+			bf = struct.unpack("<h",data[offset+off+3:offset+off+5])[0]
+			fid = struct.unpack("<h",data[offset+off+5:offset+off+7])[0]
+			var = struct.unpack("<h",data[offset+off+7:offset+off+9])[0]
+			st = struct.unpack("<h",data[offset+off+9:offset+off+11])[0]
+			offx = struct.unpack("<h",data[offset+off+11:offset+off+13])[0]
+			offy = struct.unpack("<h",data[offset+off+13:offset+off+15])[0]
+			rot = struct.unpack("<h",data[offset+off+15:offset+off+17])[0]
+			fld = struct.unpack("<I",data[offset+off+17:offset+off+21])[0]
+			outl = struct.unpack("<I",data[offset+off+21:offset+off+25])[0]
+			chdesc = "\tFlags: %02x Font: %02x ??? %02x Style: %02x (%s) OffX/Y: %d/%d Rot: %d Fild: %02x Outl: %02x"%(bf,fid,var,st,key2txt(st,lcv4styles),offx,offy,rot,fld,outl)
+		add_iter (hd,"\t Char",ch+chdesc,offset+off,chlen,"txt")
+		off += chlen
+
 def loda_coords (hd,data,offset,l_type,length):
 	if hd.version < 4:
 		loda_coords_v3 (hd,data,offset,l_type,length)
 	else:
-		if l_type < 5 and l_type != 3:
+		if l_type == 4 and round(hd.version) == 4:
+			loda_coords_v4 (hd,data,offset,l_type,length)
+		elif l_type < 5 and l_type != 3:
 			loda_coords124 (hd,data,offset,l_type)
 		elif l_type == 3:
 			loda_coords3 (hd,data,offset,l_type)
@@ -1406,7 +1444,7 @@ def loda_v5 (hd,size,data,shift=0,ftype=0):
 		t_txt += " %02x"%struct.unpack('<H',data[s_types+(n_args-i)*2:s_types+(n_args-i)*2+2])[0]
 	add_iter (hd, "Args offsets",a_txt,s_args+shift,n_args*2,"<H")
 	add_iter (hd, "Args types",t_txt,s_types+shift,n_args*2,"<H")
-#	if loda_types.has_key(l_type):
+
 	for i in range(n_args, 0, -1):
 		offset = struct.unpack('<H',data[s_args+i*2-2:s_args+i*2])[0]
 		length = struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset
