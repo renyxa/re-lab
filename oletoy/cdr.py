@@ -1177,6 +1177,15 @@ def loda_coords_0x25(hd,data,offset,l_type):
 			NodeType = NodeType+'  Arc'
 		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2)+NodeType,off+i*8,8,"txt",off+numpts*8+i,1)
  
+lcv3styles = {
+	6:"Underline",
+	4:"Bold",
+	5:"Italic",
+	7:"Bold/Italic",
+	9:"Superscript",
+	8:"Subscript"
+}
+
 
 def loda_coords_v3 (hd,data,offset,l_type,length):
 	if l_type == 0: # rectangle
@@ -1192,9 +1201,28 @@ def loda_coords_v3 (hd,data,offset,l_type,length):
 		f = struct.unpack("<h",data[offset+8:offset+10])[0]  # "connect to center" flag
 		add_iter (hd,"[001e] X/Y/Ang1/Ang2/Flag","%.2f  %.2f  %.2f %.2f %d"%(x,y,a1,a2,f),offset,10,"<hhhhh")
 	elif l_type == 2: # line/curve
-#		x = struct.unpack("<H",data[offset:offset+2])[0]*0.0254
-#		y = struct.unpack("<H",data[offset+2:offset+4])[0]*0.0254
 		add_iter (hd,"[001e] ","",offset,length,"txt")
+	elif l_type == 3: # text
+		num = struct.unpack("<H",data[offset+11:offset+13])[0]
+		add_iter (hd,"[001e] Num of char",num,offset+11,2,"<H")
+		off = 0x84
+		for i in range(num):
+			flag = ord(data[offset+off])
+			ch = data[offset+off+1]
+			chdesc = ""
+			chlen = 3
+			if flag:
+				chlen = 16
+				bf = ord(data[offset+off+3])
+				st = struct.unpack("<h",data[offset+off+4:offset+off+6])[0]
+				offx = struct.unpack("<h",data[offset+off+6:offset+off+8])[0]
+				offy = struct.unpack("<h",data[offset+off+8:offset+off+10])[0]
+				rot = struct.unpack("<h",data[offset+off+10:offset+off+12])[0]
+				fld = struct.unpack("<H",data[offset+off+12:offset+off+14])[0]
+				outl = struct.unpack("<H",data[offset+off+14:offset+off+16])[0]
+				chdesc = "\tFlags: %02x Style: %02x (%s) OffX/Y: %d/%d Rot: %d Fild: %02x Outl: %02x"%(bf,st,key2txt(st,lcv3styles),offx,offy,rot,fld,outl)
+			add_iter (hd,"\t Char",ch+chdesc,offset+off,chlen,"txt")
+			off += chlen
 
 lcv4styles = {
 	1:"Underline",
