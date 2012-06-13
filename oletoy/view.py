@@ -601,6 +601,8 @@ Hexdump selection:\n\
 						view.grab_focus()
 			elif event.keyval == 65363 and model.iter_n_children(iter1)>0:
 				view.expand_row(intPath,False)
+				ha = gtk.Adjustment()
+				view.set_hadjustment(ha)
 			elif event.keyval == 65361 and model.iter_n_children(iter1)>0:
 				view.collapse_row(intPath)
 			else:
@@ -844,7 +846,9 @@ Hexdump selection:\n\
 				elif ntype[0] == "wld":
 					if wld.wld_ids.has_key(ntype[1]):
 							wld.wld_ids[ntype[1]](hd,size,data)
-
+				elif ntype[0] == "pub98":
+					if pub.pub98_ids.has_key(ntype[1]):
+							pub.pub98_ids[ntype[1]](hd,size,data)
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)

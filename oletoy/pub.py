@@ -23,11 +23,49 @@ import pubblock
 from utils import *
 
 pub98_types = {0x15:"Document",
-	0x2:"Image",0x5:"Shape",0x8:"Text block",0xa:"Table",0xb:"Bookmark",
+	0x2:"Image",0x4:"Line",0x5:"Shape",0x7:"Ellipse",0x8:"Text block",0xa:"Table",0xb:"Bookmark",
+	0xf:"Group",
 	0x21:"ImgData",0x54:"Filename",
 	0x14:"Page",0x28:"(pub2k3 0x4a)",
 	0x29:"Printers",0x47:"ColorSchemes"}
 
+def pub98anchor (hd,size,data):
+	add_iter(hd,"Xs",struct.unpack("<i",data[6:0xa])[0]/12700.,6,4,"<I")
+	add_iter(hd,"Ys",struct.unpack("<i",data[0xa:0xe])[0]/12700.,0xa,4,"<I")
+	add_iter(hd,"Xe",struct.unpack("<i",data[0xe:0x12])[0]/12700.,0xe,4,"<I")
+	add_iter(hd,"Ye",struct.unpack("<i",data[0x12:0x16])[0]/12700.,0x12,4,"<I")
+
+def pub98image (hd,size,data):
+	pub98anchor (hd,size,data)
+
+def pub98line (hd,size,data):
+	pub98anchor (hd,size,data)
+
+def pub98shape (hd,size,data):
+	pub98anchor (hd,size,data)
+
+def pub98ellipse (hd,size,data):
+	pub98anchor (hd,size,data)
+
+def pub98text (hd,size,data):
+	pub98anchor (hd,size,data)
+
+def pub98group (hd,size,data):
+	pub98anchor (hd,size,data)
+
+def pub98doc (hd,size,data):
+	add_iter(hd,"Width",struct.unpack("<I",data[0x14:0x18])[0]/12700.,0x14,4,"<I")
+	add_iter(hd,"Height",struct.unpack("<I",data[0x18:0x1c])[0]/12700.,0x18,4,"<I")
+
+pub98_ids = {
+	0x02:pub98image,
+	0x04:pub98line,
+	0x05:pub98shape,
+	0x07:pub98ellipse,
+	0x08:pub98text,
+	0x0f:pub98group,
+	0x15:pub98doc
+}
 
 # parse "Contents" part of the pub98/pub2k
 def parse98 (page,data,parent):
