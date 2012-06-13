@@ -20,7 +20,7 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt, vba, doc, qpw
+import vsd, xls, ppt, vba, doc, qpw, ppp
 import ctypes
 from utils import *
 
@@ -107,7 +107,11 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			ftype = "qpw"
 			page.model.set_value(iter1,1,("qpw",dirflag))
 			qpw.parse (page, data, iter1)
-		
+		if infname == "Signature" and data[:4] == '\x60\x67\x01\x00':
+			ftype = "ppp"  #PagePlus OLE version (9.x?)
+		if (infname == "contents" or infname == "SCFFPreview") and ftype == "ppp":
+			ppp.parse(page,data,iter1,infname)
+
 		if infname == "VBA":
 			page.type = ftype
 			ftype = "vba"

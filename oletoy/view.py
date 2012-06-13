@@ -25,7 +25,7 @@ import escher,quill
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
-import cdr,cmx,wld
+import cdr,cmx,wld,ppp
 from utils import *
 
 version = "0.5.85"
@@ -822,7 +822,9 @@ Hexdump selection:\n\
 					vba.vba_dir(hd,data)
 				elif ntype[0] == "vba" and ntype[1] == "src":
 					vba.vba_src(hd,data)
-
+				elif ntype[0] == "ppp":
+					if ppp.ppp_ids.has_key(ntype[1]):
+						ppp.ppp_ids[ntype[1]](hd,size,data,self.das[pn])
 				elif ntype[0] == "emf":
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)
