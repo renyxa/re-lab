@@ -49,6 +49,7 @@ def pub98ellipse (hd,size,data):
 
 def pub98text (hd,size,data):
 	pub98anchor (hd,size,data)
+	add_iter(hd,"Txt ID",struct.unpack("<i",data[0x58:0x5c])[0],0x58,4,"<I")
 
 def pub98group (hd,size,data):
 	pub98anchor (hd,size,data)
