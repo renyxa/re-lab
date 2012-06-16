@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 
-version = "0.5.85"
+version = "0.7.0"
 
 ui_info = \
 '''<ui>
@@ -37,6 +37,7 @@ ui_info = \
 		<menuitem action='New'/>
 		<menuitem action='Open'/>
 		<menuitem action='Reload'/>
+		<menuitem action='Options'/>
 		<menuitem action='Save'/>
 		<menuitem action='Close'/>
 		<separator/>
@@ -130,6 +131,16 @@ class ApplicationMainWindow(gtk.Window):
 		self.cmdhistory = []
 		self.curcmd = -1
 
+		# configuration options
+		self.options_le = 1
+		self.options_be = 0
+		self.options_txt = 1
+		self.options_div = 1
+		self.options_enc = "utf-16"
+		self.options_win = None
+		self.statbuffer = ""
+
+
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
 				self.fname = sys.argv[i+1]
@@ -174,7 +185,10 @@ class ApplicationMainWindow(gtk.Window):
 				"_Dictionary","<control>D",					  # label, accelerator
 				"Show type dependant dictionary",							 # tooltip
 				self.activate_dict),
-
+			( "Options", None,                    # name, stock id
+				"Op_tions","<control>T",                      # label, accelerator
+				"Configuration options",                             # tooltip
+				self.activate_options),
 			( "Save", gtk.STOCK_SAVE,                    # name, stock id
 				"_Save","<control>S",                      # label, accelerator
 				"Save the file",                             # tooltip
@@ -240,6 +254,101 @@ Hexdump selection:\n\
 		w.set_default_size(520, 300)
 		w.add(t)
 		w.show_all()
+
+	def on_enc_entry_activate (self,entry):
+		enc = entry.get_text()
+		try:
+			unicode("test",enc)
+			self.options_enc = enc
+			if self.statbuffer != "":
+				self.calc_status(self.statbuffer,len(self.statbuffer))
+		except:
+			entry.set_text(self.options_enc)
+		print "Enc set to",self.options_enc
+
+	def on_div_entry_activate (self,entry):
+		n = entry.get_text()
+		try:
+			self.options_div = float(n)
+			if self.statbuffer != "":
+				self.calc_status(self.statbuffer,len(self.statbuffer))
+		except:
+			entry.set_text("%.2f"%self.options_div)
+		print "Div set to",self.options_div
+
+	def on_option_toggled (self,button):
+		lt = button.get_label()
+		if lt == "LE":
+			self.options_le = abs(self.options_le-1)
+		if lt == "BE":
+			self.options_be = abs(self.options_be-1)
+		if lt == "Txt":
+			self.options_txt = abs(self.options_txt-1)
+		if self.statbuffer != "":
+			self.calc_status(self.statbuffer,len(self.statbuffer))
+
+	def del_optwin (self, action):
+		self.options_win = None
+
+	def activate_options (self, action):
+		if self.options_win != None:
+			self.options_win.show_all()
+			self.options_win.present()
+		else:
+			# le, be, txt, div, enc
+			vbox = gtk.VBox()
+			le_chkb = gtk.CheckButton("LE")
+			be_chkb = gtk.CheckButton("BE")
+			txt_chkb = gtk.CheckButton("Txt")
+			
+			if self.options_le:
+				le_chkb.set_active(True)
+			if self.options_be:
+				be_chkb.set_active(True)
+			if self.options_txt:
+				txt_chkb.set_active(True)
+	
+			le_chkb.connect("toggled",self.on_option_toggled)
+			be_chkb.connect("toggled",self.on_option_toggled)
+			txt_chkb.connect("toggled",self.on_option_toggled)
+	
+			hbox0 = gtk.HBox()
+			hbox0.pack_start(le_chkb)
+			hbox0.pack_start(be_chkb)
+			hbox0.pack_start(txt_chkb)
+			
+			hbox1 = gtk.HBox()
+			div_lbl = gtk.Label("Div")
+			div_entry = gtk.Entry()
+			div_entry.connect("activate",self.on_div_entry_activate)
+			div_entry.set_text("%.2f"%self.options_div)
+			hbox1.pack_start(div_lbl)
+			hbox1.pack_start(div_entry)
+	
+			hbox2 = gtk.HBox()
+			enc_lbl = gtk.Label("Enc")
+			enc_entry = gtk.Entry()
+			enc_entry.connect("activate",self.on_enc_entry_activate)
+			hbox2.pack_start(enc_lbl)
+			hbox2.pack_start(enc_entry)
+			enc_entry.set_text(self.options_enc)
+	#		ok_btn = gtk.Button("OK")
+	
+			vbox.pack_start(hbox0)
+			vbox.pack_start(hbox1)
+			vbox.pack_start(hbox2)
+	#		vbox.pack_start(ok_btn)
+			
+			optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			optwin.set_resizable(False)
+			optwin.set_border_width(0)
+			optwin.add(vbox)
+			optwin.set_title("Colupatr Options")
+			optwin.connect ("destroy", self.del_optwin)
+			optwin.show_all()
+			self.options_win = optwin
+
+
 
 	def del_dictwin (self, action):
 		pn = self.notebook.get_current_page()
@@ -510,7 +619,10 @@ Hexdump selection:\n\
 		 return
  
 	def update_statusbar(self, buffer):
-		self.label.set_markup("%s"%buffer)
+		try:
+			self.label.set_markup("%s"%buffer)
+		except:
+			pass
 
 	def on_entry_activate (self,action):
 		goto = self.entry.get_text()
@@ -679,33 +791,52 @@ Hexdump selection:\n\
 		size = model.get_value(iter1,3)
 		offset2 = model.get_value(iter1,5)
 		size2 = model.get_value(iter1,6)
-		buffer_hex = hd.txtdump_hex.get_buffer()
-		try:
-			tag = buffer_hex.create_tag("hl",background="yellow")
-		except:
-			pass
-		buffer_hex.remove_tag_by_name("hl",buffer_hex.get_iter_at_offset(0),buffer_hex.get_iter_at_offset(buffer_hex.get_char_count()))
-		iter_hex = buffer_hex.get_iter_at_offset(offset*3)
-		vadj = hd.vscroll2.get_vadjustment()
-		rowh = vadj.get_upper()/buffer_hex.get_line_count()
-		newval = rowh*(offset/16)
-		lim = vadj.get_upper() - hd.vscroll2.allocation[3]
-		if newval + 2*rowh > hd.vscroll2.allocation[3] and newval -2.5*rowh < lim:
-			vadj.set_value(newval-rowh*2)
-		elif newval < lim:
-			vadj.set_value(newval)
-		off2 = offset*3+size*3-1
-		if off2 < 0:
-			off2 = 0
-		iter_hex_end = buffer_hex.get_iter_at_offset(off2)
-		buffer_hex.apply_tag_by_name("hl",iter_hex,iter_hex_end)
+		hd.hv.hl[0] = offset,size,1,1,0,0.9
 		if size2 > 0:
-			iter_hex2 = buffer_hex.get_iter_at_offset(offset2*3)
-			off2 = offset2*3+size2*3-1
-			if off2 < 0:
-				off2 = 0
-			iter_hex2_end = buffer_hex.get_iter_at_offset(off2)
-			buffer_hex.apply_tag_by_name("hl",iter_hex2,iter_hex2_end)
+			hd.hv.hl[1] = offset2,size2,1,0,1,0.9
+
+		hd.hv.offset = offset
+
+		lnum = offset/16
+		hd.hv.curr = lnum
+		hd.hv.curc = offset - lnum*16
+
+		if hd.hv.offnum + 1 > lnum or lnum > hd.hv.offnum + hd.hv.numtl-2:
+			hd.hv.offnum = min(lnum,hd.hv.lines-hd.hv.numtl)
+
+		hd.hv.expose(None,None)
+
+	def calc_status(self,buf,dlen):
+		self.statbuffer = buf
+		txt = ""
+		txt2 = ""
+		if dlen == 2:
+			if self.options_le == 1:
+				txt = "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
+			if self.options_be == 1:
+				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
+		if dlen == 4:
+			if self.options_le == 1:
+				txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
+				txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
+			if self.options_be == 1:
+				txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
+				txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
+		if dlen == 8:
+			if self.options_le == 1:
+				txt = "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
+			if self.options_be == 1:
+				txt += "BE: %s"%((struct.unpack(">d",buf)[0])/self.options_div)
+		if dlen == 3:
+			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
+			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
+		if dlen > 3 and dlen != 4 and dlen != 8 and self.options_txt == 1:
+			try:
+				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
+			except:
+				pass
+		self.update_statusbar(txt)
+
 
 
 	def edited_cb (self, cell, path, new_text):
@@ -757,49 +888,13 @@ Hexdump selection:\n\
 		ntype = model.get_value(iter1,1)
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
-		hd.data = data
-		str_addr = ''
-		str_hex = ''
-		str_asc = ''
+		hd.hv.data = data
+		hd.hv.parent = self
+		hd.hv.hvlines = []
+		hd.hv.hl = {}
+		hd.hv.init_lines()
+		hd.hv.expose(None,None)
 		if data != None:
-			for line in range(0, len(data), 16):
-				str_addr+="%07x: "%line
-				end = min(16, len(data) - line)
-				for byte in range(0, 15):
-					if byte < end:
-						str_hex+="%02x " % ord(data[line + byte])
-						if ord(data[line + byte]) < 32 or 126<ord(data[line + byte]):
-							str_asc +='.'
-						else:
-							str_asc += data[line + byte]
-				if end > 15:			
-					str_hex+="%02x" % ord(data[line + 15])
-					if ord(data[line + 15]) < 32 or 126<ord(data[line + 15]):
-						str_asc += '.'
-					else:
-						str_asc += data[line + 15]
-					str_hex+='\n'
-					str_asc+='\n'
-					str_addr+='\n'
-			if len(str_hex) < 47:
-				str_hex += " "*(47-len(str_hex))
-	
-			buffer_addr = hd.txtdump_addr.get_buffer()
-			iter_addr = buffer_addr.get_iter_at_offset(0)
-			iter_addr_end = buffer_addr.get_iter_at_offset(buffer_addr.get_char_count())
-			buffer_addr.delete(iter_addr, iter_addr_end)
-			buffer_addr.insert_with_tags_by_name(iter_addr, str_addr,"monospace")
-			buffer_asc = hd.txtdump_asc.get_buffer()
-			iter_asc = buffer_asc.get_iter_at_offset(0)
-			iter_asc_end = buffer_asc.get_iter_at_offset(buffer_asc.get_char_count())
-			buffer_hex = hd.txtdump_hex.get_buffer()
-			iter_hex = buffer_hex.get_iter_at_offset(0)
-			iter_hex_end = buffer_hex.get_iter_at_offset(buffer_hex.get_char_count())
-			buffer_hex.delete(iter_hex, iter_hex_end)
-			buffer_hex.insert_with_tags_by_name(iter_hex, str_hex,"monospace")
-			buffer_asc.delete(iter_asc, iter_asc_end)
-			buffer_asc.insert_with_tags_by_name(iter_asc, str_asc,"monospace")
-	
 			hd.hdmodel.clear()
 			if ntype != 0:
 				if ntype[0] == "escher":
@@ -1075,9 +1170,9 @@ Hexdump selection:\n\
 				doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdrend.connect('edited', self.edited_cb)
-				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
-				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb)
-				doc.hd.txtdump_hex.connect('key-press-event',self.hdscroll_cb)
+#				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
+#				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb)
+#				doc.hd.txtdump_hex.connect('key-press-event',self.hdscroll_cb)
 				doc.hd.hdview.set_tooltip_column(8)
 				
 				hpaned = gtk.HPaned()
