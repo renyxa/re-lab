@@ -794,6 +794,8 @@ Hexdump selection:\n\
 		hd.hv.hl[0] = offset,size,1,1,0,0.9
 		if size2 > 0:
 			hd.hv.hl[1] = offset2,size2,1,0,1,0.9
+		elif hd.hv.hl.has_key(1):
+			del hd.hv.hl[1]
 
 		hd.hv.offset = offset
 
