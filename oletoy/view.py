@@ -970,6 +970,7 @@ Hexdump selection:\n\
 			hd.hv.parent = self
 			hd.hv.hvlines = []
 			hd.hv.hl = {}
+			hd.hv.sel = None
 			hd.hv.curr = 0
 			hd.hv.curc = 0
 			hd.hv.prer = 0
