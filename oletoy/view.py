@@ -913,6 +913,7 @@ Hexdump selection:\n\
 		if data != None:
 			hd.hv.modified = 0
 			hd.hv.editmode = 0
+			hd.hv.offnum = 0
 			hd.hv.iter = iter1
 			hd.hv.data = data
 			hd.hv.parent = self

@@ -20,6 +20,7 @@ import gtk
 import tree
 import hexdump
 import pubblock
+import ctypes
 from utils import *
 
 pub98_types = {0x15:"Document",
@@ -205,6 +206,90 @@ def parse(page,data,parent):
 	except:
 		print "Failed in parsing Contents"
 
-def save(page,fname):
+def collect_ec(model,parent):
+	res = ""
+	value = model.get_value(parent,3)
+	if model.iter_n_children(parent):
+		res += value[:8]
+		for i in range(model.iter_n_children(parent)):
+			citer = model.iter_nth_child(parent, i)
+			res += collect_ec(model,citer)
+	else:
+		res += value
+	return res
+
+def collect_escher(model,citer):
+	res = ""
+	tmp = ""
+	for i in range(model.iter_n_children(citer)):
+		gciter = model.iter_nth_child(citer, i)
+		name = model.get_value(gciter,0)
+		value = model.get_value(gciter,3)
+		res += value[:8]
+		tmp += value
+		for j in range(model.iter_n_children(gciter)):
+			ggciter = model.iter_nth_child(gciter, j)
+			res += collect_ec(model,ggciter)
+
+		if len(res) < len(tmp):
+			res += tmp[len(res):]
+
+	return res
+
+def dump_tree (model, parent, outfile,cgsf):
+	ntype = model.get_value(parent,1)
+	name = model.get_value(parent,0)
+	value = model.get_value(parent,3)
+
+	if name == 'Quill':
+		child = cgsf.gsf_outfile_new_child(outfile,name,1)
+		cgsf.gsf_output_write (child,len(value),value)
+		citer = model.iter_nth_child(parent, 0)
+		gname = model.get_value(citer,0)
+		gvalue = model.get_value(citer,3)
+		gchild = cgsf.gsf_outfile_new_child(child,gname,1)
+		cgsf.gsf_output_write (gchild,len(gvalue),gvalue)
+		for i in range(model.iter_n_children(citer)):
+			gciter = model.iter_nth_child(citer, i)
+			ggname = model.get_value(gciter,0)
+			ggvalue = model.get_value(gciter,3)
+			ggchild = cgsf.gsf_outfile_new_child(gchild,ggname,0)
+			cgsf.gsf_output_write (ggchild,len(ggvalue),ggvalue)
+			cgsf.gsf_output_close (ggchild)
+		cgsf.gsf_output_close (gchild)
+
+	elif name =="Escher":
+		child = cgsf.gsf_outfile_new_child(outfile,name,1)
+		cgsf.gsf_output_write (child,len(value),value)
+		for i in range(model.iter_n_children(parent)):
+			citer = model.iter_nth_child(parent, i)
+			name = model.get_value(citer,0)
+			if name == "EscherStm":
+				value = collect_escher(model,citer)
+			else:
+				value = model.get_value(citer,3)
+			gchild = cgsf.gsf_outfile_new_child(child,name,0)
+			cgsf.gsf_output_write (gchild,len(value),value)
+			cgsf.gsf_output_close (gchild)
+
+	else: # Quill/Escher
+		child = cgsf.gsf_outfile_new_child(outfile,name,0)
+		cgsf.gsf_output_write (child,len(value),value)
+
+	cgsf.gsf_output_close (child)
+
+
+
+
+def save (page, fname):
 	model = page.view.get_model()
-	print "Save request. Stub. To be continued..."
+	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+	cgsf.gsf_init()
+	output = cgsf.gsf_output_stdio_new (fname)
+	outfile = cgsf.gsf_outfile_msole_new (output);
+	iter1 = model.get_iter_first()
+	while None != iter1:
+	  dump_tree(model, iter1, outfile,cgsf)
+	  iter1 = model.iter_next(iter1)
+	cgsf.gsf_output_close(outfile)
+	cgsf.gsf_shutdown()

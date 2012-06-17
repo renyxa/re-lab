@@ -448,7 +448,7 @@ odraw_ids = {
 }
 
 def parse (model,data,parent,doctype=""):
-#	try:
+	try:
 		offset = 0
 		while offset < len(data) - 8:
 			contflag = ord(data[offset])&0xF
@@ -493,6 +493,6 @@ def parse (model,data,parent,doctype=""):
 					offset += newL + 8
 			else:
 				offset += 4
-#	except:
-#		print "Failed to parse Escher stream",len(data)
+	except:
+		print "Failed to parse Escher stream",len(data)
 
