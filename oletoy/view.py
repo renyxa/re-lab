@@ -246,8 +246,16 @@ Entry line:\n\
 	?rREC{:[aux]STRING} - search for record with REC in the name and STRING in data.\n\
 	?rloda#{arg} - search for args in 'loda' records in CDR\n\n\
 Hexdump selection:\n\
-	Select 2,3,4 or 8 bytes - check tooltip in statusbar.\n\
-	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\n\
+	^E flips edit mode, grey/green/red circle shows status:\n\
+		grey - editing switched off,\n\
+		green - editing switched on,\n\
+		red - data was modified.\n\
+	Switch-on edit/modify/switch-off edit will update data in immediate record.\n\
+	Changes are not propogate up the tree.\n\n\
+	Select 2,3,4 or 8 bytes - check tooltip in the statusbar.\n\
+	^T opens \"Options\" dialog to adjust conversion of selected bytes.\n\n\
+	For PUB 4 bytes would be additionaly converted to points, cm and inches.\n\
+	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\
 	For CDR select outl/fild ID and press arrow right to scroll to it."
 		tb.insert(iter_txt, mytxt)
 		w.set_title("OLE Toy Manual")
@@ -332,22 +340,19 @@ Hexdump selection:\n\
 			hbox2.pack_start(enc_lbl)
 			hbox2.pack_start(enc_entry)
 			enc_entry.set_text(self.options_enc)
-	#		ok_btn = gtk.Button("OK")
-	
+
 			vbox.pack_start(hbox0)
 			vbox.pack_start(hbox1)
 			vbox.pack_start(hbox2)
-	#		vbox.pack_start(ok_btn)
-			
+
 			optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
 			optwin.set_resizable(False)
 			optwin.set_border_width(0)
 			optwin.add(vbox)
-			optwin.set_title("Colupatr Options")
+			optwin.set_title("Hexview Options")
 			optwin.connect ("destroy", self.del_optwin)
 			optwin.show_all()
 			self.options_win = optwin
-
 
 
 	def del_dictwin (self, action):
@@ -809,6 +814,8 @@ Hexdump selection:\n\
 		hd.hv.expose(None,None)
 
 	def calc_status(self,buf,dlen):
+		pn = self.notebook.get_current_page()
+		ftype = self.das[pn].type
 		self.statbuffer = buf
 		txt = ""
 		txt2 = ""
@@ -818,12 +825,54 @@ Hexdump selection:\n\
 			if self.options_be == 1:
 				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
 		if dlen == 4:
-			if self.options_le == 1:
-				txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
-				txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
-			if self.options_be == 1:
-				txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
-				txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
+			if ftype == "pub":
+				v = struct.unpack("<i",buf)[0]
+				txt = "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],round(v/12700.,2),round(v/360000.,3),round(v/914400.,4))
+			elif ftype == "FH":
+				v1 = struct.unpack(">H",buf[0:2])[0]
+				v2 = struct.unpack(">H",buf[2:4])[0]
+				txt = "BE: %s\tX: %.4f\tY: %.4f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.)
+			else:
+				if self.options_le == 1:
+					txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
+					txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
+				if self.options_be == 1:
+					txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
+					txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
+
+				if ftype[0:3] == "CDR":
+					c2 = ord(buf[0])/255.
+					m2 = ord(buf[1])/255.
+					y2 = ord(buf[2])/255.
+					k2 = ord(buf[3])/255.
+					c22 = (c2 * (1 - k2) + k2)
+					m22 = (m2 * (1 - k2) + k2)
+					y22 = (y2 * (1 - k2) + k2)
+					c1 = ord(buf[0])/100.
+					m1 = ord(buf[1])/100.
+					y1 = ord(buf[2])/100.
+					k1 = ord(buf[3])/100.
+					if c1 <= 1 and m1 <= 1 and y1 <= 1 and k1 <= 1:
+						c = (c1 * (1 - k1) + k1)
+						m = (m1 * (1 - k1) + k1)
+						y = (y1 * (1 - k1) + k1)
+						r1 = 255*(1 - c)
+						g1 = 255*(1 - m)
+						b1 = 255*(1 - y)
+						txt += '<span background="#%02x%02x%02x">CMYK100</span> '%(r1,g1,b1)
+						#print r1,g1,b1
+					r2 = 255*(1 - c22)
+					g2 = 255*(1 - m22)
+					b2 = 255*(1 - y22)
+					#print r2,g2,b2
+					txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
+					dictm = self.das[pn].dictmod
+					bstr = d2hex(buf)
+					for i in range(dictm.iter_n_children(None)):
+						if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
+							txt = '<span background="#FFFF00">'+txt+'</span>  '
+							break
+
 		if dlen == 8:
 			if self.options_le == 1:
 				txt = "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
@@ -837,6 +886,7 @@ Hexdump selection:\n\
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
 				pass
+				
 		self.update_statusbar(txt)
 
 	def update_data(self):
@@ -1013,51 +1063,6 @@ Hexdump selection:\n\
 				vadj.set_value((nv+1)*rowh)
 		if newval + rowh <= vadj.get_value():
 			vadj.set_value((nv-1)*rowh)
-
-	def hdselect_cb(self,event,udata):
-#FIXME! move to calc_status
-		if len(buf) == 4:
-			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])
-			txt += "\tLEF: %s\tBEF: %s"%(struct.unpack("<f",buf)[0],struct.unpack(">f",buf)[0])
-			if type == "pub":
-				v = struct.unpack("<i",buf)[0]
-				txt = "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],v/12700.,v/360000.,v/914400.)
-			if type == "FH":
-				v1 = struct.unpack(">H",buf[0:2])[0]
-				v2 = struct.unpack(">H",buf[2:4])[0]
-				txt = "BE: %s\tX: %.4f\tY: %.4f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.)
-			if type[0:3] == "CDR":
-				c2 = ord(buf[0])/255.
-				m2 = ord(buf[1])/255.
-				y2 = ord(buf[2])/255.
-				k2 = ord(buf[3])/255.
-				c22 = (c2 * (1 - k2) + k2)
-				m22 = (m2 * (1 - k2) + k2)
-				y22 = (y2 * (1 - k2) + k2)
-				c1 = ord(buf[0])/100.
-				m1 = ord(buf[1])/100.
-				y1 = ord(buf[2])/100.
-				k1 = ord(buf[3])/100.
-				if c1 <= 1 and m1 <= 1 and y1 <= 1 and k1 <= 1:
-					c = (c1 * (1 - k1) + k1)
-					m = (m1 * (1 - k1) + k1)
-					y = (y1 * (1 - k1) + k1)
-					r1 = 255*(1 - c)
-					g1 = 255*(1 - m)
-					b1 = 255*(1 - y)
-					txt += '<span background="#%02x%02x%02x">CMYK100</span> '%(r1,g1,b1)
-					#print r1,g1,b1
-				r2 = 255*(1 - c22)
-				g2 = 255*(1 - m22)
-				b2 = 255*(1 - y22)
-				#print r2,g2,b2
-				txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
-				dictm = self.das[pn].dictmod
-				bstr = d2hex(buf)
-				for i in range(dictm.iter_n_children(None)):
-					if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
-						txt = '<span background="#FFFF00">'+txt+'</span>  '
-						break
 
 	def activate_new (self,parent=None):
 		doc = Doc.Page()
