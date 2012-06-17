@@ -115,20 +115,21 @@ class HexView():
 
 
 	def init_config(self): # redefine UI/behaviour options from file
+		self.font = "Monospace"
+		self.fontsize = 14
+		self.hlclr = 1,1,0.5
+		self.hdrclr = 0.9,0.9,0.9
+		self.lineclr = 0,0,0
+		self.curclr = 0,0,0.8
+		self.selclr = 0.7,0.9,0.8,1
+		self.aschlclr = 0.75,0.75,1
+		self.txtcurclr = 0,0,1
+		self.mttclr = 0.9,0.95,0.95,0.85
+		self.mttxtclr = 0.5,0,0
 		try:
 			execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
 		except:
-			self.font = "Monospace"
-			self.fontsize = 14
-			self.hlclr = 1,1,0.5
-			self.hdrclr = 0.9,0.9,0.9
-			self.lineclr = 0,0,0
-			self.curclr = 0,0,0.8
-			self.selclr = 0.7,0.9,0.8,1
-			self.aschlclr = 0.75,0.75,1
-			self.txtcurclr = 0,0,1
-			self.mttclr = 0.9,0.95,0.95,0.85
-			self.mttxtclr = 0.5,0,0
+			pass
 
 	def set_dxdy(self):
 		# calculate character extents
