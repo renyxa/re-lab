@@ -24,6 +24,7 @@ class HexView():
 	def __init__(self,data="",offset=0):
 		# UI related objects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
+		self.iter = None 							# to store iter for saving modifications
 		self.hv = gtk.DrawingArea()		# middle column with the main hex context
 		self.vadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
 		self.hadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)

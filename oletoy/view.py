@@ -840,8 +840,13 @@ Hexdump selection:\n\
 		self.update_statusbar(txt)
 
 	def update_data(self):
-		# FIXME! 
-		pass
+		pn = self.notebook.get_current_page()
+		treeSelection = self.das[pn].view.get_selection()
+		model, iter1 = treeSelection.get_selected()
+		hd = self.das[pn].hd
+		model.set_value(iter1,3,hd.hv.data)
+		hd.hv.modified = 0
+		hd.hv.expose(None,None)
 
 	def edited_cb (self, cell, path, new_text):
 		pn = self.notebook.get_current_page()
@@ -892,13 +897,30 @@ Hexdump selection:\n\
 		ntype = model.get_value(iter1,1)
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
-		hd.hv.data = data
-		hd.hv.parent = self
-		hd.hv.hvlines = []
-		hd.hv.hl = {}
-		hd.hv.init_lines()
-		hd.hv.expose(None,None)
+		if hd.hv.modified:
+			dialog = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_YES_NO, 
+			flags =gtk.DIALOG_DESTROY_WITH_PARENT,type = gtk.MESSAGE_WARNING, 
+			message_format = "Do you want to save your changes?")
+			
+			dialog.set_title("Unsaved changes in data")
+			result = dialog.run()
+			dialog.destroy()
+			if result == gtk.RESPONSE_YES:
+				model.set_value(hd.hv.iter,3,hd.hv.data)
+			elif result == gtk.RESPONSE_NO:
+				print "Changes discarded"
+
 		if data != None:
+			hd.hv.modified = 0
+			hd.hv.editmode = 0
+			hd.hv.iter = iter1
+			hd.hv.data = data
+			hd.hv.parent = self
+			hd.hv.hvlines = []
+			hd.hv.hl = {}
+			hd.hv.init_lines()
+			hd.hv.expose(None,None)
+
 			hd.hdmodel.clear()
 			if ntype != 0:
 				if ntype[0] == "escher":
