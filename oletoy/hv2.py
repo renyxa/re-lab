@@ -91,8 +91,9 @@ class HexView():
 			65363:self.okp_right,
 			65360:self.okp_home,
 			65367:self.okp_end,
-#			97:self.okp_selall, # ^A for 'select all'
+			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, # ^C for 'copy'
+			101:self.okp_fledit # ^E to flip edit
 			}
 
 		self.edmap = {48:0,49:1,50:2,51:3,52:4,53:5,54:6,55:7,56:8,57:9,
@@ -162,19 +163,23 @@ class HexView():
 	def line_size(self,row):
 		# returns size of line or -1 if 'row' is behind
 		# acceptable range
-		if row < self.lines-1:
+		if row < self.lines-2:
 			return 16
-		elif row == self.lines:
-			return len(data)%16
+		elif row == self.lines-2:
+			return len(self.data)%16
 		else:
-			return 0
+			return -1
+
+	def okp_fledit(self,event):
+		if event.state == gtk.gdk.CONTROL_MASK:
+			if self.editmode:
+				self.editmode = 0
+			else:
+				self.editmode = 1
 
 	def okp_selall(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
-			maxc = 15
-			if self.curr == self.lines -2:
-				maxc = len(self.data)%16 - 1
-			self.sel = 0,0,self.lines,maxc
+			self.sel = 0,0,self.lines-2,len(self.data)%16
 			self.expose(None,event)
 
 	def okp_copy(self,event):
@@ -186,10 +191,9 @@ class HexView():
 					text = self.hvlines[r1][0][c1*3:c2*3]
 				else:
 					text = self.hvlines[r1][0][c1*3:] + "\n"
-					for i in range(r2-r1-1):
-							text += self.hvlines[r1+i+1][0] + "\n"
+					for i in range(min(r2-r1-1,self.lines-2)):
+						text += self.hvlines[r1+i+1][0] + "\n"
 					text += self.hvlines[r2][0][:c2*3]
-				print self.sel,len(text)
 				clp.set_text(text)
 				clp.store()
 
@@ -626,7 +630,7 @@ class HexView():
 			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(16-c0),self.tht+1.5)
 			# middle rows
 			for i in range(r1-r0-1):
-				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*48,self.tht)
+				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*47,self.tht)
 				ctx.rectangle(self.tdx*(11+16*3),self.tht*(r0+i+2-self.offnum)+6,self.tdx*16,self.tht+1.5)
 			# last sel row
 			ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
