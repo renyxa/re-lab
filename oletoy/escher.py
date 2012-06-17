@@ -423,7 +423,7 @@ def ClientData (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
 
-def Blip(hd,size,value,off):
+def Blip(hd,size,value,off=0):
 	pixbufloader = gtk.gdk.PixbufLoader()
 	pixbufloader.write(value[off:])
 	pixbufloader.close()
@@ -530,7 +530,8 @@ odraw_ids = {
 #	0xF118:'OfficeArtFRITContainer',
 #	0xF119:'OfficeArtFDGSL',0xF11A:'OfficeArtColorMRUContainer',
 #	0xF11D:'OfficeArtFPSPL',0xF11E:'OfficeArtSplitMenuColorContainer',
-	0xF121:FOPT,0xF122:FOPT
+	0xF121:FOPT,0xF122:FOPT,
+	"Blip":Blip
 }
 
 def parse (model,data,parent,doctype=""):

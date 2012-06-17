@@ -107,7 +107,7 @@ def parse (page,data,parent,i,j=-1):
 				[dlen] = struct.unpack('<i', data[off:off+4])
 				value = data[off:off+dlen]
 			if type == 0xc0:
-				[dlen] = struct.unpack('<i', data[off:off+4])
+				dlen = struct.unpack('<i', data[off:off+4])[0]
 				value = data[off+4:off+dlen]
 				if dlen > 4:
 					try:

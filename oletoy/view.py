@@ -239,6 +239,7 @@ Entry line:\n\
 	$ole{@addr} - try to parse record as OLE starting from addr (or 0)\n\
 	$cmx{@addr} - try to parse record as CMX starting from addr (or 0)\n\
 	$icc{@addr} - try to parse record as ICC starting from addr (or 0)\n\
+	$pix{@addr} - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
 	$xls@RC - search XLS file for record related to cell RC\n\
 	?aSTRING - search for ASCII string\n\
 	?uSTRING - search for Unicode string\n\
@@ -977,15 +978,16 @@ Hexdump selection:\n\
 			hd.hv.expose(None,None)
 
 			hd.hdmodel.clear()
+
+			if hd.da != None:
+				hd.da.destroy()
+
 			if ntype != 0:
 				ut = ""
 				for i in range(len(ntype)):
 					ut += "%s "%ntype[i]
 				self.update_statusbar("[ %s]"%ut)
-
 				if ntype[0] == "escher":
-					if hd.da != None:
-						hd.da.destroy()
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
 							escher.odraw_ids[ntype[2]](hd, size, data)
@@ -1021,8 +1023,6 @@ Hexdump selection:\n\
 					if cmx.cmx_ids.has_key(ntype[1]):
 						cmx.cmx_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cdr":
-					if hd.da != None:
-						hd.da.destroy()
 					if cdr.cdr_ids.has_key(ntype[1]):
 						if ntype[1] == 'DISP':
 							cdr.cdr_ids[ntype[1]](hd,size,data,self.das[pn])
