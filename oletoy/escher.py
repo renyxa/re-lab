@@ -19,6 +19,7 @@ import gobject
 import gtk
 import tree
 import hexdump
+import cdr # for disp_expose
 from utils import *
 
 
@@ -422,6 +423,88 @@ def ClientData (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
 
+def Blip(hd,size,value,off):
+	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader.write(value[off:])
+	pixbufloader.close()
+	pixbuf = pixbufloader.get_pixbuf()
+	imgw=pixbuf.get_width()
+	imgh=pixbuf.get_height()
+	hd.da = gtk.DrawingArea()
+	hd.hbox0.pack_start(hd.da)
+	hd.da.connect('expose_event', cdr.disp_expose,pixbuf)
+	ctx = hd.da.window.cairo_create()
+	ctx.set_source_pixbuf(pixbuf,0,0)
+	ctx.paint()
+	ctx.stroke()
+	hd.da.show()
+
+def BlipPNG (hd, size, value):
+	off = 0
+	recinst = struct.unpack("<H",value[off:off+2])[0]/16
+	add_iter(hd,"Rec Instance","%02x"%recinst,off,2,"<H")
+	off += 8
+	rgbUid1 = d2hex(value[off:off+16])
+	add_iter(hd,"rgbUid1",rgbUid1,off,16,"<txt")
+	off += 16
+	if recinst == 0x6e1:
+		rgbUid2 = d2hex(value[off:off+16])
+		add_iter(hd,"rgbUid2",rgbUid2,off,16,"<txt")
+		off += 16
+	add_iter(hd,"tag","%02x"%ord(value[off]),off,1,"<B")
+	off += 1
+	Blip(hd,size,value,off)
+
+def BlipJPEG (hd, size, value):
+	off = 0
+	recinst = struct.unpack("<H",value[off:off+2])[0]/16
+	add_iter(hd,"Rec Instance","%02x"%recinst,off,2,"<H")
+	off += 8
+	rgbUid1 = d2hex(value[off:off+16])
+	add_iter(hd,"rgbUid1",rgbUid1,off,16,"<txt")
+	off += 16
+	if recinst == 0x6e3 or recinst == 0x46b:
+		# FIXME! 0x6e3 -- CMYK jpg
+		rgbUid2 = d2hex(value[off:off+16])
+		add_iter(hd,"rgbUid2",rgbUid2,off,16,"<txt")
+		off += 16
+	add_iter(hd,"tag","%02x"%ord(value[off]),off,1,"<B")
+	off += 1
+	Blip(hd,size,value,off)
+
+def BlipTIFF (hd, size, value):
+	off = 0
+	recinst = struct.unpack("<H",value[off:off+2])[0]/16
+	add_iter(hd,"Rec Instance","%02x"%recinst,off,2,"<H")
+	off += 8
+	rgbUid1 = d2hex(value[off:off+16])
+	add_iter(hd,"rgbUid1",rgbUid1,off,16,"<txt")
+	off += 16
+	if recinst == 0x6e5:
+		rgbUid2 = d2hex(value[off:off+16])
+		add_iter(hd,"rgbUid2",rgbUid2,off,16,"<txt")
+		off += 16
+	add_iter(hd,"tag","%02x"%ord(value[off]),off,1,"<B")
+	off += 1
+	Blip(hd,size,value,off)
+
+def BlipDIB (hd, size, value):
+	off = 0
+	recinst = struct.unpack("<H",value[off:off+2])[0]/16
+	add_iter(hd,"Rec Instance","%02x"%recinst,off,2,"<H")
+	off += 8
+	rgbUid1 = d2hex(value[off:off+16])
+	add_iter(hd,"rgbUid1",rgbUid1,off,16,"<txt")
+	off += 16
+	if recinst == 0x7A9:
+		rgbUid2 = d2hex(value[off:off+16])
+		add_iter(hd,"rgbUid2",rgbUid2,off,16,"<txt")
+		off += 16
+	add_iter(hd,"tag","%02x"%ord(value[off]),off,1,"<B")
+	off += 1
+	Blip(hd,size,value,off)
+
+
 odraw_ids = {
 #	0xF000:'OfficeArtDggContainer', 0xF001:'OfficeArtBStoreContainer',
 #	0xF002:'OfficeArtDgContainer',0xF003:'OfficeArtSpgrContainer',
@@ -439,9 +522,12 @@ odraw_ids = {
 #	0xF012:'OfficeArtFConnectorRule',
 #	0xF014:'OfficeArtFArcRule',0xF017:'OfficeArtFCalloutRule',
 #	0xF01A:'OfficeArtBlipEMF',0xF01B:'OfficeArtBlipWMF',
-#	0xF01C:'OfficeArtBlipPICT',0xF01D:'OfficeArtBlipJPEG',
-#	0xF01E:'OfficeArtBlipPNG',0xF01F:'OfficeArtBlipDIB',
-#	0xF020:'OfficeArtBlipTIFF',0xF118:'OfficeArtFRITContainer',
+#	0xF01C:'OfficeArtBlipPICT',
+	0xF01D:BlipJPEG,
+	0xF01E:BlipPNG,
+	0xF01F:BlipDIB,
+	0xF020:BlipTIFF,
+#	0xF118:'OfficeArtFRITContainer',
 #	0xF119:'OfficeArtFDGSL',0xF11A:'OfficeArtColorMRUContainer',
 #	0xF11D:'OfficeArtFPSPL',0xF11E:'OfficeArtSplitMenuColorContainer',
 	0xF121:FOPT,0xF122:FOPT

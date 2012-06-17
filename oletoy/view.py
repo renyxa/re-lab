@@ -978,7 +978,14 @@ Hexdump selection:\n\
 
 			hd.hdmodel.clear()
 			if ntype != 0:
+				ut = ""
+				for i in range(len(ntype)):
+					ut += "%s "%ntype[i]
+				self.update_statusbar("[ %s]"%ut)
+
 				if ntype[0] == "escher":
+					if hd.da != None:
+						hd.da.destroy()
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
 							escher.odraw_ids[ntype[2]](hd, size, data)
