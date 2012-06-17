@@ -1045,24 +1045,6 @@ Hexdump selection:\n\
 					if fhparse.hdp.has_key(ntype[1]):
 						fhparse.hdp[ntype[1]](hd,data,self.das[pn])
 
-	def hdscroll_cb(self,view,event):
-		pn = self.notebook.get_current_page()
-		hd = self.das[pn].hd
-		buffer_hex = hd.txtdump_hex.get_buffer()
-		line = buffer_hex.get_property ("cursor-position")/47
-		vadj = hd.vscroll2.get_vadjustment()
-		rowh = vadj.get_upper()/buffer_hex.get_line_count()
-		if line == buffer_hex.get_line_count():
-			line -= 1
-		newval = rowh*line
-		nv = round(vadj.get_value()/rowh)
-		if newval + rowh > hd.vscroll2.allocation[3]+vadj.get_value():
-			if hd.vscroll2.allocation[3]+ (nv+1)*rowh> vadj.get_upper():
-				vadj.set_value(vadj.get_upper() - hd.vscroll2.allocation[3]+rowh/5)
-			else:
-				vadj.set_value((nv+1)*rowh)
-		if newval + rowh <= vadj.get_value():
-			vadj.set_value((nv-1)*rowh)
 
 	def activate_new (self,parent=None):
 		doc = Doc.Page()
