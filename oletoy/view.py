@@ -990,59 +990,7 @@ Hexdump selection:\n\
 			vadj.set_value((nv-1)*rowh)
 
 	def hdselect_cb(self,event,udata):
-		pn = self.notebook.get_current_page()
-		model = self.das[pn].view.get_model()
-		type = self.das[pn].type
-		#print "Type: ",type
-		hd = self.das[pn].hd
-		try:
-			start,end = hd.txtdump_hex.get_buffer().get_selection_bounds()
-		except:
-			return
-		buffer_asc = hd.txtdump_asc.get_buffer()
-
-		slo = start.get_offset()
-		elo = end.get_offset()
-		if slo%3 == 1:
-			slo -= 1
-			start.set_offset(slo)
-		if slo%3 == 2:
-			slo += 1
-			start.set_offset(slo)
-		if elo%3 == 0:
-			elo -= 1
-			end.set_offset(elo)
-		if elo%3 == 1:
-			elo += 1
-			end.set_offset(elo)
-		hd.txtdump_hex.get_buffer().move_mark_by_name ('selection_bound',start)
-		hd.txtdump_hex.get_buffer().move_mark_by_name ('insert',end)
-
-		asl = start.get_line()
-		ael = end.get_line()
-		aslo = start.get_line_offset()
-		aelo = end.get_line_offset()
-
-		try:
-			tag = buffer_asc.create_tag("hl",background="yellow")
-		except:
-			pass
-		buffer_asc.remove_tag_by_name("hl",buffer_asc.get_iter_at_offset(0),buffer_asc.get_iter_at_offset(buffer_asc.get_char_count()))
-		iter_asc = buffer_asc.get_iter_at_offset(asl*17+aslo/3)
-		iter_asc_end = buffer_asc.get_iter_at_offset(ael*17+aelo/3+1)
-		buffer_asc.apply_tag_by_name("hl",iter_asc,iter_asc_end)
-		dstart = asl*16+aslo/3
-		dend = ael*16+aelo/3+1
-		buf = hd.data[dstart:dend]
-		txt = ""
-		if len(buf) == 2:
-			txt = "LE: %s\tBE: %s"%(struct.unpack("<h",buf)[0],struct.unpack(">h",buf)[0])
-			if type == "FH" and self.das[pn].dict.has_key(struct.unpack(">h",buf)[0]):
-				txt = "BE: %s\t"%(struct.unpack(">h",buf)[0])+self.das[pn].dict[struct.unpack(">h",buf)[0]]
-			if type == "FH":
-				v = struct.unpack(">H",buf)[0]
-				txt = "BE: %s\tX: %d\tY: %d"%(struct.unpack(">h",buf)[0],v-1692,v-1584)
-			self.update_statusbar(txt)
+#FIXME! move to calc_status
 		if len(buf) == 4:
 			txt = "LE: %s\tBE: %s"%(struct.unpack("<i",buf)[0],struct.unpack(">i",buf)[0])
 			txt += "\tLEF: %s\tBEF: %s"%(struct.unpack("<f",buf)[0],struct.unpack(">f",buf)[0])
@@ -1085,27 +1033,6 @@ Hexdump selection:\n\
 					if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
 						txt = '<span background="#FFFF00">'+txt+'</span>  '
 						break
-
-			self.update_statusbar(txt)
-		if len(buf) == 8:
-			txt = "LE: %s\tBE: %s"%(struct.unpack("<d",buf)[0],struct.unpack(">d",buf)[0])
-			self.update_statusbar(txt)
-							
-		if len(buf) == 3:
-			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
-			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-			self.update_statusbar(txt)
-		if len(buf)>3 and len(buf)%2 == 0:
-			try:
-				if type == "FH":
-					utxt = unicode(buf,"utf-16be")
-				else:
-					utxt = unicode(buf,"utf16")
-				txt += "\t" +utxt
-				self.update_statusbar(txt)
-			except:
-				pass
-		
 
 	def activate_new (self,parent=None):
 		doc = Doc.Page()
@@ -1172,9 +1099,6 @@ Hexdump selection:\n\
 				doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdrend.connect('edited', self.edited_cb)
-#				doc.hd.txtdump_hex.connect('button-release-event',self.hdselect_cb) 
-#				doc.hd.txtdump_hex.connect('key-release-event',self.hdscroll_cb)
-#				doc.hd.txtdump_hex.connect('key-press-event',self.hdscroll_cb)
 				doc.hd.hdview.set_tooltip_column(8)
 				
 				hpaned = gtk.HPaned()
