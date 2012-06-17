@@ -174,8 +174,10 @@ class HexView():
 		if event.state == gtk.gdk.CONTROL_MASK:
 			if self.editmode:
 				self.editmode = 0
+				self.parent.update_data()
 			else:
 				self.editmode = 1
+			self.expose(None,event)
 
 	def okp_selall(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
@@ -638,6 +640,18 @@ class HexView():
 		ctx.set_source_rgba(clr[0],clr[1],clr[2],clr[3])
 		ctx.fill()
 
+	def draw_edit(self,ctx):
+		ctx.move_to(self.tdx*2-2,self.tdx)
+		ctx.arc(self.tdx+2,self.tdx,self.tdx/2.,0,6.29)
+		ctx.set_source_rgb(0.6,0.6,0.6)
+		if self.editmode:
+			if self.modified:
+				ctx.set_source_rgb(1,0.4,0.4)
+			else:
+				ctx.set_source_rgb(0.4,1,0.4)
+		ctx.fill_preserve()
+		ctx.set_source_rgb(0,0,0)
+		ctx.stroke()
 
 	def expose(self,widget,event):
 		if len(self.data) < 1:
@@ -705,6 +719,7 @@ class HexView():
 			ctx.move_to(self.tdx*(11+16*3),self.tht)
 			ctx.show_text(haddr)
 			ctx.set_source_rgb(self.lineclr[0],self.lineclr[1],self.lineclr[2])
+			
 #addr 
 			for i in range(min(self.lines-self.offnum-1,self.numtl)):
 				ctx.move_to(0,(i+2)*self.tht+4)
@@ -720,6 +735,8 @@ class HexView():
 				ctx.show_text(hex)
 				ctx.move_to(self.tdx*(10+1+16*3),self.tht*(i+2)+4)
 				ctx.show_text(asc)
+
+			self.draw_edit(ctx)
 
 		# clear prev hdr cursor
 		ctx.set_source_rgb(self.hdrclr[0],self.hdrclr[1],self.hdrclr[2])

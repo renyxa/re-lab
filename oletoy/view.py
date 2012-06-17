@@ -839,7 +839,9 @@ Hexdump selection:\n\
 				pass
 		self.update_statusbar(txt)
 
-
+	def update_data(self):
+		# FIXME! 
+		pass
 
 	def edited_cb (self, cell, path, new_text):
 		pn = self.notebook.get_current_page()
