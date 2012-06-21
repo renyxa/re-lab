@@ -105,11 +105,10 @@ class HexView():
 
 
 	def init_lines(self):
-		self.lines = 1+len(self.data)/16 # number of lines in file
+		self.lines = len(self.data)/16 # number of lines in file
 		if len(self.data)%16 != 0:
 			self.lines += 1
-		
-		for i in range(self.lines):
+		for i in range(self.lines+1):
 			self.hvlines.append("")
 
 
@@ -150,7 +149,7 @@ class HexView():
 		hex = ""
 		asc = ""
 		slen = 16
-		if num == self.lines -2 and len(self.data)%16 !=0:
+		if num == self.lines -1 and len(self.data)%16 !=0:
 			slen = len(self.data)%16
 		if self.hvlines[num] == "":
 			for j in range(slen):
@@ -165,9 +164,9 @@ class HexView():
 	def line_size(self,row):
 		# returns size of line or -1 if 'row' is behind
 		# acceptable range
-		if row < self.lines-2:
+		if row < self.lines-1:
 			return 16
-		elif row == self.lines-2:
+		elif row == self.lines-1:
 			return len(self.data)%16
 		else:
 			return -1
@@ -183,7 +182,10 @@ class HexView():
 
 	def okp_selall(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
-			self.sel = 0,0,self.lines-2,len(self.data)%16
+			maxc = len(self.data)%16
+			if maxc == 0:
+				maxc = 16
+			self.sel = 0,0,self.lines-1,maxc
 			self.expose(None,event)
 
 	def okp_copy(self,event):
@@ -195,7 +197,7 @@ class HexView():
 					text = self.hvlines[r1][0][c1*3:c2*3]
 				else:
 					text = self.hvlines[r1][0][c1*3:] + "\n"
-					for i in range(min(r2-r1-1,self.lines-2)):
+					for i in range(min(r2-r1-1,self.lines-1)):
 						text += self.hvlines[r1+i+1][0] + "\n"
 					text += self.hvlines[r2][0][:c2*3]
 				clp.set_text(text)
@@ -243,19 +245,21 @@ class HexView():
 	def okp_right(self,event):
 		self.mode = "c"
 		self.curc += 1
-		if self.curr == self.lines -2:
+		if self.curr == self.lines -1:
 			maxc = len(self.data)%16 - 1
-			if maxc != 0 and self.curc > maxc:
-				self.curc = maxc
+			if maxc == -1:
+				maxc = 15
+			if self.curc > maxc:
+					self.curc = maxc
 		elif self.curc > 15:
-			if self.curr < self.lines-2:
+			if self.curr < self.lines-1:
 				self.curc = 0
 				flag = 2
-				if self.offnum < self.lines-self.numtl and self.curr >= self.offnum+self.numtl-3:
+				if self.offnum < self.lines-self.numtl+1 and self.curr >= self.offnum+self.numtl-3:
 					self.offnum += 1
 				self.curr += 1
-				if self.curr > self.lines-2:
-					self.curr = self.lines-2
+				if self.curr > self.lines-1:
+					self.curr = self.lines-1
 				if self.curr < self.offnum:
 					self.curr = self.offnum
 				self.mode = ""
@@ -300,16 +304,16 @@ class HexView():
 
 	def okp_down(self,event):
 		self.mode = "c"
-		if self.offnum < self.lines-self.numtl and self.curr >= self.offnum+self.numtl-3:
+		if self.offnum < self.lines-self.numtl+1 and self.curr >= self.offnum+self.numtl-3:
 			self.offnum += 1
 			self.mode = ""
 		self.curr += 1
-		if self.curr > self.lines-2:
-			self.curr = self.lines-2
+		if self.curr > self.lines-1:
+			self.curr = self.lines-1
 		if self.curr < self.offnum:
 			self.curr = self.offnum
 		maxc = 15
-		if self.curr == self.lines -2 and len(self.data)%16 != 0:
+		if self.curr == self.lines -1 and len(self.data)%16 != 0:
 			maxc = len(self.data)%16 -1
 		if self.curc > maxc:
 			self.curc = maxc
@@ -318,8 +322,8 @@ class HexView():
 	def okp_pgdn(self,event):
 		self.mode = "c"
 		self.curr += (self.numtl-2)
-		if self.curr > self.lines-2:
-			self.curr = self.lines-2
+		if self.curr > self.lines-1:
+			self.curr = self.lines-1
 		if self.offnum < self.lines-self.numtl and self.curr >= self.offnum+self.numtl-3:
 			self.offnum += (self.numtl-2)
 			self.mode = ""
@@ -328,7 +332,7 @@ class HexView():
 		if self.curr < self.offnum:
 			self.curr = self.offnum
 		maxc = 15
-		if self.curr == self.lines-2 and len(self.data)%16 != 0:
+		if self.curr == self.lines-1 and len(self.data)%16 != 0:
 			maxc = len(self.data)%16 -1
 		if self.curc > maxc:
 			self.curc = maxc
@@ -348,11 +352,11 @@ class HexView():
 		self.mode = "c"
 		self.shift = self.curc
 		if event.state == gtk.gdk.CONTROL_MASK:
-			self.curr = self.lines-2
+			self.curr = self.lines-1
 			self.offnum = self.lines-self.numtl
 			self.mode = ""
 		self.curc = 15
-		if self.curr == self.lines -2 and len(self.data)%16 != 0:
+		if self.curr == self.lines -1 and len(self.data)%16 != 0:
 			self.curc = len(self.data)%16 - 1
 		return 2
 
@@ -372,8 +376,8 @@ class HexView():
 			rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
 			if event.y - self.tht - 4 < 0:
 				rownum = self.curr
-			if rownum > self.lines-2:
-				rownum = self.lines-2
+			if rownum > self.lines-1:
+				rownum = self.lines-1
 			if event.x > self.tdx*10:
 				if event.x < self.tdx*(10+16*3): # hex
 					colnum = int(((event.x-self.tdx*9.5)/self.tdx+1.5)/3)
@@ -456,8 +460,8 @@ class HexView():
 			else:
 				self.curr = self.offnum
 
-		if self.offnum > max(self.lines-self.numtl,0):
-			self.offnum = self.lines-self.numtl
+		if self.offnum > max(self.lines-self.numtl+1,0):
+			self.offnum = self.lines-self.numtl+1
 
 		if event.state == gtk.gdk.SHIFT_MASK:
 			if self.sel != None:
@@ -562,8 +566,8 @@ class HexView():
 		rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
 		if event.y - self.tht - 4 < 0:
 			rownum = self.curr
-		if rownum > self.lines-2:
-			rownum = self.lines-2
+		if rownum > self.lines-1:
+			rownum = self.lines-1
 		if event.x > self.tdx*10:
 			if event.x < self.tdx*(10+16*3): # hex
 				colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
@@ -593,7 +597,7 @@ class HexView():
 		r0 = o/16
 		c0 = o%16
 		if o+l > len(self.data) -1:
-			r1 = self.lines-2
+			r1 = self.lines-1
 			c1 = len(self.data)%16
 			if c1 == 0:
 				c1 = 16
@@ -666,7 +670,8 @@ class HexView():
 		if self.tdx == -1:
 			self.set_dxdy()
 		x,y,width,height = self.hv.allocation
-		self.numtl = min(int((height - self.tht-4)/self.tht)+1,self.lines)
+		self.numtl = min(int((height - self.tht-4)/self.tht)+1,self.lines+1)
+
 		self.hbox2.set_size_request(max(width-self.tdx*(10+16*3),0),0)
 		if self.numtl >= self.lines:
 			self.vs.hide()
@@ -723,14 +728,14 @@ class HexView():
 			ctx.set_source_rgb(self.lineclr[0],self.lineclr[1],self.lineclr[2])
 			
 #addr 
-			for i in range(min(self.lines-self.offnum-1,self.numtl)):
+			for i in range(min(self.lines-self.offnum,self.numtl)):
 				ctx.move_to(0,(i+2)*self.tht+4)
 				if i == self.curr-self.offnum:
 					ctx.set_source_rgb(self.curclr[0],self.curclr[1],self.curclr[2])
 				ctx.show_text("%08x"%((i+self.offnum)*16))
 				ctx.set_source_rgb(self.lineclr[0],self.lineclr[1],self.lineclr[2])
 # hex/asc  part
-			for i in range(min(self.lines-self.offnum-1,self.numtl)):
+			for i in range(min(self.lines-self.offnum,self.numtl)):
 				ctx.set_source_rgb(0,0,0)
 				hex,asc = self.get_string(i+self.offnum)
 				ctx.move_to(self.tdx*10,(i+2)*self.tht+4)
