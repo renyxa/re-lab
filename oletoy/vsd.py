@@ -249,7 +249,7 @@ def ptr_search (page, data, version, parent):
 	if vbaflag == 1:
 	  ole.open (vbadata, page, iter2)
 	if ptr.format >> 4 == 5 and ptr.type != 0x45:
-	  prep_pgiter(page,"List","vsd","str5tail",pdata[offset+num*plen:],parent)
+	  prep_pgiter(page,"List","vsd","str5tail",pdata[offset+num*plen:],model.iter_nth_child(parent,0))
 
 
 def get_colors (page, data, version, parent):
