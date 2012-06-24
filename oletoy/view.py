@@ -809,10 +809,13 @@ Hexdump selection:\n\
 		hd.hv.curr = lnum
 		hd.hv.curc = offset - lnum*16
 
-		if hd.hv.offnum + 1 > lnum or lnum > hd.hv.offnum + hd.hv.numtl-2:
-			hd.hv.offnum = min(lnum,hd.hv.lines-hd.hv.numtl)
+		if hd.hv.offnum > lnum or lnum > hd.hv.offnum + hd.hv.numtl:
+			hd.hv.offnum = lnum-2
+			if hd.hv.offnum < 0:
+				hd.hv.offnum = 0
 
 		hd.hv.expose(None,None)
+
 
 	def calc_status(self,buf,dlen):
 		pn = self.notebook.get_current_page()
@@ -1056,6 +1059,9 @@ Hexdump selection:\n\
 				elif ntype[0] == "fh":
 					if fhparse.hdp.has_key(ntype[1]):
 						fhparse.hdp[ntype[1]](hd,data,self.das[pn])
+				elif ntype[0] == "ole":
+					if ole.ole_ids.has_key(ntype[1]):
+						ole.ole_ids[ntype[1]](hd,data)
 
 
 	def activate_new (self,parent=None):
