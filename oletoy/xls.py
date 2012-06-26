@@ -633,10 +633,12 @@ def parse (page, data, parent):
 	iters.append(parent)
 	print "Length of iters ",len(iters)
 	curiter = iters[len(iters)-1]
+
 	try:
 		while offset < len(data) - 4:
 			rtype = struct.unpack("<H",data[offset:offset+2])[0]
 			if rtype == 0:
+				print "Break.",offset,len(data)
 				break
 			iter1 = page.model.append(curiter,None)
 			rname = ""

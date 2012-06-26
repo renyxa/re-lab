@@ -28,7 +28,7 @@ cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
-def open (buf,page,iter=None):
+def ole_open (buf,page,iter=None):
 	cgsf.gsf_init()
 	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
 	infile = cgsf.gsf_infile_msole_new(src)
@@ -222,13 +222,28 @@ def cfb_difat (hd,data):
 
 ole_ids = {0:cfb_hdr,1:cfb_dir,2:cfb_mini,3:cfb_difat}
 
+def dump_tree (model, path, parent, f):
+	value = ""
+	for i in range(model.iter_n_children(parent)):
+		value += model.get_value(model.iter_nth_child(parent,i),3)
+	f.write(value)
+
+
+def save (page,fname):
+	model = page.model
+	f = open(fname,'w')
+	print "ff",model
+	model.foreach (dump_tree, f)
+	f.close()
+
+
 # to debug libgsf, implement CFB
 def parse (buf,page,iter=None):
 	#check for signature again
 	if buf[:8] != "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 		print "No OLE signature found"
 		return
-		
+
 	oiter = add_pgiter (page,"CFB","ole",None,buf)
 	majver = struct.unpack("<H",buf[0x1a:0x1c])[0]
 	if majver == 3:
@@ -262,3 +277,4 @@ def parse (buf,page,iter=None):
 		i += 1
 		off += hdrsize
 
+	return "cfb"

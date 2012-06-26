@@ -58,7 +58,7 @@ class Page:
 			return 0
 
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-			self.type = ole.open(buf, self, parent)
+			self.type = ole.ole_open(buf, self, parent)
 			return 0
 
 		if buf[0:2] == "\x50\xc3":

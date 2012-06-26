@@ -580,10 +580,15 @@ Hexdump selection:\n\
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
 		ftype = self.das[pn].type
+		print ftype
 		if  ftype == "WMF" or ftype  == "APWMF" or ftype  == "EMF" or ftype == "SVM":
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:
 				mf.mf_save(self.das[pn],fname,ftype)
+		elif ftype == "cfb":
+			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			if fname:
+				ole.save(self.das[pn],fname)
 		elif ftype == "vsd":
 			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 			if fname:

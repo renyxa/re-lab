@@ -205,7 +205,7 @@ def parse (cmd, entry, page):
 
 		if "ole" == chtype.lower():
 			if buf[int(chaddr,16):int(chaddr,16)+8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-				ole.open (buf[int(chaddr,16):],page,iter1)
+				ole.ole_open (buf[int(chaddr,16):],page,iter1)
 			else:
 				print "OLE stream not found at ",chaddr
 		elif "esc" == chtype.lower():
