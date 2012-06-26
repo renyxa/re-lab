@@ -1040,7 +1040,7 @@ Hexdump selection:\n\
 				elif ntype[0] == "wld":
 					if wld.wld_ids.has_key(ntype[1]):
 							wld.wld_ids[ntype[1]](hd,size,data)
-				elif ntype[0] == "pub98":
+				elif ntype[0][0:3] == "pub":
 					if pub.pub98_ids.has_key(ntype[1]):
 							pub.pub98_ids[ntype[1]](hd,size,data)
 				elif	ntype[0] == "emf+":

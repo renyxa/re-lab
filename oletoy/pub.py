@@ -59,7 +59,19 @@ def pub98doc (hd,size,data):
 	add_iter(hd,"Width",struct.unpack("<I",data[0x14:0x18])[0]/12700.,0x14,4,"<I")
 	add_iter(hd,"Height",struct.unpack("<I",data[0x18:0x1c])[0]/12700.,0x18,4,"<I")
 
+def pubheader (hd,size,data):
+	if struct.unpack("<H",data[2:4])[0] == 0x22:
+		add_iter(hd,"V1",struct.unpack("<I",data[0x12:0x16])[0]/100.,0x12,4,"<I")
+		add_iter(hd,"V2",struct.unpack("<I",data[0x16:0x1a])[0]/100.,0x16,4,"<I")
+		add_iter(hd,"Saved by ?",struct.unpack("<H",data[0x20:0x22])[0],0x20,2,"<H")
+	else:
+		add_iter(hd,"Version",struct.unpack("<H",data[0x22:0x24])[0],0x22,2,"<H")
+		add_iter(hd,"Saved by",struct.unpack("<H",data[0x24:0x26])[0],0x24,2,"<H")
+		
+
+
 pub98_ids = {
+	"cnthdr":pubheader,
 	0x02:pub98image,
 	0x04:pub98line,
 	0x05:pub98shape,
@@ -121,7 +133,7 @@ def parse(page,data,parent):
 	try:
 #	if 1:
 		hdrsize = struct.unpack("<H",data[2:4])[0]
-		add_pgiter (page,"Header","pub",0,data[0:hdrsize],parent)
+		add_pgiter (page,"Header","pub","cnthdr",data[0:hdrsize],parent)
 		if hdrsize == 0x22:
 			parse98 (page,data,parent)
 			return
@@ -277,8 +289,6 @@ def dump_tree (model, parent, outfile,cgsf):
 		cgsf.gsf_output_write (child,len(value),value)
 
 	cgsf.gsf_output_close (child)
-
-
 
 
 def save (page, fname):
