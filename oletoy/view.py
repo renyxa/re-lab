@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 
-version = "0.7.0"
+version = "0.7.1"
 
 ui_info = \
 '''<ui>
@@ -703,7 +703,7 @@ Hexdump selection:\n\
 		if pn == -1:
 			gtk.main_quit()
 		else:
-			del self.das[pn]         
+			del self.das[pn]
 			self.notebook.remove_page(pn)
 			if pn < len(self.das):  ## not the last page
 				for i in range(pn,len(self.das)):
@@ -724,8 +724,7 @@ Hexdump selection:\n\
 						view.grab_focus()
 			elif event.keyval == 65363 and model.iter_n_children(iter1)>0:
 				view.expand_row(intPath,False)
-				ha = gtk.Adjustment()
-				view.set_hadjustment(ha)
+				view.columns_autosize()
 			elif event.keyval == 65361 and model.iter_n_children(iter1)>0:
 				view.collapse_row(intPath)
 			else:
@@ -757,7 +756,10 @@ Hexdump selection:\n\
 						self.das[pn].view.set_cursor_on_cell(val[1])
 					except:
 						print "No such path"
-
+			elif event.keyval == 65363:
+				pn = self.notebook.get_current_page()
+				ha = self.das[pn].scrolled.get_hadjustment()
+				ha.set_value(0)
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
