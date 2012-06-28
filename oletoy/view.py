@@ -723,10 +723,14 @@ Hexdump selection:\n\
 						view.set_cursor(intPath)
 						view.grab_focus()
 			elif event.keyval == 65363 and model.iter_n_children(iter1)>0:
-				view.expand_row(intPath,False)
+				if not view.row_expanded(intPath):
+					view.expand_row(intPath,False)
+					view.columns_autosize()
+					return 1
 				view.columns_autosize()
 			elif event.keyval == 65361 and model.iter_n_children(iter1)>0:
 				view.collapse_row(intPath)
+				view.columns_autosize()
 			else:
 				if event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK:
 					self.selection = (model.get_value(iter1,0),model.get_value(iter1,1),model.get_value(iter1,2),model.get_value(iter1,3))
@@ -756,7 +760,7 @@ Hexdump selection:\n\
 						self.das[pn].view.set_cursor_on_cell(val[1])
 					except:
 						print "No such path"
-			elif event.keyval == 65363:
+			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65363:
 				pn = self.notebook.get_current_page()
 				ha = self.das[pn].scrolled.get_hadjustment()
 				ha.set_value(0)
