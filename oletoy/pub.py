@@ -156,8 +156,9 @@ def parse(page,data,parent):
 		pubblock.parse (page,data[off+4:off+dlen],iter1,2)
 		list_iter = model.iter_nth_child(iter1,2)
 		j = 255
+		name = "***"
 		for k in range (model.iter_n_children(list_iter)):
-	#		print "Parse block %d"%i
+			print "Parse 'Contents' block %02x"%k
 			curiter = model.iter_nth_child(list_iter,k)
 			test = model.get_value(curiter,0)
 			if test[len(test)-4:] != "ID78":
@@ -172,7 +173,7 @@ def parse(page,data,parent):
 						offset = struct.unpack("<I",model.get_value(child,3))[0]
 					if id == "05":
 						[parid] = struct.unpack("<I",model.get_value(child,3))
-				[dlen] = struct.unpack('<I', data[offset:offset+4])
+				dlen = struct.unpack('<I', data[offset:offset+4])[0]
 				if parid != None:
 					if blocks.has_key(parid):
 						if pubblock.block_types.has_key(type):
@@ -180,7 +181,7 @@ def parse(page,data,parent):
 						else:
 							name = "(%02x) Type: %02x"%(j,type)
 						iter1 = add_pgiter (page,name,"pub",0,data[offset:offset+dlen],blocks[parid])
-						pubblock.parse (page,data[offset+4:offset+dlen],iter1,i+3)
+						pubblock.parse (page,data[offset+4:offset+dlen],iter1,i+3,-1,type)
 						blocks[k+255] = iter1
 					else:
 						reorders.append(k+255)
@@ -193,7 +194,8 @@ def parse(page,data,parent):
 					pubblock.parse (page,data[offset+4:offset+dlen],iter1,i+3)
 					blocks[k+255] = iter1
 			j += 1
-		for k in reorders:
+		if 0: # what I used it for??
+		#for k in reorders:
 			curiter = model.iter_nth_child(list_iter,k)
 			for i in range (model.iter_n_children(curiter)):
 				child = model.iter_nth_child(curiter,i)
@@ -214,6 +216,7 @@ def parse(page,data,parent):
 					pubblock.parse (page,data[offset+4:offset+dlen],iter1,i)
 				else:
 					print "Failed to add reordered item %02x"%parid
+					
 		return
 	except:
 		print "Failed in parsing Contents"

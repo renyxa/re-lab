@@ -24,29 +24,30 @@ from utils import *
 block_types = {
 	0x01:"Shape",
 	0x10:"Table",
-	0x30:"Logo",
+	0x30:"Group",
 	0x43:"Page",0x44:"Document",0x46:"BorderArt",0x4b:"Printers",0x4c:"Rulers",
 	0x5c:"ColorSchemes",
 	0x60:'PageName', 0x63:"Cells",0x66:"FileName",0x6c:"Fonts",0x8a:"Page Fmt"}
 
+block_ids = {
+	0x10:{0x66:"# of rows",0x67:"# of cols",0x68:"Width",0x69:"Height"}
+}
 # parses semi-standard "block" structures in MS Pub files.
-def parse (page,data,parent,i,j=-1):
+def parse (page,data,parent,i,j=-1,ptype=None):
 	model = page.model
 	off = 0
 	value = None
 	try:
-#	if 1:
 		while off < len(data) - 2:
 			id = ord(data[off])
 			type = ord(data[off+1])
-			name = "ID: %02x  Type: %02x"%(id,type)
-#			print "ID: %02x  Type: %02x Off: %02x"%(id,type,off)
+			name = "ID: %02x  Type %02x"%(id,type)
 			off+=2
 			dlen = -1
-			if type < 5 or type == 8 or type == 0xa:
+			if type < 5 or type == 8 or type == 0xa or type == 0xa8:
 				value = None
 				dlen = 0
-			if type == 0x78:	
+			if type == 0x78:
 				value = None
 				dlen = 0
 				name = "(%02x) ID78"%j
@@ -101,7 +102,7 @@ def parse (page,data,parent,i,j=-1):
 				else:
 					btype = "%02x"%id2_value
 				if model.get_value(parent,0)[0:7] != "Block A":
-					model.set_value(parent,0,"(%02x) Type: %s"%(j,btype))
+					model.set_value(parent,0,"(%02x) Type %s"%(j,btype))
 
 			if type == 0x80 or type == 0x82 or type == 0x88 or type == 0x8a or type == 0x90 or type == 0x98 or type == 0xa0:
 				[dlen] = struct.unpack('<i', data[off:off+4])
@@ -119,6 +120,11 @@ def parse (page,data,parent,i,j=-1):
 				value = ord(data[off+1])
 				dlen = 1
 			j += 1
+			if block_ids.has_key(ptype):
+				bid = block_ids[ptype]
+				if bid.has_key(id):
+					name += " (%s)"%bid[id]
+
 			if dlen == -1:
 				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off),
 				iter1 = add_pgiter (page,"Unkn block","pub",0,"",parent)
@@ -128,7 +134,7 @@ def parse (page,data,parent,i,j=-1):
 			else:
 				if type != 0x78 or j > 0xFF:
 					iter1 = add_pgiter (page,name,"pub",0,value,parent)
-					if dlen > 4 and type != 0xc0 and type != 0x38 and type != 0x28:
+					if dlen > 4 and type != 0xc0 and type != 0x80 and type != 0x38 and type != 0x28:
 						parse (page,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:
