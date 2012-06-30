@@ -92,8 +92,10 @@ class HexView():
 			65363:self.okp_right,
 			65360:self.okp_home,
 			65367:self.okp_end,
-			97:self.okp_selall, # ^A for 'select all'
-			99:self.okp_copy, # ^C for 'copy'
+			65:self.okp_selall, # ^A for 'select all'
+			97:self.okp_selall, # ^a for 'select all'
+			67:self.okp_copy, # ^C for 'copy'
+			99:self.okp_copy, # ^c for 'copy'
 			101:self.okp_fledit # ^E to flip edit
 			}
 
@@ -190,16 +192,27 @@ class HexView():
 
 	def okp_copy(self,event):
 			#	copy selection to clipboard
-			if event.state == gtk.gdk.CONTROL_MASK and self.sel:
+			if event.state&gtk.gdk.CONTROL_MASK and self.sel:
 				clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
 				r1,c1,r2,c2 = self.sel
+				shift = 0
+				end = "\n"
+				if event.state&gtk.gdk.SHIFT_MASK:
+					shift = 1
+					end = ""
 				if r1 == r2:
-					text = self.hvlines[r1][0][c1*3:c2*3]
+					text = self.hvlines[r1][shift][c1*3:c2*3]
 				else:
-					text = self.hvlines[r1][0][c1*3:] + "\n"
+					text = self.hvlines[r1][shift][c1*3:] + end
 					for i in range(min(r2-r1-1,self.lines-1)):
-						text += self.hvlines[r1+i+1][0] + "\n"
-					text += self.hvlines[r2][0][:c2*3]
+						if self.hvlines[r1+i+1] == "":
+							text += self.get_string(r1+i+1)[shift] + end
+						else:
+							text += self.hvlines[r1+i+1][shift] + end
+					if self.hvlines[r2] == "":
+						text += self.get_string(r2)[shift][:c2*3]
+					else:
+						text += self.hvlines[r2][shift][:c2*3]
 				clp.set_text(text)
 				clp.store()
 
