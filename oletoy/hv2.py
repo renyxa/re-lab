@@ -642,6 +642,11 @@ class HexView():
 
 
 	def draw_selection(self,ctx,r0,c0,r1,c1,clr=(0.5,0.5,0.5,0.5)):
+		if r0 < self.offnum:
+			r0 = self.offnum
+			c0 = 0
+		if r1 > self.offnum +self.numtl + 1:
+			r1 = self.offnum + self.numtl + 1
 		if r0 == r1: # one row
 			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(c1-c0)*3-self.tdx,self.tht)
 			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(c1-c0),self.tht+1.5)
@@ -651,7 +656,7 @@ class HexView():
 			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(16-c0),self.tht+1.5)
 			# middle rows
 			for i in range(r1-r0-1):
-				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*47,self.tht)
+				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*48,self.tht)
 				ctx.rectangle(self.tdx*(11+16*3),self.tht*(r0+i+2-self.offnum)+6,self.tdx*16,self.tht+1.5)
 			# last sel row
 			ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
@@ -715,12 +720,12 @@ class HexView():
 			ctx.stroke()
 
 # FIXME! Overpage selection, adopt to all lines the same except last one in some cases
-			if self.sel and (self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl):
+			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl) or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl) or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
 				self.draw_selection(ctx,self.sel[0],self.sel[1],self.sel[2],self.sel[3],self.selclr)
-				
+
 			for i in self.hl:
 				r0,c0,r1,c1 = self.ol2quad(self.hl[i][0],self.hl[i][1])
-				if r0 != -1 and (r0 >= self.offnum and r0 <= self.offnum + self.numtl):
+				if r0 != -1 and ((r0 >= self.offnum and r0 <= self.offnum + self.numtl) or (r1 >= self.offnum and r1 <= self.offnum + self.numtl) or (r0 < self.offnum and r1 > self.offnum+self.numtl)):
 					self.draw_selection(ctx,r0,c0,r1,c1,(self.hl[i][2],self.hl[i][3],self.hl[i][4],self.hl[i][5]))
 
 #hdr
