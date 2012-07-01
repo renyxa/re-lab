@@ -17,7 +17,7 @@
 
 import sys,struct
 import gobject
-import gtk
+import gtk, pango
 import tree
 import hexdump
 import Doc, cmd
@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 
-version = "0.7.1"
+version = "0.7.2"
 
 ui_info = \
 '''<ui>
@@ -217,18 +217,15 @@ class ApplicationMainWindow(gtk.Window):
 		action_group.add_actions(entries)
 		return action_group
 
-	def activate_manual (self, action):
-		w = gtk.Window()
-		t = gtk.TextView();
-		tb = t.get_buffer()
-		iter_txt = tb.get_iter_at_offset(0)
-		mytxt = "Main tree:\n\
+	def draw_manual (self, widget, event):
+		mytxt = \
+"<b>Main tree:</b>\n\
 	Up/Down - walk the tree.\n\
 	Right/Left - expand/collapse branch.\n\
 	Right click - copy tree path to entry line.\n\
 	Delete - remove leaf from the tree\n\
 	Type text for quick search (Up/Down for next/prev result).\n\n\
-Entry line:\n\
+<b>Entry line:</b>\n\
 	Up/Down - scroll 'command history'\n\
 	gtk tree path - scroll/expand tree\n\
 	#addr - scroll hexdump to addr\n\
@@ -240,13 +237,16 @@ Entry line:\n\
 	$cmx{@addr} - try to parse record as CMX starting from addr (or 0)\n\
 	$icc{@addr} - try to parse record as ICC starting from addr (or 0)\n\
 	$pix{@addr} - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
-	$xls@RC - search XLS file for record related to cell RC\n\
+	$xls@RC - search XLS file for record related to cell RC\n\n\
 	?aSTRING - search for ASCII string\n\
 	?uSTRING - search for Unicode string\n\
 	?x0123 - search for hex value\n\
 	?rREC{:[aux]STRING} - search for record with REC in the name and STRING in data.\n\
 	?rloda#{arg} - search for args in 'loda' records in CDR\n\n\
-Hexdump selection:\n\
+	={val} - search for differences equal to 'val' between current and next pages\n\
+		if value skipped, then compares selected iter on pages for any differences\n\
+		if no iter selected, then compares whole pages (be patient)\n\n\
+<b>Hexdump selection:</b>\n\
 	^E flips edit mode, grey/green/red circle shows status:\n\
 		grey - editing switched off,\n\
 		green - editing switched on,\n\
@@ -258,10 +258,26 @@ Hexdump selection:\n\
 	For PUB 4 bytes would be additionaly converted to points, cm and inches.\n\
 	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\
 	For CDR select outl/fild ID and press arrow right to scroll to it."
-		tb.insert(iter_txt, mytxt)
+
+		pl = widget.create_pango_layout("")
+		pl.set_markup(mytxt)
+		gc = widget.window.new_gc()
+		w,h = pl.get_size()
+		widget.set_size_request(w/1000, h/1000)
+		widget.window.draw_layout(gc, 0, 0, pl)
+
+
+	def activate_manual(self, action):
+		w = gtk.Window()
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(620,400)
+		da = gtk.DrawingArea()
+		da.connect('expose_event', self.draw_manual)
 		w.set_title("OLE Toy Manual")
 		w.set_default_size(520, 300)
-		w.add(t)
+		s.add_with_viewport(da)
+		w.add(s)
 		w.show_all()
 
 	def on_enc_entry_activate (self,entry):
