@@ -680,14 +680,17 @@ class HexView():
 	def expose(self,widget,event):
 		if len(self.data) < 1:
 			return
-		ctx = self.hv.window.cairo_create()
+		x,y,width,height = self.hv.allocation
+
+		mctx = self.hv.window.cairo_create()
+		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+		ctx = cairo.Context (cs)
 		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(self.fontsize)
 		ctx.set_line_width(1)
 		cmnt_off = (-1,-1)
 		if self.tdx == -1:
 			self.set_dxdy()
-		x,y,width,height = self.hv.allocation
 		self.numtl = min(int((height - self.tht-4)/self.tht)+1,self.lines+1)
 
 		self.hbox2.set_size_request(max(width-self.tdx*(10+16*3),0),0)
@@ -897,5 +900,9 @@ class HexView():
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
 		self.mode = ""
+
+		mctx.set_source_surface(cs,0,0)
+		mctx.paint()
+
 
 		return True

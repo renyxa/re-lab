@@ -840,7 +840,12 @@ class HexView():
 		return self.hvlines[num]
 
 	def expose (self, widget, event):
-		ctx = self.hv.window.cairo_create()
+		x,y,width,height = self.hv.allocation
+
+		mctx = self.hv.window.cairo_create()
+		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+		ctx = cairo.Context (cs)
+
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
 		ctx.set_line_width(1)
@@ -1107,5 +1112,8 @@ class HexView():
 					
 
 		self.mode = ""
+		mctx.set_source_surface(cs,0,0)
+		mctx.paint()
+
 
 		return True
