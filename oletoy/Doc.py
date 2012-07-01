@@ -22,6 +22,7 @@ import abr,rtf
 
 class Page:
 	def __init__(self):
+		self.parent = None
 		self.type = ''
 		self.fname = ''
 		self.pname = ''
@@ -221,11 +222,15 @@ class Page:
 
 		if dflag:
 			addr = model1.get_value(iter1,1)
-			hd = self.hd
+			doc = self.hd.hv
 			try:
-				buffer_hex = hd.txtdump_hex.get_buffer()
-				vadj = hd.vscroll2.get_vadjustment()
-				newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
-				vadj.set_value(newval)
+				off = model1.get_value(iter1,1)
+				length = 1
+				if off/16 < doc.offnum or off/16 > doc.offnum+doc.numtl:
+					doc.offnum = off/16-2
+					if doc.offnum < 0:
+						doc.offnum = 0
+				doc.hl[0] = (off,length,0.8,1,0.8,1)
+				doc.expose(None,None)
 			except:
 				print "Wrong address"

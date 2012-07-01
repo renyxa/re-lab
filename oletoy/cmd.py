@@ -151,18 +151,47 @@ def cmp_children (page1, model1, model2, it1, it2, carg):
 			data1 = model1.get_value(iter1,3)
 			data2 = model2.get_value(iter2,3)
 			if len(data1) == len(data2):
-				for j in range(len(data1)):
-					if ord(data1[j])+carg == ord(data2[j]):
-						s_iter = page1.search.append(None,None)
-						page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
-						page1.search.set_value(s_iter,1,j)
-						page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+				if carg =="*":
+					for j in range(len(data1)):
+						if ord(data1[j]) != ord(data2[j]):
+							s_iter = page1.search.append(None,None)
+							page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+							page1.search.set_value(s_iter,1,j)
+							page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+				else:
+					for j in range(len(data1)):
+						if ord(data1[j])+carg == ord(data2[j]):
+							s_iter = page1.search.append(None,None)
+							page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+							page1.search.set_value(s_iter,1,j)
+							page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+			else:
+				s_iter = page1.search.append(None,None)
+				page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+				page1.search.set_value(s_iter,1,0)
+				page1.search.set_value(s_iter,2,"Size mismatch (%s)"%(model1.get_value(iter1,0)))
 
 def compare (cmd, entry, page1, page2):
 	model1 = page1.view.get_model()
 	model2 = page2.view.get_model()
-	carg = int(cmd[1:])
-	page1.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+	page1.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
+
+	if len(cmd) > 1:
+		carg = int(cmd[1:])
+	else:
+		carg = "*"
+		print "Search in progress..."
+		treeSelection = page1.view.get_selection()
+		tmp, iter1 = treeSelection.get_selected()
+		if iter1 != None:
+			p = model1.get_path(iter1)
+			iter2 = model2.get_iter(p)
+			try:
+				cmp_children (page1, model1, model2, iter1, iter2, carg)
+				page1.show_search("Diff %s"%carg)
+			except:
+				print "Search failed"
+			return
 
 	for i in range(model1.iter_n_children(None)):
 		iter1 = model1.iter_nth_child(None,i)
@@ -176,12 +205,26 @@ def compare (cmd, entry, page1, page2):
 			data1 = model1.get_value(iter1,3)
 			data2 = model2.get_value(iter2,3)
 			if len(data1) == len(data2):
-				for j in range(len(data1)):
-					if ord(data1[j])+carg == ord(data2[j]):
-						s_iter = page1.search.append(None,None)
-						page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
-						page1.search.set_value(s_iter,1,j)
-						page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+				if carg =="*":
+					for j in range(len(data1)):
+						if ord(data1[j]) != ord(data2[j]):
+							s_iter = page1.search.append(None,None)
+							page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+							page1.search.set_value(s_iter,1,j)
+							page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+				else:
+					for j in range(len(data1)):
+						if ord(data1[j])+carg == ord(data2[j]):
+							s_iter = page1.search.append(None,None)
+							page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+							page1.search.set_value(s_iter,1,j)
+							page1.search.set_value(s_iter,2,"%04x (%s)"%(j,model1.get_value(iter1,0)))
+			else:
+				s_iter = page1.search.append(None,None)
+				page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
+				page1.search.set_value(s_iter,1,0)
+				page1.search.set_value(s_iter,2,"Size mismatch (%s)"%(model1.get_value(iter1,0)))
+				
 	page1.show_search("Diff %s"%carg)
 
 def parse (cmd, entry, page):
@@ -262,7 +305,7 @@ def parse (cmd, entry, page):
 				coladdr = 26*(ord(chaddr[0].lower()) - 96)+ ord(chaddr[1].lower()) - 97
 				rowaddr = int(chaddr[2:]) - 1
 #			print "Column",coladdr,"Row",rowaddr
-			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING)
+			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
 			model.foreach(xlsfind,(page,rowaddr,coladdr))
 			page.show_search("XLS: cell %s"%chaddr)
 		elif "rx2" == chtype.lower():

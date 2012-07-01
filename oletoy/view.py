@@ -645,27 +645,27 @@ Hexdump selection:\n\
 			col = self.das[pn].view.get_column(0)
 			if goto[0] == "#":
 				pos = goto.find("+")
-				if pos != -1:
-					addr1 = int(goto[1:pos],16)
-					addr2 = int(goto[pos+1:],16)
-					addr = addr1+addr2
-				else:
-					pos = goto.find("-")
+				try:
 					if pos != -1:
 						addr1 = int(goto[1:pos],16)
 						addr2 = int(goto[pos+1:],16)
-						addr = addr1-addr2
+						addr = addr1+addr2
 					else:
-						addr = int(goto[1:], 16)
-				self.entry.set_text("#%02x"%addr)
-				hd = self.das[pn].hd
-				try:
+						pos = goto.find("-")
+						if pos != -1:
+							addr1 = int(goto[1:pos],16)
+							addr2 = int(goto[pos+1:],16)
+							addr = addr1-addr2
+						else:
+							addr = int(goto[1:], 16)
+					self.entry.set_text("#%02x"%addr)
+					hd = self.das[pn].hd
 					buffer_hex = hd.txtdump_hex.get_buffer()
 					vadj = hd.vscroll2.get_vadjustment()
 					newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
 					vadj.set_value(newval)
 				except:
-					print "Wrong address"
+					self.update_statusbar("<span foreground='#ff0000'>Wrong address</span>")
 			elif goto[0] == "$" or goto[0] == "?":
 				cmd.parse (goto,self.entry,self.das[pn])
 			elif goto[0] == "=":
@@ -676,7 +676,7 @@ Hexdump selection:\n\
 					self.das[pn].view.expand_to_path(goto)
 					self.das[pn].view.set_cursor_on_cell(goto)
 				except:
-					print "No such path"
+					self.update_statusbar("No such path")
 
 	def on_entry_keypressed (self, view, event):
 		if len(self.cmdhistory) > 0:
@@ -1125,6 +1125,7 @@ Hexdump selection:\n\
 		if fname:
 			doc = Doc.Page()
 			doc.fname = fname
+			doc.parent = self
 			doc.hd = hexdump.hexdump()
 			err = doc.fload()
 			if err == 0:

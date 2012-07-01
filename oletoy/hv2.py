@@ -719,10 +719,11 @@ class HexView():
 			ctx.line_to(self.tdx*(12+16*4)+0.5,height)
 			ctx.stroke()
 
-# FIXME! Overpage selection, adopt to all lines the same except last one in some cases
+#  Selection
 			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl) or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl) or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
 				self.draw_selection(ctx,self.sel[0],self.sel[1],self.sel[2],self.sel[3],self.selclr)
 
+# Highlights
 			for i in self.hl:
 				r0,c0,r1,c1 = self.ol2quad(self.hl[i][0],self.hl[i][1])
 				if r0 != -1 and ((r0 >= self.offnum and r0 <= self.offnum + self.numtl) or (r1 >= self.offnum and r1 <= self.offnum + self.numtl) or (r0 < self.offnum and r1 > self.offnum+self.numtl)):
