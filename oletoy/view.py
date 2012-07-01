@@ -228,33 +228,33 @@ class ApplicationMainWindow(gtk.Window):
 <b>Entry line:</b>\n\
 	Up/Down - scroll 'command history'\n\
 	gtk tree path - scroll/expand tree\n\
-	#addr - scroll hexdump to addr\n\
-	#addr+shift, #addr-shift - calculate new addr and scroll hexdump\n\
-	$deflate{@addr} - try to decompress starting from addr (or 0)\n\
-	$dump{@addr} - save record starting from addr (or 0)\n\
-	$esc{@addr} - try to parse record as Escher starting from addr (or 0)\n\
-	$ole{@addr} - try to parse record as OLE starting from addr (or 0)\n\
-	$cmx{@addr} - try to parse record as CMX starting from addr (or 0)\n\
-	$icc{@addr} - try to parse record as ICC starting from addr (or 0)\n\
-	$pix{@addr} - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
-	$xls@RC - search XLS file for record related to cell RC\n\n\
-	?aSTRING - search for ASCII string\n\
-	?uSTRING - search for Unicode string\n\
-	?x0123 - search for hex value\n\
-	?rREC{:[aux]STRING} - search for record with REC in the name and STRING in data.\n\
-	?rloda#{arg} - search for args in 'loda' records in CDR\n\n\
-	={val} - search for differences equal to 'val' between current and next pages\n\
+	<tt>#addr</tt> - scroll hexdump to addr\n\
+	<tt>#addr+shift, #addr-shift</tt> - calculate new addr and scroll hexdump\n\
+	<tt>$deflate{@addr}</tt> - try to decompress starting from addr (or 0)\n\
+	<tt>$dump{@addr}</tt> - save record starting from addr (or 0)\n\
+	<tt>$esc{@addr}</tt> - try to parse record as Escher starting from addr (or 0)\n\
+	<tt>$ole{@addr}</tt> - try to parse record as OLE starting from addr (or 0)\n\
+	<tt>$cmx{@addr}</tt> - try to parse record as CMX starting from addr (or 0)\n\
+	<tt>$icc{@addr}</tt> - try to parse record as ICC starting from addr (or 0)\n\
+	<tt>$pix{@addr}</tt> - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
+	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\n\
+	<tt>?aSTRING</tt> - search for ASCII string\n\
+	<tt>?uSTRING</tt> - search for Unicode string\n\
+	<tt>?x0123</tt> - search for hex value\n\
+	<tt>?rREC{:[aux]STRING}</tt> - search for record with REC in the name and STRING in data.\n\
+	<tt>?rloda#{arg}</tt> - search for args in 'loda' records in CDR\n\n\
+	<tt>={val}</tt> - search for differences equal to 'val' between current and next pages\n\
 		if value skipped, then compares selected iter on pages for any differences\n\
 		if no iter selected, then compares whole pages (be patient)\n\n\
 <b>Hexdump selection:</b>\n\
-	^E flips edit mode, grey/green/red circle shows status:\n\
+	<tt>^E</tt> flips edit mode, grey/green/red circle shows status:\n\
 		grey - editing switched off,\n\
 		green - editing switched on,\n\
 		red - data was modified.\n\
 	Switch-on edit/modify/switch-off edit will update data in immediate record.\n\
 	Changes are not propogate up the tree.\n\n\
-	Select 2,3,4 or 8 bytes - check tooltip in the statusbar.\n\
-	^T opens \"Options\" dialog to adjust conversion of selected bytes.\n\n\
+	Select 2,3,4 or 8 bytes - check tooltip in the statusbar.\n\n\
+	<tt>^T</tt> opens \"Options\" dialog to adjust conversion of selected bytes.\n\n\
 	For PUB 4 bytes would be additionaly converted to points, cm and inches.\n\
 	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\
 	For CDR select outl/fild ID and press arrow right to scroll to it."
@@ -271,11 +271,10 @@ class ApplicationMainWindow(gtk.Window):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
 		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-		s.set_size_request(620,400)
+		s.set_size_request(660,400)
 		da = gtk.DrawingArea()
 		da.connect('expose_event', self.draw_manual)
 		w.set_title("OLE Toy Manual")
-		w.set_default_size(520, 300)
 		s.add_with_viewport(da)
 		w.add(s)
 		w.show_all()
