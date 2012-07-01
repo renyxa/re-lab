@@ -1077,17 +1077,14 @@ class ApplicationMainWindow(gtk.Window):
 					if mdb.rec_ids.has_key(ntype[1]):
 						mdb.rec_ids[ntype[1]](hd,data)
 				elif	ntype[0] == "cfb":
-					if ole.ole_ids.has_key(ntype[1]):
-						ole.ole_ids[ntype[1]](hd,data)
+					if ole.cfb_ids.has_key(ntype[1]):
+						ole.cfb_ids[ntype[1]](hd,data)
 				elif ntype[0] == "rx2":
 					if rx2.rx2_ids.has_key(ntype[1]):
 						rx2.rx2_ids[ntype[1]](hd,data)
 				elif ntype[0] == "fh":
 					if fhparse.hdp.has_key(ntype[1]):
 						fhparse.hdp[ntype[1]](hd,data,self.das[pn])
-				elif ntype[0] == "ole":
-					if ole.ole_ids.has_key(ntype[1]):
-						ole.ole_ids[ntype[1]](hd,data)
 
 
 	def activate_new (self,parent=None):

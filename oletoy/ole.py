@@ -210,8 +210,11 @@ def cfb_dir (hd,data):
 	iter = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter, 0, "Mod. Time",2,off,3,8,4,"txt")
 	off += 8
+	startloc = struct.unpack("<I",data[off:off+4])[0]
+	add_iter (hd,"Start Sec Location",startloc,off,4,"<I")
+	off += 4
 	stsize = struct.unpack("<Q",data[off:off+8])[0]
-	add_iter (hd,"Stream Size",stbits,off,8,"<Q")
+	add_iter (hd,"Stream Size",stsize,off,8,"<Q")
 	off += 8
 
 
@@ -221,7 +224,11 @@ def cfb_mini (hd,data):
 def cfb_difat (hd,data):
 	return
 
-ole_ids = {0:cfb_hdr,1:cfb_dir,2:cfb_mini,3:cfb_difat}
+def cfb_fat (hd,data):
+	return
+
+
+cfb_ids = {"hdr":cfb_hdr,"dir":cfb_dir,"mini":cfb_mini,"difat":cfb_difat,"fat":cfb_fat}
 
 def dump_tree (model, path, parent, f):
 	value = ""
@@ -238,6 +245,15 @@ def save (page,fname):
 	f.close()
 
 
+def parse_dir(page,buf,parent):
+	off = 0
+	while off < len(buf):
+		namelen = struct.unpack("<H",buf[off+0x40:off+0x42])[0]
+		name = unicode(buf[off:off+namelen],"utf-16")
+		add_pgiter (page,name,"ole",1,buf[off:off+0x80],parent)
+		off += 0x80
+
+
 # to debug libgsf, implement CFB
 def parse (buf,page,iter=None):
 	#check for signature again
@@ -245,34 +261,44 @@ def parse (buf,page,iter=None):
 		print "No OLE signature found"
 		return
 
-	oiter = add_pgiter (page,"CFB","ole",None,buf)
+	oiter = add_pgiter (page,"CFB","cfb",None,buf)
 	majver = struct.unpack("<H",buf[0x1a:0x1c])[0]
 	if majver == 3:
 		hdrsize = 512
 	else:
 		hdrsize = 4096
-	add_pgiter (page,"CF Header","ole",0,buf[0:hdrsize],oiter)
+	add_pgiter (page,"CF Header","cfb","hdr",buf[0:hdrsize],oiter)
 	ndirsec = struct.unpack("<I",buf[0x28:0x2c])[0]
 	nfatsec = struct.unpack("<I",buf[0x2c:0x30])[0]
 	dirsecloc = struct.unpack("<I",buf[0x30:0x34])[0]
 	minisecloc = struct.unpack("<I",buf[0x3c:0x40])[0]
 	nminisec = struct.unpack("<I",buf[0x44:0x48])[0]
-	difatloc = struct.unpack("<I",buf[0x48:0x4c])[0]
 	ndifatsec = struct.unpack("<I",buf[0x48:0x4c])[0]
 
-	off = hdrsize
-	i = 1
+	off = 0x4c
+	fatlist = {}
+	
+	# FIXME! no parsing for DIFAT sectors at the moment
+	while off < hdrsize:
+		difat = struct.unpack("<I",buf[off:off+4])[0]
+		fatlist[difat] = "fat"
+		off += 4
+		if difat == 0xffffffff:
+			off = hdrsize
+
+	i = 0
 	while off < len(buf):
 		sname = "Sector %02x"%i
 		if i == dirsecloc:
 			sname += " (Dir)"
-			add_pgiter (page,sname,"ole",1,buf[off:off+hdrsize],oiter)
+			diriter = add_pgiter (page,sname,"cfb","dir",buf[off:off+hdrsize],oiter)
+			parse_dir(page,buf[off:off+hdrsize],diriter)
 		elif i == minisecloc:
 			sname += " (Mini)"
-			add_pgiter (page,sname,"ole",2,buf[off:off+hdrsize],oiter)
-		elif i == difatloc:
-			sname += " (Difat)"
-			add_pgiter (page,sname,"ole",3,buf[off:off+hdrsize],oiter)
+			add_pgiter (page,sname,"cfb","mini",buf[off:off+hdrsize],oiter)
+		elif fatlist.has_key(i):
+			sname += " (FAT)"
+			add_pgiter (page,sname,"cfb","fat",buf[off:off+hdrsize],oiter)
 		else:
 			add_pgiter (page,sname,"ole",4,buf[off:off+hdrsize],oiter)
 		i += 1
