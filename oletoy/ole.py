@@ -219,12 +219,16 @@ def cfb_dir (hd,data):
 
 
 def cfb_mini (hd,data):
+	cfb_fat (hd,data)
 	return
 
 def cfb_difat (hd,data):
 	return
 
 def cfb_fat (hd,data):
+	for i in range(len(data)/4):
+		nxt = struct.unpack("<I",data[i*4:i*4+4])[0]
+		add_iter (hd,"%02x"%i,"%02x"%nxt,i*4,4,"<I")
 	return
 
 
@@ -250,8 +254,19 @@ def parse_dir(page,buf,parent):
 	while off < len(buf):
 		namelen = struct.unpack("<H",buf[off+0x40:off+0x42])[0]
 		name = unicode(buf[off:off+namelen],"utf-16")
-		add_pgiter (page,name,"ole",1,buf[off:off+0x80],parent)
+		add_pgiter (page,name,"cfb","dir",buf[off:off+0x80],parent)
 		off += 0x80
+
+def take_chain(chains,idx):
+	chain = []
+	chain.append(idx)
+	while 1:
+		off = idx*4
+		idx = struct.unpack("<I",chains[off:off+4])[0]
+		if idx == 0xfffffffe:
+			return chain
+		else:
+			chain.append(idx)
 
 
 # to debug libgsf, implement CFB
@@ -263,6 +278,8 @@ def parse (buf,page,iter=None):
 
 	oiter = add_pgiter (page,"CFB","cfb",None,buf)
 	majver = struct.unpack("<H",buf[0x1a:0x1c])[0]
+	dirsec = {}
+
 	if majver == 3:
 		hdrsize = 512
 	else:
@@ -286,12 +303,20 @@ def parse (buf,page,iter=None):
 		if difat == 0xffffffff:
 			off = hdrsize
 
+	chains = ""
+	for i in fatlist:
+		chains += buf[(i+1)*hdrsize:(i+2)*hdrsize]
+
+	chain = take_chain(chains,dirsecloc)
+	for i in chain:
+		dirsec[i] = "dir"
+
 	i = 0
 	while off < len(buf):
 		sname = "Sector %02x"%i
-		if i == dirsecloc:
+		if dirsec.has_key(i):
 			sname += " (Dir)"
-			diriter = add_pgiter (page,sname,"cfb","dir",buf[off:off+hdrsize],oiter)
+			diriter = add_pgiter (page,sname,"cfb","",buf[off:off+hdrsize],oiter)
 			parse_dir(page,buf[off:off+hdrsize],diriter)
 		elif i == minisecloc:
 			sname += " (Mini)"
@@ -299,8 +324,9 @@ def parse (buf,page,iter=None):
 		elif fatlist.has_key(i):
 			sname += " (FAT)"
 			add_pgiter (page,sname,"cfb","fat",buf[off:off+hdrsize],oiter)
+			chains += buf[off:off+hdrsize]
 		else:
-			add_pgiter (page,sname,"ole",4,buf[off:off+hdrsize],oiter)
+			add_pgiter (page,sname,"cfb",4,buf[off:off+hdrsize],oiter)
 		i += 1
 		off += hdrsize
 

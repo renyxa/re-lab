@@ -158,7 +158,7 @@ def parse(page,data,parent):
 		j = 255
 		name = "***"
 		for k in range (model.iter_n_children(list_iter)):
-			print "Parse 'Contents' block %02x"%k
+#			print "Parse 'Contents' block %02x"%k
 			curiter = model.iter_nth_child(list_iter,k)
 			test = model.get_value(curiter,0)
 			if test[len(test)-4:] != "ID78":

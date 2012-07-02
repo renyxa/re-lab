@@ -284,7 +284,17 @@ def parse (cmd, entry, page):
 			dlg.hide()
 			if resp != gtk.RESPONSE_CANCEL:
 				nlen = model.get_value(iter1,2)
-				value = model.get_value(iter1,3)[int(chaddr,16):]
+				if chaddr != 0:
+					pos = chaddr.find(":")
+					if pos != -1:
+						endaddr = chaddr[pos+1:]
+						chaddr = chaddr[:pos]
+						value = model.get_value(iter1,3)[int(chaddr,16):int(endaddr,16)]
+					else:
+						value = model.get_value(iter1,3)[int(chaddr,16):]
+				else:
+					value = model.get_value(iter1,3)[int(chaddr,16):]
+
 				if nlen != None:
 					f = open(fname,'w')
 					f.write(value)
