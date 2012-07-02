@@ -24,11 +24,12 @@ import Doc, cmd
 import escher,quill
 import vsd, vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb, pub
-import emfparse,svm,mf,wmfparse,emfplus,rx2,fh,fhparse
+import emfparse,svm,mf,wmfparse,emfplus
+import rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 
-version = "0.7.2"
+version = "0.7.3"
 
 ui_info = \
 '''<ui>
@@ -231,7 +232,7 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>#addr</tt> - scroll hexdump to addr\n\
 	<tt>#addr+shift, #addr-shift</tt> - calculate new addr and scroll hexdump\n\
 	<tt>$deflate{@addr}</tt> - try to decompress starting from addr (or 0)\n\
-	<tt>$dump{@addr}</tt> - save record starting from addr (or 0)\n\
+	<tt>$dump{@addr1{:addr2}}</tt> - save record starting from addr1 (or 0) to addr2 (or end)\n\
 	<tt>$esc{@addr}</tt> - try to parse record as Escher starting from addr (or 0)\n\
 	<tt>$ole{@addr}</tt> - try to parse record as OLE starting from addr (or 0)\n\
 	<tt>$cmx{@addr}</tt> - try to parse record as CMX starting from addr (or 0)\n\
