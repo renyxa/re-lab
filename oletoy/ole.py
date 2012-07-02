@@ -218,7 +218,7 @@ def cfb_dir (hd,data):
 	off += 8
 
 
-def cfb_mini (hd,data):
+def cfb_mdir (hd,data):
 	cfb_fat (hd,data)
 	return
 
@@ -232,7 +232,7 @@ def cfb_fat (hd,data):
 	return
 
 
-cfb_ids = {"hdr":cfb_hdr,"dir":cfb_dir,"mini":cfb_mini,"difat":cfb_difat,"fat":cfb_fat}
+cfb_ids = {"hdr":cfb_hdr,"dir":cfb_dir,"mdir":cfb_mdir,"difat":cfb_difat,"fat":cfb_fat}
 
 def dump_tree (model, path, parent, f):
 	value = ""
@@ -251,11 +251,17 @@ def save (page,fname):
 
 def parse_dir(page,buf,parent):
 	off = 0
+	mdirstart = -1
+	mdirsize = -1
 	while off < len(buf):
 		namelen = struct.unpack("<H",buf[off+0x40:off+0x42])[0]
 		name = unicode(buf[off:off+namelen],"utf-16")
 		add_pgiter (page,name,"cfb","dir",buf[off:off+0x80],parent)
+		if name == "Root Entry\x00":
+			mdirstart = struct.unpack("<I",buf[off+0x74:off+0x78])[0]
+			mdirsize = struct.unpack("<Q",buf[off+0x78:off+0x80])[0]
 		off += 0x80
+	return mdirstart,mdirsize
 
 def take_chain(chains,idx):
 	chain = []
@@ -279,6 +285,8 @@ def parse (buf,page,iter=None):
 	oiter = add_pgiter (page,"CFB","cfb",None,buf)
 	majver = struct.unpack("<H",buf[0x1a:0x1c])[0]
 	dirsec = {}
+	minidirsec = {}
+	minidata = {}
 
 	if majver == 3:
 		hdrsize = 512
@@ -311,20 +319,35 @@ def parse (buf,page,iter=None):
 	for i in chain:
 		dirsec[i] = "dir"
 
+	minichains = ""
+	mdirchain = take_chain(chains,minisecloc)
+	for i in mdirchain:
+		minidirsec[i] = "mdir"
+
 	i = 0
 	while off < len(buf):
 		sname = "Sector %02x"%i
 		if dirsec.has_key(i):
 			sname += " (Dir)"
 			diriter = add_pgiter (page,sname,"cfb","",buf[off:off+hdrsize],oiter)
-			parse_dir(page,buf[off:off+hdrsize],diriter)
-		elif i == minisecloc:
-			sname += " (Mini)"
-			add_pgiter (page,sname,"cfb","mini",buf[off:off+hdrsize],oiter)
+			m1,m2 = parse_dir(page,buf[off:off+hdrsize],diriter)
+			if m1 != -1:
+				mdirstart = m1
+				mdirsize = m2
+				mdatachain = take_chain(chains,mdirstart)
+				for j in mdatachain:
+					minidata[j] = "mdata"
+				
+		elif minidirsec.has_key(i):
+			sname += " (MiniDir)"
+			add_pgiter (page,sname,"cfb","mdir",buf[off:off+hdrsize],oiter)
 		elif fatlist.has_key(i):
 			sname += " (FAT)"
 			add_pgiter (page,sname,"cfb","fat",buf[off:off+hdrsize],oiter)
 			chains += buf[off:off+hdrsize]
+		elif minidata.has_key(i):
+			sname += " (MiniData)"
+			add_pgiter (page,sname,"cfb","mdata",buf[off:off+hdrsize],oiter)
 		else:
 			add_pgiter (page,sname,"cfb",4,buf[off:off+hdrsize],oiter)
 		i += 1
