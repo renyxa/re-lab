@@ -117,6 +117,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_le = 1
 		self.options_be = 0
 		self.options_txt = 1
+		self.options_ipaddr = 0
 		self.options_div = 1
 		self.options_enc = "utf-16"
 		self.options_win = None
@@ -211,6 +212,9 @@ class ApplicationMainWindow(gtk.Window):
 			self.options_be = abs(self.options_be-1)
 		if lt == "Txt":
 			self.options_txt = abs(self.options_txt-1)
+		if lt == "IP Addr":
+			self.options_ipaddr = abs(self.options_ipaddr-1)
+
 		if self.statbuffer != "":
 			self.calc_status(self.statbuffer,len(self.statbuffer))
 
@@ -227,6 +231,7 @@ class ApplicationMainWindow(gtk.Window):
 			le_chkb = gtk.CheckButton("LE")
 			be_chkb = gtk.CheckButton("BE")
 			txt_chkb = gtk.CheckButton("Txt")
+			ipaddr_chkb = gtk.CheckButton("IP Addr")
 			
 			if self.options_le:
 				le_chkb.set_active(True)
@@ -234,15 +239,19 @@ class ApplicationMainWindow(gtk.Window):
 				be_chkb.set_active(True)
 			if self.options_txt:
 				txt_chkb.set_active(True)
+			if self.options_ipaddr:
+				ipaddr_chkb.set_active(True)
 	
 			le_chkb.connect("toggled",self.on_option_toggled)
 			be_chkb.connect("toggled",self.on_option_toggled)
 			txt_chkb.connect("toggled",self.on_option_toggled)
+			ipaddr_chkb.connect("toggled",self.on_option_toggled)
 	
 			hbox0 = gtk.HBox()
 			hbox0.pack_start(le_chkb)
 			hbox0.pack_start(be_chkb)
 			hbox0.pack_start(txt_chkb)
+			hbox0.pack_start(ipaddr_chkb)
 			
 			hbox1 = gtk.HBox()
 			div_lbl = gtk.Label("Div")
@@ -453,6 +462,8 @@ class ApplicationMainWindow(gtk.Window):
 			if self.options_be == 1:
 				txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
 				txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
+			if self.options_ipaddr == 1:
+				txt += "%d.%d.%d.%d"%(ord(buf[0]),ord(buf[1]),ord(buf[2]),ord(buf[3]))
 		if dlen == 8:
 			if self.options_le == 1:
 				txt = "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)

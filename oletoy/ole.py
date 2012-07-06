@@ -29,7 +29,7 @@ cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
 def ole_open (buf,page,iter=None):
-	parse (buf,page,iter)
+#	parse (buf,page,iter)
 	cgsf.gsf_init()
 	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
 	infile = cgsf.gsf_infile_msole_new(src)
