@@ -29,7 +29,7 @@ cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
 def ole_open (buf,page,iter=None):
-#	parse (buf,page,iter)
+	#parse (buf,page,iter)
 	cgsf.gsf_init()
 	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
 	infile = cgsf.gsf_infile_msole_new(src)
@@ -267,13 +267,16 @@ def take_chain(chains,idx):
 	chain = []
 	chain.append(idx)
 	while 1:
-		off = idx*4
-		idx = struct.unpack("<I",chains[off:off+4])[0]
-		if idx == 0xfffffffe:
+		try:
+			off = idx*4
+			idx = struct.unpack("<I",chains[off:off+4])[0]
+			if idx == 0xfffffffe:
+				return chain
+			else:
+				chain.append(idx)
+		except:
+			print "Failed in take_chain"
 			return chain
-		else:
-			chain.append(idx)
-
 
 # to debug libgsf, implement CFB
 def parse (buf,page,iter=None):

@@ -263,7 +263,7 @@ def parse (cmd, entry, page):
 			mf.mf_open (buf[int(chaddr,16):],page,iter1)
 			page.type = pt
 		elif "pix" == chtype.lower():
-			try:
+#			try:
 				off = int(chaddr,16)
 				ntype = model.get_value(iter1,1)
 				if off:
@@ -271,8 +271,8 @@ def parse (cmd, entry, page):
 				else:
 					model.set_value(iter1,1,("escher","odraw","Blip"))
 					page.hd.hv.parent.on_row_activated(page.hd.hv,model.get_path(iter1),None)
-			except:
-				print "Failed to add as a picture"
+#			except:
+#				print "Failed to add as a picture"
 		elif "deflate" == chtype.lower():
 			uncmpr = zlib.decompress(buf[int(chaddr,16):])
 			add_pgiter (page,"[Decompressed data]","",0,uncmpr,iter1)

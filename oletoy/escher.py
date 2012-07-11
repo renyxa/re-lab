@@ -430,14 +430,19 @@ def Blip(hd,size,value,off=0):
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	hd.da = gtk.DrawingArea()
+	da = gtk.DrawingArea()
+	scrolled = gtk.ScrolledWindow()
+	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	scrolled.add_with_viewport(da)
+	da.set_size_request(imgh,imgw)
+	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
-	hd.da.connect('expose_event', cdr.disp_expose,pixbuf)
+	da.connect('expose_event', cdr.disp_expose,pixbuf)
 	ctx = hd.da.window.cairo_create()
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()
 	ctx.stroke()
-	hd.da.show()
+	hd.da.show_all()
 
 def BlipPNG (hd, size, value):
 	off = 0

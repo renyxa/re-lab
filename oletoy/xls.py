@@ -681,7 +681,7 @@ def parse (page, data, parent):
 			rdata = data[offset-4:offset+rlen]
 			page.model.set_value(iter1,0,rname)
 			page.model.set_value(iter1,1,("xls",rtype))
-			page.model.set_value(iter1,2,rlen)
+			page.model.set_value(iter1,2,len(rdata))
 			page.model.set_value(iter1,3,rdata)
 			page.model.set_value(iter1,7,"0x%02x"%rtype)
 			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
