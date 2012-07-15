@@ -80,8 +80,9 @@ class HexView():
 		self.exposed = 0
 		self.debug = -1					# -1 -- debug off, 1 -- debug on
 		self.edit = 1
+		self.editmode = 0
+		self.modified = 0
 		self.edpos = 0
-		
 		# connect signals and call some init functions
 		self.hv.set_can_focus(True)
 		self.hv.set_app_paintable(True)
@@ -101,12 +102,13 @@ class HexView():
 			65288:self.okp_bksp, 65293:self.okp_enter,
 			65289:self.okp_tab,
 			65379:self.okp_ins,
-#			100:self.okp_d, # "d" for debug
+			100:self.okp_debug, # "^d" for debug
 			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, # ^C for 'copy'
-			122:self.okp_undo, # ^Z for 'undo'
-			105:self.okp_ins,	# i for Insert
-			32:self.okp_switch	# space to switch focus
+#			122:self.okp_undo, # ^Z for 'undo'
+			105:self.okp_ins, # i for Insert
+			32:self.okp_switch, # space to switch focus
+			101:self.okp_fledit # ^E to flip edit
 			}
 		self.edmap = {48:0,49:1,50:2,51:3,52:4,53:5,54:6,55:7,56:8,57:9,
 			97:10,98:11,99:12,100:13,101:14,102:15}
@@ -121,13 +123,35 @@ class HexView():
 				self.bkhvlines.append("")
 			self.set_maxaddr()
 
+	def draw_edit(self,ctx):
+		ctx.move_to(self.tdx*2-2,self.tdx)
+		ctx.arc(self.tdx+2,self.tdx,self.tdx/2.,0,6.29)
+		ctx.set_source_rgb(0.6,0.6,0.6)
+		if self.editmode:
+			if self.modified:
+				ctx.set_source_rgb(1,0.4,0.4)
+			else:
+				ctx.set_source_rgb(0.4,1,0.4)
+		ctx.fill_preserve()
+		ctx.set_source_rgb(0,0,0)
+		ctx.stroke()
+
 	def okp_switch(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
 			self.parent.entry.grab_focus()
 
+	def okp_fledit(self,event):
+		if event.state == gtk.gdk.CONTROL_MASK:
+			if self.editmode:
+				self.editmode = 0
+			else:
+				self.editmode = 1
+			self.expose(None,event)
+
 	def okp_edit(self,event):
 		pos = self.lines[self.curr][0]+self.curc
 		v = ord(self.data[pos])
+		self.modified = 1
 		if self.edpos == 0:
 			v1 = self.edmap[event.keyval]*16+(v&0xF)
 			self.edpos = 1
@@ -376,8 +400,9 @@ class HexView():
 				self.lines[self.curr-1] = (self.lines[self.curr-1][0],3,self.lines[self.curr-1][2])
 			self.exposed = 1
 
-	def okp_d(self,event):
-		self.debug *= -1
+	def okp_debug(self,event):
+		if event.state == gtk.gdk.CONTROL_MASK:
+			self.debug *= -1
 
 	def on_vadj_changed (self, vadj):
 		# vertical scroll line
@@ -536,7 +561,7 @@ class HexView():
 			if self.kdrag == 0:
 				self.sel = (self.curr,self.curc,self.curr,self.curc)
 				self.kdrag = 1
-		if (event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103 and event.state != gtk.gdk.CONTROL_MASK):
+		if self.editmode and ((event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103 and event.state != gtk.gdk.CONTROL_MASK)):
 			self.okp_edit(event)
 		else:
 			self.edpos = 0
@@ -950,6 +975,7 @@ class HexView():
 							ctx.show_text(self.comments[self.lines[i+self.offnum][2]][1])
 					else:
 						self.lines[i+self.offnum] = (self.lines[i+self.offnum][0],self.lines[i+self.offnum][0]-2)
+			self.draw_edit(ctx)
 
 		# clear prev hdr cursor
 		ctx.set_source_rgb(0.9,0.9,0.9)

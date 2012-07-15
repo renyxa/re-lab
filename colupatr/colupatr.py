@@ -155,7 +155,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.activate_options),
 
 			( "Close", gtk.STOCK_CLOSE,                    # name, stock id
-				"Close","<control>E",                      # label, accelerator
+				"Close","<control>Z",                      # label, accelerator
 				"Close the file",                             # tooltip
 				self.activate_close),
 			( "Quit", gtk.STOCK_QUIT,					# name, stock id
