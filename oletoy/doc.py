@@ -446,18 +446,20 @@ def parse (page, data, parent):
 	page.type = "DOC"
 	add_pgiter (page,"Base","doc","base",data[0:0x20],parent)
 	offset += 0x20
-	csw = struct.unpack("<H",data[offset:offset+2])[0]
-	add_pgiter (page,"fibRgW","doc","fibRgW",data[offset:offset+2+csw*2],parent)
-	offset += 2+csw*2
-	cslw = struct.unpack("<H",data[offset:offset+2])[0]
-	add_pgiter (page,"fibRgLw","doc","fibRgLw",data[offset:offset+2+cslw*4],parent)
-	offset += 2+cslw*4
-	cbRgFcLcb = struct.unpack("<H",data[offset:offset+2])[0]
-	page.wdoc = add_pgiter (page,"fibRgFcLcbBlob","doc","fibRgFcLcbBlob",data[offset:offset+2+cbRgFcLcb*8],parent)
-	offset += 2+cbRgFcLcb*8
-	cswNew = struct.unpack("<H",data[offset:offset+2])[0]
-	add_pgiter (page,"fibRgCswNew","doc","fibRgCswNew",data[offset:offset+2+cswNew*2],parent)
-
+	try:
+	  csw = struct.unpack("<H",data[offset:offset+2])[0]
+	  add_pgiter (page,"fibRgW","doc","fibRgW",data[offset:offset+2+csw*2],parent)
+	  offset += 2+csw*2
+	  cslw = struct.unpack("<H",data[offset:offset+2])[0]
+	  add_pgiter (page,"fibRgLw","doc","fibRgLw",data[offset:offset+2+cslw*4],parent)
+	  offset += 2+cslw*4
+	  cbRgFcLcb = struct.unpack("<H",data[offset:offset+2])[0]
+	  page.wdoc = add_pgiter (page,"fibRgFcLcbBlob","doc","fibRgFcLcbBlob",data[offset:offset+2+cbRgFcLcb*8],parent)
+	  offset += 2+cbRgFcLcb*8
+	  cswNew = struct.unpack("<H",data[offset:offset+2])[0]
+	  add_pgiter (page,"fibRgCswNew","doc","fibRgCswNew",data[offset:offset+2+cswNew*2],parent)
+	except:
+	  print "Failed in fib parsing"
 
 def dump_tree (model, parent, outfile):
 	ntype = model.get_value(parent,1)

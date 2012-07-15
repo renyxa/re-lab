@@ -28,6 +28,28 @@ cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
+prop_set_ids = {
+	1:"CodePage",
+	2:"Title",
+	3:"Subject",
+	4:"Author",
+	5:"Keywords",
+	6:"Comments",
+	7:"Template",
+	8:"Last Author",
+	9:"Rev Number",
+	10:"Edit Time",
+	11:"Last Printed",
+	12:"Create DTM",
+	13:"Last Save DTM",
+	14:"Page Count",
+	15:"Word Count",
+	16:"Char Count",
+	17:"Thumbnail",
+	18:"App Name",
+	19:"Doc Security"
+}
+
 def ole_open (buf,page,iter=None):
 	#parse (buf,page,iter)
 	cgsf.gsf_init()
