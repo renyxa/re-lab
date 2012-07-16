@@ -15,9 +15,6 @@
 #
 
 import struct
-import ctypes as C
-
-cgsf = C.cdll.LoadLibrary('libgsf-1.so')
 
 def inflate_vba_stream (data):
   i = 0
@@ -110,6 +107,8 @@ def inflate_vba_oletoy (data,ptype):
   return res
 
 def inflate_vba_gsf (data,ptype):
+  import ctypes as C
+  cgsf = C.cdll.LoadLibrary('libgsf-1.so')
   cgsf.gsf_init()
   cgsf.gsf_input_memory_new.restype = C.c_void_p
   src = cgsf.gsf_input_memory_new (data,len(data),False)
