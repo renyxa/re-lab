@@ -24,7 +24,34 @@ import vsd, xls, ppt, vba, doc, qpw, ppp
 import ctypes
 from utils import *
 
-cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+ropen = ""
+
+
+def my_open (buf,page,iter=None):
+	#parse (buf,page,iter)
+	cgsf.gsf_init()
+	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
+	infile = cgsf.gsf_infile_msole_new(src)
+	ftype = get_children(page,infile,iter,"ole")
+	cgsf.gsf_shutdown()
+	return ftype
+
+def gsf_open(src,page,iter=None):
+	inp = gsf.InputMemory(src,False)
+	infile = gsf.InfileMSOle(inp)
+	ftype = gsf_get_children(page,infile,iter,"ole")
+	return ftype
+
+
+
+try:
+	import gsf
+	ropen = gsf_open
+	print "Found libgsf python bindings"
+except:
+	print 'libgsf python bindings were not found'
+	ropen = my_open
+	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
@@ -123,14 +150,96 @@ prop_types = {
 	0x2017:"ARRAY_UINT"
 }
 
-def ole_open (buf,page,iter=None):
-	#parse (buf,page,iter)
-	cgsf.gsf_init()
-	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
-	infile = cgsf.gsf_infile_msole_new(src)
-	ftype = get_children(page,infile,iter,"ole")
-	cgsf.gsf_shutdown()
+
+def gsf_get_children(page,infile,parent,ftype,dirflag=0):
+	vbaiter = None
+	docdata = ""
+	docdataiter = None
+	tbliter = None
+	for i in range(infile.num_children()):
+		infchild = infile.child_by_index(i)
+
+		infname = infile.name_by_index(i)
+		chsize = infchild.size()
+#		print "Name ", infname, dirflag
+
+		if ord(infname[0]) < 32: 
+			infname = infname[1:]
+
+
+		if infname == "dir":
+			infuncomp = infchild.uncompress()
+			data = infuncomp.read(infuncomp.size())
+		else:
+			data = infchild.read(chsize)
+			
+		iter1 = page.model.append(parent,None)
+		page.model.set_value(iter1,0,infname)
+		page.model.set_value(iter1,1,("ole",dirflag))
+		page.model.set_value(iter1,2,chsize)
+		page.model.set_value(iter1,3,data)
+		if (infname == "EscherStm" or infname == "EscherDelayStm") and chsize>0:
+			ftype = "escher"
+			page.model.set_value(iter1,1,("escher",dirflag))
+			escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
+		if infname == "CONTENTS":
+			ftype = "quill"
+			page.model.set_value(iter1,1,("quill",dirflag))
+			quill.parse (page,data,iter1)
+		if infname == "Contents":
+			if data[:2] == "\xe8\xac": # take signature into account
+				ftype = "pub"
+				page.model.set_value(iter1,1,("pub",dirflag))
+				pub.parse (page,data,iter1)
+		if infname == "VisioDocument":
+			ftype = "vsd"
+			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
+			vsd.parse (page, data, iter1)
+		if infname == "WordDocument":
+			ftype = "doc"
+			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
+			doc.parse (page, data, iter1)
+		if infname == "1Table" or infname == "0Table":
+			doc.parse_table (page, data, iter1,docdata,docdataiter)
+		if infname == "Data" and page.type == "DOC":
+			docdataiter = iter1
+			docdata = data
+		if infname == "Book" or infname == "Workbook":
+			page.model.set_value(iter1,1,("xls",dirflag))
+			ftype = xls.parse (page, data, iter1)
+		if infname == "PowerPoint Document" or infname == "Pictures":
+			ftype = "ppt"
+			page.model.set_value(iter1,1,("ppt",dirflag))
+			ppt.parse (page, data, iter1)
+		if infname == "NativeContent_MAIN":
+			ftype = "qpw"
+			page.model.set_value(iter1,1,("qpw",dirflag))
+			qpw.parse (page, data, iter1)
+		if infname == "Signature" and data[:4] == '\x60\x67\x01\x00':
+			ftype = "ppp"  #PagePlus OLE version (9.x?)
+		if (infname == "contents" or infname == "SCFFPreview") and ftype == "ppp":
+			ppp.parse(page,data,iter1,infname)
+
+		if infname == "VBA":
+			page.type = ftype
+			ftype = "vba"
+		if ftype == "vba" and infname == "dir":
+			page.model.set_value(iter1,1,("vba",dirflag))
+			vbaiter = iter1
+			vbadata = data
+		if (infile.num_children()>0):
+			page.model.set_value(iter1,1,(ftype,1))
+			gsf_get_children(page,infchild,iter1,ftype,0)
+
+	if vbaiter != None:
+		vba.parse (page, vbadata, vbaiter)
+
 	return ftype
+
+
+def ole_open (buf,page,iter=None):
+	return ropen(buf,page,iter)
+	
 
 def get_children(page,infile,parent,ftype,dirflag=0):
 	vbaiter = None

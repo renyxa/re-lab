@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 
-version = "0.7.3"
+version = "0.7.4"
 
 ui_info = \
 '''<ui>
