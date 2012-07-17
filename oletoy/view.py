@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 
-version = "0.7.4"
+version = "0.7.5"
 
 ui_info = \
 '''<ui>
@@ -239,6 +239,7 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>$icc{@addr}</tt> - try to parse record as ICC starting from addr (or 0)\n\
 	<tt>$pix{@addr}</tt> - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
 	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\n\
+	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\n\
 	<tt>?aSTRING</tt> - search for ASCII string\n\
 	<tt>?uSTRING</tt> - search for Unicode string\n\
 	<tt>?x0123</tt> - search for hex value\n\
@@ -686,6 +687,13 @@ class ApplicationMainWindow(gtk.Window):
 				cmd.parse (goto,self.entry,self.das[pn])
 			elif goto[0] == "=":
 					cmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
+			elif 'reload' in goto:
+				try:
+					exec("reload(%s)"%goto[7:-1])
+					self.activate_reload(None)
+				except:
+					print "Cannot reload",goto[7:-1]
+
 
 			else:
 				try:
