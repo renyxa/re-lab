@@ -14,6 +14,9 @@
 # USA
 #
 
+
+# Corel palettes
+
 import sys,struct,gtk,gobject
 from utils import *
 

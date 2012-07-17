@@ -6,22 +6,34 @@ moved from our earlier work.
 
 As of now OLE Toy reads and parses:
 
-- PUB (Microsoft Publisher)
-- VSD, VSS (Microsoft Visio)
+- PUB (Microsoft Publisher ver 98/2k and 2002 to 2010)
+- VSD, VSS (Microsoft Visio, ver 6,11; partially versions 4 and 5)
 - DOC (Microsoft Word)
 - XLS (Microsoft Excel)
-- PUB (Microsoft Publisher)
 - PPT (Microsoft PowerPoint)
+- MDB (Microsoft Access)
 - VBA (Microsoft Office)
+- RTF (Microsoft Office)
 - CLP (Microsoft clipboard)
-- FH (Macromedia Freehand)
-- CDR (Corel DRAW)
+- FH (Macromedia Freehand ver.10 and 11)
+- QPW (QuattroPro spreadsheets)
+- SVM (StarOffice)
+- PPP (old PagePlus files, BIPU support)
+- CDR (CorelDRAW ver. 3 to 16)
+- WLD (CorelDRAW ver. 1 and 2)
+- CMX (CorelDRAW)
+- CPL (CorelDRAW palette)
+- CDW ("Kompas" unknown version, files were picked on Inet)
+- ABR/GRD (Adobe brushes and gradients)
+- ICC (colour profiles)
 - EMF, EMF+, WMF (Microsoft)
 - REX, RX2 (Propellerheads ReCycle)
 
 The scripts depend on libgsf. You can find libgsf source code here:
-
 http://ftp.gnome.org/pub/GNOME/sources/libgsf/
+
+On non-x86 systems it's recommended to compile libgsf with python bindings support.
+OLE Toy will detect presence of those and use them.
 
 To start OLE Toy just run:
 
