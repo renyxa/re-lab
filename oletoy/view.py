@@ -28,7 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
-
+from hv2 import HexView
 version = "0.7.5"
 
 ui_info = \
@@ -1003,9 +1003,10 @@ class ApplicationMainWindow(gtk.Window):
 			hd.hv.modified = 0
 			hd.hv.editmode = 0
 			hd.hv.offnum = 0
-			hd.hv.iter = iter1
-			hd.hv.data = data
 			hd.hv.parent = self
+			hd.hv.iter = iter1
+			hd.hv.vadj.value = 0
+			hd.hv.data = data
 			hd.hv.hvlines = []
 			hd.hv.hl = {}
 			hd.hv.sel = None
