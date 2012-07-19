@@ -319,7 +319,8 @@ def parse (cmd, entry, page):
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
 		elif "dib" == chtype.lower():
-			add_pgiter (page,"[BMP]","",0,dib2bmp(buf[int(chaddr,16):]),iter1)
+			iter2 = add_pgiter (page,"[BMP]","",0,dib2bmp(buf[int(chaddr,16):]),iter1)
+			model.set_value(iter2,1,("escher","odraw","Blip"))
 		elif "zip" == chtype.lower():
 			try:
 				print int(chaddr,16)

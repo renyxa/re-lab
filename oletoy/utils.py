@@ -81,9 +81,18 @@ def bflag2txt(flag,data,txt=""):
 			txt = txt[:len(txt)-1]
 	return txt
 
-def dib2bmp(data):
+def dib2bmp(data,strict=0):
+	flag = struct.unpack("<I",data[:4])[0]
+	if flag != 0x28:
+		print "Doesn't look like DIB, sir..."
+		if strict:
+			return 0
 	size = len(data)+14
 	bpp = ord(data[14])
-	bsize = struct.unpack("<I",data[0x14:0x18])[0]
+	if bpp == 1:
+		bsize = size - 0x3e
+	else:
+		bsize = struct.unpack("<I",data[0x14:0x18])[0]
+		
 	return "BM"+struct.pack("<I",size) + "\x00"*4+struct.pack("<I",size-bsize)+data
 

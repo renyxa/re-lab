@@ -503,8 +503,9 @@ def BlipDIB (hd, size, value):
 		off += 16
 	add_iter(hd,"tag","%02x"%ord(value[off]),off,1,"<B")
 	off += 1
-	bmp = dib2bmp(value[off:])
-	Blip(hd,size,bmp,0)
+	bmp = dib2bmp(value[off:],1)  # "strict", return 0 if wrong
+	if bmp:
+		Blip(hd,size,bmp,0)
 
 
 odraw_ids = {
