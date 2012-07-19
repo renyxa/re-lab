@@ -15,6 +15,7 @@
 #
 
 import sys,struct
+import gtk
 
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -93,6 +94,11 @@ def dib2bmp(data,strict=0):
 		bsize = size - 0x3e
 	else:
 		bsize = struct.unpack("<I",data[0x14:0x18])[0]
-		
 	return "BM"+struct.pack("<I",size) + "\x00"*4+struct.pack("<I",size-bsize)+data
 
+def disp_expose (da,event,pixbuf,scale=1):
+	ctx = da.window.cairo_create()
+	ctx.scale(scale,scale)
+	ctx.set_source_pixbuf(pixbuf,0,0)
+	ctx.paint()
+	ctx.stroke()

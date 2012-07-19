@@ -18,6 +18,7 @@ import gtk
 import gobject
 import tree
 import hv2
+import utils
 
 class hexdump:
 	def __init__(self):
@@ -31,10 +32,27 @@ class hexdump:
 		self.version = None # to support vsdchunks for different versions
 		self.width = 0
 		self.height = 0
-		
+		self.dispscale = 1
+
 		self.hv = hv2.HexView()
 		self.vpaned.add2(self.hv.table)
 
 	def update():
 		pass
 
+	def disp_expose(self,da,event,pixbuf):
+		utils.disp_expose(da,event,pixbuf,self.dispscale)
+
+	def disp_on_button_press(self,da,event,pixbuf):
+		if event.type  == gtk.gdk.BUTTON_PRESS:
+			if event.button == 1:
+				self.dispscale *= 1.4
+				self.disp_expose(da,event,pixbuf)
+			if event.button == 2:
+				self.dispscale = 1
+				self.da.hide()
+				self.da.show()
+			if event.button == 3:
+				self.dispscale /= 1.4
+				self.da.hide()
+				self.da.show()

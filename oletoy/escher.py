@@ -423,10 +423,12 @@ def ClientData (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
 
+
 def Blip(hd,size,value,off=0):
 	pixbufloader = gtk.gdk.PixbufLoader()
 	pixbufloader.write(value[off:])
 	pixbufloader.close()
+	hd.dispscale = 1
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
@@ -437,7 +439,9 @@ def Blip(hd,size,value,off=0):
 	da.set_size_request(imgw,imgh)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
-	da.connect('expose_event', cdr.disp_expose,pixbuf)
+	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+	da.connect('expose_event',hd.disp_expose,pixbuf)
+	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	hd.da.show_all()
 
 def BlipPNG (hd, size, value):

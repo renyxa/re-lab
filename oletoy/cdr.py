@@ -1619,12 +1619,6 @@ def trfd (hd,size,data):
 		else:
 			add_iter (hd, "Unknown Type", "",start,2,"txt")
 
-def disp_expose (da, event,pixbuf):
-	ctx = da.window.cairo_create()
-	ctx.set_source_pixbuf(pixbuf,0,0)
-	ctx.paint()
-	ctx.stroke()
-
 def disp (hd,size,data,page):
 	# naive version, not always works as needed
 	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
@@ -1633,6 +1627,7 @@ def disp (hd,size,data,page):
 	pixbufloader = gtk.gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
+	hd.dispscale = 1
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
@@ -1643,7 +1638,9 @@ def disp (hd,size,data,page):
 	da.set_size_request(imgw,imgh)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
-	da.connect('expose_event', disp_expose,pixbuf)
+	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+	da.connect('expose_event', hd.disp_expose,pixbuf)
+	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	hd.da.show_all()
 
 def vpat (hd,size,data):
