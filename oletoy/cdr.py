@@ -1640,14 +1640,10 @@ def disp (hd,size,data,page):
 	scrolled = gtk.ScrolledWindow()
 	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 	scrolled.add_with_viewport(da)
-	da.set_size_request(imgh,imgw)
+	da.set_size_request(imgw,imgh)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
 	da.connect('expose_event', disp_expose,pixbuf)
-	ctx = hd.da.window.cairo_create()
-	ctx.set_source_pixbuf(pixbuf,0,0)
-	ctx.paint()
-	ctx.stroke()
 	hd.da.show_all()
 
 def vpat (hd,size,data):

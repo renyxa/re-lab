@@ -80,3 +80,10 @@ def bflag2txt(flag,data,txt=""):
 		if len(txt) > 0:
 			txt = txt[:len(txt)-1]
 	return txt
+
+def dib2bmp(data):
+	size = len(data)+14
+	bpp = ord(data[14])
+	bsize = struct.unpack("<I",data[0x14:0x18])[0]
+	return "BM"+struct.pack("<I",size) + "\x00"*4+struct.pack("<I",size-bsize)+data
+

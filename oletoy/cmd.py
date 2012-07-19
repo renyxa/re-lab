@@ -267,15 +267,13 @@ def parse (cmd, entry, page):
 				off = int(chaddr,16)
 				ntype = model.get_value(iter1,1)
 				if off:
-					add_pgiter(page,"Picture",("escher","Blip"),buf[off:],0,len(buf[off:]),iter1)
+					iter2 = add_pgiter(page,"Picture","escher","Blip",buf[off:],iter1)
+					model.set_value(iter2,1,("escher","odraw","Blip"))
 				else:
 					model.set_value(iter1,1,("escher","odraw","Blip"))
 					page.hd.hv.parent.on_row_activated(page.hd.hv,model.get_path(iter1),None)
 #			except:
 #				print "Failed to add as a picture"
-		elif "deflate" == chtype.lower():
-			uncmpr = zlib.decompress(buf[int(chaddr,16):])
-			add_pgiter (page,"[Decompressed data]","",0,uncmpr,iter1)
 		elif "dump" == chtype.lower():
 			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 			dlg.set_local_only(True)
@@ -314,23 +312,19 @@ def parse (cmd, entry, page):
 			else:
 				coladdr = 26*(ord(chaddr[0].lower()) - 96)+ ord(chaddr[1].lower()) - 97
 				rowaddr = int(chaddr[2:]) - 1
-#			print "Column",coladdr,"Row",rowaddr
 			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
 			model.foreach(xlsfind,(page,rowaddr,coladdr))
 			page.show_search("XLS: cell %s"%chaddr)
 		elif "rx2" == chtype.lower():
 			newL = struct.unpack('>I', buf[int(chaddr,16)+4:int(chaddr,16)+8])[0]
 			rx2.parse (model,buf[int(chaddr,16):int(chaddr,16)+newL],0,iter1)
+		elif "dib" == chtype.lower():
+			add_pgiter (page,"[BMP]","",0,dib2bmp(buf[int(chaddr,16):]),iter1)
 		elif "zip" == chtype.lower():
 			try:
 				print int(chaddr,16)
 				output = zlib.decompress(buf[int(chaddr,16):],-15)
-				iter2 = page.model.append(iter1,None)
-				model.set_value(iter2,0,"Decompressed data")
-				model.set_value(iter2,1,("","data"))
-				model.set_value(iter2,2,len(output))
-				model.set_value(iter2,3,output)
-				model.set_value(iter2,6,page.model.get_string_from_iter(iter2))
+				add_pgiter (page,"[Decompressed data]","",0,output,iter1)
 			except:
 				print "Failed to decompress"
 

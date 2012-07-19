@@ -144,7 +144,7 @@ class HexView():
 		self.tht = int(ht+6)
 		self.hbox1.set_size_request(self.tdx*9,0)
 		self.hbox3.set_size_request(0,self.tht+4)
-		self.vadj.upper = self.lines-self.numtl+1
+		self.vadj.upper = self.lines-self.numtl+2
 		self.vadj.value = self.offnum
 
 	def get_string(self, num):
@@ -563,7 +563,7 @@ class HexView():
 		# vertical scroll line
 		if int(vadj.value) != self.offnum:
 			self.offnum = int(vadj.value)
-			self.vadj.upper = self.lines-self.numtl+1
+			self.vadj.upper = self.lines-self.numtl+2
 			self.hv.hide()
 			self.hv.show()
 		return True

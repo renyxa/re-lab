@@ -434,14 +434,10 @@ def Blip(hd,size,value,off=0):
 	scrolled = gtk.ScrolledWindow()
 	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 	scrolled.add_with_viewport(da)
-	da.set_size_request(imgh,imgw)
+	da.set_size_request(imgw,imgh)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
 	da.connect('expose_event', cdr.disp_expose,pixbuf)
-	ctx = hd.da.window.cairo_create()
-	ctx.set_source_pixbuf(pixbuf,0,0)
-	ctx.paint()
-	ctx.stroke()
 	hd.da.show_all()
 
 def BlipPNG (hd, size, value):
@@ -507,7 +503,8 @@ def BlipDIB (hd, size, value):
 		off += 16
 	add_iter(hd,"tag","%02x"%ord(value[off]),off,1,"<B")
 	off += 1
-	Blip(hd,size,value,off)
+	bmp = dib2bmp(value[off:])
+	Blip(hd,size,bmp,0)
 
 
 odraw_ids = {

@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 from hv2 import HexView
-version = "0.7.5"
+version = "0.7.6"
 
 ui_info = \
 '''<ui>
@@ -231,14 +231,17 @@ class ApplicationMainWindow(gtk.Window):
 	gtk tree path - scroll/expand tree\n\
 	<tt>#addr</tt> - scroll hexdump to addr\n\
 	<tt>#addr+shift, #addr-shift</tt> - calculate new addr and scroll hexdump\n\
-	<tt>$deflate{@addr}</tt> - try to decompress starting from addr (or 0)\n\
-	<tt>$dump{@addr1{:addr2}}</tt> - save record starting from addr1 (or 0) to addr2 (or end)\n\
-	<tt>$esc{@addr}</tt> - try to parse record as Escher starting from addr (or 0)\n\
-	<tt>$ole{@addr}</tt> - try to parse record as OLE starting from addr (or 0)\n\
 	<tt>$cmx{@addr}</tt> - try to parse record as CMX starting from addr (or 0)\n\
+	<tt>$dib{@addr}</tt> - try to parse record as DIB starting from addr (or 0)\n\
+	<tt>$dump{@addr1{:addr2}}</tt> - save record starting from addr1 (or 0) to addr2 (or end)\n\
+	<tt>$emf{@addr}</tt> - try to parse record as EMF starting from addr (or 0)\n\
+	<tt>$esc{@addr}</tt> - try to parse record as Escher starting from addr (or 0)\n\
 	<tt>$icc{@addr}</tt> - try to parse record as ICC starting from addr (or 0)\n\
+	<tt>$ole{@addr}</tt> - try to parse record as OLE starting from addr (or 0)\n\
 	<tt>$pix{@addr}</tt> - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
-	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\n\
+	<tt>$wmf{@addr}</tt> - try to parse record as WMF starting from addr (or 0)\n\
+	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\
+	<tt>$zip{@addr}</tt> - try to decompress starting from addr (or 0)\n\n\
 	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\n\
 	<tt>?aSTRING</tt> - search for ASCII string\n\
 	<tt>?uSTRING</tt> - search for Unicode string\n\
@@ -254,7 +257,7 @@ class ApplicationMainWindow(gtk.Window):
 		green - editing switched on,\n\
 		red - data was modified.\n\
 	Switch-on edit/modify/switch-off edit will update data in immediate record.\n\
-	Changes are not propogate up the tree.\n\n\
+	Changes do not propogate up the tree.\n\n\
 	Select 2,3,4 or 8 bytes - check tooltip in the statusbar.\n\n\
 	<tt>^T</tt> opens \"Options\" dialog to adjust conversion of selected bytes.\n\n\
 	For PUB 4 bytes would be additionaly converted to points, cm and inches.\n\
