@@ -377,8 +377,88 @@ fopt_names = {
 0xc680:'bookmark',0xc681:'bookmarkName',0xc383:'wrapPoints'
 }
 
+def pVert (hd,data,parent,poff):
+	off = 0
+	numv = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"# of Vertices",numv,poff+off,2,"<H",0,0,parent)
+	off +=2
+	maxv = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"Max # of Vertices",maxv,poff+off,2,"<H",0,0,parent)
+	off += 2
+	elsize = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"Size of entry",elsize,poff+off,2,"<H",0,0,parent)
+	off += 2
+	for j in range(numv):
+		x = struct.unpack("<i",data[off:off+4])[0]
+		y = struct.unpack("<i",data[off+4:off+8])[0]
+		add_iter(hd,"X/Y %d"%j,"%d\t%d"%(x,y),poff+off,8,"<ii",0,0,parent)
+		off +=8
+
+pSegment_types = {
+	0:"LineTo",
+	1:"CurveTo",
+	2:"MoveTo",
+	3:"Close",
+	4:"End",
+	5:"Escape",
+	6:"ClientEscape"
+}
+
+pSegmEscTypes = {
+	0:"Extension",
+	1:"AngleEllipseTo",
+	2:"AngleEllipse",
+	3:"ArcTo",
+	4:"Arc",
+	5:"ClockwiseArcTo",
+	6:"ClockwiseArc",
+	7:"EllipticalQuadrantX",
+	8:"EllipticalQuadrantY",
+	9:"QuadraticBezier",
+	10:"NoFill",
+	11:"NoLine",
+	12:"AutoLine",
+	13:"AutoCurve",
+	14:"CornerLine",
+	15:"CornerCurve",
+	16:"SmoothLine",
+	17:"SmoothCurve",
+	18:"SymmetricLine",
+	19:"SymmetricCurve",
+	20:"Freeform",
+	21:"FillColor",
+	22:"LineColor",
+}
+
+def pSegmInfo (hd, data, parent,poff):
+	off = 0
+	numv = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"# of Segments",numv,poff+off,2,"<H",0,0,parent)
+	off +=2
+	maxv = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"Max # of Segments",maxv,poff+off,2,"<H",0,0,parent)
+	off += 2
+	elsize = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"Size of entry",elsize,poff+off,2,"<H",0,0,parent)
+	off += 2
+	for j in range(numv):
+		v = struct.unpack("<H",data[off:off+2])[0]
+		# Warning! MS spec says 3 LSB for type, 13 next bits for segments.
+		# It's other way around.
+		
+		sitype = (v>>13)%7
+		typetxt = "%s (%d)"%(pSegment_types[sitype],sitype)
+		if sitype > 4:  # EscapeInfo
+			esctype = (v>>8)&0x1f
+			segms = ord(data[off])
+			typetxt += " %s (%d)"%(pSegmEscTypes[esctype],esctype)
+		else:
+			segms = v%0x1fff
+			
+		add_iter(hd,"type/segments","%s \t%d"%(typetxt,segms),poff+off,2,"<h",0,0,parent)
+		off += 2
+
 def FOPT (hd, size, data):
-# ignoring "complex" opids for now
 	fnames = []
 	fcomplex = []
 	num = struct.unpack("<H",data[:2])[0]/16
@@ -399,7 +479,8 @@ def FOPT (hd, size, data):
 			name += "[BLIP]"
 		if fcplx:
 			name += "[CMPLX]"
-			fcomplex.append((opid,value))
+			if value > 0:
+				fcomplex.append((opid,value))
 		hd.hdmodel.set (iter1, 0, name, 1, value,2,off+2,3,4,4,"<i")
 		off +=6
 
@@ -408,21 +489,9 @@ def FOPT (hd, size, data):
 		nlen =  fcomplex[i][1]
 		piter = add_iter(hd,name+" Complex Data","",off,nlen,"txt")
 		if name == "pVertices":
-			tmpoff = off
-			numv = struct.unpack("<H",data[tmpoff:tmpoff+2])[0]
-			add_iter(hd,"# of Vertices",numv,tmpoff,2,"<H",0,0,piter)
-			tmpoff +=2
-			maxv = struct.unpack("<H",data[tmpoff:tmpoff+2])[0]
-			add_iter(hd,"Max # of Vertices",maxv,tmpoff,2,"<H",0,0,piter)
-			tmpoff += 2
-			elsize = struct.unpack("<H",data[tmpoff:tmpoff+2])[0]
-			add_iter(hd,"Size of entry",elsize,tmpoff,2,"<H",0,0,piter)
-			tmpoff += 2
-			for j in range(numv):
-				x = struct.unpack("<i",data[tmpoff:tmpoff+4])[0]
-				y = struct.unpack("<i",data[tmpoff+4:tmpoff+8])[0]
-				add_iter(hd,"X/Y %d"%j,"%d\t%d"%(x,y),tmpoff,8,"<ii",0,0,piter)
-				tmpoff +=8
+			pVert(hd,data[off:off+nlen],piter,off)
+		elif name == "pSegmentInfo":
+			pSegmInfo(hd,data[off:off+nlen],piter,off)
 		off += nlen
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
