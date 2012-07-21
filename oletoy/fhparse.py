@@ -1,16 +1,6 @@
 #!/usr/bin/env python
 import sys,struct,zlib
-
-def add_iter (hd,name,value,offset,length,vtype):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype)
-
-def d2hex(data):
-	hex = ''
-	for i in range(len(data)):
-		hex += "%02x"%ord(data[i])
-	return hex
-
+from utils import *
 
 vmp_rec = {0x0321:"Name?",
 0x065b:"?",
