@@ -377,31 +377,52 @@ fopt_names = {
 0xc680:'bookmark',0xc681:'bookmarkName',0xc383:'wrapPoints'
 }
 
-def FOPT (hd, size, value):
+def FOPT (hd, size, data):
 # ignoring "complex" opids for now
 	fnames = []
+	fcomplex = []
+	num = struct.unpack("<H",data[:2])[0]/16
 	off = 8
-	while off < size:
+	for i in range(num):
 		iter1 = hd.hdmodel.append(None, None)
-		id = struct.unpack("<H",value[off:off+2])[0]
-		if escher_opids.has_key(id):
-			opids = escher_opids[id]
+		id = struct.unpack("<H",data[off:off+2])[0]
+		opid = id&0x3fff
+		fbid = (id&0x4000)/0x4000
+		fcplx = (id&0x8000)/0x8000
+		if escher_opids.has_key(opid):
+			opids = escher_opids[opid]
 		else:
-			opids = "undef_0x%02x"%id
-		hd.hdmodel.set (iter1, 0, opids, 1, struct.unpack("<i",value[off+2:off+6])[0],2,off+2,3,4,4,"<i")
-		if fopt_names.has_key(id):
-			nlen = struct.unpack("<i",value[off+2:off+6])[0]
-			size -= nlen
-			fnames.append([id,nlen])
+			opids = "undef_0x%02x"%opid
+		name = opids
+		value = struct.unpack("<i",data[off+2:off+6])[0]
+		if fbid:
+			name += "[BLIP]"
+		if fcplx:
+			name += "[CMPLX]"
+			fcomplex.append((opid,value))
+		hd.hdmodel.set (iter1, 0, name, 1, value,2,off+2,3,4,4,"<i")
 		off +=6
-	for i in range(len(fnames)):
-		iter1 = hd.hdmodel.append(None, None)
-		name = fopt_names[fnames[i][0]]
-		nlen =  fnames[i][1]
-		if name == 'wrapPoints':
-			hd.hdmodel.set (iter1, 0, name , 1, struct.unpack("<H",value[off:off+2])[0],2,off,3,nlen,4,"<H")
-		else:
-			hd.hdmodel.set (iter1, 0, name , 1, unicode(value[off:off+nlen],"utf-16"),2,off,3,nlen,4,"txt")
+
+	for i in range(len(fcomplex)):
+		name = escher_opids[fcomplex[i][0]]
+		nlen =  fcomplex[i][1]
+		piter = add_iter(hd,name+" Complex Data","",off,nlen,"txt")
+		if name == "pVertices":
+			tmpoff = off
+			numv = struct.unpack("<H",data[tmpoff:tmpoff+2])[0]
+			add_iter(hd,"# of Vertices",numv,tmpoff,2,"<H",0,0,piter)
+			tmpoff +=2
+			maxv = struct.unpack("<H",data[tmpoff:tmpoff+2])[0]
+			add_iter(hd,"Max # of Vertices",maxv,tmpoff,2,"<H",0,0,piter)
+			tmpoff += 2
+			elsize = struct.unpack("<H",data[tmpoff:tmpoff+2])[0]
+			add_iter(hd,"Size of entry",elsize,tmpoff,2,"<H",0,0,piter)
+			tmpoff += 2
+			for j in range(numv):
+				x = struct.unpack("<i",data[tmpoff:tmpoff+4])[0]
+				y = struct.unpack("<i",data[tmpoff+4:tmpoff+8])[0]
+				add_iter(hd,"X/Y %d"%j,"%d\t%d"%(x,y),tmpoff,8,"<ii",0,0,piter)
+				tmpoff +=8
 		off += nlen
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
