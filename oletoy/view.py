@@ -1106,7 +1106,6 @@ class ApplicationMainWindow(gtk.Window):
 		self.das[dnum] = doc
 		scrolled = doc.scrolled
 		doc.hd = hexdump.hexdump()
-		doc.hd.txtdump_hex.connect('populate_popup',self.build_context_menu)
 		vpaned = doc.hd.vpaned
 		hpaned = gtk.HPaned()
 		hpaned.add1(scrolled)
