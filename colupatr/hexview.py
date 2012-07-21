@@ -169,11 +169,7 @@ class HexView():
 
 	def okp_tab(self,event):
 		self.exposed = 0
-		self.bklines = []
-		self.bkhvlines = []
-		self.bklines += self.lines
-		self.bkhvlines += self.hvlines
-		if self.curr >  0:
+		if 0 < self.curr < len(self.lines)-2:
 			# wrap at curc
 			self.fmt(self.curr,[self.line_size(self.curr-1)])
 			self.curr += 1
