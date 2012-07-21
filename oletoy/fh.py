@@ -117,7 +117,7 @@ def fh_save (page, fname):
 
 
 
-def fh_open (buf,page,parent):
+def fh_open (buf,page,parent=None):
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	iter1 = page.model.append(parent,None)
 	page.model.set_value(iter1,0,"FH file")
