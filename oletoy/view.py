@@ -78,7 +78,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.connect('destroy', lambda *w: gtk.main_quit())
 
 		self.set_title("OLE toy")
-		self.set_default_size(400, 350)
+		self.set_default_size(1100, 550)
 
 		merge = gtk.UIManager()
 		self.set_data("ui-manager", merge)

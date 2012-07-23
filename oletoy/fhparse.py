@@ -2,62 +2,62 @@
 import sys,struct,zlib
 from utils import *
 
-vmp_rec = {0x0321:"Name?",
-0x065b:"?",
-0x15e3:"Txt Align", # 0 left, 1 right, 2 center, 3 justify, 
-0x15ea:"?",
-0x15f2:"?",
-0x15f9:"?",
-0x1604:"?",
-0x160b:"?",
-0x1614:"?",
-0x161c:"Spc % Letter Max",
-0x1624:"Spc % Word Max",
-0x162b:"?",
-0x1634:"Spc % Letter Min",
-0x163c:"Spc % Word Min",
-0x1644:"?",
-0x164c:"Spc % Letter Opt",
-0x1654:"Spc % Word Opt",
-0x165c:"?",
-0x1664:"?",
-0x166b:"?",
-0x1674:"?",
-0x167c:"?",
-0x1684:"ParaSpc Below",
-0x168c:"ParaSpc Above",
-0x1691:"TabTable ID",
-0x169c:"BaseLn Shift" ,
-0x16a2:"?",
-0x16aa:"?",
-0x16b1:"?",
-0x16b9:"Txt Color ID",
-0x16c1:"Font ID",
-0x16c9:"?",
-0x16d4:"Hor Scale %",
-0x16dc:"Leading",
-0x16e3:"Leading Type", # 0 +, 1 =, 2 % 
-0x16ec:"Rng Kern %",
-0x16f1:"?",
-0x16fb:"?",
-0x1729:"?",
-0x1734:"?",
-0x1739:"?",
-0x1743:"?",
-0x1749:"Next style?",
-0x1c24:"?",
-0x1c2c:"?",
-0x1c34:"?",
-0x1c3c:"?",
-0x1c43:"?",
-0x1c4c:"?",
-0x1c51:"?",
-0x1c71:"?",
-0x1c7c:"?",
-0x1c84:"?",
-0x1c89:"?",
+vmp_rec = {
+	0x0321:"Name?",
+	0x065b:"?",
+	0x15e3:"Txt Align", # 0 left, 1 right, 2 center, 3 justify, 
+	0x15ea:"?",
+	0x15f2:"?",
+	0x15f9:"?",
+	0x1604:"?",
+	0x160b:"?",
+	0x1614:"?",
+	0x161c:"Spc % Letter Max",
+	0x1624:"Spc % Word Max",
+	0x162b:"?",
+	0x1634:"Spc % Letter Min",
+	0x163c:"Spc % Word Min",
+	0x1644:"?",
+	0x164c:"Spc % Letter Opt",
+	0x1654:"Spc % Word Opt",
+	0x165c:"?",
+	0x1664:"?",
+	0x166b:"?",
+	0x1674:"?",
+	0x167c:"?",
+	0x1684:"ParaSpc Below",
+	0x168c:"ParaSpc Above",
+	0x1691:"TabTable ID",
+	0x169c:"BaseLn Shift" ,
+	0x16a2:"?",
+	0x16aa:"?",
+	0x16b1:"?",
+	0x16b9:"Txt Color ID",
+	0x16c1:"Font ID",
+	0x16c9:"?",
+	0x16d4:"Hor Scale %",
+	0x16dc:"Leading",
+	0x16e3:"Leading Type", # 0 +, 1 =, 2 % 
+	0x16ec:"Rng Kern %",
+	0x16f1:"?",
+	0x16fb:"?",
+	0x1729:"?",
+	0x1734:"?",
+	0x1739:"?",
+	0x1743:"?",
+	0x1749:"Next style?",
+	0x1c24:"?",
+	0x1c2c:"?",
+	0x1c34:"?",
+	0x1c3c:"?",
+	0x1c43:"?",
+	0x1c4c:"?",
+	0x1c51:"?",
+	0x1c71:"?",
+	0x1c7c:"?",
+	0x1c84:"?",
+	0x1c89:"?",
 	}
-
 
 teff_rec = {
 	0x1a91:"Effect Name",
@@ -364,7 +364,7 @@ def hdList(hd,data,page):
 	ltype = struct.unpack('>H', data[offset+10:offset+12])[0]
 	ltxt = "%02x"%ltype
 	if page.dict.has_key(ltype):
-		ltxt += " (%s)"%page.dict[ltype][0]
+		ltxt += " (%s)"%page.dict[ltype]
 		add_iter (hd,'List Type',ltxt,10,2,">H")
 
 def hdColor6(hd,data,page):
@@ -374,1016 +374,954 @@ def hdColor6(hd,data,page):
 	add_iter (hd,'Name1?',"%02x"%ustr1,2,2,">h")
 	add_iter (hd,'Name2?',"%02x"%ustr2,14,2,">h")
 
-hdp = {'Rectangle':hdRectangle,"BasicLine":hdBasicLine,"Oval":hdOval,"Group":hdGroup,"AGDFont":hdAGDFont,'Layer':hdLayer,
-			"List":hdList,"MList":hdList,"BrushList":hdList,
-			"Color6":hdColor6,"SpotColor6":hdColor6,"TintColor6":hdColor6,
-			"VMpObj":hdVMpObj,"Path":hdPath,
-			"TFOnPath":hdTFOnPath,"TextColumn":hdTFOnPath,"TextInPath":hdTFOnPath,
-			"TEffect":hdTEffect,"VDict":hdTEffect}
+hdp = {
+	"Rectangle":hdRectangle,
+	"BasicLine":hdBasicLine,
+	"Oval":hdOval,
+	"Group":hdGroup,
+	"AGDFont":hdAGDFont,
+	"Layer":hdLayer,
+	"List":hdList,
+	"MList":hdList,
+	"BrushList":hdList,
+	"Color6":hdColor6,
+	"SpotColor6":hdColor6,
+	"TintColor6":hdColor6,
+	"VMpObj":hdVMpObj,
+	"Path":hdPath,
+	"TFOnPath":hdTFOnPath,
+	"TextColumn":hdTFOnPath,
+	"TextInPath":hdTFOnPath,
+	"TEffect":hdTEffect,
+	"VDict":hdTEffect
+	}
 
 
-class parser:
-	def  __init__(self):
-		self.version = 0
-		self.data = None
-		self.iter = None
+class FHDoc():
+	def __init__(self,data,page,parent):
+		self.version = page.version
+		self.data = data
+		self.iter = parent
+		self.page = page
+		self.dictitems = {}
+		self.diter = add_pgiter(page,"FH Data","fh","data",self.data,self.iter)
+		self.reclist = []
 
-def CustomProc(parser,offset,key):
-	length=48
-	return length
+		self.chunks = {
+		"AGDFont":self.VMpObj,
+		"AGDSelection":self.AGDSelection,
+		"ArrowPath":self.ArrowPath,
+		"AttributeHolder":self.AttributeHolder,
+		"BasicFill":self.BasicFill,
+		"BasicLine":self.BasicLine,
+		"BendFilter":self.BendFilter,
+		"Block":self.Block,
+		"BrushList":self.BrushList,
+		"Brush":self.Brush,
+		"BrushStroke":self.BrushStroke,
+		"BrushTip":self.BrushTip,
+		"CalligraphicStroke":self.CalligraphicStroke,
+		"CharacterFill":self.CharacterFill,
+		"ClipGroup":self.ClipGroup,
+#		"Collector":self.Collector,
+		"Color6":self.Color6,
+		"CompositePath":self.CompositePath,
+		"ConeFill":self.ConeFill,
+		"ConnectorLine":self.ConnectorLine,
+		"ContentFill":self.ContentFill,
+		"ContourFill":self.ContourFill,
+		"CustomProc":self.CustomProc,
+		"DataList":self.DataList,
+		"Data":self.Data,
+		"DateTime":self.DateTime,
+		"DuetFilter":self.DuetFilter,
+#		"Element":self.Element,
+#		"ElemList":self.ElemList,
+		"ElemPropLst":self.ElemPropLst,
+		"Envelope":self.Envelope,
+		"ExpandFilter":self.ExpandFilter,
+		"Extrusion":self.Extrusion,
+		"FHDocHeader":self.FHDocHeader,
+#		"Figure":self.Figure,
+		"FileDescriptor":self.FileDescriptor,
+		"FilterAttributeHolder":self.FilterAttributeHolder,
+		"FWBevelFilter":self.FWBevelFilter,
+		"FWBlurFilter":self.FWBlurFilter,
+		"FWFeatherFilter":self.FWFeatherFilter,
+		"FWGlowFilter":self.FWGlowFilter,
+		"FWShadowFilter":self.FWShadowFilter,
+		"FWSharpenFilter":self.FWSharpenFilter,
+		"GradientMaskFilter":self.GradientMaskFilter,
+		"GraphicStyle":self.GraphicStyle,
+		"Group":self.Group,
+		"Guides":self.Guides,
+		"Halftone":self.Halftone,
+		"ImageFill":self.ImageFill,
+		"ImageImport":self.ImageImport,
+		"Layer":self.Layer,
+		"LensFill":self.LensFill,
+		"LinearFill":self.LinearFill,
+		"LinePat":self.LinePat,
+		"LineTable":self.LineTable,
+		"List":self.List,
+		"MasterPageDocMan":self.MasterPageDocMan,
+		"MasterPageElement":self.MasterPageElement,
+		"MasterPageLayerElement":self.MasterPageLayerElement,
+		"MasterPageLayerInstance":self.MasterPageLayerInstance,
+		"MasterPageSymbolClass":self.MasterPageSymbolClass,
+		"MasterPageSymbolInstance":self.MasterPageSymbolInstance,
+		"MDict":self.MDict,
+		"MList":self.MList,
+		"MName":self.MName,
+#		"MpObject":self.MpObject,
+		"MQuickDict":self.MQuickDict,
+		"MString":self.MString,
+		"MultiBlend":self.MultiBlend,
+		"MultiColorList":self.MultiColorList,
+		"NewBlend":self.NewBlend,
+		"NewContourFill":self.NewContourFill,
+		"NewRadialFill":self.NewRadialFill,
+		"OpacityFilter":self.OpacityFilter,
+		"Oval":self.Oval,
+		"Paragraph":self.Paragraph,
+		"Path":self.Path,
+		"PathTextLineInfo":self.PathTextLineInfo,
+		"PatternFill":self.PatternFill,
+#		"PatternLine":self.PatternLine,
+		"PerspectiveEnvelope":self.PerspectiveEnvelope,
+		"PerspectiveGrid":self.PerspectiveGrid,
+		"PolygonFigure":self.PolygonFigure,
+#		"Procedure":self.Procedure,
+		"PropLst":self.PropLst,
+#		"PSLine":self.PSLine,
+		"RadialFill":self.RadialFill,
+		"RadialFillX":self.RadialFillX,
+		"RaggedFilter":self.RaggedFilter,
+		"Rectangle":self.Rectangle,
+		"SketchFilter":self.SketchFilter,
+		"SpotColor6":self.SpotColor6,
+		"StylePropLst":self.StylePropLst,
+		"SwfImport":self.SwfImport,
+		"SymbolClass":self.SymbolClass,
+		"SymbolInstance":self.SymbolInstance,
+		"SymbolLibrary":self.SymbolLibrary,
+		"TabTable":self.TabTable,
+		"TaperedFill":self.TaperedFill,
+		"TaperedFillX":self.TaperedFillX,
+		"TEffect":self.TEffect,
+		"TextBlok":self.TextBlok,
+		"TextColumn":self.TextColumn,
+#		"TextInPath":self.TextInPath,
+		"TFOnPath":self.TFOnPath,
+		"TileFill":self.TileFill,
+		"TintColor6":self.TintColor6,
+		"TransformFilter":self.TransformFilter,
+		"TString":self.TString,
+		"UString":self.UString,
+		"VDict":self.VDict,
+		"VMpObj":self.VMpObj,
+		"Xform":self.Xform
+	}
 
-def TFOnPath(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
-	shift = 26
-	for i in range(num):
-		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
-		if key == 2:
-			shift+=6
+	def read_recid(self,off):
+		if self.data[off:off+2] == '\xFF\xFF':
+			rid = struct.unpack('>i', self.data[off:off+4])[0]
+			l = 4
 		else:
-			shift+=8
-	return shift
+			rid = struct.unpack('>h', self.data[off:off+2])[0]
+			l = 2
+		return l,rid
 
-def SwfImport(parser,offset,key):
-	length= 43
-	return length
+	def AGDSelection(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		length=4*size+6
+		res,rid = self.read_recid(off+12)
+		return length+res
 
-def FWSharpenFilter(parser,offset,key):
-	length= 16
-	return length
+	def ArrowPath(self,off,mode=0):
+		size =  ord(self.data[off+21])
+		res=size*27+30
+		return res
 
-def RadialFill(parser,offset,key):
-	length= 16
-	return length
+	def AttributeHolder(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		return res+L
 
-def PatternFill(parser,offset,key):
-	length= 10
-	return length
+	def BasicFill(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+4
 
-def PatternLine(parser,offset,key):
-	# 0-2 -- link to Color
-	# 2-10 -- bitmap of the pattern
-	# 10-14 -- mitter?
-	# 14-16 -- width?
-	length= 22
-	return length
-
-def PSLine(parser,offset,key):
-	# 0-2 -- link to Color
-	# 2-4 -- link to UString with PS commands
-	# 4-6 width
-	length= 8
-	return length
-
-
-def PathTextLineInfo(parser,offset,key):
-# SHOULD BE VARIABLE, just have no idea about base and multiplier
-	length= 46
-	return length
-
-def Envelope (parser,offset,key):
-	num = struct.unpack('>h', parser.data[offset+20:offset+22])[0]
-	num2 = struct.unpack('>h', parser.data[offset+43:offset+45])[0]
-	length = 45+num2*4+num*27
-	return length
-
-def CalligraphicStroke(parser,offset,key):
-	length= 16
-	return length
-
-def PolygonFigure(parser,offset,key):
-	length= 53
-	if parser.data[offset+12:offset+14] == '\xFF\xFF':
-		length = 55
-	return length
-
-def BendFilter(parser,offset,key):
-	length= 10
-	return length
-
-def FWFeatherFilter(parser,offset,key):
-	length= 8
-	return length
-
-def ExpandFilter(parser,offset,key):
-	length= 14
-	return length
-
-def TransformFilter(parser,offset,key):
-	length= 39
-	return length
-
-def NewContourFill(parser,offset,key):
-	length= 34
-	shift = 0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 2
-	if parser.data[offset+2+shift:offset+4+shift] == '\xFF\xFF':
-		shift += 2
-	if parser.data[offset+18+shift:offset+20+shift] == '\xFF\xFF':
-		shift += 2
-	return length+shift
-
-def CharacterFill(parser,offset,key):
-	length= 0
-	return length
-
-def ConeFill(parser,offset,key):
-	length= 30
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift+16:offset+shift+18] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def TileFill(parser,offset,key):
-	length= 32
-	shift = 0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 2
-	if parser.data[offset+shift+2:offset+shift+4] == '\xFF\xFF':
-		shift += 2
-	return length+shift
-
-def DuetFilter(parser,offset,key):
-	length= 14
-	return length
-
-def FWBlurFilter(parser,offset,key):
-	length= 12
-	return length
-
-def FWGlowFilter(parser,offset,key):
-	length= 22 #was 38
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		length += 2
-	return length
-
-	return length
-
-def ConnectorLine(parser,offset,key):
-	num = struct.unpack('>h', parser.data[offset+20:offset+22])[0]
-	length= 58+num*27
-	return length
-
-def OpacityFilter(parser,offset,key):
-	length= 4
-	return length
-
-def RaggedFilter(parser,offset,key):
-	length= 16
-	return length
-
-def NewRadialFill(parser,offset,key):
-	length= 39
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift+16:offset+shift+18] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def SketchFilter(parser,offset,key):
-	length= 11
-	return length
+	def BasicLine(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+18
 	
-def BrushTip(parser,offset,key):
-	[type] = struct.unpack('>h', parser.data[offset:offset+2])
-	length= 62
-	if parser.version == 11:
-		length=66 
-	if parser.version == 10:
-		length =62
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		length += 2
-	return length
+	def BendFilter(self,off,mode=0):
+		return 10
 
-def Brush(parser,offset,key):
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return shift
+	def Block(self,off,mode=0):
+		if self.version == 10:
+			flags =  struct.unpack('>h', self.data[off:off+2])[0]
+			res = 2
+			for i in range(21):
+				L,rid1 = self.read_recid(off+res)
+				res += L
+			res += 1
+			for i in range(2):
+				L,rid1 = self.read_recid(off+res)
+				res += L
+		else:
+			# FIXME! ver11 starts with size==7
+			res = 0
+			for i in range(12):
+				L,rid1 = self.read_recid(off+res)
+				res += L
+			res += 14
+			for i in range(3):
+				L,rid1 = self.read_recid(off+res)
+				res += L
+			res +=1
+			for i in range(4):
+				L,rid1 = self.read_recid(off+res)
+				res += L
+		return res
 
-def UString(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length=4*(size+1)
-	return length
+	def Brush(self,off,mode=0):
+		res,rid1 = self.read_recid(off)
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		return res
 
-def AGDSelection(parser,offset,key):
-	size = struct.unpack('>h', parser.data[offset:offset+2])[0]
-	length=4*size+6
-	if parser.data[offset+12:offset+14] == '\xFF\xFF':
-		length += 4
-	else:
-		length += 2
-	return length
-	
-def xform_calc2(var1,var2):
-	if (var1 == 0x34 or var1 == 0x04) and var2 ==0x90:
-		len1 = 0
-	elif (var1 == 0x31 or var1 == 0x32) and var2 ==0x90:
-		len1 = 4
-	elif ((var1 == 0x12 or var1 == 0x21 or var1 == 0x33) and var2 == 0x90) or (var1 == 0x32 and var2 ==0xb0) or (var1 == 0x31 and var2 == 0xd0):
-		len1 = 8
-	elif ((var1 == 0x01 or var1 == 0x02 or var1 == 0x13 or var1 == 0x23) and var2 == 0x90) or ((var1 == 0x21 or var1 == 0x33) and var2 == 0xd0) or (var1 == 0x12 and var2 == 0xb0):
-		len1 = 12
-	elif ((var1 == 0x03 or var1 == 0x0b) and var2 == 0x90) or ((var1 == 0x13 or var1 == 0x23) and (var2 == 0xb0 or var2 == 0xd0)) or (var1 == 0x33 and var2 == 0xf0):
-		len1 = 16
-	elif (var1 == 0x03 and (var2 == 0xb0 or var2 == 0xd0)) or ((var1 == 0x13 or var1 == 0x23) and var2 == 0xf0):
-		len1 = 20
-	elif var1 == 0x03 and (var2 == 0xf0 or var2 == 0x60):
-		len1 = 24
-	else:
-		len1 = 24
-		print "Unknown XForm ID %02x %02x"%(var1,var2)
-	return len1
+	def BrushList(self,off,mode=0):
+		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 12
+		for i in range(size):
+			L,rid1 = self.read_recid(off+res)
+			res += L
+		return res
 
-def xform_calc(var1,var2):
-	a5 = not (var1&0x20)/0x20
-	a4 = not (var1&0x10)/0x10
-	a2 = (var1&0x4)/0x4
-	a1 = (var1&0x2)/0x2
-	a0 = (var1&0x1)/0x1
-	b6 = (var2&0x40)/0x40
-	b5 = (var2&0x20)/0x20
-	if a2:
+	def BrushStroke(self,off,mode=0):
+		res,rid1 = self.read_recid(off)
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		return res
+
+	def BrushTip(self,off,mode=0):
+		type = struct.unpack('>h', self.data[off:off+2])[0]
+		length= 60
+		if self.version == 11:
+			length=64
+		res,rid1 = self.read_recid(off)
+		return length+res
+
+	def CalligraphicStroke(self,off,mode=0):
+		# FXIME! recid?
+		return 16
+
+	def CharacterFill(self,off,mode=0):
+		# Warning! Flag?
 		return 0
-	xlen = (a5+a4+a1+a0+b6+b5)*4
-	return xlen
 
-def Xform(parser,offset,key):
-	var1 = ord(parser.data[offset])
-	var2 = ord(parser.data[offset+1])
-	len1 = xform_calc(var1,var2)
-	var1 = ord(parser.data[offset+len1+2])
-	var2 = ord(parser.data[offset+len1+3])
-	len2 = xform_calc(var1,var2)
-	length = len1+len2+4
-	return length
+	def ClipGroup(self,off,mode=0):
+		res,rid1 = self.read_recid(off)
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		L,rid1 = self.read_recid(off+8+res)
+		res += L
+		return res+10
+
+	def Color6(self,off,mode=0):
+		length=24
+		var = ord(self.data[off+1])
+		if var == 4:
+			length=28
+		if var == 7:
+			length=40
+		if self.version < 10:
+			length-=2
+		res,rid1 = self.read_recid(off+2)
+		L,rid = self.read_recid(off+12+res)
+		return res+length+L
+
+	def CompositePath(self,off,mode=0):
+		res,rid1 = self.read_recid(off)
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		L,rid1 = self.read_recid(off+8+res)
+		res += L
+		return res+8
+
+	def ConeFill(self,off,mode=0):
+		res,rid1 = self.read_recid(off)
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		L,rid1 = self.read_recid(off+16+res)
+		res += L
+		return res+30
+
+	def ConnectorLine(self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+20:off+22])[0]
+		length= 58+num*27
+		return length
+
+	def ContentFill(self,off,mode=0):
+		# FIXME! Flag?
+		return 0
+
+	def ContourFill(self,off,mode=0):
+		if self.version == 10:
+			length = 24
+		else:
+			num = struct.unpack('>h', self.data[off+0:off+2])[0]
+			size= struct.unpack('>h', self.data[off+2:off+4])[0]
+			length = 0
+			while num !=0:
+				length = length +10+size*2
+				num = struct.unpack('>h', self.data[off+0+length:off+2+length])[0]
+				size= struct.unpack('>h', self.data[off+2+length:off+4+length])[0]
+			length = length +10+size*2
+		return length
+
+	def CustomProc(self,off,mode=0):
+		# FIXME! recid?
+		return 48
+
+	def Data(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		length= 6+size*4
+		return length
+
+	def DataList(self,off,mode=0):
+		size= struct.unpack('>h', self.data[off:off+2])[0]
+		res = 10
+		for i in range(size):
+			L,rid = self.read_recid(off+res)
+			res += L
+		return res
+
+	def DateTime(self,off,mode=0):
+		return 14
+
+	def DuetFilter(self,off,mode=0):
+		return 14
+
+	def ElemPropLst(self,off,mode=0):
+		# FIXME! one more read_recid @6 ?
+		size = struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 10
+		if size != 0:
+			for i in range(size*2):
+				l,rid = self.read_recid(off+res)
+				res += l
+		return res
+
+	def Envelope (self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+20:off+22])[0]
+		num2 = struct.unpack('>h', self.data[off+43:off+45])[0]
+		length = 45+num2*4+num*27
+		return length
+
+	def ExpandFilter(self,off,mode=0):
+		return 14
+
+	def Extrusion(self,off,mode=0):
+		var1 = ord(self.data[off+0x60])
+		var2 = ord(self.data[off+0x61])
+		length= 96 + self.xform_calc(var1,var2)+2
+		return length
+
+	def FHDocHeader(self,off,mode=0):
+		# FIXME!
+		return 4
+
+	def FilterAttributeHolder(self,off,mode=0):
+		res,rid = self.read_recid(off+2)
+		L,rid = self.read_recid(off+2)
+		res += L
+		return res+2
+
+	def FWSharpenFilter(self,off,mode=0):
+		return 16
+
+	def FileDescriptor(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off)
+		res += L
+		size = struct.unpack('>h', self.data[off+5+res:off+7+res])[0]
+		res += 7+size
+		return res
+
+	def FWBevelFilter(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+28
+
+	def FWBlurFilter(self,off,mode=0):
+		return 12
+
+	def FWFeatherFilter(self,off,mode=0):
+		return 8
+
+	def FWGlowFilter(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+20
+
+	def FWShadowFilter(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+20
+
+	def GradientMaskFilter(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res
+
+	def GraphicStyle(self,off,mode=0):
+		size = 2*struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 6
+		for i in range(2+size):
+				L,rid = self.read_recid(off+res)
+				res += L
+		return res
+
+	def Group(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+res+8)
+		res += L
+		L,rid = self.read_recid(off+res+8)
+		res += L
+		return res+8
+
+	def Guides(self,off,mode=0):
+		size =  struct.unpack('>h', self.data[off:off+2])[0]
+		res,rid = self.read_recid(off+2)
+		L,rid = self.read_recid(off+2+res)
+		res += L
+		res += 18 + size*8
+		return res
+
+	def Halftone(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+8
+
+	def ImageFill(self,off,mode=0):
+		#FIXME! recid
+		return 6
+
+	def ImageImport(self,off,mode=0):
+		shift = 34
+		res,rid = self.read_recid(off)
+		res += 10
+		for i in range(4):
+			L,rid = self.read_recid(off+res)
+			res += L
+		while ord(self.data[off+shift+res]) != 0:
+			shift += 1
+		shift += 1
+		if self.version == 11:
+			shift += 2
+		return shift+res
+
+	def Layer(self,off,mode=0):
+		length=14
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+10+res)
+		res += L
+		L,rid = self.read_recid(off+10+res)
+		res += L
+		return length+res
+
+	def LensFill(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		return res+38
+
+	def LinearFill(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+12+res)
+		res += L
+		return res+28
+
+	def LinePat(self,off,mode=0):
+		numstrokes = struct.unpack('>h', self.data[off:off+2])[0]
+		res = 10+numstrokes*4
+		if numstrokes == 0 and self.version == 8:
+			res = 28 # for Ver8, to skip 1st 14 bytes of 0s
+		return res
+
+	def LineTable(self,off,mode=0):
+		size= struct.unpack('>h', self.data[off+2:off+4])[0]
+		#FIXME! probably more read_recids required
+		res,rid = self.read_recid(off+52)
+		return res+2+size*50
+
+	def List(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 12
+		for i in range(size):
+			l,rid = self.read_recid(off+res)
+			res += l
+		return res
+
+	def MasterPageElement(self,off,mode=0):
+		return 14
 	
-def SymbolClass(parser,offset,key):
-	shift = 0
-	for i in range(5):
-		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	return shift
+	def MasterPageDocMan(self,off,mode=0):
+		return 4
 
-def SymbolInstance(parser,offset,key):
-	shift = 0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
+	def MasterPageLayerElement(self,off,mode=0):
+		return 14
 
-	var1 = ord(parser.data[offset+shift+8])
-	var2 = ord(parser.data[offset+shift+9])
-	length= 10 + shift + xform_calc(var1,var2)
-	return length
+	def MasterPageLayerInstance(self,off,mode=0):
+		var1 = ord(self.data[off+0xe])
+		var2 = ord(self.data[off+0xf])
+		length=14 + self.xform_calc(var1,var2)+2 +2
+		return length
 
-def MasterPageSymbolInstance(parser,offset,key):
-	var1 = ord(parser.data[offset+0xe])
-	var2 = ord(parser.data[offset+0xf])
-	length=14 + xform_calc(var1,var2)+2 +2
-	return length
+	def MasterPageSymbolClass(self,off,mode=0):
+		return 12
 
-def MasterPageLayerInstance(parser,offset,key):
-	var1 = ord(parser.data[offset+0xe])
-	var2 = ord(parser.data[offset+0xf])
-	length=14 + xform_calc(var1,var2)+2 +2
-	return length
+	def MasterPageSymbolInstance(self,off,mode=0):
+		var1 = ord(self.data[off+0xe])
+		var2 = ord(self.data[off+0xf])
+		length=14 + self.xform_calc(var1,var2)+2 +2
+		return length
 
-def PerspectiveGrid(parser,offset,key):
-	i = 0
-	while ord(parser.data[offset+i]) != 0:
-		i += 1
-	length=59+i
-	return length
+	def MList(self,off,mode=0):
+		return self.List(off,mode)
+
+	def MName(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		return 4*(size+1)
+
+	def MQuickDict(self,off,mode=0):
+		size =  struct.unpack('>h', self.data[off+0:off+2])[0]
+		return 7 + size*4
 	
-def MpObject(parser,offset,key):
-	length=4   #!!!! just to set to non-zero!!!!
-	return length
-	
-def MString(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length=4*(size+1)
-	return length
+	def MString(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		return 4*(size+1)
 
-def MList(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	shift = 0
-	for i in range(size):
-		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
-			shift += 4
+	def MDict(self,off,mode=0):
+		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
+		length = 6 + size*4
+		return length
+
+	def MultiBlend(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		return 52 + size*6
+
+	def MultiColorList(self,off,mode=0):
+		num= struct.unpack('>h', self.data[off:off+2])[0]
+		res = 0
+		for i in range(num):
+				L,rid = self.read_recid(off+4+i*8+res)
+				res += L
+		return num*8+res+4
+
+	def NewBlend(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+8+res)
+		res += L
+		L,rid = self.read_recid(off+8+res)
+		res += L
+		L,rid = self.read_recid(off+8+res)
+		res += L
+		return res+34
+
+	def NewContourFill(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+14+res)
+		res += L
+		L,rid = self.read_recid(off+14+res)
+		res += L
+		return res+28
+
+	def NewRadialFill(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+16+res)
+		res += L
+		return res+39
+
+	def OpacityFilter(self,off,mode=0):
+		return 4
+
+	def Oval(self,off,mode=0):
+		if self.version > 10:
+			length=38
 		else:
-			shift += 2
-	length = 12 + shift
-	return length
-	
-def MDict(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	length = 6 + size*4
-	return length
+			length=28
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+12+res)
+		res += L
+		return length+res
 
-def DateTime(parser,offset,key):
-	length=14
-	return length
-
-def MasterPageElement(parser,offset,key):
-	length=14
-	return length
-
-def MasterPageDocMan(parser,offset,key):
-	length=4
-	return length
-
-def MasterPageSymbolClass(parser,offset,key):
-	length=12
-	return length
-
-def MasterPageLayerElement(parser,offset,key):
-	length=14
-	return length
-
-def MQuickDict(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset+0:offset+2])[0]
-	length=7 + size*4
-	return length
-
-def FHDocHeader(parser,offset,key):
-	length=4   #!!!! just to set to non-zero!!!!
-	return length
-
-def Block(parser,offset,key):
-#	length=53 #really? was 49
-#	if parser.version == 10:
-#		length =49
-#	if parser.version == 9:
-#		length = 47
-
-	shift = 0
-	for i in range(12):
-		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
-			shift += 4
+	def Paragraph(self,off,mode=0):
+		size= struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 6
+		for i in range(4):
+			L,rid = self.read_recid(off+res)
+			res += L
+		if size == 1:
+			pass
+		elif size == 2:
+			res += 24
+		elif size == 3:
+			res += 48
+		elif size == 4:
+			res += 72
+		elif size == 5:
+			res += 96
+		elif size == 7:
+			res += 144
 		else:
-			shift += 2
-	shift += 16
-	for i in range(3):
-		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	shift +=1
-	for i in range(4):
-		if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	
-	return shift
+			print "Paragraph with unknown size!!!",size
+			res += 200
+		return res+20
 
-def Element(parser,offset,key):
-	length=4   #!!!! just to set to non-zero!!!!
-	return length
+	def PathTextLineInfo(self,off,mode=0):
+		# FIXME!
+		# SHOULD BE VARIABLE, just have no idea about base and multiplier
+		length= 46
+		return length
 
-def BrushList(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	shift = 0
-	for i in range(size):
-		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	length = 12 + shift
-	return length
+	def PatternFill(self,off,mode=0):
+		return 10
 
-def VMpObj(parser,offset,key):
-	num = struct.unpack('>h', parser.data[offset+4:offset+6])[0]
-	shift = 8
-	for i in range(num):
-		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
-		rec = struct.unpack('>h', parser.data[offset+shift+2:offset+shift+4])[0]
-		if not vmp_rec.has_key(rec):
-			print 'Unknown VMpObj record: %04x'%rec
+	def Path(self,off,mode=0):
+		size =  struct.unpack('>h', self.data[off:off+2])[0]
+		length=128
+		var=struct.unpack('>h', self.data[off+20:off+22])[0]
+		length = 22 + 27*var
+		if size==0:
+			var=ord(self.data[off+15])
+			length = 16 + 27*var
+		if self.data[off+4:off+6] == '\xFF\xFF':
+			var=struct.unpack('>h', self.data[off+22:off+24])[0]
+			length = 24 + 27*var
+		if self.data[off+16:off+18] == '\xFF\xFF':
+			var=struct.unpack('>h', self.data[off+24:off+26])[0]
+			length = 26 + 27*var
+		return length
+
+	def PerspectiveEnvelope(self,off,mode=0):
+		return 177
+
+	def PerspectiveGrid(self,off,mode=0):
+		i = 0
+		while ord(self.data[off+i]) != 0:
+			i += 1
+		length=59+i
+		return length
+
+	def PolygonFigure(self,off,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+12+res)
+		res += L
+		return res+47
+
+	def PropLst(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 8
+		for i in range(2*size):
+			L,rid = self.read_recid(off+res)
+			res += L
+		return res
+
+	def RadialFill(self,off,mode=0):
+		return 16
+
+	def RadialFillX(self,off,mode=0):
+		#FIXME! verify for v11 and more v10 files
+		length=22 #v11
+		if self.version == 10:
+			length = 22
+		return length
+
+	def RaggedFilter(self,off,mode=0):
+		return 16
+
+	def Rectangle(self,off,mode=0):
+		length=69 #?ver11?
+		if self.version < 11:
+			length = 36
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
+		L,rid = self.read_recid(off+12+res)
+		res += L
+		return length+res
+
+	def SketchFilter(self,off,mode=0):
+		return 11
+
+	def SpotColor6(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		shift,recid = self.read_recid(off+2)
+		res = 26 + size*4 + shift
+#		FIXME! verify it
+#		if parser.version < 10:
+#			length = 38
+		return res
+
+	def SwfImport(self,off,mode=0):
+		#FIXME! recid
+		return 43
+
+	def StylePropLst(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 8
+		L,rif = self.read_recid(off+res)
+		res += L
+		for i in range(size*2):
+			L,rif = self.read_recid(off+res)
+			res += L
+		return res
+
+	def SymbolClass(self,off,mode=0):
+		res = 0
+		for i in range(5):
+			L,rif = self.read_recid(off+res)
+			res += L
+		return res
+
+	def SymbolInstance(self,off,mode=0):
+		shift = 0
+		res,rif = self.read_recid(off)
+		L,rif = self.read_recid(off+res)
+		res += L
+		L,rif = self.read_recid(off+res+8)
+		res += L
+		var1 = ord(self.data[off+res+8])
+		var2 = ord(self.data[off+res+9])
+		return 10 + res + self.xform_calc(var1,var2)
+
+	def SymbolLibrary(self,off,mode=0):
+		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 12
+		for i in range(size+3):
+			L,rif = self.read_recid(off+res)
+			res += L
+		return res
+
+	def TabTable(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		return 4+size*6
+
+	def TaperedFill(self,off,mode=0):
+		return 12
+
+	def TaperedFillX(self,off,mode=0):
+		# FIXME! Check for ver11 and more ver10 files
+		length=18  # v11
+		if self.version == 10:
+			length = 18
+		return length
+
+	def TEffect(self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		shift = 8
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
+			if not rec in teff_rec:
+				print 'Unknown TEffect record: %04x'%rec
+			if key == 2:
+				shift+=6
+			else:
+				shift+=8
+		return shift
+
+	def TextBlok(self,off,mode=0):
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		return 4+size*4
+
+	def TextColumn(self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		res = 8
+		for i in range(2):
+			L,rif = self.read_recid(off+res)
+			res += L
+		res += 8  # FIXME! check if those are recIDs
+		for i in range(3):
+			L,rif = self.read_recid(off+res)
+			res += L
+			
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+res:off+res+2])[0]
+			if key == 0 or self.data[off+res+4:off+res+6] == '\xFF\xFF':
+				res+=8
+			else:
+				res+=6
+		return res
+
+	def TFOnPath(self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		shift = 26
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+			if key == 2:
+				shift+=6
+			else:
+				shift+=8
+		return shift
+
+	def TileFill(self,off,mode=0):
+		res,rif = self.read_recid(off)
+		L,rif = self.read_recid(off+res)
+		res += L
+		return res+28
+
+	def TintColor6(self,off,mode=0):
+		res,rif = self.read_recid(off+16)
+		return res+36
+
+	def TransformFilter(self,off,mode=0):
+		return 39
+
+	def TString(self,off,mode=0):
+		size= struct.unpack('>h', self.data[off+2:off+4])[0]
+		res=20
+		for i in range(size):
+			L,rif = self.read_recid(off+res)
+			res += L
+		return res
+
+	def UString(self,off,mode=0):
+		size = struct.unpack('>H', self.data[off:off+2])[0]
+		length = struct.unpack('>H', self.data[off+2:off+4])[0]
+		res=4*(size+1)
+		if mode == 0:
+			return res
+		elif mode == 1:
+			add_iter(self.page.hd,"RecSize",size,0,2,">H")
+			add_iter(self.page.hd,"Len",size,0,2,">H")
+			add_iter(self.page.hd,"String",off+4,size-4,"ustr")
+
+	def VDict(self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		shift = 8
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+			if key == 2:
+				shift+=6
+			else:
+				shift+=8
+		return shift
+
+	def VMpObj(self,off,mode=0):
+		# FIXME! check for \xFF\xFF
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		shift = 8
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
+# Activate for debug
+#			if not rec in vmp_rec:
+#				print 'Unknown VMpObj record: %04x'%rec
+			
+			if key == 0 or self.data[off+shift+4:off+shift+6] == '\xFF\xFF':
+				shift+=8
+			else:
+				shift+=6
 		
-		if key == 0 or parser.data[offset+shift+4:offset+shift+6] == '\xFF\xFF':
-			shift+=8
-		else:
-			shift+=6
+		return shift
+
+
+	def xform_calc(self,var1,var2):
+		a5 = not (var1&0x20)/0x20
+		a4 = not (var1&0x10)/0x10
+		a2 = (var1&0x4)/0x4
+		a1 = (var1&0x2)/0x2
+		a0 = (var1&0x1)/0x1
+		b6 = (var2&0x40)/0x40
+		b5 = (var2&0x20)/0x20
+		if a2:
+			return 0
+		xlen = (a5+a4+a1+a0+b6+b5)*4
+		return xlen
 	
-	return shift
+	def Xform(self,off,mode=0):
+		var1 = ord(self.data[off])
+		var2 = ord(self.data[off+1])
+		len1 = self.xform_calc(var1,var2)
+		var1 = ord(self.data[off+len1+2])
+		var2 = ord(self.data[off+len1+3])
+		len2 = self.xform_calc(var1,var2)
+		length = len1+len2+4
+		return length
 
-def TextInPath(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
-	shift = 20
-	for i in range(num):
-		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
-		if key == 0 or parser.data[offset+shift+4:offset+shift+6] == '\xFF\xFF':
-			shift+=8
-		else:
-			shift+=6
-	return shift
+	def parse_agd (self):
+		offset = 0
+		j = 0
+		for i in self.reclist:
+			j += 1
+			if self.dictitems[i] in self.chunks:
+				try:
+					res = self.chunks[self.dictitems[i]](offset)
+					if -1 < res <= len(self.data)-offset:
+						add_pgiter(self.page,"[%02x] %s"%(j,self.dictitems[i]),"fh",self.dictitems[i],self.data[offset:offset+res],self.diter)
+						offset += res
+					else:
+						add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
+						print "Failed on record %d (%s)"%(j,self.dictitems[i]),res
+						print "Next is",self.dictitems[self.reclist[j+1]]
+						return
+				except:
+					add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
+					print "Failed on record %d (%s)"%(j,self.dictitems[i])
+					print "Next is",self.dictitems[self.reclist[j+1]]
+					return
+					
+			else:
+					print "Unknown record type: %s (%02x)"%(self.dictitems[i],j)
+					add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
+					if j < len(self.reclist):
+						add_pgiter(self.page,"!!! %s"%self.dictitems[self.reclist[j]],"fh","unknown","",self.diter)
+					return
+		add_pgiter(self.page,"FH Tail","fh","tail",self.data[offset:],self.diter)
+		print "FH Tail!"
 
-def ImageFill(parser,offset,key):
-	length=6
-	return length
+	def parse_list(self,data,offset):
+		size = struct.unpack('>L', data[offset:offset+4])[0]
+		print '# of items:\t%u'%size
+		offset+= 4
+		for i in range(size):
+			key = struct.unpack('>h', data[offset:offset+2])[0]
+			offset+= 2
+			self.reclist.append(key)
 
-def AGDFont(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
-	shift = 8
-	for i in range(num):
-		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
-		if key == 2:
-			shift+=6
-		else:
-			shift+=8
-	return shift
+	def parse_dict (self,data,offset):
+		if self.version > 8:
+			dictsize = struct.unpack('>h', data[offset:offset+2])[0]
+			print 'Dict size:\t%u'%dictsize
+			dictiter = add_pgiter(self.page,"FH Dictionary","fh","dict","",self.iter)
+			offset+=4
+			for i in range(dictsize):
+				key = struct.unpack('>h', data[offset:offset+2])[0]
+				k = 0
+				while ord(data[offset+k+2]) != 0:
+					k+=1
+				value = data[offset+2:offset+k+2]
+				add_pgiter(self.page,"%04x %s"%(key,value),"fh","dval",data[offset:offset+k+3],dictiter)
+				offset = offset+k+3
+				self.dictitems[key] = value
+#		else:
+#			#FIXME! need to migrate it
+#			offset,items = v8dict(buf,offset,dictiter,page)
 
-def FileDescriptor(parser,offset,key):
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	size = struct.unpack('>h', parser.data[offset+5+shift:offset+7+shift])[0]
-	length=7+shift+size
-	return length
-	
-def TabTable(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length = 4+size*6
-	return length
-	
-def SymbolLibrary(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	shift = 0
-	for i in range(size+3):
-		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	length = 12 + shift
-	return length
+		self.page.dict = self.dictitems
+		return offset
 
-def PropLst(parser,offset,key):
-	size = struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-#	length=8+4*size
-	shift = 8
-	for i in range(2*size):
-		if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	return shift
-
-def Procedure(parser,offset,key):
-	length = 4 #!!!! just to set non-zero !!!
-	return length
-
-def TEffect(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
-	shift = 8
-	for i in range(num):
-		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
-		rec = struct.unpack('>h', parser.data[offset+shift+2:offset+shift+4])[0]
-		if not teff_rec.has_key(rec):
-			print 'Unknown TEffect record: %04x'%rec
-		if key == 2:
-			shift+=6
-		else:
-			shift+=8
-	return shift
-
-def Color6(parser,offset,key):
-	length=28
-	var = ord(parser.data[offset+1])
-	if var == 4:
-		length=32
-	if var == 7:
-		length=44
-
-	if parser.version < 10:
-		length-=2
-		
-	shift = 0
-	if parser.data[offset+2:offset+4] == '\xFF\xFF':
-			shift = 2
-	if parser.data[offset+14+shift:offset+16+shift] == '\xFF\xFF':
-		shift += 2
-	return length+shift
-
-def Data(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length= 6+size*4
-	return length
-	
-def MName(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length=4*(size+1)
-	return length
-
-def List(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	shift = 0
-	for i in range(size):
-		if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	length = 12 + shift
-	return length
-
-	
-def LinePat(parser,offset,key):
-	[numstrokes] = struct.unpack('>h', parser.data[offset:offset+2])
-	length=10+numstrokes*4
-	if numstrokes == 0 and parser.version == 8:
-		length = 28 # for Ver8, to skip 1st 14 bytes of 0s
-	return length
-	
-def ElemList(parser,offset,key):
-	length = 4 #!!!! just to set it to non-zero !!!!
-	return length
-
-def ElemPropLst(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset+2:offset+4])
-	length= 10 + 4*size
-	return length
-		
-def Figure(parser,offset,key):
-	length = 4	#!!!! just to set it to non-zero !!!!
-	return length
-
-def StylePropLst(parser,offset,key):
-	size = 2*struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	if parser.data[offset+8:offset+10] == '\xFF\xFF':
-		size += 1
-	shift = 0
-	for i in range(size):
-		if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	length = 10 + shift
-	return length
-
-def SpotColor6(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length = 28 + size*4
-	shift = 0
-	if parser.data[offset+2:offset+4] == '\xFF\xFF':
-		shift = 2
-	if parser.version < 10:
-		length = 38
-	return length+shift
-
-def BasicLine(parser,offset,key):
-	length= 20 ##ver11
-	if parser.data[offset:offset+2] == '\x00\x00':
-		length = 18
-	elif parser.data[offset:offset+2] == '\xFF\xFF':
-		length = 22
-	return length
-	
-def BasicFill(parser,offset,key):
-	length=6
-	if parser.data[offset:offset+2] == '\x00\x00':
-		length = 4
-	elif parser.data[offset:offset+2] == '\xFF\xFF':
-		length = 8
-	return length
-	
-def Guides(parser,offset,key):
-	size =  struct.unpack('>h', parser.data[offset:offset+2])[0]
-	length=22 + size*8
-	if parser.data[offset+2:offset+4] == '\xFF\xFF':
-		length += 2
-	return length
-
-def Path(parser,offset,key):
-	[size] =  struct.unpack('>h', parser.data[offset:offset+2])
-	length=128
-	[var]=struct.unpack('>h', parser.data[offset+20:offset+22])
-	length = 22 + 27*var
-	if size==0:
-		var=ord(parser.data[offset+15])
-		length = 16 + 27*var
-
-	if parser.data[offset+4:offset+6] == '\xFF\xFF':
-		[var]=struct.unpack('>h', parser.data[offset+22:offset+24])
-		length = 24 + 27*var
-	if parser.data[offset+16:offset+18] == '\xFF\xFF':
-		[var]=struct.unpack('>h', parser.data[offset+24:offset+26])
-		length = 26 + 27*var
-		
-	return length
-
-def Collector(parser,offset,key):
-	length = 4 #!!!! just to set it to non-zero !!!!
-	return length
-
-def Rectangle(parser,offset,key):
-	length=69 #?ver11?
-	if parser.version < 11:
-		length = 36
-		
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+12+shift:offset+14+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def Layer(parser,offset,key):
-	length=14
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def ArrowPath(parser,offset,key):
-	size =  ord(parser.data[offset+21])
-	length=size*27+30
-	return length
-
-def VDict(parser,offset,key):
-	[num] = struct.unpack('>h', parser.data[offset+4:offset+6])
-	shift = 8
-	for i in range(num):
-		[key] = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])
-		if key == 2:
-			shift+=6
-		else:
-			shift+=8
-	return shift
-
-def Group(parser,offset,key):
-	length=8
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-
-	if parser.data[offset+shift+8:offset+shift+10] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift+8:offset+shift+10] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def Oval(parser,offset,key):
-	if parser.version > 10:
-		length=38
-	else:
-		length=28 
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift+12:offset+shift+14] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def MultiColorList(parser,offset,key):
-	num= struct.unpack('>h', parser.data[offset:offset+2])[0]
-#	length=6+num*10
-#	if parser.version == 10:
-#		length=10+num*10
-		
-	shift = 0
-	for i in range(num+1):
-		if parser.data[offset+4+i*10+shift:offset+6+i*10+shift] == '\xFF\xFF':
-			shift += 2
-	return num*10+shift+6
-
-def ContourFill(parser,offset,key):
-	[num]= struct.unpack('>h', parser.data[offset+0:offset+2])
-	[size]= struct.unpack('>h', parser.data[offset+2:offset+4])
-	length = 0
-	while num !=0:
-		length = length +10+size*2
-		[num]= struct.unpack('>h', parser.data[offset+0+length:offset+2+length])
-		[size]= struct.unpack('>h', parser.data[offset+2+length:offset+4+length])
-	length = length +10+size*2
-	if parser.version == 10:
-		 length = 18
-	return length
-
-def ClipGroup(parser,offset,key):
-	length=12
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+8+shift:offset+10+shift] == '\xFF\xFF':
-		length += 2 
-	return length+shift
-
-def NewBlend(parser,offset,key):
-	length=34
-	shift =0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+2+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-#	if parser.data[offset+shift+10:offset+12+shift] == '\xFF\xFF':
-#		length += 2
-
-	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift+8:offset+10+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def BrushStroke(parser,offset,key):
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift =2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return shift
-
-def GraphicStyle(parser,offset,key):
-	size = 2*struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	if parser.data[offset+8:offset+10] == '\xFF\xFF':
-		size += 1
-	shift = 0
-	for i in range(size):
-		if parser.data[offset+10+shift:offset+12+shift] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	length = 10 + shift
-	return length
-
-def ContentFill(parser,offset,key):
-	length=0 # was 2
-	return length
-
-def CompositePath(parser,offset,key):
-	shift = 0
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+shift+8:offset+shift+10] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-		
-	return shift+8
-
-def AttributeHolder(parser,offset,key):
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return shift
-
-def Halftone(parser,offset,key):
-	length=10
-	return length
-
-def FWShadowFilter(parser,offset,key):
-	length=22
-	shift = 0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 2
-	return length+shift
-
-def FWBevelFilter(parser,offset,key):
-	length=30
-	shift = 0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 2
-	return length+shift
-
-def FilterAttributeHolder(parser,offset,key):
-	length = 2
-	if parser.data[offset+2:offset+4] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+shift+2:offset+shift+4] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return length+shift
-
-def Extrusion(parser,offset,key):
-	var1 = ord(parser.data[offset+0x60])
-	var2 = ord(parser.data[offset+0x61])
-	length= 96 + xform_calc(var1,var2)+2
-	return length
-
-def LinearFill(parser,offset,key):
-	length=32 # was 54
-	shift = 0
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		shift = 2
-	if parser.data[offset+14+shift:offset+16+shift] == '\xFF\xFF':
-		shift += 2
-	return length+shift
-
-def GradientMaskFilter(parser,offset,key):
-	length=2
-	return length
-
-def DataList(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset:offset+2])
-	length=10+size*2
-	return length
-
-def ImageImport(parser,offset,key):
-	length=55  # was 87
-	if ord(parser.data[offset+55]) != 0:  # 0-terminated string?
-		length = 58
-	if parser.data[offset+10:offset+12] == '\xFF\xFF' and parser.version > 10:
-		length = 57
-	if parser.data[offset+36:offset+38] != '\x00\x00':
-		length += 4 
-	return length
-
-def TextBlok(parser,offset,key):
-	[size]= struct.unpack('>h', parser.data[offset:offset+2])
-	length=4+size*4
-	return length
-
-def Paragraph(parser,offset,key):
-	size= struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-#	length= 6 + 24*size # need to replace with per entry parsing of recIDs
-	if parser.data[offset+6:offset+8] == '\xFF\xFF':
-		shift = 4
-	else:
-		shift = 2
-	if parser.data[offset+6+shift:offset+8+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+6+shift:offset+8+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	if parser.data[offset+6+shift:offset+8+shift] == '\xFF\xFF':
-		shift += 4
-	else:
-		shift += 2
-	return 26+shift
-
-def TString(parser,offset,key):
-	size= struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	length=20+size*2
-	# should repeat for others if size > 1
-	if parser.data[offset+20:offset+22] == '\xFF\xFF':
-		length += 2
-	return length
-
-def LineTable(parser,offset,key):
-	size= struct.unpack('>h', parser.data[offset+2:offset+4])[0]
-	length=4+size*50
-	if parser.data[offset+52:offset+54] == '\xFF\xFF':
-		length += 2
-	return length
-
-def TextColumn(parser,offset,key):
-	num = struct.unpack('>h', parser.data[offset+4:offset+6])[0]
-	shift = 8
-	for i in range(2):
-		if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	shift += 8
-	for i in range(3):
-		if parser.data[offset+shift:offset+shift+2] == '\xFF\xFF':
-			shift += 4
-		else:
-			shift += 2
-	for i in range(num):
-		key = struct.unpack('>h', parser.data[offset+shift:offset+shift+2])[0]
-		if key == 0 or parser.data[offset+shift+4:offset+shift+6] == '\xFF\xFF':
-			shift+=8
-		else:
-			shift+=6
-	return shift
-
-def RadialFillX(parser,offset,key):
-	#length=52
-	length=20
-	if parser.version == 10:
-		length = 16
-	return length
-
-def TaperedFillX(parser,offset,key):
-	length=16
-	if parser.version == 10:
-		length = 12
-	return length
-
-def TintColor6(parser,offset,key):
-	length=38
-	if parser.data[offset+16:offset+18] == '\xFF\xFF':
-		length += 2
-	return length
-
-def TaperedFill(parser,offset,key):
-	length=12
-	return length
-
-def LensFill(parser,offset,key):
-	length=40
-	if parser.data[offset:offset+2] == '\xFF\xFF':
-		length += 2
-	return length
-
-def PerspectiveEnvelope(parser,offset,key):
-	length=177
-	return length
-
-def MultiBlend(parser,offset,key):
-	[size] = struct.unpack('>h', parser.data[offset:offset+2])
-	length=52 + size*6
-	return length
