@@ -423,7 +423,7 @@ class FHDoc():
 		"CalligraphicStroke":self.CalligraphicStroke,
 		"CharacterFill":self.CharacterFill,
 		"ClipGroup":self.ClipGroup,
-#		"Collector":self.Collector,
+		"Collector":self.Collector,
 		"Color6":self.Color6,
 		"CompositePath":self.CompositePath,
 		"ConeFill":self.ConeFill,
@@ -435,14 +435,14 @@ class FHDoc():
 		"Data":self.Data,
 		"DateTime":self.DateTime,
 		"DuetFilter":self.DuetFilter,
-#		"Element":self.Element,
-#		"ElemList":self.ElemList,
+		"Element":self.Element,
+		"ElemList":self.ElemList,
 		"ElemPropLst":self.ElemPropLst,
 		"Envelope":self.Envelope,
 		"ExpandFilter":self.ExpandFilter,
 		"Extrusion":self.Extrusion,
 		"FHDocHeader":self.FHDocHeader,
-#		"Figure":self.Figure,
+		"Figure":self.Figure,
 		"FileDescriptor":self.FileDescriptor,
 		"FilterAttributeHolder":self.FilterAttributeHolder,
 		"FWBevelFilter":self.FWBevelFilter,
@@ -473,7 +473,7 @@ class FHDoc():
 		"MDict":self.MDict,
 		"MList":self.MList,
 		"MName":self.MName,
-#		"MpObject":self.MpObject,
+		"MpObject":self.MpObject,
 		"MQuickDict":self.MQuickDict,
 		"MString":self.MString,
 		"MultiBlend":self.MultiBlend,
@@ -487,13 +487,13 @@ class FHDoc():
 		"Path":self.Path,
 		"PathTextLineInfo":self.PathTextLineInfo,
 		"PatternFill":self.PatternFill,
-#		"PatternLine":self.PatternLine,
+		"PatternLine":self.PatternLine,
 		"PerspectiveEnvelope":self.PerspectiveEnvelope,
 		"PerspectiveGrid":self.PerspectiveGrid,
 		"PolygonFigure":self.PolygonFigure,
-#		"Procedure":self.Procedure,
+		"Procedure":self.Procedure,
 		"PropLst":self.PropLst,
-#		"PSLine":self.PSLine,
+		"PSLine":self.PSLine,
 		"RadialFill":self.RadialFill,
 		"RadialFillX":self.RadialFillX,
 		"RaggedFilter":self.RaggedFilter,
@@ -511,7 +511,7 @@ class FHDoc():
 		"TEffect":self.TEffect,
 		"TextBlok":self.TextBlok,
 		"TextColumn":self.TextColumn,
-#		"TextInPath":self.TextInPath,
+		"TextInPath":self.TextInPath,
 		"TFOnPath":self.TFOnPath,
 		"TileFill":self.TileFill,
 		"TintColor6":self.TintColor6,
@@ -632,6 +632,11 @@ class FHDoc():
 		res += L
 		return res+10
 
+	def Collector(self,off,mode=0):
+		# FIXME! don't have test files for this one
+		return 4
+
+
 	def Color6(self,off,mode=0):
 		length=24
 		var = ord(self.data[off+1])
@@ -707,6 +712,12 @@ class FHDoc():
 	def DuetFilter(self,off,mode=0):
 		return 14
 
+	def Element(self,off,mode=0):
+		return 4
+
+	def ElemList(self,off,mode=0):
+		return 4
+
 	def ElemPropLst(self,off,mode=0):
 		# FIXME! one more read_recid @6 ?
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
@@ -731,6 +742,9 @@ class FHDoc():
 		var2 = ord(self.data[off+0x61])
 		length= 96 + self.xform_calc(var1,var2)+2
 		return length
+
+	def Figure (self,off,mode=0):
+		return 4
 
 	def FHDocHeader(self,off,mode=0):
 		# FIXME!
@@ -909,6 +923,9 @@ class FHDoc():
 		length = 6 + size*4
 		return length
 
+	def MpObject (self,off,mode=0):
+		return 4
+
 	def MultiBlend(self,off,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		return 52 + size*6
@@ -1014,6 +1031,21 @@ class FHDoc():
 			length = 26 + 27*var
 		return length
 
+	def PatternLine(self,off,mode=0):
+		# 0-2 -- link to Color
+		# 2-10 -- bitmap of the pattern
+		# 10-14 -- mitter?
+		# 14-16 -- width?
+		length= 22
+		return length
+	
+	def PSLine(self,off,mode=0):
+		# 0-2 -- link to Color
+		# 2-4 -- link to UString with PS commands
+		# 4-6 width
+		length= 8
+		return length
+	
 	def PerspectiveEnvelope(self,off,mode=0):
 		return 177
 
@@ -1031,6 +1063,9 @@ class FHDoc():
 		L,rid = self.read_recid(off+12+res)
 		res += L
 		return res+47
+
+	def Procedure (self,off,mode=0):
+		return 4
 
 	def PropLst(self,off,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
@@ -1177,6 +1212,19 @@ class FHDoc():
 			else:
 				shift+=8
 		return shift
+
+	def TextInPath(self,off,mode=0):
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		shift = 20
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+			if self.data[off+shift+4:off+shift+6] == '\xFF\xFF':
+				shift += 2
+			if key == 0:
+				shift+=8
+			else:
+				shift+=6
+		return shift+8
 
 	def TileFill(self,off,mode=0):
 		res,rif = self.read_recid(off)

@@ -691,11 +691,28 @@ class ApplicationMainWindow(gtk.Window):
 			elif goto[0] == "=":
 					cmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
 			elif 'reload' in goto:
-				try:
+				#try:
 					exec("reload(%s)"%goto[7:-1])
 					self.activate_reload(None)
-				except:
-					print "Cannot reload",goto[7:-1]
+				#except:
+				#	print "Cannot reload",goto[7:-1]
+			elif 'join' in goto:
+				if '@' in goto:
+					pos = goto.find("@")
+					num = int(goto[5:pos-1])
+					off = int(goto[pos+1:],16)
+				else:
+					num = int(goto[5:-1])
+					off = 0
+				treeSelection = self.das[pn].view.get_selection()
+				model, iter1 = treeSelection.get_selected()
+				if iter1 != None:
+					v = model.get_value(iter1,3)[off:]
+					for i in range(num-1):
+						iter1 = model.iter_next(iter1)
+						v += model.get_value(iter1,3)[off:]
+					add_pgiter(self.das[pn],"[Joined data]","dontsave","",v,iter1)
+
 
 
 			else:
