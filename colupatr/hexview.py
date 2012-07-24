@@ -169,13 +169,14 @@ class HexView():
 
 	def okp_tab(self,event):
 		self.exposed = 0
-		if 0 < self.curr < len(self.lines)-2:
+		if (0 < self.curr < len(self.lines)-1): # or (self.curr == len(self.lines)-2 and (self.line_size(self.curr-1) < self.line_size(self.curr))):
 			# wrap at curc
 			self.fmt(self.curr,[self.line_size(self.curr-1)])
-			self.curr += 1
 			self.prec = self.curc
+			self.prer = self.curr - 1
 			self.exposed = 1
-
+			if self.curr < len(self.lines)-2:
+				self.curr += 1
 
 	def okp_up(self,event):
 		self.mode = "c"
@@ -367,12 +368,15 @@ class HexView():
 				self.fmt(self.curr-1,[self.line_size(self.curr)+self.line_size(self.curr-1)])
 				self.curc = cc
 				self.curr -= 1
+				self.prer = self.curr
 				self.prec = self.curc - 1
+				self.hvlines[self.curr] = ""
 			else:
 				# join part of the row
 				self.fmt(self.curr-1,[self.curc+self.line_size(self.curr-1)])
 				self.curc = 0
 				self.prec = self.curc + 1
+				self.prer = self.curr
 			self.exposed = 1
 
 	def okp_enter(self,event):
@@ -711,39 +715,40 @@ class HexView():
 	def break_line(self,row,col):
 		# breaks line 'row' at 'col' position
 		# 'abcd' + col=0 -> a/bcd
-		rs = self.line_size(row)
-		if rs > 1 and col < rs-1:
-			if self.lines[row][1] > 1:
-				if self.lines[row][2] > self.lines[row][0]+col:
-					self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1],self.lines[row][2]))
-					self.lines[row] = (self.lines[row][0],0,None)
+		if row < len(self.hvlines):
+			rs = self.line_size(row)
+			if rs > 1 and col < rs-1:
+				if self.lines[row][1] > 1:
+					if self.lines[row][2] > self.lines[row][0]+col:
+						self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1],self.lines[row][2]))
+						self.lines[row] = (self.lines[row][0],0,None)
+					else:
+						mode = self.lines[row][1]
+						cmnt = self.lines[row][2]
+						self.lines[row] = (self.lines[row][0],2,cmnt)
+						self.lines.insert(row+1,(self.lines[row][0]+col+1,mode-2,None))
 				else:
-					mode = self.lines[row][1]
-					cmnt = self.lines[row][2]
-					self.lines[row] = (self.lines[row][0],2,cmnt)
-					self.lines.insert(row+1,(self.lines[row][0]+col+1,mode-2,None))
-			else:
-				self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
-				if self.lines[row][1] == 1:
-					self.lines[row] = (self.lines[row][0],0,None)
-
-		if self.debug == 1:
-			print "Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1
-		prehex,preasc = self.hvlines[row]
-		lhex = prehex[:col*3+3]
-		rhex = prehex[col*3+3:]
-		lasc = preasc[:col+1]
-		rasc = preasc[col+1:]
-		self.hvlines[row] = lhex,lasc
-		self.hvlines.insert(row+1,(rhex,rasc))
-		if self.debug == 1:
-			print "Upd2",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
+					self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
+					if self.lines[row][1] == 1:
+						self.lines[row] = (self.lines[row][0],0,None)
+	
+			if self.debug == 1:
+				print "Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1
+			prehex,preasc = self.hvlines[row]
+			lhex = prehex[:col*3+3]
+			rhex = prehex[col*3+3:]
+			lasc = preasc[:col+1]
+			rasc = preasc[col+1:]
+			self.hvlines[row] = lhex,lasc
+			self.hvlines.insert(row+1,(rhex,rasc))
+			if self.debug == 1:
+				print "Upd2",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
 
 	def fmt_row(self,row,cmd):
 		for i in range(len(cmd)):
 			rs = self.line_size(row+i)
 			res = 1
-			while rs <= int(cmd[i]) and res:
+			while rs < int(cmd[i]) and res:
 				res = self.attach_next(row+i)
 				rs = self.line_size(row+i)
 			if rs > int(cmd[i]):
@@ -849,16 +854,17 @@ class HexView():
 	def get_string(self, num):
 		hex = ""
 		asc = ""
-		if self.hvlines[num] == "":
-			ls = self.line_size(num)
-			for j in range(ls):
-				ch = self.data[self.lines[num][0]+j]
-				hex += "%02x "%ord(ch)
-				if ord(ch) < 32 or ord(ch) > 126:
-					ch = unicode("\xC2\xB7","utf8")
-				asc += ch
-			self.hvlines[num] = (hex,asc)
-		return self.hvlines[num]
+		if num < len(self.hvlines):
+			if self.hvlines[num] == "":
+				ls = self.line_size(num)
+				for j in range(ls):
+					ch = self.data[self.lines[num][0]+j]
+					hex += "%02x "%ord(ch)
+					if ord(ch) < 32 or ord(ch) > 126:
+						ch = unicode("\xC2\xB7","utf8")
+					asc += ch
+				self.hvlines[num] = (hex,asc)
+			return self.hvlines[num]
 
 	def expose (self, widget, event):
 		x,y,width,height = self.hv.allocation
