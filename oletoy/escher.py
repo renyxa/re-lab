@@ -386,13 +386,18 @@ def pVert (hd,data,parent,poff):
 	add_iter(hd,"Max # of Vertices",maxv,poff+off,2,"<H",0,0,parent)
 	off += 2
 	elsize = struct.unpack("<H",data[off:off+2])[0]
+	fstr = "<i"
+	if elsize == 0xfff0:
+		elsize = 4
+		fstr = "<h"
 	add_iter(hd,"Size of entry",elsize,poff+off,2,"<H",0,0,parent)
+	elsize /= 2
 	off += 2
 	for j in range(numv):
-		x = struct.unpack("<i",data[off:off+4])[0]
-		y = struct.unpack("<i",data[off+4:off+8])[0]
-		add_iter(hd,"X/Y %d"%j,"%d\t%d"%(x,y),poff+off,8,"<ii",0,0,parent)
-		off +=8
+		x = struct.unpack(fstr,data[off:off+elsize])[0]
+		y = struct.unpack(fstr,data[off+elsize:off+elsize*2])[0]
+		add_iter(hd,"X/Y %d"%j,"%d\t%d"%(x,y),poff+off,elsize*2,fstr*2,0,0,parent)
+		off += elsize*2
 
 pSegment_types = {
 	0:"LineTo",
@@ -476,9 +481,9 @@ def FOPT (hd, size, data):
 		name = opids
 		value = struct.unpack("<i",data[off+2:off+6])[0]
 		if fbid:
-			name += "[BLIP]"
+			name += " [BLIP]"
 		if fcplx:
-			name += "[CMPLX]"
+			name += " [CMPLX]"
 			if value > 0:
 				fcomplex.append((opid,value))
 		hd.hdmodel.set (iter1, 0, name, 1, value,2,off+2,3,4,4,"<i")
@@ -489,10 +494,10 @@ def FOPT (hd, size, data):
 		nlen =  fcomplex[i][1]
 		piter = add_iter(hd,name+" Complex Data","",off,nlen,"txt")
 		if name == "pVertices":
-			pVert(hd,data[off:off+nlen],piter,off)
+			pVert(hd,data[off:off+nlen+6],piter,off)
 		elif name == "pSegmentInfo":
-			pSegmInfo(hd,data[off:off+nlen],piter,off)
-		off += nlen
+			pSegmInfo(hd,data[off:off+nlen+6],piter,off)
+		off += nlen+6
 
 mspub_opids = {0x2001:'xLeft',0x2002:'yTop',0x2003:'xRight',0x2004:'yBottom'}
 

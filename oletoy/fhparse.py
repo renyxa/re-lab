@@ -141,6 +141,11 @@ def hdPath(hd,data,page):
 	# 19 -- 0 no Even/Odd no Closed, 1 closed, 2 Even/Odd, 3 Even/Odd + Closed
 	# ptype+1 -- 0x1b -- automatic, 0x9 -- no authomatic
 	
+	#0x1ff00 - recid
+	L,recid = read_recid(data,2)
+	if L == 4:
+		recid = 0x1ff00 - recid
+	add_iter (hd,'Graphic Style ID',"%02x"%recid,2,2,">H")
 	shift = offset + 22
 	numpts = struct.unpack('>h', data[offset+20:offset+22])[0]
 	for i in range(numpts):
@@ -396,6 +401,15 @@ hdp = {
 	"VDict":hdTEffect
 	}
 
+
+def read_recid(data,off):
+	if data[off:off+2] == '\xFF\xFF':
+		rid = struct.unpack('>i', data[off:off+4])[0]
+		l = 4
+	else:
+		rid = struct.unpack('>h', data[off:off+2])[0]
+		l = 2
+	return l,rid
 
 class FHDoc():
 	def __init__(self,data,page,parent):
@@ -1020,6 +1034,8 @@ class FHDoc():
 		length=128
 		var=struct.unpack('>h', self.data[off+20:off+22])[0]
 		length = 22 + 27*var
+		# FIXME!
+		# off+2 -- recid
 		if size==0:
 			var=ord(self.data[off+15])
 			length = 16 + 27*var
