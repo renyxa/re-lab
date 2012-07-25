@@ -36,6 +36,7 @@ ui_info = \
 	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='About'/>
+		<menuitem action='Manual'/>
 	</menu>
 	</menubar>
 </ui>'''
@@ -167,6 +168,11 @@ class ApplicationMainWindow(gtk.Window):
 				"About", "",					# label, accelerator
 				"About colupatr",								   # tooltip
 				self.activate_about ),
+			( "Manual", gtk.STOCK_HELP,							 # name, stock id
+				"Manual", "<control>H",					# label, accelerator
+				"Manual for OleToy",								   # tooltip
+				self.activate_manual ),
+
 		);
 
 		# Create the menubar and toolbar
@@ -182,6 +188,45 @@ class ApplicationMainWindow(gtk.Window):
 		## Close dialog on user response
 		dialog.connect ("response", lambda d, r: d.destroy())
 		dialog.show()
+
+	def draw_manual (self, widget, event):
+		mytxt = \
+"<b>Keys:</b>\n\
+	<tt>[Del]</tt>	attach next row to the current one\n\
+	<tt>[BS]</tt>	at the start of the row: attach row to the previous one\n\
+			at the middle of row: attach left part to the previous row\n\
+	<tt>[Tab]</tt>	 wrap or expand current row to the size of previous one,\n\
+			move to next line\n\
+\n\
+<b>Commands:</b>\n\
+	<tt>?</tt>		search\n\
+	<tt>!</tt>		comment\n\
+	<tt>/</tt>		separate at address\n\
+	<tt>goto</tt>	scroll to address\n\
+	<tt>fmt</tt>		wrap lines\n\
+	<tt>reload</tt>	reload hexview\n\
+	<tt>name</tt>	rename the tab\n\
+		"
+
+		pl = widget.create_pango_layout("")
+		pl.set_markup(mytxt)
+		gc = widget.window.new_gc()
+		w,h = pl.get_size()
+		widget.set_size_request(w/1000, h/1000)
+		widget.window.draw_layout(gc, 0, 0, pl)
+
+
+	def activate_manual(self, action):
+		w = gtk.Window()
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(660,400)
+		da = gtk.DrawingArea()
+		da.connect('expose_event', self.draw_manual)
+		w.set_title("colupatr Manual")
+		s.add_with_viewport(da)
+		w.add(s)
+		w.show_all()
 
 	def on_enc_entry_activate (self,entry):
 		enc = entry.get_text()
@@ -505,6 +550,9 @@ class ApplicationMainWindow(gtk.Window):
 					ebox.get_children()[0].set_text(cmd[1])
 				elif cmd[0].lower() == "bck":
 					pass
+				elif cmd[0].lower() == "reload":
+					exec("reload(hexview)")
+
 				elif cmd[0].lower() == "fmt":
 					cmd = cmd[1:]
 					mpos = cmdline.find("*")
