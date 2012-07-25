@@ -308,6 +308,7 @@ class HexView():
 				self.fmt(self.curr,[self.line_size(self.curr)+self.line_size(self.curr+1)])
 				self.prec = self.curc - 1
 				self.prer = self.curr - 1
+				self.hvlines[self.curr] = ""
 				self.exposed = 1
 
 	def okp_ins(self,event):
