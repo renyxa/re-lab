@@ -244,7 +244,7 @@ def ptr_search (page, data, version, parent):
 				print "ptr_search failed in %02x"%pntr.type
 		  if pntr.type == 0x16:
 			  get_colors (page, res, version, iter1)
-		  if pntr.format >>4 == 0xd or pntr.format >>4 == 0xc:
+		  if pntr.format >>4 > 7:
 			  vsdchunks.parse (model, version, iter1, pntr)
 	if vbaflag == 1:
 	  ole.open (vbadata, page, iter2)
@@ -299,7 +299,7 @@ def collect_str5 (model, parent, offset):
 	  ptr_count += 1
 	  value += res
 	  offset += len(res)
-	if ctype >> 4 == 0xd:
+	if ctype >> 4 > 7: # Fridrich found file with 0x8* instead of 0xd
 	  res = collect_strD (model,citer)
 	  ptype = model.get_value(citer,3)[0:4]
 	  pfmt = (struct.unpack("<H",model.get_value(citer,3)[16:18])[0])&0xFD
