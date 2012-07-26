@@ -82,13 +82,28 @@ pub98_ids = {
 def parse97prop(page,data,parent,prop,pid):
 	off = prop*0x200 # probably need to read block size in pub97qu
 	num = ord(data[off+0x1ff])
-#	print "Num %02x"%num
-	propiter = add_pgiter(page,"prop%s"%pid,"pub97","prop",data[off:off+0x200],parent)
+	propiter = add_pgiter(page,"prop%s %s"%(prop,pid),"pub97","prop",data[off:off+0x200],parent)
 	for i in range(num+1):
 		ch = struct.unpack("<I",data[off+i*4:off+i*4+4])[0]
 		t = ord(data[off+num*4+4+i])
 		add_pgiter(page,"Offset: %02x Type: %d"%(ch,t),"pub97","prop",data[off+i*4:off+i*4+4],propiter)
-	off += num*5+4
+	i = 0
+	shift = num*5+4
+
+	# for all pids skip lesding 0s
+	while i == 0:
+		i = ord(data[off+shift])
+		shift += 1
+		if shift > 0x1ff:
+			return
+	shift -= 1
+
+	while shift+i < 0x200:
+		if pid == "2" and i != 0:
+			i = ord(data[off+shift+1])
+		add_pgiter(page,d2hex(data[off+shift:off+shift+i+1],"",4).replace("\n"," "),"pub97","propchunk",data[off+shift:off+shift+i+1],propiter)
+		shift += i+1
+		i = ord(data[off+shift])
 
 # parse "Quill"-like part in pub97
 # it's near empty in pub98
