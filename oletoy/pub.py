@@ -60,14 +60,9 @@ def pub98doc (hd,size,data):
 	add_iter(hd,"Height",struct.unpack("<I",data[0x18:0x1c])[0]/12700.,0x18,4,"<I")
 
 def pubheader (hd,size,data):
-	if struct.unpack("<H",data[2:4])[0] == 0x22:
-		add_iter(hd,"V1",struct.unpack("<I",data[0x12:0x16])[0]/100.,0x12,4,"<I")
-		add_iter(hd,"V2",struct.unpack("<I",data[0x16:0x1a])[0]/100.,0x16,4,"<I")
-		add_iter(hd,"Saved by ?",struct.unpack("<H",data[0x20:0x22])[0],0x20,2,"<H")
-	else:
+	if struct.unpack("<H",data[2:4])[0] == 0x2c:
 		add_iter(hd,"Version",struct.unpack("<H",data[0x22:0x24])[0],0x22,2,"<H")
 		add_iter(hd,"Saved by",struct.unpack("<H",data[0x24:0x26])[0],0x24,2,"<H")
-		
 
 
 pub98_ids = {
@@ -82,11 +77,68 @@ pub98_ids = {
 	0x15:pub98doc
 }
 
+
+# parse fdpc/fdpp-like blocks in pub97
+def parse97prop(page,data,parent,prop,pid):
+	off = prop*0x200 # probably need to read block size in pub97qu
+	num = ord(data[off+0x1ff])
+#	print "Num %02x"%num
+	propiter = add_pgiter(page,"prop%s"%pid,"pub97","prop",data[off:off+0x200],parent)
+	for i in range(num+1):
+		ch = struct.unpack("<I",data[off+i*4:off+i*4+4])[0]
+		t = ord(data[off+num*4+4+i])
+		add_pgiter(page,"Offset: %02x Type: %d"%(ch,t),"pub97","prop",data[off+i*4:off+i*4+4],propiter)
+	off += num*5+4
+
+# parse "Quill"-like part in pub97
+# it's near empty in pub98
+def parse97qu (page,data,parent):
+	off = struct.unpack("<I",data[0x12:0x16])[0]
+	quhdr_size = struct.unpack("<H",data[off+2:off+4])[0]
+	off += 10
+	docstart = struct.unpack("<I",data[off:off+4])[0]
+	off += 4
+	txtstart = struct.unpack("<I",data[off:off+4])[0]
+	off += 4
+	if txtstart == docstart:
+		# pub98
+		return
+	txtend = struct.unpack("<I",data[off:off+4])[0]
+	off += 4
+	prop1 = struct.unpack("<H",data[off:off+2])[0]
+	off += 2
+	prop2 = struct.unpack("<H",data[off:off+2])[0]
+	off += 2
+	prop3 = struct.unpack("<H",data[off:off+2])[0]
+	off += 2
+	prop3e = struct.unpack("<H",data[off:off+2])[0]
+	off += 2
+	dprop1 = struct.unpack("<I",data[off:off+4])[0]
+	off += 4
+	dprop2 = struct.unpack("<I",data[off:off+4])[0]
+	off += 4
+	dprop3 = struct.unpack("<I",data[off:off+4])[0]
+	off += 4
+	txtiter = add_pgiter (page,"TEXT","pub","txt",data[txtstart:txtend],parent)
+	proppar = add_pgiter (page,"PROPS","pub","PROPS","",parent)
+
+	for i in range(prop2-prop1):
+		parse97prop(page,data,proppar,prop1+i,"1")
+
+	for i in range(prop3-prop2):
+		parse97prop(page,data,proppar,prop2+i,"2")
+
+	for i in range(prop3e-prop3):
+		parse97prop(page,data,proppar,prop3+i,"3")
+
+
 # parse "Contents" part of the pub98/pub2k
 def parse98 (page,data,parent):
-	try:
+#	try:
+		qu_start = struct.unpack("<I",data[0x12:0x16])[0]
+		add_pgiter (page,"Header","pub",0,data[:qu_start],parent)
+		parse97qu(page,data,parent)
 		tr_start = struct.unpack("<I",data[0x16:0x1a])[0]
-		add_pgiter (page,"Blocks A/B","pub",0,data[0x22:tr_start],parent)
 		blocks = {}
 		reorder = []
 		n_blocks = struct.unpack("<H",data[tr_start:tr_start+2])[0]
@@ -123,20 +175,20 @@ def parse98 (page,data,parent):
 			if blocks.has_key(par):
 				p_iter = blocks[par][3]
 			blocks[i].append(add_pgiter (page,"Block %02x (%s)"%(i,b_txt),"pub98",b_type,data[start:end],p_iter))
-	except:
-		print 'Failed in parsing pub98/2k "Contents"'
+#	except:
+#		print 'Failed in parsing pub98/2k "Contents"'
 
 
 # parse "Contents" part of the OLE container
 def parse(page,data,parent):
 	model = page.model
-	try:
-#	if 1:
+#	try:
+	if 1:
 		hdrsize = struct.unpack("<H",data[2:4])[0]
-		add_pgiter (page,"Header","pub","cnthdr",data[0:hdrsize],parent)
 		if hdrsize == 0x22:
 			parse98 (page,data,parent)
 			return
+		add_pgiter (page,"Header","pub","cnthdr",data[0:hdrsize],parent)
 		blocks = {}
 		reorders = []
 		off = hdrsize
@@ -218,8 +270,8 @@ def parse(page,data,parent):
 					print "Failed to add reordered item %02x"%parid
 					
 		return
-	except:
-		print "Failed in parsing Contents"
+#	except:
+#		print "Failed in parsing Contents"
 
 def collect_ec(model,parent):
 	res = ""
