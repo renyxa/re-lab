@@ -86,7 +86,11 @@ def parse97prop(page,data,parent,prop,pid):
 	for i in range(num+1):
 		ch = struct.unpack("<I",data[off+i*4:off+i*4+4])[0]
 		t = ord(data[off+num*4+4+i])
-		add_pgiter(page,"Offset: %02x Type: %d"%(ch,t),"pub97","prop",data[off+i*4:off+i*4+4],propiter)
+		if t == 0:
+			t = "default"
+		else:
+			t = "[%02x]"%t
+		add_pgiter(page,"Offset: %02x Style: %s"%(ch,t),"pub97","prop",data[off+i*4:off+i*4+4],propiter)
 	i = 0
 	shift = num*5+4
 
@@ -101,7 +105,7 @@ def parse97prop(page,data,parent,prop,pid):
 	while shift+i < 0x200:
 		if pid == "2" and i != 0:
 			i = ord(data[off+shift+1])
-		add_pgiter(page,d2hex(data[off+shift:off+shift+i+1],"",4).replace("\n"," "),"pub97","propchunk",data[off+shift:off+shift+i+1],propiter)
+		add_pgiter(page,"Style [%02x] "%(shift/2),"pub97","style"+pid,data[off+shift:off+shift+i+1],propiter)
 		shift += i+1
 		i = ord(data[off+shift])
 
