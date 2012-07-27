@@ -169,7 +169,7 @@ class HexView():
 
 	def okp_tab(self,event):
 		self.exposed = 0
-		if (0 < self.curr < len(self.lines)-1): # or (self.curr == len(self.lines)-2 and (self.line_size(self.curr-1) < self.line_size(self.curr))):
+		if (0 < self.curr < len(self.lines)-1):
 			# wrap at curc
 			self.fmt(self.curr,[self.line_size(self.curr-1)])
 			self.prec = self.curc
@@ -758,7 +758,7 @@ class HexView():
 	def fmt(self,row,col):
 		self.fmt_row(row, col)
 		if row < len(self.hvlines)-1:
-			self.hvlines[row+1] = ""
+			self.hvlines[row] = ""
 		self.set_maxaddr()
 		self.tdx = -1 # force to recalculate in expose
 		self.sel = None
