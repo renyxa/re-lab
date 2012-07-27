@@ -50,6 +50,13 @@ def prep_pgiter (page, name, ftype, stype, data, parent = None):
 	pgiter(page, name, ftype, stype, data, iter1)
 	return iter1
 
+def ins_pgiter (page, name, ftype, stype, data, parent = None, pos = 0):
+	# modify to insert into parent at 'pos'
+	iter1 = page.model.insert (parent,pos)
+	pgiter(page, name, ftype, stype, data, iter1)
+	return iter1
+
+
 def hex2d(data):
 	res = ''
 	data = data.replace(" ","")

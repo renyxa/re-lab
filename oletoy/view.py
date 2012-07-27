@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp
 from utils import *
 from hv2 import HexView
-version = "0.7.7"
+version = "0.7.8"
 
 ui_info = \
 '''<ui>
