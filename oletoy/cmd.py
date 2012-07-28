@@ -15,8 +15,8 @@
 #
 
 import sys,struct
-import tree, gtk, gobject,zlib
-import ole, escher, rx2, cdr,icc,mf
+import tree,gtk,gobject,zlib
+import ole,escher,rx2,cdr,icc,mf,pict
 from utils import *
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
@@ -321,6 +321,8 @@ def parse (cmd, entry, page):
 		elif "dib" == chtype.lower():
 			iter2 = add_pgiter (page,"[BMP]","",0,dib2bmp(buf[int(chaddr,16):]),iter1)
 			model.set_value(iter2,1,("escher","odraw","Blip"))
+		elif "pct" == chtype.lower():
+			pict.parse (page,buf,iter1)
 		elif "zip" == chtype.lower():
 			try:
 				print int(chaddr,16)
