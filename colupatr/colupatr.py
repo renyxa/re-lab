@@ -18,6 +18,7 @@ import sys,struct
 import gtk,gobject
 import hexview
 import utils
+import cli
 
 version = "0.4.5"
 
@@ -98,6 +99,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.statusbar.pack_start(self.entry, False,False,2)
 		self.entry.connect ("activate",self.on_entry_activate)
 		self.entry.connect ("key-press-event", self.on_entry_keypressed)
+		self.entry.set_size_request(300,24)
 		self.label = gtk.Label()
 		self.label.set_use_markup(True)
 		self.statusbar.pack_start(self.label, True,True,2)
@@ -553,6 +555,10 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmd[0].lower() == "reload":
 					exec("reload(hexview)")
 
+				elif cmd[0].lower() == "run":
+					hv = doc
+					exec(cmdline[4:])
+					hv.expose(None,None)
 				elif cmd[0].lower() == "fmt":
 					cmd = cmd[1:]
 					mpos = cmdline.find("*")
