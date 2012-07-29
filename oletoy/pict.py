@@ -252,24 +252,92 @@ opsizes = {
 	0x00A0:2,
 	0x00B0:0,
 	0x00CF:0,
-	0x00FF:2
+	0x00FF:2,
+	0x02FF:2
 }
 
-def opsize(op):
-	if op > 0xff:
+def clip(data,off):
+	return struct.unpack(">H",data[off:off+2])[0] 
+
+def pktbitrect(data,off):
+	res = off
+	rowbytes = (struct.unpack(">H",data[off:off+2])[0])&0x3fff
+	off += 2
+	bounds = struct.unpack(">HHHH",data[off:off+8])
+	off += 8
+	# skip others
+	off += 18
+	if rowbytes < 8:
+		res = rowbytes*(bounds[2]-bounds[0])+28
+	else:
+		f,t = '>B',1
+		if rowbytes > 250:
+			f,t = '>H',2
+		for i in range(bounds[2]-bounds[0]):
+			off += struct.unpack(f,data[off:off+t])[0] + t
+		res = off - res
+	return res
+
+
+def dirbitsrect(data,off):
+	res = off
+	#pixmap
+	off += 4 # handle
+	rowbytes = (struct.unpack(">H",data[off:off+2])[0])&0x3fff
+	off += 2
+	bounds = struct.unpack(">HHHH",data[off:off+8])
+	off += 8
+	# skip version
+	off += 2
+	packtype = struct.unpack(">H",data[off:off+2])[0]
+	off += 2
+	# skip others
+	off += 32
+	#skip src/dst rects
+	off += 16
+	#skip mode
+	off += 2
+	# docs p.741
+	if rowbytes < 8 or packtype == 1:
+		res = rowbytes*(bounds[2]-bounds[0])+68
+	elif packtype == 2:
+		res = rowbytes*(bounds[2]-bounds[0])*0.75+68
+	elif packtype > 2:
+		f,t = '>B',1
+		if rowbytes > 250:
+			f,t = '>H',2
+		for i in range(bounds[2]-bounds[0]):
+			off += struct.unpack(f,data[off:off+t])[0] + t
+		res = off - res
+	return res
+
+def longcmnt(data,off):
+	return struct.unpack(">H",data[off+2:off+4])[0]+4
+
+
+op_funcs = {
+	0x0001:clip,
+	0x0098:pktbitrect,
+	0x009a:dirbitsrect,
+	0x00a1:longcmnt
+}
+
+def opsize(op,data,off):
+	if op > 0xff and op != 0x2ff:
 		return (op>>8)*2
 	else:
 		if op in opsizes:
 			return opsizes[op]
+		elif op in op_funcs:
+			return op_funcs[op](data,off)
 		else:
-			# check for function
-			return 0
+			return 254
 
 def parse(page,data,parent):
 	off = 0x20a
 	while off < len(data):
 		opc = struct.unpack(">H",data[off:off+2])[0]
 		opn = key2txt(opc,opcodes,"Rsrvd by Apple")
-		ops = opsize(opc)
+		ops = opsize(opc,data,off+2) # skip opc
 		add_pgiter(page,opn,"pict",opc,data[off:off+2+ops],parent)
 		off += 2+ops

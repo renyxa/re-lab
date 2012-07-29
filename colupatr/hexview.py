@@ -759,6 +759,7 @@ class HexView():
 		self.fmt_row(row, col)
 		if row < len(self.hvlines)-1:
 			self.hvlines[row] = ""
+			self.hvlines[row+1] = ""
 		self.set_maxaddr()
 		self.tdx = -1 # force to recalculate in expose
 		self.sel = None
