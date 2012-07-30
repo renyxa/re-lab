@@ -30,11 +30,42 @@ def next (hv):
 	if hv.curc > maxc:
 		hv.curc = maxc
 
+def prev (hv):
+	if hv.offnum > 0 and hv.curr < hv.offnum+1:
+		hv.offnum -= 1
+		hv.mode = ""
+	hv.curr -= 1
+	if hv.curr < 0:
+		hv.curr = 0
+	if hv.curr > hv.offnum + hv.numtl:
+		hv.curr = hv.offnum
+	maxc = hv.lines[hv.curr+1][0] - hv.lines[hv.curr][0] -1
+	if hv.curc > maxc:
+		hv.curc = maxc
+
 def read (hv, fmt, off=-1):
 	if off == -1:
 		off = tell(hv)
 	res = struct.unpack(fmt,hv.data[off:off + struct.calcsize(fmt)])[0]
 	return res
+
+def rwrap (hv, col):
+	# wrap line from the end
+	# push down if longer than col
+	# borrow from previous line if shorter than col
+	ls = hv.line_size(hv.curr)
+	if ls == col:
+		return
+	if ls > col:
+		wrap (hv,ls-col)
+		hv.curc = 0
+	else:
+		return
+		# fixme!
+		pls = hv.line_size(hv.curr-1)
+		prev(hv)
+		wrap(hv,ls+pls)
+		rwrap(hv,col)
 
 def seek (hv, off):
 	llast = len(hv.lines)
@@ -44,6 +75,11 @@ def seek (hv, off):
 		hv.curc = off - hv.lines[lnum][0]
 		hv.offnum = min(lnum,llast-hv.numtl)
 		hv.offset = hv.lines[lnum][0]
+
+def size (hv, row = -1):
+	if row == -1:
+		row = hv.curr
+	return hv.line_size(row)
 
 def tell (hv):
 	return hv.lines[hv.curr][0]+hv.curc
