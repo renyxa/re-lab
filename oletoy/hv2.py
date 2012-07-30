@@ -374,8 +374,6 @@ class HexView():
 		return 2
 
 
-#-----------------------
-
 	def on_motion_notify (self, widget, event):
 		if self.drag:
 			flag = 0
@@ -431,7 +429,8 @@ class HexView():
 				self.mtt = None
 			if c1 != c1o or c2 != c2o or r1 != r1o or r2 != r2o:
 				self.expose(widget,event)
-			self.parent.calc_status(self.data[self.line_size(r1)+c1:self.line_size(r2)+c2],s)
+			self.parent.calc_status(self.data[r1*16+c1:r2*16+c2],s)
+
 
 
 	def on_key_press (self, view, event):
