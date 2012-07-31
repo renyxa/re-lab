@@ -55,17 +55,17 @@ def rwrap (hv, col):
 	# borrow from previous line if shorter than col
 	ls = hv.line_size(hv.curr)
 	if ls == col:
-		return
+		# return 1 to be able to check if line wasn't changed
+		return 1
 	if ls > col:
 		wrap (hv,ls-col)
 		hv.curc = 0
 	else:
-		return
-		# fixme!
-		pls = hv.line_size(hv.curr-1)
-		prev(hv)
-		wrap(hv,ls+pls)
-		rwrap(hv,col)
+		if hv.curr > 0:
+			pls = hv.line_size(hv.curr-1)
+			prev(hv)
+			wrap(hv,ls+pls)
+			rwrap(hv,col)
 
 def seek (hv, off):
 	llast = len(hv.lines)

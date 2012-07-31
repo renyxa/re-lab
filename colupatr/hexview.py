@@ -735,6 +735,8 @@ class HexView():
 	
 			if self.debug == 1:
 				print "Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1
+			if self.hvlines[row] == "":
+				self.get_string(row)
 			prehex,preasc = self.hvlines[row]
 			lhex = prehex[:col*3+3]
 			rhex = prehex[col*3+3:]

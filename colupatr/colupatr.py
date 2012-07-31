@@ -208,6 +208,10 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>fmt</tt>		wrap lines\n\
 	<tt>reload</tt>	reload hexview\n\
 	<tt>name</tt>	rename the tab\n\
+\n\
+<b>Runs:</b>\n\
+	<tt>run cli.wrap(hv,cli.read(hv,\">h\")+2); cli.next(hv)</tt>\n\
+	<tt>run if cli.rwrap(hv,hv.line_size(hv.curr+1)): cli.prev(hv)</tt>\n\
 		"
 
 		pl = widget.create_pango_layout("")
