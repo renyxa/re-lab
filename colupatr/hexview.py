@@ -114,6 +114,7 @@ class HexView():
 			97:10,98:11,99:12,100:13,101:14,102:15}
 
 
+		self.init_config()
 
 		if lines == []:
 			self.init_lines()				# init as a standard "all 0x10 wide" lines
@@ -135,6 +136,30 @@ class HexView():
 		ctx.fill_preserve()
 		ctx.set_source_rgb(0,0,0)
 		ctx.stroke()
+
+	def draw_selection(self,ctx,r0,c0,r1,c1,clr=(0.5,0.5,0.5,0.5)):
+		if r0 < self.offnum:
+			r0 = self.offnum
+			c0 = 0
+		if r1 > self.offnum +self.numtl + 1:
+			r1 = self.offnum + self.numtl + 1
+		if r0 == r1: # one row
+			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(c1-c0)*3-self.tdx,self.tht)
+			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(c1-c0),self.tht+1.5)
+		else:
+			# 1st sel row
+			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(16-c0)*3-self.tdx,self.tht)
+			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(16-c0),self.tht+1.5)
+			# middle rows
+			for i in range(r1-r0-1):
+				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*48,self.tht)
+				ctx.rectangle(self.tdx*(11+16*3),self.tht*(r0+i+2-self.offnum)+6,self.tdx*16,self.tht+1.5)
+			# last sel row
+			ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
+			ctx.rectangle(self.tdx*(11+16*3),self.tht*(r1+1-self.offnum)+6,self.tdx*c1,self.tht+1.5)
+		ctx.set_source_rgba(clr[0],clr[1],clr[2],clr[3])
+		ctx.fill()
+
 
 	def okp_switch(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
@@ -440,6 +465,24 @@ class HexView():
 			self.hvlines.append("")
 			self.bkhvlines.append("")
 		self.lines.append((len(self.data),0))
+
+	def init_config(self): # redefine UI/behaviour options from file
+		self.font = "Monospace"
+		self.fontsize = 14
+		self.hlclr = 1,1,0.5
+		self.hdrclr = 0.9,0.9,0.9
+		self.lineclr = 0,0,0
+		self.curclr = 0,0,0.8
+		self.selclr = 0.7,0.9,0.8,1
+		self.aschlclr = 0.75,0.75,1
+		self.txtcurclr = 0,0,1
+		self.mttclr = 0.9,0.95,0.95,0.85
+		self.mttxtclr = 0.5,0,0
+		try:
+			execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
+		except:
+			pass
+
 
 	def set_maxaddr (self):
 		# check and update maxaddr to the value of the longest line
@@ -913,24 +956,11 @@ class HexView():
 			ctx.move_to(self.tdx*(12+self.maxaddr*4)+0.5,0)
 			ctx.line_to(self.tdx*(12+self.maxaddr*4)+0.5,height)
 			ctx.stroke()
-			
-			if self.sel and (self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl):
-				if self.sel[0] == self.sel[2]: # one row
-					ctx.rectangle(self.tdx*(10+self.sel[1]*3),self.tht*(self.sel[0]+1-self.offnum)+6.5,self.tdx*(self.sel[3]-self.sel[1])*3-self.tdx,self.tht)
-					ctx.rectangle(self.tdx*(11+self.sel[1]+self.maxaddr*3),self.tht*(self.sel[0]+1-self.offnum)+6,self.tdx*(self.sel[3]-self.sel[1]),self.tht+1.5)
-				else:
-					# 1st sel row
-					ctx.rectangle(self.tdx*(10+self.sel[1]*3),self.tht*(self.sel[0]+1-self.offnum)+6.5,self.tdx*(self.lines[self.sel[0]+1][0]-self.lines[self.sel[0]][0]-self.sel[1])*3-self.tdx,self.tht)
-					ctx.rectangle(self.tdx*(11+self.sel[1]+self.maxaddr*3),self.tht*(self.sel[0]+1-self.offnum)+6,self.tdx*(self.lines[self.sel[0]+1][0]-self.lines[self.sel[0]][0]-self.sel[1]),self.tht+1.5)
-					# middle rows
-					for i in range(self.sel[2]-self.sel[0]-1):
-						ctx.rectangle(self.tdx*10,self.tht*(self.sel[0]+i+2-self.offnum)+6.5,self.tdx*(self.lines[self.sel[0]+i+2][0]-self.lines[self.sel[0]+i+1][0])*3-self.tdx,self.tht)
-						ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(self.sel[0]+i+2-self.offnum)+6,self.tdx*(self.lines[self.sel[0]+i+2][0]-self.lines[self.sel[0]+i+1][0]),self.tht+1.5)
-					# last sel row
-					ctx.rectangle(self.tdx*10,self.tht*(self.sel[2]+1-self.offnum)+6.5,self.tdx*self.sel[3]*3-self.tdx,self.tht)
-					ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(self.sel[2]+1-self.offnum)+6,self.tdx*self.sel[3],self.tht+1.5)
-				ctx.set_source_rgb(0.7,0.9,0.8)
-				ctx.fill()
+
+#  Selection
+			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl) or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl) or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
+				self.draw_selection(ctx,self.sel[0],self.sel[1],self.sel[2],self.sel[3],self.selclr)
+
 #hdr
 			hdr = ""
 			ctx.move_to(self.tdx*(10+self.curc*3),self.tht+1.5)
