@@ -696,6 +696,9 @@ class ApplicationMainWindow(gtk.Window):
 					self.activate_reload(None)
 				#except:
 				#	print "Cannot reload",goto[7:-1]
+			elif cmd[0].lower() == "run":
+					md = self.das[pn]
+					exec(cmdline[4:])
 			elif 'join' in goto:
 				if '@' in goto:
 					pos = goto.find("@")
@@ -1025,6 +1028,7 @@ class ApplicationMainWindow(gtk.Window):
 			hd.hv.offnum = 0
 			hd.hv.parent = self
 			hd.hv.iter = iter1
+			hd.hv.vadj.upper = len(data)/16+2
 			hd.hv.vadj.value = 0
 			hd.hv.data = data
 			hd.hv.hvlines = []
