@@ -145,18 +145,18 @@ class HexView():
 			r1 = self.offnum + self.numtl + 1
 		if r0 == r1: # one row
 			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(c1-c0)*3-self.tdx,self.tht)
-			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(c1-c0),self.tht+1.5)
+			ctx.rectangle(self.tdx*(11+c0+self.maxaddr*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(c1-c0),self.tht+1.5)
 		else:
 			# 1st sel row
-			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(16-c0)*3-self.tdx,self.tht)
-			ctx.rectangle(self.tdx*(11+c0+16*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(16-c0),self.tht+1.5)
+			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(self.line_size(r0)-c0)*3-self.tdx,self.tht)
+			ctx.rectangle(self.tdx*(11+c0+self.maxaddr*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(self.line_size(r0)-c0),self.tht+1.5)
 			# middle rows
 			for i in range(r1-r0-1):
-				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*48,self.tht)
-				ctx.rectangle(self.tdx*(11+16*3),self.tht*(r0+i+2-self.offnum)+6,self.tdx*16,self.tht+1.5)
+				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*self.line_size(i+1)*3,self.tht)
+				ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r0+i+2-self.offnum)+6,self.tdx*self.line_size(i+1),self.tht+1.5)
 			# last sel row
 			ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
-			ctx.rectangle(self.tdx*(11+16*3),self.tht*(r1+1-self.offnum)+6,self.tdx*c1,self.tht+1.5)
+			ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r1+1-self.offnum)+6,self.tdx*c1,self.tht+1.5)
 		ctx.set_source_rgba(clr[0],clr[1],clr[2],clr[3])
 		ctx.fill()
 
