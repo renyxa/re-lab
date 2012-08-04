@@ -85,4 +85,5 @@ def tell (hv):
 	return hv.lines[hv.curr][0]+hv.curc
 
 def wrap (hv,col):
-	hv.fmt(hv.curr,(col,))
+	if col > 0:
+		hv.fmt(hv.curr,(col,))

@@ -559,9 +559,13 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmd[0].lower() == "reload":
 					exec("reload(hexview)")
 
-				elif cmd[0].lower() == "run":
+				elif cmdline[:3].lower() == "run":
 					hv = doc
-					exec(cmdline[4:])
+					if len(cmdline) < 5:
+						cmdline = self.open_cli()
+					else:
+						cmdline = cmdline[4:]
+					exec(cmdline)
 					hv.expose(None,None)
 				elif cmd[0].lower() == "fmt":
 					cmd = cmd[1:]
@@ -765,6 +769,27 @@ class ApplicationMainWindow(gtk.Window):
 			self.activate_open(None,data)
 		except:
 			print "Not a copy of hexdump"
+
+	def open_cli(self):
+		dialog = gtk.Dialog("colupatr CLI",	None,
+			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+			gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+		tb = gtk.TextBuffer()
+		tv = gtk.TextView(tb)
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(660,400)
+		s.add_with_viewport(tv)
+		dialog.vbox.pack_start(s)
+		s.show_all()
+		resp = dialog.run()
+		dialog.destroy()
+		txt = ""
+		if resp == gtk.RESPONSE_ACCEPT:
+			txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+			print txt
+		return txt
 
 	def on_entry_keypressed (self, view, event):
 		if event.state == gtk.gdk.CONTROL_MASK and event.keyval == 118 : # ^V
