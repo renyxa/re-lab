@@ -124,6 +124,7 @@ def inflate_vba (data,ptype):
 
 # vsd inflate
 def inflate(ptr,vsd):
+#    print "Inf %02x %02x %02x %02x %02x"%(ptr.type,ptr.address,ptr.offset,ptr.length,ptr.format),len(vsd)
     res = ''
     buff = ['\x00']*4096
     pos = 0
@@ -149,17 +150,17 @@ def inflate(ptr,vsd):
                     offset=offset+1
                     addr2 = ord(vsd[offset])
                     offset=offset+1
-                    len = (addr2&15) + 3
+                    dlen = (addr2&15) + 3
                     point = (addr2&240)*16+addr1
                     i = i + 2
                     if point > 4078:
                         point = point - 4078
                     else:
                         point = point + 18
-                    for j in range (len):
+                    for j in range (dlen):
                         buff[(pos+j)&4095]=buff[(point+j)&4095]
                         res = res + buff[(point+j)&4095]
-                    pos = pos + len
+                    pos = pos + dlen
         except:
             print 'Inflate failed',i,ptr.length
             return res

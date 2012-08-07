@@ -20,7 +20,7 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt, vba, doc, qpw, ppp
+import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2
 import ctypes
 from utils import *
 
@@ -194,7 +194,7 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 		if infname == "VisioDocument":
 			ftype = "vsd"
 			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
-			vsd.parse (page, data, iter1)
+			vsd2.parse (page, data, iter1)
 		if infname == "WordDocument":
 			ftype = "doc"
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1

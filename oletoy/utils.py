@@ -75,7 +75,7 @@ def d2hex(data,space="",ln=0):
 	return s
 
 def key2txt(key,data,txt="Unknown"):
-	if data.has_key(key):
+	if key in data:
 		return data[key]
 	else:
 		return txt

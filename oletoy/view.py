@@ -1058,6 +1058,14 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "quill":
 					if quill.sub_ids.has_key(ntype[1]):
 						quill.sub_ids[ntype[1]](hd, size, data)
+				elif ntype[0][:4] == "vsd2":
+					off = 19
+					if ntype[0] == "vsd24":
+						off = 4
+					if ntype[0] == "vsd25":
+						off = 23
+					if ntype[1] in vsdchunks.chnk_func:
+						vsdchunks.chnk_func[ntype[1]](hd, size, data,off)
 				elif ntype[0] == "vsd":
 					if ntype[1] == "chnk":
 						if vsdchunks.chnk_func.has_key(ntype[2]):
