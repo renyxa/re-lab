@@ -58,7 +58,8 @@ chunklist = {
 		0x71:'CPntsList',
 		0x72:'CnnectList',\
 		0x73:'HypelLnkList',\
-		0x76:'SmartTagList'}
+		0x76:'SmartTagList',
+		0xcb:"0xCB list"}
 
 chunktype = {
 		0x0a:'Prompt',
@@ -193,6 +194,8 @@ class chunk:
 		else:
 			self.type,self.IX,self.level,self.unkn3,self.list,self.length = struct.unpack('<HHBBHL', data[offset:offset+12])
 			self.hdrlen = 12
+		if self.IX == 0xffffffff:
+			self.IX = -1
 
 	def get_size (self,data,offset,version):
 		trailer = 0
@@ -203,9 +206,9 @@ class chunk:
 				(2 == self.level and 0x54 == self.unkn3 and 0xaa == self.type) or\
 				(3 == self.level and 0x50 != self.unkn3) or\
 				self.type in (0x64,0x65,0x66,0x69,0x6a,0x6b,0x6f,0x71,0xa9,0xb4,0xb6,0xb9,0xc7) or\
-				(0x2c == chnk.type and chnk.unkn3 in (0x50,0x54)):
+				(0x2c == self.type and self.unkn3 in (0x50,0x54)):
 				trailer = trailer + 4
-		if 11 == version and chnk.type in (0x1f,0xc9,0x2d,0xd1):
+		if 11 == version and self.type in (0x1f,0xc9,0x2d,0xd1):
 			trailer = 0
 		return self.hdrlen+trailer+self.length
 
@@ -243,13 +246,13 @@ class pointer:
 			ch.read_hdr(self.data,off,page.version)
 			size = ch.get_size(self.data,off,page.version)
 			if ch.level == 0:
-				iter1 = add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type),"vsd2",ch.type,self.data[off:off+size],parent)
+				iter1 = add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type)+"\t%02x"%ch.IX,"vsd2",ch.type,self.data[off:off+size],parent)
 			elif ch.level == 1:
-				iter2 = add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type),"vsd2",ch.type,self.data[off:off+size],iter1)
+				iter2 = add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type)+"\t%02x"%ch.IX,"vsd2",ch.type,self.data[off:off+size],iter1)
 			elif ch.level == 2:
-				iter3 = add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type),"vsd2",ch.type,self.data[off:off+size],iter2)
+				iter3 = add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type)+"\t%02x"%ch.IX,"vsd2",ch.type,self.data[off:off+size],iter2)
 			elif ch.level == 3:
-				add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type),"vsd2",ch.type,self.data[off:off+size],iter3)
+				add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type)+"\t%02x"%ch.IX,"vsd2",ch.type,self.data[off:off+size],iter3)
 			off += size
 
 	def parse_str40 (self,page,data,parent):
@@ -262,10 +265,10 @@ class pointer:
 		if len(self.data) > 0:
 			iter2 = add_pgiter(page,key2txt(self.type,chunktype,"%02x"%self.type)+" (data)","vsd24",self.type,self.data,iter1)
 
-		if self.format&0x10 and self.type != 0x16:
+		if self.format&0x10:
 			chnklen = struct.unpack("<I",self.data[off:off+4])[0]
 			listlen = struct.unpack("<I",self.data[off+chnklen-4:off+chnklen])[0]
-			add_pgiter(page,"Hdr "+key2txt(self.type,chunktype,"%02x"%self.type),"vsd25",self.type,self.data[off:off+chnklen],iter2)
+			add_pgiter(page,"Hdr "+key2txt(self.type,chunktype,"%02x"%self.type),"vsd24",self.type,self.data[off:off+chnklen],iter2)
 			off += chnklen
 			numptr = struct.unpack("<I",self.data[off:off+4])[0]
 			off += 8
@@ -278,8 +281,19 @@ class pointer:
 				else:
 					off += 16
 
-	def parse_str00 (self,page,data,parent):
-		pass
+	def get_colors (self,page, data,parent):
+		model = page.model
+		clrnum = ord(data[6])
+		for i in range(clrnum):
+				r = ord(data[8+i*4])
+				g = ord(data[9+i*4])
+				b = ord(data[10+i*4])
+				a = ord(data[11+i*4])
+				iter1 = model.append(parent, None)
+				txt = "Color #%02x: %02x%02x%02x %02x"%(i,r,g,b,a)
+				clr = "#%02x%02x%02x"%(r,g,b)
+				model.set (iter1, 0, txt,1,("vsd","clr"),2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
+
 
 	def parse (self,page,data,parent):
 		# 0x80 -- chunk + list + collection of chunks
@@ -287,17 +301,24 @@ class pointer:
 		# 0x20 -- empty?
 		# 0x10 -- array of pointers
 		# 0x0* -- depends on ptr type
-		if self.format&0x80 == 0x80:
-			iter1 = add_pgiter(page,key2txt(self.type,chunktype,"Unkn %02x"%self.type),"vsd2",self.type,self.data,parent)
+		if self.format&0x20 == 0x20:
+			return
+		elif self.type == 0x16: #colors
+			iter1 = add_pgiter(page,key2txt(self.type,chunktype,"Unkn %02x"%self.type)+" (ptr)","vsd2",self.type,self.data,parent)
+			page.model.set_value(iter1,7,"%02x"%self.format)
+			self.get_colors (page,self.data,iter1)
+		elif self.format&0x80 == 0x80:
+			iter1 = add_pgiter(page,key2txt(self.type,chunktype,"Unkn %02x"%self.type)+" (ptr)","vsd2",self.type,self.data,parent)
 			page.model.set_value(iter1,7,"%02x"%self.format)
 			self.parse_str80 (page,data,iter1)  # don't need data
 		elif self.format&0x40 == 0x40:
-			self.parse_str40 (page,data,parent)
-		elif self.format>>4 == 0:
-			self.parse_str00 (page,data,parent)
-		else:
+				self.parse_str40 (page,data,parent)
+		elif self.format != 0:
 			# need to parse as 4,5 or 8 based on pointer.type
-			add_pgiter(page,key2txt(self.type,chunktype,"Unkn %02x"%self.type),"vsd2",(self.type,self.format),self.data,parent)
+			if self.type in chunklist:
+				self.format += 0x10
+#				print '!!!',page.model.get_path(parent),chunklist[self.type],"123","%02x"%self.format,chunklist[self.type]
+			self.parse_str40 (page,data,parent)
 
 def parse (page, data, parent):
 	ver_offset = 0x1a
@@ -316,10 +337,10 @@ def parse (page, data, parent):
 		lenhdr2 = 4
 	add_pgiter(page,"Header part2","vsd2","hdr2",data[0x36:0x36+lenhdr2],parent)
 
-	try:
-#	if 1:
+#	try:
+	if 1:
 		tr_pntr = pointer()
 		tr_pntr.read(data,data,trlr_offset,version)
 		tr_pntr.parse(page,data,parent)
-	except:
-		print "oops"
+#	except:
+#		print "oops"

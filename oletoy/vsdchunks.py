@@ -155,6 +155,7 @@ chunktype = {
 		0xd1:'Shape Data'}
 
 def List (hd, size, value, off = 19):
+	return
 	if hd.version < 6:
 		vsdchunks5.List(hd,size,value)
 		return

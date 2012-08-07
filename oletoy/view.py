@@ -22,7 +22,7 @@ import tree
 import hexdump
 import Doc, cmd
 import escher,quill
-import vsd, vsdchunks,vsdstream4
+import vsd,vsd2,vsdchunks,vsdstream4
 import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
@@ -1062,8 +1062,6 @@ class ApplicationMainWindow(gtk.Window):
 					off = 19
 					if ntype[0] == "vsd24":
 						off = 4
-					if ntype[0] == "vsd25":
-						off = 23
 					if ntype[1] in vsdchunks.chnk_func:
 						vsdchunks.chnk_func[ntype[1]](hd, size, data,off)
 				elif ntype[0] == "vsd":
