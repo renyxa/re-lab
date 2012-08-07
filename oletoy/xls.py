@@ -363,6 +363,24 @@ def biff_defcolw (hd,data):
 	cw = struct.unpack("<H",data[0+off:2+off])[0]
 	add_iter (hd,"cchdefColWidth",cw,off,2,"<H")
 
+#0x1b1
+def biff_cf (hd,data):
+	off = 4
+	add_iter (hd,"ct",ord(data[off]),off,1,"B")
+	off += 1
+	add_iter (hd,"cp",ord(data[off]),off,1,"B")
+	off += 1
+	cce1 = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd,"cce1",cce1,off,2,"<H")
+	off += 2
+	cce2 = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd,"cce2",cce2,off,2,"<H")
+	off += 2
+	#rgbdxf (variable)
+	#rgce1
+	#rgce2
+
+
 #0x7d
 def biff_colinfo (hd,data):
 	off = 4
@@ -621,7 +639,7 @@ def biff_rk (hd,data):
 
 biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
 	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
-	0x1ae:biff_supbook,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
+	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
 	0x27e:biff_rk}
 
 def parse (page, data, parent):
