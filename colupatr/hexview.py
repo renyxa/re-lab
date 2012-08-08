@@ -17,7 +17,7 @@
 import gtk
 import cairo
 import struct
-import utils
+import utils, cli
 
 class HexView():
 	def __init__(self,data=None,lines=[],comments={},offset=0):
@@ -194,14 +194,19 @@ class HexView():
 
 	def okp_tab(self,event):
 		self.exposed = 0
-		if (0 < self.curr < len(self.lines)-1):
-			# wrap at curc
-			self.fmt(self.curr,[self.line_size(self.curr-1)])
-			self.prec = self.curc
-			self.prer = self.curr - 1
+		if event.state == gtk.gdk.CONTROL_MASK:
+			if cli.rwrap(self,self.line_size(self.curr+1)):
+				cli.prev(self)
 			self.exposed = 1
-			if self.curr < len(self.lines)-2:
-				self.curr += 1
+		else:
+			if (0 < self.curr < len(self.lines)-1):
+				# wrap at curc
+				self.fmt(self.curr,[self.line_size(self.curr-1)])
+				self.prec = self.curc
+				self.prer = self.curr - 1
+				self.exposed = 1
+				if self.curr < len(self.lines)-2:
+					self.curr += 1
 
 	def okp_up(self,event):
 		self.mode = "c"
