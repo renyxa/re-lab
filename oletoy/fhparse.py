@@ -413,16 +413,17 @@ def read_recid(data,off):
 
 class FHDoc():
 	def __init__(self,data,page,parent):
-		self.version = page.version
 		self.data = data
 		self.iter = parent
-		self.page = page
 		self.dictitems = {}
-		self.diter = add_pgiter(page,"FH Data","fh","data",self.data,self.iter)
+		if page != None:
+			self.page = page
+			self.version = page.version
+			self.diter = add_pgiter(page,"FH Data","fh","data",self.data,self.iter)
 		self.reclist = []
 
 		self.chunks = {
-		"AGDFont":self.VMpObj,
+		"AGDFont":self.AGDFont,
 		"AGDSelection":self.AGDSelection,
 		"ArrowPath":self.ArrowPath,
 		"AttributeHolder":self.AttributeHolder,
@@ -598,6 +599,8 @@ class FHDoc():
 			for i in range(4):
 				L,rid1 = self.read_recid(off+res)
 				res += L
+		if self.version < 10:
+			res -= 6
 		return res
 
 	def Brush(self,off,mode=0):
@@ -883,6 +886,8 @@ class FHDoc():
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		#FIXME! probably more read_recids required
 		res,rid = self.read_recid(off+52)
+		if self.version < 10:
+			size= struct.unpack('>h', self.data[off:off+2])[0]
 		return res+2+size*50
 
 	def List(self,off,mode=0):
@@ -1015,6 +1020,8 @@ class FHDoc():
 			res += 96
 		elif size == 7:
 			res += 144
+		elif size == 0: # version 9
+			res += 120
 		else:
 			print "Paragraph with unknown size!!!",size
 			res += 200
@@ -1123,8 +1130,8 @@ class FHDoc():
 		shift,recid = self.read_recid(off+2)
 		res = 26 + size*4 + shift
 #		FIXME! verify it
-#		if parser.version < 10:
-#			length = 38
+		if self.version < 10:
+			res -= 2
 		return res
 
 	def SwfImport(self,off,mode=0):
@@ -1250,6 +1257,8 @@ class FHDoc():
 
 	def TintColor6(self,off,mode=0):
 		res,rif = self.read_recid(off+16)
+		if self.version < 10:
+			res -= 2
 		return res+36
 
 	def TransformFilter(self,off,mode=0):
@@ -1285,10 +1294,19 @@ class FHDoc():
 				shift+=8
 		return shift
 
-	def VMpObj(self,off,mode=0):
+	def AGDFont (self,off,mode=0):
+		res = self.VMpObj(off,mode)
+		return res
+
+	def VMpObj (self,off,mode=0):
 		# FIXME! check for \xFF\xFF
-		num = struct.unpack('>h', self.data[off+4:off+6])[0]
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]  
 		shift = 8
+		# FIXME!
+		# ver 9: 00 36 00 23 00 22 00 36  ++18 bytes before usual structures start
+		mod = struct.unpack('>h', self.data[off:off+2])[0]
+		if mod == 0x36:
+			shift += 18
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
@@ -1340,6 +1358,11 @@ class FHDoc():
 						offset += res
 					else:
 						add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
+						for k in range(10):
+							try:
+								add_pgiter(self.page,"!!! %s"%self.dictitems[self.reclist[i+k]],"fh","unknown","",self.diter)
+							except:
+								print "kk",k
 						print "Failed on record %d (%s)"%(j,self.dictitems[i]),res
 						print "Next is",self.dictitems[self.reclist[j+1]]
 						return

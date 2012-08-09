@@ -152,12 +152,13 @@ class Page:
 			agd_off = 0
 			agd_ver = ord(buf[agd_off+3])
 			self.type = "FH"
-			print "Probably Freehand 8"
-			try:
+			print "Probably Freehand"
+#			try:
+			if 1:
 				fh.fh_open(buf,self)
 				return 0
-			except:
-				print 'Failed to parse as FH8'
+#			except:
+#				print 'Failed to parse as FH8'
 		elif fh_off != -1:
 			agd_off = buf.find('AGD')
 			if agd_off > fh_off:
