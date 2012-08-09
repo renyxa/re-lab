@@ -698,7 +698,7 @@ class HexView():
 				s = c2 - c1
 				if r1 != r2:
 					s = self.lines[r2][0] + c2 - self.lines[r1][0]-c1
-				self.mtt = x,y,s
+				self.mtt = x,y,s,r2-r1+1
 				self.parent.calc_status(self.data[self.lines[r1][0]+c1:self.lines[r2][0]+c2],s)
 
 
@@ -867,7 +867,7 @@ class HexView():
 			if r1 != r2:
 				s = self.lines[r2][0]+ c2 - self.lines[r1][0]-c1
 			if s > 0:
-				self.mtt = event.x,event.y,s
+				self.mtt = event.x,event.y,s,r2-r1+1
 			else:
 				self.mtt = None
 			if c1 != c1o or c2 != c2o or r1 != r1o or r2 != r2o:
@@ -1136,23 +1136,14 @@ class HexView():
 
 				
 		if self.mtt:
-			sh = 0
-			if self.mtt[2] > 9999:
-				sh = 4
-			elif self.mtt[2] > 999:
-				sh = 3
-			elif self.mtt[2] > 99:
-				sh = 2
-			elif self.mtt[2] > 9:
-				sh = 1
-
+			sh = len("%s (%s)"%(self.mtt[2],self.mtt[3]))
 			ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
 			ctx.set_source_rgba(0.9,0.95,0.95,0.85)
 			ctx.fill()
 			ctx.set_source_rgb(0.5,0,0)
 			ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-			ctx.show_text("%d"%self.mtt[2])
+			ctx.show_text("%d (%d)"%(self.mtt[2],self.mtt[3]))
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
