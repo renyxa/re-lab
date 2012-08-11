@@ -56,6 +56,9 @@ def ins_pgiter (page, name, ftype, stype, data, parent = None, pos = 0):
 	pgiter(page, name, ftype, stype, data, iter1)
 	return iter1
 
+def rdata (data,off,fmt):
+	fmtlen = struct.calcsize(fmt)
+	return struct.unpack(fmt,data[off:off+fmtlen])[0],off+fmtlen
 
 def hex2d(data):
 	res = ''

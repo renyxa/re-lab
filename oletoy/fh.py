@@ -101,11 +101,11 @@ def fh_open (buf,page,parent=None):
 	else:
 		output = buf[offset+12:offset+size]
 
-	doc = fhparse.FHDoc(output,page,piter)
+	page.appdoc = fhparse.FHDoc(output,page,piter)
 	offset = offset + size
-	offset = doc.parse_dict(buf,offset)
-	doc.parse_list(buf,offset)
-	doc.parse_agd()
+	offset = page.appdoc.parse_dict(buf,offset)
+	page.appdoc.parse_list(buf,offset)
+	page.appdoc.parse_agd()
 
 
 def v8dict(buf,offset,parent,page):

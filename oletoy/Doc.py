@@ -38,6 +38,7 @@ class Page:
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 		self.win = None # for preview
 		self.debug = 0
+		self.appdoc = None
 
 	def fload(self,buf="",parent=None):
 		if buf == "":

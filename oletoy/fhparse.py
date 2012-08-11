@@ -2,6 +2,24 @@
 import sys,struct,zlib
 from utils import *
 
+# 3 - rgb
+# 4 - cmyk
+# 7 - pantone solid uncoated/mate
+# 9 - hexachrome
+
+palette = {
+	3:"RGB",
+	4:"CMYK",
+	7:"Pantone",
+	9:"Hexachrome",
+}
+
+agd_rec = {
+	0x0e11:"FontName recid",
+	0x0e1b:"Style",
+	0x0e24:"Size",
+}
+
 vmp_rec = {
 	0x0321:"Name?",
 	0x065b:"?",
@@ -175,17 +193,26 @@ def hdPath(hd,data,page):
 
 def hdAGDFont(hd,data,page):
 	offset = 0
-	fsize = struct.unpack('>H', data[offset+26:offset+28])[0]
-	fstyle = ord(data[offset+21])
-	fstxt = 'Plain'
-	if fstyle == 1:
-		fstxt = 'Bold'
-	if fstyle == 2:
-		fstxt = 'Italic'
-	if fstyle == 3:
-		fstxt = 'BoldItalic'
-	add_iter (hd,'Font Style',fstxt,21,1,"B")
-	add_iter (hd,'Font Size',fsize,26,2,">h")
+	num = struct.unpack('>h', data[offset+4:offset+6])[0]
+	shift = 8
+	for i in range(num):
+		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
+		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
+		if rec in agd_rec:
+			rname = agd_rec[rec]
+		else:
+			rname = '\t\t%04x'%rec
+		if rname == "?":
+			rname = '\t\t%04x'%rec
+		if key == 2:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
+			shift+=6
+		else:
+			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
+			shift+=8
+
+
+
 
 def hdLinearFill(hd,data,page):
 	offset = 0
@@ -348,6 +375,31 @@ def hdGroup(hd,data,page):
 		xform = struct.unpack('>H', data[offset+16:offset+18])[0]
 		add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
 
+def hdGraphicStyle(hd,data,page):
+	off = 2
+	size = struct.unpack('>H', data[off:off+2])[0]
+	off = 6
+	parent = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'Parent',"%02x"%parent,off,2,">H")
+	off += 2
+	attrid = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'Attr ID',"%02x"%attrid,off,2,">H")
+	off += 2
+	for i in range(size):
+		a = struct.unpack('>H', data[off:off+2])[0]
+		off += 2
+		v = struct.unpack('>H', data[off:off+2])[0]
+		off += 2
+		if a in page.appdoc.recs:
+			at = page.appdoc.recs[a][1]
+		else:
+			at = "%02x"%a
+		if v in page.appdoc.recs:
+			vt = page.appdoc.recs[v][1]
+		else:
+			vt = "%02x"%v
+		add_iter (hd,at,vt,off-4,4,">HH")
+	
 def hdBasicLine(hd,data,page):
 	offset = 0
 	clr = struct.unpack('>H', data[offset:offset+2])[0] # link to color chunk????
@@ -374,12 +426,15 @@ def hdList(hd,data,page):
 
 def hdColor6(hd,data,page):
 	offset = 0
+	pal = struct.unpack('>H', data[offset:offset+2])[0]
 	ustr1 = struct.unpack('>H', data[offset+2:offset+4])[0]
 	ustr2 = struct.unpack('>H', data[offset+14:offset+16])[0]
+	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
 	add_iter (hd,'Name1?',"%02x"%ustr1,2,2,">h")
 	add_iter (hd,'Name2?',"%02x"%ustr2,14,2,">h")
 
 hdp = {
+	"GraphicStyle":hdGraphicStyle,
 	"Rectangle":hdRectangle,
 	"BasicLine":hdBasicLine,
 	"Oval":hdOval,
@@ -421,6 +476,7 @@ class FHDoc():
 			self.version = page.version
 			self.diter = add_pgiter(page,"FH Data","fh","data",self.data,self.iter)
 		self.reclist = []
+		self.recs = {}
 
 		self.chunks = {
 		"AGDFont":self.AGDFont,
@@ -547,34 +603,33 @@ class FHDoc():
 			l = 2
 		return l,rid
 
-	def AGDSelection(self,off,mode=0):
+	def AGDSelection(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
-		length=4*size+6
-		res,rid = self.read_recid(off+12)
-		return length+res
+		length=4*size+8
+		return length
 
-	def ArrowPath(self,off,mode=0):
+	def ArrowPath(self,off,recid,mode=0):
 		size =  ord(self.data[off+21])
 		res=size*27+30
 		return res
 
-	def AttributeHolder(self,off,mode=0):
+	def AttributeHolder(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		return res+L
 
-	def BasicFill(self,off,mode=0):
+	def BasicFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+4
 
-	def BasicLine(self,off,mode=0):
+	def BasicLine(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+18
 	
-	def BendFilter(self,off,mode=0):
+	def BendFilter(self,off,recid,mode=0):
 		return 10
 
-	def Block(self,off,mode=0):
+	def Block(self,off,recid,mode=0):
 		if self.version == 10:
 			flags =  struct.unpack('>h', self.data[off:off+2])[0]
 			res = 2
@@ -603,13 +658,13 @@ class FHDoc():
 			res -= 6
 		return res
 
-	def Brush(self,off,mode=0):
+	def Brush(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
 		L,rid1 = self.read_recid(off+res)
 		res += L
 		return res
 
-	def BrushList(self,off,mode=0):
+	def BrushList(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 12
 		for i in range(size):
@@ -617,7 +672,7 @@ class FHDoc():
 			res += L
 		return res
 
-	def BrushStroke(self,off,mode=0):
+	def BrushStroke(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
 		L,rid1 = self.read_recid(off+res)
 		res += L
@@ -625,7 +680,7 @@ class FHDoc():
 		res += L
 		return res
 
-	def BrushTip(self,off,mode=0):
+	def BrushTip(self,off,recid,mode=0):
 		type = struct.unpack('>h', self.data[off:off+2])[0]
 		length= 60
 		if self.version == 11:
@@ -633,15 +688,15 @@ class FHDoc():
 		res,rid1 = self.read_recid(off)
 		return length+res
 
-	def CalligraphicStroke(self,off,mode=0):
+	def CalligraphicStroke(self,off,recid,mode=0):
 		# FXIME! recid?
 		return 16
 
-	def CharacterFill(self,off,mode=0):
+	def CharacterFill(self,off,recid,mode=0):
 		# Warning! Flag?
 		return 0
 
-	def ClipGroup(self,off,mode=0):
+	def ClipGroup(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
 		L,rid1 = self.read_recid(off+res)
 		res += L
@@ -649,25 +704,27 @@ class FHDoc():
 		res += L
 		return res+10
 
-	def Collector(self,off,mode=0):
+	def Collector(self,off,recid,mode=0):
 		# FIXME! don't have test files for this one
 		return 4
 
 
-	def Color6(self,off,mode=0):
+	def Color6(self,off,recid,mode=0):
 		length=24
 		var = ord(self.data[off+1])
 		if var == 4:
 			length=28
 		if var == 7:
 			length=40
+		if var == 9:
+			length=48
 		if self.version < 10:
 			length-=2
 		res,rid1 = self.read_recid(off+2)
 		L,rid = self.read_recid(off+12+res)
 		return res+length+L
 
-	def CompositePath(self,off,mode=0):
+	def CompositePath(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
 		L,rid1 = self.read_recid(off+res)
 		res += L
@@ -675,7 +732,7 @@ class FHDoc():
 		res += L
 		return res+8
 
-	def ConeFill(self,off,mode=0):
+	def ConeFill(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
 		L,rid1 = self.read_recid(off+res)
 		res += L
@@ -683,16 +740,16 @@ class FHDoc():
 		res += L
 		return res+30
 
-	def ConnectorLine(self,off,mode=0):
+	def ConnectorLine(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+20:off+22])[0]
 		length= 58+num*27
 		return length
 
-	def ContentFill(self,off,mode=0):
+	def ContentFill(self,off,recid,mode=0):
 		# FIXME! Flag?
 		return 0
 
-	def ContourFill(self,off,mode=0):
+	def ContourFill(self,off,recid,mode=0):
 		if self.version == 10:
 			length = 24
 		else:
@@ -706,16 +763,16 @@ class FHDoc():
 			length = length +10+size*2
 		return length
 
-	def CustomProc(self,off,mode=0):
+	def CustomProc(self,off,recid,mode=0):
 		# FIXME! recid?
 		return 48
 
-	def Data(self,off,mode=0):
+	def Data(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		length= 6+size*4
 		return length
 
-	def DataList(self,off,mode=0):
+	def DataList(self,off,recid,mode=0):
 		size= struct.unpack('>h', self.data[off:off+2])[0]
 		res = 10
 		for i in range(size):
@@ -723,19 +780,19 @@ class FHDoc():
 			res += L
 		return res
 
-	def DateTime(self,off,mode=0):
+	def DateTime(self,off,recid,mode=0):
 		return 14
 
-	def DuetFilter(self,off,mode=0):
+	def DuetFilter(self,off,recid,mode=0):
 		return 14
 
-	def Element(self,off,mode=0):
+	def Element(self,off,recid,mode=0):
 		return 4
 
-	def ElemList(self,off,mode=0):
+	def ElemList(self,off,recid,mode=0):
 		return 4
 
-	def ElemPropLst(self,off,mode=0):
+	def ElemPropLst(self,off,recid,mode=0):
 		# FIXME! one more read_recid @6 ?
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 10
@@ -745,38 +802,38 @@ class FHDoc():
 				res += l
 		return res
 
-	def Envelope (self,off,mode=0):
+	def Envelope (self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+20:off+22])[0]
 		num2 = struct.unpack('>h', self.data[off+43:off+45])[0]
 		length = 45+num2*4+num*27
 		return length
 
-	def ExpandFilter(self,off,mode=0):
+	def ExpandFilter(self,off,recid,mode=0):
 		return 14
 
-	def Extrusion(self,off,mode=0):
+	def Extrusion(self,off,recid,mode=0):
 		var1 = ord(self.data[off+0x60])
 		var2 = ord(self.data[off+0x61])
 		length= 96 + self.xform_calc(var1,var2)+2
 		return length
 
-	def Figure (self,off,mode=0):
+	def Figure (self,off,recid,mode=0):
 		return 4
 
-	def FHDocHeader(self,off,mode=0):
+	def FHDocHeader(self,off,recid,mode=0):
 		# FIXME!
 		return 4
 
-	def FilterAttributeHolder(self,off,mode=0):
+	def FilterAttributeHolder(self,off,recid,mode=0):
 		res,rid = self.read_recid(off+2)
 		L,rid = self.read_recid(off+2)
 		res += L
 		return res+2
 
-	def FWSharpenFilter(self,off,mode=0):
+	def FWSharpenFilter(self,off,recid,mode=0):
 		return 16
 
-	def FileDescriptor(self,off,mode=0):
+	def FileDescriptor(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off)
 		res += L
@@ -784,29 +841,29 @@ class FHDoc():
 		res += 7+size
 		return res
 
-	def FWBevelFilter(self,off,mode=0):
+	def FWBevelFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+28
 
-	def FWBlurFilter(self,off,mode=0):
+	def FWBlurFilter(self,off,recid,mode=0):
 		return 12
 
-	def FWFeatherFilter(self,off,mode=0):
+	def FWFeatherFilter(self,off,recid,mode=0):
 		return 8
 
-	def FWGlowFilter(self,off,mode=0):
+	def FWGlowFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+20
 
-	def FWShadowFilter(self,off,mode=0):
+	def FWShadowFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+20
 
-	def GradientMaskFilter(self,off,mode=0):
+	def GradientMaskFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res
 
-	def GraphicStyle(self,off,mode=0):
+	def GraphicStyle(self,off,recid,mode=0):
 		size = 2*struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 6
 		for i in range(2+size):
@@ -814,7 +871,7 @@ class FHDoc():
 				res += L
 		return res
 
-	def Group(self,off,mode=0):
+	def Group(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		res += L
@@ -824,7 +881,7 @@ class FHDoc():
 		res += L
 		return res+8
 
-	def Guides(self,off,mode=0):
+	def Guides(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off:off+2])[0]
 		res,rid = self.read_recid(off+2)
 		L,rid = self.read_recid(off+2+res)
@@ -832,15 +889,15 @@ class FHDoc():
 		res += 18 + size*8
 		return res
 
-	def Halftone(self,off,mode=0):
+	def Halftone(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+8
 
-	def ImageFill(self,off,mode=0):
+	def ImageFill(self,off,recid,mode=0):
 		#FIXME! recid
 		return 6
 
-	def ImageImport(self,off,mode=0):
+	def ImageImport(self,off,recid,mode=0):
 		shift = 34
 		res,rid = self.read_recid(off)
 		res += 10
@@ -854,7 +911,7 @@ class FHDoc():
 			shift += 2
 		return shift+res
 
-	def Layer(self,off,mode=0):
+	def Layer(self,off,recid,mode=0):
 		length=14
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+10+res)
@@ -863,11 +920,11 @@ class FHDoc():
 		res += L
 		return length+res
 
-	def LensFill(self,off,mode=0):
+	def LensFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		return res+38
 
-	def LinearFill(self,off,mode=0):
+	def LinearFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		res += L
@@ -875,14 +932,14 @@ class FHDoc():
 		res += L
 		return res+28
 
-	def LinePat(self,off,mode=0):
+	def LinePat(self,off,recid,mode=0):
 		numstrokes = struct.unpack('>h', self.data[off:off+2])[0]
 		res = 10+numstrokes*4
 		if numstrokes == 0 and self.version == 8:
 			res = 28 # for Ver8, to skip 1st 14 bytes of 0s
 		return res
 
-	def LineTable(self,off,mode=0):
+	def LineTable(self,off,recid,mode=0):
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		#FIXME! probably more read_recids required
 		res,rid = self.read_recid(off+52)
@@ -890,7 +947,7 @@ class FHDoc():
 			size= struct.unpack('>h', self.data[off:off+2])[0]
 		return res+2+size*50
 
-	def List(self,off,mode=0):
+	def List(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 12
 		for i in range(size):
@@ -898,58 +955,62 @@ class FHDoc():
 			res += l
 		return res
 
-	def MasterPageElement(self,off,mode=0):
+	def MasterPageElement(self,off,recid,mode=0):
 		return 14
 	
-	def MasterPageDocMan(self,off,mode=0):
+	def MasterPageDocMan(self,off,recid,mode=0):
 		return 4
 
-	def MasterPageLayerElement(self,off,mode=0):
+	def MasterPageLayerElement(self,off,recid,mode=0):
 		return 14
 
-	def MasterPageLayerInstance(self,off,mode=0):
+	def MasterPageLayerInstance(self,off,recid,mode=0):
 		var1 = ord(self.data[off+0xe])
 		var2 = ord(self.data[off+0xf])
 		length=14 + self.xform_calc(var1,var2)+2 +2
 		return length
 
-	def MasterPageSymbolClass(self,off,mode=0):
+	def MasterPageSymbolClass(self,off,recid,mode=0):
 		return 12
 
-	def MasterPageSymbolInstance(self,off,mode=0):
+	def MasterPageSymbolInstance(self,off,recid,mode=0):
 		var1 = ord(self.data[off+0xe])
 		var2 = ord(self.data[off+0xf])
 		length=14 + self.xform_calc(var1,var2)+2 +2
 		return length
 
-	def MList(self,off,mode=0):
+	def MList(self,off,recid,mode=0):
 		return self.List(off,mode)
 
-	def MName(self,off,mode=0):
-		size = struct.unpack('>h', self.data[off:off+2])[0]
+	def MName(self,off,recid,mode=0):
+		size = struct.unpack('>H', self.data[off:off+2])[0]
+		length = struct.unpack('>H', self.data[off+2:off+4])[0]
+		self.recs[recid] = ("str",self.data[off+4:off+4+length])
 		return 4*(size+1)
 
-	def MQuickDict(self,off,mode=0):
+	def MQuickDict(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off+0:off+2])[0]
 		return 7 + size*4
 	
-	def MString(self,off,mode=0):
+	def MString(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
+		length = struct.unpack('>H', self.data[off+2:off+4])[0]
+		self.recs[recid] = ("str",self.data[off+4:off+4+length])
 		return 4*(size+1)
 
-	def MDict(self,off,mode=0):
+	def MDict(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
 		length = 6 + size*4
 		return length
 
-	def MpObject (self,off,mode=0):
+	def MpObject (self,off,recid,mode=0):
 		return 4
 
-	def MultiBlend(self,off,mode=0):
+	def MultiBlend(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		return 52 + size*6
 
-	def MultiColorList(self,off,mode=0):
+	def MultiColorList(self,off,recid,mode=0):
 		num= struct.unpack('>h', self.data[off:off+2])[0]
 		res = 0
 		for i in range(num):
@@ -957,7 +1018,7 @@ class FHDoc():
 				res += L
 		return num*8+res+4
 
-	def NewBlend(self,off,mode=0):
+	def NewBlend(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		res += L
@@ -969,7 +1030,7 @@ class FHDoc():
 		res += L
 		return res+34
 
-	def NewContourFill(self,off,mode=0):
+	def NewContourFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		res += L
@@ -979,7 +1040,7 @@ class FHDoc():
 		res += L
 		return res+28
 
-	def NewRadialFill(self,off,mode=0):
+	def NewRadialFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		res += L
@@ -987,10 +1048,10 @@ class FHDoc():
 		res += L
 		return res+39
 
-	def OpacityFilter(self,off,mode=0):
+	def OpacityFilter(self,off,recid,mode=0):
 		return 4
 
-	def Oval(self,off,mode=0):
+	def Oval(self,off,recid,mode=0):
 		if self.version > 10:
 			length=38
 		else:
@@ -1002,7 +1063,7 @@ class FHDoc():
 		res += L
 		return length+res
 
-	def Paragraph(self,off,mode=0):
+	def Paragraph(self,off,recid,mode=0):
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 6
 		for i in range(4):
@@ -1027,16 +1088,16 @@ class FHDoc():
 			res += 200
 		return res+20
 
-	def PathTextLineInfo(self,off,mode=0):
+	def PathTextLineInfo(self,off,recid,mode=0):
 		# FIXME!
 		# SHOULD BE VARIABLE, just have no idea about base and multiplier
 		length= 46
 		return length
 
-	def PatternFill(self,off,mode=0):
+	def PatternFill(self,off,recid,mode=0):
 		return 10
 
-	def Path(self,off,mode=0):
+	def Path(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off:off+2])[0]
 		length=128
 		var=struct.unpack('>h', self.data[off+20:off+22])[0]
@@ -1054,7 +1115,7 @@ class FHDoc():
 			length = 26 + 27*var
 		return length
 
-	def PatternLine(self,off,mode=0):
+	def PatternLine(self,off,recid,mode=0):
 		# 0-2 -- link to Color
 		# 2-10 -- bitmap of the pattern
 		# 10-14 -- mitter?
@@ -1062,24 +1123,24 @@ class FHDoc():
 		length= 22
 		return length
 	
-	def PSLine(self,off,mode=0):
+	def PSLine(self,off,recid,mode=0):
 		# 0-2 -- link to Color
 		# 2-4 -- link to UString with PS commands
 		# 4-6 width
 		length= 8
 		return length
 	
-	def PerspectiveEnvelope(self,off,mode=0):
+	def PerspectiveEnvelope(self,off,recid,mode=0):
 		return 177
 
-	def PerspectiveGrid(self,off,mode=0):
+	def PerspectiveGrid(self,off,recid,mode=0):
 		i = 0
 		while ord(self.data[off+i]) != 0:
 			i += 1
 		length=59+i
 		return length
 
-	def PolygonFigure(self,off,mode=0):
+	def PolygonFigure(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
 		res += L
@@ -1087,10 +1148,10 @@ class FHDoc():
 		res += L
 		return res+47
 
-	def Procedure (self,off,mode=0):
+	def Procedure (self,off,recid,mode=0):
 		return 4
 
-	def PropLst(self,off,mode=0):
+	def PropLst(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 8
 		for i in range(2*size):
@@ -1098,20 +1159,20 @@ class FHDoc():
 			res += L
 		return res
 
-	def RadialFill(self,off,mode=0):
+	def RadialFill(self,off,recid,mode=0):
 		return 16
 
-	def RadialFillX(self,off,mode=0):
+	def RadialFillX(self,off,recid,mode=0):
 		#FIXME! verify for v11 and more v10 files
 		length=22 #v11
 		if self.version == 10:
 			length = 22
 		return length
 
-	def RaggedFilter(self,off,mode=0):
+	def RaggedFilter(self,off,recid,mode=0):
 		return 16
 
-	def Rectangle(self,off,mode=0):
+	def Rectangle(self,off,recid,mode=0):
 		length=69 #?ver11?
 		if self.version < 11:
 			length = 36
@@ -1122,10 +1183,10 @@ class FHDoc():
 		res += L
 		return length+res
 
-	def SketchFilter(self,off,mode=0):
+	def SketchFilter(self,off,recid,mode=0):
 		return 11
 
-	def SpotColor6(self,off,mode=0):
+	def SpotColor6(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		shift,recid = self.read_recid(off+2)
 		res = 26 + size*4 + shift
@@ -1134,11 +1195,11 @@ class FHDoc():
 			res -= 2
 		return res
 
-	def SwfImport(self,off,mode=0):
+	def SwfImport(self,off,recid,mode=0):
 		#FIXME! recid
 		return 43
 
-	def StylePropLst(self,off,mode=0):
+	def StylePropLst(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 8
 		L,rif = self.read_recid(off+res)
@@ -1148,14 +1209,14 @@ class FHDoc():
 			res += L
 		return res
 
-	def SymbolClass(self,off,mode=0):
+	def SymbolClass(self,off,recid,mode=0):
 		res = 0
 		for i in range(5):
 			L,rif = self.read_recid(off+res)
 			res += L
 		return res
 
-	def SymbolInstance(self,off,mode=0):
+	def SymbolInstance(self,off,recid,mode=0):
 		shift = 0
 		res,rif = self.read_recid(off)
 		L,rif = self.read_recid(off+res)
@@ -1166,7 +1227,7 @@ class FHDoc():
 		var2 = ord(self.data[off+res+9])
 		return 10 + res + self.xform_calc(var1,var2)
 
-	def SymbolLibrary(self,off,mode=0):
+	def SymbolLibrary(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 12
 		for i in range(size+3):
@@ -1174,21 +1235,24 @@ class FHDoc():
 			res += L
 		return res
 
-	def TabTable(self,off,mode=0):
+	def TabTable(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
-		return 4+size*6
+		res = 4+size*6
+		if self.version < 10:
+			res = 4+size*2
+		return res
 
-	def TaperedFill(self,off,mode=0):
+	def TaperedFill(self,off,recid,mode=0):
 		return 12
 
-	def TaperedFillX(self,off,mode=0):
+	def TaperedFillX(self,off,recid,mode=0):
 		# FIXME! Check for ver11 and more ver10 files
 		length=18  # v11
 		if self.version == 10:
 			length = 18
 		return length
 
-	def TEffect(self,off,mode=0):
+	def TEffect(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 8
 		for i in range(num):
@@ -1202,11 +1266,14 @@ class FHDoc():
 				shift+=8
 		return shift
 
-	def TextBlok(self,off,mode=0):
+	def TextBlok(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
+		length = struct.unpack('>H', self.data[off+2:off+4])[0]
+		#FIXME! have more data after string
+		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length*2],"utf-16be"))
 		return 4+size*4
 
-	def TextColumn(self,off,mode=0):
+	def TextColumn(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		res = 8
 		for i in range(2):
@@ -1225,7 +1292,7 @@ class FHDoc():
 				res+=6
 		return res
 
-	def TFOnPath(self,off,mode=0):
+	def TFOnPath(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 26
 		for i in range(num):
@@ -1236,7 +1303,7 @@ class FHDoc():
 				shift+=8
 		return shift
 
-	def TextInPath(self,off,mode=0):
+	def TextInPath(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 20
 		for i in range(num):
@@ -1249,22 +1316,22 @@ class FHDoc():
 				shift+=6
 		return shift+8
 
-	def TileFill(self,off,mode=0):
+	def TileFill(self,off,recid,mode=0):
 		res,rif = self.read_recid(off)
 		L,rif = self.read_recid(off+res)
 		res += L
 		return res+28
 
-	def TintColor6(self,off,mode=0):
+	def TintColor6(self,off,recid,mode=0):
 		res,rif = self.read_recid(off+16)
 		if self.version < 10:
 			res -= 2
 		return res+36
 
-	def TransformFilter(self,off,mode=0):
+	def TransformFilter(self,off,recid,mode=0):
 		return 39
 
-	def TString(self,off,mode=0):
+	def TString(self,off,recid,mode=0):
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		res=20
 		for i in range(size):
@@ -1272,18 +1339,15 @@ class FHDoc():
 			res += L
 		return res
 
-	def UString(self,off,mode=0):
+	def UString(self,off,recid,mode=0):
 		size = struct.unpack('>H', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
 		res=4*(size+1)
+		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length*2],"utf-16be"))
 		if mode == 0:
 			return res
-		elif mode == 1:
-			add_iter(self.page.hd,"RecSize",size,0,2,">H")
-			add_iter(self.page.hd,"Len",size,0,2,">H")
-			add_iter(self.page.hd,"String",off+4,size-4,"ustr")
 
-	def VDict(self,off,mode=0):
+	def VDict(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 8
 		for i in range(num):
@@ -1294,19 +1358,19 @@ class FHDoc():
 				shift+=8
 		return shift
 
-	def AGDFont (self,off,mode=0):
+	def AGDFont (self,off,recid,mode=0):
 		res = self.VMpObj(off,mode)
 		return res
 
-	def VMpObj (self,off,mode=0):
+	def VMpObj (self,off,recid,mode=0):
 		# FIXME! check for \xFF\xFF
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]  
 		shift = 8
 		# FIXME!
 		# ver 9: 00 36 00 23 00 22 00 36  ++18 bytes before usual structures start
-		mod = struct.unpack('>h', self.data[off:off+2])[0]
-		if mod == 0x36:
-			shift += 18
+#		mod = struct.unpack('>h', self.data[off:off+2])[0]
+#		if mod == 0x36:
+#			shift += 18
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
@@ -1335,7 +1399,7 @@ class FHDoc():
 		xlen = (a5+a4+a1+a0+b6+b5)*4
 		return xlen
 	
-	def Xform(self,off,mode=0):
+	def Xform(self,off,recid,mode=0):
 		var1 = ord(self.data[off])
 		var2 = ord(self.data[off+1])
 		len1 = self.xform_calc(var1,var2)
@@ -1352,7 +1416,7 @@ class FHDoc():
 			j += 1
 			if self.dictitems[i] in self.chunks:
 				try:
-					res = self.chunks[self.dictitems[i]](offset)
+					res = self.chunks[self.dictitems[i]](offset,j)
 					if -1 < res <= len(self.data)-offset:
 						add_pgiter(self.page,"[%02x] %s"%(j,self.dictitems[i]),"fh",self.dictitems[i],self.data[offset:offset+res],self.diter)
 						offset += res

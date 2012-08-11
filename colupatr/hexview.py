@@ -1136,14 +1136,15 @@ class HexView():
 
 				
 		if self.mtt:
-			sh = len("%s (%s)"%(self.mtt[2],self.mtt[3]))
+			mttstr = "%s/%x (%s)"%(self.mtt[2],self.mtt[2],self.mtt[3])
+			sh = len(mttstr)
 			ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
 			ctx.set_source_rgba(0.9,0.95,0.95,0.85)
 			ctx.fill()
 			ctx.set_source_rgb(0.5,0,0)
 			ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-			ctx.show_text("%d (%d)"%(self.mtt[2],self.mtt[3]))
+			ctx.show_text(mttstr)
 			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
 		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
