@@ -429,17 +429,19 @@ def parse_data (page, data, dataiter):
 	pass
 
 def parse_table (page, data, parent, docdata, docdataiter):
-	offset = 0
-	fclcb = page.model.get_value(page.wdoc,3)
-	for i in range(len(fclcb97recs1)):
-		if not ptable_unsd.has_key(i):
-		  recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
-		  reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
-		  if reclen != 0:
-			titer = add_pgiter (page,fclcb97recs1[i][0],"doc",fclcb97recs1[i][0],data[recoff:recoff+reclen],parent)
-			if len(fclcb97recs1[i]) > 1:
-			  fclcb97recs1[i][1](page,data[recoff:recoff+reclen],titer,docdataiter)
-
+	try:
+		offset = 0
+		fclcb = page.model.get_value(page.wdoc,3)
+		for i in range(len(fclcb97recs1)):
+			if not ptable_unsd.has_key(i):
+				recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+				reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+				if reclen != 0:
+					titer = add_pgiter (page,fclcb97recs1[i][0],"doc",fclcb97recs1[i][0],data[recoff:recoff+reclen],parent)
+				if len(fclcb97recs1[i]) > 1:
+					fclcb97recs1[i][1](page,data[recoff:recoff+reclen],titer,docdataiter)
+	except:
+		print "Failed in doc table parse"
 
 def parse (page, data, parent):
 	offset = 0

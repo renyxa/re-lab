@@ -15,76 +15,86 @@ palette = {
 }
 
 agd_rec = {
-	0x0e11:"FontName recid",
-	0x0e1b:"Style",
-	0x0e24:"Size",
+	0x0e11:("FontName","recid"),
+	0x0e1b:("Style",">I"),
+	0x0e24:("Size",">I")
 }
 
 vmp_rec = {
-	0x0321:"Name?",
-	0x065b:"?",
-	0x15e3:"Txt Align", # 0 left, 1 right, 2 center, 3 justify, 
-	0x15ea:"?",
-	0x15f2:"?",
-	0x15f9:"?",
-	0x1604:"?",
-	0x160b:"?",
-	0x1614:"?",
-	0x161c:"Spc % Letter Max",
-	0x1624:"Spc % Word Max",
-	0x162b:"?",
-	0x1634:"Spc % Letter Min",
-	0x163c:"Spc % Word Min",
-	0x1644:"?",
-	0x164c:"Spc % Letter Opt",
-	0x1654:"Spc % Word Opt",
-	0x165c:"?",
-	0x1664:"?",
-	0x166b:"?",
-	0x1674:"?",
-	0x167c:"?",
-	0x1684:"ParaSpc Below",
-	0x168c:"ParaSpc Above",
-	0x1691:"TabTable ID",
-	0x169c:"BaseLn Shift" ,
-	0x16a2:"?",
-	0x16aa:"?",
-	0x16b1:"?",
-	0x16b9:"Txt Color ID",
-	0x16c1:"Font ID",
-	0x16c9:"?",
-	0x16d4:"Hor Scale %",
-	0x16dc:"Leading",
-	0x16e3:"Leading Type", # 0 +, 1 =, 2 % 
-	0x16ec:"Rng Kern %",
-	0x16f1:"?",
-	0x16fb:"?",
-	0x1729:"?",
-	0x1734:"?",
-	0x1739:"?",
-	0x1743:"?",
-	0x1749:"Next style?",
-	0x1c24:"?",
-	0x1c2c:"?",
-	0x1c34:"?",
-	0x1c3c:"?",
-	0x1c43:"?",
-	0x1c4c:"?",
-	0x1c51:"?",
-	0x1c71:"?",
-	0x1c7c:"?",
-	0x1c84:"?",
-	0x1c89:"?",
+	0x0321:("Name","recid"),
+	0x065b:("?","?"),
+	0x15e3:("Txt Align","enum(txtalign)"), # 0 left, 1 right, 2 center, 3 justify, 
+	0x15ea:("?","?"),
+	0x15f2:("?","?"),
+	0x15f9:("?","?"),
+	0x1604:("?","?"),
+	0x160b:("?","?"),
+	0x1614:("?","?"),
+	0x161c:("Spc % Letter Max","?"),
+	0x1624:("Spc % Word Max","?"),
+	0x162b:("?","?"),
+	0x1634:("Spc % Letter Min","?"),
+	0x163c:("Spc % Word Min","?"),
+	0x1644:("?","?"),
+	0x164c:("Spc % Letter Opt","?"),
+	0x1654:("Spc % Word Opt","?"),
+	0x165c:("?","?"),
+	0x1664:("?","?"),
+	0x166b:("?","?"),
+	0x1674:("?","?"),
+	0x167c:("?","?"),
+	0x1684:("ParaSpc Below","?"),
+	0x168c:("ParaSpc Above","?"),
+	0x1691:("TabTable ID","?"),
+	0x169c:("BaseLn Shift" ,"?"),
+	0x16a2:("?","?"),
+	0x16aa:("?","?"),
+	0x16b1:("?","?"),
+	0x16b9:("Txt Color ID","?"),
+	0x16c1:("Font ID","?"),
+	0x16c9:("?","?"),
+	0x16d4:("Hor Scale %","?"),
+	0x16dc:("Leading","?"),
+	0x16e3:("Leading Type","enum(leadtypes)"), # 0 +, 1 =, 2 % 
+	0x16ec:("Rng Kern %","?"),
+	0x16f1:("?","?"),
+	0x16fb:("?","?"),
+	0x1729:("?","?"),
+	0x1734:("?","?"),
+	0x1739:("?","?"),
+	0x1743:("?","?"),
+	0x1749:("Next style?","?"),
+	0x1c24:("?","?"),
+	0x1c2c:("?","?"),
+	0x1c34:("?","?"),
+	0x1c3c:("?","?"),
+	0x1c43:("?","?"),
+	0x1c4c:("?","?"),
+	0x1c51:("?","?"),
+	0x1c71:("?","?"),
+	0x1c7c:("?","?"),
+	0x1c84:("?","?"),
+	0x1c89:("?","?"),
 	}
 
 teff_rec = {
-	0x1a91:"Effect Name",
+	0x1a91:("Effect Name","?"),
 #	0x1ab9:"",
 #	0x1ac1:"", 
 #	0x1acc:"BG Width", #2.2
 #	0x1ad4:"Stroke Width", #2.2
 #	0x1adb:"Count",
 	}
+
+def readid (data,off=0):
+	if data[off:off+2] == '\xFF\xFF':
+		rid = 0x1ff00 - rdata(data,off+2,">H")[0]
+		l = 4
+	else:
+		rid = rdata(data,off,">H")[0]
+		l = 2
+	return l,rid
+
 
 def hdVMpObj(hd,data,page):
 	offset = 0
@@ -93,17 +103,27 @@ def hdVMpObj(hd,data,page):
 	for i in range(num):
 		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
 		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
-		if vmp_rec.has_key(rec):
-			rname = vmp_rec[rec]
+		if key == 2:
+			at = d2hex(data[shift+4:shift+6])
+		else:
+			at = d2hex(data[shift+4:shift+8])
+		if rec in vmp_rec:
+			rname = vmp_rec[rec][0]
+			if vmp_rec[rec][1] == "recid":
+				a = readid(data,shift+4)[1]
+				if a in page.appdoc.recs:
+					at = page.appdoc.recs[a][1]
+				else:
+					at = "%02x"%a
 		else:
 			rname = '\t\t%04x'%rec
 		if rname == "?":
 			rname = '\t\t%04x'%rec
 		if key == 2:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
+			add_iter (hd,rname,at,shift,6,"txt")
 			shift+=6
 		else:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
+			add_iter (hd,rname,at,shift,8,"txt")
 			shift+=8
 
 def hdTEffect(hd,data,page):
@@ -198,17 +218,27 @@ def hdAGDFont(hd,data,page):
 	for i in range(num):
 		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
 		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
+		if key == 2:
+			at = d2hex(data[shift+4:shift+6])
+		else:
+			at = d2hex(data[shift+4:shift+8])
 		if rec in agd_rec:
-			rname = agd_rec[rec]
+			rname = agd_rec[rec][0]
+			if agd_rec[rec][1] == "recid":
+				a = readid(data,shift+4)[1]
+				if a in page.appdoc.recs:
+					at = page.appdoc.recs[a][1]
+				else:
+					at = "%02x"%a
 		else:
 			rname = '\t\t%04x'%rec
 		if rname == "?":
 			rname = '\t\t%04x'%rec
 		if key == 2:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
+			add_iter (hd,rname,at,shift,6,"txt")
 			shift+=6
 		else:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
+			add_iter (hd,rname,at,shift,8,"txt")
 			shift+=8
 
 
