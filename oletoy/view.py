@@ -696,7 +696,7 @@ class ApplicationMainWindow(gtk.Window):
 					self.activate_reload(None)
 				#except:
 				#	print "Cannot reload",goto[7:-1]
-			elif cmd[0].lower() == "run":
+			elif goto[0].lower() == "run":
 					md = self.das[pn]
 					exec(cmdline[4:])
 			elif 'join' in goto:
@@ -715,8 +715,6 @@ class ApplicationMainWindow(gtk.Window):
 						iter1 = model.iter_next(iter1)
 						v += model.get_value(iter1,3)[off:]
 					add_pgiter(self.das[pn],"[Joined data]","dontsave","",v,iter1)
-
-
 
 			else:
 				try:
