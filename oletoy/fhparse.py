@@ -428,10 +428,12 @@ def hdColor6(hd,data,page):
 	offset = 0
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
 	ustr1 = struct.unpack('>H', data[offset+2:offset+4])[0]
-	ustr2 = struct.unpack('>H', data[offset+14:offset+16])[0]
 	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
-	add_iter (hd,'Name1?',"%02x"%ustr1,2,2,">h")
-	add_iter (hd,'Name2?',"%02x"%ustr2,14,2,">h")
+	if ustr1 in page.appdoc.recs:
+		at = page.appdoc.recs[ustr1][1]
+	else:
+		at = "%02x"%ustr1
+	add_iter (hd,'Name',at,2,2,">H")
 
 hdp = {
 	"GraphicStyle":hdGraphicStyle,
