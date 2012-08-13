@@ -465,7 +465,7 @@ class ApplicationMainWindow(gtk.Window):
 		if title == 'Save':
 			dlg = gtk.FileChooserDialog('Save...',  action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 		else:
-			dlg = gtk.FileChooserDialog('Open...', parent, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg = gtk.FileChooserDialog('Open...', parent, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OK,gtk.RESPONSE_OK))
 		dlg.set_local_only(True)
 		resp = dlg.run()
 		dlg.hide()
