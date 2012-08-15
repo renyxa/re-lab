@@ -498,6 +498,14 @@ def read_recid(data,off):
 		l = 2
 	return l,rid
 
+class Xform():
+	scaleX = 1
+	skewV = 0
+	skewH = 0
+	scaleY = 1
+	dX = 0
+	dy = 0
+
 class FHDoc():
 	def __init__(self,data,page,parent):
 		self.data = data

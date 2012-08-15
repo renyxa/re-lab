@@ -244,7 +244,7 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>$zip{@addr}</tt> - try to decompress starting from addr (or 0)\n\n\
 	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\n\
 	<tt>?aSTRING</tt> - search for ASCII string\n\
-	<tt>?uSTRING</tt> - search for Unicode string\n\
+	<tt>?uSTRING</tt> - search for Unicode (utf16) string\n\
 	<tt>?x0123</tt> - search for hex value\n\
 	<tt>?rREC{:[aux]STRING}</tt> - search for record with REC in the name and STRING in data.\n\
 	<tt>?rloda#{arg}</tt> - search for args in 'loda' records in CDR\n\n\
@@ -889,9 +889,9 @@ class ApplicationMainWindow(gtk.Window):
 				v = struct.unpack("<i",buf)[0]
 				txt = "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],round(v/12700.,2),round(v/360000.,3),round(v/914400.,4))
 			elif ftype == "FH":
-				v1 = struct.unpack(">H",buf[0:2])[0]
-				v2 = struct.unpack(">H",buf[2:4])[0]
-				txt = "BE: %s\tX: %.4f\tY: %.4f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.)
+				v1 = struct.unpack(">h",buf[0:2])[0]
+				v2 = struct.unpack(">h",buf[2:4])[0]
+				txt = "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
 			else:
 				if self.options_le == 1:
 					txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)

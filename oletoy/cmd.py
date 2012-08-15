@@ -25,11 +25,11 @@ cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
 
 def arg_conv (ctype,carg):
 	data = ''
-	if ctype == 'x' or ctype == 'X':
+	if ctype.lower() == 'x':
 		data = hex2d(carg)
-	elif ctype == 'u' or ctype == 'U':
+	elif ctype.lower() == 'u':
 		data = carg.encode("utf-16")[2:]
-	elif ctype == 'a' or ctype == 'A' or ctype == 'r' or ctype == 'R':
+	elif ctype.lower() == 'a' or ctype.lower() == 'r':
 		data = carg
 	return data
 
