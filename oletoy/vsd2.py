@@ -237,11 +237,14 @@ class pointer:
 			res = data[self.offset:self.offset+self.length]
 			self.shift = 0
 		self.data = res
-
+#		print "rp: %x %x %x %x %x"%(self.type,self.address,self.offset,self.length,self.format)
 
 	def parse_str80 (self,page,data,parent):
 		off = 0
-		while off < len(self.data):
+		iter1 = ""
+		iter2 = ""
+		iter3 = ""
+		while off < len(self.data) - 19:
 			ch = chunk()
 			ch.read_hdr(self.data,off,page.version)
 			size = ch.get_size(self.data,off,page.version)
@@ -254,6 +257,8 @@ class pointer:
 			elif ch.level == 3:
 				add_pgiter(page,key2txt(ch.type,chunktype,"%02x"%ch.type)+"\t%02x"%ch.IX,"vsd2",ch.type,self.data[off:off+size],iter3)
 			off += size
+#			if len(self.data) - off < 19:
+#				print "Bang",ch.level,page.model.get_path(parent),page.model.get_path(iter1)
 
 	def parse_str40 (self,page,data,parent):
 #		print "ptr40 %02x %02x %02x %02x %02x"%(self.type,self.address,self.offset,self.length,self.format)
@@ -337,10 +342,9 @@ def parse (page, data, parent):
 		lenhdr2 = 4
 	add_pgiter(page,"Header part2","vsd2","hdr2",data[0x36:0x36+lenhdr2],parent)
 
-#	try:
-	if 1:
+	if 1: #try:
 		tr_pntr = pointer()
 		tr_pntr.read(data,data,trlr_offset,version)
 		tr_pntr.parse(page,data,parent)
 #	except:
-#		print "oops"
+#		print "Failed in VSD2 parse"
