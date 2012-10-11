@@ -589,7 +589,7 @@ def ShapeStencil (hd, size, value, off = 19):
 
 def TextField (hd, size, value, off = 19):
 	fmt = ord(value[off+7])
-	tdiff = struct.unpack("<d",value[off+8:off+18+8])[0]
+	tdiff = struct.unpack("<d",value[off+8:off+8+8])[0]
 	dlen = 8
 	dfmt = "<d"
 	if fmt == 0x28:
