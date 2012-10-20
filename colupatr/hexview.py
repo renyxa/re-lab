@@ -25,16 +25,16 @@ class HexView():
 		self.parent = None 						# used to pass info for status bar update (change to signal)
 		self.hv = gtk.DrawingArea()		# middle column with the main hex context
 		self.vadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
-		self.hadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
+#		self.hadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
 		self.vs = gtk.VScrollbar(self.vadj)
-		self.hs = gtk.HScrollbar(self.hadj)
+#		self.hs = gtk.HScrollbar(self.hadj)
 		self.hbox1 = gtk.HBox()
 		self.hbox2 = gtk.HBox()
 		self.hbox3 = gtk.HBox()
 		self.table = gtk.Table(3,4,False)
 		self.table.attach(self.hv,0,3,0,2)
 		self.table.attach(self.hbox1,0,1,2,3,0,0)
-		self.table.attach(self.hs,1,2,2,3,gtk.EXPAND|gtk.FILL,0)
+#		self.table.attach(self.hs,1,2,2,3,gtk.EXPAND|gtk.FILL,0)
 		self.table.attach(self.hbox2,2,3,2,3,0,0)
 		self.table.attach(self.hbox3,3,4,0,1,0,0)
 		self.table.attach(self.vs,3,4,1,2,0)
@@ -94,6 +94,7 @@ class HexView():
 		self.hv.connect("expose_event", self.expose)
 		self.hv.connect("motion_notify_event",self.on_motion_notify)
 		self.vadj.connect("value_changed", self.on_vadj_changed)
+#		self.hadj.connect("value_changed", self.on_hadj_changed)
 
 		# functions to handle kbd input
 		self.okp = {65362:self.okp_up , 65365:self.okp_pgup, 65364:self.okp_down,
@@ -444,6 +445,13 @@ class HexView():
 			self.hv.show()
 		return True
 
+	def on_hadj_changed (self, hadj):
+		# horizontal scroll line
+		self.hv.hide()
+		self.hv.show()
+		return True
+
+
 	def set_dxdy(self):
 		# calculate character extents
 		ctx = self.hv.window.cairo_create()
@@ -497,6 +505,7 @@ class HexView():
 			if ta > ma:
 				ma = ta
 		self.maxaddr = ma
+#		self.hadj.upper = (12+self.maxaddr*4)*self.tdx
 
 	def cursor_in_sel(self):
 		# checks if cursor is in the selection
@@ -938,10 +947,10 @@ class HexView():
 			self.vs.hide()
 		else:
 			self.vs.show()
-		if width >= self.tdx*(9+self.maxaddr*3):
-			self.hs.hide()
-		else:
-			self.hs.show()
+#		if width >= self.tdx*(9+self.maxaddr*3):
+#			self.hs.hide()
+#		else:
+#			self.hs.show()
 
 		if self.mode == "":
 			# clear top address lane
@@ -1005,7 +1014,7 @@ class HexView():
 				if self.lines[i+self.offnum][1] == 1 or self.lines[i+self.offnum][1] == 3:
 					ctx.move_to(self.tdx*10+0.5,(i+2)*self.tht+5.5)
 					ctx.set_source_rgb(1,0,0.8)
-					ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(i+2)+5.5)
+					ctx.line_to(self.tdx*(11.5+self.maxaddr*4),self.tht*(i+2)+5.5)
 					ctx.stroke()
 				# show comment
 				if self.lines[i+self.offnum][1] > 1:

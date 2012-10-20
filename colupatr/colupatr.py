@@ -126,6 +126,8 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_win = None
 		self.statbuffer = ""
 
+		self.run_win = None
+
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
 				self.fname = sys.argv[i+1]
@@ -271,6 +273,9 @@ class ApplicationMainWindow(gtk.Window):
 
 	def del_optwin (self, action):
 		self.options_win = None
+
+	def del_runwin (self, action):
+		self.run_win = None
 
 	def activate_options (self, action):
 		if self.options_win != None:
@@ -562,11 +567,12 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmdline[:3].lower() == "run":
 					hv = doc
 					if len(cmdline) < 5:
-						cmdline = self.open_cli()
+						self.open_cli()
+						cmdline = ""
 					else:
 						cmdline = cmdline[4:]
-					exec(cmdline)
-					hv.expose(None,None)
+						exec(cmdline)
+						hv.expose(None,None)
 				elif cmd[0].lower() == "fmt":
 					cmd = cmd[1:]
 					mpos = cmdline.find("*")
@@ -770,7 +776,7 @@ class ApplicationMainWindow(gtk.Window):
 		except:
 			print "Not a copy of hexdump"
 
-	def open_cli(self):
+	def open_cli_old(self):
 		dialog = gtk.Dialog("colupatr CLI",	None,
 			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
 			(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
@@ -790,6 +796,56 @@ class ApplicationMainWindow(gtk.Window):
 			txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
 			print txt
 		return txt
+
+	def cli_on_run (self,wg,event,tb):
+		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			hv = self.das[pn]
+			exec(txt)
+			hv.expose(None,None)
+
+	def cli_on_open (self,wg,event,tb):
+		print "Not implemented yet"
+
+	def cli_on_save (self,wg,event,tb):
+		print "Not implemented yet"
+
+	def open_cli(self):
+		if self.run_win != None:
+			self.run_win.show_all()
+			self.run_win.present()
+		else:
+			open_btn = gtk.Button("Open")
+			save_btn = gtk.Button("Save")
+			run_btn = gtk.Button("Run")
+			tb = gtk.TextBuffer()
+			tv = gtk.TextView(tb)
+			s = gtk.ScrolledWindow()
+			s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			s.set_size_request(660,400)
+			s.add_with_viewport(tv)
+			s.show_all()
+			hbox = gtk.HBox()
+			hbox.pack_start(open_btn)
+			hbox.pack_start(save_btn)
+			hbox.pack_start(run_btn)
+			vbox = gtk.VBox()
+			vbox.pack_start(s)
+			vbox.pack_start(hbox)
+			
+			runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			runwin.set_resizable(True)
+			runwin.set_border_width(2)
+			runwin.add(vbox)
+			runwin.set_title("Colupatr CLI")
+			runwin.connect ("destroy", self.del_runwin)
+			run_btn.connect("button-press-event",self.cli_on_run,tb)
+			open_btn.connect("button-press-event",self.cli_on_open,tb)
+			save_btn.connect("button-press-event",self.cli_on_save,tb)
+			runwin.show_all()
+			self.run_win = runwin
+
 
 	def on_entry_keypressed (self, view, event):
 		if event.state == gtk.gdk.CONTROL_MASK and event.keyval == 118 : # ^V
