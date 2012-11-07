@@ -245,7 +245,7 @@ def ptr_search (page, data, version, parent):
 					if pntr.type == 0x16:
 							get_colors (page, res, version, iter1)
 					if pntr.format >>4 > 7:
-							vsdchunks.parse (model, version, iter1, pntr)
+							vsdchunks.parse (page, version, iter1, pntr)
 
 		if vbaflag == 1:
 			ole.open (vbadata, page, iter2)
@@ -272,7 +272,7 @@ def get_colors (page, data, version, parent):
 				clr = "#%02x%02x%02x"%(r,g,b)
 				model.set (iter1, 0, txt,1,("vsd","clr"),2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
 
-def collect_chunks (model,parent):
+def collect_chunks (page,parent):
 	value = ""
 	for i in range(model.iter_n_children(parent)):
 		citer = model.iter_nth_child(parent,i)

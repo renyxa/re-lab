@@ -200,9 +200,9 @@ def Page (hd, size, value, off = 19):
 
 def Shape (hd, size, value, off = 19):
 	List (hd, size, value, off)
-	if hd.version < 6:
-		vsdchunks5.Shape(hd,size,value,off)
-		return
+#	if hd.version < 6:
+#		vsdchunks5.Shape(hd,size,value,off)
+#		return
 	add_iter(hd,"Parent","%2x"%struct.unpack("<I",value[off+10:off+10+4])[0],off+10,4,"<I")
 	add_iter(hd,"Master","%2x"%struct.unpack("<I",value[off+18:off+18+4])[0],off+18,4,"<I")
 	add_iter(hd,"MasterShape","%2x"%struct.unpack("<I",value[off+26:off+26+4])[0],off+26,4,"<I")
@@ -285,9 +285,9 @@ def Ellipse (hd, size, value, off = 19):
 		vsdblock.parse(hd, size, value, off+56)
 
 def NameID (hd, size, value, off = 19):
-	if hd.version < 6:
-		vsdchunks5.NameID(hd,size,value,off)
-		return
+#	if hd.version < 6:
+#		vsdchunks5.NameID(hd,size,value,off)
+#		return
 
 	numofrec = struct.unpack("<I",value[off:off+4])[0]
 	add_iter(hd,"#ofRecords","%2x"%numofrec,off,4,"<I")
@@ -675,7 +675,30 @@ chnk_func = {
 	0xd1:ShapeData
 }
 
-def parse(model, version, parent, pntr):
+def v5parse(page,version,parent,ptr):
+	data = ptr.data[12:]
+#	loff = struct.unpack("<H",data[len(data)-2:])[0]
+	num = struct.unpack("<H",data[len(data)-4:len(data)-2])[0]
+	loff = len(data)-4-num*4
+	chend = loff
+	shift = 0
+	for i in range(num):
+		chtype = struct.unpack("<H",data[loff+i*4+shift:loff+i*4+2+shift])[0]
+		if chtype == 0:
+			shift += 2
+			chtype = struct.unpack("<H",data[loff+i*4+shift:loff+i*4+2+shift])[0]
+		choff = struct.unpack("<H",data[loff+i*4+2+shift:loff+i*4+4+shift])[0]
+		print "%02x %02x %02x"%(choff,chend,chtype)
+		chdata = data[choff:chend]
+		chend = choff
+		if chunktype.has_key(chtype):
+			name = '%-24s'%chunktype[chtype]+'(Len: %02x)'%len(chdata)
+		else:
+			name = "Unkn %02x"%chtype
+		prep_pgiter(page,name,"vsd","chn %s"%chtype,chdata,parent)
+
+def parse(page, version, parent, pntr):
+	model = page.model
 	offset = 0
 	tmppntr = vsd.pointer()
 	tmppntr2 = vsd.pointer()
@@ -687,7 +710,7 @@ def parse(model, version, parent, pntr):
 	path2 =  parent
 	level = 0
 	while offset < len(pntr.data):
-		try:
+#		try:
 			chnk = vsd.chunk()
 			if version<6:
 				ch_hdr_len = 12
@@ -775,6 +798,9 @@ def parse(model, version, parent, pntr):
 			if debflag:
 				print model.get_string_from_iter(iter1)
 
+			if version < 6 and chunklist.has_key(chnk.type):
+				v5parse(page,version,iter1,ptr)
+
 			if chnk.type == 0xd: #OLE_List
 				olelist = model.append(iter1, None)
 				olenum = chnk.list
@@ -800,8 +826,8 @@ def parse(model, version, parent, pntr):
 			if chnk.level == 2:
 				path2 = iter1
 
-		except:
-			name = model.get_value(parent,0)
-			print 'Something wrong with chunks',name,'%x'%offset
-			offset = offset + 4 #ch_hdr_len, probably with +4 it will "autorecover" in some cases of underestimated trailer
+#		except:
+#			name = model.get_value(parent,0)
+#			print 'Something wrong with chunks',name,'%x'%offset
+#			offset = offset + 4 #ch_hdr_len, probably with +4 it will "autorecover" in some cases of underestimated trailer
 	return
