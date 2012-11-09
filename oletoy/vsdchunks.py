@@ -688,7 +688,7 @@ def v5parse(page,version,parent,ptr):
 			shift += 2
 			chtype = struct.unpack("<H",data[loff+i*4+shift:loff+i*4+2+shift])[0]
 		choff = struct.unpack("<H",data[loff+i*4+2+shift:loff+i*4+4+shift])[0]
-		print "%02x %02x %02x"%(choff,chend,chtype)
+#		print "%02x %02x %02x"%(choff,chend,chtype)
 		chdata = data[choff:chend]
 		chend = choff
 		if chunktype.has_key(chtype):

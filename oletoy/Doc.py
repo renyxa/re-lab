@@ -17,7 +17,7 @@
 import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
-import rx2,fh,mdb,cpt,cdw,pkzip,wld
+import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd
 import abr,rtf
 
 class Page:
@@ -62,6 +62,9 @@ class Page:
 		if buf[0:8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 			self.type = ole.ole_open(buf, self, parent)
 			return 0
+
+		if buf[0:18] == "Visio (TM) Drawing":
+			self.type = vsd.parse(self, buf, parent)
 
 		if buf[0:2] == "\x50\xc3":
 			self.type = "CLP"
