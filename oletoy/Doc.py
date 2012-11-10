@@ -65,6 +65,7 @@ class Page:
 
 		if buf[0:18] == "Visio (TM) Drawing":
 			self.type = vsd.parse(self, buf, parent)
+			return 0
 
 		if buf[0:2] == "\x50\xc3":
 			self.type = "CLP"

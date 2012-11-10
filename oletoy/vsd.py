@@ -143,7 +143,7 @@ def ptr_search (page, data, version, parent):
 				lnum = struct.unpack ('<L', pdata[offset+shift-4:offset+shift])[0] # FIXME! verify
 				num =	struct.unpack ('<L', pdata[offset+shift:offset+shift+4])[0]
 				offset = offset+8+shift
-		else:
+		if version > 2:
 				lnum = struct.unpack ('<H', pdata[0x6+shift:0x6+shift+2])[0]
 				num = struct.unpack ('<H', pdata[0xa+shift:0xa+shift+2])[0]
 				offset = 0xa+shift+2
@@ -156,6 +156,29 @@ def ptr_search (page, data, version, parent):
 				if ptr.type == 0x1e:
 						num = struct.unpack ('<H', pdata[0x36+shift:0x36+shift+2])[0]
 						offset = 0x36+shift+2
+		else:
+				offset = 0xa+shift+2
+				if ptr.type == 0x14:
+						num = struct.unpack ('<H', pdata[0x82+shift:0x82+shift+2])[0]
+						offset = 0x82+shift+2
+				if ptr.type == 0x1d or ptr.type > 0x45:
+						num = struct.unpack ('<H', pdata[0x1e+shift:0x1e+shift+2])[0]
+						offset = 0x1e+shift+2
+				if ptr.type == 0x1e:
+						num = struct.unpack ('<H', pdata[0x36+shift:0x36+shift+2])[0]
+						offset = 0x36+shift+2
+				if ptr.type == 0x1a:
+						num = struct.unpack ('<H', pdata[0x12+shift:0x12+shift+2])[0]
+						offset = 0x12+shift+2
+				if ptr.type == 0x18:
+						num = struct.unpack ('<H', pdata[0x2e+shift:0x2e+shift+2])[0]
+						offset = 0x2e+shift+2
+				if ptr.type == 0x15:
+						num = struct.unpack ('<H', pdata[0x42+shift:0x42+shift+2])[0]
+						offset = 0x42+shift+2
+				if ptr.type == 0x27:
+						num = struct.unpack ('<H', pdata[0x0a+shift:0x0a+shift+2])[0]
+						offset = 0x0a+shift+2
 
 		for i in range(num):
 				pntr = pointer()
@@ -261,16 +284,19 @@ def ptr_search (page, data, version, parent):
 
 def get_colors (page, data, version, parent):
 		model = page.model
-		clrnum = ord(data[6])
+		shift = 6
+		if version < 3:
+			shift = 2
+		clrnum = ord(data[shift])
 		for i in range(clrnum):
-				r = ord(data[8+i*4])
-				g = ord(data[9+i*4])
-				b = ord(data[10+i*4])
-				a = ord(data[11+i*4])
+				r = ord(data[shift+2+i*4])
+				g = ord(data[shift+3+i*4])
+				b = ord(data[shift+4+i*4])
+				a = ord(data[shift+5+i*4])
 				iter1 = model.append(parent, None)
 				txt = "Color #%02x: %02x%02x%02x %02x"%(i,r,g,b,a)
 				clr = "#%02x%02x%02x"%(r,g,b)
-				model.set (iter1, 0, txt,1,("vsd","clr"),2,4,3,data[8+i*4:12+i*4],5,clr,6,model.get_string_from_iter(iter1))
+				model.set (iter1, 0, txt,1,("vsd","clr"),2,4,3,data[shift+2+i*4:shift+6+i*4],5,clr,6,model.get_string_from_iter(iter1))
 
 def collect_chunks (page,parent):
 	value = ""

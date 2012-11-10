@@ -695,7 +695,7 @@ def v5parse(page,version,parent,ptr):
 			name = '%-24s'%chunktype[chtype]+'(Len: %02x)'%len(chdata)
 		else:
 			name = "Unkn %02x"%chtype
-		prep_pgiter(page,name,"vsd","chn %s"%chtype,chdata,parent)
+		prep_pgiter(page,name,"vsd%d"%version,"chnk %s"%chtype,chdata,parent)
 
 def parse(page, version, parent, pntr):
 	model = page.model
@@ -790,7 +790,10 @@ def parse(page, version, parent, pntr):
 #			ptr.path = path			
 			iter1 = model.append(path, None)
 			model.set_value(iter1,0,itername)
-			model.set_value(iter1,1,("vsd","chnk",chnk.type))
+			if version > 5:
+				model.set_value(iter1,1,("vsd","chnk",chnk.type))
+			else:
+				model.set_value(iter1,1,("vsd%d"%version,"chnk",chnk.type))
 			model.set_value(iter1,2,len(ptr.data))
 			model.set_value(iter1,3,ptr.data)
 			model.set_value(iter1,4,ptr)
