@@ -143,7 +143,7 @@ def ptr_search (page, data, version, parent):
 				lnum = struct.unpack ('<L', pdata[offset+shift-4:offset+shift])[0] # FIXME! verify
 				num =	struct.unpack ('<L', pdata[offset+shift:offset+shift+4])[0]
 				offset = offset+8+shift
-		if version > 2:
+		elif version > 2:
 				lnum = struct.unpack ('<H', pdata[0x6+shift:0x6+shift+2])[0]
 				num = struct.unpack ('<H', pdata[0xa+shift:0xa+shift+2])[0]
 				offset = 0xa+shift+2
@@ -185,8 +185,8 @@ def ptr_search (page, data, version, parent):
 				if version < 6:
 						plen = 16
 						npdata = pdata[offset+i*plen:offset+i*plen+16]
-						[pntr.type] = struct.unpack ('<h', npdata[0:2])
-						[pntr.format] = struct.unpack ('<h', npdata[2:4])
+						pntr.type = struct.unpack ('<h', npdata[0:2])[0]&0xFF
+						pntr.format = struct.unpack ('<h', npdata[2:4])[0]&0xFF
 						[pntr.address] = struct.unpack ('<L', npdata[4:8])
 						[pntr.offset] = struct.unpack ('<L', npdata[8:12])
 						[pntr.length] = struct.unpack ('<L', npdata[12:16])
