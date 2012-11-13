@@ -269,6 +269,8 @@ def ptr_search (page, data, version, parent):
 							get_colors (page, res, version, iter1)
 					if pntr.format >>4 > 7:
 							vsdchunks.parse (page, version, iter1, pntr)
+					if version < 3 and vsdchunks.chunklist.has_key (pntr.type):
+							vsdchunks.v5parse (page, version, iter1, pntr)
 
 		if vbaflag == 1:
 			ole.open (vbadata, page, iter2)

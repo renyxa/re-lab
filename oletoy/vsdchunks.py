@@ -676,8 +676,10 @@ chnk_func = {
 }
 
 def v5parse(page,version,parent,ptr):
-	data = ptr.data[12:]
-#	loff = struct.unpack("<H",data[len(data)-2:])[0]
+	if version > 2:
+		data = ptr.data[12:]
+	else:
+		data = ptr.data
 	num = struct.unpack("<H",data[len(data)-4:len(data)-2])[0]
 	loff = len(data)-4-num*4
 	chend = loff
