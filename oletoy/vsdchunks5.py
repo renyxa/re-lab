@@ -19,6 +19,39 @@ import datetime
 import vsd,vsdblock
 from utils import *
 
+
+def PageProps (hd, size, value):
+	for i in range(6):
+		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+	for i in range(4):
+		add_iter(hd,"x%d"%(i+6),"%2d"%ord(value[i+54]),i+54,1,"B")
+
+def TextBlock (hd, size, value):
+	for i in range(4):
+		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+	for i in range(2):
+		add_iter(hd,"x%d"%(i+6),"%2d"%ord(value[i+36]),i+36,1,"B")
+
+def XForm (hd, size, value):
+	for i in range(7):
+		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+
+def TxtXForm (hd, size, value):
+	for i in range(7):
+		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+2:i*9+10]),i*9+2,8,"<d")
+
+def MoveTo (hd, size, value):
+	off = 0
+	if ord(value[0]) < 32:
+		off += 1
+	for i in range(2):
+		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1+off:i*9+9+off]),i*9+1+off,8,"<d")
+
+def LineTo (hd, size, value):
+	for i in range(2):
+		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+
+
 def List (hd, size, value):
 	shl = struct.unpack("<I",value[8:8+4])[0]
 	add_iter(hd,"SubHdrLen","%2x"%shl,8,4,"<I")
@@ -42,3 +75,28 @@ def NameID (hd, size, value):
 		n2 = struct.unpack("<H",value[16+i*4:18+i*4])[0]
 		add_iter (hd, "Rec #%d"%i,"%2x %2x"%(n1,n2),14+i*4,4,"txt")
 
+chnk_func = {
+#	0xe:Text,
+#	0x15:Page,
+#	0x19:Font,
+#	0x28:ShapeStencil,
+#	0xd:List,0x2c:List,
+#	0x46:Shape,0x47:Shape, 0x48:Shape, 0x4a:Shape,0x4d:Shape, 0x4e:Shape,0x4f:Shape,
+#	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
+#	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
+#	0x85:Line,0x86:Fill,
+	0x87:TextBlock,
+#	0x89:Geometry,
+	0x8a:MoveTo,
+	0x8b:LineTo,
+#	0x8c:ArcTo,0x8d:InfLine,
+#	0x8f:Ellipse,0x90:EllArcTo,
+	0x92:PageProps,
+#	0x93:StyleProps,
+#	0x94:Char,0x95:Para,0x98:FrgnType,
+	0x9b:XForm,0x9c:TxtXForm,
+#	0x9d:XForm1D,
+#	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
+#	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
+#	0xd1:ShapeData
+}

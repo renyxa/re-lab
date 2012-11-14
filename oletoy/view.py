@@ -22,7 +22,7 @@ import tree
 import hexdump
 import Doc, cmd
 import escher,quill
-import vsd,vsd2,vsdchunks,vsdstream4
+import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
@@ -1071,6 +1071,9 @@ class ApplicationMainWindow(gtk.Window):
 							vsdstream4.stream_func[ntype[2]](hd, size, data)
 					elif ntype[1] == "hdr":
 						vsd.hdr(hd,data)
+				elif ntype[0][:4] == "vsdv" and ntype[1][:4] == "chnk":
+						if vsdchunks5.chnk_func.has_key(int(ntype[1][5:])):
+							vsdchunks5.chnk_func[int(ntype[1][5:])](hd, size, data)
 				elif ntype[0] == "vba" and ntype[1] == "dir":
 					vba.vba_dir(hd,data)
 				elif ntype[0] == "vba" and ntype[1] == "src":
