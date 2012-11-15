@@ -30,27 +30,63 @@ def TextBlock (hd, size, value):
 	for i in range(4):
 		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 	for i in range(2):
-		add_iter(hd,"x%d"%(i+6),"%2d"%ord(value[i+36]),i+36,1,"B")
+		add_iter(hd,"x%d"%(i+4),"%2d"%ord(value[i+36]),i+36,1,"B")
+
+
+
+def XForm1D (hd, size, value):
+	vn = {0:"BeginX",1:"BeginY",2:"EndX",3:"EndY"}
+	for i in range(4):
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+
 
 def XForm (hd, size, value):
+	vn = {0:"PinX",1:"PinY",2:"Width",3:"Height",4:"LocPinX",5:"LocPinY",6:"Angle",7:"FlipX",8:"FlipY",9:"ResizeMode"}
 	for i in range(7):
-		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+	for i in range(3):
+		add_iter(hd,vn[i+7],"%2d"%ord(value[i+63]),i+63,1,"B")
 
 def TxtXForm (hd, size, value):
 	for i in range(7):
 		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+2:i*9+10]),i*9+2,8,"<d")
 
 def MoveTo (hd, size, value):
+	vn = {0:"X",1:"Y"}
 	off = 0
 	if ord(value[0]) < 32:
 		off += 1
 	for i in range(2):
-		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1+off:i*9+9+off]),i*9+1+off,8,"<d")
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1+off:i*9+9+off]),i*9+1+off,8,"<d")
 
 def LineTo (hd, size, value):
+	vn = {0:"X",1:"Y"}
 	for i in range(2):
-		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 
+def LineTo (hd, size, value):
+	vn = {0:"X",1:"Y"}
+	for i in range(2):
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+
+def EllArcTo (hd, size, value):
+	vn = {0:"X",1:"Y",2:"A",3:"B",4:"C",5:"D"}
+	for i in range(6):
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+
+def Fill (hd, size, value):
+	vn = {0:"FillFG",1:"FillBG",2:"FillPatt",3:"ShdwFG",4:"ShdwBG",5:"ShdwPatt"}
+	for i in range(6):
+		add_iter (hd, vn[i], "%2d"%ord(value[i+1]),i+1,1,"B")
+
+def Line (hd, size, value):
+	vn = {0:"LineWght",1:"LineClr",2:"LinePatt",3:"Rounding",4:"ArrSize",5:"BegArr",6:"EndArr",7:"LineCap"}
+	add_iter (hd, vn[0], "%.2f"%struct.unpack("<d",value[1:9]),1,8,"<d")
+	for i in range(2):
+		add_iter (hd, vn[i+1], "%2d"%ord(value[i+9]),i+9,1,"B")
+	add_iter (hd, vn[3], "%.2f"%struct.unpack("<d",value[12:20]),12,8,"<d")
+	for i in range(4):
+		add_iter (hd, vn[i+4], "%2d"%ord(value[i+20]),i+20,1,"B")
 
 def List (hd, size, value):
 	shl = struct.unpack("<I",value[8:8+4])[0]
@@ -84,18 +120,17 @@ chnk_func = {
 #	0x46:Shape,0x47:Shape, 0x48:Shape, 0x4a:Shape,0x4d:Shape, 0x4e:Shape,0x4f:Shape,
 #	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 #	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
-#	0x85:Line,0x86:Fill,
+	0x85:Line,
+	0x86:Fill,
 	0x87:TextBlock,
 #	0x89:Geometry,
-	0x8a:MoveTo,
-	0x8b:LineTo,
+	0x8a:MoveTo, 0x8b:LineTo,
 #	0x8c:ArcTo,0x8d:InfLine,
-#	0x8f:Ellipse,0x90:EllArcTo,
-	0x92:PageProps,
+#	0x8f:Ellipse,
+	0x90:EllArcTo, 0x92:PageProps,
 #	0x93:StyleProps,
 #	0x94:Char,0x95:Para,0x98:FrgnType,
-	0x9b:XForm,0x9c:TxtXForm,
-#	0x9d:XForm1D,
+	0x9b:XForm,0x9c:TxtXForm, 0x9d:XForm1D,
 #	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 #	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
 #	0xd1:ShapeData
