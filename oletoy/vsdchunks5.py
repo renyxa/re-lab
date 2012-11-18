@@ -27,10 +27,29 @@ def PageProps (hd, size, value):
 		add_iter(hd,"x%d"%(i+6),"%2d"%ord(value[i+54]),i+54,1,"B")
 
 def TextBlock (hd, size, value):
+	vn = {0:"LeftMrgn",1:"RightMrgn",2:"TopMrgn",3:"BottomMrgn",4:"VAlign",5:"TxtBG"}
+	
 	for i in range(4):
-		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 	for i in range(2):
-		add_iter(hd,"x%d"%(i+4),"%2d"%ord(value[i+36]),i+36,1,"B")
+		add_iter(hd,vn[i+4],"%2d"%ord(value[i+36]),i+36,1,"B")
+
+def CharIX (hd, size, value):
+	vn = {0:"Num",1:"Font",2:"Color",3:"Style",4:"Case",5:"Pos",6:"??",7:"Size"}
+	for i in range(2):
+		add_iter (hd, vn[i], "%d"%struct.unpack("<H",value[i*2:i*2+2]),i*2,2,"<H")
+	for i in range(4):
+		add_iter(hd,vn[i+2],"%2d"%ord(value[i+4]),i+4,1,"B")
+	add_iter (hd, vn[7], "%.2f"%struct.unpack("<d",value[12:20]),12,8,"<d")
+
+
+def ParaIX (hd, size, value):
+	vn = {0:"Num",1:"IndFirst",2:"IndLeft",3:"IndRight",4:"SpLine",5:"SpBefore",6:"SpAfter",7:"HAlign"}
+	add_iter (hd, vn[0], "%d"%struct.unpack("<H",value[0:2]),0,2,"<H")
+	for i in range(6):
+		add_iter(hd,vn[i+1],"%.2f"%struct.unpack("<d",value[i*9+3:i*9+11]),i*9+3,8,"<d")
+		
+	add_iter (hd, vn[7], "%2d"%ord(value[56]),56,1,"B")
 
 
 
@@ -58,11 +77,6 @@ def MoveTo (hd, size, value):
 		off += 1
 	for i in range(2):
 		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1+off:i*9+9+off]),i*9+1+off,8,"<d")
-
-def LineTo (hd, size, value):
-	vn = {0:"X",1:"Y"}
-	for i in range(2):
-		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 
 def LineTo (hd, size, value):
 	vn = {0:"X",1:"Y"}
@@ -129,7 +143,8 @@ chnk_func = {
 #	0x8f:Ellipse,
 	0x90:EllArcTo, 0x92:PageProps,
 #	0x93:StyleProps,
-#	0x94:Char,0x95:Para,0x98:FrgnType,
+	0x94:CharIX,0x95:ParaIX,
+#	0x98:FrgnType,
 	0x9b:XForm,0x9c:TxtXForm, 0x9d:XForm1D,
 #	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 #	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
