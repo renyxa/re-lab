@@ -156,6 +156,9 @@ def ptr_search (page, data, version, parent):
 				if ptr.type == 0x1e:
 						num = struct.unpack ('<H', pdata[0x36+shift:0x36+shift+2])[0]
 						offset = 0x36+shift+2
+				if ptr.type == 0x4e:
+						num = struct.unpack ('<H', pdata[0x1e+shift:0x1e+shift+2])[0]
+						offset = 0x1e+shift+2
 		else:
 				offset = 0xa+shift+2
 				if ptr.type == 0x14:
@@ -269,7 +272,7 @@ def ptr_search (page, data, version, parent):
 							get_colors (page, res, version, iter1)
 					if pntr.format >>4 > 7:
 							vsdchunks.parse (page, version, iter1, pntr)
-					if version < 3 and vsdchunks.chunklist.has_key (pntr.type):
+					if version < 5 and vsdchunks.chunklist.has_key (pntr.type):
 							vsdchunks.v5parse (page, version, iter1, pntr)
 
 		if vbaflag == 1:
