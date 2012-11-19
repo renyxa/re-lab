@@ -90,7 +90,7 @@ def EllArcTo (hd, size, value):
 def Fill (hd, size, value):
 	vn = {0:"FillFG",1:"FillBG",2:"FillPatt",3:"ShdwFG",4:"ShdwBG",5:"ShdwPatt"}
 	for i in range(6):
-		add_iter (hd, vn[i], "%2d"%ord(value[i+1]),i+1,1,"B")
+		add_iter (hd, vn[i], "%2d"%ord(value[i]),i,1,"B")
 
 def Line (hd, size, value):
 	vn = {0:"LineWght",1:"LineClr",2:"LinePatt",3:"Rounding",4:"ArrSize",5:"BegArr",6:"EndArr",7:"LineCap"}
