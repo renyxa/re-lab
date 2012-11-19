@@ -21,14 +21,14 @@ from utils import *
 
 
 def PageProps (hd, size, value):
+	vn = {0:"PageW",1:"PageH",2:"ShdwOffX",3:"ShdwOffY",4:"PageScale",5:"DrawScale",6:"DrawSizeType",7:"DrawScaleType",8:"??",9:"??"}
 	for i in range(6):
-		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 	for i in range(4):
-		add_iter(hd,"x%d"%(i+6),"%2d"%ord(value[i+54]),i+54,1,"B")
+		add_iter(hd,vn[i+6],"%2d"%ord(value[i+54]),i+54,1,"B")
 
 def TextBlock (hd, size, value):
 	vn = {0:"LeftMrgn",1:"RightMrgn",2:"TopMrgn",3:"BottomMrgn",4:"VAlign",5:"TxtBG"}
-	
 	for i in range(4):
 		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 	for i in range(2):
@@ -52,12 +52,10 @@ def ParaIX (hd, size, value):
 	add_iter (hd, vn[7], "%2d"%ord(value[56]),56,1,"B")
 
 
-
 def XForm1D (hd, size, value):
 	vn = {0:"BeginX",1:"BeginY",2:"EndX",3:"EndY"}
 	for i in range(4):
 		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
-
 
 def XForm (hd, size, value):
 	vn = {0:"PinX",1:"PinY",2:"Width",3:"Height",4:"LocPinX",5:"LocPinY",6:"Angle",7:"FlipX",8:"FlipY",9:"ResizeMode"}
@@ -67,8 +65,9 @@ def XForm (hd, size, value):
 		add_iter(hd,vn[i+7],"%2d"%ord(value[i+63]),i+63,1,"B")
 
 def TxtXForm (hd, size, value):
+	vn = {0:"TxtPinX",1:"TxtPinY",2:"TxtWidth",3:"TxtHeight",4:"TxtLocPinX",5:"TxtLocPinY",6:"TxtAngle"}
 	for i in range(7):
-		add_iter (hd, "x%d"%i, "%.2f"%struct.unpack("<d",value[i*9+2:i*9+10]),i*9+2,8,"<d")
+		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
 
 def MoveTo (hd, size, value):
 	vn = {0:"X",1:"Y"}
