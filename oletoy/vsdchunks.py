@@ -232,6 +232,15 @@ def XForm1D (hd, size, value, off = 19):
 	if len(value)>off+38: # both 6 and 11
 		vsdblock.parse(hd, size, value, off+38)
 
+def ConnPts (hd, size, value, off = 19):
+	add_iter(hd,"X","%.2f"%struct.unpack("<d",value[off+1:off+1+8]),off+1,8,"<d")
+	add_iter(hd,"Y","%.2f"%struct.unpack("<d",value[off+10:off+10+8]),off+10,8,"<d")
+	add_iter(hd,"var1","%.2f"%struct.unpack("<d",value[off+19:off+19+8]),off+19,8,"<d")
+	add_iter(hd,"var2","%.2f"%struct.unpack("<d",value[off+28:off+28+8]),off+28,8,"<d")
+	if len(value)>off+0x30: # 11
+		vsdblock.parse(hd, size, value, off+0x30)
+
+
 def TxtXForm (hd, size, value, off = 19):
 	add_iter(hd,"TxtPinX","%.2f"%struct.unpack("<d",value[off+1:off+1+8]),off+1,8,"<d")
 	add_iter(hd,"TxtPinY","%.2f"%struct.unpack("<d",value[off+10:off+10+8]),off+10,8,"<d")
@@ -669,7 +678,7 @@ chnk_func = {
 	0x8a:MoveTo,0x8b:MoveTo,0x8c:ArcTo,0x8d:InfLine,
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,0x93:StyleProps,
-	0x94:Char,0x95:Para,0x98:FrgnType,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
+	0x94:Char,0x95:Para,0x98:FrgnType,0x99:ConnPts,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
 	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
 	0xd1:ShapeData
