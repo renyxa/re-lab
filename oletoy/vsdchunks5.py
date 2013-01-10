@@ -124,6 +124,10 @@ def NameID (hd, size, value):
 		n2 = struct.unpack("<H",value[16+i*4:18+i*4])[0]
 		add_iter (hd, "Rec #%d"%i,"%2x %2x"%(n1,n2),14+i*4,4,"txt")
 
+def TextField (hd, size, value):
+	if len(value)>0xe:
+		vsdblock.parse5(hd, size, value, 0xe)
+
 chnk_func = {
 #	0xe:Text,
 #	0x15:Page,
@@ -145,7 +149,8 @@ chnk_func = {
 	0x94:CharIX,0x95:ParaIX,
 #	0x98:FrgnType,
 	0x9b:XForm,0x9c:TxtXForm, 0x9d:XForm1D,
-#	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
+	0xa1:TextField,
+#	0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 #	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
 #	0xd1:ShapeData
 }

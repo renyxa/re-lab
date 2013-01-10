@@ -84,6 +84,35 @@ def fh_save (page, fname):
 	f.write(struct.pack(">L",endptr))
 	f.close()
 
+typecodes = {
+	"02 ca":"Preview",
+	"01 46":"Date (?)",
+	"01 28":"Time (?)",
+	"08 0a":"AGD",
+	}
+
+def read1c(buf,page,parent,off):
+	flag = ord(buf[off])
+	if flag != 0x1c:
+		print "FH: not an 0x1c flag in v10+"
+		return len(buf)
+	t1 = ord(buf[off+1])
+	t2 = ord(buf[off+2])
+	t3 = ord(buf[off+3])
+	t4 = ord(buf[off+4])
+	if t3&0x80 != 0:
+		size = struct.unpack(">L",buf[off+5:off+9])[0]+4
+	else:
+		size = t4
+	tname = "%02x %02x"%(t1,t2)
+	if typecodes.has_key(tname):
+		tname = typecodes[tname]
+	else:
+		tname += " %02x"%t3
+	add_pgiter(page,"Type %s"%tname,"fh","%02x %02x %02x"%(t1,t2,t3),buf[off:off+5+size],parent)
+
+	return off+5+size
+
 
 def fh_open (buf,page,parent=None):
 	piter = add_pgiter(page,"FH file","fh","file",buf,parent)
@@ -94,12 +123,16 @@ def fh_open (buf,page,parent=None):
 	print 'Version:\t',page.version
 	print 'Offset: \t%x'%offset
 	print 'Size:\t\t%x'%size
-	add_pgiter(page,"FH Header","fh","header",buf[:offset+12],piter)
+#	add_pgiter(page,"FH Header","fh","header",buf[:offset+12],piter)
 
 	if page.version > 8:
 		output = zlib.decompress(buf[offset+14:offset+14+size],-15)
 	else:
 		output = buf[offset+12:offset+size]
+	if page.version > 9:
+		off = 0
+		while off < len(buf):
+			off = read1c(buf,page,piter,off)
 
 	page.appdoc = fhparse.FHDoc(output,page,piter)
 	offset = offset + size

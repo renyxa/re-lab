@@ -158,23 +158,16 @@ class Page:
 			agd_ver = ord(buf[agd_off+3])
 			self.type = "FH"
 			print "Probably Freehand"
-#			try:
-			if 1:
-				fh.fh_open(buf,self)
-				return 0
-#			except:
-#				print 'Failed to parse as FH8'
+			fh.fh_open(buf,self)
+			return 0
 		elif fh_off != -1:
 			agd_off = buf.find('AGD')
 			if agd_off > fh_off:
 				agd_ver = ord(buf[agd_off+3])
 				self.type = "FH"
 				print "Probably Freehand 9+"
-				#try:
 				fh.fh_open(buf,self, parent)
 				return 0
-				#except:
-				#	print 'Failed to parse as FH9+'
 
 		if parent == None:
 			iter1 = self.model.append(None, None)

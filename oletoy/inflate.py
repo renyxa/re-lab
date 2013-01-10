@@ -119,7 +119,7 @@ def inflate_vba_gsf (data,ptype):
   return res
   
 def inflate_vba (data,ptype):
-  return inflate_vba_oletoy (data,ptype)
+  return inflate_vba_gsf (data,ptype)
   
 
 # vsd inflate

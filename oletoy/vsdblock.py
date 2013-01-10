@@ -304,6 +304,8 @@ def sl_names70 (hd, data, shift, offset, blk_off):
 	# FIXME, just skipping at the moment
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "\tnames70", 1, "",2,shift+offset+blk_off,3,7,4,"txt")
+	if hd.version < 6:
+		return blk_off+7
 	return blk_off+11
 
 sl_vars72 = {0:"X",1:"Y"}
@@ -439,7 +441,7 @@ def parse (hd, size, value,shift):
 	data = value[shift:]
 	
 	while offset < len(data):
-		[blk_len] = struct.unpack("<I",data[offset:offset+4])
+		blk_len = struct.unpack("<I",data[offset:offset+4])[0]
 		if blk_len == 0:
 			blk_len = 4  # 4 bytes "trailer" at the end of chunk
 		else:
@@ -460,3 +462,32 @@ def parse (hd, size, value,shift):
 					blk_off = get_slice(hd, data, shift, offset, blk_off)
 
 		offset += blk_len
+
+def parse5 (hd, size, value, shift):
+	offset = 0
+	blk_id = 0
+	data = value[shift:]
+	
+	while offset < len(data)-2:
+		blk_len = struct.unpack("<H",data[offset:offset+2])[0]
+		if blk_len == 0:
+			blk_len = 2  # 4 bytes "trailer" at the end of chunk
+		else:
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "Blk #%d Length"%blk_id, 1, blk_len,2,shift+offset,3,2,4,"<H")
+			blk_id += 1
+			blk_off = 2
+			blk_type = ord(data[offset+blk_off])
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "\tBlk Type", 1, blk_type,2,shift+offset+blk_off,3,1,4,"<b")
+			blk_off = 3
+			blk_idx = ord(data[offset+blk_off]) # which cell in the shapesheet this formula is for
+			iter1 = hd.hdmodel.append(None, None)
+			hd.hdmodel.set (iter1, 0, "\tBlk IDX", 1, blk_idx,2,shift+offset+blk_off,3,1,4,"<b")
+			blk_off = 4
+			if blk_type == 2:
+				while blk_off < blk_len:
+					blk_off = get_slice(hd, data, shift, offset, blk_off)
+
+		offset += blk_len
+
