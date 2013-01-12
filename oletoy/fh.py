@@ -123,7 +123,6 @@ def fh_open (buf,page,parent=None):
 	print 'Version:\t',page.version
 	print 'Offset: \t%x'%offset
 	print 'Size:\t\t%x'%size
-#	add_pgiter(page,"FH Header","fh","header",buf[:offset+12],piter)
 
 	if page.version > 8:
 		output = zlib.decompress(buf[offset+14:offset+14+size],-15)
@@ -137,52 +136,8 @@ def fh_open (buf,page,parent=None):
 	page.appdoc = fhparse.FHDoc(output,page,piter)
 	offset = offset + size
 	offset = page.appdoc.parse_dict(buf,offset)
-	page.appdoc.parse_list(buf,offset)
-	page.appdoc.parse_agd()
-
-
-def v8dict(buf,offset,parent,page):
-	dictsize = struct.unpack('>h', buf[offset:offset+2])[0]
-	lastkey = struct.unpack('>h', buf[offset+2:offset+4])[0]
-	offset += 4
-	print 'Dict size:\t%u, Last record: %04x'%(dictsize,lastkey)
-	flag = 0
-	keypaths = {"":None}
-	items = {}
-	for i in range(dictsize):
-		key = struct.unpack('>h', buf[offset:offset+2])[0]
-		key2 = struct.unpack('>h', buf[offset+2:offset+4])[0]
-		offset += 4
-		k = 0
-		while ord(buf[offset+k]) != 0:
-			k+=1
-		value = buf[offset:offset+k]
-		offset += k+1
-		k = 0
-		while flag != 2:
-			while ord(buf[offset+k]) != 0:
-				k+=1
-			flag += 1
-			k+=1
-		flag = 0
-		unkn = buf[offset:offset+k]
-		offset+=k
-		niter = page.model.append(parent,None)
-		page.model.set_value(niter,0,"%04x %s"%(key,value))
-		page.model.set_value(niter,1,("fh","dval"))
-		page.model.set_value(niter,2,len(value)+len(unkn)+4)
-		page.model.set_value(niter,3,buf[offset-len(value)-len(unkn)-5:offset])
-		page.model.set_value(niter,6,page.model.get_string_from_iter(niter))
-
-
-		items[key] = (value,unkn)
-		piter = None
-		if keypaths.has_key(key2):
-			piter = keypaths[key2]
-		d_iter = page.dictmod.append(piter,None)
-		keypaths[key] = d_iter
-		page.dictmod.set_value(d_iter,0,"%04x"%key)
-		page.dictmod.set_value(d_iter,1,value)
-		page.dictmod.set_value(d_iter,2,d2hex(unkn))
-
-	return offset,items
+	try:
+		page.appdoc.parse_list(buf,offset)
+		page.appdoc.parse_agd()
+	except:
+		print "Failed in FH parsing"

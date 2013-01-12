@@ -1495,11 +1495,11 @@ class FHDoc():
 			self.reclist.append(key)
 
 	def parse_dict (self,data,offset):
+		dictsize = struct.unpack('>h', data[offset:offset+2])[0]
+		print 'Dict size:\t%u'%dictsize
+		dictiter = add_pgiter(self.page,"FH Dictionary","fh","dict","",self.iter)
+		offset+=4
 		if self.version > 8:
-			dictsize = struct.unpack('>h', data[offset:offset+2])[0]
-			print 'Dict size:\t%u'%dictsize
-			dictiter = add_pgiter(self.page,"FH Dictionary","fh","dict","",self.iter)
-			offset+=4
 			for i in range(dictsize):
 				key = struct.unpack('>h', data[offset:offset+2])[0]
 				k = 0
@@ -1509,9 +1509,22 @@ class FHDoc():
 				add_pgiter(self.page,"%04x %s"%(key,value),"fh","dval",data[offset:offset+k+3],dictiter)
 				offset = offset+k+3
 				self.dictitems[key] = value
-#		else:
-#			#FIXME! need to migrate it
-#			offset,items = v8dict(buf,offset,dictiter,page)
+		else:
+			for i in range(dictsize):
+				key = struct.unpack('>h', data[offset:offset+2])[0]
+				key2 = struct.unpack('>h', data[offset+2:offset+4])[0]
+				k = 0
+				while ord(data[offset+k+4]) != 0:
+					k+=1
+				value = data[offset+4:offset+4+k]
+				f = 0
+				while f != 2:
+					if ord(data[offset+k+5]) == 0:
+						f += 1
+					k+=1
+				add_pgiter(self.page,"%04x %s"%(key,value),"fh","dval",data[offset:offset+k+5],dictiter)
+				offset += k+5
+				self.dictitems[key] = value
 
 		self.page.dict = self.dictitems
 		return offset
