@@ -20,7 +20,7 @@ import gobject
 import gtk, pango
 import tree
 import hexdump
-import Doc, cmd
+import App, cmd
 import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub
@@ -1129,7 +1129,7 @@ class ApplicationMainWindow(gtk.Window):
 
 
 	def activate_new (self,parent=None):
-		doc = Doc.Page()
+		doc = App.Page()
 		dnum = len(self.das)
 		self.das[dnum] = doc
 		scrolled = doc.scrolled
@@ -1175,7 +1175,7 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open()
 		print fname
 		if fname:
-			doc = Doc.Page()
+			doc = App.Page()
 			doc.fname = fname
 			doc.parent = self
 			doc.hd = hexdump.hexdump()

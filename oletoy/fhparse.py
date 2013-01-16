@@ -993,6 +993,8 @@ class FHDoc():
 		for i in range(size):
 			l,rid = self.read_recid(off+res)
 			res += l
+		if self.version < 9 and (res > 12 or struct.unpack('>h',self.data[off:off+2])[0] > 0):
+			res = 32 # probably alignment
 		return res
 
 	def MasterPageElement(self,off,recid,mode=0):
