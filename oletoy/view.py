@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2007-2010,	Valek Filippov (frob@df.ru)
+# Copyright (C) 2007-2013,	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -9,7 +9,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public License
+# You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp,pict
 from utils import *
 from hv2 import HexView
-version = "0.7.8"
+version = "0.7.9"
 
 ui_info = \
 '''<ui>
@@ -773,9 +773,33 @@ class ApplicationMainWindow(gtk.Window):
 					view.columns_autosize()
 					return 1
 				view.columns_autosize()
-			elif event.keyval == 65361 and model.iter_n_children(iter1)>0:
-				view.collapse_row(intPath)
+			elif event.keyval == 65361:
+				if view.row_expanded(intPath):
+					view.collapse_row(intPath)
+				else:
+					parent = model.iter_parent(iter1)
+					if parent:
+						intPath2 = model.get_path(parent)
+						view.set_cursor(intPath2)
+						view.grab_focus()
 				view.columns_autosize()
+			elif event.state == gtk.gdk.CONTROL_MASK and event.keyval == 65364:
+				iter2 = model.iter_next(iter1)
+				if iter2:
+					intPath2 = model.get_path(iter2)
+					view.set_cursor(intPath2)
+					view.grab_focus()
+				return 1
+			elif event.state == gtk.gdk.CONTROL_MASK and event.keyval == 65362:
+				position = intPath[-1]
+				if position != 0:
+					Path2 = list(intPath)[:-1]
+					Path2.append(position - 1)
+					prev = model.get_iter(tuple(Path2))
+					intPath2 = model.get_path(prev)
+					view.set_cursor(intPath2)
+					view.grab_focus()
+				return 1
 			else:
 				if event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK:
 					self.selection = (model.get_value(iter1,0),model.get_value(iter1,1),model.get_value(iter1,2),model.get_value(iter1,3))
