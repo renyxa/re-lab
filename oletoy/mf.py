@@ -386,21 +386,39 @@ def mf_open (buf,page,parent):
 				page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 				offset += nlen
 
+hlen = 0
+
 def mf_save (page, fname, ftype):
 	model = page.view.get_model()
+	global hlen
+	hlen = 0
+	model.foreach (checkhdr)
 	f = open(fname,'w')
 	model.foreach (dump_mf_tree, f)
 	f.close()
 
-def dump_mf_tree (model, path, parent, f):
+def recvalue (model,parent):
 	ntype = model.get_value(parent,1)[1]
+	value = ""
 	if ntype < 0x4001:
-	  nlen = model.get_value(parent,2)
-	  value = model.get_value(parent,3)
-	  if ntype == 0x46:
-		value = value[:16]
-		for i in range(model.iter_n_children(parent)):
-		  value += model.get_value(model.iter_nth_child(parent,i),3)
-	  if nlen != None:
-		  f.write(value)
-#	return True
+		nlen = model.get_value(parent,2)
+		value = model.get_value(parent,3)
+		if ntype == 0x46:
+			value = value[:16]
+			for i in range(model.iter_n_children(parent)):
+				value += model.get_value(model.iter_nth_child(parent,i),3)
+	return len(value),value,ntype
+
+def checkhdr (model, path, parent):
+	n,v,t = recvalue(model,parent)
+	global hlen
+	hlen += n
+
+def dump_mf_tree (model, path, parent, f):
+	nlen,value,ntype = recvalue(model,parent)
+	global hlen
+	if ntype == 1:
+		value = value[:48]+struct.pack("<I",hlen)+struct.pack("<I",model.iter_n_children(None))+value[56:]
+	if nlen != 0:
+		f.write(value)
+
