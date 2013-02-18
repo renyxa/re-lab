@@ -251,6 +251,8 @@ def parse (cmd, entry, page):
 				ole.ole_open (buf[int(chaddr,16):],page,iter1)
 			else:
 				print "OLE stream not found at ",chaddr
+		elif "b64" == chtype.lower():
+			b64decode (page,buf[int(chaddr,16):],iter1)
 		elif "esc" == chtype.lower():
 			escher.parse (model,buf[int(chaddr,16):],iter1)
 		elif "cmx" == chtype.lower():

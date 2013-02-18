@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct
+import sys,struct,base64
 import gtk
 
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
@@ -105,6 +105,10 @@ def dib2bmp(data,strict=0):
 	else:
 		bsize = struct.unpack("<I",data[0x14:0x18])[0]
 	return "BM"+struct.pack("<I",size) + "\x00"*4+struct.pack("<I",size-bsize)+data
+
+def b64decode (page,data,parent):
+	decdata = base64.b64decode(data)
+	add_pgiter (page, "[Base64decoded]", "base64", "", decdata, parent)
 
 def disp_expose (da,event,pixbuf,scale=1):
 	ctx = da.window.cairo_create()

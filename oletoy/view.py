@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp,pict
 from utils import *
 from hv2 import HexView
-version = "0.7.9"
+version = "0.7.10"
 
 ui_info = \
 '''<ui>
@@ -223,6 +223,8 @@ class ApplicationMainWindow(gtk.Window):
 "<b>Main tree:</b>\n\
 	Up/Down - walk the tree.\n\
 	Right/Left - expand/collapse branch.\n\
+	Left (on collapsed leaf) - jump to parent leaf.\n\
+	^Up/Down - Previous/Next branch of the same level.\n\
 	Right click - copy tree path to entry line.\n\
 	Delete - remove leaf from the tree\n\
 	Type text for quick search (Up/Down for next/prev result).\n\n\
@@ -231,6 +233,7 @@ class ApplicationMainWindow(gtk.Window):
 	gtk tree path - scroll/expand tree\n\
 	<tt>#addr</tt> - scroll hexdump to addr\n\
 	<tt>#addr+shift, #addr-shift</tt> - calculate new addr and scroll hexdump\n\
+	<tt>$b64{@addr}</tt> - try to decode record as base64 encoded string starting from addr (or 0)\n\
 	<tt>$cmx{@addr}</tt> - try to parse record as CMX starting from addr (or 0)\n\
 	<tt>$dib{@addr}</tt> - try to parse record as DIB starting from addr (or 0)\n\
 	<tt>$dump{@addr1{:addr2}}</tt> - save record starting from addr1 (or 0) to addr2 (or end)\n\

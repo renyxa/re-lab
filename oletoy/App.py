@@ -18,7 +18,7 @@ import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd
-import abr,rtf
+import abr,rtf, otxml
 
 class Page:
 	def __init__(self):
@@ -50,6 +50,10 @@ class Page:
 			offset = 0
 			f = open(self.fname)
 			buf = f.read()
+
+		if buf[0:6] == "<?xml ":
+			self.type = otxml.open(buf, self, parent)
+			return 0
 
 		if buf[0:8] == "CPT9FILE":
 			self.type = cpt.open(buf, self, parent)
