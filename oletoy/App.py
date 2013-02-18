@@ -155,7 +155,7 @@ class Page:
 			f.close()
 			pkzip.open (self.fname,self, parent)
 			return 0
-		
+
 		fh_off = buf.find('FreeHand')
 		if buf[0:3] == 'AGD':
 			agd_off = 0

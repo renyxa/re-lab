@@ -32,7 +32,8 @@ def open(fname,page,parent=None):
 				iter = add_pgiter(page,fn,"pkzip",0,data)
 			else:
 				iter = add_pgiter(page,"[%s]%s"%(fn[:pos],fn[pos:]),"pkzip",0,data)
-			page.fload(data,iter)
+			if len(data) > 0:
+				page.fload(data,iter)
 			
 	except:
 		print "Open as PKZIP failed"
