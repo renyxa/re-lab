@@ -17,8 +17,6 @@
 import zipfile
 from utils import *
 
-#add_pgiter (page, name, ftype, stype, data, parent = None):
-
 def open(fname,page,parent=None):
 	try:
 		dirstruct = {}
