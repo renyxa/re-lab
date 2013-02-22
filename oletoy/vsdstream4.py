@@ -16,6 +16,7 @@
 
 import struct
 from utils import *
+from math import ceil
 
 win_types = {0x15:'Drawing',0x1d:'Stencil'}
 
@@ -72,20 +73,59 @@ def Window (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Snap Extentions", 1, "%d"%struct.unpack("<I",value[0x5e:0x62]),2,0x62,3,4,4,"<I")
 
+def NameList (hd, size, value):
+	off = struct.unpack("<h",value[-2:])[0]
+	off = int(4*ceil(off/4.))
+	nnum = struct.unpack("<h",value[-4:-2])[0]
+	# instead of passing thru compressed flag, test for size
+	ltest = struct.unpack("<i",value[0:4])[0]
+	shift = 0
+	if ltest+4 == len(value):
+		shift = 4
+	add_iter (hd,"Rec offset (aligned)",off,len(value)-2,2,"<h")
+	add_iter (hd,"# of names",nnum,len(value)-4,2,"<h")
+	for i in reversed(xrange(nnum)):
+		curoff = off+shift+i*4+2
+		noff = struct.unpack("<h",value[curoff:curoff+2])[0]+shift
+		noff = int(4*ceil(noff/4.))
+		nid = struct.unpack("<h",value[noff:noff+2])[0]
+		endpos  = value[noff+2:].find('\x00')
+		add_iter (hd,"Name %x"%(nnum-i-1),"%s"%value[noff+2:noff+2+endpos],noff+2,endpos,"txt")
+
+def NameIDXv123 (hd, size, value):
+	off = 0  # compressed streams?
+	i = 0
+	while off < len(value):
+		v1 = struct.unpack("<h",value[off:off+2])[0]
+		v2 = struct.unpack("<h",value[off+2:off+4])[0]
+		add_iter (hd,"Name %s"%i,"%x %x"%(v1,v2),off,4,"txt")
+		off += 4
+		i += 1
+
+
 def NameIDX (hd, size, value):
 	# instead of passing thru compressed flag, test for size
 	ltest = struct.unpack("<i",value[0:4])[0]
 	shift = 0
 	if ltest+4 == len(value):
 		shift = 4
-	recnum = struct.unpack("<i",value[shift:shift+4])[0]
-	add_iter (hd,"Rec #",recnum,shift,4,"<i")
-	for i in range(recnum):
-		v1 = struct.unpack("<i",value[shift+4+i*13:shift+8+i*13])[0]
-		v2 = struct.unpack("<i",value[shift+8+i*13:shift+12+i*13])[0]
-		v3 = struct.unpack("<i",value[shift+12+i*13:shift+16+i*13])[0]
-		v4 = ord(value[shift+16+i*13])
-		add_iter (hd,"Name %s"%i,"%x %x %x %x"%(v1,v2,v3,v4),shift+4+i*13,13,"txt")
+	if hd.version >5:
+		recnum = struct.unpack("<i",value[shift:shift+4])[0]
+		add_iter (hd,"Rec #",recnum,shift,4,"<i")
+		for i in range(recnum):
+			v1 = struct.unpack("<i",value[shift+4+i*13:shift+8+i*13])[0]
+			v2 = struct.unpack("<i",value[shift+8+i*13:shift+12+i*13])[0]
+			v3 = struct.unpack("<i",value[shift+12+i*13:shift+16+i*13])[0]
+			v4 = ord(value[shift+16+i*13])
+			add_iter (hd,"Name %s"%i,"%x %x %x %x"%(v1,v2,v3,v4),shift+4+i*13,13,"txt")
+	else:
+		recnum = struct.unpack("<h",value[shift:shift+2])[0]
+		add_iter (hd,"Rec #",recnum,shift,2,"<h")
+		for i in range(recnum):
+			v1 = struct.unpack("<h",value[shift+2+i*4:shift+4+i*4])[0]
+			v2 = struct.unpack("<h",value[shift+4+i*4:shift+6+i*4])[0]
+			add_iter (hd,"Name %s"%i,"%x %x"%(v1,v2),shift+6+i*4,4,"txt")
+
 
 def FontFace (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
@@ -109,4 +149,4 @@ def FontFace (hd, size, value):
 	iter1 = hd.hdmodel.append(None, None)
 	hd.hdmodel.set (iter1, 0, "Panos", 1, panos,2,0x60,3,0xa,4,"txt")
 
-stream_func = {0x1e:StencilPage,0x2a:Window,0x2f:EventItem,0xc9:NameIDX,0xd7:FontFace}
+stream_func = {0x1e:StencilPage,0x2a:Window,0x2f:EventItem,0x32:NameList,0x34:NameIDXv123,0xc9:NameIDX,0xd7:FontFace}

@@ -71,6 +71,7 @@ chunktype = {
 		0x2c:'NameList ',\
 		0x2d:'Name     ',\
 		0x31:'Document ',\
+		0x34:'NameIDX(v123) ',\
 		0x42:'UniqueID',\
 		0x46:'PageSheet',\
 		0x47:'ShapeType="Group"',\
@@ -671,6 +672,7 @@ chnk_func = {
 	0x19:Font,
 	0x28:ShapeStencil,
 	0xd:List,0x2c:List,
+	0x34:NameID, #0x34 is used in v2,v3
 	0x46:Shape,0x47:Shape, 0x48:Shape, 0x4a:Shape,0x4d:Shape, 0x4e:Shape,0x4f:Shape,
 	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
@@ -807,7 +809,7 @@ def parse(page, version, parent, pntr):
 			if version > 5:
 				model.set_value(iter1,1,("vsd","chnk",chnk.type))
 			else:
-				model.set_value(iter1,1,("vsd%d"%version,"chnk",chnk.type))
+				model.set_value(iter1,1,("vsdv%d"%version,"chnk %s"%chnk.type))
 			model.set_value(iter1,2,len(ptr.data))
 			model.set_value(iter1,3,ptr.data)
 			model.set_value(iter1,4,ptr)

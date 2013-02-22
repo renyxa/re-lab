@@ -48,14 +48,14 @@ class chunk:
 
 streamtype = {
 		0:'Empty ptr',\
-		0x0a:'Prompt		',0xd:'OLE ',
-		0x14:'Trailer', 0x15:'Page			', 0x16:'Colors	',0x18:'Fonts		 ',\
-		0x1a:'Styles		',0x1d:'Stencils ', 0x1e:'Stncl Page', 0x1f:'OLE Data Part',\
-		0x23:'Icon				',0x27:'Pages			',0x29:'Windows	 ',0x2a:'Window		',0x2e:'EventList',\
-		0x2f:'EventItem',0x31:'Document',0x32:'NameList',0x33:'Name		',\
-		0x46:'PageSheet				',0x47:'ShapeType="Group"',0x48:'ShapeType="Shape"', 0x4a:'StyleSheet		',\
+		0x0a:'Prompt	',0xd:'OLE ',
+		0x14:'Trailer', 0x15:'Page	', 0x16:'Colors	',0x18:'Fonts	 ',\
+		0x1a:'Styles	',0x1d:'Stencils ', 0x1e:'Stncl Page', 0x1f:'OLE Data Part',\
+		0x23:'Icon	',0x27:'Pages	',0x29:'Windows	 ',0x2a:'Window	',0x2e:'EventList',\
+		0x2f:'EventItem',0x31:'Document',0x32:'NameList',0x33:'Name	',\
+		0x46:'PageSheet	',0x47:'ShapeType="Group"',0x48:'ShapeType="Shape"', 0x4a:'StyleSheet		',\
 		0x4d:'ShapeType="Guide"',0x4e:'ShapeType="Foreign"',0x4f:'DocSheet',
-		0xc9:'NameIDX		',
+		0xc9:'NameIDX	',0x34:'NameIDX(v123)',
 		0xd1:'SolutionXML',
 		0xd7:'FontFace',0xd8:'FontFaces'}
 

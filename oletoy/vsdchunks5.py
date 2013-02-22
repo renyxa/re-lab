@@ -116,13 +116,24 @@ def Shape (hd, size, value):
 	add_iter (hd, "FillStyle", "%2x"%struct.unpack("<H",value[0x1a:0x1c])[0],0x1a,2,"<H")
 	add_iter (hd, "TextStyle", "%2x"%struct.unpack("<H",value[0x1c:0x1e])[0],0x1c,2,"<H")
 
-def NameID (hd, size, value):
+def NameIDX (hd, size, value):
 	numofrec = struct.unpack("<H",value[12:12+2])[0]
 	add_iter (hd, "#ofRecords","%2x"%numofrec,12,2,"<H")
 	for i in range(numofrec):
 		n1 = struct.unpack("<H",value[14+i*4:16+i*4])[0]
 		n2 = struct.unpack("<H",value[16+i*4:18+i*4])[0]
 		add_iter (hd, "Rec #%d"%i,"%2x %2x"%(n1,n2),14+i*4,4,"txt")
+
+def NameIDXv123 (hd, size, value):
+	off = 12
+	i = 0
+	while off < len(value):
+		n1 = struct.unpack("<H",value[off:off+2])[0]
+		n2 = struct.unpack("<H",value[off+2:off+4])[0]
+		add_iter (hd, "Rec #%d"%i,"%2x %2x"%(n1,n2),off,4,"txt")
+		off += 4
+		i += 1
+
 
 def TextField (hd, size, value):
 	if len(value)>0xe:
@@ -134,6 +145,7 @@ chnk_func = {
 #	0x19:Font,
 #	0x28:ShapeStencil,
 #	0xd:List,0x2c:List,
+0x34:NameIDXv123,  # ONLY v123
 #	0x46:Shape,0x47:Shape, 0x48:Shape, 0x4a:Shape,0x4d:Shape, 0x4e:Shape,0x4f:Shape,
 #	0x64:List,0x65:List,0x66:List,0x67:List,0x68:List,0x69:List,0x6a:List,0x6b:List,0x6c:List,
 #	0x6d:List,0x6e:List,0x6f:List,0x70:List,0x71:List,0x72:List,0x76:List,
@@ -151,6 +163,7 @@ chnk_func = {
 	0x9b:XForm,0x9c:TxtXForm, 0x9d:XForm1D,
 	0xa1:TextField,
 #	0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
-#	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
+#	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 
+	0xc9:NameIDX,
 #	0xd1:ShapeData
 }
