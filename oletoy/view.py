@@ -246,6 +246,10 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\
 	<tt>$zip{@addr}</tt> - try to decompress starting from addr (or 0)\n\n\
 	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\n\
+	<tt>join {args}</tt> - combine few records starting from selected one.\n\
+	               {args} could be number of recs to combine\n\
+	               (@offset to skip first offset bytes in each record)\n\
+	               or a list of offsets in recs to be combined (comma separated)\n\n\
 	<tt>?aSTRING</tt> - search for ASCII string\n\
 	<tt>?uSTRING</tt> - search for Unicode (utf16) string\n\
 	<tt>?x0123</tt> - search for hex value\n\
@@ -703,20 +707,34 @@ class ApplicationMainWindow(gtk.Window):
 					md = self.das[pn]
 					exec(cmdline[4:])
 			elif 'join' in goto:
-				if '@' in goto:
-					pos = goto.find("@")
-					num = int(goto[5:pos-1])
-					off = int(goto[pos+1:],16)
+				if "," in goto:
+					j = goto[5:].split(",")
+					treeSelection = self.das[pn].view.get_selection()
+					model, niter = treeSelection.get_selected()
+					iter1 = niter
+					if niter != None:
+						v = ""
+						for i in j:
+							v += model.get_value(niter,3)[int(i,16):]
+							niter = model.iter_next(niter)
+
 				else:
-					num = int(goto[5:-1])
-					off = 0
-				treeSelection = self.das[pn].view.get_selection()
-				model, iter1 = treeSelection.get_selected()
+					if '@' in goto:
+						pos = goto.find("@")
+						num = int(goto[5:pos])
+						off = int(goto[pos+1:],16)
+					else:
+						num = int(goto[5:])
+						off = 0
+					treeSelection = self.das[pn].view.get_selection()
+					model, niter = treeSelection.get_selected()
+					iter1 = niter
+					if niter != None:
+						v = model.get_value(niter,3)[off:]
+						for i in range(num-1):
+							niter = model.iter_next(niter)
+							v += model.get_value(niter,3)[off:]
 				if iter1 != None:
-					v = model.get_value(iter1,3)[off:]
-					for i in range(num-1):
-						iter1 = model.iter_next(iter1)
-						v += model.get_value(iter1,3)[off:]
 					add_pgiter(self.das[pn],"[Joined data]","dontsave","",v,iter1)
 
 			else:

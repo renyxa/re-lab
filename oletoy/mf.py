@@ -15,6 +15,7 @@
 #
 
 import sys,struct,gtk,gobject,emfplus
+from utils import *
 
 emrplus_ids = {
   0x4001:"E+Header", 0x4002:"E+EOF", 0x4003:"E+Comment", 0x4004:"E+GetDC",
@@ -385,6 +386,12 @@ def mf_open (buf,page,parent):
 				page.model.set_value(iter1,3,nval)
 				page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 				offset += nlen
+			if rname == "EOF":
+				break
+				
+		if offset < len(buf):
+			add_pgiter (page, "After EOF", "wmf", "-1", buf[offset:],parent)
+
 
 hlen = 0
 
