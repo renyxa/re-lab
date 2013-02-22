@@ -26,7 +26,7 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
-import cdr,cmx,wld,ppp,pict
+import cdr,cmx,wld,ppp,pict,chdraw
 from utils import *
 from hv2 import HexView
 version = "0.7.10"

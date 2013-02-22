@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2010,2011	Valek Filippov (frob@df.ru)
+# Copyright (C) 2007-2013	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree,gtk,gobject,zlib
-import ole,escher,rx2,cdr,icc,mf,pict
+import ole,escher,rx2,cdr,icc,mf,pict,chdraw
 from utils import *
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
@@ -259,6 +259,8 @@ def parse (cmd, entry, page):
 			cdr.cdr_open (buf[int(chaddr,16):],page,iter1)
 		elif "icc" == chtype.lower():
 			icc.parse (page,buf[int(chaddr,16):],iter1)
+		elif "chdraw" == chtype.lower():
+			chdraw.open (page,buf[int(chaddr,16):],iter1)
 		elif "emf" == chtype.lower():
 			pt = page.type
 			page.type = "EMF"
