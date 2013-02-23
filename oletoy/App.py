@@ -18,7 +18,7 @@ import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd
-import abr,rtf, otxml
+import abr,rtf, otxml, chdraw
 
 class Page:
 	def __init__(self):
@@ -58,6 +58,11 @@ class Page:
 		if buf[0:8] == "CPT9FILE":
 			self.type = cpt.open(buf, self, parent)
 			return 0
+
+		if buf[0:8] == "VjCD0100":
+			self.type = chdraw.open(self, buf, parent)
+			return 0
+
 
 		if buf[0:5].lower() == "{\\rtf":
 			self.type = rtf.open(buf, self, parent)
