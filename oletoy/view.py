@@ -248,7 +248,9 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\
 	<tt>$zip{@addr}</tt> - try to decompress starting from addr (or 0)\n\n\
 	<tt>run</tt> - exec command, use rpage,rbuf,rparent\n\
-	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\n\
+	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\
+	<tt>rename</tt> - rename current record\n\
+	<tt>split@addr</tt> - split current record by addr\n\
 	<tt>join {args}</tt> - combine few records starting from selected one.\n\
 	               {args} could be number of recs to combine\n\
 	               (@offset to skip first offset bytes in each record)\n\
@@ -765,7 +767,21 @@ class ApplicationMainWindow(gtk.Window):
 					print "Cannot reload",goto[7:-1]
 			elif goto.lower() == "run":
 				self.open_cli()
-			elif 'join' in goto:
+			elif 'split@' in goto.lower():
+				pos = goto.find("@")
+				off = int(goto[pos+1:],16)
+				treeSelection = self.das[pn].view.get_selection()
+				model, niter = treeSelection.get_selected()
+				if niter != None:
+					v = model.get_value(niter,3)
+					add_pgiter(self.das[pn],"Part1","dontsave","",v[:off],niter)
+					add_pgiter(self.das[pn],"Part2","dontsave","",v[off:],niter)
+			elif 'rename' in goto.lower():
+				treeSelection = self.das[pn].view.get_selection()
+				model, niter = treeSelection.get_selected()
+				if niter != None:
+					model.set_value(niter,0,goto[7:])
+			elif 'join' in goto.lower():
 				if "," in goto:
 					j = goto[5:].split(",")
 					treeSelection = self.das[pn].view.get_selection()
@@ -776,7 +792,6 @@ class ApplicationMainWindow(gtk.Window):
 						for i in j:
 							v += model.get_value(niter,3)[int(i,16):]
 							niter = model.iter_next(niter)
-
 				else:
 					if '@' in goto:
 						pos = goto.find("@")
