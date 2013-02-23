@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,ppp,pict,chdraw
 from utils import *
 from hv2 import HexView
-version = "0.7.10"
+version = "0.7.11"
 
 ui_info = \
 '''<ui>
@@ -141,6 +141,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_win = None
 		self.statbuffer = ""
 
+		self.run_win = None
 
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
@@ -234,6 +235,7 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>#addr</tt> - scroll hexdump to addr\n\
 	<tt>#addr+shift, #addr-shift</tt> - calculate new addr and scroll hexdump\n\
 	<tt>$b64{@addr}</tt> - try to decode record as base64 encoded string starting from addr (or 0)\n\
+	<tt>$cdx{@addr}</tt> - try to parse record as CDX starting from addr (or 0)\n\
 	<tt>$cmx{@addr}</tt> - try to parse record as CMX starting from addr (or 0)\n\
 	<tt>$dib{@addr}</tt> - try to parse record as DIB starting from addr (or 0)\n\
 	<tt>$dump{@addr1{:addr2}}</tt> - save record starting from addr1 (or 0) to addr2 (or end)\n\
@@ -245,6 +247,7 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>$wmf{@addr}</tt> - try to parse record as WMF starting from addr (or 0)\n\
 	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\
 	<tt>$zip{@addr}</tt> - try to decompress starting from addr (or 0)\n\n\
+	<tt>run</tt> - exec command, use rpage,rbuf,rparent\n\
 	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\n\
 	<tt>join {args}</tt> - combine few records starting from selected one.\n\
 	               {args} could be number of recs to combine\n\
@@ -325,6 +328,63 @@ class ApplicationMainWindow(gtk.Window):
 
 	def del_optwin (self, action):
 		self.options_win = None
+
+	def del_runwin (self, action):
+		self.run_win = None
+
+	def cli_on_open (self,wg,event,tb):
+		print "Not implemented yet"
+
+	def cli_on_save (self,wg,event,tb):
+		print "Not implemented yet"
+
+	def cli_on_run (self,wg,event,tb):
+		pn = self.notebook.get_current_page()
+		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+		if pn != -1:
+			rpage = self.das[pn]
+			treeSelection = self.das[pn].view.get_selection()
+			model, rparent = treeSelection.get_selected()
+			rbuf = model.get_value(rparent,3)
+			exec(txt)
+
+	def open_cli(self):
+		if self.run_win != None:
+			self.run_win.show_all()
+			self.run_win.present()
+		else:
+#			open_btn = gtk.Button("Open")
+#			save_btn = gtk.Button("Save")
+			run_btn = gtk.Button("Run")
+			tb = gtk.TextBuffer()
+			tv = gtk.TextView(tb)
+			s = gtk.ScrolledWindow()
+			s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			s.set_size_request(660,400)
+			s.add_with_viewport(tv)
+			s.show_all()
+			hbox = gtk.HBox()
+#			hbox.pack_start(open_btn)
+#			hbox.pack_start(save_btn)
+			hbox.pack_start(run_btn)
+			vbox = gtk.VBox()
+			vbox.pack_start(s)
+			vbox.pack_start(hbox)
+			
+			runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			runwin.set_resizable(True)
+			runwin.set_border_width(2)
+			runwin.add(vbox)
+			runwin.set_title("OleToy CLI")
+			runwin.connect ("destroy", self.del_runwin)
+			run_btn.connect("button-press-event",self.cli_on_run,tb)
+#			open_btn.connect("button-press-event",self.cli_on_open,tb)
+#			save_btn.connect("button-press-event",self.cli_on_save,tb)
+			runwin.show_all()
+			self.run_win = runwin
+
+
+
 
 	def activate_options (self, action):
 		if self.options_win != None:
@@ -697,15 +757,14 @@ class ApplicationMainWindow(gtk.Window):
 				cmd.parse (goto,self.entry,self.das[pn])
 			elif goto[0] == "=":
 					cmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
-			elif 'reload' in goto:
-				#try:
+			elif 'reload' in goto.lower():
+				try:
 					exec("reload(%s)"%goto[7:-1])
 					self.activate_reload(None)
-				#except:
-				#	print "Cannot reload",goto[7:-1]
-			elif goto[0].lower() == "run":
-					md = self.das[pn]
-					exec(cmdline[4:])
+				except:
+					print "Cannot reload",goto[7:-1]
+			elif goto.lower() == "run":
+				self.open_cli()
 			elif 'join' in goto:
 				if "," in goto:
 					j = goto[5:].split(",")

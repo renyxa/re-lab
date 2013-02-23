@@ -234,7 +234,7 @@ def parse (cmd, entry, page):
 			chtype = cmd[1:pos]
 			chaddr = cmd[pos+1:]
 		else:
-			chtype = cmd[1:4]
+			chtype = cmd[1:]
 			chaddr = "0"
 		print "Command: ",chtype,chaddr
 		
@@ -259,7 +259,7 @@ def parse (cmd, entry, page):
 			cdr.cdr_open (buf[int(chaddr,16):],page,iter1)
 		elif "icc" == chtype.lower():
 			icc.parse (page,buf[int(chaddr,16):],iter1)
-		elif "chdraw" == chtype.lower():
+		elif "cdx" == chtype.lower():
 			chdraw.open (page,buf[int(chaddr,16):],iter1)
 		elif "emf" == chtype.lower():
 			pt = page.type
