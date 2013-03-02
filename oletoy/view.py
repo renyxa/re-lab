@@ -1245,7 +1245,8 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "fh":
 					if fhparse.hdp.has_key(ntype[1]):
 						fhparse.hdp[ntype[1]](hd,data,self.das[pn])
-
+				elif ntype[0] == "xml":
+					add_iter (hd,"",data,0,len(data),"txt")
 
 	def activate_new (self,parent=None):
 		doc = App.Page()

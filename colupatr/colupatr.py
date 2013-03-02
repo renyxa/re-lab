@@ -15,7 +15,7 @@
 # USA
 
 import sys,struct
-import gtk,gobject
+import gtk,gobject,gtksourceview2
 import hexview
 import utils
 import cli
@@ -819,8 +819,12 @@ class ApplicationMainWindow(gtk.Window):
 			open_btn = gtk.Button("Open")
 			save_btn = gtk.Button("Save")
 			run_btn = gtk.Button("Run")
-			tb = gtk.TextBuffer()
-			tv = gtk.TextView(tb)
+			tb = gtksourceview2.Buffer()
+			tv = gtksourceview2.View(tb)
+			lm = gtksourceview2.LanguageManager()
+			lp = lm.get_language("python")
+			tb.set_highlight_syntax(True)
+			tb.set_language(lp)
 			s = gtk.ScrolledWindow()
 			s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 			s.set_size_request(660,400)
