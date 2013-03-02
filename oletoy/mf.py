@@ -42,56 +42,50 @@ emrplus_ids = {
   0x403A:"E+SetTSClip"}
   
 emr_ids = {0:'Unknown', 1:'Header',2:'Polybezier',3:'Polygon',4:'Polyline',5:'PolybezierTo',\
-                 6:'PolylineTo',7:'PolyPolyline',8:'PolyPolygon',9:'SetWindowExtEx',10:'SetWindowOrgEx',\
-                 11:'SetViewportExtEx',12:'SetViewportOrgEx',13:'SetBrushOrgEx',14:'EOF',15:'SetPixelV',\
-                 16:'SetMapperFlags',17:'SetMapMode',18:'SetBKMode',19:'SetPolyfillMode',20:'SetRop2',\
-                 21:'SetStretchBltMode',22:'SetTextAlign', 23:'SetColorAdjustment',24:'SetTextColor',\
-                 25:'SetBKColor',26:'OffsetClipRgn',27:'MoveToEx',28:'SetMetaRgn',29:'ExcludeClipRect',\
-                 30:'IntersectClipRect',31:'ScaleViewportExtEx',32:'ScaleWindowExtEx',33:'SaveDC',\
-                 34:'RestoreDC',35:'SetWorldTransform',36:'ModifyWorldTransform',37:'SelectObject',\
-                 38:'CreatePen',39:'CreateBrushIndirect',40:'DeleteObject',41:'AngleArc',42:'Ellipse',\
-                 43:'Rectangle',44:'RoundRect',45:'Arc',46:'Chord',47:'Pie',48:'SelectPalette',\
-                 49:'CreatePalette',50:'SetPaletteEntries',51:'ResizePalette',52:'RealizePalette',\
-                 53:'ExtFloodFill',54:'LineTo',55:'ArcTo',56:'Polydraw',57:'SetArcDirection',58:'SetMiterLimit',\
-                 59:'BeginPath',60:'EndPath',61:'CloseFigure',62:'FillPath',63:'StrokeAndFillPath',\
-                 64:'StrokePath',65:'FlattenPath',66:'WidenPath',67:'SelectClipPath',68:'AbortPath', ##69 is missed
-                 70:'GDIComment',71:'FillRgn',72:'FrameRgn',73:'InvertRgn',74:'PaintRgn',75:'ExtSelectClipRgn',\
-                 76:'BitBlt',77:'StretchBlt',78:'MaskBlt',79:'PlgBlt',80:'SetDIBitsToDevice',81:'StretchDIBits',\
-                 82:'ExtCreateFontIndirectW',83:'ExtTextOutA',84:'ExtTextOutW',85:'Polybezier16',86:'Polygon16',\
-                 87:'Polyline16',88:'PolybezierTo16',89:'PolylineTo16',90:'PolyPolyline16',91:'PolyPolygon16',\
-                 92:'Polydraw16',93:'CreateMonoBrush',94:'CreateDIBPatternBrushPT',95:'ExtCreatePen',\
-                 96:'PolyTextOutA',97:'PolyTextOutW',98:'SetICMMode',99:'CreateColorSpace',100:'SetColorSpace',\
-                 101:'DeleteColorSpace',102:'GLSRecord',103:'GLSBoundedRecord',104:'PixelFormat',105:'DrawEscape',\
-                 106:'ExtEscape',107:'StartDoc',108:'SmallTextOut',109:'ForceUFIMapping',110:'NamedEscape',\
-                 111:'ColorCorrectPalette',112:'SetICMProfileA',113:'SetICMProfileW',114:'AlphaBlend',\
-                 115:'SetLayout',116:'TransparentBlt',117:'Reserved_117',118:'GradientFill',119:'SetLinkedUFI',
-                 120:'SetTextJustification',121:'ColorMatchToTargetW',122:'CreateColorSpaceW'}
+	6:'PolylineTo',7:'PolyPolyline',8:'PolyPolygon',9:'SetWindowExtEx',10:'SetWindowOrgEx',\
+	11:'SetViewportExtEx',12:'SetViewportOrgEx',13:'SetBrushOrgEx',14:'EOF',15:'SetPixelV',\
+	16:'SetMapperFlags',17:'SetMapMode',18:'SetBKMode',19:'SetPolyfillMode',20:'SetRop2',\
+	21:'SetStretchBltMode',22:'SetTextAlign', 23:'SetColorAdjustment',24:'SetTextColor',\
+	25:'SetBKColor',26:'OffsetClipRgn',27:'MoveToEx',28:'SetMetaRgn',29:'ExcludeClipRect',\
+	30:'IntersectClipRect',31:'ScaleViewportExtEx',32:'ScaleWindowExtEx',33:'SaveDC',\
+	34:'RestoreDC',35:'SetWorldTransform',36:'ModifyWorldTransform',37:'SelectObject',\
+	38:'CreatePen',39:'CreateBrushIndirect',40:'DeleteObject',41:'AngleArc',42:'Ellipse',\
+	43:'Rectangle',44:'RoundRect',45:'Arc',46:'Chord',47:'Pie',48:'SelectPalette',\
+	49:'CreatePalette',50:'SetPaletteEntries',51:'ResizePalette',52:'RealizePalette',\
+	53:'ExtFloodFill',54:'LineTo',55:'ArcTo',56:'Polydraw',57:'SetArcDirection',58:'SetMiterLimit',\
+	59:'BeginPath',60:'EndPath',61:'CloseFigure',62:'FillPath',63:'StrokeAndFillPath',\
+	64:'StrokePath',65:'FlattenPath',66:'WidenPath',67:'SelectClipPath',68:'AbortPath', ##69 is missed
+	70:'GDIComment',71:'FillRgn',72:'FrameRgn',73:'InvertRgn',74:'PaintRgn',75:'ExtSelectClipRgn',\
+	76:'BitBlt',77:'StretchBlt',78:'MaskBlt',79:'PlgBlt',80:'SetDIBitsToDevice',81:'StretchDIBits',\
+	82:'ExtCreateFontIndirectW',83:'ExtTextOutA',84:'ExtTextOutW',85:'Polybezier16',86:'Polygon16',\
+	87:'Polyline16',88:'PolybezierTo16',89:'PolylineTo16',90:'PolyPolyline16',91:'PolyPolygon16',\
+	92:'Polydraw16',93:'CreateMonoBrush',94:'CreateDIBPatternBrushPT',95:'ExtCreatePen',\
+	96:'PolyTextOutA',97:'PolyTextOutW',98:'SetICMMode',99:'CreateColorSpace',100:'SetColorSpace',\
+	101:'DeleteColorSpace',102:'GLSRecord',103:'GLSBoundedRecord',104:'PixelFormat',105:'DrawEscape',\
+	106:'ExtEscape',107:'StartDoc',108:'SmallTextOut',109:'ForceUFIMapping',110:'NamedEscape',\
+	111:'ColorCorrectPalette',112:'SetICMProfileA',113:'SetICMProfileW',114:'AlphaBlend',\
+	115:'SetLayout',116:'TransparentBlt',117:'Reserved_117',118:'GradientFill',119:'SetLinkedUFI',
+	120:'SetTextJustification',121:'ColorMatchToTargetW',122:'CreateColorSpaceW'}
 
 wmr_ids = {0:'EOF',1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Header',
-            30:'SaveDC', 295:'RestoreDC', 332:'ResetDc', 
-            
-            53:'RealizePalette', 55:'SetPalEntries', 247:'CreatePalette', 313:'ResizePalette',564:'SelectPalette', 1078:'AnimatePalette', 
-            79:'StartPage', 80:'EndPage', 82:'AbortDoc', 94:'EndDoc', 333:'StartDoc', 
-            
-            248:'CreateBrush', 322:'DibCreatePatternBrush', 505:'CreatePatternBrush',
-            762:'CreatePenIndirect',763:'CreateFontIndirect', 764:'CreateBrushIndirect', 765:'CreateBitmapIndirect', 
-            496:'DeleteObject', 301:'SelectObject', 
-            
-            258:'SetBKMode', 259:'SetMapMode', 260:'SetROP2', 261:'SetRelabs', 262:'SetPolyfillMode', 263:'SetStretchBltMode',
-            561:'SetMapperFlags', 
-            264:'SetTextCharExtra', 302:'SetTextAlign', 513:'SetBKColor', 521:'SetTextColor', 522:'SetTextJustification', 
-            
-            298:'InvertRegion', 299:'PaintRegion', 300:'SelectClipRegion',544:'OffsetClipRgn', 552:'FillRegion', 1065:'FrameRegion', 1791:'CreateRegion',
-            1045:'ExcludeClipRect', 1046:'IntersectClipRect',
-            523:'SetWindowOrgEx', 524:'SetWindowExtEx',525:'SetViewportOrgEx', 526:'SetViewportExtEx', 527:'OffsetWindowOrg', 529:'OffsetViewportOrgEx',
-            1040:'ScaleWindowExtEx', 1042:'ScaleViewportExtEx',
-            
-            1049:'FloodFill', 1352:'ExtFloodFill', 1574:'Escape', 
-            
-            531:'LineTo', 532:'MoveTo', 804:'Polygon', 805:'Polyline', 1048:'Ellipse', 1051:'Rectangle', 1055:'SetPixel', 
-            1336:'PolyPolygon', 1564:'RoundRect', 2071:'Arc', 2074:'Pie', 2096:'Chord', 
-            1313:'TextOut', 1583:'DrawText',2610:'ExtTextOut',
-            1790:'CreateBitmap', 1565:'PatBlt', 2338:'BitBlt', 2368:'DibBitblt', 2851:'StretchBlt', 2881:'DibStretchBlt', 3379:'SetDibToDev', 3907:'StretchDIBits'}
+	30:'SaveDC', 295:'RestoreDC', 332:'ResetDc', 
+	53:'RealizePalette', 55:'SetPalEntries', 247:'CreatePalette', 313:'ResizePalette',564:'SelectPalette', 1078:'AnimatePalette', 
+	79:'StartPage', 80:'EndPage', 82:'AbortDoc', 94:'EndDoc', 333:'StartDoc', 
+	248:'CreateBrush', 322:'DibCreatePatternBrush', 505:'CreatePatternBrush',
+	762:'CreatePenIndirect',763:'CreateFontIndirect', 764:'CreateBrushIndirect', 765:'CreateBitmapIndirect', 
+	496:'DeleteObject', 301:'SelectObject', 
+	258:'SetBKMode', 259:'SetMapMode', 260:'SetROP2', 261:'SetRelabs', 262:'SetPolyfillMode', 263:'SetStretchBltMode',
+	561:'SetMapperFlags', 
+	264:'SetTextCharExtra', 302:'SetTextAlign', 513:'SetBKColor', 521:'SetTextColor', 522:'SetTextJustification', 
+	298:'InvertRegion', 299:'PaintRegion', 300:'SelectClipRegion',544:'OffsetClipRgn', 552:'FillRegion', 1065:'FrameRegion', 1791:'CreateRegion',
+	1045:'ExcludeClipRect', 1046:'IntersectClipRect',
+	523:'SetWindowOrgEx', 524:'SetWindowExtEx',525:'SetViewportOrgEx', 526:'SetViewportExtEx', 527:'OffsetWindowOrg', 529:'OffsetViewportOrgEx',
+	1040:'ScaleWindowExtEx', 1042:'ScaleViewportExtEx',
+	1049:'FloodFill', 1352:'ExtFloodFill', 1574:'Escape', 
+	531:'LineTo', 532:'MoveTo', 804:'Polygon', 805:'Polyline', 1048:'Ellipse', 1051:'Rectangle', 1055:'SetPixel', 
+	1336:'PolyPolygon', 1564:'RoundRect', 2071:'Arc', 2074:'Pie', 2096:'Chord', 
+	1313:'TextOut', 1583:'DrawText',2610:'ExtTextOut',
+	1790:'CreateBitmap', 1565:'PatBlt', 2338:'BitBlt', 2368:'DibBitblt', 2851:'StretchBlt', 2881:'DibStretchBlt', 3379:'SetDibToDev', 3907:'StretchDIBits'}
 
 def emf_gentree ():
 	#							Record/Group Name		Rec. Type		Min. Length		Template
@@ -301,25 +295,25 @@ def wmf_gentree ():
 
 	return model,view
 
-def parse_gdiplus (buf, offset, model, piter):
+def parse_gdiplus (buf, offset, page, piter):
 	try:
-	  eprid = struct.unpack('<H',buf[offset+0x10:offset+0x12])[0]
-	  eprlen = struct.unpack('<I',buf[offset+0x14:offset+0x18])[0]
-	  eprname = "%02x"%eprid
-	  if emrplus_ids.has_key(eprid):
-		eprname = emrplus_ids[eprid]
-	  iter2 = model.append(piter, None) # piter for parent/children, None for EMF+ collection
-	  model.set(iter2, 0, eprname, 1, ("emf+",eprid))
-	  model.set(iter2, 2, eprlen)
-	  model.set(iter2, 3, buf[offset+0x10:offset+0x10+eprlen], 6, model.get_string_from_iter(iter2))
-	  if emfplus.emfplus_ids.has_key(eprid):
-		pass
-	  else:
-		print "Found ",eprname,model.get_string_from_iter(iter2)  # warn on not parsed EMF+ records
-	  return eprlen
+		eprid = struct.unpack('<H',buf[offset+0x10:offset+0x12])[0]
+		eprlen = struct.unpack('<I',buf[offset+0x14:offset+0x18])[0]
+		eprname = "%02x"%eprid
+		if emrplus_ids.has_key(eprid):
+			eprname = emrplus_ids[eprid]
+		# for statistics
+		print eprname
+
+		add_pgiter (page, eprname, "emf+", eprid, buf[offset+0x10:offset+0x10+eprlen],piter)
+		if emfplus.emfplus_ids.has_key(eprid):
+			pass
+		else:
+			print "Found ",eprname,page.model.get_string_from_iter(iter2)  # warn on not parsed EMF+ records
+		return eprlen
 	except:
-	  print "Oops"
-	  return 4
+		print "Oops"
+		return 4
 
 def mf_open (buf,page,parent):
 	offset = 0
@@ -330,38 +324,23 @@ def mf_open (buf,page,parent):
 		newV = buf[offset:offset+newL]
 		rname = emr_ids[newT]
 		if newT: # == 0x46: # to play with EMF+
-		  iter1 = page.model.append(parent,None)
-		  page.model.set_value(iter1,0,rname)
-		  page.model.set_value(iter1,1,("emf",newT))
-		  page.model.set_value(iter1,2,newL)
-		  page.model.set_value(iter1,3,newV)
-		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+			add_pgiter (page, rname, "emf", newT, newV,parent)
 		if newT == 0x46: # GDIComment
-		  eptype = buf[offset+0xc:offset+0x10]
-		  if eptype == '\x45\x4d\x46\x2b':  # EMF+
-			eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
-			i = 0
-			while i < eplen - 4:
-			  i += parse_gdiplus (buf, offset+i, page.model, iter1)
+			eptype = buf[offset+0xc:offset+0x10]
+			if eptype == '\x45\x4d\x46\x2b':  # EMF+
+				eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
+				i = 0
+				while i < eplen - 4:
+					i += parse_gdiplus (buf, offset+i, page, iter1)
 		offset += newL
 		if newL == 0:
-		  offset+=8
+			offset+=8
 
 	elif page.type == 'APWMF' or page.type == 'WMF':
 		if page.type == 'APWMF':
-		  iter1 = page.model.append(parent,None)
-		  page.model.set_value(iter1,0,'AP Header')
-		  page.model.set_value(iter1,1,("wmf",1))
-		  page.model.set_value(iter1,2,22)
-		  page.model.set_value(iter1,3,buf[0:22])
-		  page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
-		  offset = 22
-		iter1 = page.model.append(parent,None)
-		page.model.set_value(iter1,0,'WMF Header')
-		page.model.set_value(iter1,1,("wmf",4))
-		page.model.set_value(iter1,2,18)
-		page.model.set_value(iter1,3,buf[offset:offset+18])
-		page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+			add_pgiter (page, "AP Header", "wmf", 1, buf[0:22],parent)
+			offset = 22
+		add_pgiter (page, "WMF Header", "wmf", 4, buf[offset:offset+18],parent)
 		offset += 18
 
 		while offset < len(buf) - 5:
@@ -369,22 +348,12 @@ def mf_open (buf,page,parent):
 			[newT] = struct.unpack('<H', buf[offset+4:offset+6])
 			newV = buf[offset:offset+newL*2]
 			rname = wmr_ids[newT]
-			iter1 = page.model.append(parent,None)
-			page.model.set_value(iter1,0,rname)
-			page.model.set_value(iter1,1,("wmf",newT))
-			page.model.set_value(iter1,2,newL*2)
-			page.model.set_value(iter1,3,newV)
-			page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+			add_pgiter (page, rname, "wmf", newT, newV,parent)
 			offset = offset + newL*2
 			if rname == 'Unknown':
-				iter1 = page.model.append(parent,None)
-				page.model.set_value(iter1,0,'Leftover')
-				page.model.set_value(iter1,1,("wmf",'-1'))
 				nlen = len(buf)-offset
 				nval = buf[offset:]
-				page.model.set_value(iter1,2,nlen)
-				page.model.set_value(iter1,3,nval)
-				page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
+				add_pgiter (page, "Leftover", "wmf", "-1", nval,parent)
 				offset += nlen
 			if rname == "EOF":
 				break

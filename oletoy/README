@@ -7,7 +7,7 @@ moved from our earlier work.
 As of now OLE Toy reads and parses:
 
 - PUB (Microsoft Publisher ver 98/2k and 2002 to 2010)
-- VSD, VSS (Microsoft Visio, ver 6,11; partially versions 4 and 5)
+- VSD, VSS (Microsoft Visio, ver 1-11)
 - DOC (Microsoft Word)
 - XLS (Microsoft Excel)
 - PPT (Microsoft PowerPoint)
@@ -15,7 +15,7 @@ As of now OLE Toy reads and parses:
 - VBA (Microsoft Office)
 - RTF (Microsoft Office)
 - CLP (Microsoft clipboard)
-- FH (Macromedia Freehand ver.10 and 11)
+- FH (Macromedia Freehand ver.7 to 11)
 - QPW (QuattroPro spreadsheets)
 - SVM (StarOffice)
 - PPP (old PagePlus files, BIPU support)
@@ -28,6 +28,9 @@ As of now OLE Toy reads and parses:
 - ICC (colour profiles)
 - EMF, EMF+, WMF (Microsoft)
 - REX, RX2 (Propellerheads ReCycle)
+- XML
+- CDX (CambridgeSoft ChemDraw, BIPU support)
+
 
 The scripts depend on libgsf. You can find libgsf source code here:
 http://ftp.gnome.org/pub/GNOME/sources/libgsf/
@@ -39,7 +42,7 @@ To start OLE Toy just run:
 
 $ ./view.py
 
-All commercial software mentioned in this file and elsewhere in source code is 
+All commercial software mentioned in this file and elsewhere in source code are 
 trademarks of respective vendors. Re-lab team is not affiliated to those vendors 
 in any way. All work on support for those file formats is a result of 
 clean-room reverse-engineering. No DLL and EXE files have been looked at.

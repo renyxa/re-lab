@@ -306,7 +306,10 @@ def open (page,buf,parent):
 			parent = add_pgiter(page,"%s ID: %04x"%(tname,rid),"chdraw",rid,"",parent)
 			off += 4
 		elif tag == 0:
-			parent = page.model.iter_parent(parent)
+			try:
+				parent = page.model.iter_parent(parent)
+			except:
+				pass
 		else:
 			rlen = struct.unpack('<H', buf[off:off+2])[0]
 			off += 2

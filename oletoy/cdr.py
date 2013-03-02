@@ -750,7 +750,10 @@ def bmpf (hd,size,data):
 	da.set_size_request(imgh,imgw)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
-	da.connect('expose_event', disp_expose,pixbuf)
+	hd.dispscale = 1
+	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+	da.connect('expose_event', hd.disp_expose,pixbuf)
+	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	ctx = hd.da.window.cairo_create()
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()
@@ -819,6 +822,7 @@ def bmp (hd,size,data):
 	pixbufloader = gtk.gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
+	hd.dispscale = 1
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
@@ -829,7 +833,9 @@ def bmp (hd,size,data):
 	da.set_size_request(imgh,imgw)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
-	da.connect('expose_event', disp_expose,pixbuf)
+	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+	da.connect('expose_event', hd.disp_expose,pixbuf)
+	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	ctx = hd.da.window.cairo_create()
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()
@@ -1635,7 +1641,7 @@ def disp (hd,size,data,page):
 	scrolled = gtk.ScrolledWindow()
 	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 	scrolled.add_with_viewport(da)
-	da.set_size_request(imgw,imgh)
+	da.set_size_request(imgh,imgw)
 	hd.da = scrolled
 	hd.hbox0.pack_start(hd.da)
 	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)

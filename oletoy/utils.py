@@ -115,4 +115,4 @@ def disp_expose (da,event,pixbuf,scale=1):
 	ctx.scale(scale,scale)
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()
-	ctx.stroke()
+#	ctx.stroke()

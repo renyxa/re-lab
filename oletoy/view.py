@@ -795,10 +795,10 @@ class ApplicationMainWindow(gtk.Window):
 				else:
 					if '@' in goto:
 						pos = goto.find("@")
-						num = int(goto[5:pos])
+						num = int(goto[5:pos],16)
 						off = int(goto[pos+1:],16)
 					else:
-						num = int(goto[5:])
+						num = int(goto[5:],16)
 						off = 0
 					treeSelection = self.das[pn].view.get_selection()
 					model, niter = treeSelection.get_selected()

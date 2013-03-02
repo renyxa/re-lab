@@ -32,7 +32,7 @@ class hexdump:
 		self.version = None # to support vsdchunks for different versions
 		self.width = 0
 		self.height = 0
-		self.dispscale = 1
+		self.dispscale = 1.
 
 		self.hv = hv2.HexView()
 		self.vpaned.add2(self.hv.table)
@@ -53,6 +53,6 @@ class hexdump:
 				self.da.hide()
 				self.da.show()
 			if event.button == 3:
-				self.dispscale /= 1.4
+				self.dispscale *= .7
 				self.da.hide()
 				self.da.show()
