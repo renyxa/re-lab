@@ -968,7 +968,7 @@ def loda_name(hd,data,offset,l_type,length):
 		layrname = unicode(data[offset:],'utf-16')
 	else:
 		layrname = data[offset:]
-	add_iter (hd,"[03e8] Layer name",layrname,offset,len(data[offset:]),"txt")
+	add_iter (hd,"[03e8] Name",layrname,offset,length-offset,"txt")
 
 def loda_polygon (hd,data,offset,l_type,length):
 	num = struct.unpack('<L', data[offset+4:offset+8])[0]
@@ -1150,6 +1150,21 @@ def loda_coords_poly (hd,data,offset,l_type):
 	add_iter (hd,"[001e] var1/var2 ?","%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2),offset+4+pn*9,8,"txt")
 
 
+def loda_coords_0x6(hd,data,offset,l_type,length):
+	off = offset
+	w = round(struct.unpack('<l', data[off+4:off+8])[0]/10000.,2)
+	h = round(struct.unpack('<l', data[off+8:off+12])[0]/10000.,2)
+	add_iter (hd,"[001e] ??","",off,4,"<I")
+	add_iter (hd,"[001e] W/H","%.2f/%.2f mm"%(w,h),off+4,8,"<ll")
+	add_iter (hd,"[001e] ??","",off+12,length-12,"txt")
+	
+def loda_coords_0xa(hd,data,offset,l_type,length):
+	off = offset
+	w = round(struct.unpack('<l', data[off:off+4])[0]/10000.,2)
+	h = round(struct.unpack('<l', data[off+4:off+8])[0]/10000.,2)
+	add_iter (hd,"[001e] W/H","%.2f/%.2f mm"%(w,h),off,8,"<ll")
+	add_iter (hd,"[001e] ??","",off+8,length-8,"txt")
+
 def loda_coords_0x25(hd,data,offset,l_type):
 	n1 = struct.unpack("<H",data[offset:offset+2])[0]
 	n2 = struct.unpack("<H",data[offset+2:offset+4])[0]
@@ -1292,6 +1307,11 @@ def loda_coords (hd,data,offset,l_type,length):
 			loda_coords_0x25(hd,data,offset,l_type)
 		elif l_type == 5:
 			loda_coords5 (hd,data,offset,l_type)
+		elif l_type == 0xa:
+			loda_coords_0xa(hd,data,offset,l_type,length)
+		elif l_type == 0x6:
+			loda_coords_0x6(hd,data,offset,l_type,length)
+
 	# insert calls to specific coords parsing here
 		else:
 			add_iter (hd,"[001e]","???",offset,length,"txt")
