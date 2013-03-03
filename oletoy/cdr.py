@@ -1451,6 +1451,7 @@ loda_types = {
 	4:"Artistic Text",
 	5:"Bitmap",
 	6:"Paragraph Text",
+	0xa:"OLE",
 	0xb:"Grid",
 	0xc:"Guides",
 	0x10:"Style", #?? ver6-
