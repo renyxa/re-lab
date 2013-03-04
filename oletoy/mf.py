@@ -323,8 +323,8 @@ def mf_open (buf,page,parent):
 		newL = struct.unpack('<I', buf[offset+4:offset+8])[0]
 		newV = buf[offset:offset+newL]
 		rname = emr_ids[newT]
-		if newT: # == 0x46: # to play with EMF+
-			add_pgiter (page, rname, "emf", newT, newV,parent)
+		if newT:
+			iter1 = add_pgiter (page, rname, "emf", newT, newV,parent)
 		if newT == 0x46: # GDIComment
 			eptype = buf[offset+0xc:offset+0x10]
 			if eptype == '\x45\x4d\x46\x2b':  # EMF+
