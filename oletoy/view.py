@@ -732,7 +732,7 @@ class ApplicationMainWindow(gtk.Window):
 			if fname:
 				cdr.save(self.das[pn],fname)
 		else:
-			self.active_dump(self,action)
+			self.activate_dump(self,action)
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
