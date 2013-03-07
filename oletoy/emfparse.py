@@ -128,7 +128,7 @@ def PolyPolyline (hd, size, value):
 	hd.hdmodel.set (iter, 0, "Count", 1, count,2,28,3,4,4,"<i")
 	for i in range(numpoly):
 		iter = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter, 0, "PolyPnt %d"%i, 1, struct.unpack("<I",value)[32+i*4:36+i*4][0],2,32+i*4,3,4,4,"<I")
+		hd.hdmodel.set (iter, 0, "PolyPnt %d"%i, 1, struct.unpack("<I",value[32+i*4:36+i*4])[0],2,32+i*4,3,4,4,"<I")
 	for i in range(count):
 		PointL (hd, value, i*8+32+numpoly*4, str(i))
 
