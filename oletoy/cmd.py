@@ -15,13 +15,103 @@
 #
 
 import sys,struct
-import tree,gtk,gobject,zlib
+import tree,gtk,gobject,zlib,gtksourceview2
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw
 from utils import *
+from os.path import expanduser
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
 					0x2af8:"Polygon",0x3e8:"Name",0x2efe:"Rotation",0x7d0:"Palette",
 					0x1f40:"Lens",0x1f45:"Container"}
+
+class CliWindow(gtk.Window):
+	def __init__(self, app):
+		gtk.Window.__init__(self)
+		self.app = app
+		self.fname = ""
+		open_btn = gtk.Button("Open")
+		save_btn = gtk.Button("Save")
+		run_btn = gtk.Button("Run")
+		self.tb = gtksourceview2.Buffer()
+		tv = gtksourceview2.View(self.tb)
+		lm = gtksourceview2.LanguageManager()
+		lp = lm.get_language("python")
+		self.tb.set_highlight_syntax(True)
+		self.tb.set_language(lp)
+		tv.set_show_line_marks(True)
+		tv.set_show_line_numbers(True)
+		tv.set_draw_spaces(True)
+		tv.set_insert_spaces_instead_of_tabs(True)
+		tv.set_tab_width(4)
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(660,400)
+		s.add_with_viewport(tv)
+		s.show_all()
+		hbox = gtk.HBox()
+
+		hbox.pack_start(open_btn,0,0,0)
+		hbox.pack_start(save_btn,0,0,0)
+		hbox.pack_end(run_btn,0,0,0)
+		
+		vbox = gtk.VBox()
+		hbox2 = gtk.HBox()
+		hbox2.pack_start(s)
+		vbox.pack_start(hbox2)
+		vbox.pack_start(hbox,0,0,0)
+
+		runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		runwin.set_resizable(True)
+		runwin.set_border_width(2)
+		runwin.add(vbox)
+		runwin.set_title("OleToy CLI")
+		runwin.connect ("destroy", self.del_runwin)
+		run_btn.connect("button-press-event",self.cli_on_run,self.tb)
+		open_btn.connect("button-press-event",self.cli_on_open,self.tb)
+		save_btn.connect("button-press-event",self.cli_on_save,self.tb)
+		runwin.show_all()
+		self.app.run_win = runwin
+
+	def del_runwin (self, action):
+		self.app.run_win = None
+
+	def cli_on_open (self,wg,event,tb):
+		home = expanduser("~")
+		self.fname = self.app.file_open('Open',home+"/.oletoy")
+		if self.fname:
+			manager = gtk.recent_manager_get_default()
+			manager.add_item(self.fname)
+			offset = 0
+			f = open(self.fname)
+			buf = f.read()
+			if buf:
+				self.tb.set_text(buf)
+			f.close()
+
+	def cli_on_save (self,wg,event,tb):
+		home = expanduser("~")
+		self.fname = self.app.file_open('Save',home+"/.oletoy",self.fname)
+		if self.fname:
+			txt = self.tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+			f = open(self.fname,'w')
+			f.write(txt)
+			f.close()
+			manager = gtk.recent_manager_get_default()
+			manager.add_item(self.fname)
+
+	def cli_on_run (self,wg,event,tb):
+		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+		pn = self.app.notebook.get_current_page()
+		if pn != -1:
+			rpage = self.app.das[pn]
+			treeSelection = self.app.das[pn].view.get_selection()
+			model, rparent = treeSelection.get_selected()
+			if rparent:
+				rbuf = model.get_value(rparent,3)
+			else:
+				rbuf = ""
+			exec(txt)
+
 
 def arg_conv (ctype,carg):
 	data = ''

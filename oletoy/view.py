@@ -16,7 +16,7 @@
 
 
 import sys,struct
-import gobject,gtksourceview2
+import gobject
 import gtk, pango
 import tree
 import hexdump
@@ -66,84 +66,6 @@ def register_stock_icons():
 	# Add our custom icon factory to the list of defaults
 	factory = gtk.IconFactory()
 	factory.add_default()
-
-class CliWindow(gtk.Window):
-	def __init__(self, app):
-		gtk.Window.__init__(self)
-		self.app = app
-		open_btn = gtk.Button("Open")
-		save_btn = gtk.Button("Save")
-		run_btn = gtk.Button("Run")
-		self.tb = gtksourceview2.Buffer()
-		tv = gtksourceview2.View(self.tb)
-		lm = gtksourceview2.LanguageManager()
-		lp = lm.get_language("python")
-		self.tb.set_highlight_syntax(True)
-		self.tb.set_language(lp)
-		tv.set_show_line_marks(True)
-		tv.set_show_line_numbers(True)
-		tv.set_draw_spaces(True)
-		tv.set_insert_spaces_instead_of_tabs(True)
-		tv.set_tab_width(4)
-		s = gtk.ScrolledWindow()
-		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-		s.set_size_request(660,400)
-		s.add_with_viewport(tv)
-		s.show_all()
-		hbox = gtk.HBox()
-
-		hbox.pack_start(open_btn,0,0,0)
-		hbox.pack_start(save_btn,0,0,0)
-		hbox.pack_end(run_btn,0,0,0)
-		
-		vbox = gtk.VBox()
-		hbox2 = gtk.HBox()
-		hbox2.pack_start(s)
-		vbox.pack_start(hbox2)
-		vbox.pack_start(hbox,0,0,0)
-
-		runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-		runwin.set_resizable(True)
-		runwin.set_border_width(2)
-		runwin.add(vbox)
-		runwin.set_title("OleToy CLI")
-		runwin.connect ("destroy", self.del_runwin)
-		run_btn.connect("button-press-event",self.cli_on_run,self.tb)
-		open_btn.connect("button-press-event",self.cli_on_open,self.tb)
-		save_btn.connect("button-press-event",self.cli_on_save,self.tb)
-		runwin.show_all()
-		self.app.run_win = runwin
-
-	def del_runwin (self, action):
-		self.app.run_win = None
-
-	def cli_on_open (self,wg,event,tb):
-		fname = self.app.file_open()
-#		pos = fname.rfind('/')
-#		if pos !=-1:
-#			pname = self.fname[pos+1:]
-		offset = 0
-		f = open(fname)
-		buf = f.read()
-		if buf:
-			self.tb.set_text(buf)
-
-
-	def cli_on_save (self,wg,event,tb):
-		print "Not implemented yet"
-
-	def cli_on_run (self,wg,event,tb):
-		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
-		pn = self.app.notebook.get_current_page()
-		if pn != -1:
-			rpage = self.app.das[pn]
-			treeSelection = self.app.das[pn].view.get_selection()
-			model, rparent = treeSelection.get_selected()
-			if rparent:
-				rbuf = model.get_value(rparent,3)
-			else:
-				rbuf = ""
-			exec(txt)
 
 
 class ApplicationMainWindow(gtk.Window):
@@ -415,7 +337,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.run_win.show_all()
 			self.run_win.present()
 		else:
-			self.run_win = CliWindow(self)
+			self.run_win = cmd.CliWindow(self)
 
 	def activate_options (self, action):
 		if self.options_win != None:
@@ -1322,8 +1244,10 @@ class ApplicationMainWindow(gtk.Window):
 			self.fname = ''
 		else:
 			fname = self.file_open()
-		print fname
 		if fname:
+			print fname
+			manager = gtk.recent_manager_get_default()
+			manager.add_item(fname)
 			doc = App.Page()
 			doc.fname = fname
 			doc.parent = self
@@ -1364,11 +1288,13 @@ class ApplicationMainWindow(gtk.Window):
 				print err
 		return
 
-	def file_open (self,title='Open',parent=None, dirname=None, fname=None):
+	def file_open (self,title='Open',dirname="", fname=""):
 		if title == 'Save':
 			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 		else:
-			dlg = gtk.FileChooserDialog('Open...', parent, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg = gtk.FileChooserDialog('Open...', None, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+		dlg.set_filename(fname)
+		dlg.set_current_folder(dirname)
 		dlg.set_local_only(True)
 		resp = dlg.run()
 		fname = dlg.get_filename()
@@ -1376,6 +1302,7 @@ class ApplicationMainWindow(gtk.Window):
 		if resp == gtk.RESPONSE_CANCEL:
 			return None
 		return fname
+
 
 def main():
 	ApplicationMainWindow()
