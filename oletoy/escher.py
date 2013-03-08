@@ -303,50 +303,50 @@ odraw_bliptypes = {
 	}
 
 def FDGGBlock (hd, size, value):
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "spidMax", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "spidMax", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
 	cidcl = struct.unpack("<I",value[12:16])[0]-1
-	hd.hdmodel.set (iter1, 0, "cidcl", 1, cidcl ,2,12,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "cspSaved", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "cdgSaved", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
+	hd.model.set (iter1, 0, "cidcl", 1, cidcl ,2,12,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "cspSaved", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "cdgSaved", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
 	off = 24
 	for i in range(cidcl):
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "dgid", 1, struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "cspidCur", 1, struct.unpack("<I",value[off+4:off+8])[0],2,off+4,3,4,4,"<I")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "dgid", 1, struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "cspidCur", 1, struct.unpack("<I",value[off+4:off+8])[0],2,off+4,3,4,4,"<I")
 		off += 8
 
 def FDG (hd, size, value):
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "csp", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "spidCur", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "csp", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "spidCur", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
 
 def FSPGR (hd, size, value):
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "xLeft", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "yTop", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "xRight", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "yBottom", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "xLeft", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "yTop", 1, struct.unpack("<I",value[12:16])[0],2,12,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "xRight", 1, struct.unpack("<I",value[16:20])[0],2,16,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "yBottom", 1, struct.unpack("<I",value[20:24])[0],2,20,3,4,4,"<I")
 
 def FSP (hd, size, value):
-	iter1 = hd.hdmodel.append(None, None)
+	iter1 = hd.model.append(None, None)
 	shtype = struct.unpack("<H",value[0:2])[0]>>4
 	if msospt.has_key(shtype):
 		ntype = "%s (%02x)"%(msospt[shtype],shtype)
 	else:
 		ntype = "%02x"%shtype
-	hd.hdmodel.set (iter1, 0, "Shape", 1, ntype,2,0,3,2,4,"<H")
+	hd.model.set (iter1, 0, "Shape", 1, ntype,2,0,3,2,4,"<H")
 
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "spid", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "spid", 1, struct.unpack("<I",value[8:12])[0],2,8,3,4,4,"<I")
 	flags = struct.unpack("<I",value[12:16])[0]
 	fl = {'group':flags&1,'child':flags&2,'patriarch':flags&4,'Deleted':flags&8,'OleShape':flags&16,
 		'HaveMaster':flags&32,'FlipH':flags&64,'FlipV':flags&128,'Connector':flags&256,
@@ -355,8 +355,8 @@ def FSP (hd, size, value):
 	for i in fl.items():
 		if i[1] != 0:
 			flagstr += i[0] + " "
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "flags", 1, flagstr,2,12,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "flags", 1, flagstr,2,12,3,4,4,"<I")
 
 
 
@@ -469,7 +469,7 @@ def FOPT (hd, size, data):
 	num = struct.unpack("<H",data[:2])[0]/16
 	off = 8
 	for i in range(num):
-		iter1 = hd.hdmodel.append(None, None)
+		iter1 = hd.model.append(None, None)
 		id = struct.unpack("<H",data[off:off+2])[0]
 		opid = id&0x3fff
 		fbid = (id&0x4000)/0x4000
@@ -486,7 +486,7 @@ def FOPT (hd, size, data):
 			name += " [CMPLX]"
 			if value > 0:
 				fcomplex.append((opid,value))
-		hd.hdmodel.set (iter1, 0, name, 1, value,2,off+2,3,4,4,"<i")
+		hd.model.set (iter1, 0, name, 1, value,2,off+2,3,4,4,"<i")
 		off +=6
 
 	for i in range(len(fcomplex)):
@@ -505,18 +505,18 @@ clanchor = {1:"Xs",2:"Ys",3:"Xe",4:"Ye"}
 def ClientAnchor (hd, size, value):
 	off = 12
 	while off < size:
-		iter1 = hd.hdmodel.append(None, None)
+		iter1 = hd.model.append(None, None)
 		id = ord(value[off])
 		ntype = ord(value[off+1])
 		val = struct.unpack("<i",value[off+2:off+6])[0]/12700
 		name = clanchor[id]
-		hd.hdmodel.set (iter1, 0, name, 1,"%2d pt"%val ,2,off+2,3,4,4,"<i")
+		hd.model.set (iter1, 0, name, 1,"%2d pt"%val ,2,off+2,3,4,4,"<i")
 		off +=6
 
 def ClientData (hd, size, value):
 	off = 14 # assume it only has ShapeID
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "ShapeID", 1, "%2x"%struct.unpack("<I",value[off:off+4])[0],2,off,3,4,4,"<I")
 
 
 def Blip(hd,size,value,off=0):

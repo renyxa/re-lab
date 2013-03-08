@@ -336,11 +336,11 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 
 def cfb_hdr (hd,data):
 	off = 0
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "HdrSig",2,off,3,8,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "HdrSig",2,off,3,8,4,"txt")
 	off += 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "HdrCLSID",2,off,3,16,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "HdrCLSID",2,off,3,16,4,"txt")
 	off += 16
 	add_iter (hd,"MinVer",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
@@ -352,8 +352,8 @@ def cfb_hdr (hd,data):
 	off += 2
 	add_iter (hd,"Mini Sec. Shift",struct.unpack("<H",data[off:off+2])[0],off,2,"<H")
 	off += 2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Reserved",2,off,3,6,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "Reserved",2,off,3,6,4,"txt")
 	off += 6
 	add_iter (hd,"# Of Dir Sec.",struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 	off += 4
@@ -381,8 +381,8 @@ def cfb_dir (hd,data):
 	off = 0x40
 	namelen = struct.unpack("<H",data[off:off+2])[0]
 	name = unicode(data[0:namelen],"utf-16")
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Dir Entry Name",1, name, 2,0,3,0x40,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "Dir Entry Name",1, name, 2,0,3,0x40,4,"txt")
 	add_iter (hd,"NameLen",namelen,off,2,"<H")
 	off += 2
 	objtype = ord(data[off])
@@ -403,17 +403,17 @@ def cfb_dir (hd,data):
 	child = struct.unpack("<i",data[off:off+4])[0]
 	add_iter (hd,"Child ID",child,off,4,"<i")
 	off += 4
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "CLSID",2,off,3,0x10,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "CLSID",2,off,3,0x10,4,"txt")
 	off += 16
 	stbits = struct.unpack("<I",data[off:off+4])[0]
 	add_iter (hd,"State Bits",stbits,off,4,"<I")
 	off += 4
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Cr. Time",2,off,3,8,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "Cr. Time",2,off,3,8,4,"txt")
 	off += 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter, 0, "Mod. Time",2,off,3,8,4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set (iter, 0, "Mod. Time",2,off,3,8,4,"txt")
 	off += 8
 	startloc = struct.unpack("<I",data[off:off+4])[0]
 	add_iter (hd,"Start Sec Location",startloc,off,4,"<I")

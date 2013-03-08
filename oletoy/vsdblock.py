@@ -19,20 +19,20 @@ import struct
 
 def sl_8bytes(hd, data, shift, offset, blk_off):
 	value = struct.unpack("<d",data[offset+blk_off:offset+blk_off+8])[0]
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tieee754", 1, value,2,shift+offset+blk_off,3,8,4,"<d")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tieee754", 1, value,2,shift+offset+blk_off,3,8,4,"<d")
 	return blk_off+8
 
 def sl_2bytes(hd, data, shift, offset, blk_off):
 	value = struct.unpack("<h",data[offset+blk_off:offset+blk_off+2])[0]
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tword", 1, value,2,shift+offset+blk_off,3,2,4,"<h")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tword", 1, value,2,shift+offset+blk_off,3,2,4,"<h")
 	return blk_off+2
 
 def sl_1byte(hd, data, shift, offset, blk_off):
 	value = ord(data[offset+blk_off])
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tbyte", 1, value,2,shift+offset+blk_off,3,1,4,"<b")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tbyte", 1, value,2,shift+offset+blk_off,3,1,4,"<b")
 	return blk_off+1
 
 names75 = {0x00:"PinX",0x01:"PinY",0x02:"Width",0x03:"Height",
@@ -260,8 +260,8 @@ def sl_funcs7b(hd, data, shift, offset, blk_off):
 		nm_str += "("+fnames7ab[fid]+")" 
 	else:
 		nm_str += "%02x"%fid
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tfunc7b", 1, nm_str,2,shift+offset+blk_off,3,8,4,"<d")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tfunc7b", 1, nm_str,2,shift+offset+blk_off,3,8,4,"<d")
 	return blk_off+8
 
 def sl_funcs7a(hd, data, shift, offset, blk_off):
@@ -270,8 +270,8 @@ def sl_funcs7a(hd, data, shift, offset, blk_off):
 		nm_str = fnames7ab[fid]
 	else:
 		nm_str = "%02x"%fid
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tfunc7a", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tfunc7a", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
 	return blk_off+4
 
 def sl_str(hd, data, shift, offset, blk_off):
@@ -282,8 +282,8 @@ def sl_str(hd, data, shift, offset, blk_off):
 	else:
 		txt = data[offset+blk_off+1:offset+blk_off+2+slen]
 		tlen = slen+2
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tstring", 1, txt,2,shift+offset+blk_off,3,tlen,4,"txt")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tstring", 1, txt,2,shift+offset+blk_off,3,tlen,4,"txt")
 	return blk_off+tlen
 
 sl_opnames = {0x3:'+', 0x4:'-', 0x5:'*', 0x6:'/', 0x7:'^', 0x8:'&', 0x9:'<',
@@ -296,14 +296,14 @@ def sl_ops(hd, data, shift, offset, blk_off):
 		op_txt = sl_opnames[op]
 	else:
 		op_txt = "%02x"%op
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tops", 1, op_txt,2,shift+offset+blk_off,3,1,4,"<b")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tops", 1, op_txt,2,shift+offset+blk_off,3,1,4,"<b")
 	return blk_off+1
 
 def sl_names70 (hd, data, shift, offset, blk_off):
 	# FIXME, just skipping at the moment
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tnames70", 1, "",2,shift+offset+blk_off,3,7,4,"txt")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tnames70", 1, "",2,shift+offset+blk_off,3,7,4,"txt")
 	if hd.version < 6:
 		return blk_off+7
 	return blk_off+11
@@ -326,8 +326,8 @@ def sl_names72 (hd, data, shift, offset, blk_off):
 		var_name = sl_vars72[var]
 	else:
 		var_name = "Var%02x_"%var
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tnames72", 1, obj_name+"."+var_name+"%d"%idx,2,shift+offset+blk_off,3,7,4,"txt")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tnames72", 1, obj_name+"."+var_name+"%d"%idx,2,shift+offset+blk_off,3,7,4,"txt")
 	return blk_off+7
 
 def sl_names74 (hd, data, shift, offset, blk_off):
@@ -337,8 +337,8 @@ def sl_names74 (hd, data, shift, offset, blk_off):
 		var_name = names75[var]
 	else:
 		var_name = "Var%02x"%var
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tnames74", 1, "Sheet.%d!"%idx+var_name,2,shift+offset+blk_off,3,8,4,"txt")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tnames74", 1, "Sheet.%d!"%idx+var_name,2,shift+offset+blk_off,3,8,4,"txt")
 	return blk_off+8
 
 def sl_names75(hd, data, shift, offset, blk_off):
@@ -346,14 +346,14 @@ def sl_names75(hd, data, shift, offset, blk_off):
 	nm_str = "%02x"%value
 	if names75.has_key(value):
 		nm_str = names75[value]
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tname75", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tname75", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
 	return blk_off+4
 
 def sl_names76 (hd, data, shift, offset, blk_off):
 	# FIXME, just skipping at the moment
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tnames76", 1, "",2,shift+offset+blk_off,3,17,4,"txt")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tnames76", 1, "",2,shift+offset+blk_off,3,17,4,"txt")
 	return blk_off+17
 
 sl_logops = {0xa0:'AND()',0xa1:'OR()',0xa2:'IF()'}
@@ -366,34 +366,34 @@ def sl_logfunc (hd, data, shift, offset, blk_off):
 	else:
 		op_txt = "%02x"%op
 	len = struct.unpack("<I",data[offset+blk_off+1:offset+blk_off+5])[0]
-	iter1 = hd.hdmodel.append(None, None)
-	hd.hdmodel.set (iter1, 0, "\tlog.func", 1, op_txt,2,shift+offset+blk_off+1,3,len-1,4,"txt")
+	iter1 = hd.model.append(None, None)
+	hd.model.set (iter1, 0, "\tlog.func", 1, op_txt,2,shift+offset+blk_off+1,3,len-1,4,"txt")
 	return blk_off+len
 
 def sl_nurbs (hd, data, shift, offset, blk_off):
 	# the same as "NURBS Data (type 0x82)"
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "\tknotLast", 1, "%.2f"%struct.unpack("<d",data[offset+blk_off:offset+blk_off+8]),2,shift+offset+blk_off,3,8,4,"<d")
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "\tdegree", 1, "%.2f"%struct.unpack("<h",data[offset+blk_off+8:offset+blk_off+10]),2,shift+offset+blk_off+8,3,2,4,"<h")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "\tknotLast", 1, "%.2f"%struct.unpack("<d",data[offset+blk_off:offset+blk_off+8]),2,shift+offset+blk_off,3,8,4,"<d")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "\tdegree", 1, "%.2f"%struct.unpack("<h",data[offset+blk_off+8:offset+blk_off+10]),2,shift+offset+blk_off+8,3,2,4,"<h")
 		xType = ord(data[offset+blk_off+10])
 		yType = ord(data[offset+blk_off+11])
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "\txType", 1, xType,2,shift+offset+blk_off+10,3,1,4,"<b")
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "\tyType", 1, yType,2,shift+offset+blk_off+11,3,1,4,"<b")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "\txType", 1, xType,2,shift+offset+blk_off+10,3,1,4,"<b")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "\tyType", 1, yType,2,shift+offset+blk_off+11,3,1,4,"<b")
 		[num_pts] = struct.unpack("<I",data[offset+blk_off+12:offset+blk_off+16])
-		iter1 = hd.hdmodel.append(None, None)
-		hd.hdmodel.set (iter1, 0, "\t# of pts", 1, num_pts,2,shift+offset+blk_off+12,3,4,4,"<I")
+		iter1 = hd.model.append(None, None)
+		hd.model.set (iter1, 0, "\t# of pts", 1, num_pts,2,shift+offset+blk_off+12,3,4,4,"<I")
 		for i in range(num_pts):
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "--- x%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+16+i*32:offset+blk_off+24+i*32]),2,shift+offset+blk_off+16+i*32,3,8,4,"<d")
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\t y%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+24+i*32:offset+blk_off+32+i*32]),2,shift+offset+blk_off+24+i*32,3,8,4,"<d")
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\t knot%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+32+i*32:offset+blk_off+40+i*32]),2,shift+offset+blk_off+32+i*32,3,8,4,"<d")
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\t weight%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+40+i*32:offset+blk_off+48+i*32]),2,shift+offset+blk_off+40+i*32,3,8,4,"<d")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "--- x%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+16+i*32:offset+blk_off+24+i*32]),2,shift+offset+blk_off+16+i*32,3,8,4,"<d")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\t y%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+24+i*32:offset+blk_off+32+i*32]),2,shift+offset+blk_off+24+i*32,3,8,4,"<d")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\t knot%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+32+i*32:offset+blk_off+40+i*32]),2,shift+offset+blk_off+32+i*32,3,8,4,"<d")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\t weight%d"%(i+1), 1, "%.2f"%struct.unpack("<d",data[offset+blk_off+40+i*32:offset+blk_off+48+i*32]),2,shift+offset+blk_off+40+i*32,3,8,4,"<d")
 		return blk_off + 40 + num_pts*32
 
 
@@ -445,17 +445,17 @@ def parse (hd, size, value,shift):
 		if blk_len == 0:
 			blk_len = 4  # 4 bytes "trailer" at the end of chunk
 		else:
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "Blk #%d Length"%blk_id, 1, blk_len,2,shift+offset,3,4,4,"<d")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "Blk #%d Length"%blk_id, 1, blk_len,2,shift+offset,3,4,4,"<d")
 			blk_id += 1
 			blk_off = 4
 			blk_type = ord(data[offset+blk_off])
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\tBlk Type", 1, blk_type,2,shift+offset+blk_off,3,1,4,"<b")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\tBlk Type", 1, blk_type,2,shift+offset+blk_off,3,1,4,"<b")
 			blk_off = 5
 			blk_idx = ord(data[offset+blk_off]) # which cell in the shapesheet this formula is for
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\tBlk IDX", 1, blk_idx,2,shift+offset+blk_off,3,1,4,"<b")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\tBlk IDX", 1, blk_idx,2,shift+offset+blk_off,3,1,4,"<b")
 			blk_off = 6
 			if blk_type == 2:
 				while blk_off < blk_len:
@@ -473,17 +473,17 @@ def parse5 (hd, size, value, shift):
 		if blk_len == 0:
 			blk_len = 2  # 4 bytes "trailer" at the end of chunk
 		else:
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "Blk #%d Length"%blk_id, 1, blk_len,2,shift+offset,3,2,4,"<H")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "Blk #%d Length"%blk_id, 1, blk_len,2,shift+offset,3,2,4,"<H")
 			blk_id += 1
 			blk_off = 2
 			blk_type = ord(data[offset+blk_off])
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\tBlk Type", 1, blk_type,2,shift+offset+blk_off,3,1,4,"<b")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\tBlk Type", 1, blk_type,2,shift+offset+blk_off,3,1,4,"<b")
 			blk_off = 3
 			blk_idx = ord(data[offset+blk_off]) # which cell in the shapesheet this formula is for
-			iter1 = hd.hdmodel.append(None, None)
-			hd.hdmodel.set (iter1, 0, "\tBlk IDX", 1, blk_idx,2,shift+offset+blk_off,3,1,4,"<b")
+			iter1 = hd.model.append(None, None)
+			hd.model.set (iter1, 0, "\tBlk IDX", 1, blk_idx,2,shift+offset+blk_off,3,1,4,"<b")
 			blk_off = 4
 			if blk_type == 2:
 				while blk_off < blk_len:

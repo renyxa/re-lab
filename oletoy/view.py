@@ -1112,11 +1112,11 @@ class ApplicationMainWindow(gtk.Window):
 		model, iter1 = treeSelection.get_selected()
 		hd = self.das[pn].hd
 		value = model.get_value(iter1,3) 
-		hditer = hd.hdmodel.get_iter(path)
+		hditer = hd.model.get_iter(path)
 
-		offset = hd.hdmodel.get_value(hditer,2)
-		size = hd.hdmodel.get_value(hditer,3)
-		fmt = hd.hdmodel.get_value(hditer,4)
+		offset = hd.model.get_value(hditer,2)
+		size = hd.model.get_value(hditer,3)
+		fmt = hd.model.get_value(hditer,4)
 		#print 'Format: ', fmt
 
 		if fmt == "clr":
@@ -1187,7 +1187,7 @@ class ApplicationMainWindow(gtk.Window):
 			hd.hv.init_lines()
 			hd.hv.expose(None,None)
 
-			hd.hdmodel.clear()
+			hd.model.clear()
 
 			if hd.da != None:
 				hd.da.destroy()

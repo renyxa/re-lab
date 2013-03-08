@@ -23,7 +23,7 @@ import utils
 class hexdump:
 	def __init__(self):
 		self.vpaned = gtk.VPaned()
-		self.hdmodel, self.hdview, self.hdscrolled, self.hdrend = tree.make_view2()
+		self.model, self.hdview, self.hdscrolled, self.hdrend = tree.make_view2()
 		self.hbox0 =gtk.HBox()
 		self.da = None
 		self.hbox0.pack_start(self.hdscrolled)

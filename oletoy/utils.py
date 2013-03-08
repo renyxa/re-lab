@@ -25,12 +25,24 @@ ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	255:"OEM Latin I"}
 
 def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,tip=None):
-	iter = hd.hdmodel.append(parent, None)
-	hd.hdmodel.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
+	iter = hd.model.append(parent, None)
+	hd.model.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
 	return iter
 
+# New version of "add_iter".
+# Reduce redundancy in arguments passed to the function.
+# For non-standard formats will use "mystruct" to jump to custom functions
+# Will combine add_iter and add_pgiter
+def add_hditer (hd,name,data,fmt,off,parent=None,tip=None):
+	try:
+		fmtlen = struct.calcsize(fmt)
+		iter = hd.model.append(parent, None)
+	except:
+		mystruct[fmt[0]](data,off)
+	
+
 def add_tip (hd,iter,text):
-	hd.hdmodel.set (iter, 8, text)
+	hd.model.set (iter, 8, text)
 
 def pgiter(page, name, ftype, stype, data, iter1):
 	page.model.set_value(iter1,0,name)
@@ -116,3 +128,5 @@ def disp_expose (da,event,pixbuf,scale=1):
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()
 #	ctx.stroke()
+
+#mystruct = {"txt":txtstruct}

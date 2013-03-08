@@ -62,8 +62,8 @@ rec_ids = {1:"SysKind",2:"Lcid",3:"CodePage",4:"Name",5:"DocString",
 	}
 
 def vba_src (hd,data):
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 1, data,2,0,3,len(data),4,"txt")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 1, data,2,0,3,len(data),4,"txt")
 
 def vba_dir (hd,data):
 	off = 0
@@ -76,12 +76,12 @@ def vba_dir (hd,data):
 		recname = "%02x"%recid
 		if rec_ids.has_key(recid):
 			recname = rec_ids[recid]
-		iter = hd.hdmodel.append(miter, None)
+		iter = hd.model.append(miter, None)
 		if rec_types.has_key(recid):
 			value = rec_types[recid](data[off+6:off+6+reclen])
 		else:
 			value = data[off+6:off+6+reclen]
-		hd.hdmodel.set(iter, 0, recname,1, value,2,off,3,reclen+6,4,"txt")
+		hd.model.set(iter, 0, recname,1, value,2,off,3,reclen+6,4,"txt")
 		off += reclen + 6
 		if recid == 0x19:
 			miter = iter

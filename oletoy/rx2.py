@@ -67,120 +67,120 @@ def parse (model,buf,offset = 0,parent=None):
 	
 def rx2_head (hd, data):
 	off = 13
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Bytes per sample?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Bytes per sample?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 
 def rx2_eq (hd,data):
 	off = 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Enabled",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Enabled",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off +=1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Lo Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Lo Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Lo",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Lo",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "G",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "G",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Q",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Q",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Hi",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Hi",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "G",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "G",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Q",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Q",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Hi Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Hi Cut",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 
 def rx2_trsh (hd,data):
 	off = 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Enabled",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Enabled",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off +=1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Attack",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Attack",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Decay",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Decay",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Stretch",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Stretch",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 
 def rx2_comp (hd,data):
 	off = 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Enabled",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Enabled",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off +=1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Thrsh",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Thrsh",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Amount",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Amount",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Attack",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Attack",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Release",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Release",1, struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 
 def rx2_slce (hd,data):
 	#FF: i'm pretty confident that this relates to the offset as I created a slice very close to the start
 	# and it had a value of 3, and a file with 3 slices in had values here that looked proportional to the
 	# slice start 
 	off = 8
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Offset?",1, "%02x"%struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Offset?",1, "%02x"%struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
 	off +=4
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Length?",1, "%02x"%struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Length?",1, "%02x"%struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
 	off +=4
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Unkn1",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Unkn1",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	off +=2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Unkn2",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Unkn2",1, "%02x"%struct.unpack(">H",data[off:off+2])[0],2,off,3,2,4,">H")
 	
 def rx2_sinf (hd, data):
 	off = 14;
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Sound/slice length 1",1, struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Sound/slice length 1",1, struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
 	
 	off = 21;
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Move left locator to first slice point",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Move left locator to first slice point",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	
 	off +=1;
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Sound/slice length 2",1, struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Sound/slice length 2",1, struct.unpack(">I",data[off:off+4])[0],2,off,3,4,4,">I")
 
 def rx2_glob(hd,data):
 	off = 12 
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Length (Bars)",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Length (Bars)",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
 	off += 2
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Length (Beats)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Length (Beats)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Time Signature (upper numeral)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Time Signature (upper numeral)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Time Signature (lower numeral)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Time Signature (lower numeral)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Sens",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Sens",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	
 	#gate sensitivity has 1 decimal place but is stored as an integer so needs to be divided by 10
 	off = 18
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Gate Sens",1, struct.unpack(">H", data[off:off+2])[0] / 10.0,2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Gate Sens",1, struct.unpack(">H", data[off:off+2])[0] / 10.0,2,off,3,2,4,">H")
 	off += 2
 	
 	#gain ranges from -inf then -60db to +18db
@@ -202,40 +202,40 @@ def rx2_glob(hd,data):
 	# 0db is stored as 03 E8 (1000)
 	# 18db is stored as 1F 07 (7943)
 	# It looks like it starts out as an enumeration but at some point switches over to values. log scale?
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Gain (not sure about scale)",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")	
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Gain (not sure about scale)",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")	
 	off += 2
 	#pitch has 2 decimal places but is stored as an integer
 	#if the number displayed is 5.75, it will be stored as an integer 575
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Pitch",1, struct.unpack(">H", data[off:off+2])[0] / 100.0 ,2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Pitch",1, struct.unpack(">H", data[off:off+2])[0] / 100.0 ,2,off,3,2,4,">H")
 	
 	#FF: am assuming 32-bit int - can't be certain that it uses all 4 bytes, have only seen the last 3 bytes used (offset 25-27) 
 	#there are 3 decimal places in the tempo, so it is multiplied by 1000 and stored as an integer  
 	off = 24
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Tempo (BPM)",1, struct.unpack(">L", data[off:off+4])[0] / 1000.0 ,2,off,3,4,4,">L")	
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Tempo (BPM)",1, struct.unpack(">L", data[off:off+4])[0] / 1000.0 ,2,off,3,4,4,">L")	
 	off += 4
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Toggle: Export as multiple samples",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Toggle: Export as multiple samples",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Toggle: Silence Selected",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Toggle: Silence Selected",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 
 
 def rx2_recy(hd, data):
 	off = 9
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Bytes per sample?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Bytes per sample?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	
 	off = 13
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Toggle: Preview",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Toggle: Preview",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 
     #this changed when the number of visible slices changed
 	off = 16	
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "something to do with visible slices?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "something to do with visible slices?",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1;
 	
 	#this changes when you move the pitch control, at the same time as the pitch setting at offset 22 in the GLOB section.
@@ -251,28 +251,28 @@ def rx2_recy(hd, data):
 	#375						1056
 	
 
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Pitch/TRSH/num samples ?",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Pitch/TRSH/num samples ?",1, struct.unpack(">H", data[off:off+2])[0],2,off,3,2,4,">H")
 	
 	off = 22
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Visible Slices",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Visible Slices",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	
 	
 	
 def rx2_rcyx(hd, data):
 	off = 16
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Selected Tool (0=Arrow,1=Mute,2=Lock,3=Pen)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Selected Tool (0=Arrow,1=Mute,2=Lock,3=Pen)",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1	
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Toggle: Envelope Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Toggle: Envelope Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Toggle: Equaliser Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Toggle: Equaliser Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")
 	off += 1
-	iter = hd.hdmodel.append(None, None)
-	hd.hdmodel.set(iter, 0, "Toggle: Transient Shaper Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")	
+	iter = hd.model.append(None, None)
+	hd.model.set(iter, 0, "Toggle: Transient Shaper Toolbar",1, struct.unpack(">B", data[off:off+1])[0],2,off,3,1,4,">B")	
 
 rx2_ids = {"EQ  ":rx2_eq, "TRSH":rx2_trsh,  "COMP":rx2_comp, "SLCE":rx2_slce, 
 		"SINF":rx2_sinf, "GLOB":rx2_glob, "RCYX":rx2_rcyx, "RECY":rx2_recy,

@@ -851,7 +851,7 @@ def ftil (hd,size,data):
 def loda_outl (hd,data,offset,l_type,length):
 	if hd.version > 3:
 		iter = add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
-		hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
+		hd.model.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 	else:
 		iter = add_iter (hd, "[000a] Outl","",offset,length,"txt")
 		# type/flag:  1 - solid, 2 -- dashed, 0x40 -- behind fill, 0x80 -- scale with image
@@ -874,7 +874,7 @@ def loda_outl (hd,data,offset,l_type,length):
 def loda_fild (hd,data,offset,l_type,length):
 	if hd.version > 3:
 		iter = add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
-		hd.hdmodel.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
+		hd.model.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 	else:
 		iter = add_iter (hd, "[0014] Fild","",offset,length,"txt")
 		ftype = ord(data[offset])
