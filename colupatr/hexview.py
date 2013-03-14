@@ -469,15 +469,21 @@ class HexView():
 
 	def init_lines(self):
 		# set initial line lengths
-		for i in range(len(self.data)/16):
-			self.lines.append((i*16,0))
-			self.hvlines.append("")
-			self.bkhvlines.append("")
-		if len(self.data)%16 != 0:
-			self.lines.append((i*16+16,0))
+		if len(self.data) > 15:
+			for i in range(len(self.data)/16):
+				self.lines.append((i*16,0))
+				self.hvlines.append("")
+				self.bkhvlines.append("")
+			if len(self.data)%16 > 0:
+				self.lines.append((i*16+16,0))
+				self.hvlines.append("")
+				self.bkhvlines.append("")
+		else:
+			self.lines.append((0,0))
 			self.hvlines.append("")
 			self.bkhvlines.append("")
 		self.lines.append((len(self.data),0))
+
 
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"

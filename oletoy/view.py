@@ -26,10 +26,10 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
-import cdr,cmx,wld,ppp,pict,chdraw
+import cdr,cmx,wld,cpt,ppp,pict,chdraw
 from utils import *
 from hv2 import HexView
-version = "0.7.11"
+version = "0.7.12"
 
 ui_info = \
 '''<ui>
