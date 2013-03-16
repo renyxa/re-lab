@@ -113,6 +113,22 @@ def b64decode (page,data,parent):
 	decdata = base64.b64decode(data)
 	add_pgiter (page, "[Base64decoded]", "base64", "", decdata, parent)
 
+def bup2 (string, offlen):
+	t = ""
+	t2 = ""
+	r = []
+	string = string.replace(" ","")
+	for i in string:
+		t += bin(int(i,16))[2:].zfill(4)
+		t2 += bin(int(i,16))[2:].zfill(4) + "."
+	for i,j in offlen:
+		try:
+			r.append(int(t[int(i):int(i)+int(j)],2))
+		except:
+			pass
+	return t2[:-1],r
+
+
 def disp_expose (da,event,pixbuf,scale=1):
 	ctx = da.window.cairo_create()
 	ctx.scale(scale,scale)

@@ -24,7 +24,7 @@ def name_cnvrt(name):
 	c4 = name[0]
 	return c1+c2+c3+c4
 
-def blk_chunks(page, buf, offset, p_iter):
+def blk_chunks(page, buf, offset, adj, p_iter):
 	ch_len = struct.unpack('<I',buf[offset:offset+4])[0]
 	offset += 4
 	name = buf[offset:offset+4]
@@ -37,8 +37,8 @@ def blk_chunks(page, buf, offset, p_iter):
 		offset += 4
 		ch_data = buf[offset-8:offset+ch_len]
 
-		name = "[%02x] "%offset+ch_name+" (%02x)"%ch_len
-		add_pgiter (page, name, "CPT", "BlkChnk", ch_data, p_iter,"[%04x]"%offset)
+		name = ch_name+" (%02x)"%ch_len
+		add_pgiter (page, name, "CPT", "BlkChnk%s"%ch_name, ch_data, p_iter,"[%04x]"%(offset+adj))
 		offset += ch_len
 
 	else:
@@ -68,7 +68,8 @@ def blk_chunks(page, buf, offset, p_iter):
 
 	return offset
 
-def blk_hdr(page, buf, offset, p_iter):
+def blk_hdr(page, buf, adj, p_iter):
+	offset = 0
 	data = buf[offset:offset+4]
 	name = "Width"
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
@@ -102,11 +103,11 @@ def blk_hdr(page, buf, offset, p_iter):
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
 	offset += 4
 	data = buf[offset:offset+4]
-	name = "Chunk area size?"
+	ch_size = struct.unpack("<I",buf[offset:offset+4])[0]
+	name = "Chunk area size"
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
 	offset += 4
 	data = buf[offset:offset+4]
-#	plt_size = struct.unpack('<I',data)[0]
 	name = "Palette size"
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
 	offset += 4
@@ -114,20 +115,13 @@ def blk_hdr(page, buf, offset, p_iter):
 	name = "Unknown 3"
 	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
 	offset += 20
-	data = buf[offset:offset+4]
-	name = "Chunk area size 2?"
-	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
-	offset += 4
-	data = buf[offset:offset+4]
-	name = "Unknown 4"
-	add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
-	offset += 4
-	if plt_size > 0:
-		data = buf[offset:offset+plt_size]
-		name = "Palette"
-		add_pgiter (page, name, "CPT", "BlkHdr", data, p_iter,"[%04x]"%offset)
-		offset += plt_size
 
+	# skip chunk size and next dword
+	offset += 8
+	while offset < 0x3c + ch_size:
+		offset = blk_chunks(page,buf,offset,adj,p_iter)
+	if offset < len(buf):
+		add_pgiter (page, "Tail", "CPT", "BlkHdrTail", buf[offset:], p_iter,"[%04x]"%(offset+adj))
 	return offset
 
 
@@ -207,13 +201,7 @@ def open (buf,page,piter):
 			name = "[%02x] Block #%d"%(blk[i],i)
 			offset = blk[i]
 			iter = add_pgiter (page, name, "CPT", "BlkN", buf[offset:blk[i+1]], parent,"[%04x]"%offset)
-			offset = blk_hdr(page,buf,offset,iter)
-			while offset < blk[i+1]:
-				try:
-					offset = blk_chunks(page,buf,offset,iter)
-				except:
-					print "Something wrong with chunk at offset %02x"%offset
-					break
+			blk_hdr(page,buf[offset:blk[i+1]],offset,iter)
 		except:
 			print "Something wrong with block %d header"%i
 

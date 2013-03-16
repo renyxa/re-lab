@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree,gtk,gobject,zlib,gtksourceview2
-import ole,escher,rx2,cdr,icc,mf,pict,chdraw
+import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep
 from utils import *
 from os.path import expanduser
 
@@ -351,6 +351,9 @@ def parse (cmd, entry, page):
 			icc.parse (page,buf[int(chaddr,16):],iter1)
 		elif "cdx" == chtype.lower():
 			chdraw.open (page,buf[int(chaddr,16):],iter1)
+		elif "yep" == chtype.lower():
+			yep.parse (page,buf[int(chaddr,16):],iter1)
+			
 		elif "emf" == chtype.lower():
 			pt = page.type
 			page.type = "EMF"

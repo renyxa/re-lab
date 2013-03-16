@@ -26,10 +26,10 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
-import cdr,cmx,wld,cpt,ppp,pict,chdraw
+import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep
 from utils import *
 from hv2 import HexView
-version = "0.7.12"
+version = "0.7.13"
 
 ui_info = \
 '''<ui>
@@ -139,7 +139,10 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_txt = 1
 		self.options_div = 1
 		self.options_enc = "utf-16"
+		self.options_bup = 0
 		self.options_win = None
+		self.bup_win = None
+		self.offlen = None
 		self.statbuffer = ""
 
 		self.run_win = None
@@ -326,8 +329,16 @@ class ApplicationMainWindow(gtk.Window):
 			self.options_be = abs(self.options_be-1)
 		if lt == "Txt":
 			self.options_txt = abs(self.options_txt-1)
+		if lt == "BUP":
+			self.options_bup = abs(self.options_bup-1)
+			if self.options_bup == 1:
+				self.activate_bup("")
+			
 		if self.statbuffer != "":
 			self.calc_status(self.statbuffer,len(self.statbuffer))
+
+	def del_bupwin (self, action):
+		self.bup_win = None
 
 	def del_optwin (self, action):
 		self.options_win = None
@@ -339,6 +350,31 @@ class ApplicationMainWindow(gtk.Window):
 		else:
 			self.run_win = cmd.CliWindow(self)
 
+	def on_off_entry_activate(self,entry):
+		o = self.off_entry.get_text().split()
+		l = self.len_entry.get_text().split()
+		self.offlen = zip(o,l)
+
+	def activate_bup (self, action):
+		if self.bup_win != None:
+			self.bup_win.show_all()
+			self.bup_win.present()
+		else:
+			vbox = gtk.VBox()
+			self.off_entry = gtk.Entry()
+			self.off_entry.connect("activate",self.on_off_entry_activate)
+			self.len_entry = gtk.Entry()
+			self.len_entry.connect("activate",self.on_off_entry_activate)
+			vbox.pack_start(self.off_entry)
+			vbox.pack_start(self.len_entry)
+			bupwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			bupwin.set_border_width(0)
+			bupwin.add(vbox)
+			bupwin.set_title("Bits unpacker")
+			bupwin.connect ("destroy", self.del_bupwin)
+			bupwin.show_all()
+			self.bup_win = bupwin
+
 	def activate_options (self, action):
 		if self.options_win != None:
 			self.options_win.show_all()
@@ -349,6 +385,7 @@ class ApplicationMainWindow(gtk.Window):
 			le_chkb = gtk.CheckButton("LE")
 			be_chkb = gtk.CheckButton("BE")
 			txt_chkb = gtk.CheckButton("Txt")
+			bup_chkb = gtk.CheckButton("BUP")
 			
 			if self.options_le:
 				le_chkb.set_active(True)
@@ -356,15 +393,19 @@ class ApplicationMainWindow(gtk.Window):
 				be_chkb.set_active(True)
 			if self.options_txt:
 				txt_chkb.set_active(True)
-	
+			if self.options_bup:
+				bup_chkb.set_active(True)
+
 			le_chkb.connect("toggled",self.on_option_toggled)
 			be_chkb.connect("toggled",self.on_option_toggled)
 			txt_chkb.connect("toggled",self.on_option_toggled)
-	
+			bup_chkb.connect("toggled",self.on_option_toggled)
+
 			hbox0 = gtk.HBox()
 			hbox0.pack_start(le_chkb)
 			hbox0.pack_start(be_chkb)
 			hbox0.pack_start(txt_chkb)
+			hbox0.pack_start(bup_chkb)
 			
 			hbox1 = gtk.HBox()
 			div_lbl = gtk.Label("Div")
@@ -949,22 +990,26 @@ class ApplicationMainWindow(gtk.Window):
 		self.statbuffer = buf
 		txt = ""
 		txt2 = ""
+		if self.offlen and self.options_bup == 1:
+			bup = bup2(d2hex(buf),self.offlen)
+			txt = "%s %s"%(bup[0],bup[1])
+			
 		if dlen == 2:
 			if self.options_le == 1:
-				txt = "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
+				txt += "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
 			if self.options_be == 1:
 				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
 		if dlen == 4:
 			if ftype == "pub":
 				v = struct.unpack("<i",buf)[0]
-				txt = "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],round(v/12700.,2),round(v/360000.,3),round(v/914400.,4))
+				txt += "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],round(v/12700.,2),round(v/360000.,3),round(v/914400.,4))
 			elif ftype == "FH":
 				v1 = struct.unpack(">h",buf[0:2])[0]
 				v2 = struct.unpack(">h",buf[2:4])[0]
-				txt = "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
+				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
 			else:
 				if self.options_le == 1:
-					txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
+					txt += "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
 					txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
 				if self.options_be == 1:
 					txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
@@ -1000,16 +1045,16 @@ class ApplicationMainWindow(gtk.Window):
 					bstr = d2hex(buf)
 					for i in range(dictm.iter_n_children(None)):
 						if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
-							txt = '<span background="#FFFF00">'+txt+'</span>  '
+							txt += '<span background="#FFFF00">'+txt+'</span>  '
 							break
 
 		if dlen == 8:
 			if self.options_le == 1:
-				txt = "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
+				txt += "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
 			if self.options_be == 1:
 				txt += "BE: %s"%((struct.unpack(">d",buf)[0])/self.options_div)
 		if dlen == 3:
-			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
+			txt += '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
 		if dlen > 3 and dlen != 4 and dlen != 8 and self.options_txt == 1:
 			try:
