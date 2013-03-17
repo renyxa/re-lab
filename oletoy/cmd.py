@@ -353,6 +353,8 @@ def parse (cmd, entry, page):
 			chdraw.open (page,buf[int(chaddr,16):],iter1)
 		elif "yep" == chtype.lower():
 			yep.parse (page,buf[int(chaddr,16):],iter1)
+		elif "yep0" == chtype.lower():
+			yep.parse (page,buf[int(chaddr,16):],iter1,0)
 			
 		elif "emf" == chtype.lower():
 			pt = page.type

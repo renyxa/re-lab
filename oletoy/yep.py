@@ -17,12 +17,16 @@
 import sys,struct,math
 from utils import *
 
-def parse (page, data, parent):
+def parse (page, data, parent,align=1):
 	off = 0
 	while off < len(data):
 		fourcc = data[off:off+4]
 		off += 4
-		length = int(math.ceil(struct.unpack(">I",data[off:off+4])[0]/4.)*4)
+		l = struct.unpack(">I",data[off:off+4])[0]
+		if align:
+			length = int(math.ceil(l/4.)*4)
+		else:
+			length = l
 		off += 4
 		add_pgiter(page,"%s"%fourcc,"yep",fourcc,data[off:off+length],parent)
 		off += length
