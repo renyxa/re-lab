@@ -17,14 +17,14 @@
 import sys,struct,math
 from utils import *
 
-def parse (page, data, parent,align=1):
+def parse (page, data, parent,align=4.):
 	off = 0
 	while off < len(data):
 		fourcc = data[off:off+4]
 		off += 4
 		l = struct.unpack(">I",data[off:off+4])[0]
 		if align:
-			length = int(math.ceil(l/4.)*4)
+			length = int(math.ceil(l/align)*align)
 		else:
 			length = l
 		off += 4

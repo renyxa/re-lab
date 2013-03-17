@@ -28,8 +28,10 @@ import inflate
 import ctypes
 from utils import *
 
-cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-
+try:
+	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+except:
+	cgsf = ""
 
 escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
 

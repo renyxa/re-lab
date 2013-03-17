@@ -51,7 +51,10 @@ try:
 except:
 	print 'libgsf python bindings were not found'
 	ropen = my_open
-	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+	try:
+		cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+	except:
+		cgsf = ""
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 

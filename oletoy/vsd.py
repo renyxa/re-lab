@@ -25,7 +25,11 @@ import ole
 import ctypes
 from utils import *
 
-cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+try:
+	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+except:
+	cgsf = ""
+	print "Libgsf was not found, do not try to open OLE-based files."
 
 class pointer:
 		type = 0

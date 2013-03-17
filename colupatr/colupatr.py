@@ -412,7 +412,7 @@ class ApplicationMainWindow(gtk.Window):
 			lines = []
 			comments = {}
 			if buf == None:
-				f = open(fname)
+				f = open(fname,"rb")
 				if fname[len(fname)-3:] == "rlp":
 					print 'Re-Lab project file'
 					rbuf = f.read()

@@ -48,7 +48,7 @@ class Page:
 			else:
 				self.pname = self.fname
 			offset = 0
-			f = open(self.fname)
+			f = open(self.fname,"rb")
 			buf = f.read()
 
 		if buf[0:6] == "<?xml ":

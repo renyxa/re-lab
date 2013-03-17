@@ -15,10 +15,15 @@
 #
 
 import sys,struct
-import tree,gtk,gobject,zlib,gtksourceview2
+import tree,gtk,gobject,zlib
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep
 from utils import *
 from os.path import expanduser
+
+try:
+	import gtksourceview2
+except:
+	print "gtksourceview2 was not found. Don't try to use 'run' command."
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
 					0x2af8:"Polygon",0x3e8:"Name",0x2efe:"Rotation",0x7d0:"Palette",

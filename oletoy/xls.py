@@ -23,8 +23,10 @@ import escher
 import ctypes
 from utils import *
 
-cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-
+try:
+	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
+except:
+	cgsf = ""
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
