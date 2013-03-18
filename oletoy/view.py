@@ -363,11 +363,17 @@ class ApplicationMainWindow(gtk.Window):
 		if self.statbuffer != "":
 			self.calc_status(self.statbuffer,len(self.statbuffer))
 
-	def del_bupwin (self, action):
-		self.bup_win = None
 
-	def del_optwin (self, action):
-		self.options_win = None
+	def del_win(self,action,win):
+		if win == "bup":
+			self.bup_win = None
+		if win == "options":
+			self.options_win = None
+		if win == "dict":
+			pn = self.notebook.get_current_page()
+			if pn != -1:
+				self.das[pn].dictwin = None
+
 
 	def open_cli(self):
 		if self.run_win != None:
@@ -376,10 +382,12 @@ class ApplicationMainWindow(gtk.Window):
 		else:
 			self.run_win = cmd.CliWindow(self)
 
+
 	def on_off_entry_activate(self,entry):
 		o = self.off_entry.get_text().split()
 		l = self.len_entry.get_text().split()
 		self.offlen = zip(o,l)
+
 
 	def activate_bup (self, action):
 		if self.bup_win != None:
@@ -397,7 +405,7 @@ class ApplicationMainWindow(gtk.Window):
 			bupwin.set_border_width(0)
 			bupwin.add(vbox)
 			bupwin.set_title("Bits unpacker")
-			bupwin.connect ("destroy", self.del_bupwin)
+			bupwin.connect ("destroy", self.del_win,"bup")
 			bupwin.show_all()
 			self.bup_win = bupwin
 
@@ -458,15 +466,10 @@ class ApplicationMainWindow(gtk.Window):
 			optwin.set_border_width(0)
 			optwin.add(vbox)
 			optwin.set_title("Hexview Options")
-			optwin.connect ("destroy", self.del_optwin)
+			optwin.connect ("destroy", self.del_win, "options")
 			optwin.show_all()
 			self.options_win = optwin
 
-
-	def del_dictwin (self, action):
-		pn = self.notebook.get_current_page()
-		if pn != -1:
-			self.das[pn].dictwin = None
 
 	def activate_dict (self, action):
 		pn = self.notebook.get_current_page()

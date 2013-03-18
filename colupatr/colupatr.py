@@ -704,6 +704,15 @@ class ApplicationMainWindow(gtk.Window):
 					if len(args) > 0:
 						arg0 = args[0]
 					doc.insert_comment(arg0,arg1,arg2,1)
+				elif cmdline.lower() == "dump":
+					fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+					if fname:
+						f = open(fname,'w')
+						f.write(doc.data)
+						f.close()
+					else:
+						print "Nothing to save"
+
 				elif cmdline[0] == "/":
 					if len(cmdline) > 1:
 						arg = cmdline[1:]
