@@ -170,11 +170,8 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 		else:
 			data = infchild.read(chsize)
 			
-		iter1 = page.model.append(parent,None)
-		page.model.set_value(iter1,0,infname)
-		page.model.set_value(iter1,1,("ole",dirflag))
-		page.model.set_value(iter1,2,chsize)
-		page.model.set_value(iter1,3,data)
+		iter1 = add_pgiter (page, infname, "ole", dirflag, data)
+			
 		if (infname == "EscherStm" or infname == "EscherDelayStm") and chsize>0:
 			ftype = "escher"
 			page.model.set_value(iter1,1,("escher",dirflag))
@@ -267,12 +264,7 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			res = ctypes.string_at(page.parent.cgsf.gsf_input_read(infchild,inc,None),inc)
 			if pos != page.parent.cgsf.gsf_input_tell(infchild):
 				data += res
-			
-		iter1 = page.model.append(parent,None)
-		page.model.set_value(iter1,0,infname)
-		page.model.set_value(iter1,1,("ole",dirflag))
-		page.model.set_value(iter1,2,chsize)
-		page.model.set_value(iter1,3,data)
+		iter1 = add_pgiter (page, infname, "ole", dirflag, data)
 		if (infname == "EscherStm" or infname == "EscherDelayStm"): # and infchild.size()>0:
 			ftype = "escher"
 			page.model.set_value(iter1,1,("escher",dirflag))
