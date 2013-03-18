@@ -15,7 +15,7 @@
 # USA
 
 
-import sys,struct
+import sys,struct,ctypes
 import gobject
 import gtk, pango
 import tree
@@ -23,13 +23,13 @@ import hexdump
 import App, cmd
 import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
-import xls, vba, ole, doc, mdb, pub
+import xls, vba, ole, doc, mdb, pub, ppt
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep
 from utils import *
 from hv2 import HexView
-version = "0.7.13"
+version = "0.7.15"
 
 ui_info = \
 '''<ui>
@@ -140,17 +140,42 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_div = 1
 		self.options_enc = "utf-16"
 		self.options_bup = 0
+
+		self.init_config()
+
 		self.options_win = None
 		self.bup_win = None
 		self.offlen = None
 		self.statbuffer = ""
-
 		self.run_win = None
+
+		try:
+			self.cgsf = ctypes.cdll.LoadLibrary(self.gsfname)
+		except:
+			print "Libgsf-1 was not found, do not try to open OLE-based files."
+
 
 		if len(sys.argv) > 1:
 			for i in range(len(sys.argv)-1):
 				self.fname = sys.argv[i+1]
 				self.activate_open()
+
+
+	def init_config(self): # redefine UI/behaviour options from file
+		self.font = "Monospace"
+		self.fontsize = 14
+		self.gsfname = 'libgsf-1.so'
+		try:
+			execfile("oletoy.cfg")
+			print 'Config loaded...'
+		except:
+			pass
+
+	def save_config(self):
+		cfg = open("oletoy.cfg","w")
+		cfg.write("# Monospace font for HexView\nself.font='%s'\n\n"%self.font)
+		cfg.write("# Font size for HexView\nself.fontsize=%s\n\n"%self.fontsize)
+		cfg.write("# Name of the libgsf\nself.gsfname='%s'\n\n"%self.gsfname)
 
 	def __create_action_group(self):
 		# GtkActionEntry
@@ -250,8 +275,9 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>$pix{@addr}</tt> - try to parse record as gdkpixbuf image starting from addr (or 0)\n\
 	<tt>$wmf{@addr}</tt> - try to parse record as WMF starting from addr (or 0)\n\
 	<tt>$xls@RC</tt> - search XLS file for record related to cell RC\n\
+	<tt>$yep{0}{@addr}</tt> - try to parse as BE fourcc RIFF with dword alignment ({0} -- w/o alignment)\n\
 	<tt>$zip{@addr}</tt> - try to decompress starting from addr (or 0)\n\n\
-	<tt>run</tt> - exec command, use rpage,rbuf,rparent\n\
+	<tt>run</tt> - open CLI window. Use rapp,rpage,rmodel,riter and rbuf\n\
 	<tt>reload(module)</tt> - rerun part of the OLE Toy and reload a file\n\
 	<tt>rename</tt> - rename current record\n\
 	<tt>split@addr</tt> - split current record by addr\n\
@@ -456,10 +482,10 @@ class ApplicationMainWindow(gtk.Window):
 					view.set_enable_tree_lines(True)
 					cell1 = gtk.CellRendererText()
 					cell1.set_property('family-set',True)
-					cell1.set_property('font','monospace 10')
+					cell1.set_property('font',"%s %s"%(self.font,'10'))
 					cell2 = gtk.CellRendererText()
 					cell2.set_property('family-set',True)
-					cell2.set_property('font','monospace 10')
+					cell2.set_property('font',"%s %s"%(self.font,'10'))
 					column1 = gtk.TreeViewColumn('Type', cell1, text=1)
 					column2 = gtk.TreeViewColumn('Value', cell2, text=2)
 					column3 = gtk.TreeViewColumn('Value', cell2, text=3)
@@ -486,13 +512,13 @@ class ApplicationMainWindow(gtk.Window):
 				view.set_enable_tree_lines(True)
 				cell0 = gtk.CellRendererText()
 				cell0.set_property('family-set',True)
-				cell0.set_property('font','monospace 10')
+				cell0.set_property('font',"%s %s"%(self.font,'10'))
 				cell1 = gtk.CellRendererText()
 				cell1.set_property('family-set',True)
-				cell1.set_property('font','monospace 10')
+				cell1.set_property('font',"%s %s"%(self.font,'10'))
 				cell2 = gtk.CellRendererText()
 				cell2.set_property('family-set',True)
-				cell2.set_property('font','monospace 10')
+				cell2.set_property('font',"%s %s"%(self.font,'10'))
 				column0 = gtk.TreeViewColumn('Key', cell1, text=0)
 				column1 = gtk.TreeViewColumn('Value', cell1, text=1)
 				column2 = gtk.TreeViewColumn('???', cell2, text=2)
@@ -1297,6 +1323,8 @@ class ApplicationMainWindow(gtk.Window):
 			doc.fname = fname
 			doc.parent = self
 			doc.hd = hexdump.hexdump()
+			doc.hd.hv.font = self.font
+			doc.hd.hv.fontsize = self.fontsize
 			err = doc.fload()
 			if err == 0:
 				dnum = len(self.das)

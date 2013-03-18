@@ -108,11 +108,12 @@ class CliWindow(gtk.Window):
 		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
 		pn = self.app.notebook.get_current_page()
 		if pn != -1:
+			rapp = self.app
 			rpage = self.app.das[pn]
 			treeSelection = self.app.das[pn].view.get_selection()
-			model, rparent = treeSelection.get_selected()
-			if rparent:
-				rbuf = model.get_value(rparent,3)
+			rmodel, riter = treeSelection.get_selected()
+			if riter:
+				rbuf = model.get_value(riter,3)
 			else:
 				rbuf = ""
 			exec(txt)

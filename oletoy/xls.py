@@ -23,10 +23,6 @@ import escher
 import ctypes
 from utils import *
 
-try:
-	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-except:
-	cgsf = ""
 
 charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -724,7 +720,8 @@ def collect_tree (model, parent, value=""):
 			value = collect_tree(model, citer, value)
 	return value
 
-def dump_iter (model, parent, outfile):
+def dump_iter (page, parent, outfile):
+	model = page.view.get_model()
 	ntype = model.get_value(parent,1)
 	name = model.get_value(parent,0)
 	value = ""
@@ -732,19 +729,19 @@ def dump_iter (model, parent, outfile):
 		value = collect_tree(model, parent)
 	else:
 		value = model.get_value(parent,3)
-	child = cgsf.gsf_outfile_new_child(outfile,name,0)
-	cgsf.gsf_output_write (child,len(value),value)
-	cgsf.gsf_output_close (child)
+	child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,0)
+	page.parent.cgsf.gsf_output_write (child,len(value),value)
+	page.parent.cgsf.gsf_output_close (child)
 
 
 def save (page, fname):
 	model = page.view.get_model()
-	cgsf.gsf_init()
-	output = cgsf.gsf_output_stdio_new (fname)
-	outfile = cgsf.gsf_outfile_msole_new (output);
+	page.parent.cgsf.gsf_init()
+	output = page.parent.cgsf.gsf_output_stdio_new (fname)
+	outfile = page.parent.cgsf.gsf_outfile_msole_new (output);
 	iter1 = model.get_iter_first()
 	while None != iter1:
-	  dump_iter (model, iter1, outfile)
+	  dump_iter (page, iter1, outfile)
 	  iter1 = model.iter_next(iter1)
-	cgsf.gsf_output_close(outfile)
-	cgsf.gsf_shutdown()
+	page.parent.cgsf.gsf_output_close(outfile)
+	page.parent.cgsf.gsf_shutdown()

@@ -455,7 +455,7 @@ class HexView():
 	def set_dxdy(self):
 		# calculate character extents
 		ctx = self.hv.window.cairo_create()
-		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
 		ctx.set_line_width(1)
 		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
@@ -940,7 +940,7 @@ class HexView():
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
 
-		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(14)
 		ctx.set_line_width(1)
 		cmnt_off = (-1,-1)
@@ -1112,9 +1112,9 @@ class HexView():
 			ctx.fill()
 			ctx.set_source_rgb(0,0,1)
 			ctx.move_to(self.tdx*(10+3*self.curc),(self.curr-self.offnum+2)*self.tht+4)
-			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 			ctx.show_text("%02x "%ord(self.data[self.lines[self.curr][0]+self.curc]))
-			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 			ctx.set_source_rgb(0,0,0)
 			ctx.move_to(self.tdx*(11+self.curc+3*self.maxaddr),(self.curr-self.offnum+2)*self.tht+4)
 			ch = self.data[self.lines[self.curr][0]+self.curc]
@@ -1158,11 +1158,11 @@ class HexView():
 			ctx.fill()
 			ctx.set_source_rgb(0.5,0,0)
 			ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
-			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 			ctx.show_text(mttstr)
-			ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
-		ctx.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
 			if self.lines[i+self.offnum][1] > 1:
 				if len(self.lines[i+self.offnum]) > 2:

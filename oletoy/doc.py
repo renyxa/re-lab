@@ -28,13 +28,8 @@ import inflate
 import ctypes
 from utils import *
 
-try:
-	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-except:
-	cgsf = ""
 
 escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
-
 underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Double accounting"}
 
 def fib_base (hd, data):
@@ -465,11 +460,12 @@ def parse (page, data, parent):
 	except:
 	  print "Failed in fib parsing"
 
-def dump_tree (model, parent, outfile):
+def dump_tree (page, parent, outfile):
+	model = page.view.get_model()
 	ntype = model.get_value(parent,1)
 	name = model.get_value(parent,0)
 	if ntype[1] == 0:
-	  child = cgsf.gsf_outfile_new_child(outfile,name,0)
+	  child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,0)
 	  value = model.get_value(parent,3)
 	  if name[:6] == "Module":
 		piter = model.iter_nth_child(parent,0)
@@ -484,27 +480,27 @@ def dump_tree (model, parent, outfile):
 		  res = inflate.deflate(data[off:],1)
 		  flag = 0xb000+len(res)
 		  value += struct.pack("<H",flag)+res
-	  cgsf.gsf_output_write (child,len(value),value)
+	  page.parent.cgsf.gsf_output_write (child,len(value),value)
 
 	else: # Directory
-	  child = cgsf.gsf_outfile_new_child(outfile,name,1)
+	  child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,1)
 
 	  for i in range(model.iter_n_children(parent)):
 		piter = model.iter_nth_child(parent,i)
 		dump_tree (model, piter, child)
 
-	cgsf.gsf_output_close (child)
+	page.parent.cgsf.gsf_output_close (child)
 
 
 def save (page, fname):
 	model = page.view.get_model()
-	cgsf.gsf_init()
-	output = cgsf.gsf_output_stdio_new (fname)
-	outfile = cgsf.gsf_outfile_msole_new (output);
+	page.parent.cgsf.gsf_init()
+	output = page.parent.cgsf.gsf_output_stdio_new (fname)
+	outfile = page.parent.cgsf.gsf_outfile_msole_new (output);
 	iter1 = model.get_iter_first()
 	while None != iter1:
-	  dump_tree(model, iter1, outfile)
+	  dump_tree(page, iter1, outfile)
 	  iter1 = model.iter_next(iter1)
-	cgsf.gsf_output_close(outfile)
-	cgsf.gsf_shutdown()
+	page.parent.cgsf.gsf_output_close(outfile)
+	page.parent.cgsf.gsf_shutdown()
 

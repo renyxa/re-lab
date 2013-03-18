@@ -16,12 +16,11 @@
 
 import sys,struct
 import gobject
-import gtk
+import gtk, ctypes
 import tree
 import hexdump
 import pub, pubblock, escher, quill
 import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2
-import ctypes
 from utils import *
 
 ropen = ""
@@ -29,11 +28,11 @@ ropen = ""
 
 def my_open (buf,page,iter=None):
 	#parse (buf,page,iter)
-	cgsf.gsf_init()
-	src = cgsf.gsf_input_memory_new (buf,len(buf),False)
-	infile = cgsf.gsf_infile_msole_new(src)
+	page.parent.cgsf.gsf_init()
+	src = page.parent.cgsf.gsf_input_memory_new (buf,len(buf),False)
+	infile = page.parent.cgsf.gsf_infile_msole_new(src)
 	ftype = get_children(page,infile,iter,"ole")
-	cgsf.gsf_shutdown()
+	page.parent.cgsf.gsf_shutdown()
 	return ftype
 
 def gsf_open(src,page,iter=None):
@@ -43,7 +42,6 @@ def gsf_open(src,page,iter=None):
 	return ftype
 
 
-
 try:
 	import gsf
 	ropen = gsf_open
@@ -51,10 +49,6 @@ try:
 except:
 	print 'libgsf python bindings were not found'
 	ropen = my_open
-	try:
-		cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-	except:
-		cgsf = ""
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
@@ -211,7 +205,7 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 		if infname == "Book" or infname == "Workbook":
 			page.model.set_value(iter1,1,("xls",dirflag))
 			ftype = xls.parse (page, data, iter1)
-		if infname == "PowerPoint Document" or infname == "Pictures":
+		if infname == "PowerPoint Document" or infname == "Pictures" and data != None:
 			ftype = "ppt"
 			page.model.set_value(iter1,1,("ppt",dirflag))
 			ppt.parse (page, data, iter1)
@@ -250,28 +244,28 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 	docdata = ""
 	docdataiter = None
 	tbliter = None
-	for i in range(cgsf.gsf_infile_num_children(infile)):
-		infchild = cgsf.gsf_infile_child_by_index(infile,i)
-		infname = ctypes.string_at(cgsf.gsf_infile_name_by_index(infile,i))
+	for i in range(page.parent.cgsf.gsf_infile_num_children(infile)):
+		infchild = page.parent.cgsf.gsf_infile_child_by_index(infile,i)
+		infname = ctypes.string_at(page.parent.cgsf.gsf_infile_name_by_index(infile,i))
 #		print "Name ", infname, dirflag
 
 		if ord(infname[0]) < 32: 
 			infname = infname[1:]
-		chsize = cgsf.gsf_input_size(infchild)
+		chsize = page.parent.cgsf.gsf_input_size(infchild)
 		data = ""
 		res = ""
 		pos = -1
 		inc = 1024
-		while cgsf.gsf_input_tell(infchild) < chsize:
-			if pos == cgsf.gsf_input_tell(infchild):
+		while page.parent.cgsf.gsf_input_tell(infchild) < chsize:
+			if pos == page.parent.cgsf.gsf_input_tell(infchild):
 				if inc == 1:
 					break
 				else:
 					inc = inc/2
 			else:
-				pos = cgsf.gsf_input_tell(infchild)
-			res = ctypes.string_at(cgsf.gsf_input_read(infchild,inc,None),inc)
-			if pos != cgsf.gsf_input_tell(infchild):
+				pos = page.parent.cgsf.gsf_input_tell(infchild)
+			res = ctypes.string_at(page.parent.cgsf.gsf_input_read(infchild,inc,None),inc)
+			if pos != page.parent.cgsf.gsf_input_tell(infchild):
 				data += res
 			
 		iter1 = page.model.append(parent,None)
@@ -328,7 +322,7 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("vba",dirflag))
 			vbaiter = iter1
 			vbadata = data
-		if (cgsf.gsf_infile_num_children(infchild)>0):
+		if (page.parent.cgsf.gsf_infile_num_children(infchild)>0):
 			page.model.set_value(iter1,1,(ftype,1))
 			get_children(page,infchild,iter1,ftype,0)
 

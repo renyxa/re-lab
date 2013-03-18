@@ -25,11 +25,6 @@ import ole
 import ctypes
 from utils import *
 
-try:
-	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-except:
-	cgsf = ""
-
 
 chunknoshift = {
 		0x15:'Page',\

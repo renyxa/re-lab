@@ -25,11 +25,6 @@ import ole
 import ctypes
 from utils import *
 
-try:
-	cgsf = ctypes.cdll.LoadLibrary('libgsf-1.so')
-except:
-	cgsf = ""
-	print "Libgsf was not found, do not try to open OLE-based files."
 
 class pointer:
 		type = 0
@@ -380,19 +375,19 @@ def dump_tree (model, parent, outfile):
 		else: # VisioDocument
 			value = collect_vd (model, parent)
 
-		child = cgsf.gsf_outfile_new_child(outfile,name,0)
-		cgsf.gsf_output_write (child,len(value),value)
-		cgsf.gsf_output_close (child)
+		child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,0)
+		page.parent.cgsf.gsf_output_write (child,len(value),value)
+		page.parent.cgsf.gsf_output_close (child)
 
 def save (page, fname):
 		model = page.view.get_model()
-		cgsf.gsf_init()
-		output = cgsf.gsf_output_stdio_new (fname)
-		outfile = cgsf.gsf_outfile_msole_new (output);
+		page.parent.cgsf.gsf_init()
+		output = page.parent.cgsf.gsf_output_stdio_new (fname)
+		outfile = page.parent.cgsf.gsf_outfile_msole_new (output);
 		iter1 = model.get_iter_first()
 		while None != iter1:
 			dump_tree(model, iter1, outfile)
 			iter1 = model.iter_next(iter1)
-		cgsf.gsf_output_close(outfile)
-		cgsf.gsf_shutdown()
+		page.parent.cgsf.gsf_output_close(outfile)
+		page.parent.cgsf.gsf_shutdown()
 
