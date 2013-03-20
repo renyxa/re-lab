@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep
 from utils import *
 from hv2 import HexView
-version = "0.7.15"
+version = "0.7.16"
 
 ui_info = \
 '''<ui>
@@ -506,7 +506,7 @@ class ApplicationMainWindow(gtk.Window):
 					scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 					dictwin.add(scrolled)
 					dictwin.set_title("CDR Dictionary")
-					dictwin.connect ("destroy", self.del_dictwin)
+					dictwin.connect ("destroy", self.del_win,"dict")
 					dictwin.show_all()
 					self.das[pn].dictwin = dictwin
 			elif self.das[pn].type == "FH" and self.das[pn].version < 9:
@@ -786,6 +786,7 @@ class ApplicationMainWindow(gtk.Window):
 					self.activate_reload(None)
 				except:
 					print "Cannot reload",goto[7:-1]
+					print sys.exc_info()[1]
 			elif goto.lower() == "run":
 				self.open_cli()
 			elif 'split@' in goto.lower():
@@ -1085,7 +1086,7 @@ class ApplicationMainWindow(gtk.Window):
 		if dlen == 3:
 			txt += '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-		if dlen > 3 and dlen != 4 and dlen != 8 and self.options_txt == 1:
+		if dlen > 3 and self.options_txt == 1:
 			try:
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:

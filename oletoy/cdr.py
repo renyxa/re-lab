@@ -144,6 +144,14 @@ langids = {
 }
 
 
+def add_dictiter(page,parent,data,fourcc):
+	d_iter = page.dictmod.append(None,None)
+	page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(parent))
+	page.dictmod.set_value(d_iter,2,data)
+	page.dictmod.set_value(d_iter,1,fourcc)
+	return d_iter
+
+
 def readfrac(data):
 	intp = struct.unpack("<H",data[2:4])[0]
 	frp =  struct.unpack("<H",data[0:2])[0]/0xffff
@@ -2007,6 +2015,8 @@ def txsm (hd,size,data):
 	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 def stlt(data,page,parent):
+	# tmpcache -- probably will use to cross reference between stlt and fild/outl etc
+	tmpcache = {}
 	# FIXME! ver 13 and newer is different
 	offset = 4
 	d1 = struct.unpack("<I",data[offset:offset+4])[0]
@@ -2018,7 +2028,9 @@ def stlt(data,page,parent):
 	s_iter = add_pgiter(page,"fild list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s0",data[offset:offset+12],s_iter)
+		t_iter = add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s0",data[offset:offset+12],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt fill")
 		offset += 12
 		if page.version > 12:
 			add_pgiter(page,"\tTrafo?","cdr","stlt_d1",data[offset:offset+48],s_iter)
@@ -2028,7 +2040,9 @@ def stlt(data,page,parent):
 	s_iter = add_pgiter(page,"outl list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s1",data[offset:offset+12],s_iter)
+		t_iter = add_pgiter(page,"%s | %s | %s"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12])),"cdr","stlt_s1",data[offset:offset+12],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt outl")
 		offset += 12
 
 	size = 60
@@ -2038,14 +2052,18 @@ def stlt(data,page,parent):
 	s_iter = add_pgiter(page,"font list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s2",data[offset:offset+size],s_iter)
+		t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s2",data[offset:offset+size],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt font")
 		offset += size
 
 	d2 = struct.unpack("<I",data[offset:offset+4])[0]
 	s_iter = add_pgiter(page,"align list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s3",data[offset:offset+12],s_iter)
+		t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s3",data[offset:offset+12],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt algn")
 		offset += 12
 
 	size = 52
@@ -2053,7 +2071,9 @@ def stlt(data,page,parent):
 	s_iter = add_pgiter(page,"interval list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s4",data[offset:offset+size],s_iter)
+		t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s4",data[offset:offset+size],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt intr")
 		offset += size
 
 	size = 152
@@ -2062,7 +2082,9 @@ def stlt(data,page,parent):
 	s_iter = add_pgiter(page,"set5 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s5",data[offset:offset+size],s_iter)
+		t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s5",data[offset:offset+size],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt set5")
 		offset += size
 
 	size = 784
@@ -2070,7 +2092,9 @@ def stlt(data,page,parent):
 	s_iter = add_pgiter(page,"Tabs list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 	offset += 4
 	for i in range(d2):
-		add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s6",data[offset:offset+size],s_iter)
+		t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s6",data[offset:offset+size],s_iter)
+		tmpcache[d2hex(data[offset:offset+4])] = t_iter
+		add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt tabs")
 		offset += size
 
 	bkpoff = offset
@@ -2101,7 +2125,10 @@ def stlt(data,page,parent):
 					inc = -24
 					if page.version > 13:
 						inc = -20
-			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s7",data[offset:offset+size+inc],s_iter)
+			t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s7",data[offset:offset+size+inc],s_iter)
+			tmpcache[d2hex(data[offset:offset+4])] = t_iter
+			add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt bult")
+
 			offset += size + inc
 
 		size = 28
@@ -2109,7 +2136,9 @@ def stlt(data,page,parent):
 		s_iter = add_pgiter(page,"Indent list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
-			add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
+			t_iter = add_pgiter(page,"ID %s (pID %s)"%(d2hex(data[offset:offset+4]),d2hex(data[offset+4:offset+8])),"cdr","stlt_s8",data[offset:offset+size],s_iter)
+			tmpcache[d2hex(data[offset:offset+4])] = t_iter
+			add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt indn")
 			offset += size
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
@@ -2119,7 +2148,9 @@ def stlt(data,page,parent):
 		s_iter = add_pgiter(page,"Hypen list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
-			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s9",data[offset:offset+size],s_iter)
+			t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s9",data[offset:offset+size],s_iter)
+			tmpcache[d2hex(data[offset:offset+4])] = t_iter
+			add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt hypn")
 			offset += size
 
 		d2 = struct.unpack("<I",data[offset:offset+4])[0]
@@ -2129,7 +2160,9 @@ def stlt(data,page,parent):
 		s_iter = add_pgiter(page,"Dropcap list [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 		offset += 4
 		for i in range(d2):
-			add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
+			t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s10",data[offset:offset+size],s_iter)
+			tmpcache[d2hex(data[offset:offset+4])] = t_iter
+			add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt drcp")
 			offset += size
 
 		set11flag = 0
@@ -2140,7 +2173,9 @@ def stlt(data,page,parent):
 			s_iter = add_pgiter(page,"set11 [%u]"%d2,"cdr","stlt_d2",data[offset:offset+4],parent)
 			offset += 4
 			for i in range(d2):
-				add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s11",data[offset:offset+size],s_iter)
+				t_iter = add_pgiter(page,"ID %s"%d2hex(data[offset:offset+4]),"cdr","stlt_s11",data[offset:offset+size],s_iter)
+				tmpcache[d2hex(data[offset:offset+4])] = t_iter
+				add_dictiter(page,t_iter,d2hex(data[offset:offset+4]),"stlt st11")
 				offset += size
 
 	# size after name
@@ -2155,8 +2190,9 @@ def stlt(data,page,parent):
 			num = struct.unpack("<I",data[offset:offset+4])[0]
 			num2 = struct.unpack("<I",data[offset+12:offset+16])[0]
 			
-			add_pgiter(page,"num %d ID %s (pID %s) %s"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12]),d2hex(data[offset+12:offset+16])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
-			
+			t_iter = add_pgiter(page,"num %d ID %s (pID %s) %s"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12]),d2hex(data[offset+12:offset+16])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
+			tmpcache[d2hex(data[offset+4:offset+8])] = t_iter
+			add_dictiter(page,t_iter,d2hex(data[offset+4:offset+8]),"stlt st12")
 			if num == 3:
 				asize = 48
 			elif num == 2:
@@ -2375,10 +2411,7 @@ class record:
 			except:
 				print "Failed to parse 'sumi'"
 		if page.version < 16 and (self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "fill" or self.fourcc == "arrw" or self.fourcc == "bmpf"):
-			d_iter = page.dictmod.append(None,None)
-			page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(f_iter))
-			page.dictmod.set_value(d_iter,2,d2hex(self.data[0:4]))
-			page.dictmod.set_value(d_iter,1,self.fourcc)
+			d_iter = add_dictiter(page,f_iter,d2hex(self.data[0:4]),self.fourcc)
 			if self.fourcc == "fild" or self.fourcc == "fill":
 				off = 4
 				if page.version > 12:
@@ -2453,10 +2486,7 @@ class record:
 					page.model.set_value(f_iter,8,("path",page.model.get_string_from_iter(p_iter)))
 
 					if self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "arrx" or self.fourcc == "bmpf":
-						d_iter = page.dictmod.append(None,None)
-						page.dictmod.set_value(d_iter,0,page.model.get_string_from_iter(p_iter))
-						page.dictmod.set_value(d_iter,2,d2hex(data[0:4]))
-						page.dictmod.set_value(d_iter,1,self.fourcc)
+						d_iter = add_dictiter(page,p_iter,d2hex(data[0:4]),self.fourcc)
 						if self.fourcc == "fild":
 							off = 4
 							if page.version > 12:
