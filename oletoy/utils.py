@@ -29,7 +29,6 @@ def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,
 	hd.model.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
 	return iter
 
-
 def add_tip (hd,iter,text):
 	hd.model.set (iter, 8, text)
 

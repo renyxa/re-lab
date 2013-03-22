@@ -1561,7 +1561,8 @@ def loda (hd,size,data,shift=0,ftype=0):
 	add_iter (hd, "Args types",t_txt,s_types+shift,n_args*4,"txt")
 
 #	if loda_types.has_key(l_type):
-	for i in range(n_args, 0, -1):
+#	for i in range(n_args, 0, -1):
+	for i in range(1,n_args+1):
 		offset = struct.unpack('<L',data[s_args+i*4-4:s_args+i*4])[0]
 		length = struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset
 		argtype = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
