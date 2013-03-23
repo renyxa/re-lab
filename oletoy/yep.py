@@ -28,6 +28,7 @@ def hdr1item (page,data,parent):
 		if v != 0:
 			h1ch.append(v)
 		off += 4
+	off += 4
 
 	for i in h1ch:
 		add_pgiter(page,"Block","vrpm","hdr2ch",data[off:i],h1citer)
