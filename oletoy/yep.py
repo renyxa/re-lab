@@ -93,3 +93,4 @@ def parse (page, data, parent,align=4.):
 		if fourcc == "VPRM":
 			vprm (page, data[off:off+length], citer)
 		off += length
+	return "YEP"

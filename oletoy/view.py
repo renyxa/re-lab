@@ -50,6 +50,8 @@ ui_info = \
 		<menuitem action='Less'/>
 		<separator/>
 		<menuitem action='Dump'/>
+		<separator/>
+		<menuitem action='Config'/>
 	</menu>
 	<menu action='ViewMenu'>
 		<menuitem action='Dict'/>
@@ -196,6 +198,10 @@ class ApplicationMainWindow(gtk.Window):
 				"_Less bytes","<control>L",					  # label, accelerator
 				"Remove some bytes at the end of the current record",							 # tooltip
 				self.activate_less),
+			( "Config", gtk.STOCK_SAVE,						# name, stock id
+				"Con_fig","<control>F",					  # label, accelerator
+				"Configure OLE Toy",							 # tooltip
+				self.activate_config),
 			( "Dump", gtk.STOCK_SAVE,						# name, stock id
 				"D_ump","<control>U",					  # label, accelerator
 				"Dump record to file",							 # tooltip
@@ -737,6 +743,9 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_quit(self, action):
 		 gtk.main_quit()
+		 return
+
+	def activate_config(self, action):
 		 return
  
 	def update_statusbar(self, buffer):

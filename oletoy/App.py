@@ -17,7 +17,7 @@
 import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
-import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd
+import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf, otxml, chdraw
 
 class Page:
@@ -63,6 +63,9 @@ class Page:
 			self.type = chdraw.open(self, buf, parent)
 			return 0
 
+		if buf[0:4] == "EVHD":
+			self.type = yep.parse(self, buf, parent)
+			return 0
 
 		if buf[0:5].lower() == "{\\rtf":
 			self.type = rtf.open(buf, self, parent)
