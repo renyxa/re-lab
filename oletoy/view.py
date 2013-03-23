@@ -138,7 +138,7 @@ class ApplicationMainWindow(gtk.Window):
 		# configuration options
 		self.options_le = 1
 		self.options_be = 0
-		self.options_txt = 1
+		self.options_txt = 0
 		self.options_div = 1
 		self.options_enc = "utf-16"
 		self.options_bup = 0
@@ -730,7 +730,7 @@ class ApplicationMainWindow(gtk.Window):
 			if fname:
 				cdr.save(self.das[pn],fname)
 		else:
-			self.activate_dump(self,action)
+			self.activate_dump(action)
 
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
@@ -1099,7 +1099,7 @@ class ApplicationMainWindow(gtk.Window):
 			try:
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
-				pass
+				print sys.exc_info()
 				
 		self.update_statusbar(txt)
 

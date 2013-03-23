@@ -73,9 +73,15 @@ def vprm (page, data, parent):
 		off2 += 4
 	hbiter = add_pgiter(page,"Header B","vrpm","hdrb",data[off+hdraend:off+hdrbend],parent)
 	for i in hdrb:
-		add_pgiter(page,"Block","vrpm","hdrbch",data[off2:i],hbiter)
+		v1 = struct.unpack(">h",data[off2:off2+2])[0]
+		v2 = struct.unpack(">h",data[off2+2:off2+4])[0]
+		v3 = ord(data[off2+16])
+		add_pgiter(page,"Block %02x %02x %02x"%(v1,v2,v3),"vrpm","hdrbch",data[off2:i],hbiter)
 		off2 = i
-	add_pgiter(page,"Block","vrpm","hdrbch",data[off2:],hbiter)
+	v1 = struct.unpack(">h",data[off2:off2+2])[0]
+	v2 = struct.unpack(">h",data[off2+2:off2+4])[0]
+	v3 = ord(data[off2+16])
+	add_pgiter(page,"Block %02x %02x %02x"%(v1,v2,v3),"vrpm","hdrbch",data[off2:],hbiter)
 
 
 def parse (page, data, parent,align=4.):
