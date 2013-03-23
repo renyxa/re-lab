@@ -17,6 +17,66 @@
 import sys,struct,math
 from utils import *
 
+def hdr1item (page,data,parent):
+	off = 0
+	h1chend = struct.unpack(">I",data[off:off+4])[0]
+	off += 4
+	h1ch = []
+	h1citer = add_pgiter(page,"Header 2","vrpm","hdr2",data[:h1chend],parent)
+	while off < h1chend - 4:
+		v = struct.unpack(">I",data[off:off+4])[0]
+		if v != 0:
+			h1ch.append(v)
+		off += 4
+
+	for i in h1ch:
+		add_pgiter(page,"Block","vrpm","hdr2ch",data[off:i],h1citer)
+		off = i
+	add_pgiter(page,"Tail","vrpm","hdr2tail",data[off:],h1citer)
+
+
+def vprm (page, data, parent):
+	sig = data[:16]
+	add_pgiter(page,"Signature","vrpm","sign",data[:16],parent)
+	off = 16
+	ptr = struct.unpack(">I",data[off:off+4])[0]
+	off += 4
+
+	hdr1end = struct.unpack(">I",data[off:off+4])[0]
+	off += 4
+	hdr1 = []
+	while off < hdr1end:
+		v = struct.unpack(">I",data[off:off+4])[0]
+		if v != 0:
+			hdr1.append(v)
+		off += 4
+	h1iter = add_pgiter(page,"Header 1","vrpm","hdr1",data[20:hdr1end],parent)
+	for i in hdr1:
+		hdr1item (page,data[off:i],h1iter)
+		off = i
+	hdr1item (page,data[off:ptr],h1iter)
+
+	off = ptr
+	off2 = ptr
+	v1 = struct.unpack(">I",data[off:off+4])[0] # ??? "allways" 8
+	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
+	haiter = add_pgiter(page,"Header A","vrpm","hdra",data[off:off+hdraend],parent)
+	off2 += hdraend
+	hdrbend = off+struct.unpack(">I",data[off2:off2+4])[0]
+	hdrb = []
+	off2 += 4
+	while off2 < hdrbend:
+		v = struct.unpack(">I",data[off2:off2+4])[0]
+		if v != 0:
+			hdrb.append(v+off)
+		off2 += 4
+	hbiter = add_pgiter(page,"Header B","vrpm","hdrb",data[off+hdraend:off+hdrbend],parent)
+	for i in hdrb:
+		add_pgiter(page,"Block","vrpm","hdrbch",data[off2:i],hbiter)
+		off2 = i
+	add_pgiter(page,"Block","vrpm","hdrbch",data[off2:],hbiter)
+
+
 def parse (page, data, parent,align=4.):
 	off = 0
 	while off < len(data):
@@ -28,5 +88,7 @@ def parse (page, data, parent,align=4.):
 		else:
 			length = l
 		off += 4
-		add_pgiter(page,"%s"%fourcc,"yep",fourcc,data[off:off+length],parent)
+		citer = add_pgiter(page,"%s"%fourcc,"yep",fourcc,data[off:off+length],parent)
+		if fourcc == "VPRM":
+			vprm (page, data[off:off+length], citer)
 		off += length

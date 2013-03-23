@@ -113,7 +113,7 @@ class CliWindow(gtk.Window):
 			treeSelection = self.app.das[pn].view.get_selection()
 			rmodel, riter = treeSelection.get_selected()
 			if riter:
-				rbuf = model.get_value(riter,3)
+				rbuf = rmodel.get_value(riter,3)
 			else:
 				rbuf = ""
 			exec(txt)
