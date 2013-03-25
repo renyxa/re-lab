@@ -95,8 +95,15 @@ def parse (page, data, parent,align=4.):
 		else:
 			length = l
 		off += 4
-		citer = add_pgiter(page,"%s"%fourcc,"yep",fourcc,data[off:off+length],parent)
+		if fourcc == "SSTY":
+			iname = "SSTY %s"%(data[off:off+16])
+		else:
+			iname = "%s"%fourcc
+		citer = add_pgiter(page,iname,"yep",fourcc,data[off:off+length],parent)
 		if fourcc == "VPRM":
 			vprm (page, data[off:off+length], citer)
+		if fourcc == "IPIT":
+			parse (page, data[off:off+length], citer)
+			
 		off += length
 	return "YEP"

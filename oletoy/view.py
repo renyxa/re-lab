@@ -614,7 +614,7 @@ class ApplicationMainWindow(gtk.Window):
 			treeSelection = self.das[pn].view.get_selection()
 			model, iter1 = treeSelection.get_selected()
 			data = model.get_value(iter1,3)
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save')
 			if fname:
 				nlen = model.get_value(iter1,2)
 				value = model.get_value(iter1,3)
