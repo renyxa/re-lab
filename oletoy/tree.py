@@ -98,8 +98,11 @@ def make_view2():
    scrolled = gtk.ScrolledWindow()
    scrolled.add(view)
    scrolled.set_size_request(250,300)
-   scrolled.show()
-   return model,view,scrolled,renderer2
+   #scrolled.show()
+   hpaned = gtk.HPaned()
+   hpaned.add1(scrolled)
+   hpaned.show()  # was scrolled
+   return model,view,hpaned,renderer2
 
 
 def tree_append(model,parent,name,data,dtype,dlen):

@@ -128,6 +128,46 @@ def bup2 (string, offlen):
 	return t2[:-1],r
 
 
+def graph_on_button_press(da,event,data,hd):
+	if event.type  == gtk.gdk.BUTTON_PRESS:
+		if event.button == 1:
+			hd.dispscale *= 1.4
+			graph_expose(da,event,data,hd)
+		if event.button == 2:
+			hd.dispscale = 1
+			hd.da.hide()
+			hd.da.show()
+		if event.button == 3:
+			hd.dispscale *= .7
+			hd.da.hide()
+			hd.da.show()
+
+def graph_expose (da,event,data,hd):
+	ctx = da.window.cairo_create()
+	ctx.set_source_rgb(0,0,0.5)
+	ctx.scale(hd.dispscale,hd.dispscale)
+	ctx.move_to(0,0)
+	for x in range(len(data)):
+		y = ord(data[x])
+		ctx.line_to(x,y)
+	ctx.stroke()
+
+def graph(hd,data):
+	ch = hd.hdscrolled.get_child2()
+	if ch:
+		hd.hdscrolled.remove(ch)
+	da = gtk.DrawingArea()
+	scrolled = gtk.ScrolledWindow()
+	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	scrolled.add_with_viewport(da)
+	hd.da = scrolled
+	hd.hdscrolled.add2(hd.da)
+	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+	da.connect('expose_event', graph_expose,data,hd)
+	da.connect("button_press_event",graph_on_button_press,data,hd)
+	hd.da.show_all()
+
+
 def disp_expose (da,event,pixbuf,scale=1):
 	ctx = da.window.cairo_create()
 	ctx.scale(scale,scale)

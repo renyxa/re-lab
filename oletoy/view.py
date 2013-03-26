@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep
 from utils import *
 from hv2 import HexView
-version = "0.7.16"
+version = "0.7.17"
 
 ui_info = \
 '''<ui>
@@ -55,6 +55,7 @@ ui_info = \
 	</menu>
 	<menu action='ViewMenu'>
 		<menuitem action='Dict'/>
+		<menuitem action='Graph'/>
 	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='Manual'/>
@@ -222,6 +223,10 @@ class ApplicationMainWindow(gtk.Window):
 				"_Dictionary","<control>D",					  # label, accelerator
 				"Show type dependant dictionary",							 # tooltip
 				self.activate_dict),
+			( "Graph", gtk.STOCK_INDEX,					# name, stock id
+				"_Graph","<control>G",					  # label, accelerator
+				"Show graph",							 # tooltip
+				self.activate_graph),
 			( "Options", None,                    # name, stock id
 				"Op_tions","<control>T",                      # label, accelerator
 				"Configuration options",                             # tooltip
@@ -395,6 +400,15 @@ class ApplicationMainWindow(gtk.Window):
 		self.offlen = zip(o,l)
 
 
+	def activate_graph (self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			treeSelection = self.das[pn].view.get_selection()
+			model, iter1 = treeSelection.get_selected()
+			if iter1:
+				graph(self.das[pn].hd,model.get_value(iter1,3))
+
+
 	def activate_bup (self, action):
 		if self.bup_win != None:
 			self.bup_win.show_all()
@@ -414,6 +428,7 @@ class ApplicationMainWindow(gtk.Window):
 			bupwin.connect ("destroy", self.del_win,"bup")
 			bupwin.show_all()
 			self.bup_win = bupwin
+
 
 	def activate_options (self, action):
 		if self.options_win != None:
@@ -593,20 +608,21 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_less (self, action):
 		pn = self.notebook.get_current_page()
-		treeSelection = self.das[pn].view.get_selection()
-		model, iter1 = treeSelection.get_selected()
-		type = model.get_value(iter1,1)[0]
-		size = model.get_value(iter1,2)
-		value = model.get_value(iter1,3)
-		if type == "emf" and size > 11:
-			model.set_value(iter1,2,size-4)
-			model.set_value(iter1,3,value[0:4]+struct.pack("<I",size-4)+value[8:size-4])
-		elif type == "wmf" and size > 7:
-			model.set_value(iter1,2,size-2)
-			model.set_value(iter1,3,struct.pack("<I",len(value)/2-1)+value[4:size-2])
-		elif type == "xls" and size > 0:
-			model.set_value(iter1,2,size-1)
-			model.set_value(iter1,3,value[:2]+struct.pack("<H",size-1)+value[4:3+size])
+		if pn != -1:
+			treeSelection = self.das[pn].view.get_selection()
+			model, iter1 = treeSelection.get_selected()
+			type = model.get_value(iter1,1)[0]
+			size = model.get_value(iter1,2)
+			value = model.get_value(iter1,3)
+			if type == "emf" and size > 11:
+				model.set_value(iter1,2,size-4)
+				model.set_value(iter1,3,value[0:4]+struct.pack("<I",size-4)+value[8:size-4])
+			elif type == "wmf" and size > 7:
+				model.set_value(iter1,2,size-2)
+				model.set_value(iter1,3,struct.pack("<I",len(value)/2-1)+value[4:size-2])
+			elif type == "xls" and size > 0:
+				model.set_value(iter1,2,size-1)
+				model.set_value(iter1,3,value[:2]+struct.pack("<H",size-1)+value[4:3+size])
 
 	def activate_dump (self, action):
 		pn = self.notebook.get_current_page()
@@ -1163,6 +1179,8 @@ class ApplicationMainWindow(gtk.Window):
 		data = model.get_value(iter1,3)
 		if self.das[pn].type == "YEP":
 			gloff = model.get_value(iter1,7)
+		else:
+			gloff = None
 		if hd.hv.modified:
 			dialog = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_YES_NO, 
 			flags =gtk.DIALOG_DESTROY_WITH_PARENT,type = gtk.MESSAGE_WARNING, 

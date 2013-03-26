@@ -533,7 +533,8 @@ def Blip(hd,size,value,off=0):
 	scrolled.add_with_viewport(da)
 	da.set_size_request(imgw,imgh)
 	hd.da = scrolled
-	hd.hbox0.pack_start(hd.da)
+#	hd.hbox0.pack_start(hd.da)
+	hd.hdscrolled.add2(hd.da)
 	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
 	da.connect('expose_event',hd.disp_expose,pixbuf)
 	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
