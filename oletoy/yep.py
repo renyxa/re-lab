@@ -107,4 +107,5 @@ def parse (page, data, parent,align=4.):
 			parse (page, data[off:off+length], citer)
 			
 		off += length
+	page.view.get_column(1).set_title("Offset")
 	return "YEP"

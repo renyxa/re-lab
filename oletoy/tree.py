@@ -15,7 +15,7 @@
 #
 
 import gobject
-import gtk
+import gtk, pango
 
 def make_view():
    # Create the model.
@@ -44,6 +44,7 @@ def make_view():
    cell1 = gtk.CellRendererText()
    cell1.set_property('family-set',True)
    cell1.set_property('font','monospace 10')
+   cell1.set_property('xalign',1)
 
    cell2 = gtk.CellRendererText()
    cell2.set_property('family-set',True)
