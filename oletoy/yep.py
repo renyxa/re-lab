@@ -35,7 +35,8 @@ def hdr1item (page,data,parent,offset=0):
 		add_pgiter(page,"Block %s"%i[1],"vrpm","hdr2ch",data[off:i[0]],h1citer,"%02x  "%(offset+off))
 		off = i[0]
 	if i[1] < 4:
-		add_pgiter(page,"Tail","vrpm","hdr2tail",data[off:],h1citer,"%02x  "%(offset+off))
+		# assumption that Graph would be here always
+		add_pgiter(page,"Block 4","vrpm","hdr2tail",data[off:],h1citer,"%02x  "%(offset+off))
 
 
 def vprm (page, data, parent, offset=0):
