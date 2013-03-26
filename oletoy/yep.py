@@ -23,17 +23,19 @@ def hdr1item (page,data,parent,offset=0):
 	off += 4
 	h1ch = []
 	h1citer = add_pgiter(page,"Header 2","vrpm","hdr2",data[:h1chend],parent,"%02x  "%offset)
+	ind = 0
 	while off < h1chend - 4:
 		v = struct.unpack(">I",data[off:off+4])[0]
 		if v != 0:
-			h1ch.append(v)
+			h1ch.append((v,ind))
 		off += 4
+		ind += 1
 	off += 4
-
 	for i in h1ch:
-		add_pgiter(page,"Block","vrpm","hdr2ch",data[off:i],h1citer,"%02x  "%(offset+off))
-		off = i
-	add_pgiter(page,"Tail","vrpm","hdr2tail",data[off:],h1citer,"%02x  "%(offset+off))
+		add_pgiter(page,"Block %s"%i[1],"vrpm","hdr2ch",data[off:i[0]],h1citer,"%02x  "%(offset+off))
+		off = i[0]
+	if i[1] < 4:
+		add_pgiter(page,"Tail","vrpm","hdr2tail",data[off:],h1citer,"%02x  "%(offset+off))
 
 
 def vprm (page, data, parent, offset=0):
