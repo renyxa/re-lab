@@ -31,9 +31,9 @@ def hdr1item (page,data,parent,offset=0):
 	off += 4
 
 	for i in h1ch:
-		add_pgiter(page,"Block","vrpm","hdr2ch",data[off:i],h1citer,"%02x"%(offset+off))
+		add_pgiter(page,"Block","vrpm","hdr2ch",data[off:i],h1citer,"%02x  "%(offset+off))
 		off = i
-	add_pgiter(page,"Tail","vrpm","hdr2tail",data[off:],h1citer,"%02x"%(offset+off))
+	add_pgiter(page,"Tail","vrpm","hdr2tail",data[off:],h1citer,"%02x  "%(offset+off))
 
 
 def vprm (page, data, parent, offset=0):
@@ -102,7 +102,7 @@ def parse (page, data, parent,align=4.):
 			iname = "%s"%fourcc
 		citer = add_pgiter(page,iname,"yep",fourcc,data[off:off+length],parent)
 		if fourcc == "VPRM":
-			vprm (page, data[off:off+length], citer, off)
+			vprm (page, data[off:off+length], citer)
 		if fourcc == "IPIT":
 			parse (page, data[off:off+length], citer)
 			

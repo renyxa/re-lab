@@ -1161,6 +1161,8 @@ class ApplicationMainWindow(gtk.Window):
 		ntype = model.get_value(iter1,1)
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
+		if self.das[pn].type == "YEP":
+			gloff = model.get_value(iter1,7)
 		if hd.hv.modified:
 			dialog = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_YES_NO, 
 			flags =gtk.DIALOG_DESTROY_WITH_PARENT,type = gtk.MESSAGE_WARNING, 
@@ -1191,6 +1193,8 @@ class ApplicationMainWindow(gtk.Window):
 			hd.hv.prer = 0
 			hd.hv.prec = 0
 			hd.hv.init_lines()
+			if gloff != None:
+				hd.hv.global_off = int(gloff,16)
 			hd.hv.expose(None,None)
 
 			hd.model.clear()

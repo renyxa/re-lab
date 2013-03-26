@@ -21,7 +21,7 @@ import os
 
 
 class HexView():
-	def __init__(self,data="",offset=0):
+	def __init__(self,data="",offset=0, gloff=None):
 		# UI related objects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
 		self.iter = None 							# to store iter for saving modifications
@@ -42,6 +42,7 @@ class HexView():
 		self.table.attach(self.vs,3,4,1,2,0)
 
 		# variables to store things
+		self.global_off = gloff # to show "absolute" offset
 		self.data = data				# data presented in the widget
 		self.offset = offset		# current cursor offset
 		self.offnum = 0					# offset in lines
@@ -743,7 +744,10 @@ class HexView():
 			ctx.move_to(self.tdx*10,self.tht)
 			ctx.show_text(hdr)
 			ctx.set_source_rgb(self.curclr[0],self.curclr[1],self.curclr[2])
-			haddr = "%02x"%(self.curr*16+self.curc)
+			if self.global_off != None:
+				haddr = "%02x %04x"%(self.curr*16+self.curc,self.global_off+self.curr*16+self.curc)
+			else:
+				haddr = "%02x"%(self.curr*16+self.curc)
 			ctx.move_to(self.tdx*(11+16*3),self.tht)
 			ctx.show_text(haddr)
 			ctx.set_source_rgb(self.lineclr[0],self.lineclr[1],self.lineclr[2])
@@ -772,7 +776,7 @@ class HexView():
 		ctx.line_to(self.tdx*(12+self.prec*3),self.tht+1.5)
 		ctx.stroke()
 		# clear prev hdr address
-		ctx.rectangle(self.tdx*(11+16*3),0,self.tdx*8,self.tht+1.5)
+		ctx.rectangle(self.tdx*(11+16*3),0,self.tdx*16,self.tht+1.5)
 		ctx.fill()
 		# draw new hdr cursor
 		ctx.set_source_rgb(self.curclr[0],self.curclr[1],self.curclr[2])
@@ -781,7 +785,10 @@ class HexView():
 		ctx.stroke()
 		
 		#draw haddr
-		haddr = "%02x"%(self.curr*16+self.curc)
+		if self.global_off != None:
+			haddr = "%02x %04x"%(self.curr*16+self.curc,self.global_off+self.curr*16+self.curc)
+		else:
+			haddr = "%02x"%(self.curr*16+self.curc)
 		ctx.move_to(self.tdx*(11+16*3),self.tht)
 		ctx.show_text(haddr)
 
