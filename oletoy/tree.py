@@ -54,7 +54,7 @@ def make_view():
    column0 = gtk.TreeViewColumn('Record', cell, text=0,background=5)
    column1 = gtk.TreeViewColumn('Type', cell1, text=7)
    column2 = gtk.TreeViewColumn('Path', cell2, text=6)
-   column3 = gtk.TreeViewColumn('Length', cell1, text=2)
+   column3 = gtk.TreeViewColumn('Length', cell, text=2)
 
    view.append_column(column0)
    view.append_column(column1)

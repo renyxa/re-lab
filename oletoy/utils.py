@@ -146,11 +146,17 @@ def graph_expose (da,event,data,hd):
 	ctx = da.window.cairo_create()
 	ctx.set_source_rgb(0,0,0.5)
 	ctx.scale(hd.dispscale,hd.dispscale)
-	ctx.move_to(0,0)
+	ctx.set_source_rgb(0,0,0.1)
+	y = 0
 	for x in range(len(data)):
-		y = ord(data[x])
-		ctx.line_to(x,y)
+		y1 = ord(data[x])
+		if y1 - y < 10:
+			ctx.move_to(x*2,256-y1)
+		ctx.line_to(x*2+0.5,256.5-y1)
+		y = y1
+			
 	ctx.stroke()
+
 
 def graph(hd,data):
 	ch = hd.hdscrolled.get_child2()

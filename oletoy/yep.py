@@ -100,9 +100,17 @@ def parse (page, data, parent,align=4.):
 			length = l
 		off += 4
 		if fourcc == "SSTY":
-			iname = "SSTY %s"%(data[off:off+16])
+			iname = fourcc+" %s"%(data[off:off+16])
+		elif fourcc == "VVST":
+			n = struct.unpack(">H",data[off+0x19:off+0x1b])[0]
+			if ord(data[off+0x18]) == 0x3f:
+				f = "[Voice %s]"%n
+			else:
+				f = "[DrumKit %s]"%n
+			iname = fourcc+f+" %s"%(data[off:off+16])
 		else:
 			iname = "%s"%fourcc
+		
 		citer = add_pgiter(page,iname,"yep",fourcc,data[off:off+length],parent)
 		if fourcc == "VPRM":
 			vprm (page, data[off:off+length], citer)
