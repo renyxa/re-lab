@@ -755,15 +755,21 @@ class ApplicationMainWindow(gtk.Window):
 
 				elif cmdline[0] == "/":
 					if len(cmdline) > 1:
-						pos = cmdline.find("+")
-						if pos != -1:
+						pos1 = cmdline.find("+")
+						pos2 = cmdline.find("-")
+						if pos1 != -1 or pos2 != -1:
+							pos = max(pos1,pos2)
 							try:
 								arg1 = int(cmdline[1:pos],16)
 								arg2 = int(cmdline[pos+1:],16)
-								addr = arg1+arg2
+								if pos1 != -1:
+									addr = arg1+arg2
+									self.entry.set_text("/%x+%x"%(addr,arg2))
+								else:
+									addr = arg1-arg2
+									self.entry.set_text("/%x-%x"%(addr,arg2))
 								lnum = utils.find_line (doc,addr)
 								cnum = addr - doc.lines[lnum][0]
-								self.entry.set_text("/%x+%x"%(addr,arg2))
 							except:
 								print "Invalid offset"
 						else:
@@ -786,11 +792,11 @@ class ApplicationMainWindow(gtk.Window):
 						s = (doc.lines[lnum-1][1]+1)%4
 						doc.lines[lnum-1] = (doc.lines[lnum-1][0],s)
 						# scroll down if went below screen
-						if doc.curr > doc.offnum+doc.numtl-3:
+						if lnum > doc.offnum+doc.numtl-3:
 							doc.offnum += doc.numtl/2
 						# scroll up if went above screen
-						if doc.curr < doc.offnum:
-							doc.offnum = doc.curr
+						if lnum < doc.offnum:
+							doc.offnum = lnum
 						doc.expose(None,None)
 
 
