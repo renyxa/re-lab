@@ -20,7 +20,7 @@ import hexview
 import utils
 import cli
 
-version = "0.4.5"
+version = "0.4.9"
 
 ui_info = \
 '''<ui>

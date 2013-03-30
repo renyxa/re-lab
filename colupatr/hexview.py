@@ -19,22 +19,56 @@ import cairo
 import struct
 import utils, cli
 
+clrs = {}
+clrs[1] = (1,0.5,0.5)
+clrs[2] = (1,0.3,0.3)
+clrs[3] = (1,0,0.5)
+
+class Comment():
+	def __init__(self,text="",offset=0,length=0,color=(0,0,0),ctype=0):
+		self.text = text		# text of the comment
+		self.offset = offset	# start offset
+		self.length = length	# len of the commented bytes
+		self.clr = color		# color of the comment
+		self.ctype = ctype		# for future use
+
+	# ctx -- context to draw on
+	# hv -- for all required data
+	# r,c -- row and column for offset, calculated by get_sel_end
+	def expose(self,ctx,hv,r,c):
+		# clear the place and draw text of the comment
+		shift = 0
+		text = self.text
+		if r in hv.cmntlines:
+			shift = hv.cmntlines[r]+1
+			text = unicode("\xC2\xB7","utf8") + " " + text
+		ctx.set_source_rgb(1,1,1) # can be used for highlighting
+		ctx.rectangle(hv.tdx*(13+hv.maxaddr*4+shift),hv.tht*(r+1-hv.offnum)+4,hv.tdx*len(text),hv.tht)
+		ctx.fill()
+		ctx.move_to(hv.tdx*(13+hv.maxaddr*4+shift),hv.tht*(r+2-hv.offnum)+4)
+		ctx.set_source_rgb(self.clr[0],self.clr[1],self.clr[2])
+		ctx.select_font_face(hv.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+		ctx.show_text(text)
+		ctx.select_font_face(hv.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		hv.cmntlines[r] = shift + len(text)
+		# draw line around commented bytes
+		# calculate comment end row/col
+		re,ce = hv.get_sel_end(r,hv.lines[r][0]+c+self.length+1)
+		hv.draw_selection(ctx,r,c,re,ce,(self.clr[0],self.clr[1],self.clr[2],0.3))
+
 class HexView():
 	def __init__(self,data=None,lines=[],comments={},offset=0):
 		# UI related objects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
-		self.hv = gtk.DrawingArea()		# middle column with the main hex context
+		self.hv = gtk.DrawingArea()				# middle column with the main hex context
 		self.vadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
-#		self.hadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
 		self.vs = gtk.VScrollbar(self.vadj)
-#		self.hs = gtk.HScrollbar(self.hadj)
 		self.hbox1 = gtk.HBox()
 		self.hbox2 = gtk.HBox()
 		self.hbox3 = gtk.HBox()
 		self.table = gtk.Table(3,4,False)
 		self.table.attach(self.hv,0,3,0,2)
 		self.table.attach(self.hbox1,0,1,2,3,0,0)
-#		self.table.attach(self.hs,1,2,2,3,gtk.EXPAND|gtk.FILL,0)
 		self.table.attach(self.hbox2,2,3,2,3,0,0)
 		self.table.attach(self.hbox3,3,4,0,1,0,0)
 		self.table.attach(self.vs,3,4,1,2,0)
@@ -46,39 +80,45 @@ class HexView():
 		self.ewin.set_modal(False)
 		self.ewin.set_decorated(False)
 		self.ewin.set_border_width(0)
+		self.xs,self.ys = 0,0
 		self.entry = gtk.Entry()
 		self.entry.connect("key-press-event",self.entry_key_pressed)
-		self.ewin.add(self.entry)
+		self.comment_clr = ("#FF0000",(1,0,0))
+		cbtn = gtk.ColorButton(gtk.gdk.Color(65535,0,0))
+		cbtn.set_size_request(28,28)
+		cbtn.connect("color-set",self.on_clr_button)
+		self.hbox = gtk.HBox()
+		self.hbox.pack_start(self.entry,False,False,2)
+		self.hbox.pack_start(cbtn,False,False,2)
+		self.ewin.add(self.hbox)
 
 		# variables to store things
-		self.data = data				# data presented in the widget
-		self.fname = ""					# to store filename
+		self.data = data			# data presented in the widget
+		self.fname = ""				# to store filename
 		self.offset = offset		# current cursor offset
-		self.offnum = 0					# offset in lines
-		self.tdx = -1						# width of one glyph
-		self.tht = 0						# height of one glyph
-		self.numtl = 0					# number of lines
+		self.offnum = 0				# offset in lines
+		self.tdx = -1				# width of one glyph
+		self.tht = 0				# height of one glyph
+		self.numtl = 0				# number of lines
 		self.lines = lines			# offsets of lines in dump (offset,mode,comment idx)
-		self.comments = comments	# hash of offset:length/text
-		self.keep_cmnt = 0			# to keep comment len
-		self.maxaddr = 16				# current length of the longest line
-		self.hvlines = []				# cached text of lines
+		self.comments = comments	# hash of offset:Comment()
+		self.cmntlines = {}		# to cache lines with comments 
+		self.maxaddr = 16			# current length of the longest line
+		self.hvlines = []			# cached text of lines
 		self.selr = None
 		self.selc = None
-		self.drag = 0						# flag to track if we drag something
-		self.kdrag = 0					# flag to reinit selection if shift was released/pressed
-		self.curr = 0						# current row
-		self.curc = 0						# current column
-		self.mode = ""					# flag to jump to the current scrollbar offset or scroll back to hv cursor
-		self.prer = 0						# previous row
-		self.prec = 0						# previous column
+		self.drag = 0				# flag to track if we drag something
+		self.kdrag = 0				# flag to reinit selection if shift was released/pressed
+		self.curr = 0				# current row
+		self.curc = 0				# current column
+		self.mode = ""				# flag to jump to the current scrollbar offset or scroll back to hv cursor
+		self.prer = 0				# previous row
+		self.prec = 0				# previous column
 		self.shift = 0
-		self.sel = None					# to keep current selection (rs,cs,re,ce)
-		self.mtt = None					# mx, my, num -- to show how many bytes selected
-		self.bklines = []				# previous state of the lines to support one step undo
-		self.bkhvlines = []			# previous state of the hvlines to support one step undo
+		self.sel = None				# to keep current selection (rs,cs,re,ce)
+		self.mtt = None				# mx, my, num -- to show how many bytes selected
 		self.exposed = 0
-		self.debug = -1					# -1 -- debug off, 1 -- debug on
+		self.debug = -1				# -1 -- debug off, 1 -- debug on
 		self.edit = 1
 		self.editmode = 0
 		self.modified = 0
@@ -94,7 +134,6 @@ class HexView():
 		self.hv.connect("expose_event", self.expose)
 		self.hv.connect("motion_notify_event",self.on_motion_notify)
 		self.vadj.connect("value_changed", self.on_vadj_changed)
-#		self.hadj.connect("value_changed", self.on_hadj_changed)
 
 		# functions to handle kbd input
 		self.okp = {65362:self.okp_up , 65365:self.okp_pgup, 65364:self.okp_down,
@@ -105,25 +144,44 @@ class HexView():
 			65379:self.okp_ins,
 			100:self.okp_debug, # "^d" for debug
 			97:self.okp_selall, # ^A for 'select all'
-			99:self.okp_copy, # ^C for 'copy'
-#			122:self.okp_undo, # ^Z for 'undo'
-			105:self.okp_ins, # i for Insert
+			99:self.okp_copy, 	# ^C for 'copy'
+			105:self.okp_ins, 	# i for Insert
 			32:self.okp_switch, # space to switch focus
 			101:self.okp_fledit # ^E to flip edit
 			}
 		self.edmap = {48:0,49:1,50:2,51:3,52:4,53:5,54:6,55:7,56:8,57:9,
 			97:10,98:11,99:12,100:13,101:14,102:15}
 
-
 		self.init_config()
 
 		if lines == []:
-			self.init_lines()				# init as a standard "all 0x10 wide" lines
+			self.init_lines()		# init as a standard "all 0x10 wide" lines
 		else:
 			for i in range(len(lines)):
 				self.hvlines.append("")
-				self.bkhvlines.append("")
 			self.set_maxaddr()
+
+	def on_clr_button(self,action):
+		gc = action.get_color()
+		self.comment_clr = ("#%02x%02x%02x"%(gc.red/256,gc.green/256,gc.blue/256),(gc.red/65536.,gc.green/65536.,gc.blue/65536.))
+		self.ewin.show()
+		self.ewin.move(self.xs,self.ys)
+		self.entry.grab_focus()
+
+	def rc_to_xy_hex(self,r,c):
+		x = self.tdx*(10+c*3)
+		y = self.tht*(r+1-self.offnum)+6.5
+		return x,y
+
+	# check if offset is inside of any comment
+	# returns comment offset (id) or -1
+	def chk_offset(self,offset):
+		for i in sorted(self.comments.iterkeys()):
+			if i > offset:
+				return -1
+			elif i == offset or i+self.comments[i].length > offset:
+				return i
+		return -1
 
 	def draw_edit(self,ctx):
 		ctx.move_to(self.tdx*2-2,self.tdx)
@@ -138,12 +196,14 @@ class HexView():
 		ctx.set_source_rgb(0,0,0)
 		ctx.stroke()
 
-	def draw_selection(self,ctx,r0,c0,r1,c1,clr=(0.5,0.5,0.5,0.5)):
+	def draw_selection(self,ctx,r0,c0,r1,c1,clr=(0.5,0.5,0.5,0.5),mode=0):
 		if r0 < self.offnum:
 			r0 = self.offnum
 			c0 = 0
 		if r1 > self.offnum +self.numtl + 1:
 			r1 = self.offnum + self.numtl + 1
+		if c0 < 0:
+			c0 = 0
 		if r0 == r1: # one row
 			ctx.rectangle(self.tdx*(10+c0*3),self.tht*(r0+1-self.offnum)+6.5,self.tdx*(c1-c0)*3-self.tdx,self.tht)
 			ctx.rectangle(self.tdx*(11+c0+self.maxaddr*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(c1-c0),self.tht+1.5)
@@ -153,13 +213,20 @@ class HexView():
 			ctx.rectangle(self.tdx*(11+c0+self.maxaddr*3),self.tht*(r0+1-self.offnum)+6,self.tdx*(self.line_size(r0)-c0),self.tht+1.5)
 			# middle rows
 			for i in range(r1-r0-1):
-				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,self.tdx*self.line_size(r0+i+1)*3,self.tht)
-				ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r0+i+2-self.offnum)+6,self.tdx*self.line_size(r0+i+1),self.tht+1.5)
+				# hex
+				ctx.rectangle(self.tdx*10,self.tht*(r0+i+2-self.offnum)+6.5,
+				self.tdx*self.line_size(r0+i+1)*3-self.tdx,self.tht)
+				# asc
+				ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r0+i+2-self.offnum)+6,
+				self.tdx*self.line_size(r0+i+1),self.tht+1.5)
 			# last sel row
 			ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
 			ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r1+1-self.offnum)+6,self.tdx*c1,self.tht+1.5)
 		ctx.set_source_rgba(clr[0],clr[1],clr[2],clr[3])
-		ctx.fill()
+		if mode == 1:
+			ctx.stroke()
+		else:
+			ctx.fill()
 
 
 	def okp_switch(self,event):
@@ -331,10 +398,6 @@ class HexView():
 
 	def okp_del(self,event):
 		self.exposed = 0
-		self.bklines = []
-		self.bkhvlines = []
-		self.bklines += self.lines
-		self.bkhvlines += self.hvlines
 		if self.curr != len(self.lines)-2: # not in the last row
 				self.fmt(self.curr,[self.line_size(self.curr)+self.line_size(self.curr+1)])
 				self.prec = self.curc - 1
@@ -343,20 +406,14 @@ class HexView():
 				self.exposed = 1
 
 	def okp_ins(self,event):
+		# calculate where to show comment entry line
 		xw,yw = self.hv.get_parent_window().get_position()
 		xv,yv = self.hv.window.get_position()
-		ys = yw+ yv+int((self.curr+0.5-self.offnum)*self.tht)
-		xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
-		if self.lines[self.curr][1] > 1:
-			if self.comments.has_key(self.lines[self.curr][2]):
-				self.entry.set_text(self.comments[self.lines[self.curr][2]][1])
-				cpos = self.lines[self.curr][0]+self.curc
-				cstart = self.lines[self.curr][2]
-				cend = cstart + self.comments[self.lines[self.curr][2]][0]
-				if cpos >= cstart and cpos <= cend:
-					self.keep_cmnt = 1
+		self.ys = yw+yv+int((self.curr+0.5-self.offnum)*self.tht)
+		self.xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
+		# show entry for comment text
 		self.ewin.show_all()
-		self.ewin.move(xs,ys)
+		self.ewin.move(self.xs,self.ys)
 
 	def okp_selall(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
@@ -378,21 +435,11 @@ class HexView():
 				clp.set_text(text)
 				clp.store()
 
-	def okp_undo(self,event):
-		if event.state == gtk.gdk.CONTROL_MASK:
-			self.lines = self.bklines
-			self.hvlines = self.bkhvlines
-			self.set_maxaddr()
-			self.exposed = 1
 
 	def okp_bksp(self,event):
 		# at start of the row it joins full row to the previous one
 		# any other position -- join left part to the previous row
 		self.exposed = 0
-		self.bklines = []
-		self.bkhvlines = []
-		self.bklines += self.lines
-		self.bkhvlines += self.hvlines
 		if self.curr > 0:
 			if self.curc == 0:
 				#  join full row
@@ -414,10 +461,6 @@ class HexView():
 	def okp_enter(self,event):
 		# split row, move everything right to the next (new) one pushing everything down
 		self.exposed = 0
-		self.bklines = []
-		self.bkhvlines = []
-		self.bklines += self.lines
-		self.bkhvlines += self.hvlines
 		if self.curr < len(self.lines)-1 and self.curc > 0:
 			# wrap at curc
 			self.fmt(self.curr,[self.curc])
@@ -426,10 +469,8 @@ class HexView():
 			self.prec = self.curc - 1
 		elif self.curr > 0 and self.curc == 0:
 			# insert separator
-			if self.lines[self.curr-1][1] == 0:
-				self.lines[self.curr-1] = (self.lines[self.curr-1][0],1)
-			elif self.lines[self.curr-1][1] == 2:
-				self.lines[self.curr-1] = (self.lines[self.curr-1][0],3,self.lines[self.curr-1][2])
+			v = (self.lines[self.curr-1][1]+1)%4
+			self.lines[self.curr-1] = (self.lines[self.curr-1][0],v)
 			self.exposed = 1
 
 	def okp_debug(self,event):
@@ -473,15 +514,12 @@ class HexView():
 			for i in range(len(self.data)/16):
 				self.lines.append((i*16,0))
 				self.hvlines.append("")
-				self.bkhvlines.append("")
 			if len(self.data)%16 > 0:
-				self.lines.append((i*16+16,0))
+				self.lines.append((i*16+len(self.data)%16,0))
 				self.hvlines.append("")
-				self.bkhvlines.append("")
 		else:
 			self.lines.append((0,0))
 			self.hvlines.append("")
-			self.bkhvlines.append("")
 		self.lines.append((len(self.data),0))
 
 
@@ -511,7 +549,6 @@ class HexView():
 			if ta > ma:
 				ma = ta
 		self.maxaddr = ma
-#		self.hadj.upper = (12+self.maxaddr*4)*self.tdx
 
 	def cursor_in_sel(self):
 		# checks if cursor is in the selection
@@ -551,50 +588,15 @@ class HexView():
 			c += offset-roff
 		return row+i,c-1
 
-	def insert_comment(self,text="",offset=None,length=1,auto=0):
-		if offset == None:
-			offset = self.lines[self.curr][0]+self.curc
+	def insert_comment2 (self,text=""):
+		rs,cs,re,ce = self.sel
+		off = self.lines[rs][0]+cs+1
+		clen = self.get_sel_len()
 		if text != "":
-			mode = self.lines[self.curr][1]
-			if self.lines[self.curr][1] < 2:
-				mode += 2
-				old_coff = -1
-			else:
-				old_coff = self.lines[self.curr][2]
-
-			if self.keep_cmnt and len(self.lines[self.curr]) > 2:
-				self.comments[self.lines[self.curr][2]] = (self.comments[self.lines[self.curr][2]][0],text)
-				self.keep_cmnt = 0
-			else:
-				s = 1
-				if auto == 0:
-					if self.cursor_in_sel():
-						for i in range(self.sel[2]-self.sel[0]-1):
-							l = self.sel[0]+i+1
-							self.lines[l] = (self.lines[l][0],0)
-						l = self.sel[0]
-						offset = self.lines[self.sel[0]][0]+self.sel[1]
-						self.lines[l] = (self.lines[l][0],2,offset)
-						s = self.get_sel_len()
-					else:
-						self.lines[self.curr] = (self.lines[self.curr][0],mode,offset)
-				else:
-					l = utils.find_line(self,offset)
-					self.lines[l] = (self.lines[l][0],2,offset)
-					s = length
-				self.comments[offset] = (s,text)
-
-				if auto == 0 and old_coff != offset:
-					if self.comments.has_key(old_coff):
-						del self.comments[old_coff]
-						self.keep_cmnt = 0
+			self.comments[off] = Comment(text,off,clen,self.comment_clr[1])
 		else:
-			self.lines[self.curr] = (self.lines[self.curr][0],self.lines[self.curr][1]-2)
-			if self.comments.has_key(offset):
-				del self.comments[offset]
-				self.keep_cmnt = 0
-		if auto:
-			self.expose(None,None)
+			del self.comments[off]
+
 
 	def entry_key_pressed(self, entry, event):
 		# inserting comment
@@ -604,7 +606,7 @@ class HexView():
 		elif event.keyval == 65293: # Enter
 			self.ewin.hide()
 			txt = entry.get_text()
-			self.insert_comment(txt)
+			self.insert_comment2(txt)
 
 	def on_key_release (self, view, event):
 		# part of the data selection from keyboard
@@ -758,9 +760,9 @@ class HexView():
 		# and return 1
 		# or 0 if 'row' is the last line or after
 		if row < len(self.lines)-2:
-			if self.lines[row+1][1] > 1:
-				if self.lines[row][1] < 2:
-					self.lines[row] = (self.lines[row][0],self.lines[row+1][1],self.lines[row+1][2])
+#			if self.lines[row+1][1] > 1:
+#				if self.lines[row][1] < 2:
+#					self.lines[row] = (self.lines[row][0],self.lines[row+1][1],self.lines[row+1][2])
 			self.lines.pop(row+1)
 			self.hvlines[row] = ""
 			self.hvlines[row+1] = ""
@@ -782,18 +784,18 @@ class HexView():
 		if row < len(self.hvlines):
 			rs = self.line_size(row)
 			if rs > 1 and col < rs-1:
-				if self.lines[row][1] > 1:
-					if self.lines[row][2] > self.lines[row][0]+col:
-						self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1],self.lines[row][2]))
-						self.lines[row] = (self.lines[row][0],0,None)
-					else:
-						mode = self.lines[row][1]
-						cmnt = self.lines[row][2]
-						self.lines[row] = (self.lines[row][0],2,cmnt)
-						self.lines.insert(row+1,(self.lines[row][0]+col+1,mode-2,None))
-				else:
+#				if self.lines[row][1] > 1:
+#					if self.lines[row][2] > self.lines[row][0]+col:
+#						self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1],self.lines[row][2]))
+#						self.lines[row] = (self.lines[row][0],0,None)
+#					else:
+#						mode = self.lines[row][1]
+#						cmnt = self.lines[row][2]
+#						self.lines[row] = (self.lines[row][0],2,cmnt)
+#						self.lines.insert(row+1,(self.lines[row][0]+col+1,mode-2,None))
+#				else:
 					self.lines.insert(row+1,(self.lines[row][0]+col+1,self.lines[row][1]))
-					if self.lines[row][1] == 1:
+					if self.lines[row][1] > 0:
 						self.lines[row] = (self.lines[row][0],0,None)
 	
 			if self.debug == 1:
@@ -935,7 +937,7 @@ class HexView():
 
 	def expose (self, widget, event):
 		x,y,width,height = self.hv.allocation
-
+		self.cmntlines = {}
 		mctx = self.hv.window.cairo_create()
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
@@ -953,10 +955,6 @@ class HexView():
 			self.vs.hide()
 		else:
 			self.vs.show()
-#		if width >= self.tdx*(9+self.maxaddr*3):
-#			self.hs.hide()
-#		else:
-#			self.hs.show()
 
 		if self.mode == "":
 			# clear top address lane
@@ -977,6 +975,16 @@ class HexView():
 			ctx.line_to(self.tdx*(12+self.maxaddr*4)+0.5,height)
 			ctx.stroke()
 
+# Comments
+			minoff = self.lines[self.offnum][0]
+			maxid = min(len(self.lines)-1,self.numtl+self.offnum)
+			maxoff = self.lines[maxid][0]
+			for i in sorted(self.comments.iterkeys()):
+				if (i >= minoff and i <= maxoff) or (i < minoff and i+self.comments[i].length > minoff):
+					r,c = self.get_sel_end(self.offnum,i)
+					self.comments[i].expose(ctx,self,r,c)
+				
+					
 #  Selection
 			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl) or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl) or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
 				self.draw_selection(ctx,self.sel[0],self.sel[1],self.sel[2],self.sel[3],self.selclr)
@@ -1016,21 +1024,13 @@ class HexView():
 				ctx.show_text(hex)
 				ctx.move_to(self.tdx*(10+1+self.maxaddr*3),self.tht*(i+2)+4)
 				ctx.show_text(asc)
+
 				# draw break line
-				if self.lines[i+self.offnum][1] == 1 or self.lines[i+self.offnum][1] == 3:
-					ctx.move_to(self.tdx*10+0.5,(i+2)*self.tht+5.5)
-					ctx.set_source_rgb(1,0,0.8)
-					ctx.line_to(self.tdx*(11.5+self.maxaddr*4),self.tht*(i+2)+5.5)
-					ctx.stroke()
-				# show comment
-				if self.lines[i+self.offnum][1] > 1:
-					if len(self.lines[i+self.offnum]) > 2:
-						if self.comments.has_key(self.lines[i+self.offnum][2]):
-							ctx.move_to(self.tdx*(13+self.maxaddr*4),self.tht*(i+2)+4)
-							ctx.set_source_rgb(0.9,0,0)
-							ctx.show_text(self.comments[self.lines[i+self.offnum][2]][1])
-					else:
-						self.lines[i+self.offnum] = (self.lines[i+self.offnum][0],self.lines[i+self.offnum][0]-2)
+				v = self.lines[i+self.offnum][1] 
+				if  v > 0:
+					ctx.set_source_rgba(clrs[v][0],clrs[v][1],clrs[v][2],0.7)
+					ctx.rectangle(self.tdx*10+0.5,(i+2)*self.tht+4.5,self.tdx*(11.5+self.maxaddr*4),v-0.5)
+					ctx.fill()
 			self.draw_edit(ctx)
 
 		# clear prev hdr cursor
@@ -1076,7 +1076,15 @@ class HexView():
 				ctx.rectangle(self.tdx*(10+3*self.prec),(self.prer-self.offnum+1)*self.tht+6.5,self.tdx*2+1,self.tht)
 				# old asc char
 				ctx.rectangle(self.tdx*(11+self.prec+3*self.maxaddr),(self.prer-self.offnum+1)*self.tht+6,self.tdx+1,self.tht+1.5)
-				ctx.fill()
+				ctx.fill_preserve()
+				# check for comment to draw bg
+				t = self.chk_offset(self.lines[self.prer][0]+self.prec+1)
+				if t != -1:
+					clr = self.comments[t].clr
+					ctx.set_source_rgba(clr[0],clr[1],clr[2],0.3)
+					ctx.fill()
+				else:
+					ctx.fill()  # need to remove rectangles from context
 			ctx.set_source_rgb(0,0,0)
 			if self.prec > -1 and self.prec < (self.lines[self.prer+1][0]-self.lines[self.prer][0]):
 				# location of hex
@@ -1137,19 +1145,6 @@ class HexView():
 				ctx.set_source_rgb(0,0,0.8)
 				ctx.move_to(0,(self.curr-self.offnum+2)*self.tht+4)
 				ctx.show_text("%08x"%(self.lines[self.curr][0]))
-		# redraw break line
-		if self.lines[self.curr][1] == 1 or self.lines[self.curr][1] == 3:
-			ctx.move_to(self.tdx*10+0.5,(self.curr-self.offnum+2)*self.tht+5.5)
-			ctx.set_source_rgb(1,0,0.8)
-			ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.curr-self.offnum+2)+5.5)
-			ctx.stroke()
-		if self.lines[self.prer][1] == 1 or self.lines[self.prer][1] == 3:
-			ctx.move_to(self.tdx*10+0.5,(self.prer-self.offnum+2)*self.tht+5.5)
-			ctx.set_source_rgb(1,0,0.8)
-			ctx.line_to(self.tdx*(10+self.maxaddr*3),self.tht*(self.prer-self.offnum+2)+5.5)
-			ctx.stroke()
-
-				
 		if self.mtt:
 			mttstr = "%s/%x (%s)"%(self.mtt[2],self.mtt[2],self.mtt[3])
 			sh = len(mttstr)
@@ -1162,28 +1157,35 @@ class HexView():
 			ctx.show_text(mttstr)
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
-		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
-			if self.lines[i+self.offnum][1] > 1:
-				if len(self.lines[i+self.offnum]) > 2:
-					cmnt_off = self.lines[i+self.offnum][2]-self.lines[i+self.offnum][0]
-					ctx.set_source_rgb(1,1,1)
-					ctx.rectangle(self.tdx*(10+cmnt_off*3-1),self.tht*(i+1)+6,self.tdx,self.tht)
-					ctx.fill()
-					ctx.set_source_rgb(1,0,0.5)
-					ctx.move_to(self.tdx*(10+cmnt_off*3-1),self.tht*(i+2)+4)
-					ctx.show_text("[")
-					clen = self.comments[self.lines[i+self.offnum][2]][0]
-					r,c = self.get_sel_end(i+self.offnum,self.lines[i+self.offnum][2]+clen)
-					if r <= min(len(self.lines)-self.offnum-1,self.numtl):
-						ctx.set_source_rgb(1,1,1)
-						ctx.rectangle(self.tdx*(10+c*3+2),self.tht*(r+1)+6,self.tdx,self.tht)
-						ctx.fill()
+#		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+#		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
+#			if self.lines[i+self.offnum][1] > 1:
+#				if len(self.lines[i+self.offnum]) > 2:
+#					cmnt_off = self.lines[i+self.offnum][2]-self.lines[i+self.offnum][0]
+#					ctx.set_source_rgb(1,1,1)
+#					ctx.rectangle(self.tdx*(10+cmnt_off*3-1),self.tht*(i+1)+6,self.tdx,self.tht)
+#					ctx.fill()
+#					ctx.set_source_rgb(1,0,0.5)
+#					ctx.move_to(self.tdx*(10+cmnt_off*3-1),self.tht*(i+2)+4)
+#					ctx.show_text("[")
+#					clen = self.comments[self.lines[i+self.offnum][2]][0]
+#					r,c = self.get_sel_end(i+self.offnum,self.lines[i+self.offnum][2]+clen)
+#					if r <= min(len(self.lines)-self.offnum-1,self.numtl):
+#						ctx.set_source_rgb(1,1,1)
+#						ctx.rectangle(self.tdx*(10+c*3+2),self.tht*(r+1)+6,self.tdx,self.tht)
+#						ctx.fill()
 
-						ctx.move_to(self.tdx*(10+c*3+2),self.tht*(i+2)+4)
-						ctx.set_source_rgb(1,0,0.5)
-						ctx.show_text("]")
+#						ctx.move_to(self.tdx*(10+c*3+2),self.tht*(i+2)+4)
+#						ctx.set_source_rgb(1,0,0.5)
+#						ctx.show_text("]")
 					
+		# redraw break line
+		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
+			v = self.lines[i+self.offnum][1] 
+			if  v > 0:
+				ctx.set_source_rgba(clrs[v][0],clrs[v][1],clrs[v][2],0.3)
+				ctx.rectangle(self.tdx*10+0.5,(i+2)*self.tht+4.5,self.tdx*(11.5+self.maxaddr*4),v-0.5)
+				ctx.fill()
 
 		self.mode = ""
 		mctx.set_source_surface(cs,0,0)
