@@ -275,6 +275,9 @@ class HexView():
 				self.exposed = 1
 				if self.curr < len(self.lines)-2:
 					self.curr += 1
+				if self.curc > self.line_size(self.curr):
+					self.curc = self.line_size(self.curr)-1
+
 
 	def okp_up(self,event):
 		self.mode = "c"
