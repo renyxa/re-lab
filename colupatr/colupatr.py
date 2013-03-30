@@ -14,7 +14,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
 
-import sys,struct
+import sys,struct,getpass
+from datetime import datetime
 import gtk,gobject,gtksourceview2
 import hexview
 import utils
@@ -197,7 +198,7 @@ class ApplicationMainWindow(gtk.Window):
 		mytxt = \
 "<b>Keys:</b>\n\
 	<tt>[Del]</tt>	attach next row to the current one\n\
-	<tt>[BS]</tt>	at the start of the row: attach row to the previous one\n\
+	<tt>[BS] </tt>	at the start of the row: attach row to the previous one\n\
 			at the middle of row: attach left part to the previous row\n\
 	<tt>[Tab]</tt>	 wrap or expand current row to the size of previous one,\n\
 			move to next line\n\
@@ -206,10 +207,10 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>?</tt>		search\n\
 	<tt>!</tt>		comment\n\
 	<tt>/</tt>		separate at address\n\
-	<tt>goto</tt>	scroll to address\n\
+	<tt>goto</tt>		scroll to address\n\
 	<tt>fmt</tt>		wrap lines\n\
 	<tt>reload</tt>	reload hexview\n\
-	<tt>name</tt>	rename the tab\n\
+	<tt>name</tt>		rename the tab\n\
 \n\
 <b>Runs:</b>\n\
 	<tt>run cli.wrap(hv,cli.read(hv,\">h\")+2); cli.next(hv)</tt>\n\
@@ -358,35 +359,56 @@ class ApplicationMainWindow(gtk.Window):
 				del self.das[len(self.das)-1]
 		return
 
-	def activate_save(self, action):
+
+	def rlp_pack(self,dscr,fmt,value,f):
+		dl = len(dscr)
+		f.write(struct.pack("B",dl))
+		f.write(dscr)
+		f.write(fmt)
+		if fmt == " s":
+			vl = len(value)
+			f.write(struct.pack("<I",vl))
+			v = value
+		else:
+			v = struct.pack(fmt,value)
+		f.write(v)
+
+	def activate_save(self,action):
 		pn = self.notebook.get_current_page()
 		if pn != -1:
 			fname = self.file_open("Save",None,None,self.fname)
 			if fname:
 				f = open(fname,"w")
 				doc = self.das[pn]
-				f.write(struct.pack("<I",len(doc.lines)))
-				f.write(struct.pack("<I",len(doc.comments)))
-				for i in doc.lines:
-					f.write(struct.pack("<I",i[0]))
-					f.write(struct.pack("B",i[1]))
-					if i[1] > 1:
-						f.write(struct.pack("I",i[2]))
-
-				for i in doc.comments.items():
-					f.write(struct.pack("<I",i[0]))
-					f.write(struct.pack("B",doc.comments[i[0]][0]))
-					f.write(struct.pack("B",len(doc.comments[i[0]][1])))
-					f.write(doc.comments[i[0]][1])
+				f.write("RE-LABv05 [DL(B)|D|VF(2c)|VL(<I)|V]")
+				self.rlp_pack("Colupatr Version"," s",version,f)
+				self.rlp_pack("Change UID"," s",getpass.getuser(),f)
+				self.rlp_pack("Change time"," s",str(datetime.now()),f)
+				self.rlp_pack("Num of lines","<I",len(doc.lines),f)
+				for i in range(len(doc.lines)):
+					l = doc.lines[i][0]
+					s = doc.lines[i][1]
+					f.write(struct.pack("<I",l))
+					f.write(struct.pack("B",s))
+				self.rlp_pack("Num of comments","<I",len(doc.comments),f)
+				for i in doc.comments:
+					cmnt = doc.comments[i]
+					t = cmnt.text
+					o = cmnt.offset
+					l = cmnt.length
+					c = cmnt.clr
+					ct = cmnt.ctype
+					f.write(struct.pack("B",len(t)))
+					f.write(t)
+					f.write(struct.pack("<I",o))
+					f.write(struct.pack("<I",l))
+					f.write(struct.pack("B",int(c[0]*255)))
+					f.write(struct.pack("B",int(c[1]*255)))
+					f.write(struct.pack("B",int(c[2]*255)))
+					f.write(struct.pack("B",ct))
+				self.rlp_pack("Data BLOB","<B",0,f)
 				f.write(doc.data)
 				f.close()
-				doc.fname = fname
-				pos = fname.rfind('/')
-				if pos !=-1:
-					pname = fname[pos+1:]
-				else:
-					pname = fname
-				self.notebook.set_tab_label_text(doc.table, pname)
 
 
 	def activate_reload(self, action):
@@ -397,6 +419,24 @@ class ApplicationMainWindow(gtk.Window):
 			print "will edit the label"
 		else:
 			print label.get_selection_bounds()
+
+
+	def rlp_unpack(self,buf,off):
+		dl = ord(buf[off])
+		off += 1
+		k = buf[off:off+dl]
+		off += dl
+		fmt = buf[off:off+2]
+		off += 2
+		if fmt == " s":
+			vl = struct.unpack("<I",buf[off:off+4])[0]
+			off += 4
+			v = buf[off:off+vl]
+			off += vl
+		else:
+			v = struct.unpack(fmt,buf[off:off+struct.calcsize(fmt)])[0]
+			off += struct.calcsize(fmt)
+		return off,k,v
 
 
 	def activate_open(self,parent=None,buf=None):
@@ -413,34 +453,46 @@ class ApplicationMainWindow(gtk.Window):
 			comments = {}
 			if buf == None:
 				f = open(fname,"rb")
-				if fname[len(fname)-3:] == "rlp":
+				rbuf = f.read()
+				if rbuf[:9] == "RE-LABv05":
 					print 'Re-Lab project file'
-					rbuf = f.read()
-					llen = struct.unpack("<I",rbuf[0:4])[0]
-					clen = struct.unpack("<I",rbuf[4:8])[0]
-					shift = 0
-					for i in range(llen):
-						l1 = struct.unpack("<I",rbuf[8+i*5+shift:12+i*5+shift])[0]
-						l2 = ord(rbuf[12+i*5+shift])
-						if l2 > 1:
-							shift += 4
-							l3 = struct.unpack("<I",rbuf[9+i*5+shift:13+i*5+shift])[0]
-							lines.append((l1,l2,l3))
-						else:
-							lines.append((l1,l2))
-
-					shift = 8+llen*5+shift
-					for i in range(clen):
-						c1 = struct.unpack("<I",rbuf[shift:shift+4])[0]
-						c2 = ord(rbuf[shift+4])
-						c3 = ord(rbuf[shift+5])
-						c4 = rbuf[shift+6:shift+6+c3]
-						comments[c1] = (c2,c4)
-						shift += 6 + c3
-					buf = rbuf[shift:]
-
+					# skip "signature"
+					off = 35
+					k = ""
+					while k != "Num of lines":
+						off,k,v = self.rlp_unpack(rbuf,off)
+						print k,v
+					for i in range(v):
+						l = struct.unpack("<I",rbuf[off:off+4])[0]
+						off += 4
+						s = ord(rbuf[off])
+						lines.append((l,s))
+						off += 1
+					
+					while k != "Num of comments":
+						off,k,v = self.rlp_unpack(rbuf,off)
+						print k,v
+					for i in range(v):
+						tl = ord(rbuf[off])
+						off += 1
+						txt = rbuf[off:off+tl]
+						off += tl
+						coff = struct.unpack("<I",rbuf[off:off+4])[0]
+						off += 4
+						clen = struct.unpack("<I",rbuf[off:off+4])[0]
+						off += 4
+						clr0 = ord(rbuf[off])/255
+						clr1 = ord(rbuf[off+1])/255
+						clr2 = ord(rbuf[off+2])/255
+						ct = ord(rbuf[off+3])
+						off += 4
+						comments[coff] = hexview.Comment(txt,coff,clen,(clr0,clr1,clr2),ct)
+					while k != "Data BLOB":
+						off,k,v = self.rlp_unpack(rbuf,off)
+						print k,v
+					buf = rbuf[off:]
 				else:
-					buf = f.read()
+					buf = rbuf
 				f.close()
 			doc = hexview.HexView(buf,lines,comments)
 			doc.parent = self
@@ -456,8 +508,6 @@ class ApplicationMainWindow(gtk.Window):
 			label = gtk.Label(pname)
 			ebox = gtk.EventBox()
 			ebox.add(label)
-#			ebox.connect("button-press-event",self.on_lbl_press)
-#			ebox.connect("key-press-event",self.on_lbl_press,label)
 			ebox.show_all()
 			self.notebook.append_page(doc.table, ebox)
 			self.notebook.set_tab_reorderable(doc.table, True)
@@ -687,23 +737,13 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmdline[0] == "?":
 					utils.cmd_parse(cmdline,self,doc)
 				elif cmdline[0] == "!":
-					args = cmdline[1:].split(";")
-					arg0 = None
-					arg1 = None
-					arg2 = 1
-					if len(args) > 2 and len(args[2])>0:
-						try:
-							arg2 = int(args[2],16)
-						except:
-							arg2 = 1
-					if len(args) > 1 and len(args[1])>0:
-						try:
-							arg1 = int(args[1],16)
-						except:
-							arg1 = None
-					if len(args) > 0:
-						arg0 = args[0]
-					doc.insert_comment(arg0,arg1,arg2,1)
+					# off;len;text
+					cmd = cmdline[1:].split(";")
+					try:
+						doc.insert_comment2(";".join(cmd[2:]),int(cmd[0],16),int(cmd[1],16))
+						doc.expose(doc.hv,action)
+					except:
+						print "Wrong args",sys.exc_info()
 				elif cmdline.lower() == "dump":
 					fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 					if fname:
@@ -715,13 +755,25 @@ class ApplicationMainWindow(gtk.Window):
 
 				elif cmdline[0] == "/":
 					if len(cmdline) > 1:
-						arg = cmdline[1:]
-						try:
-							addr = int(arg,16)
-							lnum = utils.find_line (doc,addr)
-							cnum = addr - doc.lines[lnum][0]
-						except:
-							print "Invalid offset"
+						pos = cmdline.find("+")
+						if pos != -1:
+							try:
+								arg1 = int(cmdline[1:pos],16)
+								arg2 = int(cmdline[pos+1:],16)
+								addr = arg1+arg2
+								lnum = utils.find_line (doc,addr)
+								cnum = addr - doc.lines[lnum][0]
+								self.entry.set_text("/%x+%x"%(addr,arg2))
+							except:
+								print "Invalid offset"
+						else:
+							arg = cmdline[1:]
+							try:
+								addr = int(arg,16)
+								lnum = utils.find_line (doc,addr)
+								cnum = addr - doc.lines[lnum][0]
+							except:
+								print "Invalid offset"
 					else:
 						lnum = doc.curr
 						cnum = doc.curc
@@ -731,10 +783,14 @@ class ApplicationMainWindow(gtk.Window):
 							lnum += 1
 							doc.curr = lnum
 							doc.curc = 0
-						if doc.lines[lnum-1][1] == 0:
-							doc.lines[lnum-1] = (doc.lines[lnum-1][0],1)
-						elif doc.lines[lnum-1][1] == 2:
-							doc.lines[lnum-1] = (doc.lines[lnum-1][0],3,doc.lines[lnum-1][2])
+						s = (doc.lines[lnum-1][1]+1)%4
+						doc.lines[lnum-1] = (doc.lines[lnum-1][0],s)
+						# scroll down if went below screen
+						if doc.curr > doc.offnum+doc.numtl-3:
+							doc.offnum += doc.numtl/2
+						# scroll up if went above screen
+						if doc.curr < doc.offnum:
+							doc.offnum = doc.curr
 						doc.expose(None,None)
 
 

@@ -591,10 +591,16 @@ class HexView():
 			c += offset-roff
 		return row+i,c-1
 
-	def insert_comment2 (self,text=""):
-		rs,cs,re,ce = self.sel
-		off = self.lines[rs][0]+cs+1
-		clen = self.get_sel_len()
+
+	def insert_comment2 (self,text="",off=None,clen=1):
+		if off == None:
+			if self.sel == None:
+				rs = self.curr
+				cs = self.curc
+			else:
+				rs,cs,re,ce = self.sel
+				clen = self.get_sel_len()
+			off = self.lines[rs][0]+cs+1
 		if text != "":
 			self.comments[off] = Comment(text,off,clen,self.comment_clr[1])
 		else:
@@ -1029,7 +1035,7 @@ class HexView():
 				ctx.show_text(asc)
 
 				# draw break line
-				v = self.lines[i+self.offnum][1] 
+				v = self.lines[i+self.offnum][1]
 				if  v > 0:
 					ctx.set_source_rgba(clrs[v][0],clrs[v][1],clrs[v][2],0.7)
 					ctx.rectangle(self.tdx*10+0.5,(i+2)*self.tht+4.5,self.tdx*(11.5+self.maxaddr*4),v-0.5)
