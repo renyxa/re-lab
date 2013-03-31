@@ -21,7 +21,7 @@ import hexview
 import utils
 import cli
 
-version = "0.4.9"
+version = "0.5.0"
 
 ui_info = \
 '''<ui>
@@ -490,6 +490,31 @@ class ApplicationMainWindow(gtk.Window):
 					while k != "Data BLOB":
 						off,k,v = self.rlp_unpack(rbuf,off)
 						print k,v
+					buf = rbuf[off:]
+				elif fname[len(fname)-3:] == "rlp":
+					print 'Probably old Re-Lab project file'
+					llen = struct.unpack("<I",rbuf[0:4])[0]
+					clen = struct.unpack("<I",rbuf[4:8])[0]
+					off = 8
+					for i in range(llen):
+						l1 = struct.unpack("<I",rbuf[off:off+4])[0]
+						off += 4
+						l2 = ord(rbuf[off])
+						off += 1
+						if l2 > 1:
+							off += 4
+							l2 = 1
+						lines.append((l1,l2))
+					for i in range(clen):
+						c1 = struct.unpack("<I",rbuf[off:off+4])[0]
+						off += 4
+						c2 = ord(rbuf[off])
+						off += 1
+						c3 = ord(rbuf[off])
+						off += 1
+						c4 = rbuf[off:off+c3]
+						comments[c1+1] = hexview.Comment(c4,c1+1,c2,(1,0,0),0)
+						off += c3
 					buf = rbuf[off:]
 				else:
 					buf = rbuf

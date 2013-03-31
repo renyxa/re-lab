@@ -415,6 +415,14 @@ class HexView():
 		self.ys = yw+yv+int((self.curr+0.5-self.offnum)*self.tht)
 		self.xs = xw+xv+int((10+self.curc*3+4.5)*self.tdx)
 		# show entry for comment text
+		if self.cursor_in_sel():
+			rs,cs,re,ce = self.sel
+		else:
+			rs = self.curr
+			cs = self.curc
+		cmnt = self.chk_offset(self.lines[rs][0]+cs+1)
+		if cmnt != -1:
+			self.entry.set_text(self.comments[cmnt].text)
 		self.ewin.show_all()
 		self.ewin.move(self.xs,self.ys)
 
@@ -551,7 +559,11 @@ class HexView():
 			ta = self.lines[i+1][0]-self.lines[i][0]
 			if ta > ma:
 				ma = ta
-		self.maxaddr = ma
+		if ma < 1000:
+			self.maxaddr = ma
+		else:
+			print "Something thent wrong in maxaddr calculation"
+			self.maxaddr = 16
 
 	def cursor_in_sel(self):
 		# checks if cursor is in the selection
@@ -992,8 +1004,6 @@ class HexView():
 				if (i >= minoff and i <= maxoff) or (i < minoff and i+self.comments[i].length > minoff):
 					r,c = self.get_sel_end(self.offnum,i)
 					self.comments[i].expose(ctx,self,r,c)
-				
-					
 #  Selection
 			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl) or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl) or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
 				self.draw_selection(ctx,self.sel[0],self.sel[1],self.sel[2],self.sel[3],self.selclr)
@@ -1022,6 +1032,7 @@ class HexView():
 					ctx.set_source_rgb(0,0,0.8)
 				ctx.show_text("%08x"%(self.lines[i+self.offnum][0]))
 				ctx.set_source_rgb(0,0,0)
+
 # hex/asc  part
 			for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
 				ctx.set_source_rgb(0,0,0)
@@ -1166,28 +1177,6 @@ class HexView():
 			ctx.show_text(mttstr)
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
-#		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-#		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
-#			if self.lines[i+self.offnum][1] > 1:
-#				if len(self.lines[i+self.offnum]) > 2:
-#					cmnt_off = self.lines[i+self.offnum][2]-self.lines[i+self.offnum][0]
-#					ctx.set_source_rgb(1,1,1)
-#					ctx.rectangle(self.tdx*(10+cmnt_off*3-1),self.tht*(i+1)+6,self.tdx,self.tht)
-#					ctx.fill()
-#					ctx.set_source_rgb(1,0,0.5)
-#					ctx.move_to(self.tdx*(10+cmnt_off*3-1),self.tht*(i+2)+4)
-#					ctx.show_text("[")
-#					clen = self.comments[self.lines[i+self.offnum][2]][0]
-#					r,c = self.get_sel_end(i+self.offnum,self.lines[i+self.offnum][2]+clen)
-#					if r <= min(len(self.lines)-self.offnum-1,self.numtl):
-#						ctx.set_source_rgb(1,1,1)
-#						ctx.rectangle(self.tdx*(10+c*3+2),self.tht*(r+1)+6,self.tdx,self.tht)
-#						ctx.fill()
-
-#						ctx.move_to(self.tdx*(10+c*3+2),self.tht*(i+2)+4)
-#						ctx.set_source_rgb(1,0,0.5)
-#						ctx.show_text("]")
-					
 		# redraw break line
 		for i in range(min(len(self.lines)-self.offnum-1,self.numtl)):
 			v = self.lines[i+self.offnum][1] 
@@ -1199,6 +1188,5 @@ class HexView():
 		self.mode = ""
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
-
 
 		return True
