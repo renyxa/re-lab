@@ -14,7 +14,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
 
-import sys,struct,getpass
+import sys,struct,os
 from datetime import datetime
 import gtk,gobject
 try:
@@ -382,11 +382,11 @@ class ApplicationMainWindow(gtk.Window):
 		if pn != -1:
 			fname = self.file_open("Save",None,None,self.fname)
 			if fname:
-				f = open(fname,"w")
+				f = open(fname,"wb")
 				doc = self.das[pn]
 				f.write("RE-LABv05 [DL(B)|D|VF(2c)|VL(<I)|V]")
 				self.rlp_pack("Colupatr Version"," s",version,f)
-				self.rlp_pack("Change UID"," s",getpass.getuser(),f)
+				self.rlp_pack("Change UID"," s",os.environ.get("USERNAME"),f)
 				self.rlp_pack("Change time"," s",str(datetime.now()),f)
 				self.rlp_pack("Num of lines","<I",len(doc.lines),f)
 				for i in range(len(doc.lines)):
