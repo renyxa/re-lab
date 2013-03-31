@@ -16,7 +16,11 @@
 
 import sys,struct,getpass
 from datetime import datetime
-import gtk,gobject,gtksourceview2
+import gtk,gobject
+try:
+    import gtksourceview2
+except:
+    print "gtksourceview2 was not found. Don't use 'run'..."
 import hexview
 import utils
 import cli

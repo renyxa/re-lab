@@ -75,7 +75,7 @@ class HexView():
 
 		# UI to insert comment
 		self.ewin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-		self.ewin.connect ("focus-out-event", lambda d, r: d.hide())
+		#self.ewin.connect ("focus-out-event", lambda d, r: d.hide())
 		self.ewin.set_resizable(True)
 		self.ewin.set_modal(False)
 		self.ewin.set_decorated(False)
@@ -423,6 +423,7 @@ class HexView():
 		cmnt = self.chk_offset(self.lines[rs][0]+cs+1)
 		if cmnt != -1:
 			self.entry.set_text(self.comments[cmnt].text)
+		self.ewin.hide()
 		self.ewin.show_all()
 		self.ewin.move(self.xs,self.ys)
 
@@ -547,9 +548,12 @@ class HexView():
 		self.mttclr = 0.9,0.95,0.95,0.85
 		self.mttxtclr = 0.5,0,0
 		try:
-			execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
+			execfile("colupatr.cfg")
 		except:
-			pass
+			try:
+				execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
+			except:
+				pass
 
 
 	def set_maxaddr (self):
