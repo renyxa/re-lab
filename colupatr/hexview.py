@@ -95,6 +95,7 @@ class HexView():
 		# variables to store things
 		self.data = data			# data presented in the widget
 		self.fname = ""				# to store filename
+		self.fdir = ""				# to store file directory
 		self.offset = offset		# current cursor offset
 		self.offnum = 0				# offset in lines
 		self.tdx = -1				# width of one glyph
@@ -142,6 +143,7 @@ class HexView():
 			65288:self.okp_bksp, 65293:self.okp_enter,
 			65289:self.okp_tab,
 			65379:self.okp_ins,
+			104:self.okp_16bytes, # to wrap/expand to 16 bytes
 			100:self.okp_debug, # "^d" for debug
 			97:self.okp_selall, # ^A for 'select all'
 			99:self.okp_copy, 	# ^C for 'copy'
@@ -432,6 +434,15 @@ class HexView():
 			self.sel = 0,0,self.numtl,self.lines[self.numtl-1][0]
 			self.expose(None,event)
 
+	def okp_16bytes(self,event):
+		self.fmt(self.curr,(16,))
+		self.exposed = 1
+		if self.curr < len(self.lines)-2:
+			self.curr += 1
+		if self.curc > self.line_size(self.curr):
+			self.curc = self.line_size(self.curr)-1
+
+
 	def okp_copy(self,event):
 			#	copy selection to clipboard
 			if event.state == gtk.gdk.CONTROL_MASK and self.sel:
@@ -550,6 +561,10 @@ class HexView():
 		try:
 			execfile("colupatr.cfg")
 		except:
+			try:
+				execfile("oletoy.cfg")
+			except:
+				pass
 			try:
 				execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
 			except:

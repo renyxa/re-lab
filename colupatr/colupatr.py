@@ -25,7 +25,7 @@ import hexview
 import utils
 import cli
 
-version = "0.5.0"
+version = "0.5.1"
 
 ui_info = \
 '''<ui>
@@ -380,10 +380,18 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_save(self,action):
 		pn = self.notebook.get_current_page()
 		if pn != -1:
-			fname = self.file_open("Save",None,None,self.fname)
+			doc = self.das[pn]
+			fname = self.file_open("Save",None,None,doc.fname)
 			if fname:
+				doc.fname = fname
+				pos = fname.rfind('/')
+				if pos !=-1:
+					pname = fname[pos+1:]
+				else:
+					pname = fname
+				ebox = self.notebook.get_tab_label(doc.table)
+				ebox.get_children()[0].set_text(pname)
 				f = open(fname,"wb")
-				doc = self.das[pn]
 				f.write("RE-LABv05 [DL(B)|D|VF(2c)|VL(<I)|V]")
 				self.rlp_pack("Colupatr Version"," s",version,f)
 				self.rlp_pack("Change UID"," s",os.environ.get("USERNAME"),f)
@@ -547,10 +555,11 @@ class ApplicationMainWindow(gtk.Window):
 
 	def file_open (self,title='Open',parent=None, dirname=None, fname=None):
 		if title == 'Save':
-			dlg = gtk.FileChooserDialog('Save...',  action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 		else:
 			dlg = gtk.FileChooserDialog('Open...', parent, buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OK,gtk.RESPONSE_OK))
 		dlg.set_local_only(True)
+		dlg.set_current_name(fname)
 		resp = dlg.run()
 		dlg.hide()
 		if resp == gtk.RESPONSE_CANCEL:
@@ -768,8 +777,23 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmdline[0] == "!":
 					# off;len;text
 					cmd = cmdline[1:].split(";")
+					if len(cmd) < 3:
+						# add comment to selection or cursor
+						if doc.cursor_in_sel():
+							rs,cs,re,ce = doc.sel
+							clen = doc.get_sel_len()
+						else:
+							rs = doc.curr
+							cs = doc.curc
+							clen = 1
+						text = cmdline[1:]
+						off = doc.lines[rs][0]+cs+1
+					else:
+						text = ";".join(cmd[2:])
+						off = int(cmd[0],16)+1
+						clen = int(cmd[1],16)
 					try:
-						doc.insert_comment2(";".join(cmd[2:]),int(cmd[0],16),int(cmd[1],16))
+						doc.insert_comment2(text,off,clen)
 						doc.expose(doc.hv,action)
 					except:
 						print "Wrong args",sys.exc_info()
