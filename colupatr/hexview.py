@@ -236,8 +236,9 @@ class HexView():
 				ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r0+i+2-self.offnum)+6,
 				self.tdx*self.line_size(r0+i+1),self.tht+1.5)
 			# last sel row
-			ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
-			ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r1+1-self.offnum)+6,self.tdx*c1,self.tht+1.5)
+			if c1 != 0:
+				ctx.rectangle(self.tdx*10,self.tht*(r1+1-self.offnum)+6.5,self.tdx*c1*3-self.tdx,self.tht)
+				ctx.rectangle(self.tdx*(11+self.maxaddr*3),self.tht*(r1+1-self.offnum)+6,self.tdx*c1,self.tht+1.5)
 		ctx.set_source_rgba(clr[0],clr[1],clr[2],clr[3])
 		if mode == 1:
 			ctx.stroke()
