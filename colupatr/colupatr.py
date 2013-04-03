@@ -623,6 +623,50 @@ class ApplicationMainWindow(gtk.Window):
 				pass
 		self.update_statusbar(txt)
 
+	def html_export(self,doc,sline,coff,clen):
+		fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,doc.fname+".html")
+		if fname:
+			f = open(fname,'w')
+			f.write("<!DOCTYPE html><html><body><table style='font-family:%s;' cellspacing=0>\n"%doc.font)
+			f.write("<head>\n<meta charset='utf-8'>\n") 
+			f.write("<style type='text/css'>\ntr.top1 td { border-top: 1px solid black; }")
+			f.write("tr.top2 td { border-top: 2px solid purple; }\n")
+			f.write("tr.top3 td { border-top: 3px solid red; }\n")
+			f.write(".mid { border-left: 1px solid black; border-right: 1px solid black;}\n")
+			f.write("</style>\n</head>\n")
+			off = 0
+			i = 0
+			while off < clen:
+				so = doc.lines[sline+i][0]
+				eo = doc.lines[sline+i+1][0]
+				try:
+					txt1 = doc.hvlines[sline+i][0]
+				except:
+					txt1 = doc.get_string(sline+i)[0]
+				txt2 = doc.hvlines[sline+i][1]
+				off += eo - so
+				cmnt = doc.chk_comment(so,eo)
+				cl = doc.lines[sline+i][1]
+				if cl:
+					f.write("<tr class='top%s'>"%cl)
+				else:
+					f.write("<tr>")
+				txt3 = ""
+				if cmnt != -1:
+					txt3 += doc.comments[cmnt].text
+					clr = doc.comments[cmnt].clr
+					cmntclr = "%d,%d,%d"%(clr[0]*255,clr[1]*255,clr[2]*255)
+					
+					f.write("<td style='background-color: rgba(%s,0.3);'>%s</td><td class='mid'>%s</td><td style='color: rgba(%s,1);'>%s</td>"%(cmntclr,txt1,txt2,cmntclr,txt3))
+				else:
+					f.write("<td>%s</td><td class='mid'>%s</td><td></td>"%(txt1,txt2))
+				f.write("</tr>\n")
+				i += 1
+			f.write("</table></body></html>")
+			f.close()
+		else:
+			print "Nothing to export"
+
 	def on_entry_activate (self,action,cmdline=""):
 		if cmdline == "":
 			cmdline = self.entry.get_text()
@@ -651,7 +695,6 @@ class ApplicationMainWindow(gtk.Window):
 					pass
 				elif cmd[0].lower() == "reload":
 					exec("reload(hexview)")
-
 				elif cmdline[:3].lower() == "run":
 					hv = doc
 					if len(cmdline) < 5:
@@ -800,12 +843,28 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmdline.lower() == "dump":
 					fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 					if fname:
-						f = open(fname,'w')
+						f = open(fname,'wb')
 						f.write(doc.data)
 						f.close()
 					else:
 						print "Nothing to save"
-
+				elif cmd[0].lower() == "html":
+					off = -1
+					try:
+						off = int(cmd[1],16)
+						clen = int(cmd[2],16)
+						lnum = 0
+						if off < len(doc.data):
+							lnum = utils.find_line(doc,off)
+							addr = doc.lines[lnum]
+							if addr < off:
+								clen += off - addr
+					except:
+						print "Something wrong with arguments",sys.exc_info()
+					if off == -1:
+						lnum = 0
+						clen = len(doc.data)
+					self.html_export(doc,lnum,off,clen)
 				elif cmdline[0] == "/":
 					if len(cmdline) > 1:
 						pos1 = cmdline.find("+")

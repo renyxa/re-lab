@@ -185,6 +185,20 @@ class HexView():
 				return i
 		return -1
 
+	# check if there is any comment from off1 to off2
+	def chk_comment(self,off1,off2):
+		if off1 > off2:
+			return -1
+		for i in sorted(self.comments.iterkeys()):
+			if i > off2:
+				return -1
+			elif i < off1:
+				next
+			elif i >= off1:
+				return i
+		return -1
+
+
 	def draw_edit(self,ctx):
 		ctx.move_to(self.tdx*2-2,self.tdx)
 		ctx.arc(self.tdx+2,self.tdx,self.tdx/2.,0,6.29)

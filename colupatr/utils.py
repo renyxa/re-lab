@@ -25,10 +25,10 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
-def d2hex(data):
+def d2hex(data,spc=""):
 	s = ""
 	for i in range(len(data)):
-		s += "%02x"%ord(data[i])
+		s += "%02x%s"%(ord(data[i]),spc)
 	return s
 
 def arg_conv (ctype,carg):
