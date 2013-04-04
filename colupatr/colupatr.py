@@ -623,60 +623,6 @@ class ApplicationMainWindow(gtk.Window):
 				pass
 		self.update_statusbar(txt)
 
-	def html_export(self,doc,sline,doff,dlen):
-		fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,doc.fname+".html")
-		if fname:
-			f = open(fname,'w')
-			f.write("<!DOCTYPE html><html><body><table style='font-family:%s;' cellspacing=0>\n"%doc.font)
-			f.write("<head>\n<meta charset='utf-8'>\n") 
-			f.write("<style type='text/css'>\ntr.top1 td { border-bottom: 1px solid black; }")
-			f.write("tr.top2 td { border-bottom: 2px solid purple; }\n")
-			f.write("tr.top3 td { border-bottom: 3px solid red; }\n")
-			f.write(".mid { border-left: 1px solid black; border-right: 1px solid black;}\n")
-			f.write("</style>\n</head>\n")
-			off = 0
-			i = 0
-			while off < dlen:
-				so = doc.lines[sline+i][0]
-				eo = doc.lines[sline+i+1][0]
-				try:
-					txt1 = doc.hvlines[sline+i][0]
-				except:
-					txt1 = doc.get_string(sline+i)[0]
-				txt2 = doc.hvlines[sline+i][1]
-
-				cmntest = doc.chk_comment(so,eo)
-				cl = doc.lines[sline+i][1]
-				if cl:
-					f.write("<tr class='top%s'>"%cl)
-				else:
-					f.write("<tr>")
-				txt3 = ""
-				if len(cmntest) > 0:
-					cmnt = cmntest[0] # only first comment in the row is handled
-					txt3 += doc.comments[cmnt].text
-					clr = doc.comments[cmnt].clr
-					cmntclr = "%d,%d,%d"%(clr[0]*255,clr[1]*255,clr[2]*255)
-					addr1 = 0
-					if doff + off <  doc.comments[cmnt].offset - 1:
-						addr1 = doc.comments[cmnt].offset - doff - off - 1
-					addr2 = eo - so
-					if doc.comments[cmnt].length < addr1 + eo - so:
-						addr2 = addr1 + doc.comments[cmnt].length
-					txt1a = txt1[:addr1*3]
-					txt1b = txt1[addr1*3:addr2*3-1]
-					txt1c = " " + txt1[addr2*3:]
-					f.write("<td>%s<span style='background-color: rgba(%s,0.3);'>%s</span>%s</td>"%(txt1a,cmntclr,txt1b,txt1c))
-					f.write("<td class='mid'>%s</td><td style='color: rgba(%s,1);'>%s</td>"%(txt2,cmntclr,txt3))
-				else:
-					f.write("<td>%s</td><td class='mid'>%s</td><td></td>"%(txt1,txt2))
-				f.write("</tr>\n")
-				i += 1
-				off += eo - so
-			f.write("</table></body></html>")
-			f.close()
-		else:
-			print "Nothing to export"
 
 	def on_entry_activate (self,action,cmdline=""):
 		if cmdline == "":
@@ -705,7 +651,7 @@ class ApplicationMainWindow(gtk.Window):
 				elif cmd[0].lower() == "bck":
 					pass
 				elif cmd[0].lower() == "reload":
-					exec("reload(hexview)")
+					exec("reload(%s)"%(cmd[1]))
 				elif cmdline[:3].lower() == "run":
 					hv = doc
 					if len(cmdline) < 5:
@@ -875,7 +821,7 @@ class ApplicationMainWindow(gtk.Window):
 					if off == -1:
 						lnum = 0
 						clen = len(doc.data)
-					self.html_export(doc,lnum,off,clen)
+					utils.html_export(self,doc,lnum,off,clen)
 				elif cmdline[0] == "/":
 					if len(cmdline) > 1:
 						pos1 = cmdline.find("+")

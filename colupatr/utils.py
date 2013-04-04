@@ -85,4 +85,69 @@ def cmd_parse(cmd, app,doc):
 		if sflag:
 			app.show_search(carg)
 
+def html_export(app,doc,sline,doff,dlen):
+	fname = app.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,doc.fname+".html")
+	if fname:
+		f = open(fname,'w')
+		f.write("<!DOCTYPE html><html><body><table style='font-family:%s;' cellspacing=0>\n"%doc.font)
+		f.write("<head>\n<meta charset='utf-8'>\n") 
+		f.write("<style type='text/css'>\ntr.top1 td { border-bottom: 1px solid black; }")
+		f.write("tr.top2 td { border-bottom: 2px solid purple; }\n")
+		f.write("tr.top3 td { border-bottom: 3px solid red; }\n")
+		f.write(".mid { border-left: 1px solid black; border-right: 1px solid black;}\n")
+		f.write("</style>\n</head>\n")
+		off = 0
+		i = 0
+		while off < dlen:
+			so = doc.lines[sline+i][0]
+			eo = doc.lines[sline+i+1][0]
+			try:
+				txt1 = doc.hvlines[sline+i][0]
+			except:
+				txt1 = doc.get_string(sline+i)[0]
+			txt2 = doc.hvlines[sline+i][1]
+
+			cmntest = doc.chk_comment(so,eo)
+			cl = doc.lines[sline+i][1]
+			if cl:
+				f.write("<tr class='top%s'>"%cl)
+			else:
+				f.write("<tr>")
+			txt3 = ""
+			if len(cmntest) > 0:
+				tmpoff = 0
+				txthex = ""
+				txtasc = ""
+				txtcmnt = ""
+				addr1 = 0
+				addr2 = eo - so
+				for cmnt in cmntest:
+					clr = doc.comments[cmnt].clr
+					cmntclr = "%d,%d,%d"%(clr[0]*255,clr[1]*255,clr[2]*255)
+					
+					if doff + off + tmpoff < doc.comments[cmnt].offset - 1:
+						addr1 = doc.comments[cmnt].offset - doff - off - 1
+						txthex += txt1[tmpoff*3:addr1*3]
+						txtasc += txt2[tmpoff:addr1]
+					
+					if doc.comments[cmnt].length < eo - so - addr1:
+						addr2 = addr1 + doc.comments[cmnt].length
+					txthex += "<span style='background-color: rgba(%s,0.3);'>"%cmntclr+txt1[addr1*3:addr2*3-1]+"</span> "
+					txtasc += "<span style='background-color: rgba(%s,0.3);'>"%cmntclr+txt2[addr1:addr2]+"</span>"
+					tmpoff = addr2
+					txtcmnt += "<span style='color: rgb(%s);'>"%cmntclr+doc.comments[cmnt].text+"</span> "+unicode("\xC2\xB7","utf8") + " "
+				txthex += " " + txt1[addr2*3:]
+				txtasc += " " + txt2[addr2:]
+				f.write("<td>%s</td>"%txthex)
+				f.write("<td class='mid'>%s</td>"%txtasc)
+				f.write("<td>%s</td>"%txtcmnt[:-3])
+			else:
+				f.write("<td>%s</td><td class='mid'>%s</td><td></td>"%(txt1,txt2))
+			f.write("</tr>\n")
+			i += 1
+			off += eo - so
+		f.write("</table></body></html>")
+		f.close()
+	else:
+		print "Nothing to export"
 
