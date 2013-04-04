@@ -187,16 +187,17 @@ class HexView():
 
 	# check if there is any comment from off1 to off2
 	def chk_comment(self,off1,off2):
+		res = []
 		if off1 > off2:
-			return -1
+			return res
 		for i in sorted(self.comments.iterkeys()):
 			if i > off2:
-				return -1
+				return res
 			elif i < off1:
 				next
 			elif i >= off1:
-				return i
-		return -1
+				res.append(i)
+		return res
 
 
 	def draw_edit(self,ctx):
