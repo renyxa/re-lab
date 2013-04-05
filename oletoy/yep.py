@@ -16,6 +16,7 @@
 
 import sys,struct,math
 from utils import *
+from midi import *
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0
@@ -128,16 +129,18 @@ def vprm (page, data, parent, offset=0):
 			hdrb.append(v+off)
 		off2 += 4
 	hbiter = add_pgiter(page,"Header B","vprm","hdrb",data[off+hdraend:off+hdrbend],parent,"%02x  "%(offset+off+hdraend))
+	ind = 0
 	for i in hdrb:
 		v1 = struct.unpack(">h",data[off2:off2+2])[0]
 		v2 = struct.unpack(">h",data[off2+2:off2+4])[0]
 		v3 = ord(data[off2+16])
-		add_pgiter(page,"Block %02x %02x %02x"%(v1,v2,v3),"vprm","hdrbch",data[off2:i],hbiter,"%02x  "%(offset+off2))
+		add_pgiter(page,"Block %04x (%04x %04x %02x [%s])"%(ind,v1,v2,v3,pitches[v3]),"vprm","hdrbch",data[off2:i],hbiter,"%02x  "%(offset+off2))
 		off2 = i
+		ind += 1
 	v1 = struct.unpack(">h",data[off2:off2+2])[0]
 	v2 = struct.unpack(">h",data[off2+2:off2+4])[0]
 	v3 = ord(data[off2+16])
-	add_pgiter(page,"Block %02x %02x %02x"%(v1,v2,v3),"vprm","hdrbch",data[off2:],hbiter,"%02x  "%(offset+off2))
+	add_pgiter(page,"Block %04x (%04x %04x %02x [%s])"%(ind,v1,v2,v3,pitches[v3]),"vprm","hdrbch",data[off2:],hbiter,"%02x  "%(offset+off2))
 
 
 def parse (page, data, parent,align=4.):

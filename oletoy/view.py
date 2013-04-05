@@ -26,7 +26,7 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub, ppt
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
-import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep
+import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 from utils import *
 from hv2 import HexView
 version = "0.7.17"
@@ -1045,6 +1045,10 @@ class ApplicationMainWindow(gtk.Window):
 		self.statbuffer = buf
 		txt = ""
 		txt2 = ""
+		if ftype == "YEP":
+			if dlen == 1:
+				txt += key2txt(ord(buf),midi.pitches,"")
+		
 		if self.offlen and self.options_bup == 1:
 			bup = bup2(d2hex(buf),self.offlen)
 			txt = "%s %s"%(bup[0],bup[1])

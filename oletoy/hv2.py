@@ -539,7 +539,8 @@ class HexView():
 					s += len(data)%16
 				self.mtt = x,y,s
 				self.parent.calc_status(self.data[r1*16+c1:r2*16+c2],s)
-
+		else:
+			self.parent.calc_status(self.data[self.curr*16+self.curc],1)
 
 		self.vadj.upper = self.lines-self.numtl+1
 		self.vadj.value = self.offnum
