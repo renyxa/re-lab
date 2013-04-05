@@ -18,6 +18,23 @@ import sys,struct,math
 from utils import *
 from midi import *
 
+def hdra(hd,data):
+	off = 0
+	var0 = struct.unpack(">I",data[off:off+4])[0]
+	add_iter(hd,"Var0",var0,off,4,">I")
+	off += 4
+	size = struct.unpack(">I",data[off:off+4])[0]
+	add_iter(hd,"Size",size,off,4,">I")
+	off += 4
+	ind = 0
+	while off < size:
+		item = struct.unpack(">h",data[off:off+2])[0]
+		add_iter(hd,"Item %02x"%ind,"%02x"%item,off,2,">h")
+		off += 2
+		ind += 1
+
+vprmfunc = {"hdra":hdra}
+
 def hdr1item (page,data,parent,offset=0):
 	off = 0
 	# size of the "main header for level2 block
@@ -48,7 +65,7 @@ def hdr1item (page,data,parent,offset=0):
 	# parse 'parts header'
 	p1iter = add_pgiter(page,"Parts Header","vprm","prtshdr",data[h1off0:h1off1],h1citer,"%02x  "%(offset+h1off0))
 	# first dozen in 'Parts header'
-	add_pgiter(page,"PH seq0","vprm","p1s0",data[h1off0:h1off0+12],p1iter,"%02x  "%(offset+h1off0))
+	add_pgiter(page,"Common settings","vprm","p1s0",data[h1off0:h1off0+12],p1iter,"%02x  "%(offset+h1off0))
 	off = h1off0+12
 	# number of parts for voice/drumkit
 	p1num = struct.unpack(">I",data[off:off+4])[0]
@@ -58,7 +75,7 @@ def hdr1item (page,data,parent,offset=0):
 		add_pgiter(page,"PH seq%d"%(i+1),"vprm","p1s%d"%(i+1),data[off:off+12],p1iter,"%02x  "%(offset+off))
 		off += 12
 		if off > h1off1:
-			print "ATTENTION! YEP: more not enough bytes for 'dozens'..."
+			print "ATTENTION! YEP: not enough bytes for 'dozens'..."
 	
 	# parse list of offsets to parts
 	poffs = []
@@ -108,7 +125,7 @@ def vprm (page, data, parent, offset=0):
 		if v != 0:
 			hdr1.append(v)
 		off += 4
-	h1iter = add_pgiter(page,"Header 1","vprm","hdr1",data[20:hdr1end],parent,"%02x  "%(offset+20))
+	h1iter = add_pgiter(page,"Voices","vprm","voices",data[20:hdr1end],parent,"%02x  "%(offset+20))
 	for i in hdr1:
 		hdr1item (page,data[off:i],h1iter,(offset+off))
 		off = i
@@ -128,7 +145,7 @@ def vprm (page, data, parent, offset=0):
 		if v != 0:
 			hdrb.append(v+off)
 		off2 += 4
-	hbiter = add_pgiter(page,"Header B","vprm","hdrb",data[off+hdraend:off+hdrbend],parent,"%02x  "%(offset+off+hdraend))
+	hbiter = add_pgiter(page,"Samples","vprm","samples",data[off+hdraend:off+hdrbend],parent,"%02x  "%(offset+off+hdraend))
 	ind = 0
 	for i in hdrb:
 		v1 = struct.unpack(">h",data[off2:off2+2])[0]

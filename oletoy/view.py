@@ -1229,6 +1229,10 @@ class ApplicationMainWindow(gtk.Window):
 				for i in range(len(ntype)):
 					ut += "%s "%ntype[i]
 				self.update_statusbar("[ %s]"%ut)
+				# YEP
+				if ntype[0] == "vprm":
+					if ntype[1] in yep.vprmfunc:
+						yep.vprmfunc[ntype[1]](hd,data)
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
