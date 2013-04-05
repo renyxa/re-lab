@@ -25,7 +25,7 @@ import hexview
 import utils
 import cli
 
-version = "0.5.1"
+version = "0.5.2"
 
 ui_info = \
 '''<ui>
@@ -550,6 +550,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.notebook.set_tab_reorderable(doc.table, True)
 			self.notebook.show_tabs = True
 			self.notebook.show_all()
+			self.notebook.set_current_page(-1)
 			doc.hv.grab_focus()
 		return
 

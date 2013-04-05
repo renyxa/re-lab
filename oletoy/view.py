@@ -1400,6 +1400,8 @@ class ApplicationMainWindow(gtk.Window):
 				self.notebook.set_tab_reorderable(hpaned, True)
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
+				self.notebook.set_current_page(-1)
+
 			else:
 				print err
 		return
