@@ -672,7 +672,7 @@ class ApplicationMainWindow(gtk.Window):
 			doc.hv.grab_focus()
 		return
 
-	def file_open (self,title='Open',parent=None, dirname=None, fname=None):
+	def file_open (self, title='Open', parent=None, dirname=None, fname=None):
 		if title == 'Save':
 			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 			dlg.set_current_name(fname)

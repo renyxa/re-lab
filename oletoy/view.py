@@ -591,7 +591,6 @@ class ApplicationMainWindow(gtk.Window):
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		type = model.get_value(iter1,1)[0]
-		print 'Type',type
 		value = model.get_value(iter1,3)
 		if type == "emf":
 			size = model.get_value(iter1,2)+4
@@ -599,10 +598,14 @@ class ApplicationMainWindow(gtk.Window):
 		elif type == "wmf":
 			size = model.get_value(iter1,2)+2
 			model.set_value(iter1,3,struct.pack("<I",len(value)/2+1)+value[4:]+'\x00'*2)
+		elif type == "vprm":
+			size = model.get_value(iter1,2)+1
+			model.set_value(iter1,3,value+'\x00')
 		elif type == "xls":
 			size = model.get_value(iter1,2)+1
 			model.set_value(iter1,3,value[:2]+struct.pack("<H",size)+value[4:3+size]+'\x00')
 		else:
+			print 'Type',type
 			return
 		model.set_value(iter1,2,size)
 
@@ -620,6 +623,9 @@ class ApplicationMainWindow(gtk.Window):
 			elif type == "wmf" and size > 7:
 				model.set_value(iter1,2,size-2)
 				model.set_value(iter1,3,struct.pack("<I",len(value)/2-1)+value[4:size-2])
+			elif type == "vprm":
+				size = model.get_value(iter1,2)-1
+				model.set_value(iter1,3,value[:-1])
 			elif type == "xls" and size > 0:
 				model.set_value(iter1,2,size-1)
 				model.set_value(iter1,3,value[:2]+struct.pack("<H",size-1)+value[4:3+size])

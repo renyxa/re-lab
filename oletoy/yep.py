@@ -28,7 +28,7 @@ def get_parent_size (page, parent):
 
 
 # collects tree under 'parent' inserting fourcc-s and chunk sizes
-def collect_tree (page,parent):
+def collect_tree (page, parent):
 	ctdata = ""
 	if page.model.iter_n_children(parent) > 0:
 		for i in range(page.model.iter_n_children(parent)):
@@ -39,6 +39,18 @@ def collect_tree (page,parent):
 		ctdata = page.model.get_value(parent,3)
 	return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
 
+# collects tree in VPRM, skips "vdblock" and "prtshdr"
+def collect_vprm (page, parent):
+	data = ""
+	for i in range(page.model.iter_n_children(parent)):
+		citer = page.model.iter_nth_child(parent, i)
+		itype = page.model.get_value(citer,1)[1]
+		if itype != "vdblock" and itype != "prtshdr":
+			data += page.model.get_value(citer,3)
+		if page.model.iter_n_children(citer) > 0:
+			data += collect_vprm (page, citer)
+	return data
+
 # saves YEP file
 def save (page, fname):
 	data = ""
@@ -47,9 +59,8 @@ def save (page, fname):
 		if page.model.get_value(iter1,1)[1] != "VPRM":
 			data += collect_tree (page, iter1)
 		else:
-			# replace with proper recollection of VPRM
-			cdata = page.model.get_value(iter1,3)
-			data += page.model.get_value(iter1,1)[1] + struct.pack(">I",len(cdata))+cdata
+			tdata = collect_vprm (page, iter1)
+			data += page.model.get_value(iter1,1)[1] + struct.pack(">I",len(tdata))+tdata
 		iter1 = page.model.iter_next(iter1)
 	f = open(fname,"wb")
 	f.write(data)
@@ -107,6 +118,7 @@ def hdr1item (page,data,parent,offset=0):
 	off = h1off0+12
 	# number of parts for voice/drumkit
 	p1num = struct.unpack(">I",data[off:off+4])[0]
+	add_pgiter(page,"Num of sequences","vprm","p1num",data[off:off+4],p1iter,"%02x  "%(offset+off))
 	off += 4
 	# FIXME! Guessing that number of dozens would match with number of parts
 	for i in range(p1num):
@@ -153,9 +165,11 @@ def vprm (page, data, parent, offset=0):
 	add_pgiter(page,"Signature","vprm","sign",data[:16],parent,"%02x  "%offset)
 	off = 16
 	ptr = struct.unpack(">I",data[off:off+4])[0]
+	add_pgiter(page,"Offset to samples","vprm","offsmpl",data[off:off+4],parent,"%02x  "%(offset+off))
 	off += 4
 
 	hdr1end = struct.unpack(">I",data[off:off+4])[0]
+	h1iter = add_pgiter(page,"Voices","vprm","voices",data[20:hdr1end],parent,"%02x  "%(offset+off))
 	off += 4
 	hdr1 = []
 	while off < hdr1end:
@@ -163,7 +177,6 @@ def vprm (page, data, parent, offset=0):
 		if v != 0:
 			hdr1.append(v)
 		off += 4
-	h1iter = add_pgiter(page,"Voices","vprm","voices",data[20:hdr1end],parent,"%02x  "%(offset+20))
 	for i in hdr1:
 		hdr1item (page,data[off:i],h1iter,(offset+off))
 		off = i
@@ -176,6 +189,7 @@ def vprm (page, data, parent, offset=0):
 	haiter = add_pgiter(page,"Header A","vprm","hdra",data[off:off+hdraend],parent,"%02x  "%(offset+off))
 	off2 += hdraend
 	hdrbend = off+struct.unpack(">I",data[off2:off2+4])[0]
+	hbiter = add_pgiter(page,"Samples","vprm","samples",data[off+hdraend:hdrbend],parent,"%02x  "%(offset+off+hdraend))
 	hdrb = []
 	off2 += 4
 	while off2 < hdrbend:
@@ -183,7 +197,6 @@ def vprm (page, data, parent, offset=0):
 		if v != 0:
 			hdrb.append(v+off)
 		off2 += 4
-	hbiter = add_pgiter(page,"Samples","vprm","samples",data[off+hdraend:off+hdrbend],parent,"%02x  "%(offset+off+hdraend))
 	ind = 0
 	for i in hdrb:
 		v1 = struct.unpack(">h",data[off2:off2+2])[0]
