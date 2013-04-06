@@ -29,7 +29,7 @@ import rx2,fh,fhparse
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 from utils import *
 from hv2 import HexView
-version = "0.7.17"
+version = "0.7.19"
 
 ui_info = \
 '''<ui>
@@ -712,37 +712,42 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
 		ftype = self.das[pn].type
+		fname = self.das[pn].fname
 		print ftype
 		if  ftype == "WMF" or ftype  == "APWMF" or ftype  == "EMF" or ftype == "SVM":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				mf.mf_save(self.das[pn],fname,ftype)
 		elif ftype == "cfb":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				ole.save(self.das[pn],fname)
 		elif ftype == "vsd":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				vsd.save(self.das[pn],fname)
 		elif ftype == "pub":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				pub.save(self.das[pn],fname)
+		elif ftype == "YEP":
+			fname = self.file_open('Save',None,None,fname)
+			if fname:
+				yep.save(self.das[pn],fname)
 		elif ftype[0:3] == "XLS":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				xls.save(self.das[pn],fname)
 		elif ftype == "doc":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				doc.save(self.das[pn],fname)
 		elif ftype == "FH":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				fh.fh_save(self.das[pn],fname)
 		elif ftype[0:3] == "CDR":
-			fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
+			fname = self.file_open('Save',None,None,fname)
 			if fname:
 				cdr.save(self.das[pn],fname)
 		else:
@@ -1406,19 +1411,19 @@ class ApplicationMainWindow(gtk.Window):
 				print err
 		return
 
-	def file_open (self,title='Open',dirname="", fname=""):
+	def file_open (self, title='Open', parent=None, dirname=None, fname=None):
 		if title == 'Save':
 			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg.set_current_name(fname)
 		else:
 			dlg = gtk.FileChooserDialog('Open...', None, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
-		dlg.set_filename(fname)
-		dlg.set_current_folder(dirname)
+#		dlg.set_current_folder(dirname)
 		dlg.set_local_only(True)
 		resp = dlg.run()
-		fname = dlg.get_filename()
 		dlg.hide()
 		if resp == gtk.RESPONSE_CANCEL:
 			return None
+		fname = dlg.get_filename()
 		return fname
 
 

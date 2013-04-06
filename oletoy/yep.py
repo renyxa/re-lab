@@ -18,6 +18,44 @@ import sys,struct,math
 from utils import *
 from midi import *
 
+# returns size of the RIFF-based tree starting from 'parent'
+def get_parent_size (page, parent):
+	size = 8 # fourcc + chunk size
+	for i in range(page.model.iter_n_children(parent)):
+		citer = page.model.iter_nth_child(parent, i)
+		size += len(page.model.get_value(citer,3)) + 8 # data size plus child fourcc and chunk size dwords
+	return size
+
+
+# collects tree under 'parent' inserting fourcc-s and chunk sizes
+def collect_tree (page,parent):
+	ctdata = ""
+	if page.model.iter_n_children(parent) > 0:
+		for i in range(page.model.iter_n_children(parent)):
+			citer = page.model.iter_nth_child(parent, i)
+			cdata = page.model.get_value(citer,3)
+			ctdata += page.model.get_value(citer,1)[1] + struct.pack(">I",len(cdata))+cdata
+	else:
+		ctdata = page.model.get_value(parent,3)
+	return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
+
+# saves YEP file
+def save (page, fname):
+	data = ""
+	iter1 = page.model.get_iter_first()
+	while None != iter1:
+		if page.model.get_value(iter1,1)[1] != "VPRM":
+			data += collect_tree (page, iter1)
+		else:
+			# replace with proper recollection of VPRM
+			cdata = page.model.get_value(iter1,3)
+			data += page.model.get_value(iter1,1)[1] + struct.pack(">I",len(cdata))+cdata
+		iter1 = page.model.iter_next(iter1)
+	f = open(fname,"wb")
+	f.write(data)
+	f.close()
+
+
 def hdra(hd,data):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
