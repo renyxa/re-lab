@@ -773,6 +773,8 @@ class HexView():
 					s = self.lines[r2][0] + c2 - self.lines[r1][0]-c1
 				self.mtt = x,y,s,r2-r1+1
 				self.parent.calc_status(self.data[self.lines[r1][0]+c1:self.lines[r2][0]+c2],s)
+		else:
+			self.parent.calc_status(self.data[self.lines[self.curr][0]+self.curc],1)
 
 
 		self.vadj.upper = len(self.lines)-self.numtl+1

@@ -24,6 +24,7 @@ except:
 import hexview
 import utils
 import cli
+import midi
 
 version = "0.5.3"
 
@@ -127,6 +128,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_be = 0
 		self.options_txt = 1
 		self.options_ipaddr = 0
+		self.options_midi = 0
 		self.options_div = 1
 		self.options_enc = "utf-16"
 		self.options_win = None
@@ -135,7 +137,10 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_off = ""
 		self.options_len = ""
 		self.options_htmlhdr = 1
-
+		try:
+			execfile("options.cfg")
+		except:
+			print "Options config not loaded"
 		self.run_win = None
 
 		if len(sys.argv) > 1:
@@ -236,10 +241,6 @@ class ApplicationMainWindow(gtk.Window):
 		w,h = pl.get_size()
 		widget.set_size_request(w/1000, h/1000)
 		widget.window.draw_layout(gc, 0, 0, pl)
-
-
-	def on_exp_entry_activate(self, action):
-		pass
 
 	def on_exp_entry_changed(self, action, btn):
 		if btn == "len":
@@ -363,6 +364,8 @@ class ApplicationMainWindow(gtk.Window):
 			self.options_txt = abs(self.options_txt-1)
 		if lt == "IP Addr":
 			self.options_ipaddr = abs(self.options_ipaddr-1)
+		if lt == "MIDI":
+			self.options_midi = abs(self.options_midi-1)
 
 		if self.statbuffer != "":
 			self.calc_status(self.statbuffer,len(self.statbuffer))
@@ -373,17 +376,34 @@ class ApplicationMainWindow(gtk.Window):
 	def del_runwin (self, action):
 		self.run_win = None
 
+	def on_options_save(self,action):
+		try:
+			f = open("options.cfg","wb")
+			f.write("# options for colupatr\n")
+			f.write("self.options_le = %s\n"%self.options_le)
+			f.write("self.options_be = %s\n"%self.options_be)
+			f.write("self.options_txt = %s\n"%self.options_txt)
+			f.write("self.options_ipaddr = %s\n"%self.options_ipaddr)
+			f.write("self.options_midi = %s\n"%self.options_midi)
+			f.write("self.options_div = %s\n"%self.options_div)
+			f.write("self.options_enc = '%s'\n"%self.options_enc)
+			f.write("self.options_htmlhdr = %s\n"%self.options_htmlhdr)
+			f.close()
+		except:
+			print "Failed to save options"
+
 	def activate_options (self, action):
 		if self.options_win != None:
 			self.options_win.show_all()
 			self.options_win.present()
 		else:
-			# le, be, txt, div, enc
+			# le, be, txt, midi, div, enc
 			vbox = gtk.VBox()
 			le_chkb = gtk.CheckButton("LE")
 			be_chkb = gtk.CheckButton("BE")
 			txt_chkb = gtk.CheckButton("Txt")
 			ipaddr_chkb = gtk.CheckButton("IP Addr")
+			midi_chkb = gtk.CheckButton("MIDI")
 			
 			if self.options_le:
 				le_chkb.set_active(True)
@@ -393,17 +413,21 @@ class ApplicationMainWindow(gtk.Window):
 				txt_chkb.set_active(True)
 			if self.options_ipaddr:
 				ipaddr_chkb.set_active(True)
-	
+			if self.options_midi:
+				midi_chkb.set_active(True)
+
 			le_chkb.connect("toggled",self.on_option_toggled)
 			be_chkb.connect("toggled",self.on_option_toggled)
 			txt_chkb.connect("toggled",self.on_option_toggled)
 			ipaddr_chkb.connect("toggled",self.on_option_toggled)
+			midi_chkb.connect("toggled",self.on_option_toggled)
 	
 			hbox0 = gtk.HBox()
 			hbox0.pack_start(le_chkb)
 			hbox0.pack_start(be_chkb)
 			hbox0.pack_start(txt_chkb)
 			hbox0.pack_start(ipaddr_chkb)
+			hbox0.pack_start(midi_chkb)
 			
 			hbox1 = gtk.HBox()
 			div_lbl = gtk.Label("Div")
@@ -412,7 +436,7 @@ class ApplicationMainWindow(gtk.Window):
 			div_entry.set_text("%.2f"%self.options_div)
 			hbox1.pack_start(div_lbl)
 			hbox1.pack_start(div_entry)
-	
+			
 			hbox2 = gtk.HBox()
 			enc_lbl = gtk.Label("Enc")
 			enc_entry = gtk.Entry()
@@ -420,12 +444,15 @@ class ApplicationMainWindow(gtk.Window):
 			hbox2.pack_start(enc_lbl)
 			hbox2.pack_start(enc_entry)
 			enc_entry.set_text(self.options_enc)
-	#		ok_btn = gtk.Button("OK")
-	
+			ok_btn = gtk.Button("Save")
+			ok_btn.connect("pressed",self.on_options_save)
+			
 			vbox.pack_start(hbox0)
 			vbox.pack_start(hbox1)
 			vbox.pack_start(hbox2)
-	#		vbox.pack_start(ok_btn)
+			hbox3 = gtk.HBox()
+			hbox3.pack_end(ok_btn,False,False,0)
+			vbox.pack_start(hbox3)
 			
 			optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
 			optwin.set_resizable(False)
@@ -686,12 +713,18 @@ class ApplicationMainWindow(gtk.Window):
 		self.statbuffer = buf
 		txt = ""
 		txt2 = ""
-		if dlen == 2:
+		if dlen == 1 and self.options_midi == 1:
+			if ord(buf) in midi.pitches:
+				txt += midi.pitches[ord(buf)]
+			if ord(buf) in midi.controllers:
+				txt += "\t["+midi.controllers[ord(buf)]+"]"
+			
+		elif dlen == 2:
 			if self.options_le == 1:
 				txt = "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
 			if self.options_be == 1:
 				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
-		if dlen == 4:
+		elif dlen == 4:
 			if self.options_le == 1:
 				txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
 				txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
@@ -700,15 +733,15 @@ class ApplicationMainWindow(gtk.Window):
 				txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
 			if self.options_ipaddr == 1:
 				txt += "%d.%d.%d.%d"%(ord(buf[0]),ord(buf[1]),ord(buf[2]),ord(buf[3]))
-		if dlen == 8:
+		elif dlen == 8:
 			if self.options_le == 1:
 				txt = "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
 			if self.options_be == 1:
 				txt += "BE: %s"%((struct.unpack(">d",buf)[0])/self.options_div)
-		if dlen == 3:
+		elif dlen == 3:
 			txt = '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-		if dlen > 3 and dlen != 4 and dlen != 8 and self.options_txt == 1:
+		if dlen > 3 and self.options_txt == 1:
 			try:
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
