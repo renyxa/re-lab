@@ -25,7 +25,7 @@ import hexview
 import utils
 import cli
 
-version = "0.5.2"
+version = "0.5.3"
 
 ui_info = \
 '''<ui>
@@ -35,6 +35,7 @@ ui_info = \
 		<menuitem action='Open'/>
 		<menuitem action='Reload'/>
 		<menuitem action='Save'/>
+		<menuitem action='Export'/>
 		<menuitem action='Options'/>
 		<menuitem action='Close'/>
 		<separator/>
@@ -130,6 +131,10 @@ class ApplicationMainWindow(gtk.Window):
 		self.options_enc = "utf-16"
 		self.options_win = None
 		self.statbuffer = ""
+		# Export options 
+		self.options_off = ""
+		self.options_len = ""
+		self.options_htmlhdr = 1
 
 		self.run_win = None
 
@@ -159,6 +164,10 @@ class ApplicationMainWindow(gtk.Window):
 				"_Save","<control>S",                      # label, accelerator
 				"Save the file",                             # tooltip
 				self.activate_save),
+			( "Export", gtk.STOCK_SAVE,                    # name, stock id
+				"Ex_port","<control>P",                      # label, accelerator
+				"Export to HTML",                             # tooltip
+				self.activate_export),
 			( "Options", None,                    # name, stock id
 				"Op_tions","<control>T",                      # label, accelerator
 				"Configuration options",                             # tooltip
@@ -229,6 +238,86 @@ class ApplicationMainWindow(gtk.Window):
 		widget.window.draw_layout(gc, 0, 0, pl)
 
 
+	def on_exp_entry_activate(self, action):
+		pass
+
+	def on_exp_entry_changed(self, action, btn):
+		if btn == "len":
+			self.options_len = self.len_entry.get_text()
+		else:
+			self.options_off = self.off_entry.get_text()
+
+		if self.options_off == "" or self.options_len == "":
+			self.ok_btn.set_sensitive(False)
+		else:
+			try:
+				i = int(self.options_len,16)
+				j = int(self.options_off,16)
+				if i <= 0 or j < 0:
+					self.ok_btn.set_sensitive(False)
+				else:
+					self.ok_btn.set_sensitive(True)
+			except:
+				print "Incorrect value for length"
+
+	def on_opt_btn_clicked(self,action,name):
+		if name == "OK":
+			pn = self.notebook.get_current_page()
+			if pn != -1:
+				doc = self.das[pn]
+				doff = int(self.options_off,16)
+				dlen = int(self.options_len,16)
+				lnum = utils.find_line(doc,doff)
+				self.expwin.destroy()
+				utils.html_export(self,doc,lnum,doff,dlen)
+		else:
+			self.expwin.destroy()
+
+	def activate_export(self, action):
+			vbox = gtk.VBox()
+			hbox1 = gtk.HBox()
+			off_lbl = gtk.Label("Offset:")
+			self.off_entry = gtk.Entry()
+			self.off_entry.set_text(self.options_off)
+			hbox1.pack_start(off_lbl)
+			hbox1.pack_start(self.off_entry)
+			hbox2 = gtk.HBox()
+			len_lbl = gtk.Label("Length:")
+			self.len_entry = gtk.Entry()
+			self.len_entry.set_text(self.options_len)
+			hbox2.pack_start(len_lbl)
+			hbox2.pack_start(self.len_entry)
+			self.off_entry.connect("changed",self.on_exp_entry_changed,"off")
+			self.len_entry.connect("changed",self.on_exp_entry_changed,"len")
+			hdr_chkb = gtk.CheckButton("Add address line")
+			if self.options_htmlhdr:
+				hdr_chkb.set_active(True)
+			hdr_chkb.connect("toggled",self.on_option_toggled)
+
+			self.ok_btn = gtk.Button("OK")
+			if self.options_len == "" or self.options_off == "":
+				self.ok_btn.set_sensitive(False)
+			ok_tooltip = gtk.Tooltips()
+			ok_tooltip.set_tip(self.ok_btn,"Both Offset and Length has to be set")
+			cancel_btn = gtk.Button("Cancel")
+			self.ok_btn.connect("clicked", self.on_opt_btn_clicked, "OK")
+			cancel_btn.connect("clicked", self.on_opt_btn_clicked, "CANCEL")
+			hbox3 = gtk.HBox()
+			hbox3.pack_start(self.ok_btn)
+			hbox3.pack_start(cancel_btn)
+			vbox.pack_start(hbox1)
+			vbox.pack_start(hbox2)
+			vbox.pack_start(hdr_chkb)
+			vbox.pack_start(hbox3)
+			self.expwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			self.expwin.set_resizable(False)
+			self.expwin.set_border_width(0)
+			self.expwin.add(vbox)
+			self.expwin.set_title("Export Options")
+			self.expwin.connect ("destroy", lambda d: d.destroy())
+			self.expwin.show_all()
+
+
 	def activate_manual(self, action):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
@@ -264,6 +353,8 @@ class ApplicationMainWindow(gtk.Window):
 
 	def on_option_toggled (self,button):
 		lt = button.get_label()
+		if lt == "Add address line":
+			self.options_htmlhdr = abs(self.options_htmlhdr-1)
 		if lt == "LE":
 			self.options_le = abs(self.options_le-1)
 		if lt == "BE":

@@ -103,7 +103,7 @@ class HexView():
 		self.numtl = 0				# number of lines
 		self.lines = lines			# offsets of lines in dump (offset,mode,comment idx)
 		self.comments = comments	# hash of offset:Comment()
-		self.cmntlines = {}		# to cache lines with comments 
+		self.cmntlines = {}			# to cache lines with comments 
 		self.maxaddr = 16			# current length of the longest line
 		self.hvlines = []			# cached text of lines
 		self.selr = None

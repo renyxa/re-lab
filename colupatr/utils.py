@@ -89,13 +89,20 @@ def html_export(app,doc,sline,doff,dlen):
 	fname = app.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,doc.fname+".html")
 	if fname:
 		f = open(fname,'w')
-		f.write("<!DOCTYPE html><html><body><table style='font-family:%s;' cellspacing=0>\n"%doc.font)
+		f.write("<!DOCTYPE html><html><body>")
 		f.write("<head>\n<meta charset='utf-8'>\n") 
 		f.write("<style type='text/css'>\ntr.top1 td { border-bottom: 1px solid black; }")
 		f.write("tr.top2 td { border-bottom: 2px solid purple; }\n")
 		f.write("tr.top3 td { border-bottom: 3px solid red; }\n")
+		f.write("tr.title td { border-bottom: 3px solid black; }\n")
 		f.write(".mid { border-left: 1px solid black; border-right: 1px solid black;}\n")
 		f.write("</style>\n</head>\n")
+		f.write("<table style='font-family:%s;' cellspacing=0>\n"%doc.font)
+		if app.options_htmlhdr:
+			addrtxt = ""
+			for i in range(doc.maxaddr):
+				addrtxt += "%02x "%i
+			f.write("<tr class='title'><td>%s</td><td></td><td></td></tr>"%addrtxt[:-1])
 		off = 0
 		i = 0
 		while off < dlen:
@@ -137,7 +144,7 @@ def html_export(app,doc,sline,doff,dlen):
 					tmpoff = addr2
 					txtcmnt += "<span style='color: rgb(%s);'>"%cmntclr+doc.comments[cmnt].text+"</span> "+unicode("\xC2\xB7","utf8") + " "
 				txthex += " " + txt1[addr2*3:]
-				txtasc += " " + txt2[addr2:]
+				txtasc += txt2[addr2:]
 				f.write("<td>%s</td>"%txthex)
 				f.write("<td class='mid'>%s</td>"%txtasc)
 				f.write("<td>%s</td>"%txtcmnt[:-3])
