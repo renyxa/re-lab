@@ -26,7 +26,6 @@ def get_parent_size (page, parent):
 		size += len(page.model.get_value(citer,3)) + 8 # data size plus child fourcc and chunk size dwords
 	return size
 
-
 # collects tree under 'parent' inserting fourcc-s and chunk sizes
 def collect_tree (page, parent):
 	ctdata = ""
@@ -34,10 +33,25 @@ def collect_tree (page, parent):
 		for i in range(page.model.iter_n_children(parent)):
 			citer = page.model.iter_nth_child(parent, i)
 			cdata = page.model.get_value(citer,3)
-			ctdata += page.model.get_value(citer,1)[1] + struct.pack(">I",len(cdata))+cdata
+			clen = len(cdata)
+			name = page.model.get_value(citer,1)[1]
+			if name[:5] == "IPIT/":
+				name = name[5:]
+				pos = cdata.find("\x00")
+				if pos != -1:
+					clen = pos - 1
+			ctdata += name + struct.pack(">I",clen)+cdata
+		return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
 	else:
 		ctdata = page.model.get_value(parent,3)
-	return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
+		name = page.model.get_value(parent,1)[1]
+		clen = len(ctdata)
+		if name == "SSTY":
+			pos = ctdata.rfind("\x00\xFF\x2F\x00")
+			if pos != -1:
+				clen = pos + 4
+		return name+struct.pack(">I",clen)+ctdata
+
 
 # collects tree in VPRM, skips "vdblock" and "prtshdr"
 def collect_vprm (page, parent):
@@ -211,7 +225,7 @@ def vprm (page, data, parent, offset=0):
 	add_pgiter(page,"Block %04x (%04x %04x %02x [%s])"%(ind,v1,v2,v3,pitches[v3]),"vprm","hdrbch",data[off2:],hbiter,"%02x  "%(offset+off2))
 
 
-def parse (page, data, parent,align=4.):
+def parse (page, data, parent,align=4.,prefix=""):
 	off = 0
 	while off < len(data):
 		fourcc = data[off:off+4]
@@ -234,11 +248,11 @@ def parse (page, data, parent,align=4.):
 		else:
 			iname = "%s"%fourcc
 		
-		citer = add_pgiter(page,iname,"yep",fourcc,data[off:off+length],parent)
+		citer = add_pgiter(page,iname,"yep","%s%s"%(prefix,fourcc),data[off:off+length],parent)
 		if fourcc == "VPRM":
 			vprm (page, data[off:off+length], citer)
 		if fourcc == "IPIT":
-			parse (page, data[off:off+length], citer)
+			parse (page, data[off:off+length], citer, 4., "IPIT/")
 			
 		off += length
 	page.view.get_column(1).set_title("Offset")
