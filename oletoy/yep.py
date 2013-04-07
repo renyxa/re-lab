@@ -91,9 +91,10 @@ def hdra(hd,data):
 	off += 4
 	ind = 0
 	while off < size:
-		item = struct.unpack(">h",data[off:off+2])[0]
-		add_iter(hd,"Item %02x"%ind,"%02x"%item,off,2,">h")
-		off += 2
+		item_s = struct.unpack(">h",data[off:off+2])[0]
+		item_e = struct.unpack(">h",data[off+2:off+4])[0]
+		add_iter(hd,"Item %02x"%ind,"%02x %02x"%(item_s,item_e),off,2,">h")
+		off += 4
 		ind += 1
 
 vprmfunc = {"hdra":hdra}
