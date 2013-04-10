@@ -82,7 +82,6 @@ def save (page, fname):
 
 
 def hdra(hd,data):
-	return
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
 	add_iter(hd,"Var0",var0,off,4,">I")
