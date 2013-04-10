@@ -39,7 +39,7 @@ def collect_tree (page, parent):
 				name = name[5:]
 				pos = cdata.find("\x00")
 				if pos != -1:
-					clen = pos - 1
+					clen = pos
 			ctdata += name + struct.pack(">I",clen)+cdata
 		return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
 	else:
@@ -82,6 +82,7 @@ def save (page, fname):
 
 
 def hdra(hd,data):
+	return
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
 	add_iter(hd,"Var0",var0,off,4,">I")
@@ -136,8 +137,11 @@ def hdr1item (page,data,parent,offset=0):
 	add_pgiter(page,"Num of sequences","vprm","p1num",data[off:off+4],p1iter,"%02x  "%(offset+off))
 	off += 4
 	# FIXME! Guessing that number of dozens would match with number of parts
+	parts = {}
 	for i in range(p1num):
 		add_pgiter(page,"PH seq%d"%(i+1),"vprm","p1s%d"%(i+1),data[off:off+12],p1iter,"%02x  "%(offset+off))
+		pid = ord(data[off+12])
+		parts[pid] = 1
 		off += 12
 		if off > h1off1:
 			print "ATTENTION! YEP: not enough bytes for 'dozens'..."
@@ -145,7 +149,8 @@ def hdr1item (page,data,parent,offset=0):
 	# parse list of offsets to parts
 	poffs = []
 	# FIXME!  No validation that we do not cross the 1st offset to parts
-	for i in range(p1num):
+	# FIXME! assumption that number of offsets would match number of unique IDs in "dozens"
+	for i in range(len(parts)):
 		poffs.append(struct.unpack(">I",data[h1off1+i*4:h1off1+i*4+4])[0])
 	p2iter = add_pgiter(page,"Parts offsets","vprm","poffs",data[h1off1:h1off1+p1num*4],h1citer,"%02x  "%(offset+h1off1))
 
@@ -165,7 +170,7 @@ def hdr1item (page,data,parent,offset=0):
 				add_pgiter(page,"Element %d"%j,"vprm","elem",data[off:off+180],piter,"%02x  "%(offset+off))
 				off += 180
 	except:
-		print "Failed in parsing parts","%02x"%i
+		print "Failed in parsing parts","%02x"%i,sys.exc_info()
 
 	# add drumkit's "h1off2" block
 	# FIXME!  Bold assumption that "h1off3 is 'reserved'
@@ -201,10 +206,19 @@ def vprm (page, data, parent, offset=0):
 	off2 = ptr
 	v1 = struct.unpack(">I",data[off:off+4])[0] # ??? "allways" 8
 	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
-	haiter = add_pgiter(page,"Header A","vprm","hdra",data[off:off+hdraend],parent,"%02x  "%(offset+off))
+	haiter = add_pgiter(page,"Samples Header","vprm","hdra",data[off:off+hdraend],parent,"%02x  "%(offset+off))
+	slist = []
+	shdrsize = struct.unpack(">I",data[off:off+4])[0]
+	shdrlen = struct.unpack(">I",data[off+4:off+8])[0]
+	tmpoff = off + shdrsize
+	while tmpoff < off+shdrlen:
+		ss = struct.unpack(">H",data[tmpoff:tmpoff+2])[0]
+		se = struct.unpack(">H",data[tmpoff+2:tmpoff+4])[0]
+		slist.append((ss,se))
+		tmpoff += 4
 	off2 += hdraend
 	hdrbend = off+struct.unpack(">I",data[off2:off2+4])[0]
-	hbiter = add_pgiter(page,"Samples","vprm","samples",data[off+hdraend:hdrbend],parent,"%02x  "%(offset+off+hdraend))
+	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],parent,"%02x  "%(offset+off+hdraend))
 	hdrb = []
 	off2 += 4
 	while off2 < hdrbend:
@@ -212,19 +226,16 @@ def vprm (page, data, parent, offset=0):
 		if v != 0:
 			hdrb.append(v+off)
 		off2 += 4
+	hdrb.append(len(data))
 	ind = 0
-	for i in hdrb:
-		v1 = struct.unpack(">h",data[off2:off2+2])[0]
-		v2 = struct.unpack(">h",data[off2+2:off2+4])[0]
-		v3 = ord(data[off2+16])
-		add_pgiter(page,"Block %04x (%04x %04x %02x [%s])"%(ind,v1,v2,v3,pitches[v3]),"vprm","hdrbch",data[off2:i],hbiter,"%02x  "%(offset+off2))
-		off2 = i
+	for i in slist:
+		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",parent,"%02x  "%(offset+off2))
+		for j in range(i[0],i[1]+1):
+				bend = hdrb[j]
+				v3 = ord(data[off2+16])
+				add_pgiter(page,"Block %04x %02x [%s]"%(j,v3,pitches[v3]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+				off2 = bend
 		ind += 1
-	v1 = struct.unpack(">h",data[off2:off2+2])[0]
-	v2 = struct.unpack(">h",data[off2+2:off2+4])[0]
-	v3 = ord(data[off2+16])
-	add_pgiter(page,"Block %04x (%04x %04x %02x [%s])"%(ind,v1,v2,v3,pitches[v3]),"vprm","hdrbch",data[off2:],hbiter,"%02x  "%(offset+off2))
-
 
 def parse (page, data, parent,align=4.,prefix=""):
 	off = 0
