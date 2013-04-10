@@ -564,7 +564,7 @@ class HexView():
 
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"
-		self.fontsize = 14
+		self.fontsize = 12
 		self.hlclr = 1,1,0.5
 		self.hdrclr = 0.9,0.9,0.9
 		self.lineclr = 0,0,0

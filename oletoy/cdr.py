@@ -425,7 +425,8 @@ def clr_model(hd,data,offset):
 	add_iter (hd,"  Color",clr,offset+8,4,"<I")
 
 def outl (hd,size,data):
-	add_iter (hd,"Outline ID",d2hex(data[0:4]),0,4,"<I")
+#	add_iter (hd,"Outline ID",d2hex(data[0:4]),0,4,"<I")
+	add_iter (hd,"Outline ID","%08x"%(struct.unpack("<I",data[0:4])[0]),0,4,"<I")
 
 	lt = 0x4
 	ct = 0x6
@@ -524,7 +525,7 @@ def user (hd,size,data):
 	add_iter (hd,"PS fill name",psname,2,pslen,"txt")
 
 def fild (hd,size,data):
-	add_iter (hd,"Fill ID",d2hex(data[0:4]),0,4,"<I")
+	add_iter (hd,"Fill ID","%08x"%(struct.unpack("<I",data[0:4])[0]),0,4,"<I")
 	ftype_off = 4
 	if hd.version > 12:
 		ftype_off = 12
@@ -619,7 +620,7 @@ def fild (hd,size,data):
 					pal_len = 43
 				clr2_off = clr1_off + pal_len
 
-			add_iter (hd,"Pattern ID", d2hex(data[patt_off:patt_off+4]),patt_off,4,"txt")
+			add_iter (hd,"Pattern ID", "%08x"%(struct.unpack("<I",data[patt_off:patt_off+4])[0]),patt_off,4,"txt")
 			if hd.version < 6:
 				w_off = 0xc
 				h_off = 0xe
@@ -860,7 +861,7 @@ def ftil (hd,size,data):
 
 def loda_outl (hd,data,offset,l_type,length):
 	if hd.version > 3:
-		iter = add_iter (hd, "[000a] Outl ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+		iter = add_iter (hd, "[000a] Outl ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"txt")
 		hd.model.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 	else:
 		iter = add_iter (hd, "[000a] Outl","",offset,length,"txt")
@@ -883,7 +884,7 @@ def loda_outl (hd,data,offset,l_type,length):
 
 def loda_fild (hd,data,offset,l_type,length):
 	if hd.version > 3:
-		iter = add_iter (hd, "[0014] Fild ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+		iter = add_iter (hd, "[0014] Fild ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"txt")
 		hd.model.set (iter, 7,("cdr goto",d2hex(data[offset:offset+4])))
 	else:
 		iter = add_iter (hd, "[0014] Fild","",offset,length,"txt")
@@ -932,7 +933,7 @@ def loda_fild (hd,data,offset,l_type,length):
 
 def loda_trfd (hd,data,offset,l_type,length):
 	if hd.version > 3:
-		add_iter (hd, "[0064] Trfd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+		add_iter (hd, "[0064] Trfd ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"txt")
 	else:
 		add_iter (hd, "[0064] Trafo","",offset,length,"txt")
 		t_off = struct.unpack("<h",data[offset+0xa:offset+0xc])[0]
@@ -945,7 +946,7 @@ def loda_trfd (hd,data,offset,l_type,length):
 		add_iter (hd, "\tY0",struct.unpack("<i",data[offset+t_off+20:offset+t_off+24])[0]*0.0254,offset+t_off+20,4,"<i")
 
 def loda_stlt (hd,data,offset,l_type,length):
-	add_iter (hd, "[00c8] Stlt ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd, "[00c8] Stlt ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"txt")
 
 def loda_grad (hd,data,offset,l_type,length):
 	startx = struct.unpack('<i', data[offset+8:offset+12])[0]
@@ -1417,7 +1418,7 @@ def loda_lens (hd,data,offset,l_type,length):
 
 
 def loda_contnr (hd,data,offset,l_type,length):
-	add_iter (hd,"[1f45] Spnd ID",d2hex(data[offset:offset+4]),offset,4,"txt")
+	add_iter (hd,"[1f45] Spnd ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"txt")
 
 
 def loda_mesh (hd,data,offset,l_type,length):
@@ -1590,7 +1591,7 @@ def lnkt (hd,size,data):
 	for j in range(n_args):
 		start = struct.unpack('<L',data[s_args+j*4:s_args+j*4+4])[0]
 		add_iter (hd, "???", "%02x"%struct.unpack('<L',data[start:start+4])[0],start,4,"<I")
-		add_iter (hd, "spnd ID1", d2hex(data[start+4:start+8]),start+4,4,"<I")
+		add_iter (hd, "spnd ID1", "%08x"%(struct.unpack("<I",data[start+4:start+8])[0]),start+4,4,"<I")
 		add_iter (hd, "spnd ID2", d2hex(data[start+8:start+12]),start+8,4,"<I")
 
 def styd (hd,size,data):
@@ -1683,7 +1684,7 @@ def disp (hd,size,data,page):
 	hd.da.show_all()
 
 def vpat (hd,size,data):
-	add_iter (hd, "Vect ID", struct.unpack("<I",data[0:4])[0],0,4,"<I")
+	add_iter (hd, "Vect ID", "%08x"%(struct.unpack("<I",data[0:4])[0]),0,4,"<I")
 
 def txsm16 (hd,size,data):
 	off = 0
@@ -1796,7 +1797,7 @@ def txsm16 (hd,size,data):
 
 def txsm5 (hd,size,data):
 	off = 10
-	add_iter (hd, "Style ID",struct.unpack('<H', data[off:off+2])[0],off,2,"<H")
+	add_iter (hd, "Style ID","%08x"%(struct.unpack('<H', data[off:off+2])[0]),off,2,"<H")
 	off += 2
 	numst = struct.unpack('<H', data[off:off+2])[0]
 	add_iter (hd, "# style recs",numst,off,2,"<H")
@@ -1861,7 +1862,7 @@ def txsm (hd,size,data):
 	off += 4
 	if blk_flag1 == 1:
 		if hd.version > 7:
-			add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
+			add_iter (hd, "txt ID", "%08x"%(struct.unpack("<I",data[off:off+4])[0]),off,4,"<I")
 			off += 4
 			for i in range(6):
 				var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
@@ -1886,7 +1887,7 @@ def txsm (hd,size,data):
 		off += 4
 
 	if hd.version < 8:
-		add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
+		add_iter (hd, "txt ID", "%08x"%(struct.unpack("<I",data[off:off+4])[0]),off,4,"<I")
 		off += 4
 		for i in range(6):
 			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
@@ -1919,7 +1920,7 @@ def txsm (hd,size,data):
 		num4 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num4", num4,off,4,"<I")
 		off += 4
-	add_iter (hd, "Stlt ID", d2hex(data[off:off+4]),off,4,"txt")
+	add_iter (hd, "Stlt ID", "%08x"%(struct.unpack("<I",data[off:off+4])[0]),off,4,"txt")
 	# skip 1 byte
 	off += 5
 	if hd.version > 12 and num1 != 0: # skip one more byte for version 13

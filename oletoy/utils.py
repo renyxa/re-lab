@@ -161,16 +161,18 @@ def graph_expose (da,event,data,hd):
 def graph(hd,data):
 	ch = hd.hdscrolled.get_child2()
 	if ch:
-		hd.hdscrolled.remove(ch)
-	da = gtk.DrawingArea()
-	scrolled = gtk.ScrolledWindow()
-	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-	scrolled.add_with_viewport(da)
-	hd.da = scrolled
-	hd.hdscrolled.add2(hd.da)
-	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
-	da.connect('expose_event', graph_expose,data,hd)
-	da.connect("button_press_event",graph_on_button_press,data,hd)
+		ch.connect('expose_event', graph_expose,data,hd)
+	else:
+		da = gtk.DrawingArea()
+		scrolled = gtk.ScrolledWindow()
+		scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		scrolled.add_with_viewport(da)
+		hd.da = scrolled
+		hd.hdscrolled.add2(hd.da)
+		da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+		da.connect('expose_event', graph_expose,data,hd)
+		da.connect("button_press_event",graph_on_button_press,data,hd)
+
 	hd.da.show_all()
 
 
