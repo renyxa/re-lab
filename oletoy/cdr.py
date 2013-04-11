@@ -1856,11 +1856,15 @@ def txsm6 (hd,size,data):
 	elif hd.version < 5:
 		return
 
+	paraflag = struct.unpack("<i",data[0:4])[0]
+	bump = 0
+	if paraflag == 0:
+		bump = 8
 	off = 0x28
 	for i in range(6):
 		var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
 		add_iter (hd, "var%d"%i, "%d"%(var/10000),off+i*8,8,"<d")
-	off += 48
+	off += 48+bump
 	add_iter (hd, "??? 1",struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
 	off += 4
 	add_iter (hd, "Style ID",struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
