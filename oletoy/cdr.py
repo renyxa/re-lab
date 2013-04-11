@@ -1834,9 +1834,9 @@ def txsm6style(hd,siter,data,offset):
 	flag1 = ord(data[0])
 	add_iter(hd,"O/F flag",bflag2txt(flag1,flags,"?"),offset,1,"B",0,0,siter)
 	if flag1&1:
-		add_iter(hd,"Font ID",struct.unpack("<H",data[4:6])[0],offset+4,2,"<H",0,0,siter)
+		add_iter(hd,"Font ID",struct.unpack("<I",data[4:8])[0],offset+4,4,"<I",0,0,siter)
 	if flag1&2:
-		add_iter(hd,"Text decorations","...",offset+6,6,"txt",0,0,siter)
+		add_iter(hd,"Text decorations","...",offset+8,4,"txt",0,0,siter)
 	if flag1&4:
 		fsize = struct.unpack("<I",data[0xc:0x10])[0]*72/254000
 		add_iter(hd,"Font Size",fsize,offset+0xc,4,"<I",0,0,siter)
