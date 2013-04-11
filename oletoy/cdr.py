@@ -1795,6 +1795,23 @@ def txsm16 (hd,size,data):
 	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 
+def txsm5style(hd,siter,data,offset):
+	flags = {0x01:"Font ID",0x02:"Text decoration",0x04:"Font size",0x10:"Fill",0x20:"Outline"}
+	flag1 = ord(data[0])
+	add_iter(hd,"O/F flag",bflag2txt(flag1,flags,"?"),offset,1,"B",0,0,siter)
+	if flag1&1:
+		add_iter(hd,"Font ID",struct.unpack("<H",data[2:4])[0],offset+2,2,"<H",0,0,siter)
+	if flag1&2:
+		add_iter(hd,"Text decorations","...",offset+4,6,"txt",0,0,siter)
+	if flag1&4:
+		fsize = struct.unpack("<H",data[10:12])[0]*72/1000
+		add_iter(hd,"Font Size",fsize,offset+10,2,"<H",0,0,siter)
+	if flag1&0x10:
+		add_iter(hd,"Fill ID","%08x"%(struct.unpack("<I",data[14:18])[0]),offset+14,4,"<I",0,0,siter)
+		shift = 4
+	if flag1&0x20:
+		add_iter(hd,"Outl ID","%08x"%(struct.unpack("<I",data[18:22])[0]),offset+18,4,"<I",0,0,siter)
+
 def txsm5 (hd,size,data):
 	off = 10
 	add_iter (hd, "Style ID","%08x"%(struct.unpack('<H', data[off:off+2])[0]),off,2,"<H")
@@ -1803,7 +1820,8 @@ def txsm5 (hd,size,data):
 	add_iter (hd, "# style recs",numst,off,2,"<H")
 	off += 2
 	for i in range(numst):
-		add_iter (hd, "style %d"%i, "...",off,36,"txt")
+		siter = add_iter (hd, "style %d"%i, "...",off,36,"txt")
+		txsm5style(hd,siter,data[off:off+36],off)
 		off += 36
 	numch = struct.unpack('<H', data[off:off+2])[0]
 	off += 2
@@ -1812,10 +1830,13 @@ def txsm5 (hd,size,data):
 		off += 8
 
 def txsm6style(hd,siter,data,offset):
-	flags = {0x04:"Font size",0x10:"Fill",0x20:"Outline"}
+	flags = {0x01:"Font ID",0x02:"Text decoration",0x04:"Font size",0x10:"Fill",0x20:"Outline"}
 	flag1 = ord(data[0])
-	add_iter(hd,"O/F flag",bflag2txt(flag1,flags),offset,1,"B",0,0,siter)
-	add_iter(hd,"B/I/U flags","...",offset+4,8,"txt",0,0,siter)
+	add_iter(hd,"O/F flag",bflag2txt(flag1,flags,"?"),offset,1,"B",0,0,siter)
+	if flag1&1:
+		add_iter(hd,"Font ID",struct.unpack("<H",data[4:6])[0],offset+4,2,"<H",0,0,siter)
+	if flag1&2:
+		add_iter(hd,"Text decorations","...",offset+6,6,"txt",0,0,siter)
 	if flag1&4:
 		fsize = struct.unpack("<I",data[0xc:0x10])[0]*72/254000
 		add_iter(hd,"Font Size",fsize,offset+0xc,4,"<I",0,0,siter)
