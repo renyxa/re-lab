@@ -1921,10 +1921,13 @@ def txsm (hd,size,data):
 			add_iter (hd, "blk_flag2", blk_flag2,off,4,"<i")
 			off += 4
 			if blk_flag2:
-				for i in range(8):
+				skipnum = 8
+				if hd.version > 12:
+					skipnum = 10
+				for i in range(skipnum):
 					var = struct.unpack('<i', data[off+i*4:off+4+i*4])[0]
 					add_iter (hd, "v%d"%(i+1), "%d"%var,off+i*4,4,"<i")
-				off += 32
+				off += skipnum*4
 
 		else:
 			for i in range(8):
