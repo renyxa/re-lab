@@ -1811,6 +1811,23 @@ def txsm5 (hd,size,data):
 		add_iter (hd, "Char %d"%i, "%s\t(%d, %d\tstyle %d)"%(data[off+4],struct.unpack("<H",data[off:off+2])[0],struct.unpack("<H",data[off+2:off+4])[0],struct.unpack("<H",data[off+6:off+8])[0]/16),off,8,"txt")
 		off += 8
 
+def txsm6style(hd,siter,data,offset):
+	flags = {0x04:"Font size",0x10:"Fill",0x20:"Outline"}
+	flag1 = ord(data[0])
+	add_iter(hd,"O/F flag",bflag2txt(flag1,flags),offset,1,"B",0,0,siter)
+	add_iter(hd,"B/I/U flags","...",offset+4,8,"txt",0,0,siter)
+	if flag1&4:
+		fsize = struct.unpack("<I",data[0xc:0x10])[0]*72/254000
+		add_iter(hd,"Font Size",fsize,offset+0xc,4,"<I",0,0,siter)
+	shift = 0
+	if flag1&0x10:
+		add_iter(hd,"Fill ID","%08x"%(struct.unpack("<I",data[0x3c:0x40])[0]),offset+0x3c,4,"<I",0,0,siter)
+		shift = 4
+	if flag1&0x20:
+		add_iter(hd,"Outl ID","%08x"%(struct.unpack("<I",data[0x3c+shift:0x40+shift])[0]),offset+0x3c+shift,4,"<I",0,0,siter)
+	
+	
+
 def txsm6 (hd,size,data):
 	if round(hd.version) == 5:
 		txsm5 (hd,size,data)
@@ -1831,8 +1848,14 @@ def txsm6 (hd,size,data):
 	add_iter (hd, "# style recs",numst,off,4,"<I")
 	off += 4
 	for i in range(numst):
-		add_iter (hd, "style %d"%i, "...",off,60,"txt")
-		off += 60
+		stlen = 60
+		if ord(data[off])&0x10:
+			stlen += 4
+		if ord(data[off])&0x20:
+			stlen += 4
+		siter = add_iter (hd, "style %d"%i, "...",off,stlen,"txt")
+		txsm6style(hd,siter,data[off:off+stlen],off)
+		off += stlen
 	numch = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "# of chars",numch,off,4,"<I")
 	off += 4
