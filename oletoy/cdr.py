@@ -946,7 +946,10 @@ def loda_trfd (hd,data,offset,l_type,length):
 		add_iter (hd, "\tY0",struct.unpack("<i",data[offset+t_off+20:offset+t_off+24])[0]*0.0254,offset+t_off+20,4,"<i")
 
 def loda_stlt (hd,data,offset,l_type,length):
-	add_iter (hd, "[00c8] Stlt ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"txt")
+	if hd.version < 6: # probably <5
+		add_iter (hd, "[00c8] Stlt ID","%04x"%(struct.unpack("<H",data[offset:offset+2])[0]),offset,2,"<H")
+	else:
+		add_iter (hd, "[00c8] Stlt ID","%08x"%(struct.unpack("<I",data[offset:offset+4])[0]),offset,4,"<I")
 
 def loda_grad (hd,data,offset,l_type,length):
 	startx = struct.unpack('<i', data[offset+8:offset+12])[0]
@@ -1277,12 +1280,19 @@ lcv4styles = {
 
 def loda_coords_v4 (hd,data,offset,l_type,length):
 	x = struct.unpack("<h",data[offset:offset+2])[0]*0.0254
-	y = struct.unpack("<h",data[offset+2:offset+4])[0]*0.0254
-	add_iter (hd,"[001e] X/Y","%.2f  %.2f"%(x,y),offset,4,"<hh")
+	y = struct.unpack("<h",data[offset+2:offset+4])[0]
+	if l_type == 4: # artistic text 
+		add_iter (hd,"[001e] # of chars",y,offset+2,2,"<h")
+		term = 6 + 25*y
+	else:
+		add_iter (hd,"[001e] X/Y","%.2f  %.2f"%(x,y*0.0254),offset,4,"<hh")
+		term = clen - 3
+
 	off = 4
 	clen = struct.unpack("<h",data[offset+off:offset+off+2])[0]
 	off += 2
-	while off < clen - 3:
+	
+	while off < term:
 		flag = ord(data[offset+off])
 		ch = data[offset+off+1]
 		chdesc = ""
