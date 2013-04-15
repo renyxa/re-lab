@@ -18,7 +18,7 @@ import sys,struct
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
-import abr,rtf, otxml, chdraw
+import abr,rtf, otxml, chdraw,vfb
 
 class Page:
 	def __init__(self):
@@ -50,6 +50,10 @@ class Page:
 			offset = 0
 			f = open(self.fname,"rb")
 			buf = f.read()
+
+		if buf[0:6] == "\x1aWLF10":
+			self.type = vfb.open(self, buf, parent)
+			return 0
 
 		if buf[0:6] == "<?xml ":
 			self.type = otxml.open(buf, self, parent)

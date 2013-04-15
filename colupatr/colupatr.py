@@ -25,6 +25,7 @@ import hexview
 import utils
 import cli
 import midi
+from os.path import expanduser
 
 version = "0.5.3"
 
@@ -672,7 +673,7 @@ class ApplicationMainWindow(gtk.Window):
 			doc.hv.grab_focus()
 		return
 
-	def file_open (self, title='Open', parent=None, dirname=None, fname=None):
+	def file_open (self, title='Open', parent=None, dirname=None, fname=""):
 		if title == 'Save':
 			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 			dlg.set_current_name(fname)
@@ -713,11 +714,13 @@ class ApplicationMainWindow(gtk.Window):
 		self.statbuffer = buf
 		txt = ""
 		txt2 = ""
-		if dlen == 1 and self.options_midi == 1:
-			if ord(buf) in midi.pitches:
-				txt += midi.pitches[ord(buf)]
-			if ord(buf) in midi.controllers:
-				txt += "\t["+midi.controllers[ord(buf)]+"]"
+		if dlen == 1:
+			txt += "%d\t"%ord(buf)
+			if self.options_midi == 1:
+				if ord(buf) in midi.pitches:
+					txt += midi.pitches[ord(buf)]
+				if ord(buf) in midi.controllers:
+					txt += "\t["+midi.controllers[ord(buf)]+"]"
 			
 		elif dlen == 2:
 			if self.options_le == 1:
@@ -1071,10 +1074,28 @@ class ApplicationMainWindow(gtk.Window):
 			hv.expose(None,None)
 
 	def cli_on_open (self,wg,event,tb):
-		print "Not implemented yet"
+		home = expanduser("~")
+		self.fname = self.file_open('Open',home+"/.oletoy")
+		if self.fname:
+			manager = gtk.recent_manager_get_default()
+			manager.add_item(self.fname)
+			offset = 0
+			f = open(self.fname)
+			buf = f.read()
+			if buf:
+				tb.set_text(buf)
+			f.close()
 
 	def cli_on_save (self,wg,event,tb):
-		print "Not implemented yet"
+		home = expanduser("~")
+		self.fname = self.file_open('Save',home+"/.oletoy",self.fname)
+		if self.fname:
+			txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+			f = open(self.fname,'w')
+			f.write(txt)
+			f.close()
+			manager = gtk.recent_manager_get_default()
+			manager.add_item(self.fname)
 
 	def open_cli(self):
 		if self.run_win != None:

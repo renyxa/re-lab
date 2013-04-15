@@ -27,9 +27,10 @@ import xls, vba, ole, doc, mdb, pub, ppt
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh,fhparse
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
+import vfb
 from utils import *
 from hv2 import HexView
-version = "0.7.19"
+version = "0.7.20"
 
 ui_info = \
 '''<ui>
@@ -1417,7 +1418,7 @@ class ApplicationMainWindow(gtk.Window):
 				print err
 		return
 
-	def file_open (self, title='Open', parent=None, dirname=None, fname=None):
+	def file_open (self, title='Open', parent=None, dirname=None, fname=""):
 		if title == 'Save':
 			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 			dlg.set_current_name(fname)
