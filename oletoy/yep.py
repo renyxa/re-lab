@@ -231,8 +231,9 @@ def vprm (page, data, parent, offset=0):
 		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",parent,"%02x  "%(offset+off2))
 		for j in range(i[0],i[1]+1):
 				bend = hdrb[j]
-				v3 = ord(data[off2+16])
-				add_pgiter(page,"Block %04x %02x [%s]"%(j,v3,pitches[v3]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+				v3 = ord(data[off2+9])
+				v4 = ord(data[off2+8])
+				add_pgiter(page,"Block %04x %02x [%s-%s]"%(j,v3,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
 				off2 = bend
 		ind += 1
 
