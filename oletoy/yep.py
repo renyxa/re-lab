@@ -84,16 +84,16 @@ def save (page, fname):
 def hdra(hd,data):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
-	add_iter(hd,"Var0",var0,off,4,">I")
+	add_iter(hd,"Offset A",var0,off,4,">I")
 	off += 4
 	size = struct.unpack(">I",data[off:off+4])[0]
-	add_iter(hd,"Size",size,off,4,">I")
+	add_iter(hd,"Offset B",size,off,4,">I")
 	off += 4
 	ind = 0
 	while off < size:
 		item_s = struct.unpack(">h",data[off:off+2])[0]
 		item_e = struct.unpack(">h",data[off+2:off+4])[0]
-		add_iter(hd,"Item %02x"%ind,"%02x %02x"%(item_s,item_e),off,2,">h")
+		add_iter(hd,"Sample group %02x"%ind,"%02x %02x"%(item_s,item_e),off,2,">h")
 		off += 4
 		ind += 1
 
@@ -205,7 +205,8 @@ def vprm (page, data, parent, offset=0):
 	off2 = ptr
 	v1 = struct.unpack(">I",data[off:off+4])[0] # ??? "allways" 8
 	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
-	haiter = add_pgiter(page,"Samples Header","vprm","hdra",data[off:off+hdraend],parent,"%02x  "%(offset+off))
+	smplsiter = add_pgiter(page,"Samples","vprm","samples","",parent,"%02x  "%(offset+off))
+	haiter = add_pgiter(page,"List of Sample groups","vprm","hdra",data[off:off+hdraend],smplsiter,"%02x  "%(offset+off))
 	slist = []
 	shdrsize = struct.unpack(">I",data[off:off+4])[0]
 	shdrlen = struct.unpack(">I",data[off+4:off+8])[0]
@@ -217,7 +218,7 @@ def vprm (page, data, parent, offset=0):
 		tmpoff += 4
 	off2 += hdraend
 	hdrbend = off+struct.unpack(">I",data[off2:off2+4])[0]
-	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],parent,"%02x  "%(offset+off+hdraend))
+	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],smplsiter,"%02x  "%(offset+off+hdraend))
 	hdrb = []
 	off2 += 4
 	while off2 < hdrbend:
@@ -228,7 +229,7 @@ def vprm (page, data, parent, offset=0):
 	hdrb.append(len(data))
 	ind = 0
 	for i in slist:
-		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",parent,"%02x  "%(offset+off2))
+		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",smplsiter,"%02x  "%(offset+off2))
 		for j in range(i[0],i[1]+1):
 				bend = hdrb[j]
 				v3 = ord(data[off2+9])
@@ -239,7 +240,10 @@ def vprm (page, data, parent, offset=0):
 
 def parse (page, data, parent,align=4.,prefix=""):
 	off = 0
+	vvstgrpiter = None
+	sstygrpiter = None
 	while off < len(data):
+		piter = parent
 		fourcc = data[off:off+4]
 		off += 4
 		l = struct.unpack(">I",data[off:off+4])[0]
@@ -250,6 +254,9 @@ def parse (page, data, parent,align=4.,prefix=""):
 		off += 4
 		if fourcc == "SSTY":
 			iname = fourcc+" %s"%(data[off:off+16])
+			if sstygrpiter == None:
+				sstygrpiter = add_pgiter(page,"SSTYs","vprm","dontsave","",parent,"%02x  "%(off+off))
+			piter = sstygrpiter
 		elif fourcc == "VVST":
 			n = struct.unpack(">H",data[off+0x19:off+0x1b])[0]
 			if ord(data[off+0x18]) == 0x3f:
@@ -257,10 +264,13 @@ def parse (page, data, parent,align=4.,prefix=""):
 			else:
 				f = "[DrumKit %s]"%n
 			iname = fourcc+f+" %s"%(data[off:off+16])
+			if vvstgrpiter == None:
+				vvstgrpiter = add_pgiter(page,"VVSTs","vprm","dontsave","",parent,"%02x  "%(off+off))
+			piter = vvstgrpiter
 		else:
 			iname = "%s"%fourcc
 		
-		citer = add_pgiter(page,iname,"yep","%s%s"%(prefix,fourcc),data[off:off+length],parent)
+		citer = add_pgiter(page,iname,"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter)
 		if fourcc == "VPRM":
 			vprm (page, data[off:off+length], citer)
 		if fourcc == "IPIT":
