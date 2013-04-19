@@ -102,7 +102,7 @@ vprmfunc = {"hdra":hdra}
 def hdr1item (page,data,parent,offset=0):
 	off = 0
 	# size of the "main header for level2 block
-	# i.e. 'offset to the "parts header"'
+	# i.e. 'offset to the "elements header"'
 	h1off0 = struct.unpack(">I",data[off:off+4])[0]
 	if h1off0 != 0x24:
 		print "ATTENTION! YEP: size of VPRM header2 is not 0x24, it's %02x"%h1off0
@@ -113,7 +113,7 @@ def hdr1item (page,data,parent,offset=0):
 	vdidx = ord(data[0x23])
 	h1citer = add_pgiter(page,"%s Block %d"%(vdtxt,vdidx),"vprm","vdblock",data,parent,"%02x  "%offset)
 	add_pgiter(page,"V/Dk Header","vprm","vbhdr",data[:h1off0],h1citer,"%02x  "%offset)
-	# offset to the list of offsets of parts
+	# offset to the list of offsets of elements
 	h1off1 = struct.unpack(">I",data[off:off+4])[0]
 	off += 4
 	# this offset is used in Drumkits only
@@ -126,50 +126,50 @@ def hdr1item (page,data,parent,offset=0):
 	h1off4 = struct.unpack(">I",data[off:off+4])[0]
 	off += 4
 
-	# parse 'parts header'
-	p1iter = add_pgiter(page,"Parts Header","vprm","prtshdr",data[h1off0:h1off1],h1citer,"%02x  "%(offset+h1off0))
-	# first dozen in 'Parts header'
+	# parse 'elements header'
+	p1iter = add_pgiter(page,"Elements Header","vprm","prtshdr",data[h1off0:h1off1],h1citer,"%02x  "%(offset+h1off0))
+	# first dozen in 'Elements header'
 	add_pgiter(page,"Common settings","vprm","p1s0",data[h1off0:h1off0+12],p1iter,"%02x  "%(offset+h1off0))
 	off = h1off0+12
-	# number of parts for voice/drumkit
+	# number of elements for voice/drumkit
 	p1num = struct.unpack(">I",data[off:off+4])[0]
 	add_pgiter(page,"Num of sequences","vprm","p1num",data[off:off+4],p1iter,"%02x  "%(offset+off))
 	off += 4
-	# FIXME! Guessing that number of dozens would match with number of parts
-	parts = {}
+	# FIXME! Guessing that number of dozens would match with number of elements
+	elements = {}
 	for i in range(p1num):
 		add_pgiter(page,"PH seq%d"%(i+1),"vprm","p1s%d"%(i+1),data[off:off+12],p1iter,"%02x  "%(offset+off))
 		pid = ord(data[off+12])
-		parts[pid] = 1
+		elements[pid] = 1
 		off += 12
 		if off > h1off1:
 			print "ATTENTION! YEP: not enough bytes for 'dozens'..."
 	
-	# parse list of offsets to parts
+	# parse list of offsets to elements
 	poffs = []
-	# FIXME!  No validation that we do not cross the 1st offset to parts
+	# FIXME!  No validation that we do not cross the 1st offset to elements
 	# FIXME! assumption that number of offsets would match number of unique IDs in "dozens"
-	for i in range(len(parts)):
+	for i in range(len(elements)):
 		poffs.append(struct.unpack(">I",data[h1off1+i*4:h1off1+i*4+4])[0])
-	p2iter = add_pgiter(page,"Parts offsets","vprm","poffs",data[h1off1:h1off1+p1num*4],h1citer,"%02x  "%(offset+h1off1))
+	p2iter = add_pgiter(page,"Elements offsets","vprm","poffs",data[h1off1:h1off1+p1num*4],h1citer,"%02x  "%(offset+h1off1))
 
-	# parse parts
+	# parse elements
 	ind = 0
 	try:
 		for i in poffs:
 			off = i
-			# number of elements
+			# number of Key Banks
 			elnum = ord(data[off+4])
-			piter = add_pgiter(page,"Part %d"%ind,"vprm","parthdr",data[off:off+176],h1citer,"%02x  "%(offset+off))
+			piter = add_pgiter(page,"Element %d"%ind,"vprm","elemhdr",data[off:off+176],h1citer,"%02x  "%(offset+off))
 			off += 176
 			ind += 1
-			# collect elements
+			# collect Key Banks
 			# FIXME! we do not check for data bonds in the loop here
 			for j in range(elnum):
-				add_pgiter(page,"Element %d"%j,"vprm","elem",data[off:off+180],piter,"%02x  "%(offset+off))
+				add_pgiter(page,"Key Bank %d"%j,"vprm","bank",data[off:off+180],piter,"%02x  "%(offset+off))
 				off += 180
 	except:
-		print "Failed in parsing parts","%02x"%i,sys.exc_info()
+		print "Failed in parsing elements","%02x"%i,sys.exc_info()
 
 	# add drumkit's "h1off2" block
 	# FIXME!  Bold assumption that "h1off3 is 'reserved'
