@@ -80,7 +80,58 @@ def save (page, fname):
 	f.write(data)
 	f.close()
 
+def p1s0 (hd, data):
+	offset = 3
+	x = 255-ord(data[offset])
+	add_iter(hd,"Voice - Master Volume",x,offset,1,"B")
 
+def p1s1 (hd, data):
+	offset = 0
+	x = 255-ord(data[offset])
+	add_iter(hd,"Element Volume",x,offset,1,"B")
+
+def bank (hd, data):
+	offset = 2
+	x = ord(data[offset])
+	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
+
+	offset = 3
+	x = ord(data[offset])
+	add_iter(hd,"Key Range - Low note",key2txt(x,pitches),offset,1,"B")
+
+	offset = 61
+	x = 128-ord(data[offset])
+	add_iter(hd,"Envelope - Attack",x,offset,1,"B")
+
+	offset = 62
+	x = 127-ord(data[offset])
+	add_iter(hd,"Envelope - Decay",x,offset,1,"B")
+
+	offset = 63
+	x = 127-ord(data[offset])
+	add_iter(hd,"Envelope - Sustain",x,offset,1,"B")
+
+	offset = 65
+	x = 127-ord(data[offset])
+	add_iter(hd,"Envelope - Release",x,offset,1,"B")
+
+	offset = 69
+	x = 255-ord(data[offset])
+	add_iter(hd,"Envelope - Decay Level",x,offset,1,"B")
+
+	offset = 70
+	x = 255-ord(data[offset])
+	add_iter(hd,"Envelope - Sus Level",x,offset,1,"B")
+
+	offset = 91
+	x = ord(data[offset])/16
+	add_iter(hd,"Velocity Sens - Level",x,offset,1,"B")
+
+	offset = 141
+	x = ord(data[offset])
+	add_iter(hd,"Filter - Resonance",x,offset,1,"B")
+
+	
 def hdra(hd,data):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
@@ -97,7 +148,33 @@ def hdra(hd,data):
 		off += 4
 		ind += 1
 
-vprmfunc = {"hdra":hdra}
+def hdrbch (hd, data):
+	offset = 12
+	x = 255-ord(data[offset])
+	add_iter(hd,"Volume",x,offset,1,"B")
+	
+	offset = 13
+	x = ord(data[offset])-64
+	add_iter(hd,"Panorama",x,offset,1,"B")
+
+	offset = 16
+	x = ord(data[offset])
+	add_iter(hd,"Tuning Center Key-Note",key2txt(x,pitches),offset,1,"B")
+
+	offset = 17
+	x = ord(data[offset])        
+	if x >=32:
+                x = ord(data[offset])-128
+	add_iter(hd,"Tuning Coarse",x,offset,1,"B")
+
+	offset = 18
+	x = ord(data[offset])        
+	if x >=64:
+                x = ord(data[offset])-256
+	add_iter(hd,"Tuning Fine",x,offset,1,"B")
+	
+	
+vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "bank":bank, "hdra":hdra, "hdrbch":hdrbch}
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0
@@ -234,7 +311,7 @@ def vprm (page, data, parent, offset=0):
 				bend = hdrb[j]
 				v3 = ord(data[off2+9])
 				v4 = ord(data[off2+8])
-				add_pgiter(page,"Block %04x %02x-%02x [%s-%s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+				add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
 				off2 = bend
 		ind += 1
 
