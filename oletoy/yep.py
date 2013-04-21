@@ -172,9 +172,11 @@ def hdrbch (hd, data):
 	if x >=64:
                 x = ord(data[offset])-256
 	add_iter(hd,"Tuning Fine",x,offset,1,"B")
-	
-	
-vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "bank":bank, "hdra":hdra, "hdrbch":hdrbch}
+
+def vvst(hd,data):
+	print "VVST!"
+
+vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "bank":bank, "hdra":hdra, "hdrbch":hdrbch, "VVST":vvst}
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0

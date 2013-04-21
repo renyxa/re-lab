@@ -1242,7 +1242,7 @@ class ApplicationMainWindow(gtk.Window):
 					ut += "%s "%ntype[i]
 				self.update_statusbar("[ %s]"%ut)
 				# YEP
-				if ntype[0] == "vprm":
+				if ntype[0] == "vprm" or ntype[0] == "yep":
 					if ntype[1] in yep.vprmfunc:
 						yep.vprmfunc[ntype[1]](hd,data)
 				if ntype[0] == "escher":
