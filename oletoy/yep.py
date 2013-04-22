@@ -90,7 +90,24 @@ def p1s1 (hd, data):
 	x = 255-ord(data[offset])
 	add_iter(hd,"Element Volume",x,offset,1,"B")
 
+	offset = 6
+	x = ord(data[offset])
+	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
+
+	offset = 7
+	x = ord(data[offset])
+	add_iter(hd,"Key Range - Low note",key2txt(x,pitches),offset,1,"B")
+
+def elemhdr (hd, data):
+	offset = 4
+	x = ord(data[offset])
+	add_iter(hd,"Num of Key Banks",x,offset,1,"B")
+
 def bank (hd, data):
+	offset = 1
+	x = ord(data[offset])-64
+	add_iter(hd,"Panorama",x,offset,1,"B")
+        
 	offset = 2
 	x = ord(data[offset])
 	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
@@ -149,6 +166,14 @@ def hdra(hd,data):
 		ind += 1
 
 def hdrbch (hd, data):
+	offset = 8
+	x = ord(data[offset])
+	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
+
+	offset = 9
+	x = ord(data[offset])
+	add_iter(hd,"Key Range - Low note",key2txt(x,pitches),offset,1,"B")
+        
 	offset = 12
 	x = 255-ord(data[offset])
 	add_iter(hd,"Volume",x,offset,1,"B")
@@ -174,9 +199,27 @@ def hdrbch (hd, data):
 	add_iter(hd,"Tuning Fine",x,offset,1,"B")
 
 def vvst(hd,data):
-	print "VVST!"
+        offset = 57
+	x = ord(data[offset])
+	add_iter(hd,"Main Volume",x,offset,1,"B")
 
-vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "bank":bank, "hdra":hdra, "hdrbch":hdrbch, "VVST":vvst}
+        offset = 74
+	x = ord(data[offset])
+	add_iter(hd,"Reverb Depth",x,offset,1,"B")
+
+        offset = 75
+	x = ord(data[offset])
+	add_iter(hd,"Chorus Depth",x,offset,1,"B")
+
+        offset = 88
+	x = ord(data[offset])
+	add_iter(hd,"DSP Type",x,offset,1,"B")
+
+        offset = 90
+	x = ord(data[offset])
+	add_iter(hd,"DSP Depth",x,offset,1,"B")
+
+vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "elemhdr":elemhdr, "bank":bank, "hdra":hdra, "hdrbch":hdrbch, "VVST":vvst}
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0
