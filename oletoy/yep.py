@@ -92,11 +92,11 @@ def p1s1 (hd, data):
 
 	offset = 6
 	x = ord(data[offset])
-	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Key Range - High note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 	offset = 7
 	x = ord(data[offset])
-	add_iter(hd,"Key Range - Low note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 def elemhdr (hd, data):
 	offset = 4
@@ -110,11 +110,11 @@ def bank (hd, data):
         
 	offset = 2
 	x = ord(data[offset])
-	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Key Range - High note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 	offset = 3
 	x = ord(data[offset])
-	add_iter(hd,"Key Range - Low note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 	offset = 61
 	x = 128-ord(data[offset])
@@ -168,11 +168,11 @@ def hdra(hd,data):
 def hdrbch (hd, data):
 	offset = 8
 	x = ord(data[offset])
-	add_iter(hd,"Key Range - High note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Key Range - High note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 	offset = 9
 	x = ord(data[offset])
-	add_iter(hd,"Key Range - Low note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
         
 	offset = 12
 	x = 255-ord(data[offset])
@@ -184,7 +184,7 @@ def hdrbch (hd, data):
 
 	offset = 16
 	x = ord(data[offset])
-	add_iter(hd,"Tuning Center Key-Note",key2txt(x,pitches),offset,1,"B")
+	add_iter(hd,"Tuning Center Key-Note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 	offset = 17
 	x = ord(data[offset])        
