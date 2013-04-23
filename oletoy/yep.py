@@ -264,7 +264,8 @@ def hdr1item (page,data,parent,offset=0):
 	# FIXME! Guessing that number of dozens would match with number of elements
 	elements = {}
 	for i in range(p1num):
-		add_pgiter(page,"PH seq%d"%(i+1),"vprm","p1s%d"%(i+1),data[off:off+12],p1iter,"%02x  "%(offset+off))
+		# type for all 'PH seq' after 0 is "p1s1" now
+		add_pgiter(page,"PH seq%d"%(i+1),"vprm","p1s1",data[off:off+12],p1iter,"%02x  "%(offset+off))
 		pid = ord(data[off+12])
 		elements[pid] = 1
 		off += 12
@@ -302,7 +303,19 @@ def hdr1item (page,data,parent,offset=0):
 	# add drumkit's "h1off2" block
 	# FIXME!  Bold assumption that "h1off3 is 'reserved'
 	if vdtxt == "Drumkit":
-		diter = add_pgiter(page,"Drumkit block","vprm","dkblock",data[h1off2:h1off4],h1citer,"%02x  "%(offset+h1off2))
+		dbiter = add_pgiter(page,"Drumkit block","vprm","dontsave","",h1citer,"%02x  "%(offset+h1off2))
+		dboff = struct.unpack(">I",data[h1off2:h1off2+4])[0]
+		add_pgiter(page,"Drumkit blocks offset","vprm","dkboff",data[h1off2:h1off2+4],dbiter,"%02x  "%(offset+h1off2))
+		
+		print "DBO",dboff,h1off2,offset
+		if dboff > h1off2+4:
+			add_pgiter(page,"Drumkit blocks filler","vprm","dkbfiller",data[h1off2+4:dboff],dbiter,"%02x  "%(offset+h1off2+4))
+		tmpoff = dboff
+		ind = 0
+		while tmpoff < h1off4:
+			add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%tmpoff)
+			ind += 1
+			tmpoff += 24
 
 	# add graph
 	diter = add_pgiter(page,"Graph","vprm","graph",data[h1off4:],h1citer,"%02x  "%(offset+h1off4))

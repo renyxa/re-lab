@@ -30,7 +30,13 @@ import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import vfb
 from utils import *
 from hv2 import HexView
-version = "0.7.20"
+
+try:
+	import indd
+except:
+	pass
+
+version = "0.7.21"
 
 ui_info = \
 '''<ui>
