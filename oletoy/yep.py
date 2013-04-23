@@ -41,7 +41,11 @@ def collect_tree (page, parent):
 				if pos != -1:
 					clen = pos
 			ctdata += name + struct.pack(">I",clen)+cdata
-		return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
+			
+		if page.model.get_value(parent,1)[1] == "dontsave":
+			return ctdata
+		else:
+			return page.model.get_value(parent,1)[1]+struct.pack(">I",len(ctdata))+ctdata
 	else:
 		ctdata = page.model.get_value(parent,3)
 		name = page.model.get_value(parent,1)[1]
@@ -271,7 +275,9 @@ def hdr1item (page,data,parent,offset=0):
 	poffs = []
 	# FIXME!  No validation that we do not cross the 1st offset to elements
 	# FIXME! assumption that number of offsets would match number of unique IDs in "dozens"
-	for i in range(len(elements)):
+	#	for i in range(len(elements)):
+	# that was wrong, try with number of elements
+	for i in range(p1num):
 		poffs.append(struct.unpack(">I",data[h1off1+i*4:h1off1+i*4+4])[0])
 	p2iter = add_pgiter(page,"Elements offsets","vprm","poffs",data[h1off1:h1off1+p1num*4],h1citer,"%02x  "%(offset+h1off1))
 
@@ -327,7 +333,7 @@ def vprm (page, data, parent, offset=0):
 	off2 = ptr
 	v1 = struct.unpack(">I",data[off:off+4])[0] # ??? "allways" 8
 	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
-	smplsiter = add_pgiter(page,"Samples","vprm","samples","",parent,"%02x  "%(offset+off))
+	smplsiter = add_pgiter(page,"Samples","vprm","dontsave","",parent,"%02x  "%(offset+off))
 	haiter = add_pgiter(page,"List of Sample groups","vprm","hdra",data[off:off+hdraend],smplsiter,"%02x  "%(offset+off))
 	slist = []
 	shdrsize = struct.unpack(">I",data[off:off+4])[0]
@@ -352,12 +358,15 @@ def vprm (page, data, parent, offset=0):
 	ind = 0
 	for i in slist:
 		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",smplsiter,"%02x  "%(offset+off2))
-		for j in range(i[0],i[1]+1):
-				bend = hdrb[j]
-				v3 = ord(data[off2+9])
-				v4 = ord(data[off2+8])
-				add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
-				off2 = bend
+		try:  # to workaround current problem with Europack
+			for j in range(i[0],i[1]+1):
+					bend = hdrb[j]
+					v3 = ord(data[off2+9])
+					v4 = ord(data[off2+8])
+					add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+					off2 = bend
+		except:
+			print 'Failed in the loop at lines 356..361'
 		ind += 1
 
 def parse (page, data, parent,align=4.,prefix=""):
@@ -377,7 +386,7 @@ def parse (page, data, parent,align=4.,prefix=""):
 		if fourcc == "SSTY":
 			iname = fourcc+" %s"%(data[off:off+16])
 			if sstygrpiter == None:
-				sstygrpiter = add_pgiter(page,"SSTYs","vprm","dontsave","",parent,"%02x  "%(off+off))
+				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%(off+off))
 			piter = sstygrpiter
 		elif fourcc == "VVST":
 			n = struct.unpack(">H",data[off+0x19:off+0x1b])[0]
@@ -387,7 +396,7 @@ def parse (page, data, parent,align=4.,prefix=""):
 				f = "[DrumKit %s]"%n
 			iname = fourcc+f+" %s"%(data[off:off+16])
 			if vvstgrpiter == None:
-				vvstgrpiter = add_pgiter(page,"VVSTs","vprm","dontsave","",parent,"%02x  "%(off+off))
+				vvstgrpiter = add_pgiter(page,"VVSTs","vvst","dontsave","",parent,"%02x  "%(off+off))
 			piter = vvstgrpiter
 		else:
 			iname = "%s"%fourcc
