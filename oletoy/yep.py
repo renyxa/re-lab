@@ -152,7 +152,21 @@ def bank (hd, data):
 	x = ord(data[offset])
 	add_iter(hd,"Filter - Resonance",x,offset,1,"B")
 
-	
+def dkblock(hd,data):
+	offset = 3
+	x = ord(data[offset])
+	if x == 0:
+                add_iter(hd,"Alternate group","N",offset,1,"B")
+	else:
+                add_iter(hd,"Alternate group",chr(x+64),offset,1,"B")
+
+	offset = 9
+	x = ord(data[offset])
+	if x == 0:
+                add_iter(hd,"Key Off","Disable",offset,1,"B")
+	else:
+                add_iter(hd,"Key Off","Enable",offset,1,"B")
+                
 def hdra(hd,data):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
@@ -223,7 +237,7 @@ def vvst(hd,data):
 	x = ord(data[offset])
 	add_iter(hd,"DSP Depth",x,offset,1,"B")
 
-vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "elemhdr":elemhdr, "bank":bank, "hdra":hdra, "hdrbch":hdrbch, "VVST":vvst}
+vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "elemhdr":elemhdr, "bank":bank, "dkblock":dkblock, "hdra":hdra, "hdrbch":hdrbch, "VVST":vvst}
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0
