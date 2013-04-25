@@ -40,8 +40,9 @@ def collect_tree (page, parent):
 				pos = cdata.find("\x00")
 				if pos != -1:
 					clen = pos
+			elif name == "SSTY":
+				clen = page.model.get_value(citer,2)
 			ctdata += name + struct.pack(">I",clen)+cdata
-			
 		if page.model.get_value(parent,1)[1] == "dontsave":
 			return ctdata
 		else:
@@ -50,10 +51,6 @@ def collect_tree (page, parent):
 		ctdata = page.model.get_value(parent,3)
 		name = page.model.get_value(parent,1)[1]
 		clen = len(ctdata)
-		if name == "SSTY":
-			pos = ctdata.rfind("\x00\xFF\x2F\x00")
-			if pos != -1:
-				clen = pos + 4
 		return name+struct.pack(">I",clen)+ctdata
 
 
@@ -337,7 +334,6 @@ def hdr1item (page,data,parent,offset=0):
 		dboff = struct.unpack(">I",data[h1off2:h1off2+4])[0]
 		add_pgiter(page,"Drumkit blocks offset","vprm","dkboff",data[h1off2:h1off2+4],dbiter,"%02x  "%(offset+h1off2))
 		
-		print "DBO",dboff,h1off2,offset
 		if dboff > h1off2+4:
 			add_pgiter(page,"Drumkit blocks filler","vprm","dkbfiller",data[h1off2+4:dboff],dbiter,"%02x  "%(offset+h1off2+4))
 		tmpoff = dboff
@@ -427,7 +423,11 @@ def parse (page, data, parent,align=4.,prefix=""):
 			length = l
 		off += 4
 		if fourcc == "SSTY":
-			iname = fourcc+" %s"%(data[off:off+16])
+			stname = data[off:off+16]
+			p = stname.find("\x00")
+			if p != -1:
+				stname = stname[:p]
+			iname = fourcc+" %s"%stname
 			if sstygrpiter == None:
 				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%(off+off))
 			piter = sstygrpiter
@@ -444,12 +444,13 @@ def parse (page, data, parent,align=4.,prefix=""):
 		else:
 			iname = "%s"%fourcc
 		
-		citer = add_pgiter(page,iname,"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter)
+		citer = add_pgiter(page,"%s [%04x]"%(iname,l),"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter)
+		if fourcc == "SSTY":
+			page.model.set_value(citer,2,l)
 		if fourcc == "VPRM":
 			vprm (page, data[off:off+length], citer)
 		if fourcc == "IPIT":
 			parse (page, data[off:off+length], citer, 4., "IPIT/")
-			
 		off += length
 	page.view.get_column(1).set_title("Offset")
 	return "YEP"
