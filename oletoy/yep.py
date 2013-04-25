@@ -120,6 +120,14 @@ def bank (hd, data):
 	x = ord(data[offset])
 	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
+	offset = 4
+	x = ord(data[offset])
+	add_iter(hd,"Velocity Range - Hight",x,offset,1,"B")
+
+	offset = 5
+	x = ord(data[offset])
+	add_iter(hd,"Velocity Range - Low",x,offset,1,"B")
+
 	offset = 61
 	x = 128-ord(data[offset])
 	add_iter(hd,"Envelope - Attack",x,offset,1,"B")
@@ -220,6 +228,14 @@ def vvst(hd,data):
         offset = 57
 	x = ord(data[offset])
 	add_iter(hd,"Main Volume",x,offset,1,"B")
+
+        offset = 62
+	x = ord(data[offset])-64
+	add_iter(hd,"Octave",x,offset,1,"B")
+
+        offset = 63
+	x = ord(data[offset])-64
+	add_iter(hd,"Octave",x,offset,1,"B")
 
         offset = 74
 	x = ord(data[offset])
