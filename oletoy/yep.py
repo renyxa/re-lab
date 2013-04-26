@@ -588,13 +588,15 @@ def hdr1item (page,data,parent,offset=0):
 	
 	# parse list of offsets to elements
 	poffs = []
-	# FIXME!  No validation that we do not cross the 1st offset to elements
 	# FIXME! assumption that number of offsets would match number of unique IDs in "dozens"
 	#	for i in range(len(elements)):
 	# that was wrong, try with number of elements
-	for i in range(p1num):
+	# that was also wrong need to compare current offset with first element offset
+	eloff1 = struct.unpack(">I",data[h1off1:h1off1+4])[0]
+	enum = (eloff1 - h1off1)/4
+	for i in range(enum):
 		poffs.append(struct.unpack(">I",data[h1off1+i*4:h1off1+i*4+4])[0])
-	p2iter = add_pgiter(page,"Elements offsets","vprm","poffs",data[h1off1:h1off1+p1num*4],h1citer,"%02x  "%(offset+h1off1))
+	p2iter = add_pgiter(page,"Elements offsets","vprm","poffs",data[h1off1:h1off1+enum*4],h1citer,"%02x  "%(offset+h1off1))
 
 	# parse elements
 	ind = 0
@@ -612,23 +614,24 @@ def hdr1item (page,data,parent,offset=0):
 				add_pgiter(page,"Key Bank %d"%j,"vprm","bank",data[off:off+180],piter,"%02x  "%(offset+off))
 				off += 180
 	except:
-		print "Failed in parsing elements","%02x"%i,sys.exc_info()
+		print "Failed in parsing elements","%02x %02x %02x"%(i,j,off), page.model.get_string_from_iter(piter) #sys.exc_info()
 
 	# add drumkit's "h1off2" block
 	# FIXME!  Bold assumption that "h1off3 is 'reserved'
-	if vdtxt == "Drumkit":
-		dbiter = add_pgiter(page,"Drumkit block","vprm","dontsave","",h1citer,"%02x  "%(offset+h1off2))
-		dboff = struct.unpack(">I",data[h1off2:h1off2+4])[0]
-		add_pgiter(page,"Drumkit blocks offset","vprm","dkboff",data[h1off2:h1off2+4],dbiter,"%02x  "%(offset+h1off2))
-		
-		if dboff > h1off2+4:
-			add_pgiter(page,"Drumkit blocks filler","vprm","dkbfiller",data[h1off2+4:dboff],dbiter,"%02x  "%(offset+h1off2+4))
-		tmpoff = dboff
-		ind = 0
-		while tmpoff < h1off4:
-			add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%tmpoff)
-			ind += 1
-			tmpoff += 24
+	if h1off2 > 0:
+		if vdtxt == "Drumkit":
+			dbiter = add_pgiter(page,"Drumkit block","vprm","dontsave","",h1citer,"%02x  "%(offset+h1off2))
+			dboff = struct.unpack(">I",data[h1off2:h1off2+4])[0]
+			add_pgiter(page,"Drumkit blocks offset","vprm","dkboff",data[h1off2:h1off2+4],dbiter,"%02x  "%(offset+h1off2))
+			
+			if dboff > h1off2+4:
+				add_pgiter(page,"Drumkit blocks filler","vprm","dkbfiller",data[h1off2+4:dboff],dbiter,"%02x  "%(offset+h1off2+4))
+			tmpoff = dboff
+			ind = 0
+			while tmpoff < h1off4:
+				add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%tmpoff)
+				ind += 1
+				tmpoff += 24
 
 	# add graph
 	diter = add_pgiter(page,"Graph","vprm","graph",data[h1off4:],h1citer,"%02x  "%(offset+h1off4))
