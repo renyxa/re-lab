@@ -508,6 +508,23 @@ def hdrbch (hd, data):
                 x = ord(data[offset])-256
 	add_iter(hd,"Tuning Fine",x,offset,1,"B")
 
+	offset = 0x20
+	for i in range(3):
+		x = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Length %d"%i,"%02x"%x,offset,4,">I")
+		offset += 4
+
+	offset = 0x2c
+	add_iter(hd,"VWDT format?",d2hex(data[offset:offset+4]," "),offset,4,"txt")
+
+	offset = 0x3c
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter(hd,"Offset 0","%02x"%x,offset,4,">I")
+	offset = 0x44
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter(hd,"Offset 1","%02x"%x,offset,4,">I")
+
+
 def vvst(hd,data):
 	offset = 57
 	x = ord(data[offset])
@@ -635,8 +652,36 @@ def hdr1item (page,data,parent,offset=0):
 
 	# add graph
 	diter = add_pgiter(page,"Graph","vprm","graph",data[h1off4:],h1citer,"%02x  "%(offset+h1off4))
-	
-def vprm (page, data, parent, offset=0):
+
+# page, data of the 'block', sample id, block id, iter for VWDT 
+def vwdt(page,data,sampleid,blockid,vwdtiter):
+	# frequency is at offset 0x18
+	freq = struct.unpack(">I",data[0x18:0x1c])[0]
+
+	offset = 0x20
+	len0 = struct.unpack(">I",data[offset:offset+4])[0]
+	offset += 4
+	len1 = struct.unpack(">I",data[offset:offset+4])[0]
+	offset += 4
+	len2 = struct.unpack(">I",data[offset:offset+4])[0]
+
+	offset = 0x3c
+	off0 = struct.unpack(">I",data[offset:offset+4])[0]
+	offset = 0x44
+	off1 = struct.unpack(">I",data[offset:offset+4])[0]
+
+	# 0x0a seems to be "uncompressed raw, signed, BE"
+	# 0x06 have to be somehow compressed
+	# FIXME! need to find number of channels and bits per sample
+	fmt = ord(data[0x2c])
+	# FIXME! need to find how to interpret "lenghts/offsets" in fmt 6
+	if fmt == 0xa:
+		vdata = page.model.get_value(vwdtiter,3)
+		iname = "Sample %02x, Block %02x [FQ: %d]"%(sampleid,blockid,freq)
+		add_pgiter(page,iname,"vwdt","dontsave",vdata[off0:off0+len1+0x10],vwdtiter,"%02x  "%off0)
+		add_pgiter(page,"Tail %02x %02x"%(sampleid,blockid),"vwdt","dontsave",vdata[off0+len1+0x10:off1+len1+0x20],vwdtiter,"%02x  "%(off0+len0+0x10))
+
+def vprm (page, data, parent, offset=0, vwdtiter=None):
 	sig = data[:16]
 	add_pgiter(page,"Signature","vprm","sign",data[:16],parent,"%02x  "%offset)
 	off = 16
@@ -687,21 +732,24 @@ def vprm (page, data, parent, offset=0):
 	ind = 0
 	for i in slist:
 		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",smplsiter,"%02x  "%(offset+off2))
-		try:  # to workaround current problem with Europack
+		if 1:
+#		try:  # to workaround current problem with Europack
 			for j in range(i[0],i[1]+1):
 					bend = hdrb[j]
 					v3 = ord(data[off2+9])
 					v4 = ord(data[off2+8])
 					add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+					vwdt(page,data[off2:bend],ind,j,vwdtiter)
 					off2 = bend
-		except:
-			print 'Failed in the loop at lines 356..361'
+#		except:
+#			print 'Failed in the loop at lines 356..361'
 		ind += 1
 
 def parse (page, data, parent,align=4.,prefix=""):
 	off = 0
 	vvstgrpiter = None
 	sstygrpiter = None
+	vwdtiter = None
 	while off < len(data):
 		piter = parent
 		fourcc = data[off:off+4]
@@ -733,12 +781,14 @@ def parse (page, data, parent,align=4.,prefix=""):
 			piter = vvstgrpiter
 		else:
 			iname = "%s"%fourcc
-		
+
 		citer = add_pgiter(page,"%s [%04x]"%(iname,l),"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter)
+		if fourcc == "VWDT":
+			vwdtiter = citer
 		if fourcc == "SSTY":
 			page.model.set_value(citer,2,l)
 		if fourcc == "VPRM":
-			vprm (page, data[off:off+length], citer)
+			vprm (page, data[off:off+length], citer, 0, vwdtiter)
 		if fourcc == "IPIT":
 			parse (page, data[off:off+length], citer, 4., "IPIT/")
 		off += length
