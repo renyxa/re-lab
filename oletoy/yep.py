@@ -678,8 +678,11 @@ def vwdt(page,data,sampleid,blockid,vwdtiter):
 	if fmt == 0xa:
 		vdata = page.model.get_value(vwdtiter,3)
 		iname = "Sample %02x, Block %02x [FQ: %d]"%(sampleid,blockid,freq)
-		add_pgiter(page,iname,"vwdt","dontsave",vdata[off0:off0+len1+0x10],vwdtiter,"%02x  "%off0)
-		add_pgiter(page,"Tail %02x %02x"%(sampleid,blockid),"vwdt","dontsave",vdata[off0+len1+0x10:off1+len1+0x20],vwdtiter,"%02x  "%(off0+len0+0x10))
+		if off1 > 0:
+			add_pgiter(page,"%s (A)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+			add_pgiter(page,"%s (B)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+		else:
+			add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
 
 def vprm (page, data, parent, offset=0, vwdtiter=None):
 	sig = data[:16]
