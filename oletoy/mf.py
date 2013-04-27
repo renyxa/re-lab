@@ -369,7 +369,7 @@ def mf_save (page, fname, ftype):
 	global hlen
 	hlen = 0
 	model.foreach (checkhdr)
-	f = open(fname,'w')
+	f = open(fname,'wb')
 	model.foreach (dump_mf_tree, f)
 	f.close()
 

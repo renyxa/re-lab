@@ -87,7 +87,7 @@ class CliWindow(gtk.Window):
 			manager = gtk.recent_manager_get_default()
 			manager.add_item(self.fname)
 			offset = 0
-			f = open(self.fname)
+			f = open(self.fname,"rb")
 			buf = f.read()
 			if buf:
 				self.tb.set_text(buf)
@@ -98,7 +98,7 @@ class CliWindow(gtk.Window):
 		self.fname = self.app.file_open('Save',home+"/.oletoy",self.fname)
 		if self.fname:
 			txt = self.tb.get_text(tb.get_start_iter(),tb.get_end_iter())
-			f = open(self.fname,'w')
+			f = open(self.fname,'wb')
 			f.write(txt)
 			f.close()
 			manager = gtk.recent_manager_get_default()
@@ -399,7 +399,7 @@ def parse (cmd, entry, page):
 					value = model.get_value(iter1,3)[int(chaddr,16):]
 
 				if nlen != None:
-					f = open(fname,'w')
+					f = open(fname,'wb')
 					f.write(value)
 					f.close()
 				else:

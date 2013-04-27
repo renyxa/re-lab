@@ -437,7 +437,7 @@ def dump_tree (model, path, parent, f):
 
 def save (page,fname):
 	model = page.model
-	f = open(fname,'w')
+	f = open(fname,'wb')
 	print "ff",model
 	model.foreach (dump_tree, f)
 	f.close()

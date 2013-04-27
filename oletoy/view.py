@@ -648,7 +648,7 @@ class ApplicationMainWindow(gtk.Window):
 				nlen = model.get_value(iter1,2)
 				value = model.get_value(iter1,3)
 				if nlen != None:
-					f = open(fname,'w')
+					f = open(fname,'wb')
 					f.write(value)
 					f.close()
 				else:
