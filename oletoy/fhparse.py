@@ -949,6 +949,8 @@ class FHDoc():
 		shift += 1
 		if self.version == 11:
 			shift += 2
+		elif self.version == 8:
+			shift -= 3  # suo.fh8
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
@@ -993,8 +995,11 @@ class FHDoc():
 		for i in range(size):
 			l,rid = self.read_recid(off+res)
 			res += l
-		if self.version < 9 and (res > 12 or struct.unpack('>h',self.data[off:off+2])[0] > 0):
-			res = 32 # probably alignment
+		if self.version == 8: # verify for others
+			size2 = struct.unpack('>h', self.data[off:off+2])[0]
+			res += (size2-size)*2
+#		if self.version < 9 and (res > 12 or struct.unpack('>h',self.data[off:off+2])[0] > 0) and res < 32:
+#			res = 32 # probably alignment
 		return res
 
 	def MasterPageElement(self,off,recid,mode=0):
@@ -1143,7 +1148,7 @@ class FHDoc():
 		size =  struct.unpack('>h', self.data[off:off+2])[0]
 		length=128
 		var=struct.unpack('>h', self.data[off+20:off+22])[0]
-		length = 22 + 27*var
+		length = 22 + 27*size # was *var
 		# FIXME!
 		# off+2 -- recid
 		if size==0:
@@ -1379,6 +1384,10 @@ class FHDoc():
 		for i in range(size):
 			L,rif = self.read_recid(off+res)
 			res += L
+		if self.version == 8: # verify for others
+			size2 = struct.unpack('>h', self.data[off:off+2])[0]
+			res += (size2-size)*2
+
 		return res
 
 	def UString(self,off,recid,mode=0):
@@ -1449,6 +1458,8 @@ class FHDoc():
 		var2 = ord(self.data[off+len1+3])
 		len2 = self.xform_calc(var1,var2)
 		length = len1+len2+4
+		if self.version == 8:
+			length = 52
 		return length
 
 	def parse_agd (self):
