@@ -675,14 +675,15 @@ def vwdt(page,data,sampleid,blockid,vwdtiter):
 	# FIXME! need to find number of channels and bits per sample
 	fmt = ord(data[0x2c])
 	# FIXME! need to find how to interpret "lenghts/offsets" in fmt 6
-	if fmt == 0xa:
-		vdata = page.model.get_value(vwdtiter,3)
-		iname = "Sample %02x, Block %02x [FQ: %d]"%(sampleid,blockid,freq)
-		if off1 > 0:
-			add_pgiter(page,"%s (A)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
-			add_pgiter(page,"%s (B)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
-		else:
-			add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+	vdata = page.model.get_value(vwdtiter,3)
+	iname = "Sample %02x, Block %02x [FQ: %d]"%(sampleid,blockid,freq)
+	if fmt&0x4:
+		len1 *= 16
+	if off1 > 0:
+		add_pgiter(page,"%s (A)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+		add_pgiter(page,"%s (B)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+	else:
+		add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
 
 def vprm (page, data, parent, offset=0, vwdtiter=None):
 	sig = data[:16]
@@ -717,8 +718,8 @@ def vprm (page, data, parent, offset=0, vwdtiter=None):
 	shdrlen = struct.unpack(">I",data[off+4:off+8])[0]
 	tmpoff = off + shdrsize
 	while tmpoff < off+shdrlen:
-		ss = struct.unpack(">H",data[tmpoff:tmpoff+2])[0]
-		se = struct.unpack(">H",data[tmpoff+2:tmpoff+4])[0]
+		ss = struct.unpack(">h",data[tmpoff:tmpoff+2])[0]
+		se = struct.unpack(">h",data[tmpoff+2:tmpoff+4])[0]
 		slist.append((ss,se))
 		tmpoff += 4
 	off2 += hdraend
@@ -735,17 +736,17 @@ def vprm (page, data, parent, offset=0, vwdtiter=None):
 	ind = 0
 	for i in slist:
 		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",smplsiter,"%02x  "%(offset+off2))
-		if 1:
-#		try:  # to workaround current problem with Europack
+		try:  # to workaround current problem with Europack
 			for j in range(i[0],i[1]+1):
+				if not j < 0:
 					bend = hdrb[j]
 					v3 = ord(data[off2+9])
 					v4 = ord(data[off2+8])
 					add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
 					vwdt(page,data[off2:bend],ind,j,vwdtiter)
 					off2 = bend
-#		except:
-#			print 'Failed in the loop at lines 356..361'
+		except:
+			print 'Failed in the loop at lines 737..747'
 		ind += 1
 
 def parse (page, data, parent,align=4.,prefix=""):
