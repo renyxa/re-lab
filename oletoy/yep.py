@@ -368,6 +368,17 @@ def save (page, fname):
 	f.write(data)
 	f.close()
 
+
+def vbhdr (hd, data):
+	offset = 33
+	x = ord(data[offset])
+	add_iter(hd,"Bank MSB",x,offset,1,"B")
+        
+	offset = 35
+	x = ord(data[offset])
+	add_iter(hd,"Program Change No.",x,offset,1,"B")
+
+
 def p1s0 (hd, data):
 	offset = 3
 	x = 255-ord(data[offset])
@@ -526,6 +537,18 @@ def hdrbch (hd, data):
 
 
 def vvst(hd,data):
+	offset = 0
+	x = str(data[0-16])
+	add_iter(hd,"Voice name","%s"%x,offset,16,"B")
+
+	offset = 24
+	x = ord(data[offset])
+	add_iter(hd,"Bank MSB",x,offset,1,"B")
+
+	offset = 26
+	x = ord(data[offset])
+	add_iter(hd,"Program Change No.",x,offset,1,"B")
+	
 	offset = 57
 	x = ord(data[offset])
 	add_iter(hd,"Main Volume",x,offset,1,"B")
@@ -534,9 +557,9 @@ def vvst(hd,data):
 	x = ord(data[offset])-64
 	add_iter(hd,"Octave",x,offset,1,"B")
 
-	offset = 63
-	x = ord(data[offset])-64
-	add_iter(hd,"Octave",x,offset,1,"B")
+#	offset = 63
+#	x = ord(data[offset])-64
+#	add_iter(hd,"Octave",x,offset,1,"B")
 
 	offset = 74
 	x = ord(data[offset])
@@ -554,7 +577,9 @@ def vvst(hd,data):
 	x = ord(data[offset])
 	add_iter(hd,"DSP Depth",x,offset,1,"B")
 
-vprmfunc = {"p1s0":p1s0, "p1s1":p1s1, "elemhdr":elemhdr, "bank":bank, "dkblock":dkblock, "hdra":hdra, "hdrbch":hdrbch, "VVST":vvst}
+vprmfunc = {"bank":bank, "dkblock":dkblock, "elemhdr":elemhdr,
+	"hdra":hdra, "hdrbch":hdrbch, "p1s0":p1s0, "p1s1":p1s1, 
+	"vbhdr":vbhdr, "VVST":vvst}
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0
