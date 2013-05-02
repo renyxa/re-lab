@@ -370,6 +370,15 @@ def save (page, fname):
 
 
 def vbhdr (hd, data):
+	offset = 0
+	x = struct.unpack(">i",data[offset:offset+4])[0]
+	if x == 0:
+                add_iter(hd,"Offset to Elements Header","no block",offset,4,"<h")
+        else:
+                add_iter(hd,"Offset to Elements Header",d2hex(data[offset:offset+4]),offset,4,"<h")
+        
+	
+        
 	offset = 33
 	x = ord(data[offset])
 	add_iter(hd,"Bank MSB",x,offset,1,"B")
@@ -398,6 +407,12 @@ def p1s1 (hd, data):
 	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 def elemhdr (hd, data):
+	offset = 0
+	x = struct.unpack(">H",data[offset:offset+2])[0]
+	if x >=32768:
+               x = x-32768
+	add_iter(hd,"Assigned Sample",x,offset,2,"<h")
+	
 	offset = 4
 	x = ord(data[offset])
 	add_iter(hd,"Num of Key Banks",x,offset,1,"B")
@@ -538,8 +553,8 @@ def hdrbch (hd, data):
 
 def vvst(hd,data):
 	offset = 0
-	x = str(data[0-16])
-	add_iter(hd,"Voice name","%s"%x,offset,16,"B")
+	x = data[offset:offset+16]
+	add_iter(hd,"Voice name",x,offset,16,"B")
 
 	offset = 24
 	x = ord(data[offset])
