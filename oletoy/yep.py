@@ -811,7 +811,7 @@ def parse (page, data, parent,align=4.,prefix=""):
 				stname = stname[:p]
 			iname = fourcc+" %s"%stname
 			if sstygrpiter == None:
-				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%(off+off))
+				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%off)
 			piter = sstygrpiter
 		elif fourcc == "VVST":
 			n = struct.unpack(">H",data[off+0x19:off+0x1b])[0]
@@ -821,7 +821,7 @@ def parse (page, data, parent,align=4.,prefix=""):
 				f = "[DrumKit %s]"%n
 			iname = fourcc+f+" %s"%(data[off:off+16])
 			if vvstgrpiter == None:
-				vvstgrpiter = add_pgiter(page,"VVSTs","vvst","dontsave","",parent,"%02x  "%(off+off))
+				vvstgrpiter = add_pgiter(page,"VVSTs","vvst","dontsave","",parent,"%02x  "%off)
 			piter = vvstgrpiter
 		else:
 			iname = "%s"%fourcc
@@ -832,7 +832,9 @@ def parse (page, data, parent,align=4.,prefix=""):
 		if fourcc == "SSTY":
 			page.model.set_value(citer,2,l)
 		if fourcc == "VPRM":
-			vprm (page, data[off:off+length], citer, 0, vwdtiter)
+			# change 'off' to '0' to show offsets from start of VPRM
+			# currently from the start of the file
+			vprm (page, data[off:off+length], citer, off, vwdtiter)
 		if fourcc == "IPIT":
 			parse (page, data[off:off+length], citer, 4., "IPIT/")
 		off += length
