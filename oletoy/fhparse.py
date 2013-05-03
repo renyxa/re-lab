@@ -805,6 +805,7 @@ class FHDoc():
 
 	def CustomProc(self,off,recid,mode=0):
 		# FIXME! recid?
+		return 8
 		return 48
 
 	def Data(self,off,recid,mode=0):
@@ -866,7 +867,7 @@ class FHDoc():
 
 	def FilterAttributeHolder(self,off,recid,mode=0):
 		res,rid = self.read_recid(off+2)
-		L,rid = self.read_recid(off+2)
+		L,rid = self.read_recid(off+2+res)
 		res += L
 		return res+2
 
@@ -1148,7 +1149,10 @@ class FHDoc():
 		size =  struct.unpack('>h', self.data[off:off+2])[0]
 		length=128
 		var=struct.unpack('>h', self.data[off+20:off+22])[0]
-		length = 22 + 27*size # was *var
+		if self.version < 10:
+			length = 22 + 27*size
+		else:
+			length = 22 + 27*var
 		# FIXME!
 		# off+2 -- recid
 		if size==0:
@@ -1467,6 +1471,8 @@ class FHDoc():
 		j = 0
 		for i in self.reclist:
 			j += 1
+			if j%5000 == 0:
+				print j
 			if self.dictitems[i] in self.chunks:
 				try:
 					res = self.chunks[self.dictitems[i]](offset,j)
