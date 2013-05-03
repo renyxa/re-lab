@@ -847,9 +847,23 @@ class FHDoc():
 		return res
 
 	def Envelope (self,off,recid,mode=0):
-		num = struct.unpack('>h', self.data[off+20:off+22])[0]
-		num2 = struct.unpack('>h', self.data[off+43:off+45])[0]
-		length = 45+num2*4+num*27
+		# 2 bytes ??
+		# rec_id1, rec_id2
+		# 14 bytes ??
+		# #ofpts (w)
+		# rec_id3
+		# 19 bytes ??
+		# #ofdwords ?? (w)
+		# 4*#ofdwords ??
+		# 27*#ofpts
+		res,rid = self.read_recid(off+2)
+		L,rid = self.read_recid(off+2+res)
+		res += L
+		num = struct.unpack('>h', self.data[off+res+16:off+res+18])[0]
+		L,rid = self.read_recid(off+res+18)
+		res += L
+		num2 = struct.unpack('>h', self.data[off+res+37:off+res+39])[0]
+		length = 39+res+num2*4+num*27
 		return length
 
 	def ExpandFilter(self,off,recid,mode=0):
@@ -1058,8 +1072,23 @@ class FHDoc():
 		return 4
 
 	def MultiBlend(self,off,recid,mode=0):
+		# "size??" (dw)
+		# rec_id1, rec_id2
+		# 8 bytes ??
+		# rec_id3, rec_id4, rec_id5
+		# 32 bytes ??
+		# size*6 ??  FIXME!
 		size = struct.unpack('>h', self.data[off:off+2])[0]
-		return 52 + size*6
+		res,rid = self.read_recid(off+2)
+		L,rid = self.read_recid(off+2+res)
+		res += L
+		L,rid = self.read_recid(off+10+res)
+		res += L
+		L,rid = self.read_recid(off+10+res)
+		res += L
+		L,rid = self.read_recid(off+10+res)
+		res += L
+		return 42 + size*6 + res
 
 	def MultiColorList(self,off,recid,mode=0):
 		num= struct.unpack('>h', self.data[off:off+2])[0]
@@ -1217,10 +1246,11 @@ class FHDoc():
 		return 16
 
 	def RadialFillX(self,off,recid,mode=0):
-		#FIXME! verify for v11 and more v10 files
-		length=22 #v11
-		if self.version == 10:
-			length = 22
+		# v11 rec_id from 0x10
+		length=20
+		res,rif = self.read_recid(off+20)
+		return length+res
+
 		return length
 
 	def RaggedFilter(self,off,recid,mode=0):
@@ -1300,11 +1330,13 @@ class FHDoc():
 		return 12
 
 	def TaperedFillX(self,off,recid,mode=0):
-		# FIXME! Check for ver11 and more ver10 files
-		length=18  # v11
-		if self.version == 10:
-			length = 18
-		return length
+		# rec_id1
+		# 14 bytes ??
+		# rec_id2
+		res,rif = self.read_recid(off)
+		L,rif = self.read_recid(off+14+res)
+		res += L
+		return 14+res
 
 	def TEffect(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
