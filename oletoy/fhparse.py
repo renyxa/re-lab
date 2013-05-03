@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys,struct,zlib
+import gobject
 from utils import *
 
 # 3 - rgb
@@ -511,6 +512,7 @@ class FHDoc():
 		self.data = data
 		self.iter = parent
 		self.dictitems = {}
+		self.dictitems["FHTail"] = "FHTail"
 		if page != None:
 			self.page = page
 			self.version = page.version
@@ -519,6 +521,7 @@ class FHDoc():
 		self.recs = {}
 
 		self.chunks = {
+		"FHTail":self.fhtail, # false record for parsing purposes
 		"AGDFont":self.AGDFont,
 		"AGDSelection":self.AGDSelection,
 		"ArrowPath":self.ArrowPath,
@@ -1466,9 +1469,14 @@ class FHDoc():
 			length = 52
 		return length
 
-	def parse_agd (self):
+	def fhtail(self,off,recid,mode=0):
+		print "FH Tail!"
+		return len(self.data) - off
+
+	def parse_agd_iter (self, step=500):
 		offset = 0
 		j = 0
+		self.page.view.freeze_child_notify()
 		for i in self.reclist:
 			j += 1
 			if j%5000 == 0:
@@ -1501,8 +1509,19 @@ class FHDoc():
 					if j < len(self.reclist):
 						add_pgiter(self.page,"!!! %s"%self.dictitems[self.reclist[j]],"fh","unknown","",self.diter)
 					return
-		add_pgiter(self.page,"FH Tail","fh","tail",self.data[offset:],self.diter)
-		print "FH Tail!"
+			if (j % step) == 0:
+				self.page.view.thaw_child_notify()
+				yield True
+				self.page.view.freeze_child_notify()
+
+		self.page.view.thaw_child_notify()
+		# stop idle_add()
+		yield False
+
+	def parse_agd(self):
+		self.reclist.append("FHTail")
+		loader = self.parse_agd_iter()
+		gobject.idle_add(loader.next)
 
 	def parse_list(self,data,offset):
 		size = struct.unpack('>L', data[offset:offset+4])[0]
