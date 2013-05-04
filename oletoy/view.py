@@ -25,7 +25,7 @@ import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub, ppt
 import emfparse,svm,mf,wmfparse,emfplus
-import rx2,fh,fhparse
+import rx2,fh
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import vfb
 from utils import *
@@ -36,7 +36,7 @@ try:
 except:
 	pass
 
-version = "0.7.24"
+version = "0.7.25"
 
 ui_info = \
 '''<ui>
@@ -537,7 +537,7 @@ class ApplicationMainWindow(gtk.Window):
 					dictwin.connect ("destroy", self.del_win,"dict")
 					dictwin.show_all()
 					self.das[pn].dictwin = dictwin
-			elif self.das[pn].type == "FH" and self.das[pn].version < 9:
+			elif self.das[pn].type == "FH": # and self.das[pn].version < 9:
 				view = gtk.TreeView(self.das[pn].dictmod)
 				view.set_reorderable(True)
 				view.set_enable_tree_lines(True)
@@ -824,12 +824,14 @@ class ApplicationMainWindow(gtk.Window):
 			elif goto[0] == "=":
 					cmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
 			elif 'reload' in goto.lower():
-				try:
+				#try:
+				if 1:
 					exec("reload(%s)"%goto[7:-1])
 					self.activate_reload(None)
-				except:
-					print "Cannot reload",goto[7:-1]
-					print sys.exc_info()[1]
+				#except:
+				#	print "Cannot reload",goto[7:-1]
+				#	print sys.exc_info()[1]
+
 			elif goto.lower() == "run":
 				self.open_cli()
 			elif 'split@' in goto.lower():
@@ -1326,8 +1328,8 @@ class ApplicationMainWindow(gtk.Window):
 					if rx2.rx2_ids.has_key(ntype[1]):
 						rx2.rx2_ids[ntype[1]](hd,data)
 				elif ntype[0] == "fh":
-					if fhparse.hdp.has_key(ntype[1]):
-						fhparse.hdp[ntype[1]](hd,data,self.das[pn])
+					if fh.hdp.has_key(ntype[1]):
+						fh.hdp[ntype[1]](hd,data,self.das[pn])
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 
@@ -1356,16 +1358,37 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_reload (self,parent=None):
 		pn = self.notebook.get_current_page()
-		treeSelection = self.das[pn].view.get_selection()
+		page = self.das[pn]
+		treeSelection = page.view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		if iter1:
 			intPath = model.get_path(iter1)
-		fname = self.das[pn].fname
-		self.activate_close(self)
-		print "Reloading ",fname
-		self.fname = fname
-		self.activate_open(self)
-		self.notebook.set_current_page(pn)
+		if iter1 and self.das[pn].type == "FH":
+			par = model.iter_parent(iter1)
+			start,off = model.get_value(iter1,4)
+			print "Reloading FH from %02x ..."%off
+			r = model.remove(iter1)
+			while r:
+				r = model.remove(iter1)
+			print "Iters removed"
+
+			fho = page.appdoc
+			fhn = fh.FHDoc(fho.data,fho.page,fho.iter)
+			fhn.dictitems = fho.dictitems
+			fhn.version = fho.version
+			fhn.diter = fho.diter
+			fhn.reclist = fho.reclist
+			fhn.recs = fho.recs
+			page.appdoc = fhn
+			fhn.parse_agd(off,start)
+			del(fho)
+		else:
+			fname = self.das[pn].fname
+			self.activate_close(self)
+			print "Reloading ",fname
+			self.fname = fname
+			self.activate_open(self)
+			self.notebook.set_current_page(pn)
 		if iter1:
 			self.das[pn].view.expand_to_path(intPath)
 			self.das[pn].view.set_cursor_on_cell(intPath)
