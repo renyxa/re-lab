@@ -137,7 +137,9 @@ def hdVMpObj(hd,data,page):
 			rname = '\t\t%04x'%rec
 		if key == 2:
 			add_iter (hd,rname,at,shift,6,"txt")
-			shift+=6
+			shift+=4
+			L,rid = read_recid(data,offset+shift)
+			shift += L
 		else:
 			add_iter (hd,rname,at,shift,8,"txt")
 			shift+=8
@@ -157,7 +159,9 @@ def hdTEffect(hd,data,page):
 			rname = '\t\t%04x'%rec
 		if key == 2:
 			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
-			shift+=6
+			shift+=4
+			L,rid = read_recid(data,offset+shift)
+			shift += L
 		else:
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
@@ -177,7 +181,9 @@ def hdTFOnPath(hd,data,page):
 			rname = '\t\t%04x'%rec
 		if key == 2:
 			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
-			shift+=6
+			shift+=4
+			L,rid = read_recid(data,offset+shift)
+			shift += L
 		else:
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
@@ -252,13 +258,12 @@ def hdAGDFont(hd,data,page):
 			rname = '\t\t%04x'%rec
 		if key == 2:
 			add_iter (hd,rname,at,shift,6,"txt")
-			shift+=6
+			shift+=4
+			L,rid = read_recid(data,offset+shift)
+			shift += L
 		else:
 			add_iter (hd,rname,at,shift,8,"txt")
 			shift+=8
-
-
-
 
 def hdLinearFill(hd,data,page):
 	offset = 0
@@ -759,8 +764,14 @@ class FHDoc():
 		return length+res
 
 	def CalligraphicStroke(self,off,recid,mode=0):
-		# FXIME! recid?
-		return 16
+		# rec_id1
+		# 12 bytes ??
+		# rec_id2
+		res,rid1 = self.read_recid(off)
+		res += 12
+		L,rid1 = self.read_recid(off+res)
+		res += L
+		return res
 
 	def CharacterFill(self,off,recid,mode=0):
 		# Warning! Flag?
@@ -820,7 +831,7 @@ class FHDoc():
 		return 0
 
 	def ContourFill(self,off,recid,mode=0):
-		if self.version == 10:
+		if self.version > 9:
 			length = 24
 		else:
 			num = struct.unpack('>h', self.data[off+0:off+2])[0]
@@ -1031,12 +1042,17 @@ class FHDoc():
 		return res
 
 	def LineTable(self,off,recid,mode=0):
+		# dw ??
+		# "size" (dw)
+		# records of 48 bytes + rec_id
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
-		#FIXME! probably more read_recids required
-		res,rid = self.read_recid(off+52)
 		if self.version < 10:
 			size= struct.unpack('>h', self.data[off:off+2])[0]
-		return res+2+size*50
+		res = 0
+		for i in range(size):
+			L,rid = self.read_recid(off+52+i*48+res)
+			res += L
+		return res+4+size*48
 
 	def List(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
@@ -1175,29 +1191,23 @@ class FHDoc():
 		return length+res
 
 	def Paragraph(self,off,recid,mode=0):
+		# "xx xx 00" -- num of records
+		# rec_id1, rec_id2
+		# records:
+		#  "id" (w)
+		#  rec_id
+		# 20 bytes ?
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 6
-		for i in range(4):
+		for i in range(2):
 			L,rid = self.read_recid(off+res)
 			res += L
-		if size == 1:
-			pass
-		elif size == 2:
-			res += 24
-		elif size == 3:
-			res += 48
-		elif size == 4:
-			res += 72
-		elif size == 5:
-			res += 96
-		elif size == 7:
-			res += 144
-		elif size == 0: # version 9
-			res += 120
-		else:
-			print "Paragraph with unknown size!!!",size
-			res += 200
-		return res+20
+		for i in range(size):
+			L,rid = self.read_recid(off+res+2)
+			res += L + 22
+#		elif size == 0: # version 9
+#			res += 120
+		return res
 
 	def PathTextLineInfo(self,off,recid,mode=0):
 		# FIXME!
@@ -1312,7 +1322,9 @@ class FHDoc():
 		else:
 			# v8 seems to reserve space
 			size = struct.unpack('>h', self.data[off:off+2])[0]
-		res = 8
+		res = 6
+		L,rif = self.read_recid(off+res)
+		res += L
 		L,rif = self.read_recid(off+res)
 		res += L
 		for i in range(size*2):
@@ -1374,7 +1386,9 @@ class FHDoc():
 			if not rec in teff_rec:
 				print 'Unknown TEffect record: %04x'%rec
 			if key == 2:
-				shift+=6
+				shift+=4
+				L,rid = self.read_recid(off+shift)
+				shift += L
 			else:
 				shift+=8
 		return shift
@@ -1399,35 +1413,64 @@ class FHDoc():
 			
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+res:off+res+2])[0]
-			if key == 0 or self.data[off+res+4:off+res+6] == '\xFF\xFF':
-				res+=8
+			if key == 2:
+				res+=4
+				L,rid = self.read_recid(off+res)
+				res += L
 			else:
-				res+=6
+				res+=8
 		return res
 
 	def TFOnPath(self,off,recid,mode=0):
+		# "xx yy zz xx"
+		# "00 00"
+		# rec_id1
+		# 8 bytes ??
+		# rec_id2, rec_id3, rec_id4
+		# zz records
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
-		shift = 26
+		shift = 10
+		L,rid = self.read_recid(off+shift)
+		shift += L
+		shift += 8
+		L,rid = self.read_recid(off+shift)
+		shift += L
+		L,rid = self.read_recid(off+shift)
+		shift += L
+		L,rid = self.read_recid(off+shift)
+		shift += L
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			if key == 2:
-				shift+=6
+				shift+=4
+				L,rid = self.read_recid(off+shift)
+				shift += L
 			else:
 				shift+=8
 		return shift
 
 	def TextInPath(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
-		shift = 20
+		shift = 8
+		for i in range(5):
+			L,rid = self.read_recid(off+shift)
+			shift += L
+		# hack. no other way so far.
+		if self.data[off+shift:off+shift+4] == "\xFF\xFF\xFF\xFF":
+			shift+=2
+		for i in range(3):
+			L,rid = self.read_recid(off+shift)
+			shift += L
+		
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
-			if self.data[off+shift+4:off+shift+6] == '\xFF\xFF':
-				shift += 2
-			if key == 0:
-				shift+=8
+			if key == 2:
+				shift+=4
+				L,rid = self.read_recid(off+shift)
+				shift += L
 			else:
-				shift+=6
-		return shift+8
+				shift+=8
+		return shift
 
 	def TileFill(self,off,recid,mode=0):
 		res,rif = self.read_recid(off)
@@ -1470,7 +1513,9 @@ class FHDoc():
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			if key == 2:
-				shift+=6
+				shift+=4
+				L,rid = self.read_recid(off+shift)
+				shift += L
 			else:
 				shift+=8
 		return shift
@@ -1480,7 +1525,6 @@ class FHDoc():
 		return res
 
 	def VMpObj (self,off,recid,mode=0):
-		# FIXME! check for \xFF\xFF
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]  
 		shift = 8
 		# FIXME!
@@ -1494,11 +1538,12 @@ class FHDoc():
 # Activate for debug
 #			if not rec in vmp_rec:
 #				print 'Unknown VMpObj record: %04x'%rec
-			
-			if key == 0 or self.data[off+shift+4:off+shift+6] == '\xFF\xFF':
-				shift+=8
+			if key == 2:
+				shift+=4
+				L,rid = self.read_recid(off+shift)
+				shift += L
 			else:
-				shift+=6
+				shift+=8
 		
 		return shift
 
