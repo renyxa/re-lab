@@ -845,9 +845,14 @@ class FHDoc():
 		return length
 
 	def CustomProc(self,off,recid,mode=0):
-		# FIXME! recid?
-		return 8
-		return 48
+		# size (w)
+		# rec_id (name?)
+		# 2 words ??
+		# records (10 bytes each)
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		res,rid = self.read_recid(off+2)
+		res += 6  # size and 2 words
+		return res+size*10
 
 	def Data(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
@@ -1111,9 +1116,16 @@ class FHDoc():
 		return 4*(size+1)
 
 	def MDict(self,off,recid,mode=0):
+		# "xx xx xx" -- size
+		# (rec_id1,rec_id2)*size
 		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
-		length = 6 + size*4
-		return length
+		res = 6
+		for i in range(size):
+			L,rid = self.read_recid(off+res)
+			res += L
+			L,rid = self.read_recid(off+res)
+			res += L
+		return res
 
 	def MpObject (self,off,recid,mode=0):
 		return 4
@@ -1577,7 +1589,7 @@ class FHDoc():
 		print "FH Tail!"
 		return len(self.data) - off
 
-	def parse_agd_iter (self, step=500, offset=0, start=0):
+	def parse_agd_iter (self, step=500, offset=0, start=0, num=-1):
 		j = start
 		self.page.view.freeze_child_notify()
 		for i in self.reclist[start:]:
