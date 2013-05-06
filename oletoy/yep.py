@@ -369,31 +369,30 @@ def save (page, fname):
 	f.close()
 
 
-def vbhdr (hd, data):
+def vbhdr (hd, data, off):
 	offset = 0
 	x = struct.unpack(">i",data[offset:offset+4])[0]
 	if x == 0:
-                add_iter(hd,"Offset to Elements Header","no block",offset,4,"<h")
-        else:
-                add_iter(hd,"Offset to Elements Header",d2hex(data[offset:offset+4]),offset,4,"<h")
-        
-	
-        
+		add_iter(hd,"Offset to Elements Header","no block",offset,4,"<h")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to Elements Header","%02x + %02x = %02x"%(off,v,off+v),offset,4,"<h")
+
 	offset = 33
 	x = ord(data[offset])
 	add_iter(hd,"Bank MSB",x,offset,1,"B")
-        
+
 	offset = 35
 	x = ord(data[offset])
 	add_iter(hd,"Program Change No.",x,offset,1,"B")
 
 
-def p1s0 (hd, data):
+def p1s0 (hd, data, off):
 	offset = 3
 	x = 255-ord(data[offset])
 	add_iter(hd,"Voice - Master Volume",x,offset,1,"B")
 
-def p1s1 (hd, data):
+def p1s1 (hd, data, off):
 	offset = 0
 	x = 255-ord(data[offset])
 	add_iter(hd,"Element Volume",x,offset,1,"B")
@@ -406,7 +405,7 @@ def p1s1 (hd, data):
 	x = ord(data[offset])
 	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
-def elemhdr (hd, data):
+def elemhdr (hd, data, off):
 	offset = 0
 	x = struct.unpack(">H",data[offset:offset+2])[0]
 	if x >=32768:
@@ -417,7 +416,7 @@ def elemhdr (hd, data):
 	x = ord(data[offset])
 	add_iter(hd,"Num of Key Banks",x,offset,1,"B")
 
-def bank (hd, data):
+def bank (hd, data, off):
 	offset = 1
 	x = ord(data[offset])-64
 	add_iter(hd,"Panorama",x,offset,1,"B")
@@ -470,7 +469,7 @@ def bank (hd, data):
 	x = ord(data[offset])
 	add_iter(hd,"Filter - Resonance",x,offset,1,"B")
 
-def dkblock(hd,data):
+def dkblock(hd, data, off):
 	offset = 3
 	x = ord(data[offset])
 	if x == 0:
@@ -485,7 +484,7 @@ def dkblock(hd,data):
 	else:
                 add_iter(hd,"Key Off","Enable",offset,1,"B")
                 
-def hdra(hd,data):
+def hdra(hd, data, off):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
 	add_iter(hd,"Offset A",var0,off,4,">I")
@@ -501,7 +500,7 @@ def hdra(hd,data):
 		off += 4
 		ind += 1
 
-def hdrbch (hd, data):
+def hdrbch (hd, data, off):
 	offset = 8
 	x = ord(data[offset])
 	add_iter(hd,"Key Range - High note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
@@ -551,7 +550,7 @@ def hdrbch (hd, data):
 	add_iter(hd,"Offset 1","%02x"%x,offset,4,">I")
 
 
-def vvst(hd,data):
+def vvst(hd, data, off):
 	offset = 0
 	x = data[offset:offset+16]
 	add_iter(hd,"Voice name",x,offset,16,"B")
