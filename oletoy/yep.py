@@ -371,17 +371,78 @@ def save (page, fname):
 
 def vbhdr (hd, data, off):
 	offset = 0
-	x = struct.unpack(">i",data[offset:offset+4])[0]
+	x = struct.unpack(">I",data[offset:offset+4])[0]
 	if x == 0:
-		add_iter(hd,"Offset to Elements Header","no block",offset,4,"<h")
+		add_iter(hd,"Offset to Elements Header","no block",offset,4,">I")
 	else:
 		v = struct.unpack(">I",data[offset:offset+4])[0]
-		add_iter(hd,"Offset to Elements Header","%02x + %02x = %02x"%(off,v,off+v),offset,4,"<h")
+		add_iter(hd,"Offset to Elements Header","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 4
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to Elements offsets","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to Elements offsets","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 8
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to Drumkit blocks","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to Drumkit blocks","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 12
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to ???","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to ???","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 16
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to Graph","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to Graph","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 20
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to end of the Graph","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to end of the Graph","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 24
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to ???","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to ???","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
+	offset = 28
+	x = struct.unpack(">I",data[offset:offset+4])[0]
+	if x == 0:
+		add_iter(hd,"Offset to ???","no block",offset,4,">I")
+	else:
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter(hd,"Offset to ???","%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+
 
 	offset = 33
 	x = ord(data[offset])
 	add_iter(hd,"Bank MSB",x,offset,1,"B")
 
+	offset = 34
+	x = ord(data[offset])
+	add_iter(hd,"Bank LSB",x,offset,1,"B")
+	
 	offset = 35
 	x = ord(data[offset])
 	add_iter(hd,"Program Change No.",x,offset,1,"B")
@@ -496,7 +557,7 @@ def hdra(hd, data, off):
 	while off < size:
 		item_s = struct.unpack(">h",data[off:off+2])[0]
 		item_e = struct.unpack(">h",data[off+2:off+4])[0]
-		add_iter(hd,"Sample group %02x"%ind,"%02x %02x"%(item_s,item_e),off,2,">h")
+		add_iter(hd,"Sample group %02x"%ind,"%02x %02x"%(item_s,item_e),off,2,">hh")
 		off += 4
 		ind += 1
 
@@ -558,6 +619,10 @@ def vvst(hd, data, off):
 	offset = 24
 	x = ord(data[offset])
 	add_iter(hd,"Bank MSB",x,offset,1,"B")
+
+	offset = 25
+	x = ord(data[offset])
+	add_iter(hd,"Bank LSB",x,offset,1,"B")
 
 	offset = 26
 	x = ord(data[offset])
