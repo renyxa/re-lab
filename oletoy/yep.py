@@ -759,7 +759,7 @@ def hdr1item (page,data,parent,offset=0):
 	diter = add_pgiter(page,"Graph","vprm","graph",data[h1off4:],h1citer,"%02x  "%(offset+h1off4))
 
 # page, data of the 'block', sample id, block id, iter for VWDT 
-def vwdt(page,data,sampleid,blockid,vwdtiter):
+def vwdt(page,data,sampleid,blockid,vwdtiter,off):
 	# frequency is at offset 0x18
 	freq = struct.unpack(">I",data[0x18:0x1c])[0]
 
@@ -785,12 +785,12 @@ def vwdt(page,data,sampleid,blockid,vwdtiter):
 	if fmt&0x4:
 		len1 *= 16
 	if off1 > 0:
-		add_pgiter(page,"%s (A)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
-		add_pgiter(page,"%s (B)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+		add_pgiter(page,"%s (A)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0+off))
+		add_pgiter(page,"%s (B)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%(off1+off))
 	else:
-		add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%off0)
+		add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0+off))
 
-def vprm (page, data, parent, offset=0, vwdtiter=None):
+def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	sig = data[:16]
 	add_pgiter(page,"Signature","vprm","sign",data[:16],parent,"%02x  "%offset)
 	off = 16
@@ -848,13 +848,13 @@ def vprm (page, data, parent, offset=0, vwdtiter=None):
 					v3 = ord(data[off2+9])
 					v4 = ord(data[off2+8])
 					add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
-					vwdt(page,data[off2:bend],ind,j,vwdtiter)
+					vwdt(page,data[off2:bend],ind,j,vwdtiter,vwdtoff+off2)
 					off2 = bend
 		except:
 			print 'Failed in the loop at lines 737..747'
 		ind += 1
 
-def parse (page, data, parent,align=4.,prefix=""):
+def parse (page, data, parent,align=4.,prefix="",offset=0):
 	off = 0
 	vvstgrpiter = None
 	sstygrpiter = None
@@ -876,7 +876,7 @@ def parse (page, data, parent,align=4.,prefix=""):
 				stname = stname[:p]
 			iname = fourcc+" %s"%stname
 			if sstygrpiter == None:
-				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%off)
+				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%(offset+off))
 			piter = sstygrpiter
 		elif fourcc == "VVST":
 			n = struct.unpack(">H",data[off+0x19:off+0x1b])[0]
@@ -886,22 +886,23 @@ def parse (page, data, parent,align=4.,prefix=""):
 				f = "[DrumKit %s]"%n
 			iname = fourcc+f+" %s"%(data[off:off+16])
 			if vvstgrpiter == None:
-				vvstgrpiter = add_pgiter(page,"VVSTs","vvst","dontsave","",parent,"%02x  "%off)
+				vvstgrpiter = add_pgiter(page,"VVSTs","vvst","dontsave","",parent,"%02x  "%(offset+off))
 			piter = vvstgrpiter
 		else:
 			iname = "%s"%fourcc
 
-		citer = add_pgiter(page,"%s [%04x]"%(iname,l),"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter)
+		citer = add_pgiter(page,"%s [%04x]"%(iname,l),"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter,"%02x  "%(offset+off))
 		if fourcc == "VWDT":
 			vwdtiter = citer
+			vwdtoff = off
 		if fourcc == "SSTY":
 			page.model.set_value(citer,2,l)
 		if fourcc == "VPRM":
 			# change 'off' to '0' to show offsets from start of VPRM
 			# currently from the start of the file
-			vprm (page, data[off:off+length], citer, off, vwdtiter)
+			vprm (page, data[off:off+length], citer, off, vwdtiter,vwdtoff)
 		if fourcc == "IPIT":
-			parse (page, data[off:off+length], citer, 4., "IPIT/")
+			parse (page, data[off:off+length], citer, 4., "IPIT/",off)
 		off += length
 	page.view.get_column(1).set_title("Offset")
 	return "YEP"
