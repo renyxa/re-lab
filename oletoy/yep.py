@@ -316,7 +316,8 @@ def get_parent_size (page, parent):
 # collects tree under 'parent' inserting fourcc-s and chunk sizes
 def collect_tree (page, parent):
 	ctdata = ""
-	if page.model.iter_n_children(parent) > 0:
+	# FIXME! 'VWDT' is not recollected from samples at the moment.
+	if page.model.iter_n_children(parent) > 0 and page.model.get_value(parent,1)[1] != "VWDT":
 		for i in range(page.model.iter_n_children(parent)):
 			citer = page.model.iter_nth_child(parent, i)
 			cdata = page.model.get_value(citer,3)
