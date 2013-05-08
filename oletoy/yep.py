@@ -740,7 +740,7 @@ def hdr1item (page,data,parent,offset=0):
 	# add drumkit's "h1off2" block
 	# FIXME!  Bold assumption that "h1off3 is 'reserved'
 	if h1off2 > 0:
-		if vdtxt == "Drumkit":
+#		if vdtxt == "Drumkit":
 			dbiter = add_pgiter(page,"Drumkit block","vprm","dontsave","",h1citer,"%02x  "%(offset+h1off2))
 			dboff = struct.unpack(">I",data[h1off2:h1off2+4])[0]
 			add_pgiter(page,"Drumkit blocks offset","vprm","dkboff",data[h1off2:h1off2+4],dbiter,"%02x  "%(offset+h1off2))
