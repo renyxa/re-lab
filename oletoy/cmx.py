@@ -255,6 +255,17 @@ def rscr (hd,size,data):
 	# Overprint
 	add_iter (hd, "Overprint", ord(data[off]),off,1,"B")
 
+def clr_desc(hd,data,cm,off,parent):
+	if cm == 1:
+		pid = struct.unpack("<H",data[0:2])[0]
+		pdens = struct.unpack("<H",data[2:4])[0]
+		add_iter (hd, "Pantone ID", pid,off,2,"<H",0,0,parent)
+		add_iter (hd, "Pantone Dencity", pdens,off+2,2,"<H",0,0,parent)
+	elif cm == 2 or cm == 3 or cm == 4:
+		add_iter (hd, "CMY(K) 100/255", d2hex(data[0:4]),off,4,"txt",0,0,parent)
+	elif cm == 5:
+		add_iter (hd, "RGB", d2hex(data[0:3]),off,3,"rgb",0,0,parent)
+# FIXME! add other palletes
 
 def rclr (hd,size,data):
 	off = 0
@@ -264,29 +275,72 @@ def rclr (hd,size,data):
 	off += 2 #
 	for i in range(rnum):
 		# tag type
+		titer = add_iter (hd, "Color ref#%02x"%i, None,off,0,"")
 		while off < len(data):
 			ttype = ord(data[off])
 			if ttype != 0xff:
-				add_iter (hd, "Tag type", ttype,off,1,"B")
 				off += 1
 				# tag size
 				tsize = struct.unpack("<H",data[off:off+2])[0]
-				add_iter (hd, "Tag size", tsize,off,2,"<H")
+				add_iter (hd, "Tag type/size", "%02x/%02x"%(ttype,tsize),off,3,"<BH",0,0,titer)
 				off += 2
 				if ttype == 1:
 					# Colour Model
 					cm = ord(data[off])
-					add_iter (hd, "Colour Model", cm,off,1,"B")
+					add_iter (hd, "Colour Model", "%02x (%s)"%(cm,key2txt(cm,clr_models)),off,1,"B",0,0,titer)
 					off += 1
 					# Palette Type
-					add_iter (hd, "Palette Type", ord(data[off]),off,1,"B")
+					pt = ord(data[off])
+					add_iter (hd, "Palette Type", "%02x (%s)"%(pt,key2txt(pt,pal_types)),off,1,"B",0,0,titer)
 					off += 1
+				elif ttype == 2:
+					clr_desc(hd,data[off:],cm,off,titer)
+					off += tsize-3
 				else:
-					add_iter (hd, "Tag data", "",off,tsize-3,"<H")
+					add_iter (hd, "Tag data", "",off,tsize-3,"<H",0,0,titer)
 					off += tsize-3
 			else:
 				off += 1
 				break
+
+def rotl (hd,size,data):
+	off = 0
+	# records count
+	rnum = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd, "Rec. count", rnum,off,2,"<H")
+	off += 2 #
+	for i in range(rnum):
+		# tag type
+		titer = add_iter (hd, "Outline ref#%02x"%i, None,off,0,"")
+		while off < len(data):
+			ttype = ord(data[off])
+			off += 1
+			if ttype != 0xff:
+				# tag size
+				tsize = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Tag type/size", "%02x/%02x"%(ttype,tsize),off-1,3,"<BH",0,0,titer)
+				off += 2
+				lst = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Line style#", lst,off,2,"<H",0,0,titer)
+				off += 2
+				scr = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Screen#", scr,off,2,"<H",0,0,titer)
+				off += 2
+				clr = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Color#", clr,off,2,"<H",0,0,titer)
+				off += 2
+				arr = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Arrow#", arr,off,2,"<H",0,0,titer)
+				off += 2
+				pen = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Pen#", pen,off,2,"<H",0,0,titer)
+				off += 2
+				dot = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Dash-dot#", dot,off,2,"<H",0,0,titer)
+				off += 2
+			else:
+				break
+
 
 # CMX header
 def cont (hd,size,data):
@@ -375,5 +429,5 @@ def parse_page(page,data,f_iter):
 cmx_ids = {
 	"cont":cont,
 	"ixlr":ixlr,"ixtl":ixtl,"ixpg":ixpg,"ixmr":ixmr,
-	"rscr":rscr,"rclr":rclr}
+	"rscr":rscr,"rclr":rclr,"rotl":rotl}
 
