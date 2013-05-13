@@ -118,6 +118,24 @@ cmds = {
 	0x62:"TextFrame"
 }
 
+# Used for rott
+outline_spec = {
+	0x01:"None",
+	0x02:"Solid",
+	0x04:"Dot-Dash",
+	0x10:"Behind fill",
+	0x20:"Scale pen"
+	}
+
+# Used for rott
+outline_cap = {
+	0:"Mitter Cap",1:"Round Cap",2:"Square Cap"
+	}
+
+outline_join = {
+	0:"Mitter Join",0x10:"Round Join",0x20:"Bevel Join"
+}
+
 # Master Idx Table
 def ixmr (hd,size,data):
 	off = 0
@@ -303,6 +321,60 @@ def rclr (hd,size,data):
 				off += 1
 				break
 
+def rott (hd,size,data):
+	off = 0
+	# records count
+	rnum = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd, "Rec. count", rnum,off,2,"<H")
+	off += 2 #
+	for i in range(rnum):
+		# tag type
+		titer = add_iter (hd, "Outline ref#%02x"%i, None,off,0,"")
+		while off < len(data):
+			ttype = ord(data[off])
+			off += 1
+			if ttype != 0xff:
+				# tag size
+				tsize = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Tag type/size", "%02x/%02x"%(ttype,tsize),off-1,3,"<BH",0,0,titer)
+				off += 2
+				spec = ord(data[off])
+				add_iter (hd, "Spec", "%02x (%s)"%(spec,key2txt(spec,outline_spec)),off,1,"B",0,0,titer)
+				cj = ord(data[off+1])
+				c = key2txt(cj,outline_cap)
+				c += "/"+key2txt(cj&0xF0,outline_join)
+				add_iter (hd, "Cap/Join", "%02x (%s)"%(cj,c),off+1,1,"B",0,0,titer)
+				off += 2
+			else:
+				break
+
+def rpen (hd,size,data):
+	off = 0
+	# records count
+	rnum = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd, "Rec. count", rnum,off,2,"<H")
+	off += 2 #
+	for i in range(rnum):
+		# tag type
+		titer = add_iter (hd, "Pen ref#%02x"%i, None,off,0,"")
+		while off < len(data):
+			ttype = ord(data[off])
+			off += 1
+			if ttype != 0xff:
+				# tag size
+				tsize = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Tag type/size", "%02x/%02x"%(ttype,tsize),off-1,3,"<BH",0,0,titer)
+				off += 2
+				# Width (int32)
+				# Aspect (int16)
+				# Angle (int32)
+				# Xform
+				#   Type (int16): 1 - Identity, 2 - General
+				# If type == 2, 6x8bytes values
+				off += tsize-3
+			else:
+				break
+
 def rotl (hd,size,data):
 	off = 0
 	# records count
@@ -340,7 +412,6 @@ def rotl (hd,size,data):
 				off += 2
 			else:
 				break
-
 
 # CMX header
 def cont (hd,size,data):
@@ -429,5 +500,6 @@ def parse_page(page,data,f_iter):
 cmx_ids = {
 	"cont":cont,
 	"ixlr":ixlr,"ixtl":ixtl,"ixpg":ixpg,"ixmr":ixmr,
-	"rscr":rscr,"rclr":rclr,"rotl":rotl}
+	"rscr":rscr,"rclr":rclr,"rotl":rotl,"rott":rott,
+	"rpen":rpen}
 
