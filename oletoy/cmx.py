@@ -365,13 +365,24 @@ def rpen (hd,size,data):
 				tsize = struct.unpack("<H",data[off:off+2])[0]
 				add_iter (hd, "Tag type/size", "%02x/%02x"%(ttype,tsize),off-1,3,"<BH",0,0,titer)
 				off += 2
-				# Width (int32)
-				# Aspect (int16)
-				# Angle (int32)
-				# Xform
-				#   Type (int16): 1 - Identity, 2 - General
-				# If type == 2, 6x8bytes values
-				off += tsize-3
+				w = struct.unpack("<I",data[off:off+4])[0]
+				add_iter (hd, "Width", w,off,4,"<I",0,0,titer)
+				off += 4
+				a = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "Aspect", a,off,2,"<H",0,0,titer)
+				off += 2
+				a = struct.unpack("<I",data[off:off+4])[0]
+				add_iter (hd, "Angle", a,off,4,"<I",0,0,titer)
+				off += 4
+				xft = struct.unpack("<H",data[off:off+2])[0]
+				add_iter (hd, "XForm type", xft,off,2,"<H",0,0,titer)
+				off += 2
+				# Type: 1 - Identity, 2 - General
+				if xft == 2:
+					for j in range(6):
+						v = struct.unpack("<d",data[off:off+8])[0]
+						add_iter (hd, "m%d"%j, v,off,8,"<d",0,0,titer)
+						off += 8
 			else:
 				break
 
