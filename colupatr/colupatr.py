@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2011	Valek Filippov (frob@df.ru)
+# Copyright (C) 2011-2013	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -1075,7 +1075,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def cli_on_open (self,wg,event,tb):
 		home = expanduser("~")
-		self.fname = self.file_open('Open',home+"/.oletoy")
+		self.fname = self.file_open('Open',None,None,home+"/.oletoy")
 		if self.fname:
 			manager = gtk.recent_manager_get_default()
 			manager.add_item(self.fname)

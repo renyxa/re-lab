@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2011	Valek Filippov (frob@df.ru)
+# Copyright (C) 2011-2013	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 3 or later of the GNU General Public
@@ -554,7 +554,7 @@ class HexView():
 				self.lines.append((i*16,0))
 				self.hvlines.append("")
 			if len(self.data)%16 > 0:
-				self.lines.append((i*16+len(self.data)%16,0))
+				self.lines.append((i*16+16,0))
 				self.hvlines.append("")
 		else:
 			self.lines.append((0,0))
