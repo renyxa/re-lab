@@ -628,7 +628,66 @@ def vvst(hd, data, off):
 	offset = 26
 	x = ord(data[offset])
 	add_iter(hd,"Program Change No.",x,offset,1,"B")
-	
+
+	offset = 36
+	x = ord(data[offset])-64
+	add_iter(hd,"Vibrato Speed",x,offset,1,"B")
+
+	offset = 37
+	x = ord(data[offset])-64
+	add_iter(hd,"Vibrato Depth",x,offset,1,"B")
+
+	offset = 38
+	x = ord(data[offset])-64
+	add_iter(hd,"Vibrato Delay",x,offset,1,"B")
+
+	offset = 39
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Up) - Low Pass Filter",x,offset,1,"B")
+
+	offset = 40
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Up) - Amplitude",x,offset,1,"B")
+
+	offset = 41
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Up) - LFO PMOD Depth",x,offset,1,"B")
+
+	offset = 42
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Up) - LFO FMOD Depth",x,offset,1,"B")
+
+	offset = 43
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Up) - LFO AMOD Depth",x,offset,1,"B")
+
+	offset = 49
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Down) - Low Pass Filter",x,offset,1,"B")
+
+	offset = 50
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Down) - Amplitude",x,offset,1,"B")
+
+	offset = 51
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Down) - LFO PMOD Depth",x,offset,1,"B")
+
+	offset = 52
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Down) - LFO FMOD Depth",x,offset,1,"B")
+
+	offset = 53
+	x = ord(data[offset])
+	add_iter(hd,"Joy Stick Assign (Down) - LFO AMOD Depth",x,offset,1,"B")
+
+	offset = 56
+	x = ord(data[offset])
+	if x == 0:
+                add_iter(hd,"Mono / Poly","Mono",offset,1,"B")
+	else:
+                add_iter(hd,"Mono / Poly","Poly",offset,1,"B")
+
 	offset = 57
 	x = ord(data[offset])
 	add_iter(hd,"Main Volume",x,offset,1,"B")
@@ -648,6 +707,13 @@ def vvst(hd, data, off):
 	offset = 75
 	x = ord(data[offset])
 	add_iter(hd,"Chorus Depth",x,offset,1,"B")
+
+	offset = 76
+	x = ord(data[offset])
+        if x == 0:
+                add_iter(hd,"DSP SW","Off",offset,1,"B")
+	else:
+                add_iter(hd,"DSP SW","On",offset,1,"B")
 
 	offset = 88
 	x = struct.unpack(">H",data[offset:offset+2])[0]
