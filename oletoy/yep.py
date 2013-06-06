@@ -549,16 +549,16 @@ def dkblock(hd, data, off):
 def hdra(hd, data, off):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
-	add_iter(hd,"Offset A",var0,off,4,">I")
+	add_iter(hd,"Offset to List of Sample groups",var0,off,4,">I")
 	off += 4
 	size = struct.unpack(">I",data[off:off+4])[0]
-	add_iter(hd,"Offset B",size,off,4,">I")
+	add_iter(hd,"Offset to Samples Offsets",size,off,4,">I")
 	off += 4
 	ind = 0
 	while off < size:
 		item_s = struct.unpack(">h",data[off:off+2])[0]
 		item_e = struct.unpack(">h",data[off+2:off+4])[0]
-		add_iter(hd,"Sample group %02x"%ind,"%02x %02x"%(item_s,item_e),off,2,">hh")
+		add_iter(hd,"Sample group %d"%ind,"%02x %02x"%(item_s,item_e),off,2,">hh")
 		off += 4
 		ind += 1
 
@@ -906,7 +906,7 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	hdrb.append(len(data))
 	ind = 0
 	for i in slist:
-		siter = add_pgiter(page,"Sample %d"%ind,"vprm","sample","",smplsiter,"%02x  "%(offset+off2))
+		siter = add_pgiter(page,"Sample group %d"%ind,"vprm","sample","",smplsiter,"%02x  "%(offset+off2))
 		try:  # to workaround current problem with Europack
 			for j in range(i[0],i[1]+1):
 				if not j < 0:
