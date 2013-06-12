@@ -19,6 +19,7 @@ import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf, otxml, chdraw,vfb
+import lrf
 
 class Page:
 	def __init__(self):
@@ -129,6 +130,12 @@ class Page:
 			self.type = "APWMF"
 			mf.mf_open(buf,self, parent)
 			print "Aldus Placeable WMF"
+			return 0
+
+		if buf[0:8] == "\x4c\x00\x52\x00\x46\x00\x00\x00":
+			self.type = "LRF"
+			lrf.open(buf, self, parent)
+			print "LRF"
 			return 0
 
 		if buf[0:6] == "\x01\x00\x09\x00\x00\x03":

@@ -28,6 +28,7 @@ import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import vfb
+import lrf
 from utils import *
 from hv2 import HexView
 
@@ -1313,6 +1314,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0][0:3] == "pub":
 					if pub.pub98_ids.has_key(ntype[1]):
 							pub.pub98_ids[ntype[1]](hd,size,data)
+				elif ntype[0] == "lrf":
+					if lrf.lrf_ids.has_key(ntype[1]):
+						lrf.lrf_ids[ntype[1]](hd, size, data)
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)
