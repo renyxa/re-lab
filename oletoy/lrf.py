@@ -53,16 +53,32 @@ class lrf_parser(object):
 		# add_pgiter(self.page, 'GIF image', 'lrf', 0, self.strm.buf[self.strm.off:self.gif_size], self.parent)
 		pass
 
+	def read_object(self, idxoff, parent):
+		data = self.data
+		(oid, off) = rdata(data, idxoff, '<I')
+		(start, off) = rdata(data, off, '<I')
+		(end, off) = rdata(data, off, '<I')
+		add_pgiter(self.page, 'Object %s' % oid, 'lrf', 0, data[start:start + end], parent)
+
 	def read_objects(self):
 		data = self.data
 
-		start = self.object_index_offset
-		end = start + self.object_count * 16
-		idxiter = add_pgiter(self.page, 'Object index', 'lrf', 0, data[start:end], self.parent)
+		idxstart = self.object_index_offset
+		idxend = idxstart + self.object_count * 16
+
+		objstart = read(data, idxstart + 4, '<I')
+		last_obj = idxend - 16
+		(last_obj_offset, offset) = rdata(data, last_obj + 4, '<I')
+		last_obj_len = read(data, offset, '<I')
+		objend = last_obj_offset + last_obj_len
+
+		objiter = add_pgiter(self.page, 'Objects', 'lrf', 0, data[objstart:objend], self.parent)
+		idxiter = add_pgiter(self.page, 'Object index', 'lrf', 0, data[idxstart:idxend], self.parent)
 		for i in range(self.object_count):
-			off = start + 16 * i
+			off = idxstart + 16 * i
 			oid = read(data, off, '<I')
 			add_pgiter(self.page, 'Entry %s' % (oid), 'lrf', 'idxentry', data[off:off + 16], idxiter)
+			self.read_object(off, objiter)
 
 	def read(self):
 		parent = self.parent
