@@ -28,11 +28,15 @@ class lrf_parser(object):
 		self.page = page
 		self.parent = parent
 		self.version = 0
+		self.header_size = 0
 		self.root_oid = 0
 		self.object_count = 0
 		self.object_index_offset = 0
-		self.plane_stream_oid = 0
-		self.gif_size = 0
+		self.toc_oid = None
+		self.toc_offset = 0
+		self.metadata_size = 0
+		self.thumbnail_type = None
+		self.thumbnail_size = 0
 
 	def read_header(self):
 		data = self.data
@@ -40,18 +44,48 @@ class lrf_parser(object):
 		self.version = read(data, 8, '<H')
 		self.object_count = read(data, 0x10, '<Q')
 		self.object_index_offset = read(data, 0x18, '<Q')
-		self.plane_stream_oid = read(data, 0x44, '<I')
+		(self.toc_oid, off) = rdata(data, 0x44, '<I')
+		(self.toc_offset, off) = rdata(data, off, '<I')
+		(self.metadata_size, off) = rdata(data, off, '<H')
 		if (self.version > 800):
-			self.gif_size = read(data, 0x50, '<I')
-			header_size = 0x4e
-		else:
-			header_size = 0x54
+			(self.thumbnail_type, off) = rdata(data, off, '<H')
+			(self.thumbnail_size, off) = rdata(data, off, '<I')
 
-		add_pgiter(self.page, 'Header', 'lrf', 'header', data[0:header_size], self.parent)
+		self.header_size = off
 
-	def read_gif(self):
-		# add_pgiter(self.page, 'GIF image', 'lrf', 0, self.strm.buf[self.strm.off:self.gif_size], self.parent)
-		pass
+		add_pgiter(self.page, 'Header', 'lrf', 'header', data[0:off], self.parent)
+
+	def read_toc(self):
+		data = self.data
+		off = self.toc_offset
+		(oid, off) = rdata(data, off, '<I')
+		assert(oid == self.toc_oid)
+		(start, off) = rdata(data, off, '<I')
+		(length, off) = rdata(data, off, '<I')
+		end = start + length
+		add_pgiter(self.page, 'TOC', 'lrf', 0, data[start:end], self.parent)
+
+	def read_metadata(self):
+		start = self.header_size
+		end = start + self.metadata_size
+		add_pgiter(self.page, 'Metadata', 'lrf', 0, self.data[start:end], self.parent)
+
+	def get_thumbnail_type(self, typ):
+		if typ == 0x11:
+			return "JPEG"
+		elif typ == 0x12:
+			return "PNG"
+		elif typ == 0x13:
+			return "BMP"
+		elif typ == 0x14:
+			return "GIF"
+		return "unknown"
+
+	def read_thumbnail(self):
+		start = self.header_size + self.metadata_size
+		end = start + self.thumbnail_size
+		typ = self.get_thumbnail_type(self.thumbnail_type)
+		add_pgiter(self.page, 'Thumbnail (%s)' % typ, 'lrf', 0, self.data[start:end], self.parent)
 
 	def read_object(self, idxoff, parent):
 		data = self.data
@@ -84,8 +118,10 @@ class lrf_parser(object):
 		parent = self.parent
 		self.parent = add_pgiter(self.page, 'File', 'lrf', 0, self.data, parent)
 		self.read_header()
+		self.read_metadata()
 		if (self.version > 800):
-			self.read_gif()
+			self.read_thumbnail()
+		# self.read_toc()
 		self.read_objects()
 
 def add_header(hd, size, data):
