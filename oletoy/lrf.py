@@ -18,6 +18,35 @@ import struct
 
 from utils import add_iter, add_pgiter, rdata
 
+lrf_object_types = {
+	0x1: 'Page Tree',
+	0x2: 'Page',
+	0x3: 'Header',
+	0x4: 'Footer',
+	0x5: 'Page Atr',
+	0x6: 'Block',
+	0x7: 'Block Atr',
+	0x8: 'Mini Page',
+	0x9: 'Block List',
+	0xa: 'Text',
+	0xb: 'Text Atr',
+	0xc: 'Image',
+	0xd: 'Canvas',
+	0xe: 'Paragraph Atr',
+	0x11: 'Image Stream',
+	0x12: 'Import',
+	0x13: 'Button',
+	0x14: 'Window',
+	0x15: 'Pop Up Win',
+	0x16: 'Sound',
+	0x17: 'Plane Stream',
+	0x19: 'Font',
+	0x1a: 'Object Info',
+	0x1c: 'Book Atr',
+	0x1d: 'Simple Text',
+	0x1e: 'Toc',
+}
+
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
@@ -27,6 +56,7 @@ class lrf_parser(object):
 		self.data = data
 		self.page = page
 		self.parent = parent
+		self.key = 0
 		self.version = 0
 		self.header_size = 0
 		self.root_oid = 0
@@ -42,6 +72,7 @@ class lrf_parser(object):
 		data = self.data
 
 		self.version = read(data, 8, '<H')
+		self.key = read(data, 0xa, '<H')
 		self.object_count = read(data, 0x10, '<Q')
 		self.object_index_offset = read(data, 0x18, '<Q')
 		(self.toc_oid, off) = rdata(data, 0x44, '<I')
@@ -92,7 +123,13 @@ class lrf_parser(object):
 		(oid, off) = rdata(data, idxoff, '<I')
 		(start, off) = rdata(data, off, '<I')
 		(end, off) = rdata(data, off, '<I')
-		add_pgiter(self.page, 'Object %s' % oid, 'lrf', 0, data[start:start + end], parent)
+		otp = read(data, start + 6, '<H')
+
+		otype = otp
+		if lrf_object_types.has_key(otp):
+			otype = lrf_object_types[otp]
+
+		add_pgiter(self.page, 'Object %x (%s)' % (oid, otype), 'lrf', 0, data[start:start + end], parent)
 
 	def read_objects(self):
 		data = self.data
@@ -111,7 +148,7 @@ class lrf_parser(object):
 		for i in range(self.object_count):
 			off = idxstart + 16 * i
 			oid = read(data, off, '<I')
-			add_pgiter(self.page, 'Entry %s' % (oid), 'lrf', 'idxentry', data[off:off + 16], idxiter)
+			add_pgiter(self.page, 'Entry %x' % (oid), 'lrf', 'idxentry', data[off:off + 16], idxiter)
 			self.read_object(off, objiter)
 
 	def read(self):
@@ -126,6 +163,7 @@ class lrf_parser(object):
 
 def add_header(hd, size, data):
 	add_iter(hd, 'Version', read(data, 8, '<H'), 8, 2, '<H')
+	add_iter(hd, 'Pseudo Enc. Key', read(data, 0xa, '<H'), 0xa, 2, '<H')
 	add_iter(hd, 'Number of objects', read(data, 0x10, '<Q'), 0x10, 8, '<Q')
 
 def add_index_entry(hd, size, data):
