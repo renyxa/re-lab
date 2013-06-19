@@ -545,7 +545,17 @@ def dkblock(hd, data, off):
                 add_iter(hd,"Key Off","Disable",offset,1,"B")
 	else:
                 add_iter(hd,"Key Off","Enable",offset,1,"B")
-                
+
+def hdralst(hd, data, off):
+	ind = 0
+	off = 0
+	while off < len(data):
+		item_s = struct.unpack(">h",data[off:off+2])[0]
+		item_e = struct.unpack(">h",data[off+2:off+4])[0]
+		add_iter(hd,"Sample group %d"%ind,"%02x %02x"%(item_s,item_e),off,4,">hh")
+		off += 4
+		ind += 1
+
 def hdra(hd, data, off):
 	off = 0
 	var0 = struct.unpack(">I",data[off:off+4])[0]
@@ -553,14 +563,6 @@ def hdra(hd, data, off):
 	off += 4
 	size = struct.unpack(">I",data[off:off+4])[0]
 	add_iter(hd,"Offset to Samples Offsets",size,off,4,">I")
-	off += 4
-	ind = 0
-	while off < size:
-		item_s = struct.unpack(">h",data[off:off+2])[0]
-		item_e = struct.unpack(">h",data[off+2:off+4])[0]
-		add_iter(hd,"Sample group %d"%ind,"%02x %02x"%(item_s,item_e),off,2,">hh")
-		off += 4
-		ind += 1
 
 def hdrbch (hd, data, off):
 	offset = 8
@@ -724,7 +726,7 @@ def vvst(hd, data, off):
 	add_iter(hd,"DSP Depth",x,offset,1,"B")
 
 vprmfunc = {"bank":bank, "dkblock":dkblock, "elemhdr":elemhdr,
-	"hdra":hdra, "hdrbch":hdrbch, "p1s0":p1s0, "p1s1":p1s1, 
+	"hdra":hdra, "hdralst":hdralst, "hdrbch":hdrbch, "p1s0":p1s0, "p1s1":p1s1, 
 	"vbhdr":vbhdr, "VVST":vvst}
 
 def hdr1item (page,data,parent,offset=0):
@@ -883,7 +885,8 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	v1 = struct.unpack(">I",data[off:off+4])[0] # ??? "allways" 8
 	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
 	smplsiter = add_pgiter(page,"Samples","vprm","dontsave","",parent,"%02x  "%(offset+off))
-	haiter = add_pgiter(page,"List of Sample groups","vprm","hdra",data[off:off+hdraend],smplsiter,"%02x  "%(offset+off))
+	haiter = add_pgiter(page,"Sample groups header","vprm","hdra",data[off:off+8],smplsiter,"%02x  "%(offset+off))
+	haiterlst = add_pgiter(page,"List of Sample groups","vprm","hdralst",data[off+8:off+hdraend],smplsiter,"%02x  "%(offset+off))
 	slist = []
 	shdrsize = struct.unpack(">I",data[off:off+4])[0]
 	shdrlen = struct.unpack(">I",data[off+4:off+8])[0]
