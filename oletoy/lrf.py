@@ -278,7 +278,6 @@ class lrf_parser(object):
 
 		if tag == 0xf504:
 			self.stream_size = read(self.data, off, '<I')
-			print('stream size = %s' % self.stream_size)
 		elif tag == 0xf505:
 			self.stream_started = True
 		elif tag == 0xf506:
