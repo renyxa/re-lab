@@ -47,6 +47,13 @@ lrf_object_types = {
 	0x1e: 'Toc',
 }
 
+lrf_thumbnail_types = {
+	0x11: "JPEG",
+	0x12: "PNG",
+	0x13: "BMP",
+	0x14: "GIF",
+}
+
 # variable length
 V = None
 
@@ -232,21 +239,12 @@ class lrf_parser(object):
 		end = start + self.metadata_size
 		add_pgiter(self.page, 'Metadata', 'lrf', 0, self.data[start:end], self.parent)
 
-	def get_thumbnail_type(self, typ):
-		if typ == 0x11:
-			return "JPEG"
-		elif typ == 0x12:
-			return "PNG"
-		elif typ == 0x13:
-			return "BMP"
-		elif typ == 0x14:
-			return "GIF"
-		return "unknown"
-
 	def read_thumbnail(self):
 		start = self.header_size + self.metadata_size
 		end = start + self.thumbnail_size
-		typ = self.get_thumbnail_type(self.thumbnail_type)
+		typ = "Unknown"
+		if lrf_thumbnail_types.has_key(self.thumbnail_type):
+			typ = lrf_thumbnail_types[self.thumbnail_type]
 		add_pgiter(self.page, 'Thumbnail (%s)' % typ, 'lrf', 0, self.data[start:end], self.parent)
 
 	def decrypt_stream(self, data):
