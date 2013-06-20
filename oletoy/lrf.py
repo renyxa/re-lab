@@ -260,7 +260,11 @@ class lrf_parser(object):
 	def read_metadata(self):
 		start = self.header_size
 		end = start + self.metadata_size
-		add_pgiter(self.page, 'Metadata', 'lrf', 0, self.data[start:end], self.parent)
+		metaiter = add_pgiter(self.page, 'Metadata', 'lrf', 0, self.data[start:end], self.parent)
+		# There are 4 bytes at the beginning that might be uncompressed size.
+		# TODO: check
+		content = zlib.decompress(self.data[start + 4:end])
+		add_pgiter(self.page, 'Uncompressed content', 'lrf', 'text', content, metaiter)
 
 	def read_thumbnail(self):
 		start = self.header_size + self.metadata_size
@@ -414,9 +418,18 @@ def add_index_entry(hd, size, data):
 	add_iter(hd, 'Offset', read(data, 4, '<I'), 4, 4, '<I')
 	add_iter(hd, 'Length', read(data, 8, '<I'), 8, 4, '<I')
 
+def add_text(hd, size, data):
+	text = u''
+	off = 0
+	while off < size:
+		(c, off) = rdata(data, off, '<H')
+		text += unichr(c)
+	add_iter(hd, 'Text', text, 0, size, 's')
+
 lrf_ids = {
 	'header': add_header,
-	'idxentry': add_index_entry
+	'idxentry': add_index_entry,
+	'text': add_text,
 }
 
 def open(buf, page, parent):
