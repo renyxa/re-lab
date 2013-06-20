@@ -182,7 +182,7 @@ class lrf_parser(object):
 		self.data = data
 		self.page = page
 		self.parent = parent
-		self.key = 0
+		self.pseudo_encryption_key = 0
 		self.version = 0
 		self.header_size = 0
 		self.root_oid = 0
@@ -197,12 +197,13 @@ class lrf_parser(object):
 		self.stream_size = 0
 		self.stream_started = False
 		self.stream_read = False
+		self.object_type = None
 
 	def read_header(self):
 		data = self.data
 
 		self.version = read(data, 8, '<H')
-		self.key = read(data, 0xa, '<H')
+		self.pseudo_encryption_key = read(data, 0xa, '<H')
 		self.object_count = read(data, 0x10, '<Q')
 		self.object_index_offset = read(data, 0x18, '<Q')
 		(self.toc_oid, off) = rdata(data, 0x44, '<I')
@@ -248,8 +249,20 @@ class lrf_parser(object):
 		typ = self.get_thumbnail_type(self.thumbnail_type)
 		add_pgiter(self.page, 'Thumbnail (%s)' % typ, 'lrf', 0, self.data[start:end], self.parent)
 
+	def decrypt_stream(self, data):
+		declen = len(data)
+		keybyte = ((declen % self.pseudo_encryption_key) + 0x0f) & 0xff
+		if self.object_type == 0x11 or self.object_type == 0x17 or self.object_type == 0x19:
+			if declen > 0x400:
+				declen = 0x400
+		decdata = map(lambda c : chr((ord(c) ^ keybyte) & 0xff), data[0:declen])
+		decdata.append(data[declen:len(data)])
+		return ''.join(decdata)
+
 	def read_stream(self, start, length, parent):
-		add_pgiter(self.page, 'Stream', 'lrf', 0, self.data[start:start + length], parent)
+		strmiter = add_pgiter(self.page, 'Stream', 'lrf', 0, self.data[start:start + length], parent)
+		# data = self.decrypt_stream(self.data[start:start + length])
+		# add_pgiter(self.page, '[Unobfuscated]', 'lrf', 0, data, strmiter)
 		self.stream_read = True
 
 	def read_object_tag(self, n, start, end, parent):
@@ -310,7 +323,9 @@ class lrf_parser(object):
 			otype = lrf_object_types[otp]
 
 		objiter = add_pgiter(self.page, 'Object %x (%s)' % (oid, otype), 'lrf', 0, data[start:start + length], parent)
+		self.object_type = otype
 		self.read_object_tags(start, start + length, objiter)
+		self.object_type = None
 
 	def read_objects(self):
 		data = self.data
