@@ -315,6 +315,7 @@ class lrf_parser(object):
 			self.read_stream(data[start:stream_end], parent)
 			return stream_end
 
+		callback = 0
 		(tag, off) = rdata(data, start, '<H')
 		name = 'Tag %x' % tag
 		length = None
@@ -322,6 +323,7 @@ class lrf_parser(object):
 			if lrf_tags.has_key(tag):
 				(name, length) = lrf_tags[tag]
 		else:
+			callback = 'text'
 			name = 'Data'
 
 		# try to find the next tag
@@ -350,7 +352,7 @@ class lrf_parser(object):
 			self.close_stream_level()
 
 		if off + length <= end:
-			add_pgiter(self.page, '%s (%d)' % (name, n), 'lrf', 0, data[start:off + length], parent)
+			add_pgiter(self.page, '%s (%d)' % (name, n), 'lrf', callback, data[start:off + length], parent)
 		else:
 			return end
 
