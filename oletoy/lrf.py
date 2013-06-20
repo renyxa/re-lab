@@ -15,6 +15,7 @@
 #
 
 import struct
+import zlib
 
 from utils import add_iter, add_pgiter, rdata
 
@@ -185,6 +186,14 @@ def read(data, offset, fmt):
 
 class lrf_parser(object):
 
+	class stream_state:
+
+		def __init__(self):
+			self.stream_flags = 0
+			self.stream_size = 0
+			self.stream_started = False
+			self.stream_read = False
+
 	def __init__(self, data, page, parent):
 		self.data = data
 		self.page = page
@@ -201,10 +210,24 @@ class lrf_parser(object):
 		self.thumbnail_type = None
 		self.thumbnail_size = 0
 
-		self.stream_size = 0
-		self.stream_started = False
-		self.stream_read = False
+		self.stream_level = 1
+		self.stream_states = []
 		self.object_type = None
+
+	def open_stream_level(self):
+		if (self.stream_level > len(self.stream_states)):
+			self.stream_states.append(self.stream_state())
+		assert(self.stream_level == len(self.stream_states))
+
+	def close_stream_level(self):
+		self.stream_states.pop(-1)
+		assert(len(self.stream_states) >= 0)
+		assert(self.stream_level > 0)
+
+	def is_in_stream(self):
+		if len(self.stream_states) == self.stream_level:
+			return self.stream_states[-1].stream_started and not self.stream_states[-1].stream_read
+		return False
 
 	def read_header(self):
 		data = self.data
@@ -257,27 +280,50 @@ class lrf_parser(object):
 		decdata.append(data[declen:len(data)])
 		return ''.join(decdata)
 
-	def read_stream(self, start, length, parent):
-		strmiter = add_pgiter(self.page, 'Stream', 'lrf', 0, self.data[start:start + length], parent)
+	def read_stream(self, data, parent):
+		strmiter = add_pgiter(self.page, 'Stream', 'lrf', 0, data, parent)
 		# data = self.decrypt_stream(self.data[start:start + length])
 		# add_pgiter(self.page, '[Unobfuscated]', 'lrf', 0, data, strmiter)
-		self.stream_read = True
 
-	def read_object_tag(self, n, start, end, parent):
-		if self.stream_started and not self.stream_read:
-			self.read_stream(start, self.stream_size, parent)
-			return start + self.stream_size
+		# This is what I see for text streams anyway. But it is probably
+		# recorded in the stream's flags.
+		# TODO: check stream flags
+		content = data
+		content_name = 'Content'
+		if len(data) > 64:
+			# there are 4 bytes of something that looks like uncompressed size
+			# at the beginning
+			content = zlib.decompress(data[4:])
+			content_name = 'Uncompressed content'
+		cntiter = add_pgiter(self.page, content_name, 'lrf', 0, content, strmiter)
+		self.stream_level += 1
+		# There are streams that do not contain tags. Maybe only text
+		# streams contain tags.
+		if len(content) > 1 and ord(content[1]) == 0xf5:
+			self.read_object_tags(content, cntiter)
+		self.stream_level -= 1
+		self.stream_states[-1].stream_read = True
 
-		(tag, off) = rdata(self.data, start, '<H')
+	def read_object_tag(self, n, data, start, parent):
+		end = len(data)
+		if self.is_in_stream():
+			stream_end = start + self.stream_states[-1].stream_size
+			self.read_stream(data[start:stream_end], parent)
+			return stream_end
+
+		(tag, off) = rdata(data, start, '<H')
 		name = 'Tag %x' % tag
 		length = None
-		if lrf_tags.has_key(tag):
-			(name, length) = lrf_tags[tag]
+		if ((tag & 0xff00) >> 8) == 0xf5:
+			if lrf_tags.has_key(tag):
+				(name, length) = lrf_tags[tag]
+		else:
+			name = 'Data'
 
 		# try to find the next tag
 		if length is None:
 			pos = off
-			while self.data[pos] != chr(0xf5) and pos < end:
+			while data[pos] != chr(0xf5) and pos < end:
 				pos += 1
 			if pos < end:
 				pos -= 1
@@ -288,26 +334,30 @@ class lrf_parser(object):
 			length = pos - off
 
 		if tag == 0xf504:
-			self.stream_size = read(self.data, off, '<I')
+			self.open_stream_level()
+			self.stream_states[-1].stream_size = read(data, off, '<I')
 		elif tag == 0xf505:
-			self.stream_started = True
+			self.open_stream_level()
+			self.stream_states[-1].stream_started = True
+		elif tag == 0xf554:
+			self.open_stream_level()
+			self.stream_states[-1].stream_flags = read(data, off, '<H')
 		elif tag == 0xf506:
-			self.stream_started = False
-			self.stream_read = False
+			self.close_stream_level()
 
-		if start + length <= end:
-			add_pgiter(self.page, '%s (%d)' % (name, n), 'lrf', 0, self.data[start:off + length], parent)
+		if off + length <= end:
+			add_pgiter(self.page, '%s (%d)' % (name, n), 'lrf', 0, data[start:off + length], parent)
 		else:
 			return end
 
 		return off + length
 
-	def read_object_tags(self, start, end, parent):
+	def read_object_tags(self, data, parent):
 		n = 0
-		pos = self.read_object_tag(n, start, end, parent)
-		while pos < end:
+		pos = self.read_object_tag(n, data, 0, parent)
+		while pos < len(data):
 			n += 1
-			pos = self.read_object_tag(n, pos, end, parent)
+			pos = self.read_object_tag(n, data, pos, parent)
 
 	def read_object(self, idxoff, parent):
 		data = self.data
@@ -322,7 +372,7 @@ class lrf_parser(object):
 
 		objiter = add_pgiter(self.page, 'Object %x (%s)' % (oid, otype), 'lrf', 0, data[start:start + length], parent)
 		self.object_type = otype
-		self.read_object_tags(start, start + length, objiter)
+		self.read_object_tags(data[start:start + length], objiter)
 		self.object_type = None
 
 	def read_objects(self):
