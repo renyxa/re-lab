@@ -450,6 +450,13 @@ def vbhdr (hd, data, off):
 
 
 def p1s0 (hd, data, off):
+	offset = 1
+	x = ord(data[offset])
+	if x == 0:
+		add_iter(hd,"Voice Type","Normal",offset,1,"B")
+	else:
+		add_iter(hd,"Voice Type","Drum Kit",offset,1,"B")
+
 	offset = 3
 	x = 255-ord(data[offset])
 	add_iter(hd,"Voice - Master Volume",x,offset,1,"B")
@@ -597,6 +604,10 @@ def hdrbch (hd, data, off):
                 x = ord(data[offset])-256
 	add_iter(hd,"Tuning Fine",x,offset,1,"B")
 
+	offset = 19
+	x = ord(data[offset])        
+	add_iter(hd,"Number of channels",x,offset,1,"B")
+
 	offset = 0x20
 	for i in range(3):
 		x = struct.unpack(">I",data[offset:offset+4])[0]
@@ -738,10 +749,12 @@ def hdr1item (page,data,parent,offset=0):
 		print "ATTENTION! YEP: size of VPRM header2 is not 0x24, it's %02x"%h1off0
 	off += 4
 	vdtxt = "Drumkit"
-	if ord(data[0x21]) == 0x3f:
+	if ord(data[0x25]) == 0x00:
 		vdtxt = "Voice"
-	vdidx = ord(data[0x23])
-	h1citer = add_pgiter(page,"%s Block %d"%(vdtxt,vdidx),"vprm","vdblock",data,parent,"%02x  "%offset)
+	vdidxa = ord(data[0x21])
+	vdidxb = ord(data[0x22])
+	vdidxc = ord(data[0x23])	
+	h1citer = add_pgiter(page,"%s Block [%d-%d-%d]"%(vdtxt,vdidxa,vdidxb,vdidxc),"vprm","vdblock",data,parent,"%02x  "%offset)
 	add_pgiter(page,"V/Dk Header","vprm","vbhdr",data[:h1off0],h1citer,"%02x  "%offset)
 	# offset to the list of offsets of elements
 	h1off1 = struct.unpack(">I",data[off:off+4])[0]
@@ -853,8 +866,8 @@ def vwdt(page,data,sampleid,blockid,vwdtiter,off):
 	if fmt&0x4:
 		len1 *= 16
 	if off1 > 0:
-		add_pgiter(page,"%s (A)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
-		add_pgiter(page,"%s (B)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%(off1*2+off))
+		add_pgiter(page,"%s (Left)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+		add_pgiter(page,"%s (Right)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%(off1*2+off))
 	else:
 		add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
 
@@ -948,11 +961,13 @@ def parse (page, data, parent,align=4.,prefix="",offset=0):
 				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%(offset+off))
 			piter = sstygrpiter
 		elif fourcc == "VVST":
-			n = struct.unpack(">H",data[off+0x19:off+0x1b])[0]
-			if ord(data[off+0x18]) == 0x3f:
-				f = "[Voice %s]"%n
+                        na = ord(data[off+0x18])
+                	nb = ord(data[off+0x19])
+                	nc = ord(data[off+0x1a])	
+			if ord(data[off+0x14]) == 0x3f or ord(data[off+0x14]) == 0x00:
+				f = "[Voice %d-%d-%d]"%(na,nb,nc)
 			else:
-				f = "[DrumKit %s]"%n
+				f = "[DrumKit %d-%d-%d]"%(na,nb,nc)
 			iname = fourcc+f+" %s"%(data[off:off+16])
 			if vvstgrpiter == None:
 				vvstgrpiter = add_pgiter(page,"VVSTs","vvst","dontsave","",parent,"%02x  "%(offset+off))
