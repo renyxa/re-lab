@@ -211,7 +211,7 @@ lrf_tags = {
 	0xf5c9 : ('F5C9', 0),
 	0xf5ca : ('Space', 2),
 	0xf5cb : ('F5CB', V),
-	0xf5cc : ('F5CC', 2),
+	0xf5cc : ('Text Size', 2),
 	0xf5d1 : ('Koma Plot', V),
 	0xf5d2 : ('EOL', 0),
 	0xf5d4 : ('Wait', 2),
