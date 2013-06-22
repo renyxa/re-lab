@@ -316,7 +316,10 @@ class lrf_parser(object):
 		metaiter = add_pgiter(self.page, 'Metadata', 'lrf', 0, self.data[start:end], self.parent)
 		# There are 4 bytes at the beginning that might be uncompressed size.
 		# TODO: check
-		content = zlib.decompress(self.data[start + 4:end])
+		try:
+			content = zlib.decompress(self.data[start + 4:end])
+		except zlib.error:
+			content = self.data
 		add_pgiter(self.page, 'Uncompressed content', 'lrf', 'text', content, metaiter)
 
 	def read_thumbnail(self):
@@ -350,8 +353,11 @@ class lrf_parser(object):
 		if len(data) > 64:
 			# there are 4 bytes of something that looks like uncompressed size
 			# at the beginning
-			content = zlib.decompress(data[4:])
-			content_name = 'Uncompressed content'
+			try:
+				content = zlib.decompress(data[4:])
+				content_name = 'Uncompressed content'
+			except zlib.error:
+				pass
 		cntiter = add_pgiter(self.page, content_name, 'lrf', 0, content, strmiter)
 		self.stream_level += 1
 		# There are streams that do not contain tags. Maybe only text
