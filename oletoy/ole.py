@@ -21,6 +21,7 @@ import tree
 import hexdump
 import pub, pubblock, escher, quill
 import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2
+import wt602
 from utils import *
 
 ropen = ""
@@ -177,9 +178,14 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("escher",dirflag))
 			escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
 		if infname == "CONTENTS":
-			ftype = "quill"
-			page.model.set_value(iter1,1,("quill",dirflag))
-			quill.parse (page,data,iter1)
+			if data[6:11] == "WT602":
+				ftype = "wt602"
+				page.model.set_value(iter1,1,("wt602",dirflag))
+				wt602.parse (page,data,iter1)
+			else:
+				ftype = "quill"
+				page.model.set_value(iter1,1,("quill",dirflag))
+				quill.parse (page,data,iter1)
 		if infname == "Contents":
 			if data[:2] == "\xe8\xac": # take signature into account
 				ftype = "pub"
@@ -270,9 +276,14 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("escher",dirflag))
 			escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
 		if infname == "CONTENTS":
-			ftype = "quill"
-			page.model.set_value(iter1,1,("quill",dirflag))
-			quill.parse (page,data,iter1)
+			if data[6:11] == "WT602":
+				ftype = "wt602"
+				page.model.set_value(iter1,1,("wt602",dirflag))
+				wt602.parse (page,data,iter1)
+			else:
+				ftype = "quill"
+				page.model.set_value(iter1,1,("quill",dirflag))
+				quill.parse (page,data,iter1)
 		if infname == "Contents":
 			if data[:2] == "\xe8\xac": # take signature into account
 				ftype = "pub"
