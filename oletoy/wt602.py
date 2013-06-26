@@ -37,7 +37,7 @@ wt602_sections = (
 	'Section 15',
 	'Section 16',
 	'Section 17',
-	'Section 18',
+	'Styles',
 	'Section 19',
 	'Section 20',
 	'Section 21',
@@ -71,6 +71,16 @@ def handle_fonts(page, data, parent):
 			off += 1
 		add_pgiter(page, 'Font %d' % i, 'wt602', 'font', data[start:off], parent)
 
+def handle_styles(page, data, parent):
+	(hdrsize, off) = rdata(data, 0, '<I')
+	count = hdrsize / 0x20
+	off = 0x10
+	hdriter = add_pgiter(page, 'Names', 'wt602', 0, data[:hdrsize + 0x10], parent)
+	for i in range(0, count):
+		add_pgiter(page, 'Style %d' % i, 'wt602', 'style_header', data[off:off + 0x20], hdriter)
+		off += 0x20
+	add_pgiter(page, 'Definitions', 'wt602', 0, data[hdrsize + 0x10:], parent)
+
 wt602_section_handlers = (
 	None,
 	None,
@@ -90,7 +100,7 @@ wt602_section_handlers = (
 	None,
 	None,
 	None,
-	None,
+	(handle_styles, 'styles'),
 	None,
 	None,
 	None,
@@ -178,6 +188,16 @@ def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', c, 0, 4, '<I')
 
+def add_style_header(hd, size, data):
+	(length, off) = rdata(data, 0x12, '<H')
+	fmt = '<%ds' % length
+	name = read(data, off, fmt)
+	add_iter(hd, 'Name', name, off, length, fmt)
+
+def add_styles(hd, size, data):
+	(c, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', c / 0x20, 0, 4, '<I')
+
 def add_text(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Length', length, 0, 4, '<I')
@@ -189,6 +209,8 @@ wt602_ids = {
 	'font' : add_font,
 	'fonts' : add_fonts,
 	'header': add_header,
+	'style_header': add_style_header,
+	'styles': add_styles,
 	'text': add_text,
 }
 
