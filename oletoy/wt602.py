@@ -73,6 +73,7 @@ class wt602_parser(object):
 	def parse(self):
 		self.parse_header()
 		self.parse_offset_table()
+		self.parse_text()
 
 	def parse_header(self):
 		add_pgiter(self.page, 'Header', 'wt602', 'header', self.data[0:0x72], self.parent)
@@ -90,17 +91,28 @@ class wt602_parser(object):
 			if cur != 0:
 				end = cur
 				if i != 0:
-					self.sections[idx] = (begin, end)
+					self.sections[idx] = (begin + 0x72, end + 0x72)
 				begin = cur
 				idx = i
-		print('table = %s' % self.sections)
+
+	def parse_text(self):
+		limits = self.sections[27]
+		add_pgiter(self.page, wt602_sections[27], 'wt602', 'text', self.data[limits[0]:limits[1]], self.parent)
 
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', c, 0, 4, '<I')
 
+def add_text(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, 0, 4, '<I')
+	fmt = '<%ds' % length
+	text = read(data[off:], 0, fmt)
+	add_iter(hd, 'Text', text, off, length, fmt)
+
 wt602_ids = {
 	'header': add_header,
+	'text': add_text,
 }
 
 def parse(page, data, parent):
