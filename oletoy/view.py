@@ -29,6 +29,7 @@ import rx2,fh
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import vfb
 import lrf
+import wt602
 from utils import *
 from hv2 import HexView
 
@@ -1317,6 +1318,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "lrf":
 					if lrf.lrf_ids.has_key(ntype[1]):
 						lrf.lrf_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "wt602":
+					if wt602.wt602_ids.has_key(ntype[1]):
+						wt602.wt602_ids[ntype[1]](hd, size, data)
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)
