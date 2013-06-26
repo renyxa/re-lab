@@ -58,6 +58,46 @@ wt602_sections = (
 	'Section 36',
 )
 
+wt602_section_handlers = (
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	(None, 'text'),
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+	None,
+)
+
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
@@ -73,7 +113,8 @@ class wt602_parser(object):
 	def parse(self):
 		self.parse_header()
 		self.parse_offset_table()
-		self.parse_text()
+		for i in range(0, len(wt602_sections)):
+			self.parse_section(i)
 
 	def parse_header(self):
 		add_pgiter(self.page, 'Header', 'wt602', 'header', self.data[0:0x72], self.parent)
@@ -95,9 +136,18 @@ class wt602_parser(object):
 				begin = cur
 				idx = i
 
-	def parse_text(self):
-		limits = self.sections[27]
-		add_pgiter(self.page, wt602_sections[27], 'wt602', 'text', self.data[limits[0]:limits[1]], self.parent)
+	def parse_section(self, n):
+		(begin, end) = self.sections[n]
+		name = wt602_sections[n]
+		func = wt602_section_handlers[n]
+		adder = 0
+		if end > begin:
+			handler = None
+			if func != None:
+				(handler, adder) = func
+			sectiter = add_pgiter(self.page, name, 'wt602', adder, self.data[begin:end], self.parent)
+			if handler != None:
+				handler(self.page, self.data[begin:end], sectiter)
 
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
