@@ -29,7 +29,7 @@ wt602_sections = (
 	'Section 7',
 	'Section 8',
 	'Section 9',
-	'Section 10',
+	'Used fonts',
 	'Section 11',
 	'Section 12',
 	'Section 13',
@@ -58,6 +58,19 @@ wt602_sections = (
 	'Section 36',
 )
 
+def handle_fonts(page, data, parent):
+	(count, off) = rdata(data, 0, '<I')
+	for i in range(0, count):
+		start = off
+		off += 2
+		# read font name
+		while off < len(data) and data[off] != '\0':
+			off += 1
+		# read zeros to the next record
+		while off < len(data) and data[off] == '\0':
+			off += 1
+		add_pgiter(page, 'Font %d' % i, 'wt602', 'font', data[start:off], parent)
+
 wt602_section_handlers = (
 	None,
 	None,
@@ -69,7 +82,7 @@ wt602_section_handlers = (
 	None,
 	None,
 	None,
-	None,
+	(handle_fonts, 'fonts'),
 	None,
 	None,
 	None,
@@ -149,6 +162,18 @@ class wt602_parser(object):
 			if handler != None:
 				handler(self.page, self.data[begin:end], sectiter)
 
+def add_font(hd, size, data):
+	i = 2
+	start = i
+	while i < len(data) and data[i] != '\0':
+		i += 1
+	length = i - start
+	add_iter(hd, 'Name', data[start:i], start, length, '<%ds' % length)
+
+def add_fonts(hd, size, data):
+	(c, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', c, 0, 4, '<I')
+
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', c, 0, 4, '<I')
@@ -161,6 +186,8 @@ def add_text(hd, size, data):
 	add_iter(hd, 'Text', text, off, length, fmt)
 
 wt602_ids = {
+	'font' : add_font,
+	'fonts' : add_fonts,
 	'header': add_header,
 	'text': add_text,
 }
