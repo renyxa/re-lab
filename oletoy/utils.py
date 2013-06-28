@@ -150,9 +150,9 @@ def graph_expose (da,event,data,hd):
 	y = 0
 	for x in range(len(data)):
 		y1 = ord(data[x])
-		if y1 - y < 10:
-			ctx.move_to(x*2,256-y1)
-		ctx.line_to(x*2+0.5,256.5-y1)
+#		if y1 - y < 10:
+#			ctx.move_to(x*2,256-y1)
+		ctx.line_to(x+0.5,256.5-y1)
 		y = y1
 			
 	ctx.stroke()

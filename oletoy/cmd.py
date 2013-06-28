@@ -16,7 +16,7 @@
 
 import sys,struct
 import tree,gtk,gobject,zlib
-import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep
+import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx
 from utils import *
 from os.path import expanduser
 
@@ -349,6 +349,8 @@ def parse (cmd, entry, page):
 				print "OLE stream not found at ",chaddr
 		elif "b64" == chtype.lower():
 			b64decode (page,buf[int(chaddr,16):],iter1)
+		elif "cvx" == chtype.lower():
+			cvx.parse (page,buf[int(chaddr,16):],iter1)
 		elif "esc" == chtype.lower():
 			escher.parse (model,buf[int(chaddr,16):],iter1)
 		elif "cmx" == chtype.lower():
