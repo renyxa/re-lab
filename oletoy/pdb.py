@@ -79,6 +79,17 @@ def add_ereader_index(hd, size, data):
 	(compression, off) = rdata(data, 0, '>H')
 	add_iter(hd, 'Compression', compression, 0, 2, '>H')
 
+	# There are two different headers created by applications
+	if len(data) == 132:
+		pass
+	elif len(data) == 202:
+		off += 6
+		(first_nontext, off) = rdata(data, off, '>H')
+		add_iter(hd, 'First non-text record', first_nontext, off - 2, 2, '>H')
+		off = 0x6e
+		(chapters, off) = rdata(data, off, '>H') # ???
+		add_iter(hd, 'Number of chapters in TOC', chapters, off - 2, 2, '>H')
+
 pdb_ids = {
 	"ereader_index": add_ereader_index,
 }
