@@ -20,6 +20,7 @@ import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf, otxml, chdraw,vfb
 import lrf
+import pdb
 
 class Page:
 	def __init__(self):
@@ -173,6 +174,13 @@ class Page:
 			print "Probably PK-ZIP"
 			f.close()
 			pkzip.open (self.fname,self, parent)
+			return 0
+
+		pdbtype = buf[0x3c:0x44]
+		if pdbtype == "PNRdPPrs":
+			self.type = "PDB"
+			print "Probably Palm e-book"
+			pdb.open(buf, self, parent, pdbtype)
 			return 0
 
 		fh_off = buf.find('FreeHand')

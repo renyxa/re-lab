@@ -30,6 +30,7 @@ import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import vfb
 import lrf
 import wt602
+import pdb
 from utils import *
 from hv2 import HexView
 
@@ -1339,6 +1340,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "rx2":
 					if rx2.rx2_ids.has_key(ntype[1]):
 						rx2.rx2_ids[ntype[1]](hd,data)
+				elif ntype[0] == "pdb":
+					if pdb.pdb_ids.has_key(ntype[1]):
+						pdb.pdb_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
