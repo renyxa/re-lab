@@ -44,7 +44,7 @@ wt602_sections = (
 	'Hard formats',
 	'Section 23',
 	'Section 24',
-	'Paragraph info',
+	'Text info',
 	'Section 26',
 	'Text',
 	'Section 28',
@@ -70,6 +70,14 @@ def handle_fonts(page, data, parent):
 		while off < len(data) and data[off] == '\0':
 			off += 1
 		add_pgiter(page, 'Font %d' % i, 'wt602', 'font', data[start:off], parent)
+
+def handle_text_infos(page, data, parent):
+	(count, off) = rdata(data, 0, '<I')
+	off += 6
+	for i in range(0, count):
+		begin = off
+		add_pgiter(page, 'Span %d ' %i, 'wt602', 'text_info', data[begin:begin + 28], parent)
+		off += 28
 
 def handle_styles(page, data, parent):
 	(hdrsize, off) = rdata(data, 0, '<I')
@@ -107,7 +115,7 @@ wt602_section_handlers = (
 	None,
 	None,
 	None,
-	None,
+	(handle_text_infos, 'text_infos'),
 	None,
 	(None, 'text'),
 	None,
@@ -188,6 +196,40 @@ def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', c, 0, 4, '<I')
 
+def get_char_format(flags):
+	fmt = []
+	if flags & 0x2:
+		fmt.append('bold')
+	if flags & 0x4:
+		fmt.append('italic')
+	if flags & 0x8:
+		fmt.append('underline')
+	return ' + '.join(fmt)
+
+def get_para_flags(flags):
+	ret = []
+	if flags & 0x8:
+		ret.append('page break')
+	if flags & 0x100:
+		ret.append('paragraph break')
+	return ' + '.join(ret)
+
+def add_text_info(hd, size, data):
+	(flags, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Flags', '%x' % flags, off - 2, 2, '<H')
+	off += 2
+	(para_flags, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Text flags', '%x (%s)' % (para_flags, get_para_flags(para_flags)), off - 2, 2, '<H')
+	off += 6
+	(attribs, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Format', '%x (%s)' % (attribs, get_char_format(attribs)), off - 2, 2, '<H')
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length', length, off - 2, 2, '<H')
+
+def add_text_infos(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', count, 0, 4, '<I')
+
 def add_style_header(hd, size, data):
 	(length, off) = rdata(data, 0x12, '<H')
 	fmt = '<%ds' % length
@@ -209,6 +251,8 @@ wt602_ids = {
 	'font' : add_font,
 	'fonts' : add_fonts,
 	'header': add_header,
+	'text_info': add_text_info,
+	'text_infos': add_text_infos,
 	'style_header': add_style_header,
 	'styles': add_styles,
 	'text': add_text,
