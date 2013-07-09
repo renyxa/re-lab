@@ -559,17 +559,19 @@ def hdralst(hd, data, off):
 	while off < len(data):
 		item_s = struct.unpack(">h",data[off:off+2])[0]
 		item_e = struct.unpack(">h",data[off+2:off+4])[0]
-		add_iter(hd,"Sample group %d"%ind,"%02x %02x"%(item_s,item_e),off,4,">hh")
+		add_iter(hd,"Sample group %d"%ind,"Samples from %02x to %02x"%(item_s,item_e),off,4,">hh")
 		off += 4
 		ind += 1
 
 def hdra(hd, data, off):
-	off = 0
-	var0 = struct.unpack(">I",data[off:off+4])[0]
-	add_iter(hd,"Offset to List of Sample groups",var0,off,4,">I")
-	off += 4
-	size = struct.unpack(">I",data[off:off+4])[0]
-	add_iter(hd,"Offset to Samples Offsets",size,off,4,">I")
+	offset = 0
+	var0 = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter(hd,"Offset to List of Sample groups","%02x + %02x = %02x"%(off,var0,off+var0),offset,4,">I")
+
+	offset += 4
+	size = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter(hd,"Offset to Samples Offsets","%02x + %02x = %02x"%(off,size,off+size),offset,4,">I")
+
 
 def hdrbch (hd, data, off):
 	offset = 8
@@ -736,9 +738,19 @@ def vvst(hd, data, off):
 	x = ord(data[offset])
 	add_iter(hd,"DSP Depth",x,offset,1,"B")
 
+def samples(hd, data, off):
+	ind = 0
+	offset = 0
+	while offset < len(data):
+		v = struct.unpack(">I",data[offset:offset+4])[0]
+#		add_iter(hd,"Offset to Sample %d"%ind,"%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
+                add_iter(hd,"Offset to Sample %d"%ind,"%02x"%(v),offset,4,">I")	
+		offset += 4
+		ind += 1
+
 vprmfunc = {"bank":bank, "dkblock":dkblock, "elemhdr":elemhdr,
 	"hdra":hdra, "hdralst":hdralst, "hdrbch":hdrbch, "p1s0":p1s0, "p1s1":p1s1, 
-	"vbhdr":vbhdr, "VVST":vvst}
+	"vbhdr":vbhdr, "VVST":vvst, "samples":samples}
 
 def hdr1item (page,data,parent,offset=0):
 	off = 0
@@ -832,7 +844,7 @@ def hdr1item (page,data,parent,offset=0):
 			tmpoff = dboff
 			ind = 0
 			while tmpoff < h1off4:
-				add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%tmpoff)
+				add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%(offset+tmpoff))
 				ind += 1
 				tmpoff += 24
 
