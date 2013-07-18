@@ -28,6 +28,9 @@ import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import vfb
+import lrf
+import wt602
+import pdb
 from utils import *
 from hv2 import HexView
 
@@ -1313,6 +1316,12 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0][0:3] == "pub":
 					if pub.pub98_ids.has_key(ntype[1]):
 							pub.pub98_ids[ntype[1]](hd,size,data)
+				elif ntype[0] == "lrf":
+					if lrf.lrf_ids.has_key(ntype[1]):
+						lrf.lrf_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "wt602":
+					if wt602.wt602_ids.has_key(ntype[1]):
+						wt602.wt602_ids[ntype[1]](hd, size, data)
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)
@@ -1331,6 +1340,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "rx2":
 					if rx2.rx2_ids.has_key(ntype[1]):
 						rx2.rx2_ids[ntype[1]](hd,data)
+				elif ntype[0] == "pdb":
+					if pdb.pdb_ids.has_key(ntype[1]):
+						pdb.pdb_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
