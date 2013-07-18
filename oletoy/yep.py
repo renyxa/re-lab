@@ -743,8 +743,7 @@ def samples(hd, data, off):
 	offset = 0
 	while offset < len(data):
 		v = struct.unpack(">I",data[offset:offset+4])[0]
-#		add_iter(hd,"Offset to Sample %d"%ind,"%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
-                add_iter(hd,"Offset to Sample %d"%ind,"%02x"%(v),offset,4,">I")	
+		add_iter(hd,"Offset to Sample %d"%ind,"%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
 		offset += 4
 		ind += 1
 
@@ -911,7 +910,7 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
 	smplsiter = add_pgiter(page,"Samples","vprm","dontsave","",parent,"%02x  "%(offset+off))
 	haiter = add_pgiter(page,"Sample groups header","vprm","hdra",data[off:off+8],smplsiter,"%02x  "%(offset+off))
-	haiterlst = add_pgiter(page,"List of Sample groups","vprm","hdralst",data[off+8:off+hdraend],smplsiter,"%02x  "%(offset+off))
+	haiterlst = add_pgiter(page,"List of Sample groups","vprm","hdralst",data[off+8:off+hdraend],smplsiter,"%02x  "%(offset+off+8))
 	slist = []
 	shdrsize = struct.unpack(">I",data[off:off+4])[0]
 	shdrlen = struct.unpack(">I",data[off+4:off+8])[0]
@@ -923,7 +922,7 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 		tmpoff += 4
 	off2 += hdraend
 	hdrbend = off+struct.unpack(">I",data[off2:off2+4])[0]
-	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],smplsiter,"%02x  "%(offset+off+hdraend))
+	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],smplsiter,"%02x  "%(offset+off+hdraend),offset+off)
 	hdrb = []
 	off2 += 4
 	while off2 < hdrbend:

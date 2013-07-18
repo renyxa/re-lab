@@ -39,7 +39,7 @@ try:
 except:
 	pass
 
-version = "0.7.26"
+version = "0.7.28"
 
 ui_info = \
 '''<ui>
@@ -1256,9 +1256,13 @@ class ApplicationMainWindow(gtk.Window):
 				if ntype[0] == "vprm" or ntype[0] == "yep":
 					if ntype[1] in yep.vprmfunc:
 						off = 0
-						offstr = model.get_value(iter1,7)
-						if offstr:
-							off = int(offstr,16)
+						offsmp = model.get_value(iter1,8)
+						if offsmp == None:
+							offstr = model.get_value(iter1,7)
+							if offstr:
+								off = int(offstr,16)
+						else:
+							off = offsmp
 						yep.vprmfunc[ntype[1]](hd,data,off)
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":

@@ -32,7 +32,7 @@ def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,
 def add_tip (hd,iter,text):
 	hd.model.set (iter, 8, text)
 
-def pgiter(page, name, ftype, stype, data, iter1,coltype=None):
+def pgiter(page, name, ftype, stype, data, iter1,coltype=None, vprmsmp = None):
 	page.model.set_value(iter1,0,name)
 	page.model.set_value(iter1,1,(ftype,stype))
 	if data != None:
@@ -40,11 +40,14 @@ def pgiter(page, name, ftype, stype, data, iter1,coltype=None):
 		page.model.set_value(iter1,3,data)
 	if coltype !=None:
 		page.model.set_value(iter1,7,coltype)
+	if vprmsmp !=None:
+		page.model.set_value(iter1,8,vprmsmp)
+	
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 
-def add_pgiter (page, name, ftype, stype, data, parent = None, coltype = None):
+def add_pgiter (page, name, ftype, stype, data, parent = None, coltype = None, vprmsmp = None):
 	iter1 = page.model.append (parent,None)
-	pgiter(page, name, ftype, stype, data, iter1, coltype)
+	pgiter(page, name, ftype, stype, data, iter1, coltype, vprmsmp)
 	return iter1
 
 def prep_pgiter (page, name, ftype, stype, data, parent = None, coltype=None):
