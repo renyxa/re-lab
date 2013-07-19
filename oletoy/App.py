@@ -31,6 +31,7 @@ class Page:
 		self.items = ''
 		self.version = 0
 		self.hd = None
+		self.hpaned = None
 		self.dict = None
 		self.dictmod = None
 		self.dictview = None

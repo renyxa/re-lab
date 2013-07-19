@@ -39,7 +39,7 @@ try:
 except:
 	pass
 
-version = "0.7.28"
+version = "0.7.29"
 
 ui_info = \
 '''<ui>
@@ -66,6 +66,7 @@ ui_info = \
 	<menu action='ViewMenu'>
 		<menuitem action='Dict'/>
 		<menuitem action='Graph'/>
+		<menuitem action='Sync Panels'/>
 	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='Manual'/>
@@ -237,6 +238,11 @@ class ApplicationMainWindow(gtk.Window):
 				"_Graph","<control>G",					  # label, accelerator
 				"Show graph",							 # tooltip
 				self.activate_graph),
+			( "Sync Panels", gtk.STOCK_INDEX,					# name, stock id
+				"S_ync","<control>Y",					  # label, accelerator
+				"Sync Panels",							 # tooltip
+				self.activate_syncpanels),
+
 			( "Options", None,                    # name, stock id
 				"Op_tions","<control>T",                      # label, accelerator
 				"Configuration options",                             # tooltip
@@ -335,6 +341,15 @@ class ApplicationMainWindow(gtk.Window):
 		widget.window.draw_layout(gc, 0, 0, pl)
 
 
+	def activate_syncpanels(self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			hp_pos = self.das[pn].hpaned.get_position()
+			vp_pos = self.das[pn].hd.vpaned.get_position()
+			for i in self.das:
+				self.das[i].hpaned.set_position(hp_pos)
+				self.das[i].hd.vpaned.set_position(vp_pos)
+		
 	def activate_manual(self, action):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
@@ -1445,9 +1460,9 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdrend.connect('edited', self.edited_cb)
 				doc.hd.hdview.set_tooltip_column(8)
 				
-				hpaned = gtk.HPaned()
-				hpaned.add1(scrolled)
-				hpaned.add2(vpaned)
+				doc.hpaned = gtk.HPaned()
+				doc.hpaned.add1(scrolled)
+				doc.hpaned.add2(vpaned)
 				label = gtk.Label(doc.pname)
 #				label.set_use_markup(True)
 #				label.set_markup("<span background='green'>%s</span>"%doc.pname)
@@ -1457,8 +1472,8 @@ class ApplicationMainWindow(gtk.Window):
 #				style = eventbox.get_style().copy ()
 #				style.bg[gtk.STATE_NORMAL] = eventbox.get_colormap().alloc_color (0xffff, 0x0000, 0x0000)
 #				self.notebook.set_style (style)
-				self.notebook.append_page(hpaned, eventbox)
-				self.notebook.set_tab_reorderable(hpaned, True)
+				self.notebook.append_page(doc.hpaned, eventbox)
+				self.notebook.set_tab_reorderable(doc.hpaned, True)
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
 				self.notebook.set_current_page(-1)
