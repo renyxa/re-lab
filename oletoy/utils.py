@@ -73,13 +73,23 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
+def d2asc(data,ln=0,rch=unicode("\xC2\xB7","utf8")):
+	asc = ""
+	for i in range(len(data)):
+		ch = data[i]
+		if ord(ch) < 32 or ord(ch) > 126:
+			ch = rch
+		asc += ch
+		if ln != 0 and i > 0 and (i+1)%ln == 0:
+			asc += "\n"
+	return asc
+
 def d2hex(data,space="",ln=0):
 	s = ""
 	for i in range(len(data)):
 		s += "%02x%s"%(ord(data[i]),space)
-		if ln != 0 and (i % ln) == 0:
+		if ln != 0 and i > 0 and (i+1)%ln == 0:
 			s += "\n"
-			
 	return s
 
 def key2txt(key,data,txt="Unknown"):

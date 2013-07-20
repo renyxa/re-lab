@@ -18,6 +18,7 @@
 import sys,struct,ctypes
 import gobject
 import gtk, pango
+import difflib
 import tree
 import hexdump
 import App, cmd
@@ -39,7 +40,7 @@ try:
 except:
 	pass
 
-version = "0.7.29"
+version = "0.7.30"
 
 ui_info = \
 '''<ui>
@@ -67,6 +68,7 @@ ui_info = \
 		<menuitem action='Dict'/>
 		<menuitem action='Graph'/>
 		<menuitem action='Sync Panels'/>
+		<menuitem action='Diff'/>
 	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='Manual'/>
@@ -147,6 +149,11 @@ class ApplicationMainWindow(gtk.Window):
 		self.cmdhistory = []
 		self.curcmd = -1
 
+		self.da1txt = ""
+		self.da2txt = ""
+		self.da3txt = ""
+		self.da4txt = ""
+
 		# configuration options
 		self.options_le = 1
 		self.options_be = 0
@@ -173,6 +180,85 @@ class ApplicationMainWindow(gtk.Window):
 			for i in range(len(sys.argv)-1):
 				self.fname = sys.argv[i+1]
 				self.activate_open()
+
+	def diff_test(self):
+		pn = self.notebook.get_current_page()
+		if pn != -1 and pn+1 in self.das:
+			doc1 = self.das[pn]
+			doc2 = self.das[pn+1]
+			s1 = doc1.view.get_selection()
+			m1, i1 = s1.get_selected()
+			s2 = doc2.view.get_selection()
+			m2, i2 = s2.get_selected()
+			data1 = m1.get_value(i1,3)
+			data2 = m2.get_value(i2,3)
+			sm = difflib.SequenceMatcher(None, data1, data2, False)
+			a = ""
+			b = ""
+			asca = ""
+			ascb = ""
+			for tag, i1, i2, j1, j2 in sm.get_opcodes():
+				if tag == 'delete':
+					tad = data1[i1:i2]
+					a += "<span background='#79B9FF'>"+d2hex(tad, " ", 16)+"</span>"
+					if a[-1] != "\n":
+						a += "\n"
+					asca += d2asc(tad, 16)
+					if asca[-1] != "\n":
+						asca += "\n"
+					n = 1+(len(tad)-1)/16
+					b += "\n"*n
+					ascb += "\n"*n
+				if tag == 'insert':
+					tbd = data2[j1:j2]
+					b += "<span background='#79B9FF'>"+d2hex(tbd, " ", 16)+"</span>"
+					if b[-1] != "\n":
+						b += "\n"
+					ascb += d2asc(tbd, 16)
+					if ascb[-1] != "\n":
+						ascb += "\n"
+					n = 1+(len(tbd)-1)/16
+					a += "\n"*n
+					asca += "\n"*n
+				if tag == 'equal':
+					tad = data1[i1:i2]
+					tt = d2hex(tad, " ", 16)
+					tta = d2asc(tad, 16)
+					if tt[-1] != "\n":
+						tt += "\n"
+						tta += "\n"
+					a += tt
+					b += tt
+					asca += tta
+					ascb += tta
+				if tag == 'replace':
+					tad = data1[i1:i2]
+					tbd = data2[j1:j2]
+					a += "<span background='#FFD879'>"+d2hex(tad, " ", 16)+"</span>"
+					b += "<span background='#FFD879'>"+d2hex(tbd, " ", 16)+"</span>"
+					if a[-1] != "\n":
+						a += "\n"
+					if b[-1] != "\n":
+						b += "\n"
+					asca += d2asc(tad, 16)
+					if asca[-1] != "\n":
+						asca += "\n"
+					ascb += d2asc(tbd, 16)
+					if ascb[-1] != "\n":
+						ascb += "\n"
+					
+					na = (len(tad)-1)/16
+					nb = (len(tbd)-1)/16
+					if na > nb:
+						b += "\n"*(na-nb)
+						ascb += "\n"*(na-nb)
+					elif nb > na:
+						a += "\n"*(nb-na)
+						asca += "\n"*(nb-na)
+			self.da1txt = a
+			self.da2txt = b
+			self.da3txt = asca
+			self.da4txt = ascb
 
 
 	def init_config(self): # redefine UI/behaviour options from file
@@ -242,6 +328,10 @@ class ApplicationMainWindow(gtk.Window):
 				"S_ync","<control>Y",					  # label, accelerator
 				"Sync Panels",							 # tooltip
 				self.activate_syncpanels),
+			( "Diff", gtk.STOCK_INDEX,					# name, stock id
+				"Diff","<control>X",					  # label, accelerator
+				"Diff for two records",							 # tooltip
+				self.activate_diff),
 
 			( "Options", None,                    # name, stock id
 				"Op_tions","<control>T",                      # label, accelerator
@@ -349,7 +439,42 @@ class ApplicationMainWindow(gtk.Window):
 			for i in self.das:
 				self.das[i].hpaned.set_position(hp_pos)
 				self.das[i].hd.vpaned.set_position(vp_pos)
-		
+
+	def activate_diff(self, action):
+		w = gtk.Window()
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(760,400)
+		da = gtk.DrawingArea()
+		da.connect('expose_event', self.draw_diff)
+		self.diff_test()
+		w.set_title("OLE Toy DIFF")
+		s.add_with_viewport(da)
+		w.add(s)
+		w.show_all()
+
+	def draw_diff (self, widget, event):
+		pl1 = widget.create_pango_layout("")
+		pl2 = widget.create_pango_layout("")
+		pl3 = widget.create_pango_layout("")
+		pl4= widget.create_pango_layout("")
+		pl1.set_markup("<span font_family='Monospace'>"+self.da1txt+"</span>")
+		pl2.set_markup("<span font_family='Monospace'>"+self.da2txt+"</span>")
+		pl3.set_markup("<span font_family='Monospace'>"+self.da3txt+"</span>")
+		pl4.set_markup("<span font_family='Monospace'>"+self.da4txt+"</span>")
+
+		w1,h1 = pl1.get_size()
+		w2,h2 = pl2.get_size()
+		w3,h3 = pl3.get_size()
+		w4,h4 = pl4.get_size()
+		gc = widget.window.new_gc()
+		widget.set_size_request((w1+w2+w3+w4)/1000, (h1+h2+h3+h4)/1000)
+		widget.window.draw_layout(gc, 0, 0, pl1)
+		widget.window.draw_layout(gc, w1/1000+2, 0, pl3)
+		widget.window.draw_layout(gc, (w1+w3)/1000+4,0, pl2)
+		widget.window.draw_layout(gc, (w1+w3+w2)/1000+6,0, pl4)
+
+
 	def activate_manual(self, action):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
