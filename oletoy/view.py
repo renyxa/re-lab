@@ -409,18 +409,37 @@ class ApplicationMainWindow(gtk.Window):
 			return
 		w.set_title("OLE Toy DIFF")
 		s.add_with_viewport(da)
-		entleft = gtk.Entry()
-		entright = gtk.Entry()
-		entleft.set_text("%s (tab %s)/%s"%(self.das[pn].pname,pn,m1.get_string_from_iter(iter1)))
-		entright.set_text("%s (tab %s)/%s"%(self.das[pn+1].pname,pn+1,m2.get_string_from_iter(iter2)))
+		self.entleft = gtk.Entry()
+		self.entright = gtk.Entry()
+		self.entleft.set_text("%s (tab %s)/%s"%(self.das[pn].pname,pn,m1.get_string_from_iter(iter1)))
+		self.entright.set_text("%s (tab %s)/%s"%(self.das[pn+1].pname,pn+1,m2.get_string_from_iter(iter2)))
+		self.entleft.connect("activate",self.on_diff_entry_activate,1)
+		self.entright.connect("activate",self.on_diff_entry_activate,2)
+		self.entleft.connect("key-press-event", self.on_diff_entry_keypressed,1)
+		self.entright.connect("key-press-event", self.on_diff_entry_keypressed,2)
 		hbox = gtk.HBox()
-		hbox.pack_start(entleft,1,1,0)
-		hbox.pack_start(entright,1,1,0)
+		hbox.pack_start(self.entleft,1,1,0)
+		hbox.pack_start(self.entright,1,1,0)
 		vbox = gtk.VBox()
 		vbox.pack_start(s,1,1,0)
 		vbox.pack_end(hbox,0,0,0)
 		w.add(vbox)
 		w.show_all()
+
+	def on_diff_entry_activate(self,entry,eid):
+		if eid == 1: # left
+			o = self.entleft.get_text().split()
+			# make left fun
+		else:
+			o = self.entright.get_text().split()
+			# make right fun
+
+	def on_diff_entry_keypressed (self, view, event, eid):
+		# arrow up/down to go prev/next iter 
+		if event.keyval == 65362:
+			print 'up the tree'
+		elif event.keyval == 65364:
+			print 'down the tree'
 
 	def draw_diff (self, widget, event):
 		x,y,width,height = widget.allocation
@@ -1258,7 +1277,6 @@ class ApplicationMainWindow(gtk.Window):
 						ts = self.das[pn].view.get_selection()
 						m,i = ts.get_selected()
 						self.das[pn].backpath = m.get_string_from_iter(i)
-#						print "Go to:",val[1],"Backpath:",self.das[pn].backpath
 						for i in range(dm.iter_n_children(None)):
 							ci = dm.iter_nth_child(None,i)
 							v2 = dm.get_value(ci,2)
