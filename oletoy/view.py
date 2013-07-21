@@ -374,7 +374,9 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>^T</tt> opens \"Options\" dialog to adjust conversion of selected bytes.\n\n\
 	For PUB 4 bytes would be additionaly converted to points, cm and inches.\n\
 	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\
-	For CDR select outl/fild ID and press arrow right to scroll to it."
+	For CDR select outl/fild ID and press arrow right to scroll to it.\n\
+	For YEP press arrow right on VPRM block to jump to VWDT sample.\n\
+	Press Backspace to come back."
 
 		pl = widget.create_pango_layout("")
 		pl.set_markup(mytxt)
@@ -1253,7 +1255,10 @@ class ApplicationMainWindow(gtk.Window):
 					if val[0] == "cdr goto":
 						pn = self.notebook.get_current_page()
 						dm = self.das[pn].dictmod
-						print "Go to:",val[1]
+						ts = self.das[pn].view.get_selection()
+						m,i = ts.get_selected()
+						self.das[pn].backpath = m.get_string_from_iter(i)
+#						print "Go to:",val[1],"Backpath:",self.das[pn].backpath
 						for i in range(dm.iter_n_children(None)):
 							ci = dm.iter_nth_child(None,i)
 							v2 = dm.get_value(ci,2)
