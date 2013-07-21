@@ -40,7 +40,7 @@ try:
 except:
 	pass
 
-version = "0.7.30"
+version = "0.7.31"
 
 ui_info = \
 '''<ui>
@@ -149,11 +149,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.cmdhistory = []
 		self.curcmd = -1
 
-		self.da1txt = ""
-		self.da2txt = ""
-		self.da3txt = ""
-		self.da4txt = ""
-		self.diffarr = []
+		self.diffarr = [] # for DIFF window data
 
 		# configuration options
 		self.options_le = 1
@@ -1225,6 +1221,27 @@ class ApplicationMainWindow(gtk.Window):
 				pn = self.notebook.get_current_page()
 				ha = self.das[pn].scrolled.get_hadjustment()
 				ha.set_value(0)
+				ntype = model.get_value(iter1,1)
+				if ntype[0] == 'vprm' and ntype[1] == 'hdrbch':
+					self.das[pn].backpath = model.get_string_from_iter(iter1)
+					goto = model.get_value(iter1,4)
+					try:
+						self.das[pn].view.expand_to_path(goto)
+						self.das[pn].view.set_cursor_on_cell(goto)
+					except:
+						print "No such path"
+			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65288:
+				pn = self.notebook.get_current_page()
+				goto = self.das[pn].backpath
+				if goto != None:
+					print goto
+					try:
+						self.das[pn].view.expand_to_path(goto)
+						self.das[pn].view.set_cursor_on_cell(goto)
+					except:
+						print "No such path for back path"
+
+
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()

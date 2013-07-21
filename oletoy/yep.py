@@ -877,10 +877,11 @@ def vwdt(page,data,sampleid,blockid,vwdtiter,off):
 	if fmt&0x4:
 		len1 *= 16
 	if off1 > 0:
-		add_pgiter(page,"%s (Left)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+		ri = add_pgiter(page,"%s (Left)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
 		add_pgiter(page,"%s (Right)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%(off1*2+off))
 	else:
-		add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+		ri = add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+	return ri
 
 def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	sig = data[:16]
@@ -940,8 +941,10 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 					bend = hdrb[j]
 					v3 = ord(data[off2+9])
 					v4 = ord(data[off2+8])
-					add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
-					vwdt(page,data[off2:bend],ind,j,vwdtiter,vwdtoff)
+					ti = add_pgiter(page,"Block %04d %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+					ri = vwdt(page,data[off2:bend],ind,j,vwdtiter,vwdtoff)
+					page.model.set_value(ti,4,page.model.get_string_from_iter(ri))
+
 					off2 = bend
 		except:
 			print 'Failed in the loop at lines 737..747'
