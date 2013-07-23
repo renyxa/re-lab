@@ -404,15 +404,15 @@ class ApplicationMainWindow(gtk.Window):
 		da.connect('expose_event', self.draw_diff)
 		pn = self.notebook.get_current_page()
 		if pn != -1:
-			m1,iter1,m2,iter2 = self.diff_test()
-		if m1 == None:
+			self.m1,self.iter1,self.m2,self.iter2 = self.diff_test()
+		if self.m1 == None:
 			return
 		w.set_title("OLE Toy DIFF")
 		s.add_with_viewport(da)
 		self.entleft = gtk.Entry()
 		self.entright = gtk.Entry()
-		self.entleft.set_text("%s (tab %s)/%s"%(self.das[pn].pname,pn,m1.get_string_from_iter(iter1)))
-		self.entright.set_text("%s (tab %s)/%s"%(self.das[pn+1].pname,pn+1,m2.get_string_from_iter(iter2)))
+		self.entleft.set_text("%s (tab %s)/%s"%(self.das[pn].pname,pn,self.m1.get_string_from_iter(self.iter1)))
+		self.entright.set_text("%s (tab %s)/%s"%(self.das[pn+1].pname,pn+1,self.m2.get_string_from_iter(self.iter2)))
 		self.entleft.connect("activate",self.on_diff_entry_activate,1)
 		self.entright.connect("activate",self.on_diff_entry_activate,2)
 		self.entleft.connect("key-press-event", self.on_diff_entry_keypressed,1)
@@ -439,6 +439,9 @@ class ApplicationMainWindow(gtk.Window):
 		if event.keyval == 65362:
 			print 'up the tree'
 		elif event.keyval == 65364:
+#			ni = self.m1.iter_next(self.iter1)
+#			self.iter1 = ni
+#			self.m1.get_string_from_iter(ni)
 			print 'down the tree'
 
 	def draw_diff (self, widget, event):
