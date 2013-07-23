@@ -479,7 +479,7 @@ def elemhdr (hd, data, off):
 	x = struct.unpack(">H",data[offset:offset+2])[0]
 	if x >=32768:
                x = x-32768
-	add_iter(hd,"Assigned Sample",x,offset,2,"<h")
+	add_iter(hd,"Assigned Sample group",x,offset,2,"<h")
 	
 	offset = 4
 	x = ord(data[offset])
@@ -843,7 +843,7 @@ def hdr1item (page,data,parent,offset=0):
 			tmpoff = dboff
 			ind = 0
 			while tmpoff < h1off4:
-				add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%(offset+tmpoff))
+				add_pgiter(page,"Drumkit block %d %s"%(ind,pitches[ind+13]),"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%(offset+tmpoff))
 				ind += 1
 				tmpoff += 24
 
@@ -873,7 +873,7 @@ def vwdt(page,data,sampleid,blockid,vwdtiter,off):
 	fmt = ord(data[0x2c])
 	# FIXME! need to find how to interpret "lenghts/offsets" in fmt 6
 	vdata = page.model.get_value(vwdtiter,3)
-	iname = "Sample %02x, Block %02x [FQ: %d]"%(sampleid,blockid,freq)
+	iname = "Sample group %d, Block %04d [FQ: %d]"%(sampleid,blockid,freq)
 	if fmt&0x4:
 		len1 *= 16
 	if off1 > 0:
