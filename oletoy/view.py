@@ -150,6 +150,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.curcmd = -1
 
 		self.diffarr = [] # for DIFF window data
+		self.cbm = None
 
 		# configuration options
 		self.options_le = 1
@@ -187,8 +188,12 @@ class ApplicationMainWindow(gtk.Window):
 			doc2 = self.das[pn+1]
 			s1 = doc1.view.get_selection()
 			m1, iter1 = s1.get_selected()
+			if iter1 == None:
+				iter1 = doc1.model.get_iter_first()
 			s2 = doc2.view.get_selection()
 			m2, iter2 = s2.get_selected()
+			if iter2 == None:
+				iter2 = doc2.model.get_iter_first()
 			data1 = m1.get_value(iter1,3)
 			data2 = m2.get_value(iter2,3)
 			sm = difflib.SequenceMatcher(None, data1, data2, False)
@@ -409,16 +414,32 @@ class ApplicationMainWindow(gtk.Window):
 			return
 		w.set_title("OLE Toy DIFF")
 		s.add_with_viewport(da)
+		self.cbleft = gtk.ComboBoxEntry()
+		self.cbright = gtk.ComboBoxEntry()
+		self.cbm = gtk.ListStore(gobject.TYPE_STRING)
+		for i in self.das:
+			li = self.cbm.append()
+			self.cbm.set_value(li,0,"%s (tab %s)"%(self.das[i].pname,i))
+
+		self.cbleft.set_model(self.cbm)
+		self.cbleft.set_text_column(0)
+		self.cbleft.set_active(pn)
+		self.cbright.set_model(self.cbm)
+		self.cbright.set_text_column(0)
+		self.cbright.set_active(pn+1)
+
 		self.entleft = gtk.Entry()
 		self.entright = gtk.Entry()
-		self.entleft.set_text("%s (tab %s)/%s"%(self.das[pn].pname,pn,self.m1.get_string_from_iter(self.iter1)))
-		self.entright.set_text("%s (tab %s)/%s"%(self.das[pn+1].pname,pn+1,self.m2.get_string_from_iter(self.iter2)))
+		self.entleft.set_text("%s"%self.m1.get_string_from_iter(self.iter1))
+		self.entright.set_text("%s"%self.m2.get_string_from_iter(self.iter2))
 		self.entleft.connect("activate",self.on_diff_entry_activate,1)
 		self.entright.connect("activate",self.on_diff_entry_activate,2)
 		self.entleft.connect("key-press-event", self.on_diff_entry_keypressed,1)
 		self.entright.connect("key-press-event", self.on_diff_entry_keypressed,2)
 		hbox = gtk.HBox()
+		hbox.pack_start(self.cbleft,1,1,0)
 		hbox.pack_start(self.entleft,1,1,0)
+		hbox.pack_start(self.cbright,1,1,0)
 		hbox.pack_start(self.entright,1,1,0)
 		vbox = gtk.VBox()
 		vbox.pack_start(s,1,1,0)
@@ -1166,6 +1187,11 @@ class ApplicationMainWindow(gtk.Window):
 				for i in range(pn,len(self.das)):
 					self.das[i] = self.das[i+1]
 				del self.das[len(self.das)-1]
+
+			if self.cbm != None:
+				li = self.cbm.get_iter_from_string("%s"%pn)
+				self.cbm.remove(li)
+
 		return
 
 	def on_row_keypressed (self, view, event):
@@ -1732,7 +1758,9 @@ class ApplicationMainWindow(gtk.Window):
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
 				self.notebook.set_current_page(-1)
-
+				if self.cbm != None:
+					li = self.cbm.append()
+					self.cbm.set_value(li,0,"%s (tab %s)"%(doc.pname,dnum))
 			else:
 				print err
 		return
