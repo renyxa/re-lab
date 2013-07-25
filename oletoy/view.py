@@ -119,6 +119,7 @@ class ApplicationMainWindow(gtk.Window):
 			0,						 0);
 		
 		self.notebook =gtk.Notebook()
+		self.notebook.connect("page-reordered",self.on_page_reordered)
 		self.notebook.set_tab_pos(gtk.POS_BOTTOM)
 		self.notebook.set_scrollable(True)
 		table.attach(self.notebook,
@@ -1191,7 +1192,6 @@ class ApplicationMainWindow(gtk.Window):
 			if self.cbm != None:
 				li = self.cbm.get_iter_from_string("%s"%pn)
 				self.cbm.remove(li)
-
 		return
 
 	def on_row_keypressed (self, view, event):
@@ -1490,6 +1490,37 @@ class ApplicationMainWindow(gtk.Window):
 		self.on_row_activated(self.das[pn].view,model.get_path(iter1),0)
 		hd.hdview.set_cursor(path)
 		hd.hdview.grab_focus()
+
+	def on_page_reordered(self,nb,widget,num):
+		# to detect from where tab was dragged
+		# not aware about straight way to find it
+		# hence use reverse way
+		for i in range(len(self.das)):
+			if i != num:
+				if widget == self.das[i].hpaned:
+					numold = i
+		if numold > num: # moved from right to left
+			# skip to num and after numold
+			for i in range(len(self.das)):
+				if i == num:
+					tmp = self.das[i]
+					self.das[i] = self.das[numold]
+				elif i > num and i <= numold:
+					tmp2 = self.das[i]
+					self.das[i] = tmp
+					tmp = tmp2
+				if i > numold:
+					break
+		else: # moved from left to right
+			# skip to num and after numold
+			for i in range(len(self.das)):
+				if i >= numold and i < num:
+					if i == numold:
+						tmp = self.das[i]
+					self.das[i] = self.das[i+1]
+				elif i == num:
+					self.das[i] = tmp
+					break
 
 	def on_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
