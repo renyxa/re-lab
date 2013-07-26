@@ -177,7 +177,7 @@ class Page:
 			return 0
 
 		pdbtype = buf[0x3c:0x44]
-		if pdbtype == "PNRdPPrs":
+		if pdbtype in ['DataPlkr', 'PNRdPPrs', 'SDocSilX', 'TEXtREAd', 'TEXtTlDc', 'ToGoToGo', 'zTXTGPlm']:
 			self.type = "PDB"
 			print "Probably Palm e-book"
 			pdb.open(buf, self, parent, pdbtype)

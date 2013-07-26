@@ -75,6 +75,78 @@ class ereader_parser(pdb_parser):
 			unscrambled = [(chr(ord(b) ^ 0xa5)) for b in data]
 			add_pgiter(self.page, "Uncompressed", 'pdb', 0, unscrambled, reciter)
 
+class isilo_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(isilo_parser, self).__init__(data, page, parent)
+		self.compression = None
+
+	def parse_index_record(self, data, parent):
+		pass
+
+	def parse_data_record(self, n, data, parent):
+		pass
+
+class isilo3_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(isilo3_parser, self).__init__(data, page, parent)
+		self.compression = None
+
+	def parse_index_record(self, data, parent):
+		pass
+
+	def parse_data_record(self, n, data, parent):
+		pass
+
+class palmdoc_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(palmdoc_parser, self).__init__(data, page, parent)
+		self.compression = None
+
+	def parse_index_record(self, data, parent):
+		pass
+
+	def parse_data_record(self, n, data, parent):
+		pass
+
+class plucker_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(plucker_parser, self).__init__(data, page, parent)
+		self.compression = None
+
+	def parse_index_record(self, data, parent):
+		pass
+
+	def parse_data_record(self, n, data, parent):
+		pass
+
+class tealdoc_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(tealdoc_parser, self).__init__(data, page, parent)
+		self.compression = None
+
+	def parse_index_record(self, data, parent):
+		pass
+
+	def parse_data_record(self, n, data, parent):
+		pass
+
+class ztxt_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(ztxt_parser, self).__init__(data, page, parent)
+		self.compression = None
+
+	def parse_index_record(self, data, parent):
+		pass
+
+	def parse_data_record(self, n, data, parent):
+		pass
+
 def add_ereader_index(hd, size, data):
 	(compression, off) = rdata(data, 0, '>H')
 	add_iter(hd, 'Compression', compression, 0, 2, '>H')
@@ -95,7 +167,13 @@ pdb_ids = {
 }
 
 pdb_types = {
+	'DataPlkr': plucker_parser,
 	'PNRdPPrs': ereader_parser,
+	'SDocSilX': isilo3_parser,
+	'TEXtREAd': palmdoc_parser,
+	'TEXtTlDc': tealdoc_parser,
+	'ToGoToGo': isilo_parser,
+	'zTXTGPlm': ztxt_parser,
 }
 
 def open(buf, page, parent, pdbtype):
