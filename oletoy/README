@@ -30,6 +30,13 @@ As of now OLE Toy reads and parses:
 - REX, RX2 (Propellerheads ReCycle)
 - XML
 - CDX (CambridgeSoft ChemDraw, BIPU support)
+- LRF (Sony BroadBand EBook, also known as BBeB)
+- PDB (various Palm-based e-book formats, currently eReader, Plucker,
+       PalmDoc, TealDoc, zTXT, iSilo ver. 1 to 3. Very BIPU ATM, but all
+       the formats except iSilo are documented or have been reverse
+       engineered, so it is just a matter of time and effort to support
+       them properly.)
+- WT602 (Software602 602Text, BIPU support)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:
