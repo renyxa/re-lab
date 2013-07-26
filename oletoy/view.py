@@ -17,7 +17,8 @@
 
 import sys,struct,ctypes
 import gobject
-import gtk, pango
+import gtk, pango, cairo
+import difflib
 import tree
 import hexdump
 import App, cmd
@@ -39,7 +40,7 @@ try:
 except:
 	pass
 
-version = "0.7.26"
+version = "0.7.31"
 
 ui_info = \
 '''<ui>
@@ -66,6 +67,8 @@ ui_info = \
 	<menu action='ViewMenu'>
 		<menuitem action='Dict'/>
 		<menuitem action='Graph'/>
+		<menuitem action='Sync Panels'/>
+		<menuitem action='Diff'/>
 	</menu>
 	<menu action='HelpMenu'>
 		<menuitem action='Manual'/>
@@ -116,6 +119,7 @@ class ApplicationMainWindow(gtk.Window):
 			0,						 0);
 		
 		self.notebook =gtk.Notebook()
+		self.notebook.connect("page-reordered",self.on_page_reordered)
 		self.notebook.set_tab_pos(gtk.POS_BOTTOM)
 		self.notebook.set_scrollable(True)
 		table.attach(self.notebook,
@@ -146,6 +150,9 @@ class ApplicationMainWindow(gtk.Window):
 		self.cmdhistory = []
 		self.curcmd = -1
 
+		self.diffarr = [] # for DIFF window data
+		self.cbm = None
+
 		# configuration options
 		self.options_le = 1
 		self.options_be = 0
@@ -173,6 +180,45 @@ class ApplicationMainWindow(gtk.Window):
 				self.fname = sys.argv[i+1]
 				self.activate_open()
 
+	def diff_test(self):
+		pn = self.notebook.get_current_page()
+		if pn != -1 and (pn+1 in self.das):
+			del self.diffarr
+			self.diffarr = []
+			doc1 = self.das[pn]
+			doc2 = self.das[pn+1]
+			s1 = doc1.view.get_selection()
+			m1, iter1 = s1.get_selected()
+			if iter1 == None:
+				iter1 = doc1.model.get_iter_first()
+			s2 = doc2.view.get_selection()
+			m2, iter2 = s2.get_selected()
+			if iter2 == None:
+				iter2 = doc2.model.get_iter_first()
+			data1 = m1.get_value(iter1,3)
+			data2 = m2.get_value(iter2,3)
+			sm = difflib.SequenceMatcher(None, data1, data2, False)
+			ta = ""
+			tb = ""
+			clra = 1,1,1
+			clrb = 1,1,1
+			for tag, i1, i2, j1, j2 in sm.get_opcodes():
+				if tag == 'delete':
+					ta = data1[i1:i2]
+					tb = ""
+				if tag == 'insert':
+					tb = data2[j1:j2]
+					ta = ""
+				if tag == 'equal':
+					ta = data1[i1:i2]
+					tb = ta
+				if tag == 'replace':
+					ta = data1[i1:i2]
+					tb = data2[j1:j2]
+				self.diffarr.append((ta,tb,tag))
+			return m1,iter1,m2,iter2
+		else:
+			return None,None,None,None
 
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"
@@ -237,6 +283,15 @@ class ApplicationMainWindow(gtk.Window):
 				"_Graph","<control>G",					  # label, accelerator
 				"Show graph",							 # tooltip
 				self.activate_graph),
+			( "Sync Panels", gtk.STOCK_INDEX,					# name, stock id
+				"S_ync","<control>Y",					  # label, accelerator
+				"Sync Panels",							 # tooltip
+				self.activate_syncpanels),
+			( "Diff", gtk.STOCK_INDEX,					# name, stock id
+				"Diff","<control>X",					  # label, accelerator
+				"Diff for two records",							 # tooltip
+				self.activate_diff),
+
 			( "Options", None,                    # name, stock id
 				"Op_tions","<control>T",                      # label, accelerator
 				"Configuration options",                             # tooltip
@@ -325,7 +380,9 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>^T</tt> opens \"Options\" dialog to adjust conversion of selected bytes.\n\n\
 	For PUB 4 bytes would be additionaly converted to points, cm and inches.\n\
 	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\
-	For CDR select outl/fild ID and press arrow right to scroll to it."
+	For CDR select outl/fild ID and press arrow right to scroll to it.\n\
+	For YEP press arrow right on VPRM block to jump to VWDT sample.\n\
+	Press Backspace to come back."
 
 		pl = widget.create_pango_layout("")
 		pl.set_markup(mytxt)
@@ -334,6 +391,218 @@ class ApplicationMainWindow(gtk.Window):
 		widget.set_size_request(w/1000, h/1000)
 		widget.window.draw_layout(gc, 0, 0, pl)
 
+
+	def activate_syncpanels(self, action):
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			hp_pos = self.das[pn].hpaned.get_position()
+			vp_pos = self.das[pn].hd.vpaned.get_position()
+			for i in self.das:
+				self.das[i].hpaned.set_position(hp_pos)
+				self.das[i].hd.vpaned.set_position(vp_pos)
+
+	def activate_diff(self, action):
+		w = gtk.Window()
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(1095,400)
+		da = gtk.DrawingArea()
+		da.connect('expose_event', self.draw_diff)
+		pn = self.notebook.get_current_page()
+		if pn != -1:
+			self.m1,self.iter1,self.m2,self.iter2 = self.diff_test()
+		if self.m1 == None:
+			return
+		w.set_title("OLE Toy DIFF")
+		s.add_with_viewport(da)
+		self.cbleft = gtk.ComboBoxEntry()
+		self.cbright = gtk.ComboBoxEntry()
+		self.cbm = gtk.ListStore(gobject.TYPE_STRING)
+		for i in self.das:
+			li = self.cbm.append()
+			self.cbm.set_value(li,0,"%s (tab %s)"%(self.das[i].pname,i))
+
+		self.cbleft.set_model(self.cbm)
+		self.cbleft.set_text_column(0)
+		self.cbleft.set_active(pn)
+		self.cbright.set_model(self.cbm)
+		self.cbright.set_text_column(0)
+		self.cbright.set_active(pn+1)
+
+		self.entleft = gtk.Entry()
+		self.entright = gtk.Entry()
+		self.entleft.set_text("%s"%self.m1.get_string_from_iter(self.iter1))
+		self.entright.set_text("%s"%self.m2.get_string_from_iter(self.iter2))
+		self.entleft.connect("activate",self.on_diff_entry_activate,1)
+		self.entright.connect("activate",self.on_diff_entry_activate,2)
+		self.entleft.connect("key-press-event", self.on_diff_entry_keypressed,1)
+		self.entright.connect("key-press-event", self.on_diff_entry_keypressed,2)
+		hbox = gtk.HBox()
+		hbox.pack_start(self.cbleft,1,1,0)
+		hbox.pack_start(self.entleft,1,1,0)
+		hbox.pack_start(self.cbright,1,1,0)
+		hbox.pack_start(self.entright,1,1,0)
+		vbox = gtk.VBox()
+		vbox.pack_start(s,1,1,0)
+		vbox.pack_end(hbox,0,0,0)
+		w.add(vbox)
+		w.show_all()
+
+	def on_diff_entry_activate(self,entry,eid):
+		if eid == 1: # left
+			o = self.entleft.get_text().split()
+			# make left fun
+		else:
+			o = self.entright.get_text().split()
+			# make right fun
+
+	def on_diff_entry_keypressed (self, view, event, eid):
+		# arrow up/down to go prev/next iter 
+		if event.keyval == 65362:
+			print 'up the tree'
+		elif event.keyval == 65364:
+#			ni = self.m1.iter_next(self.iter1)
+#			self.iter1 = ni
+#			self.m1.get_string_from_iter(ni)
+			print 'down the tree'
+
+	def draw_diff (self, widget, event):
+		x,y,width,height = widget.allocation
+		mctx = widget.window.cairo_create()
+		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+		ctx = cairo.Context (cs)
+		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		ctx.set_font_size(14)
+		ctx.set_line_width(1)
+		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
+		wt = int(dx)
+		ht = int(ht+4)
+		x,y,width,height = widget.allocation
+	# clear everything
+		ctx.set_source_rgb(0.95,0.95,0.95)
+		ctx.rectangle(0,0,width,height)
+		ctx.fill()
+		addr = 1
+		for i in self.diffarr:
+			ta,tb,tag = i
+			if tag == 'delete':
+				hexa = d2hex(ta, " ", 16).split("\n")
+				asca = d2asc(ta,16).split("\n") 
+				r,g,b = 0.5,0.75,1
+				for j in range(len(hexa)):
+					ctx.set_source_rgb(r,g,b)
+					ctx.rectangle(wt*5,ht*(addr-1),wt*64,ht)
+					ctx.fill()
+					ctx.set_source_rgb(0,0,0)
+					ctx.move_to(0,ht*addr)
+					ctx.show_text("%04d"%addr)
+					ctx.move_to(wt*5,ht*addr)
+					ctx.show_text(hexa[j])
+					ctx.move_to(wt*53,ht*addr)
+					ctx.show_text(asca[j])
+					addr += 1
+			if tag == 'insert':
+				hexb = d2hex(tb, " ", 16).split("\n")
+				ascb = d2asc(tb,16).split("\n") 
+				r,g,b = 0.5,0.75,1
+				for j in range(len(hexb)):
+					ctx.set_source_rgb(r,g,b)
+					ctx.rectangle(wt*70,ht*(addr-1),wt*64,ht)
+					ctx.fill()
+					ctx.set_source_rgb(0,0,0)
+					ctx.move_to(0,ht*addr)
+					ctx.show_text("%04d"%addr)
+					ctx.move_to(wt*70,ht*addr)
+					ctx.show_text(hexb[j])
+					ctx.move_to(wt*118,ht*addr)
+					ctx.show_text(ascb[j])
+					addr += 1
+			if tag == 'equal':
+				hexa = d2hex(ta, " ", 16).split("\n")
+				asca = d2asc(ta,16).split("\n") 
+				for j in range(len(hexa)):
+					ctx.set_source_rgb(0,0,0)
+					ctx.move_to(0,ht*addr)
+					ctx.show_text("%04d"%addr)
+					ctx.move_to(wt*5,ht*addr)
+					ctx.show_text(hexa[j])
+					ctx.move_to(wt*53,ht*addr)
+					ctx.show_text(asca[j])
+					ctx.move_to(wt*70,ht*addr)
+					ctx.show_text(hexa[j])
+					ctx.move_to(wt*118,ht*addr)
+					ctx.show_text(asca[j])
+					addr += 1
+			if tag == 'replace':
+				hexa = d2hex(ta, " ", 16).split("\n")
+				asca = d2asc(ta,16).split("\n") 
+				hexb = d2hex(tb, " ", 16).split("\n")
+				ascb = d2asc(tb,16).split("\n") 
+				r,g,b = 1,0.75,0.5
+				for j in range(min(len(hexa),len(hexb))):
+					ctx.set_source_rgb(r,g,b)
+					ctx.rectangle(wt*5,ht*(addr-1),wt*129,ht)
+					ctx.fill()
+					ctx.set_source_rgb(0,0,0)
+					ctx.move_to(0,ht*addr)
+					ctx.show_text("%04d"%addr)
+					ctx.move_to(wt*5,ht*addr)
+					ctx.show_text(hexa[j])
+					ctx.move_to(wt*53,ht*addr)
+					ctx.show_text(asca[j])
+					ctx.move_to(wt*70,ht*addr)
+					ctx.show_text(hexb[j])
+					ctx.move_to(wt*118,ht*addr)
+					ctx.show_text(ascb[j])
+					addr += 1
+				# print leftovers
+				if len(hexa) > len(hexb):
+					lb = len(hexb)
+					for j in range(len(hexa)-lb):
+						ctx.set_source_rgb(r,g,b)
+						ctx.rectangle(wt*5,ht*(addr-1),wt*64,ht)
+						ctx.fill()
+						ctx.set_source_rgb(0,0,0)
+						ctx.move_to(0,ht*addr)
+						ctx.show_text("%04d"%addr)
+						ctx.move_to(wt*5,ht*addr)
+						ctx.show_text(hexa[j+lb])
+						ctx.move_to(wt*53,ht*addr)
+						ctx.show_text(asca[j+lb])
+						addr += 1
+				elif len(hexb)>len(hexa):
+					la = len(hexa)
+					for j in range(len(hexb)-la):
+						ctx.set_source_rgb(r,g,b)
+						ctx.rectangle(wt*70,ht*(addr-1),wt*64,ht)
+						ctx.fill()
+						ctx.set_source_rgb(0,0,0)
+						ctx.move_to(0,ht*addr)
+						ctx.show_text("%04d"%addr)
+						ctx.move_to(wt*70,ht*addr)
+						ctx.show_text(hexb[j+la])
+						ctx.move_to(wt*118,ht*addr)
+						ctx.show_text(ascb[j+la])
+						addr += 1
+						
+		ctx.set_source_rgb(0,0,0)
+		ctx.move_to(int(wt*4.5)+0.5,0)
+		ctx.line_to(int(wt*4.5)+0.5,height)
+		ctx.move_to(int(wt*52.5)+0.5,0)
+		ctx.line_to(int(wt*52.5)+0.5,height)
+		ctx.move_to(int(wt*69.5)-0.5,0)
+		ctx.line_to(int(wt*69.5)-0.5,height)
+		ctx.move_to(int(wt*69.5)+1.5,0)
+		ctx.line_to(int(wt*69.5)+1.5,height)
+		ctx.move_to(int(wt*117.5)+0.5,0)
+		ctx.line_to(int(wt*117.5)+0.5,height)
+		ctx.move_to(int(wt*134.5)+0.5,0)
+		ctx.line_to(int(wt*134.5)+0.5,height)
+		ctx.stroke()
+
+		mctx.set_source_surface(cs,0,0)
+		mctx.paint()
+		widget.set_size_request(int(wt*134.5)+1,ht*addr)
 
 	def activate_manual(self, action):
 		w = gtk.Window()
@@ -919,6 +1188,10 @@ class ApplicationMainWindow(gtk.Window):
 				for i in range(pn,len(self.das)):
 					self.das[i] = self.das[i+1]
 				del self.das[len(self.das)-1]
+
+			if self.cbm != None:
+				li = self.cbm.get_iter_from_string("%s"%pn)
+				self.cbm.remove(li)
 		return
 
 	def on_row_keypressed (self, view, event):
@@ -998,6 +1271,27 @@ class ApplicationMainWindow(gtk.Window):
 				pn = self.notebook.get_current_page()
 				ha = self.das[pn].scrolled.get_hadjustment()
 				ha.set_value(0)
+				ntype = model.get_value(iter1,1)
+				if ntype[0] == 'vprm' and ntype[1] == 'hdrbch':
+					self.das[pn].backpath = model.get_string_from_iter(iter1)
+					goto = model.get_value(iter1,4)
+					try:
+						self.das[pn].view.expand_to_path(goto)
+						self.das[pn].view.set_cursor_on_cell(goto)
+					except:
+						print "No such path"
+			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65288:
+				pn = self.notebook.get_current_page()
+				goto = self.das[pn].backpath
+				if goto != None:
+					print goto
+					try:
+						self.das[pn].view.expand_to_path(goto)
+						self.das[pn].view.set_cursor_on_cell(goto)
+					except:
+						print "No such path for back path"
+
+
 
 	def on_hdrow_keyreleased (self, view, event):
 		treeSelection = view.get_selection()
@@ -1009,7 +1303,9 @@ class ApplicationMainWindow(gtk.Window):
 					if val[0] == "cdr goto":
 						pn = self.notebook.get_current_page()
 						dm = self.das[pn].dictmod
-						print "Go to:",val[1]
+						ts = self.das[pn].view.get_selection()
+						m,i = ts.get_selected()
+						self.das[pn].backpath = m.get_string_from_iter(i)
 						for i in range(dm.iter_n_children(None)):
 							ci = dm.iter_nth_child(None,i)
 							v2 = dm.get_value(ci,2)
@@ -1195,6 +1491,37 @@ class ApplicationMainWindow(gtk.Window):
 		hd.hdview.set_cursor(path)
 		hd.hdview.grab_focus()
 
+	def on_page_reordered(self,nb,widget,num):
+		# to detect from where tab was dragged
+		# not aware about straight way to find it
+		# hence use reverse way
+		for i in range(len(self.das)):
+			if i != num:
+				if widget == self.das[i].hpaned:
+					numold = i
+		if numold > num: # moved from right to left
+			# skip to num and after numold
+			for i in range(len(self.das)):
+				if i == num:
+					tmp = self.das[i]
+					self.das[i] = self.das[numold]
+				elif i > num and i <= numold:
+					tmp2 = self.das[i]
+					self.das[i] = tmp
+					tmp = tmp2
+				if i > numold:
+					break
+		else: # moved from left to right
+			# skip to num and after numold
+			for i in range(len(self.das)):
+				if i >= numold and i < num:
+					if i == numold:
+						tmp = self.das[i]
+					self.das[i] = self.das[i+1]
+				elif i == num:
+					self.das[i] = tmp
+					break
+
 	def on_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
@@ -1256,9 +1583,13 @@ class ApplicationMainWindow(gtk.Window):
 				if ntype[0] == "vprm" or ntype[0] == "yep":
 					if ntype[1] in yep.vprmfunc:
 						off = 0
-						offstr = model.get_value(iter1,7)
-						if offstr:
-							off = int(offstr,16)
+						offsmp = model.get_value(iter1,8)
+						if offsmp == None:
+							offstr = model.get_value(iter1,7)
+							if offstr:
+								off = int(offstr,16)
+						else:
+							off = offsmp
 						yep.vprmfunc[ntype[1]](hd,data,off)
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
@@ -1441,9 +1772,9 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdrend.connect('edited', self.edited_cb)
 				doc.hd.hdview.set_tooltip_column(8)
 				
-				hpaned = gtk.HPaned()
-				hpaned.add1(scrolled)
-				hpaned.add2(vpaned)
+				doc.hpaned = gtk.HPaned()
+				doc.hpaned.add1(scrolled)
+				doc.hpaned.add2(vpaned)
 				label = gtk.Label(doc.pname)
 #				label.set_use_markup(True)
 #				label.set_markup("<span background='green'>%s</span>"%doc.pname)
@@ -1453,12 +1784,14 @@ class ApplicationMainWindow(gtk.Window):
 #				style = eventbox.get_style().copy ()
 #				style.bg[gtk.STATE_NORMAL] = eventbox.get_colormap().alloc_color (0xffff, 0x0000, 0x0000)
 #				self.notebook.set_style (style)
-				self.notebook.append_page(hpaned, eventbox)
-				self.notebook.set_tab_reorderable(hpaned, True)
+				self.notebook.append_page(doc.hpaned, eventbox)
+				self.notebook.set_tab_reorderable(doc.hpaned, True)
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
 				self.notebook.set_current_page(-1)
-
+				if self.cbm != None:
+					li = self.cbm.append()
+					self.cbm.set_value(li,0,"%s (tab %s)"%(doc.pname,dnum))
 			else:
 				print err
 		return

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys,struct,zlib
-import fhparse
+import fh
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
 
@@ -22,10 +22,10 @@ def parse_agd (FHDoc,rname,dumpsize):
 		j += 1
 		if FHDoc.dictitems[i] in FHDoc.chunks:
 			try:
-				res = FHDoc.chunks[FHDoc.dictitems[i]](offset)
+				res = FHDoc.chunks[FHDoc.dictitems[i]](offset,j)
 				if -1 < res <= len(FHDoc.data)-offset:
-					if FHDoc.dictitems[i] == rname:
-						print rname,"%02x\t"%j,d2hex(FHDoc.data[offset:offset+dumpsize]," "),res
+					if rname == "*" or FHDoc.dictitems[i] == rname:
+						print "%-16s [%4x] "%(FHDoc.dictitems[i],res),"%02x\t"%j,d2hex(FHDoc.data[offset:offset+dumpsize]," ")
 					offset += res
 				else:
 					print "Failed on record %d (%s)"%(j,FHDoc.dictitems[i]),res
@@ -64,7 +64,7 @@ def parse(buf,rname,dumpsize=8):
 		output = zlib.decompress(buf[offset+14:offset+14+size],-15)
 	else:
 		output = buf[offset+12:offset+size]
-	doc = fhparse.FHDoc(output,None,None)
+	doc = fh.FHDoc(output,None,None)
 	doc.version = version
 	offset = offset + size
 	offset = parse_dict(doc,buf,offset)

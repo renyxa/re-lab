@@ -32,7 +32,7 @@ def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,
 def add_tip (hd,iter,text):
 	hd.model.set (iter, 8, text)
 
-def pgiter(page, name, ftype, stype, data, iter1,coltype=None):
+def pgiter(page, name, ftype, stype, data, iter1,coltype=None, vprmsmp = None):
 	page.model.set_value(iter1,0,name)
 	page.model.set_value(iter1,1,(ftype,stype))
 	if data != None:
@@ -40,11 +40,14 @@ def pgiter(page, name, ftype, stype, data, iter1,coltype=None):
 		page.model.set_value(iter1,3,data)
 	if coltype !=None:
 		page.model.set_value(iter1,7,coltype)
+	if vprmsmp !=None:
+		page.model.set_value(iter1,8,vprmsmp)
+	
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 
-def add_pgiter (page, name, ftype, stype, data, parent = None, coltype = None):
+def add_pgiter (page, name, ftype, stype, data, parent = None, coltype = None, vprmsmp = None):
 	iter1 = page.model.append (parent,None)
-	pgiter(page, name, ftype, stype, data, iter1, coltype)
+	pgiter(page, name, ftype, stype, data, iter1, coltype, vprmsmp)
 	return iter1
 
 def prep_pgiter (page, name, ftype, stype, data, parent = None, coltype=None):
@@ -70,13 +73,23 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
+def d2asc(data,ln=0,rch=unicode("\xC2\xB7","utf8")):
+	asc = ""
+	for i in range(len(data)):
+		ch = data[i]
+		if ord(ch) < 32 or ord(ch) > 126:
+			ch = rch
+		asc += ch
+		if ln != 0 and i > 0 and (i+1)%ln == 0:
+			asc += "\n"
+	return asc
+
 def d2hex(data,space="",ln=0):
 	s = ""
 	for i in range(len(data)):
 		s += "%02x%s"%(ord(data[i]),space)
-		if ln != 0 and (i % ln) == 0:
+		if ln != 0 and i > 0 and (i+1)%ln == 0:
 			s += "\n"
-			
 	return s
 
 def key2txt(key,data,txt="Unknown"):

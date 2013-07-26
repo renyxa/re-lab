@@ -479,7 +479,7 @@ def elemhdr (hd, data, off):
 	x = struct.unpack(">H",data[offset:offset+2])[0]
 	if x >=32768:
                x = x-32768
-	add_iter(hd,"Assigned Sample",x,offset,2,"<h")
+	add_iter(hd,"Assigned Sample group",x,offset,2,"<h")
 	
 	offset = 4
 	x = ord(data[offset])
@@ -743,8 +743,7 @@ def samples(hd, data, off):
 	offset = 0
 	while offset < len(data):
 		v = struct.unpack(">I",data[offset:offset+4])[0]
-#		add_iter(hd,"Offset to Sample %d"%ind,"%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
-                add_iter(hd,"Offset to Sample %d"%ind,"%02x"%(v),offset,4,">I")	
+		add_iter(hd,"Offset to Sample %d"%ind,"%02x + %02x = %02x"%(off,v,off+v),offset,4,">I")
 		offset += 4
 		ind += 1
 
@@ -844,7 +843,7 @@ def hdr1item (page,data,parent,offset=0):
 			tmpoff = dboff
 			ind = 0
 			while tmpoff < h1off4:
-				add_pgiter(page,"Drumkit block %d"%ind,"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%(offset+tmpoff))
+				add_pgiter(page,"Drumkit block %d %s"%(ind,pitches[ind+13]),"vprm","dkblock",data[tmpoff:tmpoff+24],dbiter,"%02x  "%(offset+tmpoff))
 				ind += 1
 				tmpoff += 24
 
@@ -874,14 +873,15 @@ def vwdt(page,data,sampleid,blockid,vwdtiter,off):
 	fmt = ord(data[0x2c])
 	# FIXME! need to find how to interpret "lenghts/offsets" in fmt 6
 	vdata = page.model.get_value(vwdtiter,3)
-	iname = "Sample %02x, Block %02x [FQ: %d]"%(sampleid,blockid,freq)
+	iname = "Sample group %d, Block %04d [FQ: %d]"%(sampleid,blockid,freq)
 	if fmt&0x4:
 		len1 *= 16
 	if off1 > 0:
-		add_pgiter(page,"%s (Left)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+		ri = add_pgiter(page,"%s (Left)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
 		add_pgiter(page,"%s (Right)"%iname,"vwdt","dontsave",vdata[off1*2:off1*2+len1*2+0x20],vwdtiter,"%02x  "%(off1*2+off))
 	else:
-		add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+		ri = add_pgiter(page,"%s (Mono)"%iname,"vwdt","dontsave",vdata[off0*2:off0*2+len1*2+0x20],vwdtiter,"%02x  "%(off0*2+off))
+	return ri
 
 def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	sig = data[:16]
@@ -911,7 +911,7 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 	hdraend = struct.unpack(">I",data[off2+4:off2+8])[0]
 	smplsiter = add_pgiter(page,"Samples","vprm","dontsave","",parent,"%02x  "%(offset+off))
 	haiter = add_pgiter(page,"Sample groups header","vprm","hdra",data[off:off+8],smplsiter,"%02x  "%(offset+off))
-	haiterlst = add_pgiter(page,"List of Sample groups","vprm","hdralst",data[off+8:off+hdraend],smplsiter,"%02x  "%(offset+off))
+	haiterlst = add_pgiter(page,"List of Sample groups","vprm","hdralst",data[off+8:off+hdraend],smplsiter,"%02x  "%(offset+off+8))
 	slist = []
 	shdrsize = struct.unpack(">I",data[off:off+4])[0]
 	shdrlen = struct.unpack(">I",data[off+4:off+8])[0]
@@ -923,7 +923,7 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 		tmpoff += 4
 	off2 += hdraend
 	hdrbend = off+struct.unpack(">I",data[off2:off2+4])[0]
-	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],smplsiter,"%02x  "%(offset+off+hdraend))
+	hbiter = add_pgiter(page,"Samples Offsets","vprm","samples",data[off+hdraend:hdrbend],smplsiter,"%02x  "%(offset+off+hdraend),offset+off)
 	hdrb = []
 	off2 += 4
 	while off2 < hdrbend:
@@ -941,8 +941,10 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 					bend = hdrb[j]
 					v3 = ord(data[off2+9])
 					v4 = ord(data[off2+8])
-					add_pgiter(page,"Block %04x %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
-					vwdt(page,data[off2:bend],ind,j,vwdtiter,vwdtoff)
+					ti = add_pgiter(page,"Block %04d %02x-%02x [%s - %s]"%(j,v3,v4,pitches[v3],pitches[v4]),"vprm","hdrbch",data[off2:bend],siter,"%02x  "%(offset+off2))
+					ri = vwdt(page,data[off2:bend],ind,j,vwdtiter,vwdtoff)
+					page.model.set_value(ti,4,page.model.get_string_from_iter(ri))
+
 					off2 = bend
 		except:
 			print 'Failed in the loop at lines 737..747'

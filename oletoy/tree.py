@@ -24,7 +24,7 @@ def make_view():
     gobject.TYPE_PYOBJECT,  # Type
     gobject.TYPE_INT,       # Length
     gobject.TYPE_PYOBJECT,  # Value
-    gobject.TYPE_PYOBJECT,  # Value2
+    gobject.TYPE_PYOBJECT,  # Value2 (peer path for YEP)
     gobject.TYPE_STRING,    # Colour
     gobject.TYPE_STRING,    # Path
     gobject.TYPE_STRING,    # VSD_Stream_Format

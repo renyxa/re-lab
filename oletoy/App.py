@@ -31,6 +31,7 @@ class Page:
 		self.items = ''
 		self.version = 0
 		self.hd = None
+		self.hpaned = None
 		self.dict = None
 		self.dictmod = None
 		self.dictview = None
@@ -41,6 +42,7 @@ class Page:
 		self.win = None # for preview
 		self.debug = 0
 		self.appdoc = None
+		self.backpath = None
 
 	def fload(self,buf="",parent=None):
 		if buf == "":
