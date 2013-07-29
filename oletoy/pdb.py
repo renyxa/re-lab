@@ -50,11 +50,11 @@ class pdb_parser(object):
 
 	def parse_header(self):
 		(count, off) = rdata(self.data, 76, '>H')
-		hdriter = add_pgiter(self.page, 'Header', 'pdb', 0, self.data[0:76 + 4 * count], self.parent)
+		hdriter = add_pgiter(self.page, 'Header', 'pdb', 'pdb_header', self.data[0:76 + 4 * count], self.parent)
 		offiter = add_pgiter(self.page, 'Offset table', 'pdb', 0, self.data[76:76 + 4 * count], hdriter)
 
 		for i in range(0, count):
-			add_pgiter(self.page, 'Offset %d' % i, 'pdb', 0, self.data[off:off + 8], offiter)
+			add_pgiter(self.page, 'Offset %d' % i, 'pdb', 'pdb_offset', self.data[off:off + 8], offiter)
 			(record, off) = rdata(self.data, off, '>I')
 			off += 4
 			self.records.append(record)
@@ -165,6 +165,27 @@ def add_isilo3_index(hd, size, data):
 def add_palmdoc_index(hd, size, data):
 	pass
 
+def add_pdb_header(hd, size, data):
+	(name, off) = rdata(data, 0, '32s')
+	add_iter(hd, 'Name', name, 0, 32, '32s')
+	off += 2
+	(version, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Version', version, off - 2, 2, '>H')
+	off += 24
+	(typ, off) = rdata(data, off, '4s')
+	add_iter(hd, 'Type', typ, off - 4, 4, '4s')
+	(creator, off) = rdata(data, off, '4s')
+	add_iter(hd, 'Creator', creator, off - 4, 4, '4s')
+	off += 8
+	(records, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Number of records', records, off - 2, 2, '>H')
+
+def add_pdb_offset(hd, size, data):
+	(offset, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Offset', offset, 0, 4, '>I')
+	(ident, off) = rdata(data, off, '>I')
+	add_iter(hd, 'ID', ident, off - 4, 4, '>I')
+
 def add_plucker_index(hd, size, data):
 	pass
 
@@ -174,12 +195,13 @@ def add_tealdoc_index(hd, size, data):
 def add_ztxt_index(hd, size, data):
 	pass
 
-
 pdb_ids = {
 	'ereader_index': add_ereader_index,
 	'isilo_index': add_isilo_index,
 	'isilo3_index': add_isilo3_index,
 	'palmdoc_index': add_palmdoc_index,
+	'pdb_header': add_pdb_header,
+	'pdb_offset': add_pdb_offset,
 	'plucker_index': add_plucker_index,
 	'tealdoc_index': add_tealdoc_index,
 	'ztxt_index': add_ztxt_index,
