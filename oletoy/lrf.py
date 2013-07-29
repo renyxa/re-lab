@@ -14,6 +14,9 @@
 # USA
 #
 
+# reverse-engineered specification: http://doc.the-ebook.org/LrfFormat
+# (2013)
+
 import struct
 import zlib
 

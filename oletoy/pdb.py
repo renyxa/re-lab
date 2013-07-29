@@ -14,6 +14,9 @@
 # USA
 #
 
+# specification of the Palm Database Format:
+# http://wiki.mobileread.com/wiki/PDB (2013)
+
 import struct
 import zlib
 
@@ -59,6 +62,7 @@ class pdb_parser(object):
 			off += 4
 			self.records.append(record)
 
+# specification: http://wiki.mobileread.com/wiki/EReader (2013)
 class ereader_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
@@ -97,6 +101,7 @@ class isilo3_parser(pdb_parser):
 	def parse_data_record(self, n, data, parent):
 		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
+# specification: http://wiki.mobileread.com/wiki/PalmDOC (2013)
 class palmdoc_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
@@ -108,6 +113,8 @@ class palmdoc_parser(pdb_parser):
 	def parse_data_record(self, n, data, parent):
 		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
+# specification: http://www.fifi.org/doc/plucker/manual/DBFormat.html
+# (2013)
 class plucker_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
@@ -119,6 +126,7 @@ class plucker_parser(pdb_parser):
 	def parse_data_record(self, n, data, parent):
 		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
+# specification: http://wiki.mobileread.com/wiki/TealDoc (2013)
 class tealdoc_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
@@ -130,6 +138,7 @@ class tealdoc_parser(pdb_parser):
 	def parse_data_record(self, n, data, parent):
 		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
+# specification: http://gutenpalm.sourceforge.net/ztxt_format.php (2013)
 class ztxt_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
