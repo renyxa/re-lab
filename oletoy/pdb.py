@@ -79,7 +79,6 @@ class isilo_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(isilo_parser, self).__init__(data, page, parent)
-		self.compression = None
 
 	def parse_index_record(self, data, parent):
 		pass
@@ -91,7 +90,6 @@ class isilo3_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(isilo3_parser, self).__init__(data, page, parent)
-		self.compression = None
 
 	def parse_index_record(self, data, parent):
 		pass
@@ -103,7 +101,6 @@ class palmdoc_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(palmdoc_parser, self).__init__(data, page, parent)
-		self.compression = None
 
 	def parse_index_record(self, data, parent):
 		pass
@@ -115,7 +112,6 @@ class plucker_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(plucker_parser, self).__init__(data, page, parent)
-		self.compression = None
 
 	def parse_index_record(self, data, parent):
 		pass
@@ -127,7 +123,6 @@ class tealdoc_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(tealdoc_parser, self).__init__(data, page, parent)
-		self.compression = None
 
 	def parse_index_record(self, data, parent):
 		pass
@@ -139,7 +134,6 @@ class ztxt_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(ztxt_parser, self).__init__(data, page, parent)
-		self.compression = None
 
 	def parse_index_record(self, data, parent):
 		pass
