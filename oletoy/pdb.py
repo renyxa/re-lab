@@ -25,6 +25,60 @@ from utils import add_iter, add_pgiter, rdata
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
+class lz77_error:
+	pass
+
+"""Handler of LZ77 compression method, as used by PalmDoc."""
+def lz77_decompress(data):
+	buffer = []
+	length = len(data)
+
+	i = 0
+	while i != length:
+		c = data[i]
+		o = ord(c)
+
+		if o == 0 or (o >= 0x9 and o <= 0x7f):
+			buffer.extend(c)
+			i += 1
+
+		elif o >= 1 and o <= 8:
+			end = i + c
+			if end >= length:
+				raise lz77_error
+			while i != end:
+				cc = data[i]
+				buffer.extend(cc)
+			i += 1
+
+		elif o >= 0x80 and o <= 0xbf:
+			i += 1
+			byte1 = o & 0x3f
+			byte2 = ord(data[i])
+			combined = (byte1 << 8) | byte2
+			distance = (combined & 0xfff8) >> 3
+			length = (combined & 0x7) + 3
+
+			if distance > len(buffer):
+				raise lz77_error
+			if distance == 0:
+				raise lz77_error
+
+			if length < distance:
+				buffer.append(buffer[len(buffer) - distance:length])
+			else:
+				repeated = buffer[len(buffer) - distance]
+				buffer.append([repeated for j in range(length)])
+
+			i += 1
+
+		else:
+			buffer.extend(' ')
+			buffer.extend(chr(o ^ 0x80))
+			i += 1
+
+	return buffer
+
 class pdb_parser(object):
 
 	def __init__(self, data, page, parent):
@@ -109,9 +163,13 @@ class palmdoc_parser(pdb_parser):
 
 	def parse_index_record(self, data, parent):
 		add_pgiter(self.page, 'Index', 'pdb', 'palmdoc_index', data, parent)
+		self.compression = read(data, 0, '>H')
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		reciter = add_pgiter(self.page, "Text %d" % n, 'pdb', 0, data, parent)
+		if self.compression == 2:
+			uncompressed = lz77_decompress(data)
+			add_pgiter(self.page, "Uncompressed", 'pdb', 0, uncompressed, reciter)
 
 # specification: http://www.fifi.org/doc/plucker/manual/DBFormat.html
 # (2013)
@@ -172,7 +230,22 @@ def add_isilo3_index(hd, size, data):
 	pass
 
 def add_palmdoc_index(hd, size, data):
-	pass
+	(compression_value, off) = rdata(data, 0, '>H')
+	if compression_value == 1:
+		compression = 'None'
+	elif compression_value == 2:
+		compression = 'LZ77'
+	else:
+		compression = 'Unknown'
+	add_iter(hd, 'Compression', compression, 0, 2, '>H')
+
+	off += 2
+	(length, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Text length', length, off - 4, 4, '>I')
+	(count, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Record count', count, off - 2, 2, '>H')
+	(size, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Max. record size', size, off - 2, 2, '>H')
 
 def add_pdb_header(hd, size, data):
 	(name, off) = rdata(data, 0, '32s')
