@@ -81,10 +81,10 @@ class isilo_parser(pdb_parser):
 		super(isilo_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		pass
+		add_pgiter(self.page, 'Index', 'pdb', 'isilo_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		pass
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
 class isilo3_parser(pdb_parser):
 
@@ -92,10 +92,10 @@ class isilo3_parser(pdb_parser):
 		super(isilo3_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		pass
+		add_pgiter(self.page, 'Index', 'pdb', 'isilo3_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		pass
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
 class palmdoc_parser(pdb_parser):
 
@@ -103,10 +103,10 @@ class palmdoc_parser(pdb_parser):
 		super(palmdoc_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		pass
+		add_pgiter(self.page, 'Index', 'pdb', 'palmdoc_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		pass
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
 class plucker_parser(pdb_parser):
 
@@ -114,10 +114,10 @@ class plucker_parser(pdb_parser):
 		super(plucker_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		pass
+		add_pgiter(self.page, 'Index', 'pdb', 'plucker_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		pass
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
 class tealdoc_parser(pdb_parser):
 
@@ -125,10 +125,10 @@ class tealdoc_parser(pdb_parser):
 		super(tealdoc_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		pass
+		add_pgiter(self.page, 'Index', 'pdb', 'tealdoc_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		pass
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
 class ztxt_parser(pdb_parser):
 
@@ -136,10 +136,10 @@ class ztxt_parser(pdb_parser):
 		super(ztxt_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		pass
+		add_pgiter(self.page, 'Index', 'pdb', 'ztxt_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		pass
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
 def add_ereader_index(hd, size, data):
 	(compression, off) = rdata(data, 0, '>H')
@@ -156,8 +156,33 @@ def add_ereader_index(hd, size, data):
 		(chapters, off) = rdata(data, off, '>H') # ???
 		add_iter(hd, 'Number of chapters in TOC', chapters, off - 2, 2, '>H')
 
+def add_isilo_index(hd, size, data):
+	pass
+
+def add_isilo3_index(hd, size, data):
+	pass
+
+def add_palmdoc_index(hd, size, data):
+	pass
+
+def add_plucker_index(hd, size, data):
+	pass
+
+def add_tealdoc_index(hd, size, data):
+	pass
+
+def add_ztxt_index(hd, size, data):
+	pass
+
+
 pdb_ids = {
-	"ereader_index": add_ereader_index,
+	'ereader_index': add_ereader_index,
+	'isilo_index': add_isilo_index,
+	'isilo3_index': add_isilo3_index,
+	'palmdoc_index': add_palmdoc_index,
+	'plucker_index': add_plucker_index,
+	'tealdoc_index': add_tealdoc_index,
+	'ztxt_index': add_ztxt_index,
 }
 
 pdb_types = {
