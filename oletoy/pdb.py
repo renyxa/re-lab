@@ -197,7 +197,10 @@ class tealdoc_parser(pdb_parser):
 		add_pgiter(self.page, 'Index', 'pdb', 'tealdoc_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		reciter = add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		if self.compression == 2:
+			uncompressed = lz77_decompress(data)
+			add_pgiter(self.page, "Uncompressed", 'pdb', 0, uncompressed, reciter)
 
 # specification: http://gutenpalm.sourceforge.net/ztxt_format.php (2013)
 class ztxt_parser(pdb_parser):
@@ -287,7 +290,22 @@ def add_plucker_index(hd, size, data):
 	pass
 
 def add_tealdoc_index(hd, size, data):
-	pass
+	(compression_value, off) = rdata(data, 0, '>H')
+	if compression_value == 1:
+		compression = 'None'
+	elif compression_value == 2:
+		compression = 'LZ77'
+	else:
+		compression = 'Unknown'
+	add_iter(hd, 'Compression', compression, 0, 2, '>H')
+
+	off += 2
+	(length, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Text length', length, off - 4, 4, '>I')
+	(count, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Record count', count, off - 2, 2, '>H')
+	(size, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Max. record size', size, off - 2, 2, '>H')
 
 def add_ztxt_index(hd, size, data):
 	off = 0
