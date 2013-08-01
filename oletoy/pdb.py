@@ -271,7 +271,14 @@ def add_pdb_header(hd, size, data):
 	off += 2
 	(version, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Version', version, off - 2, 2, '>H')
-	off += 24
+	(cdate, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Creation date', cdate, off - 4, 4, '>I')
+	(mdate, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Modification date', mdate, off - 4, 4, '>I')
+	off += 8
+	(appinfo, off) = rdata(data, off, '>I')
+	add_iter(hd, 'AppInfo offset', appinfo, off - 4, 4, '>I')
+	off += 4
 	(typ, off) = rdata(data, off, '4s')
 	add_iter(hd, 'Type', typ, off - 4, 4, '4s')
 	(creator, off) = rdata(data, off, '4s')
