@@ -18,6 +18,7 @@
 # http://wiki.mobileread.com/wiki/PDB (2013)
 
 import struct
+import zlib
 
 from utils import add_iter, add_pgiter, rdata
 
@@ -176,6 +177,21 @@ class palmdoc_parser(pdb_parser):
 
 # specification: http://www.fifi.org/doc/plucker/manual/DBFormat.html
 # (2013)
+
+plucker_type = (
+	'Text',
+	'Compressed text',
+	'Image',
+	'Compressed image',
+	'Mailto',
+	'URL handling',
+	'URL data',
+	'Compressed URL data',
+	'External bookmarks',
+	'Default category',
+	'Metadata',
+)
+
 class plucker_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
@@ -196,7 +212,34 @@ class plucker_parser(pdb_parser):
 			add_pgiter(self.page, 'Reserved record %d' % i, 'pdb', 'plucker_record_index', record_data, reciter)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		(para, off) = rdata(data, 2, '>H')
+		off += 2
+		(typ, off) = rdata(data, off, 'B')
+		typ_str = None
+		if int(typ) < len(plucker_type):
+			typ_str = ' (%s)' % plucker_type[int(typ)]
+		reciter = add_pgiter(self.page, 'Record %d%s' % (n, typ_str), 'pdb', 'plucker_record', data, parent)
+
+		if typ == 0 or typ == 1:
+			# read para headers
+			off = 8
+			paraiter = add_pgiter(self.page, 'Paragraphs', 'pdb', 0, data[off:off + 4 * int(para)], reciter)
+			for i in range(int(para)):
+				(size, off) = rdata(data, off, '>H')
+				(attrs, off) = rdata(data, off, '>H')
+				add_pgiter(self.page, 'Paragraph %d' % i, 'pdb', 'plucker_para', data[off - 4:off], paraiter)
+
+			text = data[off:len(data)]
+
+			if typ == 0:
+				add_pgiter(self.page, 'Text', 'pdb', 0, text, reciter)
+			elif typ == 1:
+				if self.version == 1:
+					uncompressed = lz77_decompress(text)
+					add_pgiter(self.page, 'Text', 'pdb', 0, uncompressed, reciter)
+				elif self.version == 2:
+					uncompressed = zlib.decompress(text)
+					add_pgiter(self.page, 'Text', 'pdb', 0, uncompressed, reciter)
 
 # specification: http://wiki.mobileread.com/wiki/TealDoc (2013)
 class tealdoc_parser(pdb_parser):
@@ -318,6 +361,12 @@ def add_plucker_index(hd, size, data):
 	(records, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Reserved records', records, off - 2, 2, '>H')
 
+def add_plucker_para(hd, size, data):
+	(size, off) = rdata(data, 0, '>H')
+	add_iter(hd, 'Size', size, off - 2, 2, '>H')
+	(attrs, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Attributes', attrs, off - 2, 2, '>H')
+
 def add_plucker_record_index(hd, size, data):
 	(name, off) = rdata(data, 0, '>H')
 	(ident, off) = rdata(data, off, '>H')
@@ -335,6 +384,19 @@ def add_plucker_record_index(hd, size, data):
 	else:
 		title = 'Unknown'
 	add_iter(hd, 'Name', title, off - 2, 2, '>H')
+
+def add_plucker_record(hd, size, data):
+	(ident, off) = rdata(data, 0, '>H')
+	add_iter(hd, 'UID', ident, off - 2, 2, '>H')
+	(paragraphs, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Paragraphs', paragraphs, off - 2, 2, '>H')
+	(size, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Size of data', size, off - 2, 2, '>H')
+	(typ, off) = rdata(data, off, 'B')
+	typ_str = 'Unknown'
+	if int(typ) < len(plucker_type):
+		typ_str = plucker_type[int(typ)]
+	add_iter(hd, 'Type', typ_str, off - 1, 1, 'B')
 
 def add_tealdoc_index(hd, size, data):
 	(compression_value, off) = rdata(data, 0, '>H')
@@ -382,7 +444,9 @@ pdb_ids = {
 	'pdb_header': add_pdb_header,
 	'pdb_offset': add_pdb_offset,
 	'plucker_index': add_plucker_index,
+	'plucker_para': add_plucker_para,
 	'plucker_record_index': add_plucker_record_index,
+	'plucker_record': add_plucker_record,
 	'tealdoc_index': add_tealdoc_index,
 	'ztxt_index': add_ztxt_index,
 }
