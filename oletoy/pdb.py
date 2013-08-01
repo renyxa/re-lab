@@ -180,9 +180,20 @@ class plucker_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(plucker_parser, self).__init__(data, page, parent)
+		self.version = 0
+		self.reserved_records = {}
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'plucker_index', data, parent)
+		reciter = add_pgiter(self.page, 'Index', 'pdb', 'plucker_index', data, parent)
+		off = 2
+		(self.version, off) = rdata(data, off, '>H')
+		(records, off) = rdata(data, off, '>H')
+		for i in range(int(records)):
+			(name, off) = rdata(data, off, '>H')
+			(ident, off) = rdata(data, off, '>H')
+			self.reserved_records[ident] = name
+			record_data = data[off - 4:off]
+			add_pgiter(self.page, 'Reserved record %d' % i, 'pdb', 'plucker_record_index', record_data, reciter)
 
 	def parse_data_record(self, n, data, parent):
 		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
@@ -294,7 +305,36 @@ def add_pdb_offset(hd, size, data):
 	add_iter(hd, 'ID', ident, off - 4, 4, '>I')
 
 def add_plucker_index(hd, size, data):
-	pass
+	(uid, off) = rdata(data, 0, '>H')
+	add_iter(hd, 'Record ID', uid, off - 2, 2, '>H')
+	(version, off) = rdata(data, off, '>H')
+	if version == 1:
+		compression = 'LZ77'
+	elif version == 2:
+		compression = 'Zlib'
+	else:
+		compression = 'Unknown'
+	add_iter(hd, 'Compression', compression, off - 2, 2, '>H')
+	(records, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Reserved records', records, off - 2, 2, '>H')
+
+def add_plucker_record_index(hd, size, data):
+	(name, off) = rdata(data, 0, '>H')
+	(ident, off) = rdata(data, off, '>H')
+	add_iter(hd, 'ID', ident, off - 2, 2, '>H')
+	if name == 0:
+		title = 'home.html'
+	elif name == 1:
+		title = 'external bookmarks'
+	elif name == 2:
+		title = 'URL handling'
+	elif name == 3:
+		title = 'default category'
+	elif name == 4:
+		title = 'additional metadata'
+	else:
+		title = 'Unknown'
+	add_iter(hd, 'Name', title, off - 2, 2, '>H')
 
 def add_tealdoc_index(hd, size, data):
 	(compression_value, off) = rdata(data, 0, '>H')
@@ -342,6 +382,7 @@ pdb_ids = {
 	'pdb_header': add_pdb_header,
 	'pdb_offset': add_pdb_offset,
 	'plucker_index': add_plucker_index,
+	'plucker_record_index': add_plucker_record_index,
 	'tealdoc_index': add_tealdoc_index,
 	'ztxt_index': add_ztxt_index,
 }
