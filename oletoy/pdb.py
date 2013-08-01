@@ -18,7 +18,6 @@
 # http://wiki.mobileread.com/wiki/PDB (2013)
 
 import struct
-import zlib
 
 from utils import add_iter, add_pgiter, rdata
 
@@ -102,6 +101,7 @@ class pdb_parser(object):
 		if len(self.records) > 0:
 			self.parse_index_record(self.data[self.records[0]:self.get_record_end(0)], reciter)
 
+			self.parsing_data_records(self.data[self.records[1]:len(self.data)], len(self.records) - 1)
 			for i in range(1, len(self.records)):
 				self.parse_data_record(i, self.data[self.records[i]:self.get_record_end(i)], reciter)
 
@@ -115,6 +115,9 @@ class pdb_parser(object):
 			(record, off) = rdata(self.data, off, '>I')
 			off += 4
 			self.records.append(record)
+
+	def parsing_data_records(self, data, count):
+		pass
 
 # specification: http://wiki.mobileread.com/wiki/EReader (2013)
 class ereader_parser(pdb_parser):
@@ -201,8 +204,20 @@ class ztxt_parser(pdb_parser):
 
 	def __init__(self, data, page, parent):
 		super(ztxt_parser, self).__init__(data, page, parent)
+		self.version = 0
+		self.record_count = 0
+		self.record_size = 0
+		self.text_length = 0
+		self.compression = 0
 
 	def parse_index_record(self, data, parent):
+		off = 0
+		(self.version, off) = rdata(data, off, '>H')
+		(self.record_count, off) = rdata(data, off, '>H')
+		(self.text_length, off) = rdata(data, off, '>I')
+		(self.record_size, off) = rdata(data, off, '>H')
+		off += 8
+		(self.compression, off) = rdata(data, off, 'B')
 		add_pgiter(self.page, 'Index', 'pdb', 'ztxt_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
@@ -275,7 +290,24 @@ def add_tealdoc_index(hd, size, data):
 	pass
 
 def add_ztxt_index(hd, size, data):
-	pass
+	off = 0
+	(version, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Version', version, off - 2, 2, '>H')
+	(count, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Record count', count, off - 2, 2, '>H')
+	(length, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Text size', length, off - 4, 4, '>I')
+	(size, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Record size', size, off - 2, 2, '>H')
+	off += 8
+	(compression, off) = rdata(data, off, 'B')
+	if compression == 1:
+		mode = 'Random access'
+	elif compression == 2:
+		mode = 'Nonuniform'
+	else:
+		mode = 'Unknown'
+	add_iter(hd, 'Compression mode', mode, off - 1, 1, 'B')
 
 pdb_ids = {
 	'ereader_index': add_ereader_index,
