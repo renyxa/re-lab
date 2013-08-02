@@ -218,25 +218,28 @@ class ApplicationMainWindow(gtk.Window):
 				iter2 = doc2.model.get_iter_first()
 			data1 = m1.get_value(iter1,3)
 			data2 = m2.get_value(iter2,3)
-			sm = difflib.SequenceMatcher(None, data1, data2, False)
-			ta = ""
-			tb = ""
-			clra = 1,1,1
-			clrb = 1,1,1
-			for tag, i1, i2, j1, j2 in sm.get_opcodes():
-				if tag == 'delete':
-					ta = data1[i1:i2]
-					tb = ""
-				if tag == 'insert':
-					tb = data2[j1:j2]
-					ta = ""
-				if tag == 'equal':
-					ta = data1[i1:i2]
-					tb = ta
-				if tag == 'replace':
-					ta = data1[i1:i2]
-					tb = data2[j1:j2]
-				self.diffarr.append((ta,tb,tag))
+			if data1 != data2:
+				sm = difflib.SequenceMatcher(None, data1, data2, False)
+				ta = ""
+				tb = ""
+				clra = 1,1,1
+				clrb = 1,1,1
+				for tag, i1, i2, j1, j2 in sm.get_opcodes():
+					if tag == 'delete':
+						ta = data1[i1:i2]
+						tb = ""
+					if tag == 'insert':
+						tb = data2[j1:j2]
+						ta = ""
+					if tag == 'equal':
+						ta = data1[i1:i2]
+						tb = ta
+					if tag == 'replace':
+						ta = data1[i1:i2]
+						tb = data2[j1:j2]
+					self.diffarr.append((ta,tb,tag))
+			else:
+				self.diffarr.append((data1,data1,"equal"))
 			return m1,iter1,m2,iter2
 		else:
 			return None,None,None,None
