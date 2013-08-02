@@ -83,6 +83,26 @@ def register_stock_icons():
 	factory = gtk.IconFactory()
 	factory.add_default()
 
+class TabLabel(gtk.HBox):
+	__gsignals__ = {"close-clicked": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),}
+
+	def __init__(self, label_text):
+		gtk.HBox.__init__(self)
+		label = gtk.Label(label_text)
+		image = gtk.Image()
+		image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+		btn = gtk.Button()
+		btn.set_image(image)
+		btn.set_relief(gtk.RELIEF_NONE)
+		btn.set_focus_on_click(False)
+		btn.connect("clicked",self.tab_button_clicked)
+		self.pack_start(label,1,1,0)
+		self.pack_start(btn,0,0,0)
+		self.show_all()
+
+	def tab_button_clicked(self, button):
+		self.emit("close-clicked")
+
 
 class ApplicationMainWindow(gtk.Window):
 	def __init__(self, parent=None):
@@ -1680,6 +1700,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 
+	def tab_button_clicked(self, button):
+		print 'Close tab clicked',button.get_parent().get_parent()
+
 	def activate_new (self,parent=None):
 		doc = App.Page()
 		dnum = len(self.das)
@@ -1690,7 +1713,8 @@ class ApplicationMainWindow(gtk.Window):
 		hpaned = gtk.HPaned()
 		hpaned.add1(scrolled)
 		hpaned.add2(vpaned)
-		label = gtk.Label("Unnamed")
+		label = TabLabel("Unnamed")
+		label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
 		self.notebook.append_page(hpaned, label)
 		self.notebook.show_tabs = True
 		self.notebook.show_all()
@@ -1740,6 +1764,21 @@ class ApplicationMainWindow(gtk.Window):
 			self.das[pn].view.expand_to_path(intPath)
 			self.das[pn].view.set_cursor_on_cell(intPath)
 
+	def on_tab_close_clicked(self, tab_label, notebook, tab_widget):
+		""" Callback for the "close-clicked" emitted by custom TabLabel widget. """
+		pn = notebook.page_num(tab_widget)
+		del self.das[pn]
+		self.notebook.remove_page(pn)
+		if len(self.das) == 0:
+			gtk.main_quit()
+		if pn < len(self.das):  ## not the last page
+			for i in range(pn,len(self.das)):
+				self.das[i] = self.das[i+1]
+			del self.das[len(self.das)-1]
+		if self.cbm != None:
+			li = self.cbm.get_iter_from_string("%s"%pn)
+			self.cbm.remove(li)
+
 	def activate_open(self,parent=None):
 		if self.fname !='':
 			fname = self.fname
@@ -1775,16 +1814,9 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hpaned = gtk.HPaned()
 				doc.hpaned.add1(scrolled)
 				doc.hpaned.add2(vpaned)
-				label = gtk.Label(doc.pname)
-#				label.set_use_markup(True)
-#				label.set_markup("<span background='green'>%s</span>"%doc.pname)
-				eventbox = gtk.EventBox()
-				eventbox.add(label)
-				eventbox.show_all()
-#				style = eventbox.get_style().copy ()
-#				style.bg[gtk.STATE_NORMAL] = eventbox.get_colormap().alloc_color (0xffff, 0x0000, 0x0000)
-#				self.notebook.set_style (style)
-				self.notebook.append_page(doc.hpaned, eventbox)
+				label = TabLabel(doc.pname)
+				label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
+				self.notebook.append_page(doc.hpaned, label)
 				self.notebook.set_tab_reorderable(doc.hpaned, True)
 				self.notebook.show_tabs = True
 				self.notebook.show_all()
