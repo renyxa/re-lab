@@ -32,6 +32,7 @@ import vfb
 import lrf
 import wt602
 import pdb
+import sbimp
 from utils import *
 from hv2 import HexView
 
@@ -1673,6 +1674,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "wt602":
 					if wt602.wt602_ids.has_key(ntype[1]):
 						wt602.wt602_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == 'imp':
+					if sbimp.imp_ids.has_key(ntype[1]):
+						sbimp.imp_ids[ntype[1]](hd, size, data)
 				elif	ntype[0] == "emf+":
 					if emfplus.emfplus_ids.has_key(ntype[1]):
 						emfplus.emfplus_ids[ntype[1]](hd,data)

@@ -21,6 +21,7 @@ import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf, otxml, chdraw,vfb
 import lrf
 import pdb
+import sbimp
 
 class Page:
 	def __init__(self):
@@ -183,6 +184,12 @@ class Page:
 			self.type = "PDB"
 			print "Probably Palm e-book"
 			pdb.open(buf, self, parent, pdbtype)
+			return 0
+
+		if buf[2:10] == 'BOOKDOUG':
+			self.type = 'IMP'
+			print 'Probably SoftBook e-book'
+			sbimp.open(buf, self, parent)
 			return 0
 
 		fh_off = buf.find('FreeHand')
