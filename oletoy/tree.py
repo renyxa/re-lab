@@ -17,6 +17,31 @@
 import gobject
 import gtk, pango
 
+def drag_data_received_cb(view, context, x, y, selection, info, etime):
+      model = view.get_model()
+      drop_info = view.get_dest_row_at_pos(x, y)
+      if drop_info:
+         path, position = drop_info
+         iter = model.get_iter(path)
+         if (position == gtk.TREE_VIEW_DROP_BEFORE
+            or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+             niter = model.insert_before(iter, None)
+         else:
+            niter = model.insert_after(iter, None)
+      else:
+          niter = model.append(None)
+      if context.action == gtk.gdk.ACTION_MOVE:
+          context.finish(True, True, etime)
+          model.set(niter,3,selection.data)
+      return
+
+
+def drag_data_get_data(view, context, selection, target_id, etime):
+   treeselection = view.get_selection()
+   model, iter = treeselection.get_selected()
+   data = model.get_value(iter, 3)
+   selection.set(selection.target, 8, data)
+
 def make_view():
    # Create the model.
    model = gtk.TreeStore(
@@ -35,6 +60,10 @@ def make_view():
    # Create the view itself.
    view = gtk.TreeView(model)
    view.set_reorderable(True)
+#   view.enable_model_drag_source(gtk.gdk.BUTTON1_MASK,[("oletoy",gtk.TARGET_SAME_APP,1974)],gtk.gdk.ACTION_DEFAULT|gtk.gdk.ACTION_MOVE)
+#   view.enable_model_drag_dest([("oletoy",gtk.TARGET_SAME_APP,1974)],gtk.gdk.ACTION_DEFAULT)
+#   view.connect("drag-data-received", drag_data_received_cb)
+#   view.connect("drag_data_get", drag_data_get_data)
    view.columns_autosize()
    view.set_enable_tree_lines(True)
    cell = gtk.CellRendererText()
