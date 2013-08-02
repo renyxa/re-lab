@@ -5,7 +5,7 @@
 # License as published by the Free Software Foundation.
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
@@ -34,16 +34,16 @@ def read_cstring(data, offset):
 
 class imp_parser(object):
 
-    def __init__(self, data, page, parent):
-        self.data = data
-        self.page = page
-        self.parent = parent
+	def __init__(self, data, page, parent):
+		self.data = data
+		self.page = page
+		self.parent = parent
 
-    def parse(self):
+	def parse(self):
 		self.parent = add_pgiter(self.page, 'IMP', 'lrf', 0, self.data, self.parent)
 		self.parse_header()
 
-    def parse_header(self):
+	def parse_header(self):
 		add_pgiter(self.page, 'Header', 'imp', 'imp_header', self.data[0:48], self.parent)
 		metadata_end = 0
 		remaining = read(self.data, 0x16, '>H')
