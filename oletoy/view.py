@@ -173,6 +173,8 @@ class ApplicationMainWindow(gtk.Window):
 
 		self.diffarr = [] # for DIFF window data
 		self.cbm = None
+		self.diffsize = None
+		self.diffminimap = None
 
 		# configuration options
 		self.options_le = 1
@@ -425,6 +427,9 @@ class ApplicationMainWindow(gtk.Window):
 				self.das[i].hpaned.set_position(hp_pos)
 				self.das[i].hd.vpaned.set_position(vp_pos)
 
+	def on_diff_va_changed (self,va,damm,s):
+		self.draw_diffmm(damm,None,s)
+
 	def activate_diff(self, action):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
@@ -432,6 +437,11 @@ class ApplicationMainWindow(gtk.Window):
 		s.set_size_request(1095,400)
 		da = gtk.DrawingArea()
 		da.connect('expose_event', self.draw_diff)
+		damm = gtk.DrawingArea()
+		damm.connect('expose_event', self.draw_diffmm,s)
+		va = s.get_vadjustment()
+		va.connect('value-changed',self.on_diff_va_changed,damm,s)
+		damm.set_size_request(42,1)
 		pn = self.notebook.get_current_page()
 		if pn != -1:
 			self.m1,self.iter1,self.m2,self.iter2 = self.diff_test()
@@ -467,7 +477,10 @@ class ApplicationMainWindow(gtk.Window):
 		hbox.pack_start(self.cbright,1,1,0)
 		hbox.pack_start(self.entright,1,1,0)
 		vbox = gtk.VBox()
-		vbox.pack_start(s,1,1,0)
+		hbox2= gtk.HBox()
+		hbox2.pack_start(damm,0,0,0)
+		hbox2.pack_start(s,1,1,0)
+		vbox.pack_start(hbox2,1,1,0)
 		vbox.pack_end(hbox,0,0,0)
 		w.add(vbox)
 		w.show_all()
@@ -490,6 +503,67 @@ class ApplicationMainWindow(gtk.Window):
 #			self.m1.get_string_from_iter(ni)
 			print 'down the tree'
 
+	def draw_diffmm (self, widget, event,scrollbar):
+		x,y,width,height = widget.allocation
+		mctx = widget.window.cairo_create()
+		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+		ctx = cairo.Context (cs)
+
+		# to calculate how many text lines could be on the screen
+		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		ctx.set_font_size(14)
+		ctx.set_line_width(1)
+		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
+		wt = int(dx)
+		ht = int(ht+4)
+
+		ctx.set_source_rgb(0.9,0.9,0.9)
+		ctx.rectangle(0,0,40,height)
+		ctx.fill()
+
+		# scale to text if it's less than one screen, otherwise to window
+		if self.diffsize:
+			hscale = height*1./self.diffsize
+			if height*1./(self.diffsize*ht) > 1:
+				hscale = ht
+			ctx.scale(1,hscale)
+
+		addr = 1
+		for i in self.diffarr:
+			ta,tb,tag = i
+			if tag == 'delete' or tag == 'insert':
+				hexa = d2hex(ta, " ", 16).split("\n")
+				r,g,b = 0.5,0.75,1
+				if tag == 'insert':
+					hexa = d2hex(tb, " ", 16).split("\n")
+					r,g,b = 0.5,1,0.75
+				h = len(hexa)
+				ctx.set_source_rgb(r,g,b)
+				ctx.rectangle(0,addr-1,40,h)
+				ctx.fill()
+				addr += h
+			if tag == 'equal':
+				hexa = d2hex(ta, " ", 16).split("\n")
+				addr += len(hexa)
+			if tag == 'replace':
+				hexa = d2hex(ta, " ", 16).split("\n")
+				hexb = d2hex(tb, " ", 16).split("\n")
+				r,g,b = 1,0.75,0.5
+				h = max(len(hexa),len(hexb))
+				ctx.set_source_rgb(r,g,b)
+				ctx.rectangle(0,addr-1,40,h)
+				ctx.fill()
+				addr += h
+		va = scrollbar.get_vadjustment()
+		ctx.set_source_rgb(0,0,0)
+		mms = va.get_value()*height/va.get_upper()
+		mmh = height/ht
+		ctx.rectangle(1.5,int(mms/hscale)+0.5,37,mmh)
+		ctx.stroke()
+		mctx.set_source_surface(cs,0,0)
+		mctx.paint()
+		widget.set_size_request(42,addr)
+
 	def draw_diff (self, widget, event):
 		x,y,width,height = widget.allocation
 		mctx = widget.window.cairo_create()
@@ -501,12 +575,13 @@ class ApplicationMainWindow(gtk.Window):
 		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
 		wt = int(dx)
 		ht = int(ht+4)
-		x,y,width,height = widget.allocation
 	# clear everything
 		ctx.set_source_rgb(0.95,0.95,0.95)
 		ctx.rectangle(0,0,width,height)
 		ctx.fill()
 		addr = 1
+	# need to count lines once for height, than take into account current scrollbar position
+	# and only draw visible part
 		for i in self.diffarr:
 			ta,tb,tag = i
 			if tag == 'delete':
@@ -528,7 +603,7 @@ class ApplicationMainWindow(gtk.Window):
 			if tag == 'insert':
 				hexb = d2hex(tb, " ", 16).split("\n")
 				ascb = d2asc(tb,16).split("\n") 
-				r,g,b = 0.5,0.75,1
+				r,g,b = 0.5,1,0.75
 				for j in range(len(hexb)):
 					ctx.set_source_rgb(r,g,b)
 					ctx.rectangle(wt*70,ht*(addr-1),wt*64,ht)
@@ -623,10 +698,12 @@ class ApplicationMainWindow(gtk.Window):
 		ctx.move_to(int(wt*134.5)+0.5,0)
 		ctx.line_to(int(wt*134.5)+0.5,height)
 		ctx.stroke()
+		
+		self.diffsize = addr-1
 
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
-		widget.set_size_request(int(wt*134.5)+1,ht*addr)
+		widget.set_size_request(int(wt*134.5)+1,ht*(addr-1))
 
 	def activate_manual(self, action):
 		w = gtk.Window()
