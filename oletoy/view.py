@@ -524,9 +524,10 @@ class ApplicationMainWindow(gtk.Window):
 		# scale to text if it's less than one screen, otherwise to window
 		if self.diffsize:
 			hscale = height*1./self.diffsize
+			frame = 1
 			if height*1./(self.diffsize*ht) > 1:
 				hscale = ht
-			ctx.scale(1,hscale)
+				frame = 0
 
 		addr = 1
 		for i in self.diffarr:
@@ -539,7 +540,7 @@ class ApplicationMainWindow(gtk.Window):
 					r,g,b = 0.5,1,0.75
 				h = len(hexa)
 				ctx.set_source_rgb(r,g,b)
-				ctx.rectangle(0,addr-1,40,h)
+				ctx.rectangle(0,(addr-1)*hscale,40,h*hscale)
 				ctx.fill()
 				addr += h
 			if tag == 'equal':
@@ -551,15 +552,16 @@ class ApplicationMainWindow(gtk.Window):
 				r,g,b = 1,0.75,0.5
 				h = max(len(hexa),len(hexb))
 				ctx.set_source_rgb(r,g,b)
-				ctx.rectangle(0,addr-1,40,h)
+				ctx.rectangle(0,(addr-1)*hscale,40,h*hscale)
 				ctx.fill()
 				addr += h
-		va = scrollbar.get_vadjustment()
-		ctx.set_source_rgb(0,0,0)
-		mms = va.get_value()*height/va.get_upper()
-		mmh = height/ht
-		ctx.rectangle(1.5,int(mms/hscale)+0.5,37,mmh)
-		ctx.stroke()
+		if frame == 1:
+			va = scrollbar.get_vadjustment()
+			ctx.set_source_rgb(0,0,0)
+			mms = va.get_value()*height/va.get_upper()
+			mmh = height/ht
+			ctx.rectangle(1.5,int(mms)+0.5,37,mmh*hscale)
+			ctx.stroke()
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
 		widget.set_size_request(42,addr)
