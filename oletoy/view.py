@@ -203,23 +203,10 @@ class ApplicationMainWindow(gtk.Window):
 				self.fname = sys.argv[i+1]
 				self.activate_open()
 
-	def diff_test(self):
-		pn = self.notebook.get_current_page()
-		if pn != -1 and (pn+1 in self.das):
+	def diff_test(self,data1,data2):
+#		if pn != -1 and (pn+1 in self.das):
 			del self.diffarr
 			self.diffarr = []
-			doc1 = self.das[pn]
-			doc2 = self.das[pn+1]
-			s1 = doc1.view.get_selection()
-			m1, iter1 = s1.get_selected()
-			if iter1 == None:
-				iter1 = doc1.model.get_iter_first()
-			s2 = doc2.view.get_selection()
-			m2, iter2 = s2.get_selected()
-			if iter2 == None:
-				iter2 = doc2.model.get_iter_first()
-			data1 = m1.get_value(iter1,3)
-			data2 = m2.get_value(iter2,3)
 			if data1 != data2:
 				sm = difflib.SequenceMatcher(None, data1, data2, False)
 				ta = ""
@@ -240,11 +227,9 @@ class ApplicationMainWindow(gtk.Window):
 						ta = data1[i1:i2]
 						tb = data2[j1:j2]
 					self.diffarr.append((ta,tb,tag))
+			# exactly the same records
 			else:
 				self.diffarr.append((data1,data1,"equal"))
-			return m1,iter1,m2,iter2
-		else:
-			return None,None,None,None
 
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"
@@ -430,11 +415,11 @@ class ApplicationMainWindow(gtk.Window):
 	def on_diff_va_changed (self,va,damm,s):
 		self.draw_diffmm(damm,None,s)
 
-	def activate_diff(self, action):
+	def activate_diff(self, action,data1=None,data2=None):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
 		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-		s.set_size_request(1095,400)
+		s.set_size_request(1165,400)
 		da = gtk.DrawingArea()
 		da.connect('expose_event', self.draw_diff)
 		damm = gtk.DrawingArea()
@@ -442,11 +427,28 @@ class ApplicationMainWindow(gtk.Window):
 		va = s.get_vadjustment()
 		va.connect('value-changed',self.on_diff_va_changed,damm,s)
 		damm.set_size_request(42,1)
-		pn = self.notebook.get_current_page()
-		if pn != -1:
-			self.m1,self.iter1,self.m2,self.iter2 = self.diff_test()
-		if self.m1 == None:
-			return
+		entlefttxt = "Unknown"
+		entrighttxt= "Unknown"
+		if data1 == None:
+			pn1 = self.notebook.get_current_page()
+			if pn1 != -1:
+				doc1 = self.das[pn1]
+				pn2 = min(pn1+1,len(self.das)-1)
+				doc2 = self.das[pn2]
+				s1 = doc1.view.get_selection()
+				m1, iter1 = s1.get_selected()
+				if iter1 == None:
+					iter1 = doc1.model.get_iter_first()
+				s2 = doc2.view.get_selection()
+				m2, iter2 = s2.get_selected()
+				if iter2 == None:
+					iter2 = doc2.model.get_iter_first()
+				data1 = m1.get_value(iter1,3)
+				data2 = m2.get_value(iter2,3)
+				entlefttxt = "%s"%m1.get_string_from_iter(iter1)
+				entrighttxt = "%s"%m2.get_string_from_iter(iter2)
+		self.diff_test(data1,data2)
+
 		w.set_title("OLE Toy DIFF")
 		s.add_with_viewport(da)
 		self.cbleft = gtk.ComboBoxEntry()
@@ -458,50 +460,59 @@ class ApplicationMainWindow(gtk.Window):
 
 		self.cbleft.set_model(self.cbm)
 		self.cbleft.set_text_column(0)
-		self.cbleft.set_active(pn)
+		self.cbleft.set_active(pn1)
 		self.cbright.set_model(self.cbm)
 		self.cbright.set_text_column(0)
-		self.cbright.set_active(pn+1)
+		self.cbright.set_active(pn2)
 
 		self.entleft = gtk.Entry()
 		self.entright = gtk.Entry()
-		self.entleft.set_text("%s"%self.m1.get_string_from_iter(self.iter1))
-		self.entright.set_text("%s"%self.m2.get_string_from_iter(self.iter2))
+		self.entleft.set_text(entlefttxt)
+		self.entright.set_text(entrighttxt)
 		self.entleft.connect("activate",self.on_diff_entry_activate,1)
 		self.entright.connect("activate",self.on_diff_entry_activate,2)
 		self.entleft.connect("key-press-event", self.on_diff_entry_keypressed,1)
 		self.entright.connect("key-press-event", self.on_diff_entry_keypressed,2)
-		hbox = gtk.HBox()
-		hbox.pack_start(self.cbleft,1,1,0)
-		hbox.pack_start(self.entleft,1,1,0)
-		hbox.pack_start(self.cbright,1,1,0)
-		hbox.pack_start(self.entright,1,1,0)
+		self.btn = gtk.Button()
+		self.btn.set_label("Go")
+		self.btn.set_size_request(42,1)
+		self.hb = gtk.HBox()
+		self.hb.pack_start(self.btn,0,0,0)
+		self.hb.pack_start(self.cbleft,1,1,0)
+		self.hb.pack_start(self.entleft,1,1,0)
+		self.hb.pack_start(self.cbright,1,1,0)
+		self.hb.pack_start(self.entright,1,1,0)
 		vbox = gtk.VBox()
 		hbox2= gtk.HBox()
 		hbox2.pack_start(damm,0,0,0)
 		hbox2.pack_start(s,1,1,0)
 		vbox.pack_start(hbox2,1,1,0)
-		vbox.pack_end(hbox,0,0,0)
+		vbox.pack_end(self.hb,0,0,0)
 		w.add(vbox)
 		w.show_all()
 
 	def on_diff_entry_activate(self,entry,eid):
+		o = "Oops"
 		if eid == 1: # left
-			o = self.entleft.get_text().split()
+			o = 'Left: %s'%self.entleft.get_text()
 			# make left fun
 		else:
-			o = self.entright.get_text().split()
+			o = 'Right: %s'%self.entright.get_text()
 			# make right fun
+		print o
 
 	def on_diff_entry_keypressed (self, view, event, eid):
 		# arrow up/down to go prev/next iter 
 		if event.keyval == 65362:
 			print 'up the tree'
+			return 1
 		elif event.keyval == 65364:
 #			ni = self.m1.iter_next(self.iter1)
 #			self.iter1 = ni
 #			self.m1.get_string_from_iter(ni)
 			print 'down the tree'
+		elif event.keyval == 65293:
+			self.on_diff_entry_activate(view,eid)
 
 	def draw_diffmm (self, widget, event,scrollbar):
 		x,y,width,height = widget.allocation
@@ -522,9 +533,10 @@ class ApplicationMainWindow(gtk.Window):
 		ctx.fill()
 
 		# scale to text if it's less than one screen, otherwise to window
+		frame = 1
+		hscale = 1
 		if self.diffsize:
 			hscale = height*1./self.diffsize
-			frame = 1
 			if height*1./(self.diffsize*ht) > 1:
 				hscale = ht
 				frame = 0
@@ -532,15 +544,20 @@ class ApplicationMainWindow(gtk.Window):
 		addr = 1
 		for i in self.diffarr:
 			ta,tb,tag = i
-			if tag == 'delete' or tag == 'insert':
+			if tag == 'delete':
 				hexa = d2hex(ta, " ", 16).split("\n")
 				r,g,b = 0.5,0.75,1
-				if tag == 'insert':
-					hexa = d2hex(tb, " ", 16).split("\n")
-					r,g,b = 0.5,1,0.75
 				h = len(hexa)
 				ctx.set_source_rgb(r,g,b)
-				ctx.rectangle(0,(addr-1)*hscale,40,h*hscale)
+				ctx.rectangle(0,(addr-1)*hscale,20,h*hscale)
+				ctx.fill()
+				addr += h
+			if tag == 'insert':
+				hexa = d2hex(tb, " ", 16).split("\n")
+				r,g,b = 0.5,1,0.75
+				h = len(hexa)
+				ctx.set_source_rgb(r,g,b)
+				ctx.rectangle(21,(addr-1)*hscale,40,h*hscale)
 				ctx.fill()
 				addr += h
 			if tag == 'equal':
@@ -559,12 +576,11 @@ class ApplicationMainWindow(gtk.Window):
 			va = scrollbar.get_vadjustment()
 			ctx.set_source_rgb(0,0,0)
 			mms = va.get_value()*height/va.get_upper()
-			mmh = height/ht
-			ctx.rectangle(1.5,int(mms)+0.5,37,mmh*hscale)
+			mmh = round(height*1.0/ht,1)
+			ctx.rectangle(0.5,int(mms)+0.5,39,mmh*hscale)
 			ctx.stroke()
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
-		widget.set_size_request(42,addr)
 
 	def draw_diff (self, widget, event):
 		x,y,width,height = widget.allocation
@@ -582,8 +598,11 @@ class ApplicationMainWindow(gtk.Window):
 		ctx.rectangle(0,0,width,height)
 		ctx.fill()
 		addr = 1
+		loff = 0
+		roff = 0
+	# FIXME!
 	# need to count lines once for height, than take into account current scrollbar position
-	# and only draw visible part
+	# and only redraw visible part
 		for i in self.diffarr:
 			ta,tb,tag = i
 			if tag == 'delete':
@@ -592,31 +611,33 @@ class ApplicationMainWindow(gtk.Window):
 				r,g,b = 0.5,0.75,1
 				for j in range(len(hexa)):
 					ctx.set_source_rgb(r,g,b)
-					ctx.rectangle(wt*5,ht*(addr-1),wt*64,ht)
+					ctx.rectangle(wt*7,ht*(addr-1),wt*64,ht)
 					ctx.fill()
 					ctx.set_source_rgb(0,0,0)
 					ctx.move_to(0,ht*addr)
-					ctx.show_text("%04d"%addr)
-					ctx.move_to(wt*5,ht*addr)
+					ctx.show_text("%06x"%loff)
+					ctx.move_to(wt*7,ht*addr)
 					ctx.show_text(hexa[j])
-					ctx.move_to(wt*53,ht*addr)
+					ctx.move_to(wt*55,ht*addr)
 					ctx.show_text(asca[j])
 					addr += 1
+					loff += len(asca[j])
 			if tag == 'insert':
 				hexb = d2hex(tb, " ", 16).split("\n")
 				ascb = d2asc(tb,16).split("\n") 
 				r,g,b = 0.5,1,0.75
 				for j in range(len(hexb)):
 					ctx.set_source_rgb(r,g,b)
-					ctx.rectangle(wt*70,ht*(addr-1),wt*64,ht)
+					ctx.rectangle(wt*79,ht*(addr-1),wt*64,ht)
 					ctx.fill()
 					ctx.set_source_rgb(0,0,0)
-					ctx.move_to(0,ht*addr)
-					ctx.show_text("%04d"%addr)
-					ctx.move_to(wt*70,ht*addr)
+					ctx.move_to(wt*72,ht*addr)
+					ctx.show_text("%06d"%roff)
+					ctx.move_to(wt*79,ht*addr)
 					ctx.show_text(hexb[j])
-					ctx.move_to(wt*118,ht*addr)
+					ctx.move_to(wt*127,ht*addr)
 					ctx.show_text(ascb[j])
+					roff += len(ascb[j])
 					addr += 1
 			if tag == 'equal':
 				hexa = d2hex(ta, " ", 16).split("\n")
@@ -624,15 +645,19 @@ class ApplicationMainWindow(gtk.Window):
 				for j in range(len(hexa)):
 					ctx.set_source_rgb(0,0,0)
 					ctx.move_to(0,ht*addr)
-					ctx.show_text("%04d"%addr)
-					ctx.move_to(wt*5,ht*addr)
+					ctx.show_text("%06x"%loff)
+					ctx.move_to(wt*72,ht*addr)
+					ctx.show_text("%06d"%roff)
+					ctx.move_to(wt*7,ht*addr)
 					ctx.show_text(hexa[j])
-					ctx.move_to(wt*53,ht*addr)
+					ctx.move_to(wt*55,ht*addr)
 					ctx.show_text(asca[j])
-					ctx.move_to(wt*70,ht*addr)
+					ctx.move_to(wt*79,ht*addr)
 					ctx.show_text(hexa[j])
-					ctx.move_to(wt*118,ht*addr)
+					ctx.move_to(wt*127,ht*addr)
 					ctx.show_text(asca[j])
+					loff += len(asca[j])
+					roff += len(asca[j])
 					addr += 1
 			if tag == 'replace':
 				hexa = d2hex(ta, " ", 16).split("\n")
@@ -642,70 +667,79 @@ class ApplicationMainWindow(gtk.Window):
 				r,g,b = 1,0.75,0.5
 				for j in range(min(len(hexa),len(hexb))):
 					ctx.set_source_rgb(r,g,b)
-					ctx.rectangle(wt*5,ht*(addr-1),wt*129,ht)
+					ctx.rectangle(wt*7,ht*(addr-1),wt*64,ht)
+					ctx.rectangle(wt*79,ht*(addr-1),wt*64,ht)
 					ctx.fill()
 					ctx.set_source_rgb(0,0,0)
 					ctx.move_to(0,ht*addr)
-					ctx.show_text("%04d"%addr)
-					ctx.move_to(wt*5,ht*addr)
+					ctx.show_text("%06x"%loff)
+					ctx.move_to(wt*72,ht*addr)
+					ctx.show_text("%06d"%roff)
+					ctx.move_to(wt*7,ht*addr)
 					ctx.show_text(hexa[j])
-					ctx.move_to(wt*53,ht*addr)
+					ctx.move_to(wt*55,ht*addr)
 					ctx.show_text(asca[j])
-					ctx.move_to(wt*70,ht*addr)
+					ctx.move_to(wt*79,ht*addr)
 					ctx.show_text(hexb[j])
-					ctx.move_to(wt*118,ht*addr)
+					ctx.move_to(wt*127,ht*addr)
 					ctx.show_text(ascb[j])
+					loff += len(asca[j])
+					roff += len(ascb[j])
 					addr += 1
 				# print leftovers
 				if len(hexa) > len(hexb):
 					lb = len(hexb)
 					for j in range(len(hexa)-lb):
 						ctx.set_source_rgb(r,g,b)
-						ctx.rectangle(wt*5,ht*(addr-1),wt*64,ht)
+						ctx.rectangle(wt*7,ht*(addr-1),wt*64,ht)
 						ctx.fill()
 						ctx.set_source_rgb(0,0,0)
 						ctx.move_to(0,ht*addr)
-						ctx.show_text("%04d"%addr)
-						ctx.move_to(wt*5,ht*addr)
+						ctx.show_text("%06x"%loff)
+						ctx.move_to(wt*7,ht*addr)
 						ctx.show_text(hexa[j+lb])
-						ctx.move_to(wt*53,ht*addr)
+						ctx.move_to(wt*55,ht*addr)
 						ctx.show_text(asca[j+lb])
+						loff += len(asca[j+lb])
 						addr += 1
 				elif len(hexb)>len(hexa):
 					la = len(hexa)
 					for j in range(len(hexb)-la):
 						ctx.set_source_rgb(r,g,b)
-						ctx.rectangle(wt*70,ht*(addr-1),wt*64,ht)
+						ctx.rectangle(wt*79,ht*(addr-1),wt*64,ht)
 						ctx.fill()
 						ctx.set_source_rgb(0,0,0)
-						ctx.move_to(0,ht*addr)
-						ctx.show_text("%04d"%addr)
-						ctx.move_to(wt*70,ht*addr)
+						ctx.move_to(wt*72,ht*addr)
+						ctx.show_text("%06d"%roff)
+						ctx.move_to(wt*79,ht*addr)
 						ctx.show_text(hexb[j+la])
-						ctx.move_to(wt*118,ht*addr)
+						ctx.move_to(wt*127,ht*addr)
 						ctx.show_text(ascb[j+la])
+						roff += len(ascb[j+la])
 						addr += 1
 						
 		ctx.set_source_rgb(0,0,0)
-		ctx.move_to(int(wt*4.5)+0.5,0)
-		ctx.line_to(int(wt*4.5)+0.5,height)
-		ctx.move_to(int(wt*52.5)+0.5,0)
-		ctx.line_to(int(wt*52.5)+0.5,height)
-		ctx.move_to(int(wt*69.5)-0.5,0)
-		ctx.line_to(int(wt*69.5)-0.5,height)
-		ctx.move_to(int(wt*69.5)+1.5,0)
-		ctx.line_to(int(wt*69.5)+1.5,height)
-		ctx.move_to(int(wt*117.5)+0.5,0)
-		ctx.line_to(int(wt*117.5)+0.5,height)
-		ctx.move_to(int(wt*134.5)+0.5,0)
-		ctx.line_to(int(wt*134.5)+0.5,height)
+		ctx.move_to(int(wt*6.5)+0.5,0)
+		ctx.line_to(int(wt*6.5)+0.5,height)
+		ctx.move_to(int(wt*54.5)+0.5,0)
+		ctx.line_to(int(wt*54.5)+0.5,height)
+		ctx.move_to(int(wt*71.5)-0.5,0)
+		ctx.line_to(int(wt*71.5)-0.5,height)
+		ctx.move_to(int(wt*71.5)+1.5,0)
+		ctx.line_to(int(wt*71.5)+1.5,height)
+		ctx.move_to(int(wt*78.5)-0.5,0)
+		ctx.line_to(int(wt*78.5)-0.5,height)
+		ctx.move_to(int(wt*126.5)+0.5,0)
+		ctx.line_to(int(wt*126.5)+0.5,height)
+		ctx.move_to(int(wt*143.5)+0.5,0)
+		ctx.line_to(int(wt*143.5)+0.5,height)
 		ctx.stroke()
 		
 		self.diffsize = addr-1
 
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
-		widget.set_size_request(int(wt*134.5)+1,ht*(addr-1))
+		widget.set_size_request(int(wt*143.5)+1,ht*(addr-1))
 
 	def activate_manual(self, action):
 		w = gtk.Window()
