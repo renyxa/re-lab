@@ -41,7 +41,7 @@ try:
 except:
 	pass
 
-version = "0.7.34"
+version = "0.7.35"
 
 ui_info = \
 '''<ui>
@@ -355,16 +355,24 @@ class DiffWindow(gtk.Window):
 		da = gtk.DrawingArea()
 		da.connect('expose_event', self.draw_diff,s)
 		s.add_with_viewport(da)
-		damm = gtk.DrawingArea()
-		damm.connect('expose_event', self.draw_diffmm,s)
-		damm.set_size_request(42,1)
+		self.damm = gtk.DrawingArea()
+		self.damm.connect('expose_event', self.draw_diffmm,s)
+		self.damm.set_size_request(42,1)
 		va = s.get_vadjustment()
-		va.connect('value-changed',self.on_diff_va_changed,damm,s)
+		va.connect('value-changed',self.on_diff_va_changed,self.damm,s)
 
 		hbox= gtk.HBox()
-		hbox.pack_start(damm,0,0,0)
+		hbox.pack_start(self.damm,0,0,0)
 		hbox.pack_start(s,1,1,0)
 
+		tbox = gtk.HBox()
+		flr = gtk.HBox()
+		flr.set_size_request(42,1)
+		vbl = gtk.VBox()
+		vbr = gtk.VBox()
+		tbox.pack_start(flr,0,0,0)
+		tbox.pack_start(vbl,1,1,0)
+		tbox.pack_start(vbr,1,1,0)
 		# Create statusbar
 		self.statusbar = gtk.HBox()
 		self.sblabel = gtk.Label()
@@ -376,6 +384,7 @@ class DiffWindow(gtk.Window):
 		self.statusbar.pack_start(exp_btn, 0,0,0)
 
 		vbox = gtk.VBox()
+		vbox.pack_start(tbox,0,0,0)
 		vbox.pack_start(hbox,1,1,1)
 		vbox.pack_start(self.statusbar,0,0,0)
 		self.add(vbox)
@@ -386,15 +395,28 @@ class DiffWindow(gtk.Window):
 		self.cswidth = None
 		self.csheight = None
 		self.draft = 1
+		sw = self.mainapp.sw
+		self.f1name = sw.ltab_cb.child.get_text()
+		self.f2name = sw.rtab_cb.child.get_text()
+		self.r1name = "%s (%s)"%(sw.lpath_cb.child.get_text(),sw.lpath_entry.get_text())
+		self.r2name = "%s (%s)"%(sw.rpath_cb.child.get_text(),sw.rpath_entry.get_text())
+		filelbll = gtk.Label(self.f1name)
+		filelblr = gtk.Label(self.f2name)
+		reclbll = gtk.Label(self.r1name)
+		reclblr = gtk.Label(self.r2name)
+		filelbll.set_alignment(xalign=0.0, yalign=0.5)
+		filelblr.set_alignment(xalign=0.0, yalign=0.5)
+		reclbll.set_alignment(xalign=0.0, yalign=0.5)
+		reclblr.set_alignment(xalign=0.0, yalign=0.5)
+		vbl.pack_start(filelbll,0,0,0)
+		vbl.pack_start(reclbll,0,0,0)
+		vbr.pack_start(filelblr,0,0,0)
+		vbr.pack_start(reclblr,0,0,0)
+
 
 	def activate_export(self, button):
 		fname = self.mainapp.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,"not_implemented_yet.html")
 		if fname:
-			sw = self.mainapp.sw
-			f1name = sw.ltab_cb.child.get_text()
-			f2name = sw.rtab_cb.child.get_text()
-			r1name = "%s (%s)"%(sw.lpath_cb.child.get_text(),sw.lpath_entry.get_text())
-			r2name = "%s (%s)"%(sw.rpath_cb.child.get_text(),sw.rpath_entry.get_text())
 			f = open(fname,'w')
 			f.write("<!DOCTYPE html><html><body>")
 			f.write("<head>\n<meta charset='utf-8'>\n") 
@@ -405,10 +427,10 @@ class DiffWindow(gtk.Window):
 			f.write("</style>\n</head>\n")
 			f.write("<table style='font-family:%s;' cellspacing=0 cellpadding=2>\n"%self.mainapp.font)
 			f.write("<tr>")
-			f.write("<td colspan=3>%s</td><td colspan=3>%s</td>"%(f1name,f2name))
+			f.write("<td colspan=3>%s</td><td colspan=3>%s</td>"%(self.f1name,self.f2name))
 			f.write("</tr>\n")
 			f.write("<tr class='title'>")
-			f.write("<td colspan=3>%s</td><td colspan=3>%s</td>"%(r1name,r2name))
+			f.write("<td colspan=3>%s</td><td colspan=3>%s</td>"%(self.r1name,self.r2name))
 			f.write("</tr>\n")
 
 			addr = 1
@@ -515,6 +537,8 @@ class DiffWindow(gtk.Window):
 		mctx = widget.window.cairo_create()
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
+		if self.diffcs == None:
+			return
 
 		# to calculate how many text lines could be on the screen
 		ctx.select_font_face(self.mainapp.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
@@ -524,59 +548,25 @@ class DiffWindow(gtk.Window):
 		wt = int(dx)
 		ht = int(ht+4)
 
-		ctx.set_source_rgb(0.9,0.9,0.9)
-		ctx.rectangle(0,0,40,height)
-		ctx.fill()
+		wscale = 42./self.cswidth
+		hscale = height*1./self.csheight
+		ctx.scale(wscale,hscale)
+		ctx.set_source_surface(self.diffcs,0,0)
+		ctx.paint()
 
-		# scale to text if it's less than one screen, otherwise to window
-		frame = 1
-		hscale = 1
-		if self.mainapp.diffsize:
-			hscale = height*1./self.mainapp.diffsize
-			if height*1./(self.mainapp.diffsize*ht) > 1:
-				hscale = ht
-				frame = 0
-
-		addr = 1
-		for i in self.mainapp.diffarr:
-			ta,tb,tag = i
-			if tag == 'delete':
-				hexa = d2hex(ta, " ", 16).split("\n")
-				r,g,b = 0.5,0.75,1
-				h = len(hexa)
-				ctx.set_source_rgb(r,g,b)
-				ctx.rectangle(0,(addr-1)*hscale,20,h*hscale)
-				ctx.fill()
-				addr += h
-			if tag == 'insert':
-				hexa = d2hex(tb, " ", 16).split("\n")
-				r,g,b = 0.5,1,0.75
-				h = len(hexa)
-				ctx.set_source_rgb(r,g,b)
-				ctx.rectangle(21,(addr-1)*hscale,40,h*hscale)
-				ctx.fill()
-				addr += h
-			if tag == 'equal':
-				hexa = d2hex(ta, " ", 16).split("\n")
-				addr += len(hexa)
-			if tag == 'replace':
-				hexa = d2hex(ta, " ", 16).split("\n")
-				hexb = d2hex(tb, " ", 16).split("\n")
-				r,g,b = 1,0.75,0.5
-				h = max(len(hexa),len(hexb))
-				ctx.set_source_rgb(r,g,b)
-				ctx.rectangle(0,(addr-1)*hscale,40,h*hscale)
-				ctx.fill()
-				addr += h
-		if frame == 1:
+		if height*1./(self.mainapp.diffsize*ht) <= 1:
 			va = scrollbar.get_vadjustment()
 			ctx.set_source_rgb(0,0,0)
 			mms = va.get_value()*height/va.get_upper()
-			mmh = round(height*1.0/ht,1)
-			ctx.rectangle(0.5,int(mms)+0.5,39,mmh*hscale)
+			mmh = va.get_page_size()*height/va.get_upper()
+			ctx.scale(1./wscale,1./hscale)
+			ctx.rectangle(1.5,int(mms)+0.5,39,int(mmh))
 			ctx.stroke()
+			ctx.scale(wscale,hscale)
+
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
+
 
 	def draw_diff (self, widget, event, scrollbar):
 		# FIXME!
@@ -633,7 +623,7 @@ class DiffWindow(gtk.Window):
 						ctx.fill()
 						ctx.set_source_rgb(0,0,0)
 						ctx.move_to(wt*72,ht*addr)
-						ctx.show_text("%06d"%roff)
+						ctx.show_text("%06x"%roff)
 						ctx.move_to(wt*79,ht*addr)
 						ctx.show_text(hexb[j])
 						ctx.move_to(wt*127,ht*addr)
@@ -648,7 +638,7 @@ class DiffWindow(gtk.Window):
 						ctx.move_to(0,ht*addr)
 						ctx.show_text("%06x"%loff)
 						ctx.move_to(wt*72,ht*addr)
-						ctx.show_text("%06d"%roff)
+						ctx.show_text("%06x"%roff)
 						ctx.move_to(wt*7,ht*addr)
 						ctx.show_text(hexa[j])
 						ctx.move_to(wt*55,ht*addr)
@@ -675,7 +665,7 @@ class DiffWindow(gtk.Window):
 						ctx.move_to(0,ht*addr)
 						ctx.show_text("%06x"%loff)
 						ctx.move_to(wt*72,ht*addr)
-						ctx.show_text("%06d"%roff)
+						ctx.show_text("%06x"%roff)
 						ctx.move_to(wt*7,ht*addr)
 						ctx.show_text(hexa[j])
 						ctx.move_to(wt*55,ht*addr)
@@ -711,7 +701,7 @@ class DiffWindow(gtk.Window):
 							ctx.fill()
 							ctx.set_source_rgb(0,0,0)
 							ctx.move_to(wt*72,ht*addr)
-							ctx.show_text("%06d"%roff)
+							ctx.show_text("%06x"%roff)
 							ctx.move_to(wt*79,ht*addr)
 							ctx.show_text(hexb[j+la])
 							ctx.move_to(wt*127,ht*addr)
@@ -742,6 +732,7 @@ class DiffWindow(gtk.Window):
 			self.cswidth = int(wt*143.5)+1
 			self.csheight = int(ht*self.mainapp.diffsize)
 			self.draw_diff(widget,event,scrollbar)
+			self.draw_diffmm(self.damm,event,scrollbar)
 		else:
 			cs = self.diffcs
 			wt = self.wt
