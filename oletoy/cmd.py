@@ -16,6 +16,7 @@
 
 import sys,struct
 import tree,gtk,gobject,cairo,zlib
+import difflib
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx
 from utils import *
 from os.path import expanduser
@@ -133,6 +134,7 @@ class SelectWindow(gtk.Window):
 
 		table.attach(ok_btn,
 			1, 3, 7, 8, 0, 0, 0, 0);
+
 		self.init_controls()
 		# signals here to not react on init_controls
 		self.ltab_cb.connect ('changed', self.changed_cb,"ltab")
@@ -181,20 +183,22 @@ class SelectWindow(gtk.Window):
 				self.reoff_spb.set_value(dlen)
 				self.rlen_spb.set_value(dlen)
 
+	def on_dw_destroy(self,widget):
+		self.changed = 1
+
 	def ok_button_clicked(self, button):
-		if self.mainapp.dw:
-			self.mainapp.dw.destroy()
-		self.mainapp.dw = DiffWindow(self.mainapp)
 		if self.changed:
+			self.mainapp.dw = DiffWindow(self.mainapp)
+			self.mainapp.dw.connect("destroy", self.on_dw_destroy)
 			m1 = self.lpath_cb.get_model()
 			m2 = self.rpath_cb.get_model()
 			iter1 = self.lpath_cb.get_active_iter()
 			iter2 = self.rpath_cb.get_active_iter()
-			self.mainapp.diffdata1 = m1.get_value(iter1,3)
-			self.mainapp.diffdata2 = m2.get_value(iter2,3)
+			self.mainapp.dw.diffdata1 = m1.get_value(iter1,3)
+			self.mainapp.dw.diffdata2 = m2.get_value(iter2,3)
 			self.changed = 0
-			self.mainapp.diff_test(self.mainapp.diffdata1,self.mainapp.diffdata2)
-		self.mainapp.dw.show_all()
+			self.mainapp.dw.diff_test(self.mainapp.dw.diffdata1,self.mainapp.dw.diffdata2)
+			self.mainapp.dw.show_all()
 
 	def init_controls(self):
 		self.ltab_cb.set_model(self.tab_cbm)
@@ -263,9 +267,6 @@ class SelectWindow(gtk.Window):
 			self.llen_spb.set_sensitive(False)
 			self.rlen_spb.set_sensitive(False)
 
-			self.mainapp.diffdata1 = m1.get_value(iter1,3)
-			self.mainapp.diffdata2 = m2.get_value(iter2,3)
-
 
 class DiffWindow(gtk.Window):
 	def __init__(self, mainapp, parent=None):
@@ -320,6 +321,11 @@ class DiffWindow(gtk.Window):
 		self.cswidth = None
 		self.csheight = None
 		self.draft = 1
+		self.diffarr = []
+		self.diffsize = None
+		self.diffdata1 = None
+		self.diffdata2 = None
+
 		sw = self.mainapp.sw
 		self.f1name = sw.ltab_cb.child.get_text()
 		self.f2name = sw.rtab_cb.child.get_text()
@@ -362,7 +368,7 @@ class DiffWindow(gtk.Window):
 			loff = 0
 			roff = 0
 #			addr1 |Hex1| Asc1 || addr2 |Hex2| Asc2
-			for i in self.mainapp.diffarr:
+			for i in self.diffarr:
 				ta,tb,tag = i
 				if tag == 'delete':
 					hexa = d2hex(ta, " ", 16).split("\n")
@@ -457,6 +463,36 @@ class DiffWindow(gtk.Window):
 	def on_diff_va_changed (self,va,damm,s):
 		self.draw_diffmm(damm,None,s)
 
+
+	def diff_test(self,data1,data2):
+		del self.diffarr
+		self.diffarr = []
+		if data1 != data2:
+			sm = difflib.SequenceMatcher(None, data1, data2, False)
+			ta = ""
+			tb = ""
+			clra = 1,1,1
+			clrb = 1,1,1
+			for tag, i1, i2, j1, j2 in sm.get_opcodes():
+				if tag == 'delete':
+					ta = data1[i1:i2]
+					tb = ""
+				if tag == 'insert':
+					tb = data2[j1:j2]
+					ta = ""
+				if tag == 'equal':
+					ta = data1[i1:i2]
+					tb = ta
+				if tag == 'replace':
+					ta = data1[i1:i2]
+					tb = data2[j1:j2]
+				self.diffarr.append((ta,tb,tag))
+		# exactly the same records
+		else:
+			self.diffarr.append((data1,data1,"equal"))
+
+
+
 	def draw_diffmm (self, widget, event,scrollbar):
 		x,y,width,height = widget.allocation
 		mctx = widget.window.cairo_create()
@@ -475,7 +511,7 @@ class DiffWindow(gtk.Window):
 
 		wscale = 42./self.cswidth
 		hscale = height*1./self.csheight
-		if height*1./(self.mainapp.diffsize*ht) > 1:
+		if height*1./(self.diffsize*ht) > 1:
 			hscale = 1
 		ctx.scale(wscale,hscale)
 		ctx.set_source_surface(self.diffcs,0,0)
@@ -521,7 +557,7 @@ class DiffWindow(gtk.Window):
 			addr = 1
 			loff = 0
 			roff = 0
-			for i in self.mainapp.diffarr:
+			for i in self.diffarr:
 				ta,tb,tag = i
 				if tag == 'delete':
 					hexa = d2hex(ta, " ", 16).split("\n")
@@ -652,12 +688,12 @@ class DiffWindow(gtk.Window):
 			ctx.move_to(int(wt*143.5)+0.5,0)
 			ctx.line_to(int(wt*143.5)+0.5,height)
 			ctx.stroke()
-			self.mainapp.diffsize = addr-1
+			self.diffsize = addr-1
 			self.diffcs = cs
 			self.wt = wt
 			self.ht = ht
 			self.cswidth = int(wt*143.5)+1
-			self.csheight = int(ht*self.mainapp.diffsize)
+			self.csheight = int(ht*self.diffsize)
 			self.draw_diff(widget,event,scrollbar)
 			self.draw_diffmm(self.damm,event,scrollbar)
 		else:
@@ -666,8 +702,7 @@ class DiffWindow(gtk.Window):
 			ht = self.ht
 		mctx.set_source_surface(cs,0,0)
 		mctx.paint()
-		widget.set_size_request(int(wt*143.5)+1,int(ht*self.mainapp.diffsize))
-
+		widget.set_size_request(int(wt*143.5)+1,int(ht*self.diffsize))
 
 
 class CliWindow(gtk.Window):

@@ -18,7 +18,6 @@
 import sys,struct,ctypes
 import gobject
 import gtk, pango, cairo
-import difflib
 import tree
 import hexdump
 import App, cmd
@@ -41,7 +40,7 @@ try:
 except:
 	pass
 
-version = "0.7.35"
+version = "0.7.36"
 
 ui_info = \
 '''<ui>
@@ -171,12 +170,8 @@ class ApplicationMainWindow(gtk.Window):
 		self.cmdhistory = []
 		self.curcmd = -1
 
-		self.diffarr = [] # for DIFF window data
 		self.cbm = None
-		self.diffsize = None
-		self.diffminimap = None
-		self.diffdata1 = None
-		self.diffdata2 = None
+		self.sw = None
 
 		# configuration options
 		self.options_le = 1
@@ -205,33 +200,9 @@ class ApplicationMainWindow(gtk.Window):
 				self.fname = sys.argv[i+1]
 				self.activate_open()
 
-	def diff_test(self,data1,data2):
-#		if pn != -1 and (pn+1 in self.das):
-			del self.diffarr
-			self.diffarr = []
-			if data1 != data2:
-				sm = difflib.SequenceMatcher(None, data1, data2, False)
-				ta = ""
-				tb = ""
-				clra = 1,1,1
-				clrb = 1,1,1
-				for tag, i1, i2, j1, j2 in sm.get_opcodes():
-					if tag == 'delete':
-						ta = data1[i1:i2]
-						tb = ""
-					if tag == 'insert':
-						tb = data2[j1:j2]
-						ta = ""
-					if tag == 'equal':
-						ta = data1[i1:i2]
-						tb = ta
-					if tag == 'replace':
-						ta = data1[i1:i2]
-						tb = data2[j1:j2]
-					self.diffarr.append((ta,tb,tag))
-			# exactly the same records
-			else:
-				self.diffarr.append((data1,data1,"equal"))
+	def on_win_destroy(self,widget):
+		del self.sw
+		self.sw = None
 
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"
@@ -416,9 +387,11 @@ class ApplicationMainWindow(gtk.Window):
 
 
 	def activate_diff(self, action,data1=None,data2=None):
-		self.sw = cmd.SelectWindow(self)
-		self.dw = None
-		self.sw.show_all()
+		if self.sw == None:
+			self.sw = cmd.SelectWindow(self)
+			self.sw.connect("destroy", self.on_win_destroy)
+			self.dw = None
+			self.sw.show_all()
 
 
 	def activate_manual(self, action):
