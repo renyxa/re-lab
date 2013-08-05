@@ -32,6 +32,7 @@ import lrf
 import wt602
 import pdb
 import sbimp
+import hv2, utils
 from utils import *
 from hv2 import HexView
 

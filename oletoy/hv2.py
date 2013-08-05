@@ -580,33 +580,36 @@ class HexView():
 
 
 	def on_button_press (self, widget, event):
-		rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
-		if event.y - self.tht - 4 < 0:
-			rownum = self.curr
-		if rownum > self.lines-1:
-			rownum = self.lines-1
-		if event.x > self.tdx*10:
-			if event.x < self.tdx*(10+16*3): # hex
-				colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
-			elif event.x < self.tdx*(11+16*4): #ascii
-				colnum = int((event.x-self.tdx*(12+16*3))/self.tdx)
-			else:
-				colnum = self.line_size(rownum)-1
+		if event.button == 3:
+			print "Will add context menu in the future",event.x, event.y
 		else:
-			colnum = self.curc
-		if colnum > self.line_size(rownum)-1:
-			colnum = self.line_size(rownum)-1
-		if colnum < 0:
-			colnum = self.curc
-		self.prer = self.curr
-		self.prec = self.curc
-		self.curr = rownum
-		self.curc = colnum
-		self.sel = None
-		self.drag = 1
-		self.mode = "c"
-		self.expose(widget,event)
-		self.hv.grab_focus()
+			rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
+			if event.y - self.tht - 4 < 0:
+				rownum = self.curr
+			if rownum > self.lines-1:
+				rownum = self.lines-1
+			if event.x > self.tdx*10:
+				if event.x < self.tdx*(10+16*3): # hex
+					colnum = int((event.x-self.tdx*9.5)/self.tdx/3)
+				elif event.x < self.tdx*(11+16*4): #ascii
+					colnum = int((event.x-self.tdx*(12+16*3))/self.tdx)
+				else:
+					colnum = self.line_size(rownum)-1
+			else:
+				colnum = self.curc
+			if colnum > self.line_size(rownum)-1:
+				colnum = self.line_size(rownum)-1
+			if colnum < 0:
+				colnum = self.curc
+			self.prer = self.curr
+			self.prec = self.curc
+			self.curr = rownum
+			self.curc = colnum
+			self.sel = None
+			self.drag = 1
+			self.mode = "c"
+			self.expose(widget,event)
+			self.hv.grab_focus()
 
 	def ol2quad(self,o,l):
 		if o > len(self.data) - 1:

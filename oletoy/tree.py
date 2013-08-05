@@ -108,6 +108,7 @@ def make_view():
 	view.show()
 	# Create scrollbars around the view.
 	scrolled = gtk.ScrolledWindow()
+	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 	scrolled.add(view)
 	scrolled.set_size_request(400,400)
 	scrolled.show()
@@ -141,6 +142,7 @@ def make_view2():
 	view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
 	# Create scrollbars around the view.
 	scrolled = gtk.ScrolledWindow()
+	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 	scrolled.add(view)
 	scrolled.set_size_request(250,300)
 	#scrolled.show()
