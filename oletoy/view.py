@@ -41,7 +41,7 @@ try:
 except:
 	pass
 
-version = "0.7.33"
+version = "0.7.34"
 
 ui_info = \
 '''<ui>
@@ -390,17 +390,118 @@ class DiffWindow(gtk.Window):
 	def activate_export(self, button):
 		fname = self.mainapp.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,"not_implemented_yet.html")
 		if fname:
+			sw = self.mainapp.sw
+			f1name = sw.ltab_cb.child.get_text()
+			f2name = sw.rtab_cb.child.get_text()
+			r1name = "%s (%s)"%(sw.lpath_cb.child.get_text(),sw.lpath_entry.get_text())
+			r2name = "%s (%s)"%(sw.rpath_cb.child.get_text(),sw.rpath_entry.get_text())
 			f = open(fname,'w')
 			f.write("<!DOCTYPE html><html><body>")
 			f.write("<head>\n<meta charset='utf-8'>\n") 
-			f.write("<style type='text/css'>\ntr.top1 td { border-bottom: 1px solid black; }")
-			f.write("tr.top2 td { border-bottom: 2px solid purple; }\n")
-			f.write("tr.top3 td { border-bottom: 3px solid red; }\n")
+			f.write("<style type='text/css'>\ntr.top1 td { border-top: 1px solid black; }")
 			f.write("tr.title td { border-bottom: 3px solid black; }\n")
 			f.write(".mid { border-left: 1px solid black; border-right: 1px solid black;}\n")
+			f.write(".mid2 { border-right: 3px solid black; border-right-style: double}\n")
 			f.write("</style>\n</head>\n")
-			f.write("<table style='font-family:%s;' cellspacing=0>\n"%self.mainapp.font)
-			f.write("NOT IMPLEMENTED YET")
+			f.write("<table style='font-family:%s;' cellspacing=0 cellpadding=2>\n"%self.mainapp.font)
+			f.write("<tr>")
+			f.write("<td colspan=3>%s</td><td colspan=3>%s</td>"%(f1name,f2name))
+			f.write("</tr>\n")
+			f.write("<tr class='title'>")
+			f.write("<td colspan=3>%s</td><td colspan=3>%s</td>"%(r1name,r2name))
+			f.write("</tr>\n")
+
+			addr = 1
+			loff = 0
+			roff = 0
+#			addr1 |Hex1| Asc1 || addr2 |Hex2| Asc2
+			for i in self.mainapp.diffarr:
+				ta,tb,tag = i
+				if tag == 'delete':
+					hexa = d2hex(ta, " ", 16).split("\n")
+					asca = d2asc(ta,16).split("\n") 
+					clr = "128,192,255"
+					clrsp="<span style='background-color: rgba(%s,0.3);'>"%clr
+					for j in range(len(hexa)):
+						hpad = "&nbsp;"*(47-len(hexa[j]))
+						apad = "&nbsp;"*(16-len(asca[j]))
+						f.write("<tr>")
+						f.write("<td>%06x</td><td class='mid'>%s%s</span></td><td class='mid2'>%s%s</span></td>"%(loff,clrsp,hexa[j]+hpad,clrsp,asca[j]+apad))
+						f.write("<td></td><td class='mid'></td><td></td>")
+						f.write("</tr>\n")
+						addr += 1
+						loff += len(asca[j])
+				if tag == 'insert':
+					hexb = d2hex(tb, " ", 16).split("\n")
+					ascb = d2asc(tb,16).split("\n") 
+					clr = "128,255,192"
+					clrsp="<span style='background-color: rgba(%s,0.3);'>"%clr
+					for j in range(len(hexb)):
+						hpad = "&nbsp;"*(47-len(hexb[j]))
+						apad = "&nbsp;"*(16-len(ascb[j]))
+						f.write("<tr>")
+						f.write("<td></td><td class='mid'></td><td class='mid2'></td>")
+						f.write("<td>%06x</td><td class='mid'>%s%s</span></td><td>%s%s</span></td>"%(roff,clrsp,hexb[j]+hpad,clrsp,ascb[j]+apad))
+						f.write("</tr>\n")
+						roff += len(ascb[j])
+						addr += 1
+				if tag == 'equal':
+					hexa = d2hex(ta, " ", 16).split("\n")
+					asca = d2asc(ta,16).split("\n") 
+					for j in range(len(hexa)):
+						hpad = "&nbsp;"*(47-len(hexa[j]))
+						apad = "&nbsp;"*(16-len(asca[j]))
+						f.write("<tr>")
+						f.write("<td>%06x</td><td class='mid'>%s</td><td class='mid2'>%s</td>"%(loff,hexa[j]+hpad,asca[j]+apad))
+						f.write("<td>%06x</td><td class='mid'>%s</td><td>%s</td>"%(roff,hexa[j]+hpad,asca[j]+apad))
+						f.write("</tr>\n")
+						loff += len(asca[j])
+						roff += len(asca[j])
+						addr += 1
+				if tag == 'replace':
+					hexa = d2hex(ta, " ", 16).split("\n")
+					asca = d2asc(ta,16).split("\n") 
+					hexb = d2hex(tb, " ", 16).split("\n")
+					ascb = d2asc(tb,16).split("\n") 
+					clr = "255,192,128"
+					clrsp="<span style='background-color: rgba(%s,0.3);'>"%clr
+					for j in range(min(len(hexa),len(hexb))):
+						hpada = "&nbsp;"*(47-len(hexa[j]))
+						apada = "&nbsp;"*(16-len(asca[j]))
+						hpadb = "&nbsp;"*(47-len(hexb[j]))
+						apadb = "&nbsp;"*(16-len(ascb[j]))
+						f.write("<tr>")
+						f.write("<td>%06x</td><td class='mid'>%s%s</span></td><td class='mid2'>%s%s</span></td>"%(loff,clrsp,hexa[j]+hpada,clrsp,asca[j]+apada))
+						f.write("<td>%06x</td><td class='mid'>%s%s</span></td><td>%s%s</span></td>"%(roff,clrsp,hexb[j]+hpadb,clrsp,ascb[j]+apadb))
+						f.write("</tr>\n")
+						loff += len(asca[j])
+						roff += len(ascb[j])
+						addr += 1
+					# print leftovers
+					if len(hexa) > len(hexb):
+						lb = len(hexb)
+						for j in range(len(hexa)-lb):
+							hpada = "&nbsp;"*(47-len(hexa[j+lb]))
+							apada = "&nbsp;"*(16-len(asca[j+lb]))
+							f.write("<tr>")
+							f.write("<td>%06x</td><td class='mid'>%s%s</span></td><td class='mid2'>%s%s</span></td>"%(loff,clrsp,hexa[j+lb]+hpada,clrsp,asca[j+lb]+apada))
+							f.write("<td></td><td class='mid'></td><td></td>")
+							f.write("</tr>\n")
+							loff += len(asca[j+lb])
+							addr += 1
+					elif len(hexb)>len(hexa):
+						la = len(hexa)
+						for j in range(len(hexb)-la):
+							hpadb = "&nbsp;"*(47-len(hexb[j+la]))
+							apadb = "&nbsp;"*(16-len(ascb[j+la]))
+							f.write("<tr>")
+							f.write("<td></td><td class='mid'></td><td class='mid2'></td>")
+							f.write("<td>%06x</td><td class='mid'>%s%s</span></td><td>%s%s</span></td>"%(roff,clrsp,hexb[j+la]+hpadb,clrsp,ascb[j+la]+apadb))
+							f.write("</tr>\n")
+							roff += len(ascb[j+la])
+							addr += 1
+
+			f.write("<tr class='top1'><td colspan=6></td></tr>\n")
 			f.write("</table></body></html>")
 			f.close()
 		else:
