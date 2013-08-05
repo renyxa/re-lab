@@ -194,17 +194,18 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 		if infname == "VisioDocument":
 			ftype = "vsd"
 			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
-# choose vsd or vsd2
+		# choose vsd or vsd2
 			vsd.parse (page, data, iter1)
+
 		if infname == "WordDocument":
 			ftype = "doc"
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 			doc.parse (page, data, iter1)
 		if infname == "1Table" or infname == "0Table":
-			doc.parse_table (page, data, iter1,docdata,docdataiter)
-		if infname == "Data" and page.type == "DOC":
-			docdataiter = iter1
-			docdata = data
+			page.wtable = iter1
+		if infname == "Data":
+			page.wdata = iter1
+
 		if infname == "Book" or infname == "Workbook":
 			page.model.set_value(iter1,1,("xls",dirflag))
 			ftype = xls.parse (page, data, iter1)

@@ -324,7 +324,12 @@ fclcb97recs1 = [
 
 #PlcfLvcPre10
 
-fclcb97recs2 = ["PlcfLvcPre10","PlcfAsumy","PlcfGram","SttbListNames","SttbfUssr"]
+fclcb97recs2 = [
+	("PlcfLvcPre10",),
+	("PlcfAsumy",),
+	("PlcfGram",),
+	("SttbListNames",),
+	("SttbfUssr",)]
 
 def FcLcb97 (hd,data):
 	off = 2
@@ -343,9 +348,22 @@ def FcLcb97 (hd,data):
 		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
-fclcb2krecs = ["PlcfTch","RmdThreading","Mid","SttbRgtplc","MsoEnvelope",
-  "PlcfLad","RgDofr","Plcosl","PlcfCookieOld","PgdMotherOld","BkdMotherOld",
-  "PgdFtnOld","BkdFtnOld","PgdEdnOld","BkdEdnOld"]
+fclcb2krecs = [
+	("PlcfTch",),
+	("RmdThreading",),
+	("Mid",),
+	("SttbRgtplc",),
+	("MsoEnvelope",),
+	("PlcfLad",),
+	("RgDofr",),
+	("Plcosl",),
+	("PlcfCookieOld",),
+	("PgdMotherOld",),
+	("BkdMotherOld",),
+	("PgdFtnOld",),
+	("BkdFtnOld",),
+	("PgdEdnOld",),
+	("BkdEdnOld",)]
 
 def FcLcb2k (hd,data):
 	FcLcb97 (hd,data)
@@ -356,12 +374,35 @@ def FcLcb2k (hd,data):
 		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
-fclcb2k2recs = ["Unused1","PlcfPgp","Plcfuim","PlfguidUim","AtrdExtra",
-  "Plrsid","SttbfBkmkFactoid","PlcfBkfFactoid","Plcfcookie","PlcfBklFactoid",
-  "FactoidData","DocUndo","SttbfBkmkFcc","PlcfBkfFcc","PlcfBklFcc",
-  "SttbfbkmkBPRepairs","PlcfbkfBPRepairs","PlcfbklBPRepairs","PmsNew",
-  "ODSO","PlcfpmiOldXP","PlcfpmiNewXP","PlcfpmiMixedXP","Unused2","Plcffactoid",
-  "PlcflvcOldXP","PlcflvcNewXP","PlcflvcMixedXP"]
+fclcb2k2recs = [
+	("Unused1",),
+	("PlcfPgp",),
+	("Plcfuim",),
+	("PlfguidUim",),
+	("AtrdExtra",),
+	("Plrsid",),
+	("SttbfBkmkFactoid",),
+	("PlcfBkfFactoid",),
+	("Plcfcookie",),
+	("PlcfBklFactoid",),
+	("FactoidData",),
+	("DocUndo",),
+	("SttbfBkmkFcc",),
+	("PlcfBkfFcc",),
+	("PlcfBklFcc",),
+	("SttbfbkmkBPRepairs",),
+	("PlcfbkfBPRepairs",),
+	("PlcfbklBPRepairs",),
+	("PmsNew",),
+	("ODSO",),
+	("PlcfpmiOldXP",),
+	("PlcfpmiNewXP",),
+	("PlcfpmiMixedXP",),
+	("Unused2",),
+	("Plcffactoid",),
+	("PlcflvcOldXP",),
+	("PlcflvcNewXP",),
+	("PlcflvcMixedXP",)]
 
 def FcLcb2k2 (hd,data):
 	FcLcb2k (hd,data)
@@ -372,11 +413,35 @@ def FcLcb2k2 (hd,data):
 		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
-fclcb2k3recs = ["Hplxsdr","SttbfBkmkSdt","PlcfBkfSdt","PlcfBklSdt","CustomXForm",
-  "SttbfBkmkProt","PlcfBkfProt","PlcfBklProt","SttbProtUser","Unused","PlcfpmiOld",
-  "PlcfpmiOldInline","PlcfpmiNew","PlcfpmiNewInline","PlcflvcOld","PlcflvcOldInline",
-  "PlcflvcNew","PlcflvcNewInline","PgdMother","BkdMother","AfdMother","PgdFtn",
-  "BkdFtn","AfdFtn","PgdEdn","BkdEdn","AfdEdn","Afd"]
+fclcb2k3recs = [
+	("Hplxsdr",),
+	("SttbfBkmkSdt",),
+	("PlcfBkfSdt",),
+	("PlcfBklSdt",),
+	("CustomXForm",),
+	("SttbfBkmkProt",),
+	("PlcfBkfProt",),
+	("PlcfBklProt",),
+	("SttbProtUser",),
+	("Unused",),
+	("PlcfpmiOld",),
+	("PlcfpmiOldInline",),
+	("PlcfpmiNew",),
+	("PlcfpmiNewInline",),
+	("PlcflvcOld",),
+	("PlcflvcOldInline",),
+	("PlcflvcNew",),
+	("PlcflvcNewInline",),
+	("PgdMother",),
+	("BkdMother",),
+	("AfdMother",),
+	("PgdFtn",),
+	("BkdFtn",),
+	("AfdFtn",),
+	("PgdEdn",),
+	("BkdEdn",),
+	("AfdEdn",),
+	("Afd",)]
 
 def FcLcb2k3 (hd,data):
 	FcLcb2k2 (hd,data)
@@ -387,10 +452,26 @@ def FcLcb2k3 (hd,data):
 		add_iter(hd,"lcb%s"%i,struct.unpack("<I",data[off:off+4])[0],off,4,"<I")
 		off += 4
 
-fclcb2k7recs = ["Plcfmthd","SttbfBkmkMoveFrom","PlcfBkfMoveFrom","PlcfBklMoveFrom",
-  "SttbfBkmkMoveTo","PlcfBkfMoveTo","PlcfBklMoveTo","Unused1","Unused2",
-  "Unused3","SttbfBkmkArto","PlcfBkfArto","PlcfBklArto","ArtoData",
-  "Unused4","Unused5","Unused6","OssTheme","ColorSchemeMapping"]
+fclcb2k7recs = [
+	("Plcfmthd",),
+	("SttbfBkmkMoveFrom",),
+	("PlcfBkfMoveFrom",),
+	("PlcfBklMoveFrom",),
+	("SttbfBkmkMoveTo",),
+	("PlcfBkfMoveTo",),
+	("PlcfBklMoveTo",),
+	("Unused1",),
+	("Unused2",),
+	("Unused3",),
+	("SttbfBkmkArto",),
+	("PlcfBkfArto",),
+	("PlcfBklArto",),
+	("ArtoData",),
+	("Unused4",),
+	("Unused5",),
+	("Unused6",),
+	("OssTheme",),
+	("ColorSchemeMapping",),]
 
 def FcLcb2k7 (hd,data):
 	FcLcb2k3 (hd,data)
@@ -425,18 +506,82 @@ ptable_unsd = {0:"",7:"",14:"",20:"",25:"",26:"",34:"",35:"",38:"",39:"",45:"",4
 def parse_data (page, data, dataiter):
 	pass
 
-def parse_table (page, data, parent, docdata, docdataiter):
+
+def parse_table (page):
+	data = page.model.get_value(page.wtable,3)
+	parent = page.wtable
+	totlen = 0
 	try:
 		offset = 0
 		fclcb = page.model.get_value(page.wdoc,3)
+		print 'ParseTable (%d)'%len(data)
 		for i in range(len(fclcb97recs1)):
 			if not ptable_unsd.has_key(i):
 				recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 				reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+				totlen += reclen
 				if reclen != 0:
 					titer = add_pgiter (page,fclcb97recs1[i][0],"doc",fclcb97recs1[i][0],data[recoff:recoff+reclen],parent)
 				if len(fclcb97recs1[i]) > 1:
-					fclcb97recs1[i][1](page,data[recoff:recoff+reclen],titer,docdataiter)
+					fclcb97recs1[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)
+		print 'Parsed:',totlen
+		if totlen < len(data):
+			for i in range(len(fclcb97recs2)):
+				if not ptable_unsd.has_key(i):
+					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+					totlen += reclen
+					if reclen != 0:
+						titer = add_pgiter (page,fclcb97recs2[i][0],"doc",fclcb97recs2[i][0],data[recoff:recoff+reclen],parent)
+					if len(fclcb97recs2[i]) > 1:
+						fclcb97recs2[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)
+			print 'Parsed:',totlen
+		if totlen < len(data):
+			for i in range(len(fclcb2krecs)):
+				if not ptable_unsd.has_key(i):
+					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+					totlen += reclen
+					if reclen != 0:
+						titer = add_pgiter (page,fclcb2krecs[i][0],"doc",fclcb2krecs[i][0],data[recoff:recoff+reclen],parent)
+					if len(fclcb2krecs[i]) > 1:
+						fclcb2krecs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
+			print 'Parsed:',totlen
+		if totlen < len(data):
+			for i in range(len(fclcb2k2recs)):
+				if not ptable_unsd.has_key(i):
+					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+					totlen += reclen
+					if reclen != 0:
+						titer = add_pgiter (page,fclcb2k2recs[i][0],"doc",fclcb2k2recs[i][0],data[recoff:recoff+reclen],parent)
+					if len(fclcb2k2recs[i]) > 1:
+						fclcb2k2recs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
+			print 'Parsed:',totlen
+		if totlen < len(data):
+			for i in range(len(fclcb2k3recs)):
+				if not ptable_unsd.has_key(i):
+					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+					totlen += reclen
+					if reclen != 0:
+						titer = add_pgiter (page,fclcb2k3recs[i][0],"doc",fclcb2k3recs[i][0],data[recoff:recoff+reclen],parent)
+					if len(fclcb2k3recs[i]) > 1:
+						fclcb2k3recs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
+			print 'Parsed:',totlen
+		if totlen < len(data):
+			for i in range(len(fclcb2k7recs)):
+				if not ptable_unsd.has_key(i):
+					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
+					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
+					totlen += reclen
+					if reclen != 0:
+						titer = add_pgiter (page,fclcb2k7recs[i][0],"doc",fclcb2k7recs[i][0],data[recoff:recoff+reclen],parent)
+					if len(fclcb2k7recs[i]) > 1:
+						fclcb2k7recs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
+			print 'Parsed:',totlen
+
+
 	except:
 		print "Failed in doc table parse"
 
@@ -446,17 +591,19 @@ def parse (page, data, parent):
 	add_pgiter (page,"Base","doc","base",data[0:0x20],parent)
 	offset += 0x20
 	try:
-	  csw = struct.unpack("<H",data[offset:offset+2])[0]
-	  add_pgiter (page,"fibRgW","doc","fibRgW",data[offset:offset+2+csw*2],parent)
-	  offset += 2+csw*2
-	  cslw = struct.unpack("<H",data[offset:offset+2])[0]
-	  add_pgiter (page,"fibRgLw","doc","fibRgLw",data[offset:offset+2+cslw*4],parent)
-	  offset += 2+cslw*4
-	  cbRgFcLcb = struct.unpack("<H",data[offset:offset+2])[0]
-	  page.wdoc = add_pgiter (page,"fibRgFcLcbBlob","doc","fibRgFcLcbBlob",data[offset:offset+2+cbRgFcLcb*8],parent)
-	  offset += 2+cbRgFcLcb*8
-	  cswNew = struct.unpack("<H",data[offset:offset+2])[0]
-	  add_pgiter (page,"fibRgCswNew","doc","fibRgCswNew",data[offset:offset+2+cswNew*2],parent)
+		csw = struct.unpack("<H",data[offset:offset+2])[0]
+		add_pgiter (page,"fibRgW","doc","fibRgW",data[offset:offset+2+csw*2],parent)
+		offset += 2+csw*2
+		cslw = struct.unpack("<H",data[offset:offset+2])[0]
+		add_pgiter (page,"fibRgLw","doc","fibRgLw",data[offset:offset+2+cslw*4],parent)
+		offset += 2+cslw*4
+		cbRgFcLcb = struct.unpack("<H",data[offset:offset+2])[0]
+		page.wdoc = add_pgiter (page,"fibRgFcLcbBlob","doc","fibRgFcLcbBlob",data[offset:offset+2+cbRgFcLcb*8],parent)
+		offset += 2+cbRgFcLcb*8
+		cswNew = struct.unpack("<H",data[offset:offset+2])[0]
+		add_pgiter (page,"fibRgCswNew","doc","fibRgCswNew",data[offset:offset+2+cswNew*2],parent)
+		
+		parse_table(page)
 	except:
 	  print "Failed in fib parsing"
 

@@ -39,6 +39,8 @@ class Page:
 		self.dictwin = None
 		self.search = None
 		self.wdoc = None  # need to store 'WordDocument' stream
+		self.wtable = None # need to store 'xTable' stream of ms-doc
+		self.wdata = None # need to store 'Data' stream
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 		self.win = None # for preview
 		self.debug = 0
