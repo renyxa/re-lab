@@ -142,6 +142,8 @@ class imp_parser(object):
 		filedata = data[20:len(data)]
 		if typ in imp_resource_types:
 			self.parse_resource(filedata, typ, fileiter)
+		elif typ == '!!sw':
+			self.parse_sw(filedata, typ, fileiter)
 		elif text:
 			self.parse_text(filedata, fileiter)
 
@@ -196,6 +198,28 @@ class imp_parser(object):
 					recdata = resdata[recbegin:recbegin + 10]
 					add_pgiter(self.page, 'Record %d' % j, 'imp', recid, recdata, resiter)
 					recbegin += 10
+
+	def parse_sw(self, data, index, parent):
+		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
+
+		off = int(read(data, 10, '>I'))
+
+		reciter = add_pgiter(self.page, 'Records', 'imp', 0, data[32:off], parent)
+		idxiter = add_pgiter(self.page, 'Index', 'imp', 0, data[off:len(data)], parent)
+
+		i = 0
+		# Rev-eng. doc. says 16, but that does not match what I see...
+		entrylen = 18
+		while off + entrylen <= len(data):
+			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_sw_index', data[off:off + entrylen], idxiter)
+			(seq, off) = rdata(data, off, '<I')
+			(length, off) = rdata(data, off, '<I')
+			(start, off) = rdata(data, off, '<I')
+			recdata = data[int(start):int(start) + int(length)]
+			off += 2
+			(typ, off) = rdata(data, off, '4s')
+			add_pgiter(self.page, 'Record %d (typ %s)' % (i, typ), 'imp', 'imp_sw_record', recdata, reciter)
+			i += 1
 
 	def parse_text(self, data, parent):
 		if not self.compressed:
@@ -322,6 +346,21 @@ def add_imp_resource_index(hd, size, data):
 	(start, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Offset to start of record', start, off - 4, 4, '<I')
 
+def add_imp_sw_index(hd, size, data):
+	# See the comment in add_imp_resource_index...
+	(seq, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Sequence number', seq, 0, 4, '<I')
+	(length, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of item', length, off - 4, 4, '<I')
+	(offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset to beginning of item', offset, off - 4, 4, '<I')
+	off += 2
+	(typ, off) = rdata(data, off, '4s')
+	add_iter(hd, 'File type', typ, off - 4, 4, '4s')
+
+def add_imp_sw_record(hd, size, data):
+	pass
+
 imp_ids = {
 	'imp_directory': add_imp_directory,
 	'imp_directory_entry': add_imp_directory_entry,
@@ -333,6 +372,8 @@ imp_ids = {
 	'imp_resource_0x65_last': add_imp_resource_0x65_last,
 	'imp_resource_header': add_imp_resource_header,
 	'imp_resource_index': add_imp_resource_index,
+	'imp_sw_index' : add_imp_sw_index,
+	'imp_sw_record' : add_imp_sw_record,
 }
 
 def open(buf, page, parent):
