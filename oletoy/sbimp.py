@@ -18,7 +18,7 @@
 
 # reverse-engineered specification: http://www.chromakinetics.com/REB1200/imp_format.htm
 
-from utils import add_iter, add_pgiter, rdata
+from utils import add_iter, add_pgiter, ins_pgiter, rdata
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -31,6 +31,169 @@ def read_cstring(data, offset):
 	if offset < len(data):
 		offset += 1
 	return (data[begin:offset], offset, offset - begin)
+
+class lzss_error:
+	pass
+
+def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_length=None):
+	buffer = []
+	length = len(data)
+
+	class SlidingWindow(object):
+
+		def __init__(self, size, fill=' '):
+			self.data = [fill for i in range(size)]
+			self.begin = 0
+			self.end = 0
+			self.growing = True
+
+		def push(self, byte):
+			self.data[self.end] = byte
+			self._advance()
+
+		def copy_out(self, offset, length):
+			pos = self.begin
+			pos = self._advance_pos(pos, offset)
+			out = []
+			for i in range(length):
+				out.append(self.data[pos])
+				pos = self._advance_pos(pos)
+			self._push(out)
+			return out
+
+		def _push(self, bytes):
+			for b in bytes:
+				self.data[self.end] = b
+				self._advance()
+
+		def _advance(self):
+			self.end = self._advance_pos(self.end)
+			if self.end == self.begin:
+				self.growing = False
+			if not self.growing:
+				self.begin = self._advance_pos(self.begin)
+
+		def _advance_pos(self, pos, inc=1):
+			if inc == 0:
+				return pos
+			return (pos + inc) % len(self.data)
+
+	class BitStream(object):
+
+		MASKS = [0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff]
+
+		def __init__(self, data):
+			self.data = data
+			self.pos = 0
+			self.current = None
+			self.available = 0
+
+			assert len(self.data) > 0
+
+		def read(self, bits, big_endian=False):
+			assert bits <= 32
+
+			if bits == 0:
+				return 0
+
+			p = [0, 0, 0, 0]
+			i = 0
+			if big_endian:
+				i = (bits - 1) / 8
+
+			while 8 <= bits:
+				p[i] = self._read_byte()
+				bits -= 8
+				if big_endian:
+					i -= 1
+				else:
+					i += 1
+
+			if 0 < bits:
+				p[i] = self._read_bits(bits)
+
+			val = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)
+			return val
+
+		def at_eos(self):
+			return self.at_last_byte() and self.available == 0
+
+		def at_last_byte(self):
+			if self._at_end():
+				return True
+
+			self._fill()
+			return self._at_end()
+
+		def _at_end(self):
+			return self.pos == len(self.data) - 1
+
+		def _read_u8(self):
+			b = self.data[self.pos]
+			self.pos += 1
+			return b
+
+		def _fill(self):
+			if self.available == 0:
+				self.current = ord(self._read_u8())
+				self.available = 8
+			assert self.available > 0
+
+		def _read_byte(self):
+			return self._read_bits(8)
+
+		def _read_bits(self, bits):
+			assert bits <= 8
+
+			if bits == 0:
+				return 0
+
+			value = 0
+
+			self._fill()
+
+			if bits <= self.available:
+				value = self._read_available_bits(bits)
+			else:
+				bits -= self.available
+				value = self._read_available_bits(self.available)
+				self._fill()
+				value <<= bits
+				value |= self._read_available_bits(bits)
+
+			return value
+
+		def _read_available_bits(self, bits):
+			assert bits <= self.available
+
+			current = self.current
+			if bits < self.available:
+				current >>= self.available - bits
+			self.available -= bits
+
+			return self.MASKS[bits - 1] & current
+
+	stream = BitStream(data)
+	window = SlidingWindow(1 << offset_bits, ' ')
+
+	def finished():
+		if text_length == None:
+			return stream.at_last_byte()
+		else:
+			return len(buffer) >= text_length
+
+	while not finished():
+		encoded = stream.read(1, big_endian)
+		if encoded == 0:
+			offset = int(stream.read(offset_bits, big_endian))
+			length = int(stream.read(length_bits, big_endian)) + 3
+			buffer.extend(window.copy_out(offset, length))
+		else:
+			c = chr(stream.read(8, big_endian))
+			buffer.append(c)
+			window.push(c)
+
+	return ''.join(buffer)
 
 imp_version = 0
 # default for v.2
@@ -76,6 +239,9 @@ class imp_parser(object):
 		self.directory_begin = 0
 		self.directory_end = 0
 		self.compressed = False
+		self.window_bits = 14
+		self.length_bits = 3
+		self.text_length = None
 
 	def parse(self):
 		self.parent = add_pgiter(self.page, 'IMP', 'lrf', 0, self.data, self.parent)
@@ -122,21 +288,27 @@ class imp_parser(object):
 		data = self.data[self.directory_end:len(self.data)]
 		fileiter = add_pgiter(self.page, 'Files', 'imp', 0, data, self.parent)
 
+		text_begin = 0
+		text_end = 0
+		text_pos = 0
 		begin = 0
 		for i in range(self.files):
 			(length, off) = rdata(data, begin + 8, '>I')
 			(typ, off) = rdata(data, off, '4s')
 			end = begin + int(length) + 20
-			self.parse_file(data[begin:end], i, typ, fileiter)
+			if typ == '    ':
+				# defer processing of text file till we know details about compression etc.
+				text_begin = begin
+				text_end = end
+				text_pos = i
+			else:
+				self.parse_file(data[begin:end], i, typ, fileiter)
 			begin = end
 
+		self.parse_text(data[text_begin:text_end], text_pos, fileiter)
+
 	def parse_file(self, data, n, typ, parent):
-		typ_str = typ
-		text = False
-		if typ == '    ':
-			text = True
-			typ_str = 'Text'
-		fileiter = add_pgiter(self.page, 'File %d (type %s)' % (n, typ_str), 'imp', 0, data, parent)
+		fileiter = add_pgiter(self.page, 'File %d (type %s)' % (n, typ), 'imp', 0, data, parent)
 		add_pgiter(self.page, 'Header', 'imp', 'imp_file_header', data[0:20], fileiter)
 
 		filedata = data[20:len(data)]
@@ -144,8 +316,6 @@ class imp_parser(object):
 			self.parse_resource(filedata, typ, fileiter)
 		elif typ == '!!sw':
 			self.parse_sw(filedata, typ, fileiter)
-		elif text:
-			self.parse_text(filedata, fileiter)
 
 	def parse_resource(self, data, typ, parent):
 		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
@@ -186,6 +356,11 @@ class imp_parser(object):
 
 			if i == 0x64:
 				add_pgiter(self.page, 'Resource 0x64', 'imp', 'imp_resource_0x64', resdata, parent)
+				off = 6
+				(window_bits, off) = rdata(resdata, off, '>H')
+				(length_bits, off) = rdata(resdata, off, '>H')
+				self.window_bits = int(window_bits)
+				self.length_bits = int(length_bits)
 
 			elif i == 0x65:
 				resiter = add_pgiter(self.page, 'Resource 0x65', 'imp', 0, resdata, parent)
@@ -195,6 +370,7 @@ class imp_parser(object):
 					recid = 'imp_resource_0x65'
 					if j == count - 1:
 						recid = 'imp_resource_0x65_last'
+						self.text_length = int(read(resdata, recbegin, '>I'))
 					recdata = resdata[recbegin:recbegin + 10]
 					add_pgiter(self.page, 'Record %d' % j, 'imp', recid, recdata, resiter)
 					recbegin += 10
@@ -221,9 +397,17 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Record %d (typ %s)' % (i, typ), 'imp', 'imp_sw_record', recdata, reciter)
 			i += 1
 
-	def parse_text(self, data, parent):
+	def parse_text(self, data, n, parent):
+		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
+		add_pgiter(self.page, 'Header', 'imp', 'imp_file_header', data[0:20], fileiter)
+
+		filedata = data[20:len(data)]
 		if not self.compressed:
-			add_pgiter(self.page, 'Text', 'imp', 0, data, parent)
+			add_pgiter(self.page, 'Text', 'imp', 0, filedata, fileiter)
+		else:
+			textiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
+			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
+			add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
 
 def add_imp_directory(hd, size, data):
 	fmt = '%ds' % imp_dirname_length
