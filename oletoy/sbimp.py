@@ -198,6 +198,7 @@ def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_l
 imp_version = 0
 # default for v.2
 imp_file_header_size = 20
+imp_color_mode = 1
 imp_dirname_length = 0
 
 imp_resource_types = frozenset((
@@ -255,6 +256,7 @@ class imp_parser(object):
 		global imp_dirname_length
 		global imp_file_header_size
 		global imp_version
+		global imp_color_mode
 
 		(version, off) = rdata(self.data, 0, '>H')
 		imp_version = int(version)
@@ -271,6 +273,9 @@ class imp_parser(object):
 		off += 8
 		(compression, off) = rdata(self.data, off, '>I')
 		self.compressed = int(compression) == 1
+		off += 4
+		(flags, off) = rdata(self.data, off, '>I')
+		imp_color_mode = (int(flags) & (0x3 << 4)) >> 4
 
 		add_pgiter(self.page, 'Metadata', 'imp', 'imp_metadata', self.data[49:self.directory_begin], self.parent)
 
@@ -334,13 +339,20 @@ class imp_parser(object):
 
 		off = 0
 		i = 0
-		# Rev-eng. doc. says 12, but that does not match what I see...
-		entrylen = 14
+		entrylen = 12
+		if imp_color_mode == 2:
+			entrylen = 14
+
 		while off + entrylen <= len(data):
 			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_resource_index', data[off:off + entrylen], parent)
-			(idx, off) = rdata(data, off, '<I')
-			(length, off) = rdata(data, off, '<I')
-			(start, off) = rdata(data, off, '<I')
+			if imp_color_mode == 2:
+				(idx, off) = rdata(data, off, '<I')
+				(length, off) = rdata(data, off, '<I')
+				(start, off) = rdata(data, off, '<I')
+			else:
+				(idx, off) = rdata(data, off, '>H')
+				(length, off) = rdata(data, off, '>I')
+				(start, off) = rdata(data, off, '>I')
 			index[int(idx)] = (int(start), int(length))
 			off += 2
 			i += 1
@@ -384,13 +396,21 @@ class imp_parser(object):
 		idxiter = add_pgiter(self.page, 'Index', 'imp', 0, data[off:len(data)], parent)
 
 		i = 0
-		# Rev-eng. doc. says 16, but that does not match what I see...
-		entrylen = 18
+		entrylen = 16
+		if imp_color_mode == 2:
+			entrylen = 18
+		print('color mode = %d, entry len = %d' % (imp_color_mode, entrylen))
+
 		while off + entrylen <= len(data):
 			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_sw_index', data[off:off + entrylen], idxiter)
-			(seq, off) = rdata(data, off, '<I')
-			(length, off) = rdata(data, off, '<I')
-			(start, off) = rdata(data, off, '<I')
+			if imp_color_mode == 2:
+				(seq, off) = rdata(data, off, '<I')
+				(length, off) = rdata(data, off, '<I')
+				(start, off) = rdata(data, off, '<I')
+			else:
+				(seq, off) = rdata(data, off, '>H')
+				(length, off) = rdata(data, off, '>I')
+				(start, off) = rdata(data, off, '>I')
 			recdata = data[int(start):int(start) + int(length)]
 			off += 2
 			(typ, off) = rdata(data, off, '4s')
@@ -406,8 +426,8 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Text', 'imp', 0, filedata, fileiter)
 		else:
 			textiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
-			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
-			add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
+			# uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
+			# add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
 
 def add_imp_directory(hd, size, data):
 	fmt = '%ds' % imp_dirname_length
@@ -435,7 +455,8 @@ def add_imp_file_header(hd, size, data):
 	(typ, off) = rdata(data, off, '4s')
 	add_iter(hd, 'File type', typ, off - 4, 4, '4s')
 
-IMP_ZOOM_STATES = ('Both', 'Small', 'Large')
+imp_zoom_states = ('Both', 'Small', 'Large')
+imp_color_modes = ('Unknown', 'Color VGA', 'Grayscale Half-VGA')
 
 def add_imp_header(hd, size, data):
 	(version, off) = rdata(data, 0, '>H')
@@ -454,11 +475,10 @@ def add_imp_header(hd, size, data):
 	add_iter(hd, 'Compressed?', compression != 0, off - 4, 4, '>I')
 	(encryption, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Encrypted?', encryption != 0, off - 4, 4, '>I')
-	(zoom, off) = rdata(data, off, '>I')
-	zoom_str = 'Unknown'
-	if int(zoom) < 3:
-		zoom_str = IMP_ZOOM_STATES[int(zoom)]
-	add_iter(hd, 'Zoom state', zoom_str, off - 4, 4, '>I')
+	(flags, off) = rdata(data, off, '>I')
+	zoom = int(flags) & 0x3
+	flags_str = 'zoom = %s, color mode = %s' % (imp_zoom_states[zoom], imp_color_modes[color_mode])
+	add_iter(hd, 'Flags', flags_str, off - 4, 4, '>I')
 	off += 4
 	assert off == 30
 
@@ -519,25 +539,32 @@ def add_imp_resource_header(hd, size, data):
 	(offset, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Offset to start of index', offset, off - 4, 4, '>I')
 
+def get_index_formats():
+	# I assume this crap is there as a workaround for a buggy device,
+	# not because someone thought it would be a good idea...
+	if imp_color_mode == 2:
+		return ('<I', '<I')
+	return ('>I', '>H')
+
 def add_imp_resource_index(hd, size, data):
-	# Okay, this is just insane... The whole format uses big endian, but
-	# the record index items are little endian. I only hope it happened
-	# because of a bug in eBook Publisher, not as a conscious decision.
-	(idx, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Resource ID', '0x%x' % int(idx), 0, 4, '<I')
-	(length, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Record length', length, off - 4, 4, '<I')
-	(start, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Offset to start of record', start, off - 4, 4, '<I')
+	(fmt, idfmt) = get_index_formats()
+
+	(idx, off) = rdata(data, 0, idfmt)
+	add_iter(hd, 'Resource ID', '0x%x' % int(idx), 0, off, idfmt)
+	(length, off) = rdata(data, off, fmt)
+	add_iter(hd, 'Record length', length, off - 4, 4, fmt)
+	(start, off) = rdata(data, off, fmt)
+	add_iter(hd, 'Offset to start of record', start, off - 4, 4, fmt)
 
 def add_imp_sw_index(hd, size, data):
-	# See the comment in add_imp_resource_index...
-	(seq, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Sequence number', seq, 0, 4, '<I')
-	(length, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length of item', length, off - 4, 4, '<I')
-	(offset, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Offset to beginning of item', offset, off - 4, 4, '<I')
+	(fmt, idfmt) = get_index_formats()
+
+	(seq, off) = rdata(data, 0, fmt)
+	add_iter(hd, 'Sequence number', seq, 0, seq, fmt)
+	(length, off) = rdata(data, off, fmt)
+	add_iter(hd, 'Length of item', length, off - 4, 4, fmt)
+	(offset, off) = rdata(data, off, fmt)
+	add_iter(hd, 'Offset to beginning of item', offset, off - 4, 4, fmt)
 	off += 2
 	(typ, off) = rdata(data, off, '4s')
 	add_iter(hd, 'File type', typ, off - 4, 4, '4s')
