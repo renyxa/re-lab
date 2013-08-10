@@ -155,7 +155,7 @@ class imp_parser(object):
 
 		idx = self.parse_resource_index(idx_data, idxiter)
 		if typ == '!!cm':
-			self.parse_compression(res_data, idx, resiter)
+			self.parse_compression(data, idx, resiter)
 
 	def parse_resource_index(self, data, parent):
 		index = {}
@@ -178,7 +178,24 @@ class imp_parser(object):
 		return index
 
 	def parse_compression(self, data, index, parent):
-		pass
+		for i in index.keys():
+			res = index[i]
+			resdata = data[res[0]:res[0] + res[1]]
+
+			if i == 0x64:
+				add_pgiter(self.page, 'Resource 0x64', 'imp', 'imp_resource_0x64', resdata, parent)
+
+			elif i == 0x65:
+				resiter = add_pgiter(self.page, 'Resource 0x65', 'imp', 0, resdata, parent)
+				count = len(resdata) / 10
+				recbegin = 0
+				for j in range(count):
+					recid = 'imp_resource_0x65'
+					if j == count - 1:
+						recid = 'imp_resource_0x65_last'
+					recdata = resdata[recbegin:recbegin + 10]
+					add_pgiter(self.page, 'Record %d' % j, 'imp', recid, recdata, resiter)
+					recbegin += 10
 
 	def parse_text(self, data, parent):
 		if not self.compressed:
@@ -253,6 +270,38 @@ def add_imp_metadata(hd, size, data):
 	(first_name, off, length) = read_cstring(data, off)
 	add_iter(hd, 'First name', first_name, off - length, length, '%ds' % length)
 
+def add_imp_resource_0x64(hd, size, data):
+	off = 6
+	(window, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Compression window size', window, off - 2, 2, '>H')
+	(lookahead, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Look-ahead buffer size', lookahead, off - 2, 2, '>H')
+
+def add_imp_resource_0x65(hd, size, data):
+	(uncompressed_pos, off) = rdata(hd, 0, '>I')
+	add_iter(hd, 'Byte position in uncompressed data', uncompressed_pos, 0, 4, '>I')
+	(compressed_pos, off) = rdata(hd, off, '>I')
+	add_iter(hd, 'Byte position in compressed data', compressed_pos, off - 4, 4, '>I')
+	bit_pos_map = {
+		0x1: 7,
+		0x2: 6,
+		0x4: 5,
+		0x8: 4,
+		0x10: 3,
+		0x20: 2,
+		0x40: 1,
+		0x80: 0,
+	}
+	(bit_pos, off) = rdata(hd, off, '>H')
+	bit_pos_val = 0
+	if bit_pos_map.has_key(ord(bit_pos)):
+		bit_pos_val = bit_pos_map[ord(bit_pos)]
+	add_iter(hd, 'Bit position in compressed data', bit_pos_val, off - 2, 2, '>H')
+
+def add_imp_resource_0x65_last(hd, size, data):
+	(length, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Length of uncompressed text', length, 0, 4, '>I')
+
 def add_imp_resource_header(hd, size, data):
 	(version, off) = rdata(data, 0, '>H')
 	add_iter(hd, 'Version', version, off - 2, 2, '>H')
@@ -279,6 +328,9 @@ imp_ids = {
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
 	'imp_metadata': add_imp_metadata,
+	'imp_resource_0x64': add_imp_resource_0x64,
+	'imp_resource_0x65': add_imp_resource_0x65,
+	'imp_resource_0x65_last': add_imp_resource_0x65_last,
 	'imp_resource_header': add_imp_resource_header,
 	'imp_resource_index': add_imp_resource_index,
 }
