@@ -821,7 +821,6 @@ imp_ids = {
 	'imp_resource_header': add_imp_resource_header,
 	'imp_resource_index': add_imp_resource_index,
 	'imp_str2': add_imp_str2,
-	'imp_str2': add_imp_str2,
 	'imp_strn': add_imp_strn,
 	'imp_styl': add_imp_styl,
 	'imp_sw_index' : add_imp_sw_index,
