@@ -471,7 +471,8 @@ class imp_parser(object):
 		pass
 
 	def parse_styl(self, rid, data, typ, parent):
-		pass
+		if rid == 0x80:
+			add_pgiter(self.page, 'Style', 'imp', 'imp_styl', data, parent)
 
 	def parse_tabl(self, rid, data, typ, parent):
 		pass
@@ -665,6 +666,65 @@ def add_imp_resource_header(hd, size, data):
 	(offset, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Offset to start of index', offset, off - 4, 4, '>I')
 
+def add_imp_styl(hd, size, data):
+	off = 2
+
+	def get_or_default(dictionary, key, default):
+		if dictionary.has_key(key):
+			return dictionary[key]
+		return default
+
+	(decoration, off) = rdata(data, off, '>H')
+	decoration_map = {0: 'none', 1: 'subscript', 2: 'superscript', 4: 'line-through'}
+	decoration_str = get_or_default(decoration_map, int(decoration), 'unknown')
+	add_iter(hd, 'Text decoration', decoration_str, off - 2, 2, '>H')
+
+	off += 2
+
+	(font_family, off) = rdata(data, off, '>H')
+	font_family_map = {0x14: 'serif', 0x15: 'sans-serif', 3: 'smallfont', 4: 'monospace'}
+	font_family_str = get_or_default(font_family_map, int(font_family), 'unknown')
+	add_iter(hd, 'Font family', font_family_str, off - 2, 2, '>H')
+
+	(font_style, off) = rdata(data, off, '>H')
+	font_style_map = {0: 'regular', 1: 'bold', 2: 'italic', 3: 'bold italic', 4: 'underlined', 5: 'bold underlined', 6: 'italic underlined'}
+	font_style_str = get_or_default(font_style_map, int(font_style), 'unknown')
+	add_iter(hd, 'Text style', font_style_str, off - 2, 2, '>H')
+
+	(font_size, off) = rdata(data, off, '>H')
+	font_size_map = {1: 'xx-small', 2: 'x-small', 3: 'small', 4: 'medium', 5: 'large', 6: 'x-large', 7: 'xx-large'}
+	font_size_str = get_or_default(font_size_map, int(font_size), 'unknown')
+	add_iter(hd, 'Font size', font_size_str, off - 2, 2, '>H')
+
+	(text_align, off) = rdata(data, off, '>H')
+	text_align_map = {0: 'none', 0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
+	text_align_str = get_or_default(text_align_map, int(text_align), 'unknown')
+	add_iter(hd, 'Text alignment', text_align_str, off - 2, 2, '>H')
+
+	# TODO: parse colors
+	# (text_color, off) = rdata(data, off, '>H')
+	off += 3
+	# (bg_color, off) = rdata(data, off, '>H')
+	off += 3
+
+	(margin_top, off) = rdata(data, off, '>H')
+	margin_top_str = margin_top
+	if int(margin_top) == 0xffff:
+		margin_top_str = 'not defined'
+	add_iter(hd, 'Top margin', margin_top_str, off - 2, 2, '>H')
+
+	(text_indent, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Text indent', text_indent, off - 2, 2, '>H')
+	(margin_right, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Right margin', margin_right, off - 2, 2, '>H')
+	(margin_left, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Left margin', margin_left, off - 2, 2, '>H')
+
+	off += 2
+
+	(columns, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Number of columns', columns, off - 2, 2, '>H')
+
 def get_index_formats():
 	# I assume this crap is there as a workaround for a buggy device,
 	# not because someone thought it would be a good idea...
@@ -713,6 +773,7 @@ imp_ids = {
 	'imp_resource_0x65_last': add_imp_resource_0x65_last,
 	'imp_resource_header': add_imp_resource_header,
 	'imp_resource_index': add_imp_resource_index,
+	'imp_styl': add_imp_styl,
 	'imp_sw_index' : add_imp_sw_index,
 	'imp_sw_record' : add_imp_sw_record,
 }
