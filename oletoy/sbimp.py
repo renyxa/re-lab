@@ -32,6 +32,11 @@ def read_cstring(data, offset):
 		offset += 1
 	return (data[begin:offset], offset, offset - begin)
 
+def get_or_default(dictionary, key, default):
+	if dictionary.has_key(key):
+		return dictionary[key]
+	return default
+
 class lzss_error:
 	pass
 
@@ -650,9 +655,7 @@ def add_imp_resource_0x65(hd, size, data):
 	add_iter(hd, 'Byte position in compressed data', compressed_pos, off - 4, 4, '>I')
 	bit_pos_map = {0x1: 7, 0x2: 6, 0x4: 5, 0x8: 4, 0x10: 3, 0x20: 2, 0x40: 1, 0x80: 0}
 	(bit_pos, off) = rdata(hd, off, '>H')
-	bit_pos_val = 0
-	if bit_pos_map.has_key(ord(bit_pos)):
-		bit_pos_val = bit_pos_map[ord(bit_pos)]
+	bit_pos_val = get_or_default(bit_pos_map, int(bit_pos), 0)
 	add_iter(hd, 'Bit position in compressed data', bit_pos_val, off - 2, 2, '>H')
 
 def add_imp_resource_0x65_last(hd, size, data):
@@ -682,11 +685,6 @@ def add_imp_strn(hd, size, data):
 
 def add_imp_styl(hd, size, data):
 	off = 2
-
-	def get_or_default(dictionary, key, default):
-		if dictionary.has_key(key):
-			return dictionary[key]
-		return default
 
 	(decoration, off) = rdata(data, off, '>H')
 	decoration_map = {0: 'none', 1: 'subscript', 2: 'superscript', 4: 'line-through'}
