@@ -351,6 +351,8 @@ class imp_parser(object):
 		idx = self.parse_resource_index(idx_data, idxiter)
 		if typ == '!!cm':
 			self.parse_compression(data, idx, resiter)
+		elif typ == 'AncT':
+			self.parse_anct(data, idx, resiter)
 
 	def parse_resource_index(self, data, parent):
 		index = {}
@@ -434,6 +436,22 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Record %d (typ %s)' % (i, typ), 'imp', 'imp_sw_record', recdata, reciter)
 			i += 1
 
+	def parse_anct(self, data, index, parent):
+		for i in index.keys():
+			res = index[i]
+			resdata = data[res[0]:res[0] + res[1]]
+
+			if i == 0 or i == 1:
+				(count, off) = rdata(resdata, 0, '>I')
+				view = 'large'
+				if i == 1:
+					view = 'small'
+				tagiter = add_pgiter(self.page, 'Tags for %s view' % view,  'imp', 'imp_anct', resdata, parent)
+				if int(count) > 0:
+					for j in range(int(count)):
+						add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', resdata[off:off + 8], parent)
+						off += 8
+
 	def parse_text(self, data, n, parent):
 		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
 		add_pgiter(self.page, 'Header', 'imp', 'imp_file_header', data[0:20], fileiter)
@@ -445,6 +463,16 @@ class imp_parser(object):
 			textiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
 			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
 			add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
+
+def add_imp_anct(hd, size, data):
+	count = read(data, 0, '>I')
+	add_iter(hd, 'Count of anchor tags', count, 0, 4, '>I')
+
+def add_imp_anct_tag(hd, size, data):
+	(offset, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Offset to anchor tag in text', offset, 0, 4, '>I')
+	(page, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Page number', page, off - 4, 4, '>I')
 
 def add_imp_directory(hd, size, data):
 	fmt = '%ds' % imp_dirname_length
@@ -590,6 +618,8 @@ def add_imp_sw_record(hd, size, data):
 	pass
 
 imp_ids = {
+	'imp_anct' : add_imp_anct,
+	'imp_anct_tag' : add_imp_anct_tag,
 	'imp_directory': add_imp_directory,
 	'imp_directory_entry': add_imp_directory_entry,
 	'imp_file_header': add_imp_file_header,
