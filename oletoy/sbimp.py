@@ -467,7 +467,11 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Page info for %s view' % view,  'imp', 'imp_pinf', data, parent)
 
 	def parse_ppic(self, rid, data, typ, parent):
-		pass
+		if rid == 0 or rid == 1:
+			view = 'large'
+			if rid == 1:
+				view = 'small'
+			add_pgiter(self.page, 'Picture info for %s view' %view, 'imp', 'imp_ppic', data, parent)
 
 	def parse_str2(self, rid, data, typ, parent):
 		if rid == 0x8001:
@@ -641,6 +645,19 @@ def add_imp_pinf(hd, size, data):
 	(images, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Count of images', images, off - 2, 2, '>H')
 
+def add_imp_ppic(hd, size, data):
+	off = 2
+	(borders, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Count of cell and table borders', borders, off - 4, 4, '>I')
+	(has_borders, off) = rdata(data, off, '>I')
+	has_borders_str = get_or_default({0: False, 0x64: True}, int(has_borders), 'unknown')
+	add_iter(hd, 'Has any borders?', has_borders_str, off - 4, 4, '>I')
+	(pictures, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Count of pictures', borders, off - 4, 4, '>I')
+	(has_pictures, off) = rdata(data, off, '>I')
+	has_pictures_str = get_or_default({0: False, 0x64: True}, int(has_pictures), 'unknown')
+	add_iter(hd, 'Has any pictures?', has_pictures_str, off - 4, 4, '>I')
+
 def add_imp_resource_0x64(hd, size, data):
 	off = 6
 	(window, off) = rdata(data, off, '>H')
@@ -780,6 +797,7 @@ imp_ids = {
 	'imp_header': add_imp_header,
 	'imp_metadata': add_imp_metadata,
 	'imp_pinf': add_imp_pinf,
+	'imp_ppic': add_imp_ppic,
 	'imp_resource_0x64': add_imp_resource_0x64,
 	'imp_resource_0x65': add_imp_resource_0x65,
 	'imp_resource_0x65_last': add_imp_resource_0x65_last,
