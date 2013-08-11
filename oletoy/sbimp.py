@@ -606,6 +606,7 @@ def add_imp_header(hd, size, data):
 	add_iter(hd, 'Encrypted?', encryption != 0, off - 4, 4, '>I')
 	(flags, off) = rdata(data, off, '>I')
 	zoom = int(flags) & 0x3
+	color_mode = (int(flags) & (0x3 << 4)) >> 4
 	flags_str = 'zoom = %s, color mode = %s' % (imp_zoom_states[zoom], imp_color_modes[color_mode])
 	add_iter(hd, 'Flags', flags_str, off - 4, 4, '>I')
 	off += 4
