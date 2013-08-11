@@ -317,6 +317,8 @@ class imp_parser(object):
 			self.parse_resource(filedata, typ, fileiter)
 		elif typ == '!!sw':
 			self.parse_sw(filedata, typ, fileiter)
+		else:
+			add_pgiter(self.page, 'Content', 'imp', 0, data[20:len(data)], fileiter)
 
 	def parse_resource(self, data, typ, parent):
 		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
