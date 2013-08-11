@@ -514,11 +514,40 @@ class imp_parser(object):
 
 		filedata = data[20:len(data)]
 		if not self.compressed:
-			add_pgiter(self.page, 'Text', 'imp', 0, filedata, fileiter)
+			textiter = add_pgiter(self.page, 'Text', 'imp', 0, filedata, fileiter)
+			self.parse_text_tags(filedata, txtiter)
 		else:
-			textiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
+			dataiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
 			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
-			add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
+			textiter = add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, dataiter)
+			self.parse_text_tags(uncompressed, textiter)
+
+	def parse_text_tags(self, data, parent):
+		control_char_map = {
+			0xa: 'End of document',
+			0xb: 'Start of element',
+			0xd: 'Line break',
+			0xe: 'Start of table',
+			0xf: 'Image',
+			0x13: 'End of cell',
+			0x14: 'Horizontal rule',
+			0x15: 'Start/End of header content',
+			0x15: 'Start/End of footer content',
+		}
+
+		s = ''
+
+		for c in data:
+			o = ord(c)
+			if control_char_map.has_key(o):
+				if s != '':
+					add_pgiter(self.page, 'Text', 'imp', 'imp_text', s, parent)
+				s = ''
+				control_char = get_or_default(control_char_map, o, '')
+				add_pgiter(self.page, control_char, 'imp', 0, c, parent)
+			else:
+				s += c
+		assert s == ''
 
 imp_resource_map = {
 	'!!cm': imp_parser.parse_compression,
@@ -803,6 +832,9 @@ def add_imp_sw_index(hd, size, data):
 def add_imp_sw_record(hd, size, data):
 	pass
 
+def add_imp_text(hd, size, data):
+	add_iter(hd, 'Text', data, 0, len(data), '%ds' % len(data))
+
 imp_ids = {
 	'imp_anct' : add_imp_anct,
 	'imp_anct_tag' : add_imp_anct_tag,
@@ -827,6 +859,7 @@ imp_ids = {
 	'imp_styl': add_imp_styl,
 	'imp_sw_index' : add_imp_sw_index,
 	'imp_sw_record' : add_imp_sw_record,
+	'imp_text': add_imp_text,
 }
 
 def open(buf, page, parent):
