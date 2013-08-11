@@ -44,7 +44,7 @@ def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_l
 		def __init__(self, size, fill=' '):
 			self.data = [fill for i in range(size)]
 			self.begin = 0
-			self.end = 0
+			self.end = 1
 			self.growing = True
 
 		def push(self, byte):
@@ -55,9 +55,13 @@ def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_l
 			pos = self.begin
 			pos = self._advance_pos(pos, offset)
 			out = []
-			for i in range(length):
-				out.append(self.data[pos])
-				pos = self._advance_pos(pos)
+			if self.growing and pos + length > self.end:
+				for i in range(length):
+					out.append(self.data[pos])
+			else:
+				for i in range(length):
+					out.append(self.data[pos])
+					pos = self._advance_pos(pos)
 			self._push(out)
 			return out
 
