@@ -455,7 +455,11 @@ class imp_parser(object):
 		pass
 
 	def parse_pinf(self, rid, data, typ, parent):
-		pass
+		if rid == 0 or rid == 1:
+			view = 'large'
+			if rid == 1:
+				view = 'small'
+			add_pgiter(self.page, 'Page info for %s view' % view,  'imp', 'imp_pinf', data, parent)
 
 	def parse_ppic(self, rid, data, typ, parent):
 		pass
@@ -613,6 +617,13 @@ def add_imp_metadata(hd, size, data):
 	(first_name, off, length) = read_cstring(data, off)
 	add_iter(hd, 'First name', first_name, off - length, length, '%ds' % length)
 
+def add_imp_pinf(hd, size, data):
+	off = 4
+	(last, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Last page', last, off - 2, 2, '>H')
+	(images, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Count of images', images, off - 2, 2, '>H')
+
 def add_imp_resource_0x64(hd, size, data):
 	off = 6
 	(window, off) = rdata(data, off, '>H')
@@ -696,6 +707,7 @@ imp_ids = {
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
 	'imp_metadata': add_imp_metadata,
+	'imp_pinf': add_imp_pinf,
 	'imp_resource_0x64': add_imp_resource_0x64,
 	'imp_resource_0x65': add_imp_resource_0x65,
 	'imp_resource_0x65_last': add_imp_resource_0x65_last,
