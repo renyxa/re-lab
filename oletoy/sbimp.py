@@ -584,9 +584,6 @@ def add_imp_file_header(hd, size, data):
 	(typ, off) = rdata(data, off, '4s')
 	add_iter(hd, 'File type', typ, off - 4, 4, '4s')
 
-imp_zoom_states = ('Both', 'Small', 'Large')
-imp_color_modes = ('Unknown', 'Color VGA', 'Grayscale Half-VGA')
-
 def add_imp_header(hd, size, data):
 	(version, off) = rdata(data, 0, '>H')
 	add_iter(hd, 'Version', version, off - 2, 2, '>H')
@@ -604,11 +601,15 @@ def add_imp_header(hd, size, data):
 	add_iter(hd, 'Compressed?', compression != 0, off - 4, 4, '>I')
 	(encryption, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Encrypted?', encryption != 0, off - 4, 4, '>I')
+
 	(flags, off) = rdata(data, off, '>I')
+	imp_zoom_states = ('Both', 'Small', 'Large')
+	imp_color_modes = ('Unknown', 'Color VGA', 'Grayscale Half-VGA')
 	zoom = int(flags) & 0x3
 	color_mode = (int(flags) & (0x3 << 4)) >> 4
 	flags_str = 'zoom = %s, color mode = %s' % (imp_zoom_states[zoom], imp_color_modes[color_mode])
 	add_iter(hd, 'Flags', flags_str, off - 4, 4, '>I')
+
 	off += 4
 	assert off == 0x30
 
