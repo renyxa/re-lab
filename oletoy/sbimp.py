@@ -456,7 +456,7 @@ class imp_parser(object):
 		pass
 
 	def parse_mrgn(self, rid, data, typ, parent):
-		pass
+		add_pgiter(self.page, 'Record %d' % rid, 'imp', 'imp_mrgn', data, parent)
 
 	def parse_pcz0(self, rid, data, typ, parent):
 		pass
@@ -649,6 +649,9 @@ def add_imp_metadata(hd, size, data):
 	(first_name, off, length) = read_cstring(data, off)
 	add_iter(hd, 'First name', first_name, off - length, length, '%ds' % length)
 
+def add_imp_mrgn(hd, size, data):
+	pass
+
 def add_imp_pinf(hd, size, data):
 	off = 4
 	(last, off) = rdata(data, off, '>H')
@@ -809,6 +812,7 @@ imp_ids = {
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
 	'imp_metadata': add_imp_metadata,
+	'imp_mrgn': add_imp_mrgn,
 	'imp_pinf': add_imp_pinf,
 	'imp_ppic': add_imp_ppic,
 	'imp_resource_0x64': add_imp_resource_0x64,
