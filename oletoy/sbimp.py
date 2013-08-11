@@ -414,7 +414,7 @@ class imp_parser(object):
 			tagiter = add_pgiter(self.page, 'Tags for %s view' % view,  'imp', 'imp_anct', data, parent)
 			if int(count) > 0:
 				for j in range(int(count)):
-					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], parent)
+					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], tagiter)
 					off += 8
 
 	def parse_bgcl(self, rid, data, typ, parent):
