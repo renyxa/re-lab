@@ -648,16 +648,7 @@ def add_imp_resource_0x65(hd, size, data):
 	add_iter(hd, 'Byte position in uncompressed data', uncompressed_pos, 0, 4, '>I')
 	(compressed_pos, off) = rdata(hd, off, '>I')
 	add_iter(hd, 'Byte position in compressed data', compressed_pos, off - 4, 4, '>I')
-	bit_pos_map = {
-		0x1: 7,
-		0x2: 6,
-		0x4: 5,
-		0x8: 4,
-		0x10: 3,
-		0x20: 2,
-		0x40: 1,
-		0x80: 0,
-	}
+	bit_pos_map = {0x1: 7, 0x2: 6, 0x4: 5, 0x8: 4, 0x10: 3, 0x20: 2, 0x40: 1, 0x80: 0}
 	(bit_pos, off) = rdata(hd, off, '>H')
 	bit_pos_val = 0
 	if bit_pos_map.has_key(ord(bit_pos)):
