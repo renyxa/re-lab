@@ -493,7 +493,12 @@ class imp_parser(object):
 						off += 8
 
 	def parse_bgcl(self, data, index, parent):
-		pass
+		for i in index.keys():
+			res = index[i]
+			resdata = data[res[0]:res[0] + res[1]]
+
+			if i == 0x80:
+				add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', resdata, parent)
 
 	def parse_bpgz(self, data, index, parent, large):
 		pass
@@ -573,6 +578,21 @@ def add_imp_anct_tag(hd, size, data):
 	add_iter(hd, 'Offset to anchor tag in text', offset, 0, 4, '>I')
 	(page, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Page number', page, off - 4, 4, '>I')
+
+def add_imp_bgcl(hd, size, data):
+	off = 2
+	(red, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Red', '0x%x' % int(red), off - 1, 1, '>B')
+	(bgred, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Red color set', '%s' % (int(bgred) == 0), off - 1, 1, '>B')
+	(green, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Green', '0x%x' % int(green), off - 1, 1, '>B')
+	(bggreen, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Green color set', '%s' % (int(bggreen) == 0), off - 1, 1, '>B')
+	(blue, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Blue', '0x%x' % int(blue), off - 1, 1, '>B')
+	(bgblue, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Blue color set', '%s' % (int(bgblue) == 0), off - 1, 1, '>B')
 
 def add_imp_directory(hd, size, data):
 	fmt = '%ds' % imp_dirname_length
@@ -720,6 +740,7 @@ def add_imp_sw_record(hd, size, data):
 imp_ids = {
 	'imp_anct' : add_imp_anct,
 	'imp_anct_tag' : add_imp_anct_tag,
+	'imp_bgcl': add_imp_bgcl,
 	'imp_directory': add_imp_directory,
 	'imp_directory_entry': add_imp_directory_entry,
 	'imp_file_header': add_imp_file_header,
