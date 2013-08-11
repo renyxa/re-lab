@@ -465,10 +465,19 @@ class imp_parser(object):
 		pass
 
 	def parse_str2(self, rid, data, typ, parent):
-		pass
+		if rid == 0x8001:
+			add_pgiter(self.page, 'String run index', 'imp', 0, data, parent)
+		elif rid >= 0x8002:
+			add_pgiter(self.page, 'String run %x' % rid, 'imp', 'imp_str2', data, parent)
 
 	def parse_strn(self, rid, data, typ, parent):
-		pass
+		striter = add_pgiter(self.page, 'String runs', 'imp', 0, data, parent)
+		off = 0
+		n = 0
+		while off + 8 <= len(data):
+			add_pgiter(self.page, 'Run %d' % n, 'imp', 'imp_strn', data[off:off + 8], striter)
+			off += 8
+			n += 1
 
 	def parse_styl(self, rid, data, typ, parent):
 		if rid == 0x80:
@@ -666,6 +675,18 @@ def add_imp_resource_header(hd, size, data):
 	(offset, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Offset to start of index', offset, off - 4, 4, '>I')
 
+def add_imp_str2(hd, size, data):
+	(offset, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+	(style, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Style', style, off - 4, 4, '>I')
+
+def add_imp_strn(hd, size, data):
+	(offset, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+	(style, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Style', style, off - 4, 4, '>I')
+
 def add_imp_styl(hd, size, data):
 	off = 2
 
@@ -773,6 +794,9 @@ imp_ids = {
 	'imp_resource_0x65_last': add_imp_resource_0x65_last,
 	'imp_resource_header': add_imp_resource_header,
 	'imp_resource_index': add_imp_resource_index,
+	'imp_str2': add_imp_str2,
+	'imp_str2': add_imp_str2,
+	'imp_strn': add_imp_strn,
 	'imp_styl': add_imp_styl,
 	'imp_sw_index' : add_imp_sw_index,
 	'imp_sw_record' : add_imp_sw_record,
