@@ -443,8 +443,8 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Text', 'imp', 0, filedata, fileiter)
 		else:
 			textiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
-			# uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
-			# add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
+			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
+			add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
 
 def add_imp_directory(hd, size, data):
 	fmt = '%ds' % imp_dirname_length
