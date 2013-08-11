@@ -219,34 +219,7 @@ imp_file_header_size = 20
 imp_color_mode = 1
 imp_dirname_length = 0
 
-imp_resource_types = frozenset((
-	'!!cm',
-	'AncT',
-	'BGcl',
-	'BPgz',
-	'BPgZ',
-	'BPos',
-	'eLnk',
-	'ESts',
-	'HfPz',
-	'HfPZ',
-	'HRle',
-	'ImRn',
-	'Lnks',
-	'Mrgn',
-	'Pcz0',
-	'PcZ0',
-	'Pcz1',
-	'PcZ1',
-	'pInf',
-	'PPic',
-	'StR2',
-	'StRn',
-	'Styl',
-	'Tabl',
-	'TCel',
-	'TRow',
-))
+imp_resource_map = {}
 
 class imp_parser(object):
 
@@ -335,7 +308,7 @@ class imp_parser(object):
 		add_pgiter(self.page, 'Header', 'imp', 'imp_file_header', data[0:20], fileiter)
 
 		filedata = data[20:len(data)]
-		if typ in imp_resource_types:
+		if imp_resource_map.has_key(typ):
 			self.parse_resource(filedata, typ, fileiter)
 		elif typ == '!!sw':
 			self.parse_sw(filedata, typ, fileiter)
@@ -349,50 +322,10 @@ class imp_parser(object):
 		idxiter = add_pgiter(self.page, 'Index', 'imp', 0, idx_data, parent)
 
 		idx = self.parse_resource_index(idx_data, idxiter)
-		if typ == '!!cm':
-			self.parse_compression(data, idx, resiter)
-		elif typ == 'AncT':
-			self.parse_anct(data, idx, resiter)
-		elif typ == 'BGcl':
-			self.parse_bgcl(data, idx, resiter)
-		elif typ in ['BPgz', 'BPgZ']:
-			self.parse_bpgz(data, idx, resiter, typ == 'BPgZ')
-		elif typ == 'BPos':
-			self.parse_bpos(data, idx, resiter)
-		elif typ == 'eLnk':
-			self.parse_elnk(data, idx, resiter)
-		elif typ == 'ESts':
-			self.parse_ests(data, idx, resiter)
-		elif typ in ['HfPz', 'HfPZ']:
-			self.parse_hfpz(data, idx, resiter, typ == 'HfPZ')
-		elif typ == 'HRle':
-			self.parse_hrle(data, idx, resiter)
-		elif typ == 'ImRn':
-			self.parse_imrn(data, idx, resiter)
-		elif typ == 'Lnks':
-			self.parse_lnks(data, idx, resiter)
-		elif typ == 'Mrgn':
-			self.parse_mrgn(data, idx, resiter)
-		elif typ in ['Pcz0', 'PcZ0']:
-			self.parse_pcz0(data, idx, resiter, typ == 'PcZ0')
-		elif typ in ['Pcz1', 'PcZ1']:
-			self.parse_pcz1(data, idx, resiter, typ == 'PcZ1')
-		elif typ == 'pInf':
-			self.parse_pinf(data, idx, resiter)
-		elif typ == 'PPic':
-			self.parse_ppic(data, idx, resiter)
-		elif typ == 'StR2':
-			self.parse_str2(data, idx, resiter)
-		elif typ == 'StRn':
-			self.parse_strn(data, idx, resiter)
-		elif typ == 'Styl':
-			self.parse_styl(data, idx, resiter)
-		elif typ == 'Tabl':
-			self.parse_tabl(data, idx, resiter)
-		elif typ == 'TCel':
-			self.parse_tcel(data, idx, resiter)
-		elif typ == 'TRow':
-			self.parse_trow(data, idx, resiter)
+		for i in idx.keys():
+			res = idx[i]
+			resdata = data[res[0]:res[0] + res[1]]
+			imp_resource_map[typ](self, i, resdata, typ, resiter)
 
 	def parse_resource_index(self, data, parent):
 		index = {}
@@ -421,31 +354,27 @@ class imp_parser(object):
 
 		return index
 
-	def parse_compression(self, data, index, parent):
-		for i in index.keys():
-			res = index[i]
-			resdata = data[res[0]:res[0] + res[1]]
+	def parse_compression(self, rid, data, typ, parent):
+		if rid == 0x64:
+			add_pgiter(self.page, 'Resource 0x64', 'imp', 'imp_resource_0x64', data, parent)
+			off = 6
+			(window_bits, off) = rdata(data, off, '>H')
+			(length_bits, off) = rdata(data, off, '>H')
+			self.window_bits = int(window_bits)
+			self.length_bits = int(length_bits)
 
-			if i == 0x64:
-				add_pgiter(self.page, 'Resource 0x64', 'imp', 'imp_resource_0x64', resdata, parent)
-				off = 6
-				(window_bits, off) = rdata(resdata, off, '>H')
-				(length_bits, off) = rdata(resdata, off, '>H')
-				self.window_bits = int(window_bits)
-				self.length_bits = int(length_bits)
-
-			elif i == 0x65:
-				resiter = add_pgiter(self.page, 'Resource 0x65', 'imp', 0, resdata, parent)
-				count = len(resdata) / 10
-				recbegin = 0
-				for j in range(count):
-					recid = 'imp_resource_0x65'
-					if j == count - 1:
-						recid = 'imp_resource_0x65_last'
-						self.text_length = int(read(resdata, recbegin, '>I'))
-					recdata = resdata[recbegin:recbegin + 10]
-					add_pgiter(self.page, 'Record %d' % j, 'imp', recid, recdata, resiter)
-					recbegin += 10
+		elif rid == 0x65:
+			resiter = add_pgiter(self.page, 'Resource 0x65', 'imp', 0, data, parent)
+			count = len(data) / 10
+			recbegin = 0
+			for j in range(count):
+				recid = 'imp_resource_0x65'
+				if j == count - 1:
+					recid = 'imp_resource_0x65_last'
+					self.text_length = int(read(data, recbegin, '>I'))
+				recdata = data[recbegin:recbegin + 10]
+				add_pgiter(self.page, 'Record %d' % j, 'imp', recid, recdata, resiter)
+				recbegin += 10
 
 	def parse_sw(self, data, index, parent):
 		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
@@ -476,85 +405,77 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Record %d (typ %s)' % (i, typ), 'imp', 'imp_sw_record', recdata, reciter)
 			i += 1
 
-	def parse_anct(self, data, index, parent):
-		for i in index.keys():
-			res = index[i]
-			resdata = data[res[0]:res[0] + res[1]]
+	def parse_anct(self, rid, data, typ, parent):
+		if rid == 0 or rid == 1:
+			(count, off) = rdata(data, 0, '>I')
+			view = 'large'
+			if rid == 1:
+				view = 'small'
+			tagiter = add_pgiter(self.page, 'Tags for %s view' % view,  'imp', 'imp_anct', data, parent)
+			if int(count) > 0:
+				for j in range(int(count)):
+					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], parent)
+					off += 8
 
-			if i == 0 or i == 1:
-				(count, off) = rdata(resdata, 0, '>I')
-				view = 'large'
-				if i == 1:
-					view = 'small'
-				tagiter = add_pgiter(self.page, 'Tags for %s view' % view,  'imp', 'imp_anct', resdata, parent)
-				if int(count) > 0:
-					for j in range(int(count)):
-						add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', resdata[off:off + 8], parent)
-						off += 8
+	def parse_bgcl(self, rid, data, typ, parent):
+		if rid == 0x80:
+			add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', data, parent)
 
-	def parse_bgcl(self, data, index, parent):
-		for i in index.keys():
-			res = index[i]
-			resdata = data[res[0]:res[0] + res[1]]
-
-			if i == 0x80:
-				add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', resdata, parent)
-
-	def parse_bpgz(self, data, index, parent, large):
+	def parse_bpgz(self, rid, data, typ, parent):
 		pass
 
-	def parse_bpos(self, data, index, parent):
+	def parse_bpos(self, rid, data, typ, parent):
 		pass
 
-	def parse_elnk(self, data, index, parent):
+	def parse_elnk(self, rid, data, typ, parent):
 		pass
 
-	def parse_ests(self, data, index, parent):
+	def parse_ests(self, rid, data, typ, parent):
 		pass
 
-	def parse_hfpz(self, data, index, parent, large):
+	def parse_hfpz(self, rid, data, typ, parent):
 		pass
 
-	def parse_hrle(self, data, index, parent):
+	def parse_hrle(self, rid, data, typ, parent):
 		pass
 
-	def parse_imrn(self, data, index, parent):
+	def parse_imrn(self, rid, data, typ, parent):
 		pass
 
-	def parse_lnks(self, data, index, parent):
+	def parse_lnks(self, rid, data, typ, parent):
 		pass
 
-	def parse_mrgn(self, data, index, parent):
+	def parse_mrgn(self, rid, data, typ, parent):
 		pass
 
-	def parse_pcz0(self, data, index, parent, large):
+	def parse_pcz0(self, rid, data, typ, parent):
 		pass
 
-	def parse_pcz1(self, data, index, parent, large):
+	def parse_pcz1(self, rid, data, typ, parent):
 		pass
 
-	def parse_pinf(self, data, index, parent):
+	def parse_pinf(self, rid, data, typ, parent):
 		pass
 
-	def parse_ppic(self, data, index, parent):
+	def parse_ppic(self, rid, data, typ, parent):
 		pass
 
-	def parse_str2(self, data, index, parent):
+	def parse_str2(self, rid, data, typ, parent):
 		pass
 
-	def parse_strn(self, data, index, parent):
+	def parse_strn(self, rid, data, typ, parent):
 		pass
 
-	def parse_styl(self, data, index, parent):
+	def parse_styl(self, rid, data, typ, parent):
 		pass
 
-	def parse_tabl(self, data, index, parent):
+	def parse_tabl(self, rid, data, typ, parent):
 		pass
 
-	def parse_tcel(self, data, index, parent):
+	def parse_tcel(self, rid, data, typ, parent):
 		pass
 
-	def parse_trow(self, data, index, parent):
+	def parse_trow(self, rid, data, typ, parent):
 		pass
 
 	def parse_text(self, data, n, parent):
@@ -568,6 +489,35 @@ class imp_parser(object):
 			textiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
 			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
 			add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, textiter)
+
+imp_resource_map = {
+	'!!cm': imp_parser.parse_compression,
+	'AncT': imp_parser.parse_anct,
+	'BGcl': imp_parser.parse_bgcl,
+	'BPgz': imp_parser.parse_bpgz,
+	'BPgZ': imp_parser.parse_bpgz,
+	'BPos': imp_parser.parse_bpos,
+	'eLnk': imp_parser.parse_elnk,
+	'ESts': imp_parser.parse_ests,
+	'HfPz': imp_parser.parse_hfpz,
+	'HfPZ': imp_parser.parse_hfpz,
+	'HRle': imp_parser.parse_hrle,
+	'ImRn': imp_parser.parse_imrn,
+	'Lnks': imp_parser.parse_lnks,
+	'Mrgn': imp_parser.parse_mrgn,
+	'Pcz0': imp_parser.parse_pcz0,
+	'PcZ0': imp_parser.parse_pcz0,
+	'Pcz1': imp_parser.parse_pcz1,
+	'PcZ1': imp_parser.parse_pcz1,
+	'pInf': imp_parser.parse_pinf,
+	'PPic': imp_parser.parse_ppic,
+	'StR2': imp_parser.parse_str2,
+	'StRn': imp_parser.parse_strn,
+	'Styl': imp_parser.parse_styl,
+	'Tabl': imp_parser.parse_tabl,
+	'TCel': imp_parser.parse_tcel,
+	'TRow': imp_parser.parse_trow,
+}
 
 def add_imp_anct(hd, size, data):
 	count = read(data, 0, '>I')
