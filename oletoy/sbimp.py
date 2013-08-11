@@ -436,7 +436,12 @@ class imp_parser(object):
 		pass
 
 	def parse_ests(self, rid, data, typ, parent):
-		pass
+		if rid == 1:
+			add_pgiter(self.page, 'CSS x-sbp-orphan-pull', 'imp', 'imp_ests_orphan_pull', data, parent)
+		elif rid == 2:
+			add_pgiter(self.page, 'CSS x-sbp-widow-push', 'imp', 'imp_ests_widow_push', data, parent)
+		elif rid == 3:
+			add_pgiter(self.page, 'Unknown', 'imp', 0, data, parent)
 
 	def parse_hfpz(self, rid, data, typ, parent):
 		pass
@@ -583,6 +588,12 @@ def add_imp_directory_entry(hd, size, data):
 		add_imp_file_header(hd, size, data)
 	else:
 		assert False
+
+def add_imp_ests_orphan_pull(hd, size, data):
+	pass
+
+def add_imp_ests_widow_push(hd, size, data):
+	pass
 
 def add_imp_file_header(hd, size, data):
 	(name, off) = rdata(data, 0, '4s')
@@ -793,6 +804,8 @@ imp_ids = {
 	'imp_bgcl': add_imp_bgcl,
 	'imp_directory': add_imp_directory,
 	'imp_directory_entry': add_imp_directory_entry,
+	'imp_ests_orphan_pull': add_imp_ests_orphan_pull,
+	'imp_ests_widow_push': add_imp_ests_widow_push,
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
 	'imp_metadata': add_imp_metadata,
