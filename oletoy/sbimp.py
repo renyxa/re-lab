@@ -353,6 +353,46 @@ class imp_parser(object):
 			self.parse_compression(data, idx, resiter)
 		elif typ == 'AncT':
 			self.parse_anct(data, idx, resiter)
+		elif typ == 'BGcl':
+			self.parse_bgcl(data, idx, resiter)
+		elif typ in ['BPgz', 'BPgZ']:
+			self.parse_bpgz(data, idx, resiter, typ == 'BPgZ')
+		elif typ == 'BPos':
+			self.parse_bpos(data, idx, resiter)
+		elif typ == 'eLnk':
+			self.parse_elnk(data, idx, resiter)
+		elif typ == 'ESts':
+			self.parse_ests(data, idx, resiter)
+		elif typ in ['HfPz', 'HfPZ']:
+			self.parse_hfpz(data, idx, resiter, typ == 'HfPZ')
+		elif typ == 'HRle':
+			self.parse_hrle(data, idx, resiter)
+		elif typ == 'ImRn':
+			self.parse_imrn(data, idx, resiter)
+		elif typ == 'Lnks':
+			self.parse_lnks(data, idx, resiter)
+		elif typ == 'Mrgn':
+			self.parse_mrgn(data, idx, resiter)
+		elif typ in ['Pcz0', 'PcZ0']:
+			self.parse_pcz0(data, idx, resiter, typ == 'PcZ0')
+		elif typ in ['Pcz1', 'PcZ1']:
+			self.parse_pcz1(data, idx, resiter, typ == 'PcZ1')
+		elif typ == 'pInf':
+			self.parse_pinf(data, idx, resiter)
+		elif typ == 'PPic':
+			self.parse_ppic(data, idx, resiter)
+		elif typ == 'StR2':
+			self.parse_str2(data, idx, resiter)
+		elif typ == 'StRn':
+			self.parse_strn(data, idx, resiter)
+		elif typ == 'Styl':
+			self.parse_styl(data, idx, resiter)
+		elif typ == 'Tabl':
+			self.parse_tabl(data, idx, resiter)
+		elif typ == 'TCel':
+			self.parse_tcel(data, idx, resiter)
+		elif typ == 'TRow':
+			self.parse_trow(data, idx, resiter)
 
 	def parse_resource_index(self, data, parent):
 		index = {}
@@ -451,6 +491,66 @@ class imp_parser(object):
 					for j in range(int(count)):
 						add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', resdata[off:off + 8], parent)
 						off += 8
+
+	def parse_bgcl(self, data, index, parent):
+		pass
+
+	def parse_bpgz(self, data, index, parent, large):
+		pass
+
+	def parse_bpos(self, data, index, parent):
+		pass
+
+	def parse_elnk(self, data, index, parent):
+		pass
+
+	def parse_ests(self, data, index, parent):
+		pass
+
+	def parse_hfpz(self, data, index, parent, large):
+		pass
+
+	def parse_hrle(self, data, index, parent):
+		pass
+
+	def parse_imrn(self, data, index, parent):
+		pass
+
+	def parse_lnks(self, data, index, parent):
+		pass
+
+	def parse_mrgn(self, data, index, parent):
+		pass
+
+	def parse_pcz0(self, data, index, parent, large):
+		pass
+
+	def parse_pcz1(self, data, index, parent, large):
+		pass
+
+	def parse_pinf(self, data, index, parent):
+		pass
+
+	def parse_ppic(self, data, index, parent):
+		pass
+
+	def parse_str2(self, data, index, parent):
+		pass
+
+	def parse_strn(self, data, index, parent):
+		pass
+
+	def parse_styl(self, data, index, parent):
+		pass
+
+	def parse_tabl(self, data, index, parent):
+		pass
+
+	def parse_tcel(self, data, index, parent):
+		pass
+
+	def parse_trow(self, data, index, parent):
+		pass
 
 	def parse_text(self, data, n, parent):
 		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
