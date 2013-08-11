@@ -97,20 +97,34 @@ def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_l
 				return 0
 
 			p = [0, 0, 0, 0]
-			i = 0
+
 			if big_endian:
 				i = (bits - 1) / 8
 
-			while 8 <= bits:
-				p[i] = self._read_byte()
-				bits -= 8
-				if big_endian:
+				over = bits % 8
+				if over > 0:
+					p[i] = self._read_bits(over)
+					bits -= over
 					i -= 1
-				else:
-					i += 1
+				assert bits % 8 == 0
 
-			if 0 < bits:
-				p[i] = self._read_bits(bits)
+				while 8 <= bits:
+					p[i] = self._read_byte()
+					bits -= 8
+					i -= 1
+				assert bits == 0
+
+			else:
+				i = 0
+
+				while 8 <= bits:
+					p[i] = self._read_byte()
+					bits -= 8
+					i += 1
+				assert bits < 8
+
+				if 0 < bits:
+					p[i] = self._read_bits(bits)
 
 			val = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)
 			return val
