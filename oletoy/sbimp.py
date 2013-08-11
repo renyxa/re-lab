@@ -399,7 +399,6 @@ class imp_parser(object):
 		entrylen = 16
 		if imp_color_mode == 2:
 			entrylen = 18
-		print('color mode = %d, entry len = %d' % (imp_color_mode, entrylen))
 
 		while off + entrylen <= len(data):
 			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_sw_index', data[off:off + entrylen], idxiter)
