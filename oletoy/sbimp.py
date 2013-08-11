@@ -610,7 +610,7 @@ def add_imp_header(hd, size, data):
 	flags_str = 'zoom = %s, color mode = %s' % (imp_zoom_states[zoom], imp_color_modes[color_mode])
 	add_iter(hd, 'Flags', flags_str, off - 4, 4, '>I')
 	off += 4
-	assert off == 30
+	assert off == 0x30
 
 def add_imp_metadata(hd, size, data):
 	(ident, off, length) = read_cstring(data, 0)
