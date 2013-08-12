@@ -355,7 +355,7 @@ class ApplicationMainWindow(gtk.Window):
 		if value skipped, then compares selected iter on pages for any differences\n\
 		if no iter selected, then compares whole pages (be patient)\n\n\
 <b>Hexdump selection:</b>\n\
-	<tt>^E</tt> flips edit mode, grey/green/red circle shows status:\n\
+	<tt>^E</tt> flips edcurrentlyit mode, grey/green/red circle shows status:\n\
 		grey - editing switched off,\n\
 		green - editing switched on,\n\
 		red - data was modified.\n\
@@ -367,7 +367,25 @@ class ApplicationMainWindow(gtk.Window):
 	For CDR if 4 bytes match with ID from dictionary, tooltip would be yellow.\n\
 	For CDR select outl/fild ID and press arrow right to scroll to it.\n\
 	For YEP press arrow right on VPRM block to jump to VWDT sample.\n\
-	Press Backspace to come back."
+	Press Backspace to come back.\n\n\
+<b>Diff:</b>\n\
+	^X opens a window that allows to select two records to compare them.\n\
+	For the left side it pre-selects currently activated tab for file and\n\
+	its current tree selection for record. If no leaf selected in the tree,\n\
+	then the first record in the file pre-selected for the record field.\n\
+	For the right side it chooses the next tab for the file and its selection\n\
+	for the record. If currently activated tab is the last or the only in the list,\n\
+	that file will be pre-selected for the right side.\n\
+	Paths, offsets and lengths are display only at the moment.\n\n\
+	Once selection of the records are completed, press 'Run' button.\n\
+	OLEToy uses python's difflib to calculate the difference between those records.\n\
+	(Note: it can 'freeze' the program during this calculation)\n\n\
+	Diff window highlights the differences:\n\
+	  <span bgcolor='#80C0FF'>blue</span> for bytes to add on the right side to match with left side\n\
+	  <span bgcolor='#80FFC0'>green</span> for bytes to add on the left side to match with the right side\n\
+	  <span bgcolor='#FFC080'>orange</span> for bytes that need to be interchanged between two\n\n\
+	There are 'minimap' on the left edge and hex offsets of the first byte of each line\n\
+	for both left and right panels." 
 
 		pl = widget.create_pango_layout("")
 		pl.set_markup(mytxt)
@@ -399,7 +417,7 @@ class ApplicationMainWindow(gtk.Window):
 		w = gtk.Window()
 		s = gtk.ScrolledWindow()
 		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-		s.set_size_request(660,400)
+		s.set_size_request(860,500)
 		da = gtk.DrawingArea()
 		da.connect('expose_event', self.draw_manual)
 		w.set_title("OLE Toy Manual")
