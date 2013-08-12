@@ -1541,8 +1541,6 @@ class ApplicationMainWindow(gtk.Window):
 		pn = notebook.page_num(tab_widget)
 		del self.das[pn]
 		self.notebook.remove_page(pn)
-		if len(self.das) == 0:
-			gtk.main_quit()
 		if pn < len(self.das):  ## not the last page
 			for i in range(pn,len(self.das)):
 				self.das[i] = self.das[i+1]
