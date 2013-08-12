@@ -1529,11 +1529,9 @@ class ApplicationMainWindow(gtk.Window):
 			del(fho)
 		else:
 			fname = self.das[pn].fname
-			self.activate_close(self)
 			print "Reloading ",fname
-			self.fname = fname
-			self.activate_open(self)
-			self.notebook.set_current_page(pn)
+			model.clear()
+			self.das[pn].fload()
 		if iter1:
 			self.das[pn].view.expand_to_path(intPath)
 			self.das[pn].view.set_cursor_on_cell(intPath)
