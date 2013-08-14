@@ -23,7 +23,7 @@ import hexdump
 import App, cmd
 import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
-import xls, vba, ole, doc, mdb, pub, ppt
+import xls, vba, ole, doc, mdb, pub, ppt, rtf
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
@@ -41,7 +41,7 @@ try:
 except:
 	pass
 
-version = "0.7.36"
+version = "0.7.37"
 
 ui_info = \
 '''<ui>
@@ -1243,12 +1243,14 @@ class ApplicationMainWindow(gtk.Window):
 		if dlen == 3:
 			txt += '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
-		if dlen > 3 and self.options_txt == 1:
+		if dlen > 3 and self.options_txt == 1 and ftype != "RTF":
 			try:
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
 				print sys.exc_info()
-				
+
+		if ftype == "RTF":
+			txt = '<span background="#DDFFDD">'+rtf.recode(buf,self.options_enc)+'</span>'
 		self.update_statusbar(txt)
 
 	def update_data(self):

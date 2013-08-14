@@ -91,6 +91,25 @@ def rtf_read (buf,off,page,parent):
 	except:
 		print "failed","%02x"%off,name
 
+def recode(buf, enc):
+	off = 0
+	strbuf = ""
+	tbuf = buf.replace("\x0d\x0a","\\n")
+	while off < len(tbuf)-3:
+		pos = tbuf.find("\'",off)
+		if pos != -1:
+			pos+=1
+			if pos > off+2:
+				strbuf += tbuf[off:pos-2]
+			try:
+				strbuf += struct.pack("B",int(tbuf[pos:pos+2],16)).decode(enc)
+			except:
+				pass
+			off = pos+2
+		else:
+			break
+	return strbuf
+
 def open(buf,page,parent):
 	off = 0
 	rtf_read (buf[1:],off,page,parent)
