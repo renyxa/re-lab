@@ -581,6 +581,15 @@ def hdrbch (hd, data, off):
 	offset = 9
 	x = ord(data[offset])
 	add_iter(hd,"Key Range - Low note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
+
+	offset = 10
+	x = ord(data[offset])
+	add_iter(hd,"Velocity Range - Hight",x,offset,1,"B")
+
+	offset = 11
+	x = ord(data[offset])
+	add_iter(hd,"Velocity Range - Low",x,offset,1,"B")
+	
         
 	offset = 12
 	x = 255-ord(data[offset])
