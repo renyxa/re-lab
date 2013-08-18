@@ -333,7 +333,7 @@ class imp_parser(object):
 		for i in idx.keys():
 			res = idx[i]
 			resdata = data[res[0]:res[0] + res[1]]
-			imp_resource_map[typ](self, i, resdata, typ, resiter)
+			imp_resource_map[typ](self, i, resdata, typ, version, resiter)
 
 	def parse_resource_index(self, data, parent, version):
 		index = {}
@@ -366,7 +366,7 @@ class imp_parser(object):
 
 		return index
 
-	def parse_compression(self, rid, data, typ, parent):
+	def parse_compression(self, rid, data, typ, version, parent):
 		if rid == 0x64:
 			add_pgiter(self.page, 'Resource 0x64', 'imp', 'imp_resource_0x64', data, parent)
 			off = 6
@@ -417,7 +417,7 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Record %d (typ %s)' % (i, typ), 'imp', 'imp_sw_record', recdata, reciter)
 			i += 1
 
-	def parse_anct(self, rid, data, typ, parent):
+	def parse_anct(self, rid, data, typ, version, parent):
 		if rid == 0 or rid == 1:
 			(count, off) = rdata(data, 0, '>I')
 			view = 'large'
@@ -429,20 +429,20 @@ class imp_parser(object):
 					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], tagiter)
 					off += 8
 
-	def parse_bgcl(self, rid, data, typ, parent):
+	def parse_bgcl(self, rid, data, typ, version, parent):
 		if rid == 0x80:
 			add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', data, parent)
 
-	def parse_bpgz(self, rid, data, typ, parent):
+	def parse_bpgz(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_bpos(self, rid, data, typ, parent):
+	def parse_bpos(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_elnk(self, rid, data, typ, parent):
+	def parse_elnk(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_ests(self, rid, data, typ, parent):
+	def parse_ests(self, rid, data, typ, version, parent):
 		if rid == 1:
 			add_pgiter(self.page, 'CSS x-sbp-orphan-pull', 'imp', 'imp_ests_orphan_pull', data, parent)
 		elif rid == 2:
@@ -450,48 +450,48 @@ class imp_parser(object):
 		elif rid == 3:
 			add_pgiter(self.page, 'Unknown', 'imp', 0, data, parent)
 
-	def parse_hfpz(self, rid, data, typ, parent):
+	def parse_hfpz(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_hrle(self, rid, data, typ, parent):
+	def parse_hrle(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_imrn(self, rid, data, typ, parent):
+	def parse_imrn(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_lnks(self, rid, data, typ, parent):
+	def parse_lnks(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_mrgn(self, rid, data, typ, parent):
+	def parse_mrgn(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Record %d' % rid, 'imp', 'imp_mrgn', data, parent)
 
-	def parse_pcz0(self, rid, data, typ, parent):
+	def parse_pcz0(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_pcz1(self, rid, data, typ, parent):
+	def parse_pcz1(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_pinf(self, rid, data, typ, parent):
+	def parse_pinf(self, rid, data, typ, version, parent):
 		if rid == 0 or rid == 1:
 			view = 'large'
 			if rid == 1:
 				view = 'small'
 			add_pgiter(self.page, 'Page info for %s view' % view,  'imp', 'imp_pinf', data, parent)
 
-	def parse_ppic(self, rid, data, typ, parent):
+	def parse_ppic(self, rid, data, typ, version, parent):
 		if rid == 0 or rid == 1:
 			view = 'large'
 			if rid == 1:
 				view = 'small'
 			add_pgiter(self.page, 'Picture info for %s view' %view, 'imp', 'imp_ppic', data, parent)
 
-	def parse_str2(self, rid, data, typ, parent):
+	def parse_str2(self, rid, data, typ, version, parent):
 		if rid == 0x8001:
 			add_pgiter(self.page, 'String run index', 'imp', 0, data, parent)
 		elif rid >= 0x8002:
 			add_pgiter(self.page, 'String run %x' % rid, 'imp', 'imp_str2', data, parent)
 
-	def parse_strn(self, rid, data, typ, parent):
+	def parse_strn(self, rid, data, typ, version, parent):
 		striter = add_pgiter(self.page, 'String runs', 'imp', 0, data, parent)
 		off = 0
 		n = 0
@@ -500,11 +500,11 @@ class imp_parser(object):
 			off += 8
 			n += 1
 
-	def parse_styl(self, rid, data, typ, parent):
+	def parse_styl(self, rid, data, typ, version, parent):
 		if rid == 0x80:
 			add_pgiter(self.page, 'Style', 'imp', 'imp_styl', data, parent)
 
-	def parse_tabl(self, rid, data, typ, parent):
+	def parse_tabl(self, rid, data, typ, version, parent):
 		if rid == 0x80:
 			tablesiter = add_pgiter(self.page, 'Tables', 'imp', 0, data, parent)
 
@@ -514,10 +514,10 @@ class imp_parser(object):
 				add_pgiter(self.page, 'Table %d' % i, 'imp', 'imp_tabl', data[begin:begin + 24], tablesiter)
 				begin += 24
 
-	def parse_tcel(self, rid, data, typ, parent):
+	def parse_tcel(self, rid, data, typ, version, parent):
 		pass
 
-	def parse_trow(self, rid, data, typ, parent):
+	def parse_trow(self, rid, data, typ, version, parent):
 		pass
 
 	def parse_text(self, data, n, parent):
