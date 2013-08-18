@@ -927,7 +927,14 @@ def add_imp_trow_v1(hd, size, data):
 	add_iter(hd, 'Length of row content', length, off - 4, 4, '>I')
 
 def add_imp_trow_v2(hd, size, data):
-	pass
+	(typ, off) = rdata(data, 0, '>H')
+	typ_map = {0xfffe: 'table', 0xff81: 'list'}
+	typ_str = get_or_default(typ_map, int(typ), 'unknown')
+	add_iter(hd, 'Row type', typ_str, 0, 2, '>H')
+
+	# the rest seems to be pretty much random :-( I've even seen two
+	# consecutive builds of the same source produce records with
+	# different length...
 
 imp_ids = {
 	'imp_anct' : add_imp_anct,
