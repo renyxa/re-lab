@@ -500,7 +500,14 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Style', 'imp', 'imp_styl', data, parent)
 
 	def parse_tabl(self, rid, data, typ, parent):
-		pass
+		if rid == 0x80:
+			tablesiter = add_pgiter(self.page, 'Tables', 'imp', 0, data, parent)
+
+			count = len(data) / 24
+			begin = 0
+			for i in range(count):
+				add_pgiter(self.page, 'Table %d' % i, 'imp', 'imp_tabl', data[begin:begin + 24], tablesiter)
+				begin += 24
 
 	def parse_tcel(self, rid, data, typ, parent):
 		pass
@@ -832,6 +839,56 @@ def add_imp_sw_index(hd, size, data):
 def add_imp_sw_record(hd, size, data):
 	pass
 
+def add_imp_tabl(hd, size, data):
+	(align, off) = rdata(data, 0, '>H')
+	align_map = {0xfffa: 'not specified', 0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
+	align_str = get_or_default(align_map, int(align), 'unknown')
+	add_iter(hd, 'Text alignment', align_str, off - 2, 2, '>H')
+
+	(width, off) = rdata(data, off, '>H')
+	w = int(width)
+	if w == 0xffff:
+		width_str = 'not specified'
+	elif (w & 0x8000) != 0:
+		width_str = "%d %%" % (0xffff - w)
+	else:
+		width_str = w
+	add_iter(hd, 'Width', width_str, off - 2, 2, '>H')
+
+	(border, off) = rdata(data, off, '>H')
+	border_map = {0: 'single', 0xffff: 'double'}
+	border_str = get_or_default(border_map, int(border), 'unknown')
+	add_iter(hd, 'Border', border_str, off - 2, 2, '>H')
+
+	(cellspacing, off) = rdata(data, off, '>H')
+	cellspacing_str = cellspacing
+	if int(cellspacing) == 0xffff:
+		cellspacing_str = 'not set'
+	add_iter(hd, 'Cell spacing', cellspacing_str, off - 2, 2, '>H')
+
+	(cellpadding, off) = rdata(data, off, '>H')
+	cellpadding_str = cellpadding
+	if int(cellpadding) == 0xffff:
+		cellpadding_str = 'not set'
+	add_iter(hd, 'Cell padding', cellpadding_str, off - 2, 2, '>H')
+
+	(caption, off) = rdata(data, off, '>I')
+	caption_map = {1: 'yes', 0xffffffff: 'no'}
+	caption_str = get_or_default(caption_map, int(caption), 'unknown')
+	add_iter(hd, 'Caption present?', caption_str, off - 4, 4, '>I')
+
+	(caption_length, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Caption length', caption_length, off - 4, 4, '>I')
+
+	off += 2
+
+	(list_style, off) = rdata(data, off, '>H')
+
+	(rowsid, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Rows ID', "0x%x" % rowsid, off - 2, 2, '>H')
+
+	assert off == 24
+
 def add_imp_text(hd, size, data):
 	add_iter(hd, 'Text', data, 0, len(data), '%ds' % len(data))
 
@@ -859,6 +916,7 @@ imp_ids = {
 	'imp_styl': add_imp_styl,
 	'imp_sw_index' : add_imp_sw_index,
 	'imp_sw_record' : add_imp_sw_record,
+	'imp_tabl': add_imp_tabl,
 	'imp_text': add_imp_text,
 }
 
