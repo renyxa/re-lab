@@ -698,7 +698,7 @@ def add_imp_ppic(hd, size, data):
 	has_borders_str = get_or_default({0: False, 0x64: True}, int(has_borders), 'unknown')
 	add_iter(hd, 'Has any borders?', has_borders_str, off - 4, 4, '>I')
 	(pictures, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Count of pictures', borders, off - 4, 4, '>I')
+	add_iter(hd, 'Count of pictures', pictures, off - 4, 4, '>I')
 	(has_pictures, off) = rdata(data, off, '>I')
 	has_pictures_str = get_or_default({0: False, 0x64: True}, int(has_pictures), 'unknown')
 	add_iter(hd, 'Has any pictures?', has_pictures_str, off - 4, 4, '>I')
