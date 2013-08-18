@@ -518,7 +518,7 @@ class imp_parser(object):
 		pass
 
 	def parse_trow(self, rid, data, typ, version, parent):
-		pass
+		add_pgiter(self.page, 'Table Row 0x%x' % rid, 'imp', 'imp_trow_v%d' % version, data, parent)
 
 	def parse_text(self, data, n, parent):
 		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
@@ -906,6 +906,29 @@ def add_imp_tabl(hd, size, data):
 def add_imp_text(hd, size, data):
 	add_iter(hd, 'Text', data, 0, len(data), '%ds' % len(data))
 
+def add_imp_trow_v1(hd, size, data):
+	(typ, off) = rdata(data, 0, '>I')
+	typ_map = {0xfffafffa: 'table', 0xfffffffc: 'definition list'}
+	typ_str = get_or_default(typ_map, int(typ), 'unknown')
+	add_iter(hd, 'Row type', typ_str, 0, 4, '>I')
+
+	(border, off) = rdata(data, off, '>H')
+	border_map = {0: 'single', 0xffff: 'double'}
+	border_str = get_or_default(border_map, int(border), 'unknown')
+	add_iter(hd, 'Border', border_str, off - 2, 2, '>H')
+
+	(celid, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Cell ID', '0x%x' % celid, off - 2, 2, '>H')
+
+	(offset, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+
+	(length, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Length of row content', length, off - 4, 4, '>I')
+
+def add_imp_trow_v2(hd, size, data):
+	pass
+
 imp_ids = {
 	'imp_anct' : add_imp_anct,
 	'imp_anct_tag' : add_imp_anct_tag,
@@ -933,6 +956,8 @@ imp_ids = {
 	'imp_sw_record' : add_imp_sw_record,
 	'imp_tabl': add_imp_tabl,
 	'imp_text': add_imp_text,
+	'imp_trow_v1': add_imp_trow_v1,
+	'imp_trow_v2': add_imp_trow_v2,
 }
 
 def open(buf, page, parent):
