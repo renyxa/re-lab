@@ -326,7 +326,7 @@ class imp_parser(object):
 		offset = int(read(data, 10, '>I'))
 		res_data = data[32:offset]
 		idx_data = data[offset:len(data)]
-		resiter = add_pgiter(self.page, 'Resources', 'imp', 0, res_data, parent)
+		resiter = add_pgiter(self.page, 'Records', 'imp', 0, res_data, parent)
 		idxiter = add_pgiter(self.page, 'Index', 'imp', 0, idx_data, parent)
 
 		idx = self.parse_resource_index(idx_data, idxiter, version)
