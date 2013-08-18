@@ -322,19 +322,20 @@ class imp_parser(object):
 
 	def parse_resource(self, data, typ, parent):
 		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
+		version = int(read(data, 0, '>H'))
 		offset = int(read(data, 10, '>I'))
 		res_data = data[32:offset]
 		idx_data = data[offset:len(data)]
 		resiter = add_pgiter(self.page, 'Resources', 'imp', 0, res_data, parent)
 		idxiter = add_pgiter(self.page, 'Index', 'imp', 0, idx_data, parent)
 
-		idx = self.parse_resource_index(idx_data, idxiter)
+		idx = self.parse_resource_index(idx_data, idxiter, version)
 		for i in idx.keys():
 			res = idx[i]
 			resdata = data[res[0]:res[0] + res[1]]
 			imp_resource_map[typ](self, i, resdata, typ, resiter)
 
-	def parse_resource_index(self, data, parent):
+	def parse_resource_index(self, data, parent, version):
 		index = {}
 
 		off = 0
@@ -342,9 +343,11 @@ class imp_parser(object):
 		entrylen = 12
 		if imp_color_mode == 2:
 			entrylen = 14
+		if version == 2:
+			entrylen = 16
 
 		while off + entrylen <= len(data):
-			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_resource_index', data[off:off + entrylen], parent)
+			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_resource_index_v%d' % version, data[off:off + entrylen], parent)
 			if imp_color_mode == 2:
 				(idx, off) = rdata(data, off, '<I')
 				(length, off) = rdata(data, off, '<I')
@@ -352,6 +355,8 @@ class imp_parser(object):
 			else:
 				(idx, off) = rdata(data, off, '>H')
 				(length, off) = rdata(data, off, '>I')
+				if version == 2:
+					off += 4
 				(start, off) = rdata(data, off, '>I')
 			index[int(idx)] = (int(start), int(length))
 			off += 2
@@ -813,7 +818,7 @@ def get_index_formats():
 		return ('<I', '<I')
 	return ('>I', '>H')
 
-def add_imp_resource_index(hd, size, data):
+def add_imp_resource_index_v1(hd, size, data):
 	(fmt, idfmt) = get_index_formats()
 
 	(idx, off) = rdata(data, 0, idfmt)
@@ -822,6 +827,15 @@ def add_imp_resource_index(hd, size, data):
 	add_iter(hd, 'Record length', length, off - 4, 4, fmt)
 	(start, off) = rdata(data, off, fmt)
 	add_iter(hd, 'Offset to start of record', start, off - 4, 4, fmt)
+
+def add_imp_resource_index_v2(hd, size, data):
+	(idx, off) = rdata(data, 0, '>H')
+	add_iter(hd, 'Resource ID', '0x%x' % int(idx), 0, off, '>H')
+	(length, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Record length', length, off - 4, 4, '>I')
+	off += 4
+	(start, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset to start of record', start, off - 4, 4, '>I')
 
 def add_imp_sw_index(hd, size, data):
 	(fmt, idfmt) = get_index_formats()
@@ -910,7 +924,8 @@ imp_ids = {
 	'imp_resource_0x65': add_imp_resource_0x65,
 	'imp_resource_0x65_last': add_imp_resource_0x65_last,
 	'imp_resource_header': add_imp_resource_header,
-	'imp_resource_index': add_imp_resource_index,
+	'imp_resource_index_v1': add_imp_resource_index_v1,
+	'imp_resource_index_v2': add_imp_resource_index_v2,
 	'imp_str2': add_imp_str2,
 	'imp_strn': add_imp_strn,
 	'imp_styl': add_imp_styl,
