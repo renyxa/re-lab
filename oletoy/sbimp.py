@@ -467,7 +467,14 @@ class imp_parser(object):
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 'imp_imrn', data, parent)
 
 	def parse_lnks(self, rid, data, typ, version, parent):
-		pass
+		lnkiter = add_pgiter(self.page, 'Links', 'imp', 0, data, parent)
+
+		n = 0
+		begin = 0
+		while begin + 34 <= len(data):
+			add_pgiter(self.page, 'Link %d' % n, 'imp', 'imp_lnks', data[begin:begin + 34], lnkiter)
+			n += 1
+			begin += 34
 
 	def parse_mrgn(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
@@ -733,6 +740,39 @@ def add_imp_imrn(hd, size, data):
 	(iid, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Image ID', iid, off - 2, 2, '>H')
 	assert off == 0x20
+
+def add_imp_lnks(hd, size, data):
+	(start, off) = rdata(data, 0, '>I')
+	add_iter(hd, "Offset of the link's start", start, off - 4, 4, '>I')
+	(end, off) = rdata(data, off, '>I')
+	add_iter(hd, "Offset of the link's end", end, off - 4, 4, '>I')
+
+	toc = int(start) == 0x7fffffff and int(end) == 0xffffffff
+	internal = False
+	(typ, off) = rdata(data, off, '>I')
+	typ_str = 'unknown'
+	if int(typ) == 0xffffffff:
+		typ_str = 'internal'
+		internal = True
+	elif int(typ) == 0xfffffffc:
+		typ_str = 'external'
+	elif toc:
+		typ_str = 'table of contents'
+	add_iter(hd, 'Type', typ_str, off - 4, 4, '>I')
+
+	off += 4
+	(target, off) = rdata(data, off, '>I')
+	add_iter(hd, "Offset of the link's target", target, off - 4, 4, '>I')
+	off += 6
+	(rid, off) = rdata(data, off, '>H')
+	rid_str = rid
+	if toc or internal:
+		rid_str = 'internal'
+		assert int(rid) == 0
+	add_iter(hd, 'Resource ID of ext. link', rid_str, off - 2, 2, '>H')
+	off += 6
+
+	assert off == 34
 
 def add_imp_metadata(hd, size, data):
 	(ident, off, length) = read_cstring(data, 0)
@@ -1046,6 +1086,7 @@ imp_ids = {
 	'imp_header': add_imp_header,
 	'imp_hrle': add_imp_hrle,
 	'imp_imrn': add_imp_imrn,
+	'imp_lnks': add_imp_lnks,
 	'imp_metadata': add_imp_metadata,
 	'imp_mrgn': add_imp_mrgn,
 	'imp_pinf': add_imp_pinf,
