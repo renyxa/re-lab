@@ -463,7 +463,7 @@ class imp_parser(object):
 		pass
 
 	def parse_mrgn(self, rid, data, typ, version, parent):
-		add_pgiter(self.page, 'Record %d' % rid, 'imp', 'imp_mrgn', data, parent)
+		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
 
 	def parse_pcz0(self, rid, data, typ, version, parent):
 		pass
