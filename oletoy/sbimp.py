@@ -515,7 +515,15 @@ class imp_parser(object):
 				begin += 24
 
 	def parse_tcel(self, rid, data, typ, version, parent):
-		pass
+		cellsiter = add_pgiter(self.page, 'Table cells 0x%x' % rid, 'imp', 0, data, parent)
+
+		if version == 1:
+			n = 0
+			begin = 0
+			while begin + 26 <= len(data):
+				add_pgiter(self.page, 'Cell %d' % n, 'imp', 'imp_tcel_v1', data[begin:begin + 26], cellsiter)
+				n += 1
+				begin += 26
 
 	def parse_trow(self, rid, data, typ, version, parent):
 		rowsiter = add_pgiter(self.page, 'Table Rows 0x%x' % rid, 'imp', 0, data, parent)
@@ -911,6 +919,46 @@ def add_imp_tabl(hd, size, data):
 
 	assert off == 24
 
+def add_imp_tcel_v1(hd, size, data):
+	off = 6
+	(typ, off) = rdata(data, off, '>H')
+	typ_map = {0xfffa: 'table', 0xfffc: 'definition list'}
+	typ_str = get_or_default(typ_map, int(typ), 'unknown')
+	add_iter(hd, 'Cell type', typ_str, off - 2, 2, '>H')
+
+	(align, off) = rdata(data, off, '>H')
+	align_map = {0xfffa: middle, 0xfffc: top, 0xfffb: bottom}
+	align_str = get_or_default(align_map, int(align), 'unknown')
+	add_iter(hd, 'Vertical alignment', align_str, off - 2, 2, '>H')
+
+	(width, off) = rdata(data, off, '>H')
+	width_str = width
+	if int(width) == 0:
+		width_str = 'not set'
+	add_iter(hd, 'Width', width_str, off - 2, 2, '>H')
+
+	(height, off) = rdata(data, off, '>H')
+	height_str = height
+	if int(height) == 0:
+		height_str = 'not set'
+	add_iter(hd, 'Height', height_str, off - 2, 2, '>H')
+
+	(offset, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+
+	(length, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Length of cell content', length, off - 4, 4, '>I')
+
+	(bgcolor, off) = rdata(data, off, '>I')
+	if int(bgcolor) == 0xffffffff:
+		bgcolor_str = 'not set'
+	else:
+		bgcolor_str = '#%x' % (int(bgcolor) & 0xffffff)
+	add_iter(hd, 'Background color', bgcolor_str, off - 4, 4, '>I')
+
+def add_imp_tcel_v2(hd, size, data):
+	pass
+
 def add_imp_text(hd, size, data):
 	add_iter(hd, 'Text', data, 0, len(data), '%ds' % len(data))
 
@@ -970,6 +1018,8 @@ imp_ids = {
 	'imp_sw_index' : add_imp_sw_index,
 	'imp_sw_record' : add_imp_sw_record,
 	'imp_tabl': add_imp_tabl,
+	'imp_tcel_v1': add_imp_tcel_v1,
+	'imp_tcel_v2': add_imp_tcel_v2,
 	'imp_text': add_imp_text,
 	'imp_trow_v1': add_imp_trow_v1,
 	'imp_trow_v2': add_imp_trow_v2,
