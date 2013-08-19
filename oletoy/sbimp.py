@@ -457,7 +457,7 @@ class imp_parser(object):
 		pass
 
 	def parse_imrn(self, rid, data, typ, version, parent):
-		pass
+		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 'imp_imrn', data, parent)
 
 	def parse_lnks(self, rid, data, typ, version, parent):
 		pass
@@ -691,6 +691,22 @@ def add_imp_header(hd, size, data):
 
 	off += 4
 	assert off == 0x30
+
+def add_imp_imrn(hd, size, data):
+	off = 8
+	(width, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Width', width, off - 2, 2, '>H')
+	(height, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Height', height, off - 2, 2, '>H')
+	off += 6
+	(offset, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+	off += 4
+	(typ, off) = rdata(data, off, '4s')
+	add_iter(hd, 'Type', typ, off - 4, 4, '4s')
+	(iid, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Image ID', iid, off - 2, 2, '>H')
+	assert off == 0x20
 
 def add_imp_metadata(hd, size, data):
 	(ident, off, length) = read_cstring(data, 0)
@@ -1002,6 +1018,7 @@ imp_ids = {
 	'imp_ests_widow_push': add_imp_ests_widow_push,
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
+	'imp_imrn': add_imp_imrn,
 	'imp_metadata': add_imp_metadata,
 	'imp_mrgn': add_imp_mrgn,
 	'imp_pinf': add_imp_pinf,
