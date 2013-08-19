@@ -518,7 +518,15 @@ class imp_parser(object):
 		pass
 
 	def parse_trow(self, rid, data, typ, version, parent):
-		add_pgiter(self.page, 'Table Row 0x%x' % rid, 'imp', 'imp_trow_v%d' % version, data, parent)
+		rowsiter = add_pgiter(self.page, 'Table Rows 0x%x' % rid, 'imp', 0, data, parent)
+
+		if version == 1:
+			n = 0
+			begin = 0
+			while begin + 16 <= len(data):
+				add_pgiter(self.page, 'Row %d' % n, 'imp', 'imp_trow_v1', data, parent)
+				n += 1
+				begin += 16
 
 	def parse_text(self, data, n, parent):
 		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
