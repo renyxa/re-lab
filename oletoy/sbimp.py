@@ -454,7 +454,14 @@ class imp_parser(object):
 		pass
 
 	def parse_hrle(self, rid, data, typ, version, parent):
-		pass
+		ruleiter = add_pgiter(self.page, 'Horizontal rules', 'imp', 0, data, parent)
+
+		n = 0
+		begin = 0
+		while begin + 12 <= len(data):
+			add_pgiter(self.page, 'Rule %d' % n, 'imp', 'imp_hrle', data[begin:begin + 12], ruleiter)
+			n += 1
+			begin += 12
 
 	def parse_imrn(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 'imp_imrn', data, parent)
@@ -691,6 +698,25 @@ def add_imp_header(hd, size, data):
 
 	off += 4
 	assert off == 0x30
+
+def add_imp_hrle(hd, size, data):
+	(size, off) = rdata(data, 0, '>H')
+	add_iter(hd, 'Size', size, off - 2, 2, '>H')
+
+	(width, off) = rdata(data, off, '>H')
+	width_str = width
+	if (int(width) & 0x8000):
+		width_str = '%d %%' % (0xffff - int(width))
+	add_iter(hd, 'Width', width_str, off - 2, 2, '>H')
+
+	(align, off) = rdata(data, off, '>H')
+	align_map = {0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
+	align_str = get_or_default(align_map, int(align), 'unknown')
+	add_iter(hd, 'Alignment', align_str, off - 2, 2, '>H')
+
+	off += 2
+	(offset, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
 
 def add_imp_imrn(hd, size, data):
 	off = 8
@@ -1018,6 +1044,7 @@ imp_ids = {
 	'imp_ests_widow_push': add_imp_ests_widow_push,
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
+	'imp_hrle': add_imp_hrle,
 	'imp_imrn': add_imp_imrn,
 	'imp_metadata': add_imp_metadata,
 	'imp_mrgn': add_imp_mrgn,
