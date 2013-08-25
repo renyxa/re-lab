@@ -484,7 +484,13 @@ class imp_parser(object):
 		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
 
 	def parse_pcz0(self, rid, data, typ, version, parent):
-		pass
+		n = 0
+		off = 0
+		size = 46
+		while off + size <= len(data):
+			add_pgiter(self.page, 'Image position %d' % n, 'imp', 'imp_pcz0', data[off:off + size], parent)
+			n += 1
+			off += size
 
 	def parse_pcz1(self, rid, data, typ, version, parent):
 		pass
@@ -809,6 +815,28 @@ def add_imp_metadata(hd, size, data):
 def add_imp_mrgn(hd, size, data):
 	pass
 
+def add_imp_pcz0(hd, size, data):
+	off = 4
+	(horizontal, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Horizontal offset', horizontal, off - 4, 4, '>I')
+	(vertical, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Vertical offset', vertical, off - 4, 4, '>I')
+	(width, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Width', width, off - 4, 4, '>I')
+	(height, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Height', height, off - 4, 4, '>I')
+	off += 2
+	(pos, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Position in text', pos, off - 4, 4, '>I')
+	off += 4
+	(typ, off) = rdata(data, off, '4s')
+	add_iter(hd, 'Type', typ, off - 4, 4, '4s')
+	off += 4
+	(rid, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Resource ID', '0x%x' % rid, off - 2, 2, '>H')
+	off += 6
+	assert off == 46
+
 def add_imp_pinf(hd, size, data):
 	off = 4
 	(last, off) = rdata(data, off, '>H')
@@ -1109,6 +1137,7 @@ imp_ids = {
 	'imp_lnks': add_imp_lnks,
 	'imp_metadata': add_imp_metadata,
 	'imp_mrgn': add_imp_mrgn,
+	'imp_pcz0': add_imp_pcz0,
 	'imp_pinf': add_imp_pinf,
 	'imp_ppic': add_imp_ppic,
 	'imp_resource_0x64': add_imp_resource_0x64,
