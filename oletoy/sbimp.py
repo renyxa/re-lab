@@ -483,6 +483,9 @@ class imp_parser(object):
 	def parse_mrgn(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
 
+	def parse_pc31(self, rid, data, typ, version, parent):
+		pass
+
 	def parse_pcz0(self, rid, data, typ, version, parent):
 		if version == 1:
 			n = 0
@@ -630,6 +633,7 @@ imp_resource_map = {
 	'ImRn': imp_parser.parse_imrn,
 	'Lnks': imp_parser.parse_lnks,
 	'Mrgn': imp_parser.parse_mrgn,
+	'Pc31': imp_parser.parse_pc31,
 	'Pcz0': imp_parser.parse_pcz0,
 	'PcZ0': imp_parser.parse_pcz0,
 	'Pcz1': imp_parser.parse_pcz1,
