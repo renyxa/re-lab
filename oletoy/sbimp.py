@@ -451,6 +451,9 @@ class imp_parser(object):
 		elif rid == 3:
 			add_pgiter(self.page, 'Unknown', 'imp', 0, data, parent)
 
+	def parse_gif(self, rid, data, typ, version, parent):
+		add_pgiter(self.page, 'Data', 'imp', 0, data, parent)
+
 	def parse_hfpz(self, rid, data, typ, version, parent):
 		pass
 
@@ -606,6 +609,7 @@ imp_resource_map = {
 	'BPgZ': imp_parser.parse_bpgz,
 	'BPos': imp_parser.parse_bpos,
 	'eLnk': imp_parser.parse_elnk,
+	'GIF ': imp_parser.parse_gif,
 	'ESts': imp_parser.parse_ests,
 	'HfPz': imp_parser.parse_hfpz,
 	'HfPZ': imp_parser.parse_hfpz,
