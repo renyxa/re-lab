@@ -446,6 +446,9 @@ class imp_parser(object):
 	def parse_bpos(self, rid, data, typ, version, parent):
 		pass
 
+	def parse_devm(self, rid, data, typ, version, parent):
+		pass
+
 	def parse_elnk(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'External link 0x%x' % rid, 'imp', 'imp_elnk', data, parent)
 
@@ -696,6 +699,7 @@ imp_resource_map = {
 	'BPgz': imp_parser.parse_bpgz,
 	'BPgZ': imp_parser.parse_bpgz,
 	'BPos': imp_parser.parse_bpos,
+	'Devm': imp_parser.parse_devm,
 	'eLnk': imp_parser.parse_elnk,
 	'GIF ': imp_parser.parse_gif,
 	'ESts': imp_parser.parse_ests,
