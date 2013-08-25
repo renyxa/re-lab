@@ -517,7 +517,13 @@ class imp_parser(object):
 
 	def parse_styl(self, rid, data, typ, version, parent):
 		if rid == 0x80:
-			add_pgiter(self.page, 'Style', 'imp', 'imp_styl', data, parent)
+			n = 0
+			off = 0
+			size = 46
+			while off + size < len(data):
+				add_pgiter(self.page, 'Style %d' % n, 'imp', 'imp_styl', data[off:off + size], parent)
+				off += size
+				n += 1
 
 	def parse_tabl(self, rid, data, typ, version, parent):
 		if rid == 0x80:
@@ -914,6 +920,9 @@ def add_imp_styl(hd, size, data):
 
 	(columns, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Number of columns', columns, off - 2, 2, '>H')
+
+	off += 14
+	assert off == 46
 
 def get_index_formats():
 	# I assume this crap is there as a workaround for a buggy device,
