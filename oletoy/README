@@ -32,12 +32,10 @@ As of now OLE Toy reads and parses:
 - CDX (CambridgeSoft ChemDraw, BIPU support)
 - LRF (Sony BroadBand EBook, also known as BBeB)
 - PDB (various Palm-based e-book formats, currently eReader, Plucker,
-       PalmDoc, TealDoc, zTXT, iSilo ver. 1 to 3. Very BIPU ATM, but all
-       the formats except iSilo are documented or have been reverse
-       engineered, so it is just a matter of time and effort to support
-       them properly.)
+       PalmDoc, TealDoc, zTXT and iSilo ver. 1 to 3. iSilo only shows
+       basic structure, because the format is not known.)
 - WT602 (Software602 602Text, BIPU support)
-- IMP (SoftBook e-book, BIPU support)
+- IMP (SoftBook e-book)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:
