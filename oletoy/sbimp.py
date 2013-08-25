@@ -1158,8 +1158,8 @@ def add_imp_resource_index_v2(hd, size, data):
 def add_imp_sw_index(hd, size, data):
 	(fmt, idfmt) = get_index_formats()
 
-	(seq, off) = rdata(data, 0, fmt)
-	add_iter(hd, 'Sequence number', seq, 0, seq, fmt)
+	(seq, off) = rdata(data, 0, idfmt)
+	add_iter(hd, 'Sequence number', seq, 0, struct.calcsize(idfmt), idfmt)
 	(length, off) = rdata(data, off, fmt)
 	add_iter(hd, 'Length of item', length, off - 4, 4, fmt)
 	(offset, off) = rdata(data, off, fmt)
