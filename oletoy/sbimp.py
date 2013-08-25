@@ -457,6 +457,18 @@ class imp_parser(object):
 		elif rid == 3:
 			add_pgiter(self.page, 'Unknown', 'imp', 0, data, parent)
 
+	def parse_fidt(self, rid, data, typ, version, parent):
+		pass
+
+	def parse_fitm(self, rid, data, typ, version, parent):
+		pass
+
+	def parse_form(self, rid, data, typ, version, parent):
+		pass
+
+	def parse_frdt(self, rid, data, typ, version, parent):
+		pass
+
 	def parse_gif(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Data', 'imp', 0, data, parent)
 
@@ -687,6 +699,10 @@ imp_resource_map = {
 	'eLnk': imp_parser.parse_elnk,
 	'GIF ': imp_parser.parse_gif,
 	'ESts': imp_parser.parse_ests,
+	'FIDt': imp_parser.parse_fidt,
+	'FItm': imp_parser.parse_fitm,
+	'Form': imp_parser.parse_form,
+	'FrDt': imp_parser.parse_frdt,
 	'HfPz': imp_parser.parse_hfpz,
 	'HfPZ': imp_parser.parse_hfpz,
 	'HRle': imp_parser.parse_hrle,
