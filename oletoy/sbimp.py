@@ -18,6 +18,8 @@
 
 # reverse-engineered specification: http://www.chromakinetics.com/REB1200/imp_format.htm
 
+import struct
+
 from utils import add_iter, add_pgiter, ins_pgiter, rdata
 
 def read(data, offset, fmt):
@@ -435,7 +437,11 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', data, parent)
 
 	def parse_bpgz(self, rid, data, typ, version, parent):
-		pass
+		if version == 1:
+			self.parse_page_info(rid, data, typ, parent)
+		else:
+			# TODO: rev. eng. this
+			pass
 
 	def parse_bpos(self, rid, data, typ, version, parent):
 		pass
@@ -455,7 +461,8 @@ class imp_parser(object):
 		add_pgiter(self.page, 'Data', 'imp', 0, data, parent)
 
 	def parse_hfpz(self, rid, data, typ, version, parent):
-		pass
+		assert version == 1
+		self.parse_page_info(rid, data, typ, parent)
 
 	def parse_hrle(self, rid, data, typ, version, parent):
 		ruleiter = add_pgiter(self.page, 'Horizontal rules', 'imp', 0, data, parent)
@@ -575,6 +582,59 @@ class imp_parser(object):
 				add_pgiter(self.page, 'Row %d' % n, 'imp', 'imp_trow_v1', data, parent)
 				n += 1
 				begin += 16
+
+	def parse_page_info(self, rid, data, typ, parent):
+		def read_block(off, fmt, size):
+			count = int(read(data, off, fmt))
+			end = off + struct.calcsize(fmt) + count * size
+			return (count, end, (off, end))
+
+		def add_block_iter(title, span, parent, callback='imp_page_info_block_i'):
+			return add_pgiter(self.page, title, 'imp', callback, data[span[0]:span[1]], parent)
+
+		def add_record_iters(title, span, size, callback, parent, count_size = 4):
+			n = 0
+			off = span[0] + count_size
+			while off + size <= span[1]:
+				add_pgiter(self.page, title + ' %d' % n, 'imp', callback, data[off:off + size], parent)
+				n += 1
+				off += size
+
+		off = 6
+
+		(geometries_n, off, geometries) = read_block(off, '>H', 8)
+		geometries_iter = add_block_iter('Line geometries', geometries, parent, 'imp_page_info_block_h')
+		add_record_iters('Line geometry', geometries, 8, 'imp_page_info_geometry', geometries_iter, 2)
+
+		(indexes_n, off, indexes) = read_block(off, '>I', 4)
+		indexes_iter = add_block_iter('Page indexes', indexes, parent)
+		add_record_iters('Page index', indexes, 4, 'imp_page_info_page_index', indexes_iter)
+
+		(pages_n, off, pages) = read_block(off, '>I', 8)
+		pages_iter = add_block_iter('Page spans', pages, parent)
+		add_record_iters('Page', pages, 8, 'imp_page_info_page', pages_iter)
+
+		pgsiter = add_pgiter(self.page, 'Pages', 'imp', 0, data[off:len(data)], parent)
+		for i in range(pages_n):
+			begin = off
+			off += 8
+			(regions_n, off, regions) = read_block(off, '>I', 20)
+			(lines_n, off, lines) = read_block(off, '>I', 3)
+			# TODO: this is wrong. It only works to read all the records
+			# from my sample file.
+			off += 1
+			(borders_n, off, borders) = read_block(off, '>I', 4)
+			(images_n, off, images) = read_block(off, '>I', 4)
+
+			pgiter = add_pgiter(self.page, 'Page %d' % i, 'imp', 0, data[begin:begin + off], pgsiter)
+			regions_iter = add_block_iter('Page regions', regions, pgiter)
+			add_record_iters('Page region', regions, 20, 'imp_page_info_page_region', regions_iter)
+			lines_iter = add_block_iter('Lines', lines, pgiter)
+			add_record_iters('Line', lines, 3, 'imp_page_info_line', lines_iter)
+			borders_iter = add_block_iter('Borders', borders, pgiter)
+			add_record_iters('Border', borders, 4, 'imp_page_info_border', borders_iter)
+			images_iter = add_block_iter('Images', images, pgiter)
+			add_record_iters('Image', images, 4, 'imp_page_info_image', images_iter)
 
 	def parse_text(self, data, n, parent):
 		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
@@ -825,6 +885,72 @@ def add_imp_metadata(hd, size, data):
 
 def add_imp_mrgn(hd, size, data):
 	pass
+
+def add_imp_page_info_block_h(hd, size, data):
+	count = read(data, 0, '>H')
+	add_iter(hd, 'Count', count, 0, 2, '>H')
+
+def add_imp_page_info_block_i(hd, size, data):
+	count = read(data, 0, '>I')
+	add_iter(hd, 'Count', count, 0, 4, '>I')
+
+def add_imp_page_info_border(hd, size, data):
+	number = read(data, 0, '>I')
+	add_iter(hd, 'Number of border record in Pcz1 or PcZ1', number, 0, 4, '>I')
+
+def add_imp_page_info_geometry(hd, size, data):
+	(left, off) = rdata(data, 0, '>H')
+	add_iter(hd, 'Offset from left edge', left, off - 2, 2, '>H')
+
+	(top, off) = rdata(data, off, '>H')
+	top_str = top
+	top_title = 'Offset from previous line'
+	if int(top) == 0x8000:
+		top_str = 0
+		top_title = 'Offset from top edge'
+	elif int(top) & 0x8000:
+		top_str = 0xffff - int(top)
+		top_title = 'Offset from top edge'
+	add_iter(hd, top_title, top_str, off - 2, 2, '>H')
+
+	(width, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Width', width, off - 2, 2, '>H')
+	(height, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Height', height, off - 2, 2, '>H')
+
+def add_imp_page_info_image(hd, size, data):
+	number = read(data, 0, '>I')
+	add_iter(hd, 'Number of image record in Pcz0 or PcZ0', number, 0, 4, '>I')
+
+def add_imp_page_info_line(hd, size, data):
+	(flags, off) = rdata(data, 0, '>B')
+	add_iter(hd, 'Flags', int(flags) & 0xf0, off - 1, 1, '>B')
+	(lower, off) = rdata(data, off, '>B')
+	offset = ((int(flags) & 0xf) << 8) & int(lower)
+	add_iter(hd, 'Offset into page record', offset, off - 1, 1, '>B')
+	(count, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Number of characters', count, off - 1, 1, '>B')
+
+def add_imp_page_info_page(hd, size, data):
+	(first, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Offset into text of first character of page', first, off - 4, 4, '>I')
+	(last, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset into text of last character of page', last, off - 4, 4, '>I')
+
+def add_imp_page_info_page_index(hd, size, data):
+	offset = read(data, 0, '>I')
+	add_iter(hd, 'Offset to page record', offset, 0, 4, '>I')
+
+def add_imp_page_info_page_region(hd, size, data):
+	off = 4
+	(top, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Screen top', top, off - 4, 4, '>I')
+	(right, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Screen right', right, off - 4, 4, '>I')
+	(bottom, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Screen bottom', bottom, off - 4, 4, '>I')
+	(left, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Screen left', left, off - 4, 4, '>I')
 
 def add_imp_pcz0(hd, size, data):
 	off = 4
@@ -1164,6 +1290,15 @@ imp_ids = {
 	'imp_lnks': add_imp_lnks,
 	'imp_metadata': add_imp_metadata,
 	'imp_mrgn': add_imp_mrgn,
+	'imp_page_info_block_h': add_imp_page_info_block_h,
+	'imp_page_info_block_i': add_imp_page_info_block_i,
+	'imp_page_info_border': add_imp_page_info_border,
+	'imp_page_info_geometry': add_imp_page_info_geometry,
+	'imp_page_info_image': add_imp_page_info_image,
+	'imp_page_info_line': add_imp_page_info_line,
+	'imp_page_info_page': add_imp_page_info_page,
+	'imp_page_info_page_index': add_imp_page_info_page_index,
+	'imp_page_info_page_region': add_imp_page_info_page_region,
 	'imp_pcz0': add_imp_pcz0,
 	'imp_pcz1_v1': add_imp_pcz1_v1,
 	'imp_pcz1_v2': add_imp_pcz1_v2,
