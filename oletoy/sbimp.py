@@ -424,6 +424,7 @@ class imp_parser(object):
 			if rid == 1:
 				view = 'small'
 			tagiter = add_pgiter(self.page, 'Tags for %s view' % view,  'imp', 'imp_anct', data, parent)
+			return
 			if int(count) > 0:
 				for j in range(int(count)):
 					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], tagiter)
@@ -440,7 +441,7 @@ class imp_parser(object):
 		pass
 
 	def parse_elnk(self, rid, data, typ, version, parent):
-		pass
+		add_pgiter(self.page, 'External link 0x%x' % rid, 'imp', 'imp_elnk', data, parent)
 
 	def parse_ests(self, rid, data, typ, version, parent):
 		if rid == 1:
@@ -661,6 +662,11 @@ def add_imp_directory_entry(hd, size, data):
 		add_imp_file_header(hd, size, data)
 	else:
 		assert False
+
+def add_imp_elnk(hd, size, data):
+	fmt = '%ds' % size
+	(target, off) = rdata(data, 0, fmt)
+	add_iter(hd, 'Target', target, 0, size, fmt)
 
 def add_imp_ests_orphan_pull(hd, size, data):
 	pass
@@ -1080,6 +1086,7 @@ imp_ids = {
 	'imp_bgcl': add_imp_bgcl,
 	'imp_directory': add_imp_directory,
 	'imp_directory_entry': add_imp_directory_entry,
+	'imp_elnk': add_imp_elnk,
 	'imp_ests_orphan_pull': add_imp_ests_orphan_pull,
 	'imp_ests_widow_push': add_imp_ests_widow_push,
 	'imp_file_header': add_imp_file_header,
