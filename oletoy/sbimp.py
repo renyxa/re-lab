@@ -625,6 +625,12 @@ class imp_parser(object):
 				n += 1
 				off += size
 
+		if imp_color_mode == 2:
+			# TODO: figure out how this looks in grayscale mode.
+			# Apparently there are more changes than just switching from
+			# big to little endian...
+			return
+
 		off = 6
 
 		(geometries_n, off, geometries) = read_block(off, '>H', 8)
