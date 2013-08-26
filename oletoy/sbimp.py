@@ -467,7 +467,7 @@ class imp_parser(object):
 		pass
 
 	def parse_form(self, rid, data, typ, version, parent):
-		pass
+		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_form', data, parent)
 
 	def parse_frdt(self, rid, data, typ, version, parent):
 		pass
