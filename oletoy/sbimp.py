@@ -563,6 +563,9 @@ class imp_parser(object):
 				view = 'small'
 			add_pgiter(self.page, 'Page info for %s view' % view,  'imp', 'imp_pinf', data, parent)
 
+	def parse_png(self, rid, data, typ, version, parent):
+		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
+
 	def parse_ppic(self, rid, data, typ, version, parent):
 		if rid == 0 or rid == 1:
 			view = 'large'
@@ -732,6 +735,7 @@ imp_resource_map = {
 	'Pcz1': imp_parser.parse_pcz1,
 	'PcZ1': imp_parser.parse_pcz1,
 	'pInf': imp_parser.parse_pinf,
+	'PNG ': imp_parser.parse_png,
 	'PPic': imp_parser.parse_ppic,
 	'StR2': imp_parser.parse_str2,
 	'StRn': imp_parser.parse_strn,
