@@ -428,7 +428,9 @@ class imp_parser(object):
 
 	def parse_anct(self, rid, data, typ, version, parent):
 		if rid == 0 or rid == 1:
-			(count, off) = rdata(data, 0, '>I')
+			(fmtH, fmtI, fmtId) = get_formats()
+
+			(count, off) = rdata(data, 0, fmtI)
 			view = 'large'
 			if rid == 1:
 				view = 'small'
@@ -731,14 +733,18 @@ imp_resource_map = {
 }
 
 def add_imp_anct(hd, size, data):
-	count = read(data, 0, '>I')
-	add_iter(hd, 'Count of anchor tags', count, 0, 4, '>I')
+	(fmtH, fmtI, fmtId) = get_formats()
+
+	count = read(data, 0, fmtI)
+	add_iter(hd, 'Count of anchor tags', count, 0, 4, fmtI)
 
 def add_imp_anct_tag(hd, size, data):
-	(offset, off) = rdata(data, 0, '>I')
-	add_iter(hd, 'Offset to anchor tag in text', offset, 0, 4, '>I')
-	(page, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Page number', page, off - 4, 4, '>I')
+	(fmtH, fmtI, fmtId) = get_formats()
+
+	(offset, off) = rdata(data, 0, fmtI)
+	add_iter(hd, 'Offset to anchor tag in text', offset, 0, 4, fmtI)
+	(page, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Page number', page, off - 4, 4, fmtI)
 
 def add_imp_bgcl(hd, size, data):
 	off = 2
