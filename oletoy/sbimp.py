@@ -650,7 +650,7 @@ class imp_parser(object):
 		def add_record_iters(title, span, size, callback, parent, count_size = 4):
 			n = 0
 			off = span[0] + count_size
-			while off + size <= span[1]:
+			while off + size <= span[1] and off + size <= len(data):
 				add_pgiter(self.page, title + ' %d' % n, 'imp', callback, data[off:off + size], parent)
 				n += 1
 				off += size
@@ -677,36 +677,48 @@ class imp_parser(object):
 
 		pgsiter = add_pgiter(self.page, 'Pages', 'imp', 0, data[off:len(data)], parent)
 		for i in range(pages_n):
-			begin = off
-			off += 8
-			(regions_n, off, regions) = read_block(off, '>I', 20)
-			(lines_n, off, lines) = read_block(off, '>I', 3)
+			try:
+				begin = off
+				off += 8
+				(regions_n, off, regions) = read_block(off, '>I', 20)
+				(lines_n, off, lines) = read_block(off, '>I', 3)
 
-			line_index_begin = off
-			# TODO: parse the data
-			for j in range(lines_n):
-				(c, off) = rdata(data, off, 'B')
-				if int(c) & 0x80:
-					pass
-				elif int(c) & 0xc0:
-					(b, off) = rdata(data, off, 'B')
-				else:
-					(b, off) = rdata(data, off, 'B')
-			line_index_data = data[line_index_begin:off]
+				line_index_begin = off
+				line_indexes = []
 
-			(borders_n, off, borders) = read_block(off, '>I', 4)
-			(images_n, off, images) = read_block(off, '>I', 4)
+				n = 0
+				while n < lines_n:
+					(record, off) = rdata(data, off, 'B')
+					if int(record) & 0x80:
+						n += 1
+						line_indexes.append((off - 1, off))
+					elif int(record) & 0xc0:
+						(rec, off) = rdata(data, off, 'B')
+						n += 1
+						line_indexes.append((off - 2, off))
+					else:
+						(count, off) = rdata(data, off, 'B')
+						n += int(count)
+						line_indexes.append((off - 2, off))
 
-			pgiter = add_pgiter(self.page, 'Page %d' % i, 'imp', 0, data[begin:begin + off], pgsiter)
-			regions_iter = add_block_iter('Page regions', regions, pgiter)
-			add_record_iters('Page region', regions, 20, 'imp_page_info_page_region', regions_iter)
-			lines_iter = add_block_iter('Lines', lines, pgiter)
-			add_record_iters('Line', lines, 3, 'imp_page_info_line', lines_iter)
-			add_pgiter(self.page, 'Line index', 'imp', 0, line_index_data, lines_iter)
-			borders_iter = add_block_iter('Borders', borders, pgiter)
-			add_record_iters('Border', borders, 4, 'imp_page_info_border', borders_iter)
-			images_iter = add_block_iter('Images', images, pgiter)
-			add_record_iters('Image', images, 4, 'imp_page_info_image', images_iter)
+				line_index_data = data[line_index_begin:off]
+
+				(borders_n, off, borders) = read_block(off, '>I', 4)
+				(images_n, off, images) = read_block(off, '>I', 4)
+
+				pgiter = add_pgiter(self.page, 'Page %d' % i, 'imp', 0, data[begin:off], pgsiter)
+				regions_iter = add_block_iter('Page regions', regions, pgiter)
+				add_record_iters('Page region', regions, 20, 'imp_page_info_page_region', regions_iter)
+				lines_iter = add_block_iter('Lines', lines, pgiter)
+				add_record_iters('Line', lines, 3, 'imp_page_info_line', lines_iter)
+				add_pgiter(self.page, 'Line index', 'imp', 'imp_page_info_line_index', line_index_data, lines_iter)
+				borders_iter = add_block_iter('Borders', borders, pgiter)
+				add_record_iters('Border', borders, 4, 'imp_page_info_border', borders_iter)
+				images_iter = add_block_iter('Images', images, pgiter)
+				add_record_iters('Image', images, 4, 'imp_page_info_image', images_iter)
+			except struct.error:
+				pgiter = add_pgiter(self.page, 'Page %d' % i, 'imp', 0, data[begin:len(data)], pgsiter)
+				return
 
 	def parse_text(self, data, n, parent):
 		fileiter = ins_pgiter(self.page, 'File %d (type Text)' % n, 'imp', 0, data, parent, n)
@@ -1008,6 +1020,22 @@ def add_imp_page_info_line(hd, size, data):
 	add_iter(hd, 'Offset into page record', offset, off - 1, 1, 'B')
 	(count, off) = rdata(data, off, 'B')
 	add_iter(hd, 'Number of characters', count, off - 1, 1, 'B')
+
+def add_imp_page_info_line_index(hd, size, data):
+	off = 0
+	while off < size:
+		(record, off) = rdata(data, off, 'B')
+		if int(record) & 0x80:
+			rid = int(record) & 0x7f
+			add_iter(hd, 'Line geometry for a single line', '%d' % rid, off - 1, 1, 'B')
+		elif int(record) & 0xc0:
+			(rec, off) = rdata(data, off, 'B')
+			rid = ((int(record) & 0xf) << 8) | int(rec)
+			add_iter(hd, 'Line geometry for a single line', '%d' % rid, off - 2, 2, '>H')
+		else:
+			add_iter(hd, 'Line geometry for N lines', record, off - 1, 1, 'B')
+			(count, off) = rdata(data, off, 'B')
+			add_iter(hd, 'Number of lines', count, off - 1, 1, 'B')
 
 def add_imp_page_info_page(hd, size, data):
 	(first, off) = rdata(data, 0, '>I')
@@ -1410,6 +1438,7 @@ imp_ids = {
 	'imp_page_info_geometry': add_imp_page_info_geometry,
 	'imp_page_info_image': add_imp_page_info_image,
 	'imp_page_info_line': add_imp_page_info_line,
+	'imp_page_info_line_index': add_imp_page_info_line_index,
 	'imp_page_info_page': add_imp_page_info_page,
 	'imp_page_info_page_index': add_imp_page_info_page_index,
 	'imp_page_info_page_region': add_imp_page_info_page_region,
