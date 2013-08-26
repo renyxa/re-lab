@@ -435,7 +435,7 @@ class imp_parser(object):
 			if rid == 1:
 				view = 'small'
 			tagiter = add_pgiter(self.page, 'Tags for %s view' % view,  'imp', 'imp_anct', data, parent)
-			return
+			off = 0
 			if int(count) > 0:
 				for j in range(int(count)):
 					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], tagiter)
@@ -741,10 +741,10 @@ def add_imp_anct(hd, size, data):
 def add_imp_anct_tag(hd, size, data):
 	(fmtH, fmtI, fmtId) = get_formats()
 
-	(offset, off) = rdata(data, 0, fmtI)
-	add_iter(hd, 'Offset to anchor tag in text', offset, 0, 4, fmtI)
-	(page, off) = rdata(data, off, fmtI)
+	(page, off) = rdata(data, 0, fmtI)
 	add_iter(hd, 'Page number', page, off - 4, 4, fmtI)
+	(offset, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Offset to anchor tag in text', offset, off - 4, 4, fmtI)
 
 def add_imp_bgcl(hd, size, data):
 	off = 2
