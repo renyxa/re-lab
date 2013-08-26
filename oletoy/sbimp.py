@@ -634,7 +634,7 @@ class imp_parser(object):
 			n = 0
 			begin = 0
 			while begin + 16 <= len(data):
-				add_pgiter(self.page, 'Row %d' % n, 'imp', 'imp_trow_v1', data, parent)
+				add_pgiter(self.page, 'Row %d' % n, 'imp', 'imp_trow_v1', data, rowsiter)
 				n += 1
 				begin += 16
 
