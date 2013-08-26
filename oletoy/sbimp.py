@@ -624,6 +624,9 @@ class imp_parser(object):
 				n += 1
 				begin += 26
 
+	def parse_tgnt(self, rid, data, typ, version, parent):
+		pass
+
 	def parse_trow(self, rid, data, typ, version, parent):
 		rowsiter = add_pgiter(self.page, 'Table Rows 0x%x' % rid, 'imp', 0, data, parent)
 
@@ -742,6 +745,7 @@ imp_resource_map = {
 	'Styl': imp_parser.parse_styl,
 	'Tabl': imp_parser.parse_tabl,
 	'TCel': imp_parser.parse_tcel,
+	'TGNt': imp_parser.parse_tgnt,
 	'TRow': imp_parser.parse_trow,
 }
 
