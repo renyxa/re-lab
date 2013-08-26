@@ -507,10 +507,13 @@ class imp_parser(object):
 
 		n = 0
 		begin = 0
-		while begin + 34 <= len(data):
-			add_pgiter(self.page, 'Link %d' % n, 'imp', 'imp_lnks', data[begin:begin + 34], lnkiter)
+		size = 34
+		if imp_color_mode == 2:
+			size += 2
+		while begin + size <= len(data):
+			add_pgiter(self.page, 'Link %d' % n, 'imp', 'imp_lnks', data[begin:begin + size], lnkiter)
 			n += 1
-			begin += 34
+			begin += size
 
 	def parse_mrgn(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
@@ -854,14 +857,17 @@ def add_imp_imrn(hd, size, data):
 	assert off == 0x20
 
 def add_imp_lnks(hd, size, data):
-	(start, off) = rdata(data, 0, '>I')
-	add_iter(hd, "Offset of the link's start", start, off - 4, 4, '>I')
-	(end, off) = rdata(data, off, '>I')
-	add_iter(hd, "Offset of the link's end", end, off - 4, 4, '>I')
+	(fmtH, fmtI, fmtId) = get_formats()
+	idlen = struct.calcsize(fmtId)
+
+	(start, off) = rdata(data, 0, fmtI)
+	add_iter(hd, "Offset of the link's start", start, off - 4, 4, fmtI)
+	(end, off) = rdata(data, off, fmtI)
+	add_iter(hd, "Offset of the link's end", end, off - 4, 4, fmtI)
 
 	toc = int(start) == 0x7fffffff and int(end) == 0xffffffff
 	internal = False
-	(typ, off) = rdata(data, off, '>I')
+	(typ, off) = rdata(data, off, fmtI)
 	typ_str = 'unknown'
 	if int(typ) == 0xffffffff:
 		typ_str = 'internal'
@@ -870,21 +876,21 @@ def add_imp_lnks(hd, size, data):
 		typ_str = 'external'
 	elif toc:
 		typ_str = 'table of contents'
-	add_iter(hd, 'Type', typ_str, off - 4, 4, '>I')
+	add_iter(hd, 'Type', typ_str, off - 4, 4, fmtI)
 
 	off += 4
-	(target, off) = rdata(data, off, '>I')
-	add_iter(hd, "Offset of the link's target", target, off - 4, 4, '>I')
+	(target, off) = rdata(data, off, fmtI)
+	add_iter(hd, "Offset of the link's target", target, off - 4, 4, fmtI)
 	off += 6
-	(rid, off) = rdata(data, off, '>H')
-	rid_str = rid
+	(rid, off) = rdata(data, off, fmtId)
+	rid_str = '0x%x' % rid
 	if toc or internal:
 		rid_str = 'internal'
 		assert int(rid) == 0
-	add_iter(hd, 'Resource ID of ext. link', rid_str, off - 2, 2, '>H')
+	add_iter(hd, 'Resource ID of ext. link', rid_str, off - idlen, idlen, fmtId)
 	off += 6
 
-	assert off == 34
+	assert off == size
 
 def add_imp_metadata(hd, size, data):
 	(ident, off, length) = read_cstring(data, 0)
