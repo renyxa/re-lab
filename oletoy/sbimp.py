@@ -461,7 +461,7 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Unknown', 'imp', 0, data, parent)
 
 	def parse_fidt(self, rid, data, typ, version, parent):
-		pass
+		add_pgiter(self.page, 'Form input data 0x%x' % rid, 'imp', 'imp_fidt', data, parent)
 
 	def parse_fitm(self, rid, data, typ, version, parent):
 		pass
