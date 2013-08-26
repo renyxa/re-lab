@@ -596,11 +596,16 @@ class imp_parser(object):
 		if rid == 0x80:
 			tablesiter = add_pgiter(self.page, 'Tables', 'imp', 0, data, parent)
 
-			count = len(data) / 24
-			begin = 0
-			for i in range(count):
-				add_pgiter(self.page, 'Table %d' % i, 'imp', 'imp_tabl', data[begin:begin + 24], tablesiter)
-				begin += 24
+			n = 0
+			off = 0
+			size = 24
+			if imp_color_mode == 2:
+				size += 4
+
+			while off + size <= len(data):
+				add_pgiter(self.page, 'Table %d' % n, 'imp', 'imp_tabl', data[off:off + size], tablesiter)
+				off += size
+				n += 1
 
 	def parse_tcel(self, rid, data, typ, version, parent):
 		cellsiter = add_pgiter(self.page, 'Table cells 0x%x' % rid, 'imp', 0, data, parent)
@@ -1199,12 +1204,14 @@ def add_imp_sw_record(hd, size, data):
 	pass
 
 def add_imp_tabl(hd, size, data):
-	(align, off) = rdata(data, 0, '>H')
+	(fmtH, fmtI, fmtId) = get_formats()
+
+	(align, off) = rdata(data, 0, fmtH)
 	align_map = {0xfffa: 'not specified', 0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
 	align_str = get_or_default(align_map, int(align), 'unknown')
-	add_iter(hd, 'Text alignment', align_str, off - 2, 2, '>H')
+	add_iter(hd, 'Text alignment', align_str, off - 2, 2, fmtH)
 
-	(width, off) = rdata(data, off, '>H')
+	(width, off) = rdata(data, off, fmtH)
 	w = int(width)
 	if w == 0xffff:
 		width_str = 'not specified'
@@ -1212,41 +1219,47 @@ def add_imp_tabl(hd, size, data):
 		width_str = "%d %%" % (0xffff - w)
 	else:
 		width_str = w
-	add_iter(hd, 'Width', width_str, off - 2, 2, '>H')
+	add_iter(hd, 'Width', width_str, off - 2, 2, fmtH)
 
-	(border, off) = rdata(data, off, '>H')
+	(border, off) = rdata(data, off, fmtH)
 	border_map = {0: 'single', 0xffff: 'double'}
 	border_str = get_or_default(border_map, int(border), 'unknown')
-	add_iter(hd, 'Border', border_str, off - 2, 2, '>H')
+	add_iter(hd, 'Border', border_str, off - 2, 2, fmtH)
 
-	(cellspacing, off) = rdata(data, off, '>H')
+	(cellspacing, off) = rdata(data, off, fmtH)
 	cellspacing_str = cellspacing
 	if int(cellspacing) == 0xffff:
 		cellspacing_str = 'not set'
-	add_iter(hd, 'Cell spacing', cellspacing_str, off - 2, 2, '>H')
+	add_iter(hd, 'Cell spacing', cellspacing_str, off - 2, 2, fmtH)
 
-	(cellpadding, off) = rdata(data, off, '>H')
+	(cellpadding, off) = rdata(data, off, fmtH)
 	cellpadding_str = cellpadding
 	if int(cellpadding) == 0xffff:
 		cellpadding_str = 'not set'
-	add_iter(hd, 'Cell padding', cellpadding_str, off - 2, 2, '>H')
+	add_iter(hd, 'Cell padding', cellpadding_str, off - 2, 2, fmtH)
 
-	(caption, off) = rdata(data, off, '>I')
+	if imp_color_mode == 2:
+		off += 2
+
+	(caption, off) = rdata(data, off, fmtI)
 	caption_map = {1: 'yes', 0xffffffff: 'no'}
 	caption_str = get_or_default(caption_map, int(caption), 'unknown')
-	add_iter(hd, 'Caption present?', caption_str, off - 4, 4, '>I')
+	add_iter(hd, 'Caption present?', caption_str, off - 4, 4, fmtI)
 
-	(caption_length, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Caption length', caption_length, off - 4, 4, '>I')
+	(caption_length, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Caption length', caption_length, off - 4, 4, fmtI)
 
 	off += 2
 
-	(list_style, off) = rdata(data, off, '>H')
+	(list_style, off) = rdata(data, off, fmtH)
 
-	(rowsid, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Rows ID', "0x%x" % rowsid, off - 2, 2, '>H')
+	(rowsid, off) = rdata(data, off, fmtH)
+	add_iter(hd, 'Rows ID', "0x%x" % rowsid, off - 2, 2, fmtH)
 
-	assert off == 24
+	if imp_color_mode == 2:
+		off += 2
+
+	assert off == size
 
 def add_imp_tcel_v1(hd, size, data):
 	off = 6
