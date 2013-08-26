@@ -657,40 +657,11 @@ class imp_parser(object):
 
 		filedata = data[20:len(data)]
 		if not self.compressed:
-			textiter = add_pgiter(self.page, 'Text', 'imp', 0, filedata, fileiter)
-			self.parse_text_tags(filedata, txtiter)
+			textiter = add_pgiter(self.page, 'Text', 'imp', 'imp_text', filedata, fileiter)
 		else:
 			dataiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
 			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
-			textiter = add_pgiter(self.page, 'Text', 'imp', 0, uncompressed, dataiter)
-			self.parse_text_tags(uncompressed, textiter)
-
-	def parse_text_tags(self, data, parent):
-		control_char_map = {
-			0xa: 'End of document',
-			0xb: 'Start of element',
-			0xd: 'Line break',
-			0xe: 'Start of table',
-			0xf: 'Image',
-			0x13: 'End of cell',
-			0x14: 'Horizontal rule',
-			0x15: 'Start/End of header content',
-			0x15: 'Start/End of footer content',
-		}
-
-		s = ''
-
-		for c in data:
-			o = ord(c)
-			if control_char_map.has_key(o):
-				if s != '':
-					add_pgiter(self.page, 'Text', 'imp', 'imp_text', s, parent)
-				s = ''
-				control_char = get_or_default(control_char_map, o, '')
-				add_pgiter(self.page, control_char, 'imp', 0, c, parent)
-			else:
-				s += c
-		assert s == ''
+			textiter = add_pgiter(self.page, 'Text', 'imp', 'imp_text', uncompressed, dataiter)
 
 imp_resource_map = {
 	'!!cm': imp_parser.parse_compression,
@@ -1262,7 +1233,33 @@ def add_imp_tcel_v2(hd, size, data):
 	pass
 
 def add_imp_text(hd, size, data):
-	add_iter(hd, 'Text', data, 0, len(data), '%ds' % len(data))
+	control_char_map = {
+		0xa: 'End of document',
+		0xb: 'Start of element',
+		0xd: 'Line break',
+		0xe: 'Start of table',
+		0xf: 'Image',
+		0x13: 'End of cell',
+		0x14: 'Horizontal rule',
+		0x15: 'Start/End of header content',
+		0x15: 'Start/End of footer content',
+	}
+
+	begin = None
+
+	for off in range(len(data)):
+		c = data[off]
+		o = ord(c)
+		if control_char_map.has_key(o):
+			if begin != None:
+				add_iter(hd, 'Text', data[begin:off], begin, off - begin, '%ds' % (off - begin))
+			begin = None
+			control_char = get_or_default(control_char_map, o, '')
+			add_iter(hd, control_char, '0x%x' % o, off, 1, '>B')
+		elif begin == None:
+			begin = off
+
+	assert begin == None
 
 def add_imp_trow_v1(hd, size, data):
 	(typ, off) = rdata(data, 0, '>I')
