@@ -540,7 +540,7 @@ class imp_parser(object):
 			off = 0
 			size = 46
 			while off + size <= len(data):
-				add_pgiter(self.page, 'Image position %d' % n, 'imp', 'imp_pcz1', data[off:off + size], parent)
+				add_pgiter(self.page, 'Image position %d' % n, 'imp', 'imp_pcz0', data[off:off + size], parent)
 				n += 1
 				off += size
 
