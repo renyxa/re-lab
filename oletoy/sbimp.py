@@ -564,7 +564,7 @@ class imp_parser(object):
 			n = 0
 			off = 0
 			size = 46
-			while off + size < len(data):
+			while off + size <= len(data):
 				add_pgiter(self.page, 'Style %d' % n, 'imp', 'imp_styl', data[off:off + size], parent)
 				off += size
 				n += 1
