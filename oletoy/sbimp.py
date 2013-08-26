@@ -681,9 +681,19 @@ class imp_parser(object):
 			off += 8
 			(regions_n, off, regions) = read_block(off, '>I', 20)
 			(lines_n, off, lines) = read_block(off, '>I', 3)
-			# TODO: this is wrong. It only works to read all the records
-			# from my sample file.
-			off += 1
+
+			line_index_begin = off
+			# TODO: parse the data
+			for j in range(lines_n):
+				(c, off) = rdata(data, off, 'B')
+				if int(c) & 0x80:
+					pass
+				elif int(c) & 0xc0:
+					(b, off) = rdata(data, off, 'B')
+				else:
+					(b, off) = rdata(data, off, 'B')
+			line_index_data = data[line_index_begin:off]
+
 			(borders_n, off, borders) = read_block(off, '>I', 4)
 			(images_n, off, images) = read_block(off, '>I', 4)
 
@@ -692,6 +702,7 @@ class imp_parser(object):
 			add_record_iters('Page region', regions, 20, 'imp_page_info_page_region', regions_iter)
 			lines_iter = add_block_iter('Lines', lines, pgiter)
 			add_record_iters('Line', lines, 3, 'imp_page_info_line', lines_iter)
+			add_pgiter(self.page, 'Line index', 'imp', 0, line_index_data, lines_iter)
 			borders_iter = add_block_iter('Borders', borders, pgiter)
 			add_record_iters('Border', borders, 4, 'imp_page_info_border', borders_iter)
 			images_iter = add_block_iter('Images', images, pgiter)
