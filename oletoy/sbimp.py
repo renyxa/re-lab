@@ -500,7 +500,16 @@ class imp_parser(object):
 		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_hyp2', data, parent)
 
 	def parse_imrn(self, rid, data, typ, version, parent):
-		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 'imp_imrn', data, parent)
+		n = 0
+		off = 0
+		size = 32
+		if imp_color_mode == 2:
+			size += 2
+
+		while off + size <= len(data):
+			add_pgiter(self.page, 'Image %d' % n, 'imp', 'imp_imrn', data[off:off + size], parent)
+			n += 1
+			off += size
 
 	def parse_lnks(self, rid, data, typ, version, parent):
 		lnkiter = add_pgiter(self.page, 'Links', 'imp', 0, data, parent)
