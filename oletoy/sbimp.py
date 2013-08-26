@@ -814,23 +814,25 @@ def add_imp_header(hd, size, data):
 	assert off == 0x30
 
 def add_imp_hrle(hd, size, data):
-	(size, off) = rdata(data, 0, '>H')
-	add_iter(hd, 'Size', size, off - 2, 2, '>H')
+	(fmtH, fmtI, fmtId) = get_formats()
 
-	(width, off) = rdata(data, off, '>H')
+	(size, off) = rdata(data, 0, fmtH)
+	add_iter(hd, 'Size', size, off - 2, 2, fmtH)
+
+	(width, off) = rdata(data, off, fmtH)
 	width_str = width
 	if (int(width) & 0x8000):
 		width_str = '%d %%' % (0xffff - int(width))
-	add_iter(hd, 'Width', width_str, off - 2, 2, '>H')
+	add_iter(hd, 'Width', width_str, off - 2, 2, fmtH)
 
-	(align, off) = rdata(data, off, '>H')
+	(align, off) = rdata(data, off, fmtH)
 	align_map = {0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
 	align_str = get_or_default(align_map, int(align), 'unknown')
-	add_iter(hd, 'Alignment', align_str, off - 2, 2, '>H')
+	add_iter(hd, 'Alignment', align_str, off - 2, 2, fmtH)
 
 	off += 2
-	(offset, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+	(offset, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, fmtI)
 
 def add_imp_hyp2(hd, size, data):
 	pass
