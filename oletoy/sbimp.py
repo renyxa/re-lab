@@ -504,6 +504,8 @@ class imp_parser(object):
 		off = 0
 		size = 32
 		if imp_color_mode == 2:
+			# FIXME: this does not work. Apparently some records can be
+			# 36 bytes long.
 			size += 2
 
 		while off + size <= len(data):
@@ -850,20 +852,28 @@ def add_imp_hyp2(hd, size, data):
 	pass
 
 def add_imp_imrn(hd, size, data):
+	(fmtH, fmtI, fmtId) = get_formats()
+	idlen = struct.calcsize(fmtId)
+
 	off = 8
-	(width, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Width', width, off - 2, 2, '>H')
-	(height, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Height', height, off - 2, 2, '>H')
+	(width, off) = rdata(data, off, fmtH)
+	add_iter(hd, 'Width', width, off - 2, 2, fmtH)
+	(height, off) = rdata(data, off, fmtH)
+	add_iter(hd, 'Height', height, off - 2, 2, fmtH)
 	off += 6
-	(offset, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+	if imp_color_mode == 2:
+		off += 2
+	(offset, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, fmtI)
 	off += 4
 	(typ, off) = rdata(data, off, '4s')
-	add_iter(hd, 'Type', typ, off - 4, 4, '4s')
-	(iid, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Image ID', iid, off - 2, 2, '>H')
-	assert off == 0x20
+	typ_str = typ
+	if imp_color_mode == 2:
+		typ_str = ''.join([c for c in reversed(typ)])
+	add_iter(hd, 'Type', typ_str, off - 4, 4, '4s')
+	(iid, off) = rdata(data, off, fmtId)
+	add_iter(hd, 'Image ID', '0x%x' % iid, off - idlen, idlen, fmtId)
+	assert off == size
 
 def add_imp_lnks(hd, size, data):
 	(fmtH, fmtI, fmtId) = get_formats()
