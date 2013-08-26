@@ -457,8 +457,8 @@ class imp_parser(object):
 			add_pgiter(self.page, 'CSS x-sbp-orphan-pull', 'imp', 'imp_ests_orphan_pull', data, parent)
 		elif rid == 2:
 			add_pgiter(self.page, 'CSS x-sbp-widow-push', 'imp', 'imp_ests_widow_push', data, parent)
-		elif rid == 3:
-			add_pgiter(self.page, 'Unknown', 'imp', 0, data, parent)
+		else:
+			add_pgiter(self.page, 'Unknown (0x%x)' % rid, 'imp', 0, data, parent)
 
 	def parse_fidt(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Form input data 0x%x' % rid, 'imp', 'imp_fidt', data, parent)
