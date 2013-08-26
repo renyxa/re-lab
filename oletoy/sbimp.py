@@ -1283,7 +1283,7 @@ def add_imp_tcel_v1(hd, size, data):
 	add_iter(hd, 'Cell type', typ_str, off - 2, 2, '>H')
 
 	(align, off) = rdata(data, off, '>H')
-	align_map = {0xfffa: middle, 0xfffc: top, 0xfffb: bottom}
+	align_map = {0xfffa: 'middle', 0xfffc: 'top', 0xfffb: 'bottom'}
 	align_str = get_or_default(align_map, int(align), 'unknown')
 	add_iter(hd, 'Vertical alignment', align_str, off - 2, 2, '>H')
 
