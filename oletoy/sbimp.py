@@ -993,7 +993,7 @@ def add_imp_page_info_line(hd, size, data):
 	(flags, off) = rdata(data, 0, '>B')
 	add_iter(hd, 'Flags', int(flags) & 0xf0, off - 1, 1, '>B')
 	(lower, off) = rdata(data, off, '>B')
-	offset = ((int(flags) & 0xf) << 8) & int(lower)
+	offset = ((int(flags) & 0xf) << 8) | int(lower)
 	add_iter(hd, 'Offset into page record', offset, off - 1, 1, '>B')
 	(count, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Number of characters', count, off - 1, 1, '>B')
