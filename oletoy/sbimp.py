@@ -489,6 +489,9 @@ class imp_parser(object):
 			n += 1
 			begin += 12
 
+	def parse_hyp2(self, rid, data, typ, version, parent):
+		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_hyp2', data, parent)
+
 	def parse_imrn(self, rid, data, typ, version, parent):
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 'imp_imrn', data, parent)
 
@@ -681,6 +684,7 @@ imp_resource_map = {
 	'HfPz': imp_parser.parse_hfpz,
 	'HfPZ': imp_parser.parse_hfpz,
 	'HRle': imp_parser.parse_hrle,
+	'Hyp2': imp_parser.parse_hyp2,
 	'ImRn': imp_parser.parse_imrn,
 	'Lnks': imp_parser.parse_lnks,
 	'Mrgn': imp_parser.parse_mrgn,
@@ -808,6 +812,9 @@ def add_imp_hrle(hd, size, data):
 	off += 2
 	(offset, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
+
+def add_imp_hyp2(hd, size, data):
+	pass
 
 def add_imp_imrn(hd, size, data):
 	off = 8
@@ -1303,6 +1310,7 @@ imp_ids = {
 	'imp_file_header': add_imp_file_header,
 	'imp_header': add_imp_header,
 	'imp_hrle': add_imp_hrle,
+	'imp_hyp2': add_imp_hyp2,
 	'imp_imrn': add_imp_imrn,
 	'imp_lnks': add_imp_lnks,
 	'imp_metadata': add_imp_metadata,
