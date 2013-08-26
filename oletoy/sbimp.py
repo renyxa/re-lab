@@ -1102,10 +1102,12 @@ def add_imp_str2(hd, size, data):
 	add_iter(hd, 'Style', style, off - 4, 4, '>I')
 
 def add_imp_strn(hd, size, data):
-	(offset, off) = rdata(data, 0, '>I')
-	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
-	(style, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Style', style, off - 4, 4, '>I')
+	(fmtH, fmtI, fmtId) = get_formats()
+
+	(offset, off) = rdata(data, 0, fmtI)
+	add_iter(hd, 'Offset into text', offset, off - 4, 4, fmtI)
+	(style, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Style', style, off - 4, 4, fmtI)
 
 def add_imp_styl(hd, size, data):
 	off = 2
