@@ -756,6 +756,9 @@ def add_imp_ests_orphan_pull(hd, size, data):
 def add_imp_ests_widow_push(hd, size, data):
 	pass
 
+def add_imp_fidt(hd, size, data):
+	pass
+
 def add_imp_file_header(hd, size, data):
 	(name, off) = rdata(data, 0, '4s')
 	add_iter(hd, 'File name', name, 0, 4, '4s')
@@ -764,6 +767,9 @@ def add_imp_file_header(hd, size, data):
 	add_iter(hd, 'File size', size, off - 4, 4, '>I')
 	(typ, off) = rdata(data, off, '4s')
 	add_iter(hd, 'File type', typ, off - 4, 4, '4s')
+
+def add_imp_form(hd, size, data):
+	pass
 
 def add_imp_header(hd, size, data):
 	(version, off) = rdata(data, 0, '>H')
@@ -1307,7 +1313,9 @@ imp_ids = {
 	'imp_elnk': add_imp_elnk,
 	'imp_ests_orphan_pull': add_imp_ests_orphan_pull,
 	'imp_ests_widow_push': add_imp_ests_widow_push,
+	'imp_fidt': add_imp_fidt,
 	'imp_file_header': add_imp_file_header,
+	'imp_form': add_imp_form,
 	'imp_header': add_imp_header,
 	'imp_hrle': add_imp_hrle,
 	'imp_hyp2': add_imp_hyp2,
