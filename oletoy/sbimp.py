@@ -228,6 +228,13 @@ imp_dirname_length = 0
 
 imp_resource_map = {}
 
+def get_formats():
+	# I assume this crap is there as a workaround for a buggy device,
+	# not because someone thought it would be a good idea...
+	if imp_color_mode == 2:
+		return ('<H', '<I', '<I')
+	return ('>H', '>I', '>H')
+
 class imp_parser(object):
 
 	def __init__(self, data, page, parent):
@@ -1114,11 +1121,8 @@ def add_imp_styl(hd, size, data):
 	assert off == 46
 
 def get_index_formats():
-	# I assume this crap is there as a workaround for a buggy device,
-	# not because someone thought it would be a good idea...
-	if imp_color_mode == 2:
-		return ('<I', '<I')
-	return ('>I', '>H')
+	(dummy, fmtI, fmtId) = get_formats()
+	return (fmtI, fmtId)
 
 def add_imp_resource_index(hd, size, data, v2=False):
 	(fmt, idfmt) = get_index_formats()
