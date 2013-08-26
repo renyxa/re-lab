@@ -515,6 +515,9 @@ class imp_parser(object):
 			n += 1
 			off += size
 
+	def parse_jpeg(self, rid, data, typ, version, parent):
+		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
+
 	def parse_lnks(self, rid, data, typ, version, parent):
 		lnkiter = add_pgiter(self.page, 'Links', 'imp', 0, data, parent)
 
@@ -720,6 +723,7 @@ imp_resource_map = {
 	'HRle': imp_parser.parse_hrle,
 	'Hyp2': imp_parser.parse_hyp2,
 	'ImRn': imp_parser.parse_imrn,
+	'JPEG': imp_parser.parse_jpeg,
 	'Lnks': imp_parser.parse_lnks,
 	'Mrgn': imp_parser.parse_mrgn,
 	'Pc31': imp_parser.parse_pc31,
