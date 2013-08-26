@@ -482,7 +482,7 @@ class imp_parser(object):
 		pass
 
 	def parse_gif(self, rid, data, typ, version, parent):
-		add_pgiter(self.page, 'Data', 'imp', 0, data, parent)
+		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
 	def parse_hfpz(self, rid, data, typ, version, parent):
 		assert version == 1
