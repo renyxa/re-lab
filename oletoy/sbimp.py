@@ -765,18 +765,18 @@ def add_imp_anct_tag(hd, size, data):
 
 def add_imp_bgcl(hd, size, data):
 	off = 2
-	(red, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Red', '0x%x' % int(red), off - 1, 1, '>B')
-	(bgred, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Red color set', '%s' % (int(bgred) == 0), off - 1, 1, '>B')
-	(green, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Green', '0x%x' % int(green), off - 1, 1, '>B')
-	(bggreen, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Green color set', '%s' % (int(bggreen) == 0), off - 1, 1, '>B')
-	(blue, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Blue', '0x%x' % int(blue), off - 1, 1, '>B')
-	(bgblue, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Blue color set', '%s' % (int(bgblue) == 0), off - 1, 1, '>B')
+	(red, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Red', '0x%x' % int(red), off - 1, 1, 'B')
+	(bgred, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Red color set', '%s' % (int(bgred) == 0), off - 1, 1, 'B')
+	(green, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Green', '0x%x' % int(green), off - 1, 1, 'B')
+	(bggreen, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Green color set', '%s' % (int(bggreen) == 0), off - 1, 1, 'B')
+	(blue, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Blue', '0x%x' % int(blue), off - 1, 1, 'B')
+	(bgblue, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Blue color set', '%s' % (int(bgblue) == 0), off - 1, 1, 'B')
 
 def add_imp_directory(hd, size, data):
 	fmt = '%ds' % imp_dirname_length
@@ -990,13 +990,13 @@ def add_imp_page_info_image(hd, size, data):
 	add_iter(hd, 'Number of image record in Pcz0 or PcZ0', number, 0, 4, '>I')
 
 def add_imp_page_info_line(hd, size, data):
-	(flags, off) = rdata(data, 0, '>B')
-	add_iter(hd, 'Flags', int(flags) & 0xf0, off - 1, 1, '>B')
-	(lower, off) = rdata(data, off, '>B')
+	(flags, off) = rdata(data, 0, 'B')
+	add_iter(hd, 'Flags', int(flags) & 0xf0, off - 1, 1, 'B')
+	(lower, off) = rdata(data, off, 'B')
 	offset = ((int(flags) & 0xf) << 8) | int(lower)
-	add_iter(hd, 'Offset into page record', offset, off - 1, 1, '>B')
-	(count, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Number of characters', count, off - 1, 1, '>B')
+	add_iter(hd, 'Offset into page record', offset, off - 1, 1, 'B')
+	(count, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Number of characters', count, off - 1, 1, 'B')
 
 def add_imp_page_info_page(hd, size, data):
 	(first, off) = rdata(data, 0, '>I')
@@ -1338,7 +1338,7 @@ def add_imp_text(hd, size, data):
 				add_iter(hd, 'Text', data[begin:off], begin, off - begin, '%ds' % (off - begin))
 			begin = None
 			control_char = get_or_default(control_char_map, o, '')
-			add_iter(hd, control_char, '0x%x' % o, off, 1, '>B')
+			add_iter(hd, control_char, '0x%x' % o, off, 1, 'B')
 		elif begin == None:
 			begin = off
 
