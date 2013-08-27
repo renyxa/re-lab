@@ -376,6 +376,8 @@ class imp_parser(object):
 		return index
 
 	def parse_compression(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0x64:
 			add_pgiter(self.page, 'Resource 0x64', 'imp', 'imp_resource_0x64', data, parent)
 			off = 6
@@ -398,6 +400,9 @@ class imp_parser(object):
 				recbegin += 10
 
 	def parse_sw(self, data, index, parent):
+		version = int(read(data, 0, '>I'))
+		assert version == 1
+
 		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
 
 		off = int(read(data, 10, '>I'))
@@ -427,6 +432,8 @@ class imp_parser(object):
 			i += 1
 
 	def parse_anct(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0 or rid == 1:
 			(fmtH, fmtI, fmtId) = get_formats()
 
@@ -442,6 +449,7 @@ class imp_parser(object):
 					off += 8
 
 	def parse_bgcl(self, rid, data, typ, version, parent):
+		assert version == 1
 		if rid == 0x80:
 			add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', data, parent)
 
@@ -453,15 +461,19 @@ class imp_parser(object):
 			pass
 
 	def parse_bpos(self, rid, data, typ, version, parent):
+		assert version == 1
 		pass
 
 	def parse_devm(self, rid, data, typ, version, parent):
+		assert version == 1
 		pass
 
 	def parse_elnk(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'External link 0x%x' % rid, 'imp', 'imp_elnk', data, parent)
 
 	def parse_ests(self, rid, data, typ, version, parent):
+		assert version == 1
 		if rid == 1:
 			add_pgiter(self.page, 'CSS x-sbp-orphan-pull', 'imp', 'imp_ests_orphan_pull', data, parent)
 		elif rid == 2:
@@ -470,18 +482,23 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Unknown (0x%x)' % rid, 'imp', 0, data, parent)
 
 	def parse_fidt(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Form input data 0x%x' % rid, 'imp', 'imp_fidt', data, parent)
 
 	def parse_fitm(self, rid, data, typ, version, parent):
+		assert version == 1
 		pass
 
 	def parse_form(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_form', data, parent)
 
 	def parse_frdt(self, rid, data, typ, version, parent):
+		assert version == 1
 		pass
 
 	def parse_gif(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
 	def parse_hfpz(self, rid, data, typ, version, parent):
@@ -489,6 +506,8 @@ class imp_parser(object):
 		self.parse_page_info(rid, data, typ, parent)
 
 	def parse_hrle(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		ruleiter = add_pgiter(self.page, 'Horizontal rules', 'imp', 0, data, parent)
 
 		n = 0
@@ -499,9 +518,12 @@ class imp_parser(object):
 			begin += 12
 
 	def parse_hyp2(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_hyp2', data, parent)
 
 	def parse_imrn(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		n = 0
 		off = 0
 		size = 32
@@ -516,9 +538,12 @@ class imp_parser(object):
 			off += size
 
 	def parse_jpeg(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
 	def parse_lnks(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		lnkiter = add_pgiter(self.page, 'Links', 'imp', 0, data, parent)
 
 		n = 0
@@ -532,9 +557,11 @@ class imp_parser(object):
 			begin += size
 
 	def parse_mrgn(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
 
 	def parse_pc31(self, rid, data, typ, version, parent):
+		assert version == 1
 		pass
 
 	def parse_pcz0(self, rid, data, typ, version, parent):
@@ -548,6 +575,8 @@ class imp_parser(object):
 				off += size
 
 	def parse_pcz1(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		n = 0
 		off = 0
 		size = 30
@@ -557,6 +586,8 @@ class imp_parser(object):
 			off += size
 
 	def parse_pinf(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0 or rid == 1:
 			view = 'large'
 			if rid == 1:
@@ -564,12 +595,16 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Page info for %s view' % view,  'imp', 'imp_pinf', data, parent)
 
 	def parse_pic2(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
 	def parse_png(self, rid, data, typ, version, parent):
+		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
 	def parse_ppic(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0 or rid == 1:
 			view = 'large'
 			if rid == 1:
@@ -577,12 +612,16 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Picture info for %s view' %view, 'imp', 'imp_ppic', data, parent)
 
 	def parse_str2(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0x8001:
 			add_pgiter(self.page, 'String run index', 'imp', 'imp_str2_index', data, parent)
 		elif rid >= 0x8002:
 			add_pgiter(self.page, 'String run %x' % rid, 'imp', 'imp_str2', data, parent)
 
 	def parse_strn(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		striter = add_pgiter(self.page, 'String runs', 'imp', 0, data, parent)
 		off = 0
 		n = 0
@@ -592,6 +631,8 @@ class imp_parser(object):
 			n += 1
 
 	def parse_styl(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0x80:
 			n = 0
 			off = 0
@@ -602,6 +643,8 @@ class imp_parser(object):
 				n += 1
 
 	def parse_tabl(self, rid, data, typ, version, parent):
+		assert version == 1
+
 		if rid == 0x80:
 			tablesiter = add_pgiter(self.page, 'Tables', 'imp', 0, data, parent)
 
@@ -628,6 +671,7 @@ class imp_parser(object):
 				begin += 26
 
 	def parse_tgnt(self, rid, data, typ, version, parent):
+		assert version == 1
 		pass
 
 	def parse_trow(self, rid, data, typ, version, parent):
