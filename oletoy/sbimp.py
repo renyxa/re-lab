@@ -562,24 +562,24 @@ class imp_parser(object):
 		pass
 
 	def parse_pcz0(self, rid, data, typ, version, real_length, parent):
-		if version == 1:
-			n = 0
-			off = 0
-			size = 46
-			while off + size <= len(data):
-				add_pgiter(self.page, 'Image position %d' % n, 'imp', 'imp_pcz0', data[off:off + size], parent)
-				n += 1
-				off += size
+		assert version == 1 or version == 2
+
+		n = 0
+		off = 0
+		size = 46
+		while off + size <= len(data):
+			self._add_pgiter('Image position %d' % n, 'imp_pcz0', data[off:off + size], version, real_length, parent)
+			n += 1
+			off += size
 
 	def parse_pcz1(self, rid, data, typ, version, real_length, parent):
-		# It seems there is no significant change in v.2 ???
 		assert version == 1 or version == 2
 
 		n = 0
 		off = 0
 		size = 30
 		while off + size <= len(data):
-			add_pgiter(self.page, 'Border position %d' % n, 'imp', 'imp_pcz1', data[off:off + size], parent)
+			self._add_pgiter('Border position %d' % n, 'imp_pcz1', data[off:off + size], version, real_length, parent)
 			n += 1
 			off += size
 
@@ -666,32 +666,32 @@ class imp_parser(object):
 				n += 1
 
 	def parse_tcel(self, rid, data, typ, version, real_length, parent):
+		assert version == 1 or version == 2
+
 		cellsiter = add_pgiter(self.page, 'Table cells 0x%x' % rid, 'imp', 0, data, parent)
 
-		if version == 1:
-			n = 0
-			begin = 0
-			while begin + 26 <= len(data):
-				add_pgiter(self.page, 'Cell %d' % n, 'imp', 'imp_tcel_v1', data[begin:begin + 26], cellsiter)
-				n += 1
-				begin += 26
+		n = 0
+		begin = 0
+		while begin + 26 <= len(data):
+			self._add_pgiter('Cell %d' % n, 'imp_tcel_v1', data[begin:begin + 26], version, real_length, cellsiter)
+			n += 1
+			begin += 26
 
 	def parse_tgnt(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
 	def parse_trow(self, rid, data, typ, version, real_length, parent):
+		assert version == 1 or version == 2
+
 		rowsiter = add_pgiter(self.page, 'Table Rows 0x%x' % rid, 'imp', 0, data, parent)
 
-		if version == 1:
-			n = 0
-			begin = 0
-			while begin + 16 <= len(data):
-				add_pgiter(self.page, 'Row %d' % n, 'imp', 'imp_trow_v1', data, rowsiter)
-				n += 1
-				begin += 16
-		elif version == 2:
-			add_pgiter(self.page, 'Compressed', 'imp', 'imp_trow_v1', data, rowsiter)
+		n = 0
+		begin = 0
+		while begin + 16 <= len(data):
+			self._add_pgiter('Row %d' % n, 'imp_trow_v1', data, version, real_length, rowsiter)
+			n += 1
+			begin += 16
 
 	def parse_page_info(self, rid, data, typ, parent):
 		def read_block(off, fmt, size):
@@ -790,6 +790,14 @@ class imp_parser(object):
 	def _decompress_record(self, data, length):
 		return lzss_decompress(data, big_endian=True, offset_bits=9,
 				length_bits=1, text_length=length, init_byte=chr(0), min_length=2)
+
+	def _add_pgiter(self, title, callback, data, version, length, parent):
+		if version == 1:
+			add_pgiter(self.page, title, 'imp', callback, data, parent)
+		elif version == 2:
+			cmiter = add_pgiter(self.page, title, 'imp', 0, data, parent)
+			uncompressed = self._decompress_record(data, length)
+			add_pgiter(self.page, 'Uncompressed', 'imp', callback, uncompressed, cmiter)
 
 imp_resource_map = {
 	'!!cm': imp_parser.parse_compression,
