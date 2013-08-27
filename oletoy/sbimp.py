@@ -1371,19 +1371,46 @@ def add_imp_text(hd, size, data):
 		0x16: 'Start/End of footer content',
 	}
 
+	replacement_char_map = {
+		0x8e: unichr(0xe9),
+		0xa0: unichr(0xa0),
+		0xa5: unichr(0x2022),
+		0xa8: unichr(0xae),
+		0xa9: unichr(0xa9),
+		0xaa: unichr(0x2122),
+		0xae: unichr(0xc6),
+		0xc7: unichr(0xab),
+		0xc8: unichr(0xbb),
+		0xc9: unichr(0x2026),
+		0xd0: unichr(0x2013),
+		0xd1: unichr(0x2014),
+		0xd2: unichr(0x201c),
+		0xd3: unichr(0x201d),
+		0xd4: unichr(0x2018),
+		0xd5: unichr(0x2019),
+		0xe1: unichr(0xb7),
+	}
+
 	begin = None
+	text = ''
 
 	for off in range(len(data)):
 		c = data[off]
 		o = ord(c)
 		if control_char_map.has_key(o):
 			if begin != None:
-				add_iter(hd, 'Text', data[begin:off], begin, off - begin, '%ds' % (off - begin))
-			begin = None
+				add_iter(hd, 'Text', text, begin, off - begin, '%ds' % (off - begin))
+				begin = None
+				text = ''
 			control_char = get_or_default(control_char_map, o, '')
 			add_iter(hd, control_char, '', off, 1, 'B')
-		elif begin == None:
-			begin = off
+		else:
+			if begin == None:
+				begin = off
+			if replacement_char_map.has_key(o):
+				text += replacement_char_map[o]
+			else:
+				text += c
 
 	assert begin == None
 
