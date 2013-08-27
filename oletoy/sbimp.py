@@ -1167,14 +1167,16 @@ def add_imp_resource_0x64(hd, size, data):
 	add_iter(hd, 'Look-ahead buffer size', lookahead, off - 2, 2, '>H')
 
 def add_imp_resource_0x65(hd, size, data):
-	(uncompressed_pos, off) = rdata(hd, 0, '>I')
+	(uncompressed_pos, off) = rdata(data, 0, '>I')
 	add_iter(hd, 'Byte position in uncompressed data', uncompressed_pos, 0, 4, '>I')
-	(compressed_pos, off) = rdata(hd, off, '>I')
+	(compressed_pos, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Byte position in compressed data', compressed_pos, off - 4, 4, '>I')
 	bit_pos_map = {0x1: 7, 0x2: 6, 0x4: 5, 0x8: 4, 0x10: 3, 0x20: 2, 0x40: 1, 0x80: 0}
-	(bit_pos, off) = rdata(hd, off, '>H')
+	(bit_pos, off) = rdata(data, off, 'B')
 	bit_pos_val = get_or_default(bit_pos_map, int(bit_pos), 0)
-	add_iter(hd, 'Bit position in compressed data', bit_pos_val, off - 2, 2, '>H')
+	add_iter(hd, 'Bit position in compressed data', bit_pos_val, off - 1, 1, 'B')
+	off += 1
+	assert off == size
 
 def add_imp_resource_0x65_last(hd, size, data):
 	(length, off) = rdata(data, 0, '>I')
