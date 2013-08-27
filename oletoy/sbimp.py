@@ -1360,7 +1360,7 @@ def add_imp_tcel_v2(hd, size, data):
 
 def add_imp_text(hd, size, data):
 	control_char_map = {
-		0xa: 'End of document',
+		0xa: 'Page break',
 		0xb: 'Start of element',
 		0xd: 'Line break',
 		0xe: 'Start of table',

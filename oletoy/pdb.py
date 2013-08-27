@@ -256,6 +256,17 @@ class tealdoc_parser(pdb_parser):
 			uncompressed = lz77_decompress(data)
 			add_pgiter(self.page, "Uncompressed", 'pdb', 0, uncompressed, reciter)
 
+class tomeraider3_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(tomeraider3_parser, self).__init__(data, page, parent)
+
+	def parse_index_record(self, data, parent):
+		add_pgiter(self.page, 'Index', 'pdb', 'tomeraider3_index', data, parent)
+
+	def parse_data_record(self, n, data, parent):
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+
 # specification: http://gutenpalm.sourceforge.net/ztxt_format.php (2013)
 class ztxt_parser(pdb_parser):
 
@@ -416,6 +427,9 @@ def add_tealdoc_index(hd, size, data):
 	(size, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Max. record size', size, off - 2, 2, '>H')
 
+def add_tomeraider3_index(hd, size, data):
+	pass
+
 def add_ztxt_index(hd, size, data):
 	off = 0
 	(version, off) = rdata(data, off, '>H')
@@ -448,6 +462,7 @@ pdb_ids = {
 	'plucker_record_index': add_plucker_record_index,
 	'plucker_record': add_plucker_record,
 	'tealdoc_index': add_tealdoc_index,
+	'tomeraider3_index': add_tomeraider3_index,
 	'ztxt_index': add_ztxt_index,
 }
 
@@ -458,6 +473,7 @@ pdb_types = {
 	'TEXtREAd': palmdoc_parser,
 	'TEXtTlDc': tealdoc_parser,
 	'ToGoToGo': isilo_parser,
+	'TR3DTR3C': tomeraider3_parser,
 	'zTXTGPlm': ztxt_parser,
 }
 
