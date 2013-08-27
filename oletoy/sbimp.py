@@ -388,12 +388,14 @@ class imp_parser(object):
 			count = len(data) / 10
 			recbegin = 0
 			for j in range(count):
+				title = 'Position sync %d' % j
 				recid = 'imp_resource_0x65'
 				if j == count - 1:
+					title = 'Total length'
 					recid = 'imp_resource_0x65_last'
 					self.text_length = int(read(data, recbegin, '>I'))
 				recdata = data[recbegin:recbegin + 10]
-				add_pgiter(self.page, 'Record %d' % j, 'imp', recid, recdata, resiter)
+				add_pgiter(self.page, title, 'imp', recid, recdata, resiter)
 				recbegin += 10
 
 	def parse_sw(self, data, index, parent):
