@@ -23,8 +23,9 @@ from os.path import expanduser
 
 try:
 	import gtksourceview2
+	usegtksv2 = True
 except:
-	print "gtksourceview2 was not found. Don't try to use 'run' command."
+	usegtksv2 = False
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
 					0x2af8:"Polygon",0x3e8:"Name",0x2efe:"Rotation",0x7d0:"Palette",
@@ -713,21 +714,26 @@ class CliWindow(gtk.Window):
 		open_btn = gtk.Button("Open")
 		save_btn = gtk.Button("Save")
 		run_btn = gtk.Button("Run")
-		self.tb = gtksourceview2.Buffer()
-		tv = gtksourceview2.View(self.tb)
-		lm = gtksourceview2.LanguageManager()
-		lp = lm.get_language("python")
-		self.tb.set_highlight_syntax(True)
-		self.tb.set_language(lp)
-		tv.set_show_line_marks(True)
-		tv.set_show_line_numbers(True)
-		tv.set_draw_spaces(True)
-		tv.set_insert_spaces_instead_of_tabs(True)
-		tv.set_tab_width(4)
+		if usegtksv2:
+			self.tb = gtksourceview2.Buffer()
+			tv = gtksourceview2.View(self.tb)
+			lm = gtksourceview2.LanguageManager()
+			lp = lm.get_language("python")
+			self.tb.set_highlight_syntax(True)
+			self.tb.set_language(lp)
+			tv.set_show_line_marks(True)
+			tv.set_show_line_numbers(True)
+			tv.set_draw_spaces(True)
+			tv.set_insert_spaces_instead_of_tabs(True)
+			tv.set_tab_width(4)
+		else:
+			tv = gtk.TextView()
+			self.tb = tv.get_buffer()
+
 		s = gtk.ScrolledWindow()
 		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 		s.set_size_request(660,400)
-		s.add_with_viewport(tv)
+		s.add(tv)
 		s.show_all()
 		hbox = gtk.HBox()
 
