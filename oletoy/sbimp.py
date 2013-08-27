@@ -345,6 +345,8 @@ class imp_parser(object):
 			imp_resource_map[typ](self, i, resdata, typ, version, resiter)
 
 	def parse_resource_index(self, data, parent, version):
+		(fmtH, fmtI, fmtId) = get_formats()
+
 		index = {}
 
 		off = 0
@@ -357,16 +359,11 @@ class imp_parser(object):
 
 		while off + entrylen <= len(data):
 			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_resource_index_v%d' % version, data[off:off + entrylen], parent)
-			if imp_color_mode == 2:
-				(idx, off) = rdata(data, off, '<I')
-				(length, off) = rdata(data, off, '<I')
-				(start, off) = rdata(data, off, '<I')
-			else:
-				(idx, off) = rdata(data, off, '>H')
-				(length, off) = rdata(data, off, '>I')
-				if version == 2:
-					off += 4
-				(start, off) = rdata(data, off, '>I')
+			(idx, off) = rdata(data, off, fmtId)
+			(length, off) = rdata(data, off, fmtI)
+			if version == 2:
+				off += 4
+			(start, off) = rdata(data, off, fmtI)
 			index[int(idx)] = (int(start), int(length))
 			off += 2
 			i += 1
