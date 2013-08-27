@@ -1194,23 +1194,26 @@ def add_imp_resource_header(hd, size, data):
 	add_iter(hd, 'Offset to start of index', offset, off - 4, 4, '>I')
 
 def add_imp_str2(hd, size, data):
-	off = 0
+	(fmtH, fmtI, fmtId) = get_formats()
 
+	off = 0
 	while off + 8 <= size:
-		(offset, off) = rdata(data, off, '>I')
-		add_iter(hd, 'Offset into text', '%s (0x%x)' % (offset, offset), off - 4, 4, '>I')
-		(style, off) = rdata(data, off, '>I')
-		add_iter(hd, 'Style', style, off - 4, 4, '>I')
+		(offset, off) = rdata(data, off, fmtI)
+		add_iter(hd, 'Offset into text', '%s (0x%x)' % (offset, offset), off - 4, 4, fmtI)
+		(style, off) = rdata(data, off, fmtI)
+		add_iter(hd, 'Style', style, off - 4, 4, fmtI)
 
 	assert off == size
 
 def add_imp_str2_index(hd, size, data):
-	(count, off) = rdata(data, 0, '>I')
-	add_iter(hd, 'Number of records', count, off - 4, 4, '>I')
-	(full, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Number of entries in record', full, off - 4, 4, '>I')
-	(partial, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Number of entries in last record', partial, off - 4, 4, '>I')
+	(fmtH, fmtI, fmtId) = get_formats()
+
+	(count, off) = rdata(data, 0, fmtI)
+	add_iter(hd, 'Number of records', count, off - 4, 4, fmtI)
+	(full, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Number of entries in record', full, off - 4, 4, fmtI)
+	(partial, off) = rdata(data, off, fmtI)
+	add_iter(hd, 'Number of entries in last record', partial, off - 4, 4, fmtI)
 
 def add_imp_strn(hd, size, data):
 	(fmtH, fmtI, fmtId) = get_formats()
