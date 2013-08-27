@@ -400,9 +400,6 @@ class imp_parser(object):
 				recbegin += 10
 
 	def parse_sw(self, data, index, parent):
-		version = int(read(data, 0, '>I'))
-		assert version == 1
-
 		add_pgiter(self.page, 'Resource header', 'imp', 'imp_resource_header', data[0:32], parent)
 
 		off = int(read(data, 10, '>I'))
