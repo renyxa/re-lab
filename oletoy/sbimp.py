@@ -616,6 +616,8 @@ class imp_parser(object):
 			if version == 1:
 				add_pgiter(self.page, title, 'imp', callback, data, parent)
 			elif version == 2:
+				# FIXME: figure out what is wrong with the decompression
+				return
 				runiter = add_pgiter(self.page, title, 'imp', 0, data, parent)
 				uncompressed = self._decompress_record(data, real_length)
 				add_pgiter(self.page, 'Uncompressed', 'imp', callback, uncompressed, runiter)
@@ -795,6 +797,8 @@ class imp_parser(object):
 		if version == 1:
 			add_pgiter(self.page, title, 'imp', callback, data, parent)
 		elif version == 2:
+			# FIXME: figure out what is wrong with the decompression
+			return
 			cmiter = add_pgiter(self.page, title, 'imp', 0, data, parent)
 			uncompressed = self._decompress_record(data, length)
 			add_pgiter(self.page, 'Uncompressed', 'imp', callback, uncompressed, cmiter)
