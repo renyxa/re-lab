@@ -578,7 +578,7 @@ class imp_parser(object):
 
 	def parse_str2(self, rid, data, typ, version, parent):
 		if rid == 0x8001:
-			add_pgiter(self.page, 'String run index', 'imp', 0, data, parent)
+			add_pgiter(self.page, 'String run index', 'imp', 'imp_str2_index', data, parent)
 		elif rid >= 0x8002:
 			add_pgiter(self.page, 'String run %x' % rid, 'imp', 'imp_str2', data, parent)
 
@@ -1156,6 +1156,14 @@ def add_imp_str2(hd, size, data):
 	(style, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Style', style, off - 4, 4, '>I')
 
+def add_imp_str2_index(hd, size, data):
+	(count, off) = rdata(data, 0, '>I')
+	add_iter(hd, 'Number of records', count, off - 4, 4, '>I')
+	(full, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Number of entries in record', full, off - 4, 4, '>I')
+	(partial, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Number of entries in last record', partial, off - 4, 4, '>I')
+
 def add_imp_strn(hd, size, data):
 	(fmtH, fmtI, fmtId) = get_formats()
 
@@ -1497,6 +1505,7 @@ imp_ids = {
 	'imp_resource_index_v1': add_imp_resource_index_v1,
 	'imp_resource_index_v2': add_imp_resource_index_v2,
 	'imp_str2': add_imp_str2,
+	'imp_str2_index': add_imp_str2_index,
 	'imp_strn': add_imp_strn,
 	'imp_styl': add_imp_styl,
 	'imp_sw_index' : add_imp_sw_index,
