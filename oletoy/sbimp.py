@@ -1381,7 +1381,7 @@ def add_imp_text(hd, size, data):
 				add_iter(hd, 'Text', data[begin:off], begin, off - begin, '%ds' % (off - begin))
 			begin = None
 			control_char = get_or_default(control_char_map, o, '')
-			add_iter(hd, control_char, '0x%x' % o, off, 1, 'B')
+			add_iter(hd, control_char, '', off, 1, 'B')
 		elif begin == None:
 			begin = off
 
