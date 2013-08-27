@@ -1367,8 +1367,8 @@ def add_imp_text(hd, size, data):
 		0xf: 'Image',
 		0x13: 'End of cell',
 		0x14: 'Horizontal rule',
-		0x15: 'Start/End of header content',
-		0x16: 'Start/End of footer content',
+		0x15: ' of header content',
+		0x16: ' of footer content',
 	}
 
 	replacement_char_map = {
@@ -1391,8 +1391,12 @@ def add_imp_text(hd, size, data):
 		0xe1: unichr(0xb7),
 	}
 
+	position_map = {False: 'Start', True: 'End'}
+
 	begin = None
 	text = ''
+	header = False
+	footer = False
 
 	for off in range(len(data)):
 		c = data[off]
@@ -1402,8 +1406,16 @@ def add_imp_text(hd, size, data):
 				add_iter(hd, 'Text', text, begin, off - begin, '%ds' % (off - begin))
 				begin = None
 				text = ''
-			control_char = get_or_default(control_char_map, o, '')
-			add_iter(hd, control_char, '', off, 1, 'B')
+			control_str = control_char_map[o]
+			if o == 0x15:
+				pos = get_or_default(position_map, header, 'Start/End')
+				control_str = pos + control_str
+				header = not header
+			elif o == 0x16:
+				pos = get_or_default(position_map, footer, 'Start/End')
+				control_str = pos + control_str
+				footer = not footer
+			add_iter(hd, control_str, '', off, 1, 'B')
 		else:
 			if begin == None:
 				begin = off
