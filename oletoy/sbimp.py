@@ -1368,7 +1368,7 @@ def add_imp_text(hd, size, data):
 		0x13: 'End of cell',
 		0x14: 'Horizontal rule',
 		0x15: 'Start/End of header content',
-		0x15: 'Start/End of footer content',
+		0x16: 'Start/End of footer content',
 	}
 
 	begin = None
