@@ -575,7 +575,8 @@ class imp_parser(object):
 				off += size
 
 	def parse_pcz1(self, rid, data, typ, version, parent):
-		assert version == 1
+		# It seems there is no significant change in v.2 ???
+		assert version == 1 or version == 2
 
 		n = 0
 		off = 0
