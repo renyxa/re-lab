@@ -42,7 +42,7 @@ def get_or_default(dictionary, key, default):
 class lzss_error:
 	pass
 
-def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_length=None):
+def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, min_length=3, init_byte=' ', text_length=None):
 	buffer = []
 	length = len(data)
 
@@ -199,7 +199,7 @@ def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_l
 			return self.MASKS[bits - 1] & current
 
 	stream = BitStream(data)
-	window = SlidingWindow(1 << offset_bits, ' ')
+	window = SlidingWindow(1 << offset_bits, init_byte)
 
 	def finished():
 		if text_length == None:
@@ -211,7 +211,7 @@ def lzss_decompress(data, big_endian=True, offset_bits=12, length_bits=4, text_l
 		encoded = stream.read(1, big_endian)
 		if encoded == 0:
 			offset = int(stream.read(offset_bits, big_endian))
-			length = int(stream.read(length_bits, big_endian)) + 3
+			length = int(stream.read(length_bits, big_endian)) + min_length
 			buffer.extend(window.copy_out(offset, length))
 		else:
 			c = chr(stream.read(8, big_endian))
@@ -342,7 +342,7 @@ class imp_parser(object):
 		for i in idx.keys():
 			res = idx[i]
 			resdata = data[res[0]:res[0] + res[1]]
-			imp_resource_map[typ](self, i, resdata, typ, version, resiter)
+			imp_resource_map[typ](self, i, resdata, typ, version, res[2], resiter)
 
 	def parse_resource_index(self, data, parent, version):
 		(fmtH, fmtI, fmtId) = get_formats()
@@ -361,10 +361,11 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Entry %d' % i, 'imp', 'imp_resource_index_v%d' % version, data[off:off + entrylen], parent)
 			(idx, off) = rdata(data, off, fmtId)
 			(length, off) = rdata(data, off, fmtI)
+			uncompressed_length = length
 			if version == 2:
-				off += 4
+				(uncompressed_length, off) = rdata(data, off, fmtI)
 			(start, off) = rdata(data, off, fmtI)
-			index[int(idx)] = (int(start), int(length))
+			index[int(idx)] = (int(start), int(length), int(uncompressed_length))
 			off += 2
 			i += 1
 
@@ -372,7 +373,7 @@ class imp_parser(object):
 
 		return index
 
-	def parse_compression(self, rid, data, typ, version, parent):
+	def parse_compression(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		if rid == 0x64:
@@ -427,7 +428,7 @@ class imp_parser(object):
 			add_pgiter(self.page, 'Record %d (typ %s)' % (i, typ), 'imp', 'imp_sw_record', recdata, reciter)
 			i += 1
 
-	def parse_anct(self, rid, data, typ, version, parent):
+	def parse_anct(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		if rid == 0 or rid == 1:
@@ -444,31 +445,31 @@ class imp_parser(object):
 					add_pgiter(self.page, 'Tag %d' % j, 'imp', 'imp_anct_tag', data[off:off + 8], tagiter)
 					off += 8
 
-	def parse_bgcl(self, rid, data, typ, version, parent):
+	def parse_bgcl(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		if rid == 0x80:
 			add_pgiter(self.page, 'Background color', 'imp', 'imp_bgcl', data, parent)
 
-	def parse_bpgz(self, rid, data, typ, version, parent):
+	def parse_bpgz(self, rid, data, typ, version, real_length, parent):
 		if version == 1:
 			self.parse_page_info(rid, data, typ, parent)
 		else:
 			# TODO: rev. eng. this
 			pass
 
-	def parse_bpos(self, rid, data, typ, version, parent):
+	def parse_bpos(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
-	def parse_devm(self, rid, data, typ, version, parent):
+	def parse_devm(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
-	def parse_elnk(self, rid, data, typ, version, parent):
+	def parse_elnk(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'External link 0x%x' % rid, 'imp', 'imp_elnk', data, parent)
 
-	def parse_ests(self, rid, data, typ, version, parent):
+	def parse_ests(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		if rid == 1:
 			add_pgiter(self.page, 'CSS x-sbp-orphan-pull', 'imp', 'imp_ests_orphan_pull', data, parent)
@@ -477,31 +478,31 @@ class imp_parser(object):
 		else:
 			add_pgiter(self.page, 'Unknown (0x%x)' % rid, 'imp', 0, data, parent)
 
-	def parse_fidt(self, rid, data, typ, version, parent):
+	def parse_fidt(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Form input data 0x%x' % rid, 'imp', 'imp_fidt', data, parent)
 
-	def parse_fitm(self, rid, data, typ, version, parent):
+	def parse_fitm(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
-	def parse_form(self, rid, data, typ, version, parent):
+	def parse_form(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_form', data, parent)
 
-	def parse_frdt(self, rid, data, typ, version, parent):
+	def parse_frdt(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
-	def parse_gif(self, rid, data, typ, version, parent):
+	def parse_gif(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
-	def parse_hfpz(self, rid, data, typ, version, parent):
+	def parse_hfpz(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		self.parse_page_info(rid, data, typ, parent)
 
-	def parse_hrle(self, rid, data, typ, version, parent):
+	def parse_hrle(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		ruleiter = add_pgiter(self.page, 'Horizontal rules', 'imp', 0, data, parent)
@@ -513,11 +514,11 @@ class imp_parser(object):
 			n += 1
 			begin += 12
 
-	def parse_hyp2(self, rid, data, typ, version, parent):
+	def parse_hyp2(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Resource 0x%x' % rid, 'imp', 'imp_hyp2', data, parent)
 
-	def parse_imrn(self, rid, data, typ, version, parent):
+	def parse_imrn(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		n = 0
@@ -533,11 +534,11 @@ class imp_parser(object):
 			n += 1
 			off += size
 
-	def parse_jpeg(self, rid, data, typ, version, parent):
+	def parse_jpeg(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
-	def parse_lnks(self, rid, data, typ, version, parent):
+	def parse_lnks(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		lnkiter = add_pgiter(self.page, 'Links', 'imp', 0, data, parent)
@@ -552,15 +553,15 @@ class imp_parser(object):
 			n += 1
 			begin += size
 
-	def parse_mrgn(self, rid, data, typ, version, parent):
+	def parse_mrgn(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Record 0x%x' % rid, 'imp', 'imp_mrgn', data, parent)
 
-	def parse_pc31(self, rid, data, typ, version, parent):
+	def parse_pc31(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
-	def parse_pcz0(self, rid, data, typ, version, parent):
+	def parse_pcz0(self, rid, data, typ, version, real_length, parent):
 		if version == 1:
 			n = 0
 			off = 0
@@ -570,7 +571,7 @@ class imp_parser(object):
 				n += 1
 				off += size
 
-	def parse_pcz1(self, rid, data, typ, version, parent):
+	def parse_pcz1(self, rid, data, typ, version, real_length, parent):
 		# It seems there is no significant change in v.2 ???
 		assert version == 1 or version == 2
 
@@ -582,7 +583,7 @@ class imp_parser(object):
 			n += 1
 			off += size
 
-	def parse_pinf(self, rid, data, typ, version, parent):
+	def parse_pinf(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		if rid == 0 or rid == 1:
@@ -591,15 +592,15 @@ class imp_parser(object):
 				view = 'small'
 			add_pgiter(self.page, 'Page info for %s view' % view,  'imp', 'imp_pinf', data, parent)
 
-	def parse_pic2(self, rid, data, typ, version, parent):
+	def parse_pic2(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
-	def parse_png(self, rid, data, typ, version, parent):
+	def parse_png(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		add_pgiter(self.page, 'Image 0x%x' % rid, 'imp', 0, data, parent)
 
-	def parse_ppic(self, rid, data, typ, version, parent):
+	def parse_ppic(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		if rid == 0 or rid == 1:
@@ -608,15 +609,23 @@ class imp_parser(object):
 				view = 'small'
 			add_pgiter(self.page, 'Picture info for %s view' %view, 'imp', 'imp_ppic', data, parent)
 
-	def parse_str2(self, rid, data, typ, version, parent):
-		assert version == 1
+	def parse_str2(self, rid, data, typ, version, real_length, parent):
+		assert version == 1 or version == 2
+
+		def add_runiter(title, callback):
+			if version == 1:
+				add_pgiter(self.page, title, 'imp', callback, data, parent)
+			elif version == 2:
+				runiter = add_pgiter(self.page, title, 'imp', 0, data, parent)
+				uncompressed = self._decompress_record(data, real_length)
+				add_pgiter(self.page, 'Uncompressed', 'imp', callback, uncompressed, runiter)
 
 		if rid == 0x8001:
-			add_pgiter(self.page, 'String run index', 'imp', 'imp_str2_index', data, parent)
+			add_runiter('String run index', 'imp_str2_index')
 		elif rid >= 0x8002:
-			add_pgiter(self.page, 'String run %x' % rid, 'imp', 'imp_str2', data, parent)
+			add_runiter('String run 0x%x' % rid, 'imp_str2')
 
-	def parse_strn(self, rid, data, typ, version, parent):
+	def parse_strn(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		striter = add_pgiter(self.page, 'String runs', 'imp', 0, data, parent)
@@ -627,7 +636,7 @@ class imp_parser(object):
 			off += 8
 			n += 1
 
-	def parse_styl(self, rid, data, typ, version, parent):
+	def parse_styl(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		if rid == 0x80:
@@ -639,7 +648,7 @@ class imp_parser(object):
 				off += size
 				n += 1
 
-	def parse_tabl(self, rid, data, typ, version, parent):
+	def parse_tabl(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 
 		if rid == 0x80:
@@ -656,7 +665,7 @@ class imp_parser(object):
 				off += size
 				n += 1
 
-	def parse_tcel(self, rid, data, typ, version, parent):
+	def parse_tcel(self, rid, data, typ, version, real_length, parent):
 		cellsiter = add_pgiter(self.page, 'Table cells 0x%x' % rid, 'imp', 0, data, parent)
 
 		if version == 1:
@@ -667,11 +676,11 @@ class imp_parser(object):
 				n += 1
 				begin += 26
 
-	def parse_tgnt(self, rid, data, typ, version, parent):
+	def parse_tgnt(self, rid, data, typ, version, real_length, parent):
 		assert version == 1
 		pass
 
-	def parse_trow(self, rid, data, typ, version, parent):
+	def parse_trow(self, rid, data, typ, version, real_length, parent):
 		rowsiter = add_pgiter(self.page, 'Table Rows 0x%x' % rid, 'imp', 0, data, parent)
 
 		if version == 1:
@@ -681,6 +690,8 @@ class imp_parser(object):
 				add_pgiter(self.page, 'Row %d' % n, 'imp', 'imp_trow_v1', data, rowsiter)
 				n += 1
 				begin += 16
+		elif version == 2:
+			add_pgiter(self.page, 'Compressed', 'imp', 'imp_trow_v1', data, rowsiter)
 
 	def parse_page_info(self, rid, data, typ, parent):
 		def read_block(off, fmt, size):
@@ -775,6 +786,10 @@ class imp_parser(object):
 			dataiter = add_pgiter(self.page, 'Compressed text', 'imp', 0, filedata, fileiter)
 			uncompressed = lzss_decompress(filedata, True, self.window_bits, self.length_bits, self.text_length)
 			textiter = add_pgiter(self.page, 'Text', 'imp', 'imp_text', uncompressed, dataiter)
+
+	def _decompress_record(self, data, length):
+		return lzss_decompress(data, big_endian=True, offset_bits=9,
+				length_bits=1, text_length=length, init_byte=chr(0), min_length=2)
 
 imp_resource_map = {
 	'!!cm': imp_parser.parse_compression,
