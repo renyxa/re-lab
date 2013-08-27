@@ -1151,10 +1151,15 @@ def add_imp_resource_header(hd, size, data):
 	add_iter(hd, 'Offset to start of index', offset, off - 4, 4, '>I')
 
 def add_imp_str2(hd, size, data):
-	(offset, off) = rdata(data, 0, '>I')
-	add_iter(hd, 'Offset into text', offset, off - 4, 4, '>I')
-	(style, off) = rdata(data, off, '>I')
-	add_iter(hd, 'Style', style, off - 4, 4, '>I')
+	off = 0
+
+	while off + 8 <= size:
+		(offset, off) = rdata(data, off, '>I')
+		add_iter(hd, 'Offset into text', '%s (0x%x)' % (offset, offset), off - 4, 4, '>I')
+		(style, off) = rdata(data, off, '>I')
+		add_iter(hd, 'Style', style, off - 4, 4, '>I')
+
+	assert off == size
 
 def add_imp_str2_index(hd, size, data):
 	(count, off) = rdata(data, 0, '>I')
