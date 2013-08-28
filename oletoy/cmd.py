@@ -721,11 +721,15 @@ class CliWindow(gtk.Window):
 			lp = lm.get_language("python")
 			self.tb.set_highlight_syntax(True)
 			self.tb.set_language(lp)
+			self.tb.set_max_undo_levels(16)
+			self.tb.set_highlight_matching_brackets(False)
 			tv.set_show_line_marks(True)
 			tv.set_show_line_numbers(True)
 			tv.set_draw_spaces(True)
-			tv.set_insert_spaces_instead_of_tabs(True)
 			tv.set_tab_width(4)
+			tv.set_smart_home_end(True)
+			tv.set_auto_indent(True)
+			tv.set_property("draw-spaces",51) # space, tab, leading, text
 		else:
 			tv = gtk.TextView()
 			self.tb = tv.get_buffer()
