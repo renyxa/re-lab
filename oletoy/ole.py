@@ -22,6 +22,7 @@ import hexdump
 import pub, pubblock, escher, quill
 import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2
 import wt602
+import zmf
 from utils import *
 
 ropen = ""
@@ -222,6 +223,15 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 		if (infname == "contents" or infname == "SCFFPreview") and ftype == "ppp":
 			ppp.parse(page,data,iter1,infname)
 
+		# I've no idea if this is really the signature, but it is
+		# present in all files I've seen so far
+		if infname == "Header" and data[0xc:0xf] == 'xV4':
+			ftype = 'zmf'
+			zmf.zmf3_open(page, data, iter1, infname)
+		if infname[-4:] == '.zmf':
+			ftype = 'zmf'
+			zmf.zmf3_open(page, data, iter1, infname)
+
 		if infname == "VBA":
 			page.type = ftype
 			ftype = "vba"
@@ -318,6 +328,15 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			ftype = "ppp"  #PagePlus OLE version (9.x?)
 		if (infname == "contents" or infname == "SCFFPreview") and ftype == "ppp":
 			ppp.parse(page,data,iter1,infname)
+
+		# I've no idea if this is really the signature, but it is
+		# present in all files I've seen so far
+		if infname == "Header" and data[0xc:0xf] == 'xV4':
+			ftype = 'zmf'
+			zmf.parse(page, data, iter1, 3, infname)
+		if infname[-4:] == '.zmf':
+			ftype = 'zmf'
+			zmf.parse(page, data, iter1, 3, infname)
 
 		if infname == "VBA":
 			page.type = ftype

@@ -32,6 +32,7 @@ import lrf
 import wt602
 import pdb
 import sbimp
+import zmf
 import hv2, utils
 from utils import *
 from hv2 import HexView
@@ -1491,6 +1492,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
+				elif ntype[0] == "zmf":
+					if zmf.zmf_ids.has_key(ntype[1]):
+						zmf.zmf_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 

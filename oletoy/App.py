@@ -22,6 +22,7 @@ import abr,rtf, otxml, chdraw,vfb
 import lrf
 import pdb
 import sbimp
+import zmf
 
 class Page:
 	def __init__(self):
@@ -210,6 +211,12 @@ class Page:
 				print "Probably Freehand 9+"
 				fh.fh_open(buf,self, parent)
 				return 0
+
+		if buf[8:11] == 'xV4':
+			self.type = 'ZMF'
+			print 'Probably Zoner Draw 4+'
+			zmf.zmf5_open(buf, self, parent)
+			return 0
 
 		if parent == None:
 			iter1 = self.model.append(None, None)
