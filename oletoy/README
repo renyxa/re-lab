@@ -38,6 +38,7 @@ As of now OLE Toy reads and parses:
 - WT602 (Software602 602Text, BIPU support)
 - IMP (SoftBook e-book)
 - ZMF (Zoner Callisto, also known as Zoner Draw; extremely BIPU support)
+- ZBR (Zebra Metafile, BIPU support)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:

@@ -23,6 +23,7 @@ import lrf
 import pdb
 import sbimp
 import zmf
+import zbr
 
 class Page:
 	def __init__(self):
@@ -216,6 +217,13 @@ class Page:
 			self.type = 'ZMF'
 			print 'Probably Zoner Draw 4+'
 			zmf.zmf5_open(buf, self, parent)
+			return 0
+
+		# NOTE: 0x29a is 666 in decimal .-)
+		if buf[0:2] == '\x9a\x02' and buf[2:4] in ['\01\0', '\02\0', '\03\0', '\04\0']:
+			self.type = 'ZBR'
+			print 'Probably Zebra Metafile'
+			zbr.open(buf, self, parent)
 			return 0
 
 		if parent == None:
