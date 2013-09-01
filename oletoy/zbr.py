@@ -52,7 +52,7 @@ class Parser(object):
 		(length, off) = rdata(self.data, off, '<I')
 		length = int(length)
 		data = self.data[off - 4:off + length]
-		confiter = add_pgiter(self.page, 'Configuration', 'zbr', 'length', data, self.parent)
+		confiter = add_pgiter(self.page, 'Configuration', 'zbr', 'configuration', data, self.parent)
 		add_pgiter(self.page, 'Local configuration', 'zbr', 'config_local', data[4:], confiter)
 		return off + length
 
@@ -60,13 +60,23 @@ class Parser(object):
 		(length, off) = rdata(self.data, off, '<I')
 		length = int(length)
 		data = self.data[off - 4:off + length]
-		palette_iter = add_pgiter(self.page, 'Color Palette', 'zbr', 'length', data, self.parent)
+		palette_iter = add_pgiter(self.page, 'Color Palette', 'zbr', 'color_palette', data, self.parent)
 		add_pgiter(self.page, 'Palette', 'zbr', 'palette', data[4:], palette_iter)
 		return off + length
 
 	def parse_objects(self, off):
 		objsiter = add_pgiter(self.page, 'Objects', 'zbr', 0, self.data[off:], self.parent)
 		return len(self.data)
+
+def _add_length(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, 0, 4, '<I')
+
+def add_color_palette(hd, size, data):
+	_add_length(hd, size, data)
+
+def add_configuration(hd, size, data):
+	_add_length(hd, size, data)
 
 def add_header(hd, size, data):
 	(sig, off) = rdata(data, 0, '<H')
@@ -76,10 +86,6 @@ def add_header(hd, size, data):
 	(comment, off) = rdata(data, off, '100s')
 	add_iter(hd, 'Comment', comment, off - 100, 100, '100s')
 	assert off == 104
-
-def add_length(hd, size, data):
-	(length, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Length', length, 0, 4, '<I')
 
 def add_palette(hd, size, data):
 	n = 0
@@ -95,7 +101,8 @@ def add_palette(hd, size, data):
 
 zbr_ids = {
 	'header': add_header,
-	'length': add_length,
+	'color_palette': add_color_palette,
+	'configuration': add_configuration,
 	'palette': add_palette,
 }
 
