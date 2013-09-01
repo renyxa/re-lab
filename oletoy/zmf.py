@@ -96,9 +96,6 @@ class ZMF5Parser(object):
 				self.parse_object(data[off:off + length], parent)
 			off += length
 
-def parse_header(page, data, parent):
-	add_pgiter(page, 'Header', 'zmf', 'zmf3_header', data, parent)
-
 def add_zmf3_header(hd, size, data):
 	off = 10
 	(version, off) = rdata(data, off, '<H')
@@ -144,7 +141,7 @@ zmf_ids = {
 
 def zmf3_open(page, data, parent, fname):
 	if fname == 'Header':
-		parse_header(page, data, parent)
+		add_pgiter(page, 'Header', 'zmf', 'zmf3_header', data, parent)
 	elif fname in ('BitmapDB.zmf', 'TextStyles.zmf', 'Callisto_doc.zmf', 'Callisto_pages.zmf'):
 		if data != None:
 			parser = ZMF3Parser(data, page, parent)
