@@ -29,14 +29,13 @@ class ZMF5Parser(object):
 		self.parent = parent
 
 	def parse(self):
-		fileiter = add_pgiter(self.page, 'ZMF', 'zmf', 0, self.data, self.parent)
-		content = self.parse_header(fileiter)
-		add_pgiter(self.page, 'Content', 'zmf', 0, self.data[content:], fileiter)
+		content = self.parse_header()
+		add_pgiter(self.page, 'Content', 'zmf', 0, self.data[content:], self.parent)
 
-	def parse_header(self, parent):
+	def parse_header(self):
 		offset = int(read(self.data, 0x20, '<I'))
 		data = self.data[0:offset]
-		add_pgiter(self.page, 'Header', 'zmf', 'zmf5_header', data, parent)
+		add_pgiter(self.page, 'Header', 'zmf', 'zmf5_header', data, self.parent)
 		return offset
 
 def parse_header(page, data, parent):
