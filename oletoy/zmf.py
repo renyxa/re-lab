@@ -21,6 +21,38 @@ from utils import add_iter, add_pgiter, rdata
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
+class ZMF3Parser(object):
+
+	def __init__(self, data, page, parent):
+		self.data = data
+		self.page = page
+		self.parent = parent
+
+	def parse(self):
+		fileiter = add_pgiter(self.page, 'ZMF', 'zmf', 0, self.data, self.parent)
+		self._parse_group(self.data, fileiter)
+
+	def parse_object(self, data, parent):
+		objiter = add_pgiter(self.page, 'Object', 'zmf', 'zmf3_object', data, parent)
+		# TODO: this seems to fit, but it is not enough... I see two
+		# nested objects in all files, with a lot of opaque data inside
+		# the inner one. Maybe it is compressed?
+		add_pgiter(self.page, 'Header', 'zmf', 'zmf3_object_header', data[0:16], objiter)
+		# TODO: this is probably set of flags
+		(typ, off) = rdata(data, 4, '<H')
+		if typ == 0x4:
+			self._parse_group(data[16:], objiter)
+		else:
+			add_pgiter(self.page, 'Data', 'zmf', 0, data[16:], objiter)
+
+	def _parse_group(self, data, parent):
+		off = 0
+		while off + 4 <= len(data):
+			length = int(read(data, off, '<I'))
+			if off + length <= len(data):
+				self.parse_object(data[off:off + length], parent)
+			off += length
+
 class ZMF5Parser(object):
 
 	def __init__(self, data, page, parent):
@@ -67,21 +99,18 @@ class ZMF5Parser(object):
 def parse_header(page, data, parent):
 	add_pgiter(page, 'Header', 'zmf', 'zmf3_header', data, parent)
 
-def parse_text_styles(page, data, parent):
-	pass
-
-def parse_pages(page, data, parent):
-	pass
-
-def parse_doc(page, data, parent):
-	pass
-
 def add_zmf3_header(hd, size, data):
 	off = 10
 	(version, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Version', version, off - 2, 2, '<H')
 	(sig, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Signature', '0x%x' % sig, off - 4, 4, '<I')
+
+def add_zmf3_object_header(hd, size, data):
+	(size, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+	(typ, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Type', typ, off - 2, 2, '<H')
 
 def add_zmf5_header(hd, size, data):
 	off = 8
@@ -108,6 +137,7 @@ def add_zmf5_object_header(hd, size, data):
 
 zmf_ids = {
 	'zmf3_header': add_zmf3_header,
+	'zmf3_object_header': add_zmf3_object_header,
 	'zmf5_header': add_zmf5_header,
 	'zmf5_object_header': add_zmf5_object_header,
 }
@@ -115,12 +145,10 @@ zmf_ids = {
 def zmf3_open(page, data, parent, fname):
 	if fname == 'Header':
 		parse_header(page, data, parent)
-	if fname == 'TextStyles.zmf':
-		parse_text_styles(page, data, parent)
-	elif fname == 'Callisto_doc.zmf':
-		parse_doc(page, data, parent)
-	elif fname == 'Callisto_pages.zmf':
-		parse_pages(page, data, parent)
+	elif fname in ('TextStyles.zmf', 'Callisto_doc.zmf', 'Callisto_pages.zmf'):
+		if data != None:
+			parser = ZMF3Parser(data, page, parent)
+			parser.parse()
 
 def zmf5_open(data, page, parent):
 	parser = ZMF5Parser(data, page, parent)
