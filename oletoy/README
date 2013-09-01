@@ -37,7 +37,7 @@ As of now OLE Toy reads and parses:
        not known.)
 - WT602 (Software602 602Text, BIPU support)
 - IMP (SoftBook e-book)
-- ZMF (Zoner Callisto, also known as Zoner Draw; extremely BIPU support)
+- ZMF (Zoner Callisto, also known as Zoner Draw, BIPU support)
 - ZBR (Zebra Metafile, BIPU support)
 
 
