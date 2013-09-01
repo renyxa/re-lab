@@ -65,7 +65,7 @@ class ZMF5Parser(object):
 			off += length
 
 def parse_header(page, data, parent):
-	pass
+	add_pgiter(page, 'Header', 'zmf', 'zmf3_header', data, parent)
 
 def parse_text_styles(page, data, parent):
 	pass
@@ -75,6 +75,13 @@ def parse_pages(page, data, parent):
 
 def parse_doc(page, data, parent):
 	pass
+
+def add_zmf3_header(hd, size, data):
+	off = 10
+	(version, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Version', version, off - 2, 2, '<H')
+	(sig, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Signature', '0x%x' % sig, off - 4, 4, '<I')
 
 def add_zmf5_header(hd, size, data):
 	off = 8
@@ -100,6 +107,7 @@ def add_zmf5_object_header(hd, size, data):
 	add_iter(hd, 'Type', typ, off - 4, 4, '<I')
 
 zmf_ids = {
+	'zmf3_header': add_zmf3_header,
 	'zmf5_header': add_zmf5_header,
 	'zmf5_object_header': add_zmf5_object_header,
 }
