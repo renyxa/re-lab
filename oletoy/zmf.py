@@ -145,7 +145,7 @@ zmf_ids = {
 def zmf3_open(page, data, parent, fname):
 	if fname == 'Header':
 		parse_header(page, data, parent)
-	elif fname in ('TextStyles.zmf', 'Callisto_doc.zmf', 'Callisto_pages.zmf'):
+	elif fname in ('BitmapDB.zmf', 'TextStyles.zmf', 'Callisto_doc.zmf', 'Callisto_pages.zmf'):
 		if data != None:
 			parser = ZMF3Parser(data, page, parent)
 			parser.parse()
