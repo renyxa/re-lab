@@ -1637,6 +1637,9 @@ class ApplicationMainWindow(gtk.Window):
 			dlg = gtk.FileChooserDialog('Open...', None, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
 #		dlg.set_current_folder(dirname)
 		dlg.set_local_only(True)
+		if dirname and fname != "":
+			dlg.select_filename(os.path.join(dirname,fname))
+
 		resp = dlg.run()
 		dlg.hide()
 		if resp == gtk.RESPONSE_CANCEL:

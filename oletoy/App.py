@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct
+import sys,struct,os
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
@@ -50,12 +50,8 @@ class Page:
 		self.backpath = None
 
 	def fload(self,buf="",parent=None):
+		self.pname = os.path.split(self.fname)[1]
 		if buf == "":
-			pos = self.fname.rfind('/')
-			if pos !=-1:
-				self.pname = self.fname[pos+1:]
-			else:
-				self.pname = self.fname
 			offset = 0
 			f = open(self.fname,"rb")
 			buf = f.read()
