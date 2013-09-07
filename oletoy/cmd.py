@@ -761,6 +761,7 @@ class CliWindow(gtk.Window):
 		open_btn.connect("button-press-event",self.cli_on_open,self.tb)
 		save_btn.connect("button-press-event",self.cli_on_save,self.tb)
 		runwin.show_all()
+		tv.grab_focus()
 		self.app.run_win = runwin
 
 	def del_runwin (self, action):
