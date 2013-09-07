@@ -15,7 +15,7 @@
 # USA
 
 
-import sys,struct,ctypes
+import sys,struct,ctypes,os
 import gobject
 import gtk, pango, cairo
 import tree
@@ -43,7 +43,7 @@ try:
 except:
 	pass
 
-version = "0.7.37"
+version = "0.7.38"
 
 ui_info = \
 '''<ui>
@@ -86,7 +86,8 @@ def register_stock_icons():
 	factory = gtk.IconFactory()
 	factory.add_default()
 
-class TabLabel(gtk.HBox):
+
+class OldTabLabel(gtk.HBox):
 	__gsignals__ = {"close-clicked": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),}
 
 	def __init__(self, label_text):
@@ -211,6 +212,8 @@ class ApplicationMainWindow(gtk.Window):
 		self.font = "Monospace"
 		self.fontsize = 14
 		self.gsfname = 'libgsf-1.so'
+		self.snipsdir = os.path.join(os.path.expanduser("~"),".oletoy")
+
 		try:
 			execfile("oletoy.cfg")
 			print 'Config loaded...'
@@ -1515,7 +1518,7 @@ class ApplicationMainWindow(gtk.Window):
 		hpaned = gtk.HPaned()
 		hpaned.add1(scrolled)
 		hpaned.add2(vpaned)
-		label = TabLabel("Unnamed")
+		label = cmd.TabLabel("Unnamed")
 		label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
 		self.notebook.append_page(hpaned, label)
 		self.notebook.show_tabs = True
@@ -1612,7 +1615,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hpaned = gtk.HPaned()
 				doc.hpaned.add1(scrolled)
 				doc.hpaned.add2(vpaned)
-				label = TabLabel(doc.pname)
+				label = cmd.TabLabel(doc.pname)
 				label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
 				self.notebook.append_page(doc.hpaned, label)
 				self.notebook.set_tab_reorderable(doc.hpaned, True)

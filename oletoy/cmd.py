@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct
+import sys,struct,os
 import tree,gtk,gobject,cairo,zlib
 import difflib
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx
@@ -706,23 +706,262 @@ class DiffWindow(gtk.Window):
 		widget.set_size_request(int(wt*143.5)+1,int(ht*self.diffsize))
 
 
+
+class OSD_Entry(gtk.Window):
+	def __init__(self, parent, oid, mode="snippet"):
+		gtk.Window.__init__(self,gtk.WINDOW_TOPLEVEL)
+		self.Doc = parent
+		self.oid = oid
+		self.mode = mode
+		self.set_resizable(True)
+		self.set_modal(True)
+		self.set_decorated(False)
+		self.set_border_width(0)
+		self.xs,self.ys = 0,0
+		self.entry = gtk.Entry()
+		self.entry.connect("key-press-event",self.entry_key_pressed)
+		self.add(self.entry)
+
+	def entry_key_pressed(self, entry, event):
+		# Changing Label
+		if event.keyval == 65307: # Esc
+			self.hide()
+			entry.set_text("")
+			if self.mode == "snippet" and self.Doc.OSD_txt:
+				self.Doc.add_snippet("noname",self.Doc.OSD_txt)
+				self.Doc.OSD_txt = ""
+		elif event.keyval == 65293: # Enter
+			self.hide()
+			txt = entry.get_text()
+			if self.mode == "snippet" and self.Doc.OSD_txt:
+				self.Doc.add_snippet(txt,self.Doc.OSD_txt)
+				self.Doc.OSD_txt = ""
+
+
+class TabLabel(gtk.HBox):
+	__gsignals__ = {"close-clicked": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),}
+
+	def __init__(self, label_text):
+		gtk.HBox.__init__(self)
+		label = gtk.Label(label_text)
+		image = gtk.Image()
+		image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+		btn = gtk.Button()
+		btn.set_image(image)
+		btn.set_relief(gtk.RELIEF_NONE)
+		btn.set_focus_on_click(False)
+		btn.connect("clicked",self.tab_button_clicked)
+		self.eb = gtk.EventBox()
+		self.eb.add(label)
+		self.pack_start(self.eb,1,1,0)
+		self.pack_start(btn,0,0,0)
+		self.show_all()
+		#eb.modify_bg(gtk.STATE_NORMAL,self.get_colormap().alloc_color("green"))
+
+	def change_text(self,text):
+		self.eb.get_children()[0].set_text(text)
+
+	def get_label_text (self):
+		return self.eb.get_children()[0].get_text()
+
+	def tab_button_clicked(self, button):
+		self.emit("close-clicked")
+
+ 	def on_tab_close_clicked(self, tab_label, notebook, tab_widget, arr, tabtype):
+		""" Callback for the "close-clicked" emitted by custom TabLabel widget. """
+		# FROB: need to ask for confirmation of file/page removal
+		pn = notebook.page_num(tab_widget)
+		if pn != -1:
+			del arr[pn]
+			notebook.remove_page(pn)
+		else: #if len(arr) == 0:
+			if tabtype == "doc":
+				gtk.main_quit()
+		if pn < len(arr):  ## not the last page
+			for i in range(pn,len(arr)):
+				arr[i] = arr[i+1]
+			del arr[len(arr)-1]
+
+
+
+def make_cli_view(cli):
+	model = gtk.TreeStore(
+	gobject.TYPE_STRING,	# 0 Snippet Name
+	gobject.TYPE_STRING, 	# 1 Snippet text
+	)
+	view = gtk.TreeView(model)
+	view.set_reorderable(True)
+	view.columns_autosize()
+	view.set_enable_tree_lines(True)
+	cell = gtk.CellRendererText()
+	cell.set_property('family-set',True)
+	cell.set_property('font','monospace 10')
+	column0 = gtk.TreeViewColumn('SnipName', cell, text=0)
+	view.append_column(column0)
+	view.set_headers_visible(False)
+	view.set_tooltip_column(1)
+	treescr = gtk.ScrolledWindow()
+	treescr.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	treescr.add(view)
+	treescr.set_size_request(150,-1)
+	
+	target_entries = [('text/plain', 0, 0)]
+
+	view.enable_model_drag_source(
+		gtk.gdk.BUTTON1_MASK, target_entries, gtk.gdk.ACTION_DEFAULT|gtk.gdk.ACTION_COPY)
+	view.enable_model_drag_dest(target_entries,gtk.gdk.ACTION_DEFAULT|gtk.gdk.ACTION_COPY)
+	view.connect('drag-data-received', cli.on_drag_data_received)
+	view.connect("key-press-event", cli.on_row_keypressed)
+
+	return view, model, treescr
+
+
+
+
 class CliWindow(gtk.Window):
 	def __init__(self, app):
 		gtk.Window.__init__(self)
 		self.app = app
-		self.fname = ""
+		self.scripts = {}
+		self.snipsdir = app.snipsdir
+		self.OSD = None
+		self.OSD_txt = ""
+
+		tb,tv = self.create_tbtv()
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(660,400)
+		s.add(tv)
+		s.show_all()
+		
+		self.clinb = gtk.Notebook()
+		frame = gtk.Frame("Snippets")
+		self.snview,self.snmodel,self.scroll = make_cli_view(self)
+		self.snview.connect("row-activated", self.on_row_activated)
+
+		frame.add(self.scroll)
+		self.restore_state()
+		if len(self.scripts) == 0:
+			tab_lbl = TabLabel("New 1")
+			tab_lbl.connect("close-clicked", tab_lbl.on_tab_close_clicked, self.clinb, s, self.scripts, "script")
+			self.clinb.append_page(s, tab_lbl)
+			self.clinb.set_tab_reorderable(s, True)
+			self.clinb.show_all()
+			self.scripts[len(self.scripts)] = [tb,"New 1",tab_lbl]
+
+		mainhb = gtk.HBox()
+		mainhb.pack_start(self.clinb,1,1,0)
+		mainhb.pack_start(frame,0,0,0)
+
+		new_btn = gtk.Button("New")
 		open_btn = gtk.Button("Open")
 		save_btn = gtk.Button("Save")
 		run_btn = gtk.Button("Run")
+
+		hbox = gtk.HBox()
+		hbox.pack_start(new_btn,0,0,0)
+		hbox.pack_start(open_btn,0,0,0)
+		hbox.pack_start(save_btn,0,0,0)
+		hbox.pack_end(run_btn,0,0,0)
+
+		vbox = gtk.VBox()
+		vbox.pack_start(mainhb)
+		vbox.pack_start(hbox,0,0,0)
+
+		runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		accgrp = gtk.AccelGroup()
+		accgrp.connect_group(110, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #N
+		accgrp.connect_group(111, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #O
+		accgrp.connect_group(114, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #R
+		accgrp.connect_group(115, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #S
+
+		runwin.add_accel_group(accgrp)
+		runwin.set_resizable(True)
+		runwin.set_border_width(2)
+		runwin.add(vbox)
+		runwin.set_title("OLEToy CLI")
+		runwin.connect ("destroy", self.del_runwin)
+		run_btn.connect("button-press-event",self.cli_on_run)
+		new_btn.connect("button-press-event",self.cli_on_new)
+		open_btn.connect("button-press-event",self.cli_on_open)
+		save_btn.connect("button-press-event",self.cli_on_save)
+		runwin.show_all()
+		tv.grab_focus()
+		self.app.run_win = runwin
+
+
+	def add_snippet(self,name,text):
+		iter = self.snmodel.append(None,None)
+		self.snmodel.set(iter,0,name,1,text)
+		self.save_state("snippets")
+
+	def save_state(self,mode="all"):
+		# save the state, ignore 'New' files
+		if mode in ("files","all"):
+			try:
+				fs = open(os.path.join(self.snipsdir,"cli_state"),"wb")
+				for s in self.scripts.values():
+					d = s[1]
+					fn = s[2].get_label_text()
+					if d != fn:
+						fs.write(os.path.join(d,fn))
+						fs.write("\n")
+				fs.close()
+			except:
+				print 'Failed to save state'
+
+		if mode in ("snippets","all"):
+#			try:
+				fs = open(os.path.join(self.snipsdir,"cli_snippets"),"wb")
+				fs.write("# OLEToy snippets file #\n")
+				for i in  range(self.snmodel.iter_n_children(None)):
+					ch = self.snmodel.iter_nth_child(None,i)
+					n,t = self.snmodel.get_value(ch,0),self.snmodel.get_value(ch,1)
+					fs.write("%s %d\n"%(n,len(t)))
+					fs.write(t)
+					fs.write("\n")
+				fs.close()
+#			except:
+#				print 'Failed to save snippets'
+
+	def restore_state(self):
+		# open recent files
+		try:
+			fs = open(os.path.join(self.snipsdir,"cli_state"),"rb")
+			for l in fs:
+				try:
+					self.cli_on_open(None,None,l[:-1])
+				except:
+					pass # file not loaded
+		except:
+			print 'No saved CLI state was found'
+
+		# load snippets
+		try:
+			fs = open(os.path.join(self.snipsdir,"cli_snippets"),"rb")
+			l = fs.readline() # skip 'header'
+			while l:
+				l = fs.readline()
+				if l:
+					name,tlen = l.split()
+					txt = fs.read(int(tlen)+1)
+					self.add_snippet(name,txt[:-1])
+			fs.close()
+		except:
+			print 'Failed to load snippets'
+
+
+	def create_tbtv(self):
+		# rely on gtksourceview2
 		if usegtksv2:
-			self.tb = gtksourceview2.Buffer()
-			tv = gtksourceview2.View(self.tb)
+			tb = gtksourceview2.Buffer()
+			tv = gtksourceview2.View(tb)
 			lm = gtksourceview2.LanguageManager()
 			lp = lm.get_language("python")
-			self.tb.set_highlight_syntax(True)
-			self.tb.set_language(lp)
-			self.tb.set_max_undo_levels(16)
-			self.tb.set_highlight_matching_brackets(False)
+			tb.set_highlight_syntax(True)
+			tb.set_language(lp)
+			tb.set_max_undo_levels(16)
+			tb.set_highlight_matching_brackets(False)
 			tv.set_show_line_marks(True)
 			tv.set_show_line_numbers(True)
 			tv.set_draw_spaces(True)
@@ -732,67 +971,120 @@ class CliWindow(gtk.Window):
 			tv.set_property("draw-spaces",51) # space, tab, leading, text
 		else:
 			tv = gtk.TextView()
-			self.tb = tv.get_buffer()
-
-		s = gtk.ScrolledWindow()
-		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-		s.set_size_request(660,400)
-		s.add(tv)
-		s.show_all()
-		hbox = gtk.HBox()
-
-		hbox.pack_start(open_btn,0,0,0)
-		hbox.pack_start(save_btn,0,0,0)
-		hbox.pack_end(run_btn,0,0,0)
-		
-		vbox = gtk.VBox()
-		hbox2 = gtk.HBox()
-		hbox2.pack_start(s)
-		vbox.pack_start(hbox2)
-		vbox.pack_start(hbox,0,0,0)
-
-		runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-		runwin.set_resizable(True)
-		runwin.set_border_width(2)
-		runwin.add(vbox)
-		runwin.set_title("OleToy CLI")
-		runwin.connect ("destroy", self.del_runwin)
-		run_btn.connect("button-press-event",self.cli_on_run,self.tb)
-		open_btn.connect("button-press-event",self.cli_on_open,self.tb)
-		save_btn.connect("button-press-event",self.cli_on_save,self.tb)
-		runwin.show_all()
-		tv.grab_focus()
-		self.app.run_win = runwin
+			tb = tv.get_buffer()
+		return tb,tv
 
 	def del_runwin (self, action):
 		self.app.run_win = None
 
-	def cli_on_open (self,wg,event,tb):
+	def on_key_press(self,a1,a2,a3,a4):
+		if a3 == 110:
+			self.cli_on_new (None,None)
+		elif a3 == 111:
+			self.cli_on_open (None,None)
+		elif a3 == 114:
+			self.cli_on_run (None,None)
+		elif a3 == 115:
+			self.cli_on_save (None,None)
+		return True
+
+
+	def on_row_activated(self,view,path,column):
+		iter1 = self.snmodel.get_iter(path)
+		txt = self.snmodel.get_value(iter1,1)
+		pn = self.clinb.get_current_page()
+		if pn != -1:
+			tb = self.scripts[pn][0]
+			tb.insert_at_cursor(txt)
+
+	def on_row_keypressed (self, view, event):
+		treeSelection = view.get_selection()
+		model, iter1 = treeSelection.get_selected()
+		if iter1:
+			intPath = model.get_path(iter1)
+			if event.keyval == 65535:
+				model.remove(iter1)
+				if model.get_iter_first():
+					if intPath >= 0:
+						view.set_cursor(intPath)
+						view.grab_focus()
+
+
+	def cli_on_open (self,wg,event,fname=None):
 		home = expanduser("~")
-		self.fname = self.app.file_open('Open',home+"/.oletoy")
-		if self.fname:
-			manager = gtk.recent_manager_get_default()
-			manager.add_item(self.fname)
+		if fname is None:
+			fname = self.app.file_open('Open',None,os.path.join(home,".oletoy"))
+			if fname:
+				manager = gtk.recent_manager_get_default()
+				manager.add_item(fname)
+		if fname:
 			offset = 0
-			f = open(self.fname,"rb")
+			f = open(fname,"rb")
 			buf = f.read()
 			if buf:
-				self.tb.set_text(buf)
+				self.cli_on_new(wg,event,buf,fname)
 			f.close()
 
-	def cli_on_save (self,wg,event,tb):
-		home = expanduser("~")
-		self.fname = self.app.file_open('Save',home+"/.oletoy",self.fname)
-		if self.fname:
-			txt = self.tb.get_text(tb.get_start_iter(),tb.get_end_iter())
-			f = open(self.fname,'wb')
-			f.write(txt)
-			f.close()
-			manager = gtk.recent_manager_get_default()
-			manager.add_item(self.fname)
 
-	def cli_on_run (self,wg,event,tb):
-		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
+	def curpage_is_empty(self):
+		pn = self.clinb.get_current_page()
+		if pn != -1:
+			script = self.scripts[pn]
+			if not len(script[0].get_text(script[0].get_start_iter(),script[0].get_end_iter())):
+				return True
+		return False
+
+
+	def cli_on_save (self,wg,event):
+		pn = self.clinb.get_current_page()
+		if pn != -1:
+			script = self.scripts[pn]
+			fname = script[2].get_label_text()
+			home = expanduser("~")
+			fname = self.app.file_open('Save',None,script[1],fname)
+			if fname:
+				txt = script[0].get_text(script[0].get_start_iter(),script[0].get_end_iter())
+				f = open(fname,'wb')
+				f.write(txt)
+				f.close()
+				manager = gtk.recent_manager_get_default()
+				manager.add_item(fname)
+				# need to change tab label and store fname
+				dname,pname = os.path.split(fname)
+				script[1] = dname
+				script[2].change_text(pname)
+		self.save_state()
+
+
+	def cli_on_new (self,wg,event,txt="",fname=""):
+		if fname == "":
+			fname = "New %s"%(len(self.scripts)+1)
+		dname,pname = os.path.split(fname)
+		if self.curpage_is_empty():
+			pn = self.clinb.get_current_page()
+			if pn != -1:
+				script = self.scripts[pn]
+				script[0].set_text(txt)
+				script[1] = dname
+				script[2].change_text(pname)
+		else:
+			tb,tv = self.create_tbtv()
+			s = gtk.ScrolledWindow()
+			s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			s.set_size_request(660,400)
+			s.add(tv)
+			s.show_all()
+	
+			tab_lbl = TabLabel(pname)
+			tab_lbl.connect("close-clicked", tab_lbl.on_tab_close_clicked, self.clinb, s, self.scripts, "script")
+			self.clinb.append_page(s, tab_lbl)
+			self.clinb.set_current_page(-1)
+			if txt != "":
+				tb.set_text(txt)
+			self.scripts[len(self.scripts)] = [tb,dname,tab_lbl]
+
+
+	def cli_on_run (self,wg,event):
 		pn = self.app.notebook.get_current_page()
 		if pn != -1:
 			rapp = self.app
@@ -803,7 +1095,23 @@ class CliWindow(gtk.Window):
 				rbuf = rmodel.get_value(riter,3)
 			else:
 				rbuf = ""
-			exec(txt)
+			pnb = self.clinb.get_current_page()
+			if pnb != -1:
+				script = self.scripts[pnb]
+				txt = script[0].get_text(script[0].get_start_iter(),script[0].get_end_iter())
+				exec(txt)
+
+
+	def on_drag_data_received(self, view, drag_context, x, y, selection_data, info, eventtime):
+		self.OSD_txt = selection_data.get_text()
+		if self.OSD is None:
+			self.OSD = OSD_Entry(self,None,"snippet")
+		xv,yv,w,h = self.scroll.allocation
+		xw,yw = self.scroll.get_parent_window().get_position()
+		self.OSD.hide()
+		self.OSD.show_all()
+		self.OSD.move(x+xw+xv,y+yw+yv)
+		drag_context.finish(success=True, del_=False, time=eventtime)
 
 
 def arg_conv (ctype,carg):
