@@ -79,8 +79,8 @@ vmp_rec = {
 	0x1739:("?","?"),
 	0x1743:("?","?"),
 	0x1749:("Next style?","?"),
-	0x1c24:("?","?"),
-	0x1c2c:("?","?"),
+	0x1c24:("?","?"), # page start X?  same for 1c7c
+	0x1c2c:("?","?"), # page start Y?  same for 1c84
 	0x1c34:("Page W","?"),
 	0x1c3c:("Page H","?"),
 	0x1c43:("?","?"),
@@ -321,6 +321,24 @@ def hdBendFilter(hd,data,page):
 	# 2-4.4-6 -- X
 	# 6-8.8-10 -- Y
 	pass
+
+
+def hdPropLst(hd,data,page):
+	off = 0
+	size = struct.unpack('>h', data[off+2:off+4])[0]
+	res = 8
+	for i in range(size):
+		L1,rid1 = read_recid(data,off+res)
+		res += L1
+		L2,rid2 = read_recid(data,off+res)
+		res += L2
+		if rid1 in page.appdoc.recs:
+			at = page.appdoc.recs[rid1][1]
+		else:
+			at = "%02x"%rid1
+		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
+
+
 
 def hdLayer(hd,data,page):
 	offset = 0
@@ -567,6 +585,7 @@ hdp = {
 	"TintColor6":hdColor6,
 	"VMpObj":hdVMpObj,
 	"Path":hdPath,
+	"PropLst":hdPropLst,
 	"TFOnPath":hdTFOnPath,
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
@@ -983,9 +1002,12 @@ class FHDoc():
 		return 14
 
 	def Extrusion(self,off,recid,mode=0):
+		res,rid = self.read_recid(off)
+		L,rid = self.read_recid(off+res)
+		res += L
 		var1 = ord(self.data[off+0x60])
 		var2 = ord(self.data[off+0x61])
-		length= 96 + self.xform_calc(var1,var2)+2
+		length= res + 92 + self.xform_calc(var1,var2)[0] +2
 		return length
 
 	def Figure (self,off,recid,mode=0):
