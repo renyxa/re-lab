@@ -73,6 +73,13 @@ def hex2d(data):
 		res += struct.pack("B",num)
 	return res
 
+
+def cnvrt22(data,end=">"):
+	i = struct.unpack("%sh"%end,data[0:2])[0]
+	f = struct.unpack("%sh"%end,data[2:4])[0]/65536.
+	return i+f
+
+
 def d2asc(data,ln=0,rch=unicode("\xC2\xB7","utf8")):
 	asc = ""
 	for i in range(len(data)):

@@ -336,6 +336,71 @@ def hdLayer(hd,data,page):
 	add_iter (hd,'View mode',lmtxt,offset+9,1,"txt")
 	add_iter (hd,'Visible',visib,offset+17,1,"B")
 
+
+def xform_calc(var1,var2):
+	a5 = not (var1&0x20)/0x20
+	a4 = not (var1&0x10)/0x10
+	a2 = (var1&0x4)/0x4
+	a1 = (var1&0x2)/0x2
+	a0 = (var1&0x1)/0x1
+	b6 = (var2&0x40)/0x40
+	b5 = (var2&0x20)/0x20
+	if a2:
+		return 0,()
+	xlen = (a5+a4+a1+a0+b6+b5)*4
+	return xlen,(a4,b6,b5,a5,a0,a1)
+
+
+def hdXform(hd,data,page):
+	offset = 0
+	var1 = ord(data[offset])
+	var2 = ord(data[offset+1])
+	len1,x = xform_calc(var1,var2)
+	offset += 2
+	if len1 > 0:
+		if x[0]:
+			m11 = cnvrt22(data[offset:offset+4])
+			add_iter (hd,'m11',"%.2f"%m11,offset,4,">HH")
+			offset += 4
+		else:
+			m11 = 1
+			add_iter (hd,'m11',"%.2f"%m11,offset,0,">HH")
+		if x[1]:
+			m21 = cnvrt22(data[offset:offset+4])
+			add_iter (hd,'m21',"%.2f"%m21,offset,4,">HH")
+			offset += 4
+		else:
+			m21 = 0
+			add_iter (hd,'m21',"%.2f"%m21,offset,0,">HH")
+		if x[2]:
+			m12 = cnvrt22(data[offset:offset+4])
+			add_iter (hd,'m12',"%.2f"%m12,offset,4,">HH")
+			offset += 4
+		else:
+			m12 = 0
+			add_iter (hd,'m12',"%.2f"%m12,offset,0,">HH")
+		if x[3]:
+			m22 = cnvrt22(data[offset:offset+4])
+			add_iter (hd,'m22',"%.2f"%m22,offset,4,">HH")
+			offset += 4
+		else:
+			m22 = 1
+			add_iter (hd,'m22',"%.2f"%m22,offset,0,">HH")
+		if x[4]:
+			m13 = cnvrt22(data[offset:offset+4])
+			add_iter (hd,'m13',"%.2f"%m13,offset,4,">HH")
+			offset += 4
+		else:
+			m13 = 0
+			add_iter (hd,'m13',"%.2f"%m13,offset,0,">HH")
+		if x[5]:
+			m23 = cnvrt22(data[offset:offset+4])
+			add_iter (hd,'m23',"%.2f"%m23,offset,4,">HH")
+		else:
+			m23 = 0
+			add_iter (hd,'m23',"%.2f"%m23,offset,0,">HH")
+
+
 def hdRectangle(hd,data,page):
 	offset = 0
 	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
@@ -506,7 +571,8 @@ hdp = {
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
 	"TEffect":hdTEffect,
-	"VDict":hdTEffect
+	"VDict":hdTEffect,
+	"Xform":hdXform,
 	}
 
 
@@ -1569,17 +1635,17 @@ class FHDoc():
 		b6 = (var2&0x40)/0x40
 		b5 = (var2&0x20)/0x20
 		if a2:
-			return 0
+			return 0,()
 		xlen = (a5+a4+a1+a0+b6+b5)*4
-		return xlen
+		return xlen,(a4,b6,b5,a5,a0,a1)
 	
 	def Xform(self,off,recid,mode=0):
 		var1 = ord(self.data[off])
 		var2 = ord(self.data[off+1])
-		len1 = self.xform_calc(var1,var2)
+		len1,x = self.xform_calc(var1,var2)
 		var1 = ord(self.data[off+len1+2])
 		var2 = ord(self.data[off+len1+3])
-		len2 = self.xform_calc(var1,var2)
+		len2,x = self.xform_calc(var1,var2)
 		length = len1+len2+4
 		if self.version == 8:
 			length = 52
