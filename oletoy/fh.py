@@ -342,17 +342,28 @@ def hdPropLst(hd,data,page):
 
 def hdLayer(hd,data,page):
 	offset = 0
-	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
-	mode = ord(data[offset+9])
+	L1,gr_style = read_recid(data,offset)
+	offset += L1
+	mode = ord(data[offset+7])
 	lmtxt = 'Normal'
 	if mode&0x10 == 0x10:
 		lmtxt = 'Wire'
 	if mode&0x1 == 1:
 		lmtxt += ' Locked'
-	visib = ord(data[offset+17])
-	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
-	add_iter (hd,'View mode',lmtxt,offset+9,1,"txt")
-	add_iter (hd,'Visible',visib,offset+17,1,"B")
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,L1,">H")
+	add_iter (hd,'View mode',lmtxt,L1+7,1,"txt")
+	L2,attr = read_recid(data,offset+8)
+	offset += L2
+	L3,name = read_recid(data,offset+8)
+	if name in page.appdoc.recs:
+		at = page.appdoc.recs[name][1]
+	else:
+		at = "%02x"%name
+
+	add_iter (hd,'Layer name',at,offset+8,L3,"B")
+	offset += L3
+	visib = ord(data[offset+11])
+	add_iter (hd,'Visible',visib,offset+11,1,"B")
 
 
 def xform_calc(var1,var2):
@@ -534,6 +545,16 @@ def hdGraphicStyle(hd,data,page):
 			vt = "%02x"%v
 		add_iter (hd,at,vt,off-4,4,">HH")
 
+
+def hdAttributeHolder(hd,data,page):
+	offset = 0
+	L,parent = read_recid(data,offset)
+	add_iter (hd,'Parent',"%02x"%parent,offset,L,">H")
+	offset += L
+	L,attr = read_recid(data,offset)
+	add_iter (hd,'Attr ID',"%02x"%attr,offset,L,">H")
+
+
 def hdBasicFill(hd,data,page):
 	offset = 0
 	L,clr = read_recid(data,offset)
@@ -586,6 +607,7 @@ def hdColor6(hd,data,page):
 	add_iter (hd,'Name',at,2,2,">H")
 
 hdp = {
+	"AttributeHolder":hdAttributeHolder,
 	"GraphicStyle":hdGraphicStyle,
 	"Rectangle":hdRectangle,
 	"BasicFill":hdBasicFill,
