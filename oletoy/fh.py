@@ -533,22 +533,38 @@ def hdGraphicStyle(hd,data,page):
 		else:
 			vt = "%02x"%v
 		add_iter (hd,at,vt,off-4,4,">HH")
-	
+
+def hdBasicFill(hd,data,page):
+	offset = 0
+	L,clr = read_recid(data,offset)
+	add_iter (hd,'Color',"%02x"%clr,offset,L,"txt")
+	offset += L
+	overprint = ord(data[offset+2])
+
+
 def hdBasicLine(hd,data,page):
 	offset = 0
-	clr = struct.unpack('>H', data[offset:offset+2])[0] # link to color chunk????
-	dash = struct.unpack('>H', data[offset+2:offset+4])[0] # link to linepat chunk
-	larr = struct.unpack('>H', data[offset+4:offset+6])[0] # link to arrowpat chunk
-	rarr = struct.unpack('>H', data[offset+6:offset+8])[0] # link to arrowpat chunk
-
-	mit = struct.unpack('>H', data[offset+8:offset+10])[0]
-	mitf = struct.unpack('>H', data[offset+10:offset+12])[0]
-	w = struct.unpack('>H', data[offset+12:offset+14])[0]
-	overprint = ord(data[offset+17])
-	join = ord(data[offset+18]) # 0 - angle, 1 - round, 2 - square
-	cap = ord(data[offset+19]) # 0 - none, 1 - round, 2 - square
-	add_iter (hd,'Miter',"%.4f"%(mit+mitf/65536.),8,4,"txt")
-	add_iter (hd,'Width',w,12,2,">H")
+	L,clr = read_recid(data,offset)
+	add_iter (hd,'Color',"%02x"%clr,offset,L,"txt")
+	offset += L
+	L,dash = read_recid(data,offset)
+	add_iter (hd,'Line Pattern',"%02x"%dash,offset,L,"txt")
+	offset += L
+	L,larr = read_recid(data,offset)
+	add_iter (hd,'Start Arrow',"%02x"%larr,offset,L,"txt")
+	offset += L
+	L,rarr = read_recid(data,offset)
+	add_iter (hd,'End Arrow',"%02x"%rarr,offset,L,"txt")
+	offset += L
+	mit = struct.unpack('>H', data[offset:offset+2])[0]
+	mitf = struct.unpack('>H', data[offset+2:offset+4])[0]
+	w = struct.unpack('>H', data[offset+4:offset+6])[0]
+	overprint = ord(data[offset+7])
+	join = ord(data[offset+8]) # 0 - angle, 1 - round, 2 - square
+	cap = ord(data[offset+9]) # 0 - none, 1 - round, 2 - square
+	# FIXME! add iters for overprint/join/cap
+	add_iter (hd,'Miter',"%.4f"%(mit+mitf/65536.),offset,4,"txt")
+	add_iter (hd,'Width',w,offset+4,2,">H")
 
 def hdList(hd,data,page):
 	offset = 0
@@ -572,6 +588,7 @@ def hdColor6(hd,data,page):
 hdp = {
 	"GraphicStyle":hdGraphicStyle,
 	"Rectangle":hdRectangle,
+	"BasicFill":hdBasicFill,
 	"BasicLine":hdBasicLine,
 	"Oval":hdOval,
 	"Group":hdGroup,
