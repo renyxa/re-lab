@@ -76,7 +76,7 @@ vmp_rec = {
 	0x16fb:("?","?"),
 	0x1729:("?","?"),
 	0x1734:("?","?"),
-	0x1739:("?","?"),
+	0x1739:("?","?"), # id of ustring w font name
 	0x1743:("?","?"),
 	0x1749:("Next style?","?"),
 	0x1c24:("?","?"), # page start X?  same for 1c7c
@@ -1211,7 +1211,7 @@ class FHDoc():
 	def MasterPageLayerInstance(self,off,recid,mode=0):
 		var1 = ord(self.data[off+0xe])
 		var2 = ord(self.data[off+0xf])
-		length=14 + self.xform_calc(var1,var2)+2 +2
+		length=14 + self.xform_calc(var1,var2)[0]+2 +2
 		return length
 
 	def MasterPageSymbolClass(self,off,recid,mode=0):
@@ -1220,7 +1220,7 @@ class FHDoc():
 	def MasterPageSymbolInstance(self,off,recid,mode=0):
 		var1 = ord(self.data[off+0xe])
 		var2 = ord(self.data[off+0xf])
-		length=14 + self.xform_calc(var1,var2)+2 +2
+		length=14 + self.xform_calc(var1,var2)[0]+2 +2
 		return length
 
 	def MList(self,off,recid,mode=0):
@@ -1487,7 +1487,7 @@ class FHDoc():
 		res += L
 		var1 = ord(self.data[off+res+8])
 		var2 = ord(self.data[off+res+9])
-		return 10 + res + self.xform_calc(var1,var2)
+		return 10 + res + self.xform_calc(var1,var2)[0]
 
 	def SymbolLibrary(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
