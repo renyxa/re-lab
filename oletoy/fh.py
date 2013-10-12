@@ -1742,9 +1742,18 @@ class FHDoc():
 				try:
 					res = self.chunks[self.dictitems[i]](offset,j)
 					if -1 < res <= len(self.data)-offset:
-						niter = add_pgiter(self.page,"[%02x] %s"%(j,self.dictitems[i]),"fh",self.dictitems[i],self.data[offset:offset+res],self.diter)
+						uid = ""
+						if self.dictitems[i] in ("Layer","Rectangle","Oval","ClipGroup","Group","CompositePath"):
+							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+6:offset+8])[0])
+						elif self.dictitems[i] == "Path":
+							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+8:offset+10])[0])
+						elif self.dictitems[i] == "TextColumn":
+							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+14:offset+16])[0])
+						niter = add_pgiter(self.page,"[%02x] %s %s"%(j,self.dictitems[i],uid),"fh",self.dictitems[i],self.data[offset:offset+res],self.diter)
 						self.page.model.set_value(niter,4,(j-1,offset))
 						offset += res
+						if uid != "":
+							print self.dictitems[i],uid
 					else:
 						add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
 						for k in range(10):
