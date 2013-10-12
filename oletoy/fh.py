@@ -37,7 +37,7 @@ agd_rec = {
 
 vmp_rec = {
 	0x0321:("Name","recid"),
-	0x065b:("?","?"),
+	0x065b:("uid","?"),
 	0x15e3:("Txt Align","enum(txtalign)"), # 0 left, 1 right, 2 center, 3 justify, 
 	0x15ea:("?","?"),
 	0x15f2:("?","?"),
@@ -485,32 +485,36 @@ def hdRectangle(hd,data,page):
 
 def hdOval(hd,data,page):
 	offset = 0
-	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
-	layer = struct.unpack('>H', data[offset+2:offset+4])[0]
-	xform = struct.unpack('>H', data[offset+16:offset+18])[0]
-	x1 = struct.unpack('>H', data[offset+18:offset+20])[0] - 1692
-	x1f = struct.unpack('>H', data[offset+20:offset+22])[0]
-	y1 = struct.unpack('>H', data[offset+22:offset+24])[0] - 1584
-	y1f = struct.unpack('>H', data[offset+24:offset+26])[0]
-	x2 = struct.unpack('>H', data[offset+26:offset+28])[0] - 1692
-	x2f = struct.unpack('>H', data[offset+28:offset+30])[0]
-	y2 = struct.unpack('>H', data[offset+30:offset+32])[0] - 1584
-	y2f = struct.unpack('>H', data[offset+32:offset+34])[0]
-	arc1 = struct.unpack('>H', data[offset+34:offset+36])[0]
-	arc1f = struct.unpack('>H', data[offset+36:offset+38])[0]
-	arc2 = struct.unpack('>H', data[offset+38:offset+40])[0]
-	arc2f = struct.unpack('>H', data[offset+40:offset+42])[0]
-	clsd = ord(data[offset+42])
-	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
-	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
-	add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
-	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),18,4,"txt")
-	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),22,4,"txt")
-	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),26,4,"txt")
-	add_iter (hd,'Y2',"%.4f"%(y2+y2f/65536.),30,4,"txt")
-	add_iter (hd,'Arc <>',"%.4f"%(arc1+arc1f/65536.),34,4,"txt")
-	add_iter (hd,'Arc ()',"%.4f"%(arc2+arc2f/65536.),38,4,"txt")
-	add_iter (hd,'Closed',clsd,42,1,"B")
+	L,gr_style = read_recid(data,offset)
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,offset,L,">H")
+	offset += L
+	L,layer = read_recid(data,offset)
+	add_iter (hd,'Parent',"%02x"%layer,offset,L,">h")
+	offset += L
+	L,xform = read_recid(data,offset+12)
+	add_iter (hd,'XForm',"%02x"%xform,offset+12,L,">h")
+	offset += L
+	x1 = struct.unpack('>H', data[offset+12:offset+14])[0] - 1692
+	x1f = struct.unpack('>H', data[offset+14:offset+16])[0]
+	y1 = struct.unpack('>H', data[offset+16:offset+18])[0] - 1584
+	y1f = struct.unpack('>H', data[offset+18:offset+20])[0]
+	x2 = struct.unpack('>H', data[offset+20:offset+22])[0] - 1692
+	x2f = struct.unpack('>H', data[offset+22:offset+24])[0]
+	y2 = struct.unpack('>H', data[offset+24:offset+26])[0] - 1584
+	y2f = struct.unpack('>H', data[offset+26:offset+28])[0]
+	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),offset+12,4,"txt")
+	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),offset+16,4,"txt")
+	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),offset+20,4,"txt")
+	add_iter (hd,'Y2',"%.4f"%(y2+y2f/65536.),offset+24,4,"txt")
+	if page.version > 10:
+		arc1 = struct.unpack('>H', data[offset+28:offset+30])[0]
+		arc1f = struct.unpack('>H', data[offset+30:offset+32])[0]
+		arc2 = struct.unpack('>H', data[offset+32:offset+34])[0]
+		arc2f = struct.unpack('>H', data[offset+34:offset+36])[0]
+		clsd = ord(data[offset+36])
+		add_iter (hd,'Arc <>',"%.4f"%(arc1+arc1f/65536.),offset+28,4,"txt")
+		add_iter (hd,'Arc ()',"%.4f"%(arc2+arc2f/65536.),offset+32,4,"txt")
+		add_iter (hd,'Closed',clsd,offset+36,1,"B")
 
 def hdGroup(hd,data,page):
 	offset = 0
