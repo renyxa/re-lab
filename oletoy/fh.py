@@ -64,7 +64,7 @@ vmp_rec = {
 	0x169c:("BaseLn Shift" ,"?"),
 	0x16a2:("?","?"),
 	0x16aa:("?","?"),
-	0x16b1:("?","?"),
+	0x16b1:("TEffect ID","?"),  # teffect ID
 	0x16b9:("Txt Color ID","?"),
 	0x16c1:("Font ID","?"),
 	0x16c9:("?","?"),
@@ -75,29 +75,31 @@ vmp_rec = {
 	0x16f1:("?","?"),
 	0x16fb:("?","?"),
 	0x1729:("?","?"),
-	0x1734:("?","?"),
-	0x1739:("?","?"), # id of ustring w font name
+	0x1734:("Font Size","?"),
+	0x1739:("Font Name","?"), # id of ustring w font name
 	0x1743:("?","?"),
 	0x1749:("Next style?","?"),
-	0x1c24:("?","?"), # page start X?  same for 1c7c
-	0x1c2c:("?","?"), # page start Y?  same for 1c84
+	0x1c7c:("Page Start X","?"),
+	0x1c84:("Page Start Y","?"),
+	0x1c24:("Page Start X","?"), # page start X?  same for 1c7c
+	0x1c2c:("Page Start Y","?"), # page start Y?  same for 1c84
 	0x1c34:("Page W","?"),
 	0x1c3c:("Page H","?"),
 	0x1c43:("?","?"),
 	0x1c4c:("?","?"),
 	0x1c51:("?","?"),
-	0x1c71:("?","?"),
+	0x1c71:("?","?"), # guides ID?
 	0x1c7c:("?","?"),
 	0x1c84:("?","?"),
-	0x1c89:("?","?"),
+	0x1c89:("?","?"), # Group ID?
 	}
 
 teff_rec = {
 	0x1a91:("Effect Name","?"),
-#	0x1ab9:"",
-#	0x1ac1:"", 
-#	0x1acc:"BG Width", #2.2
-#	0x1ad4:"Stroke Width", #2.2
+	0x1ab9:("Underline Clr ID",""),  # underline color ID
+	0x1ac1:("Underline Dash ID",""),  # underline dash ID
+	0x1acc:("Underline Position","?"), #"BG Width", #2.2
+	0x1ad4:("Stroke Width","?"), #2.2
 #	0x1adb:"Count",
 	}
 
@@ -595,6 +597,18 @@ def hdList(hd,data,page):
 		ltxt += " (%s)"%page.dict[ltype]
 		add_iter (hd,'List Type',ltxt,10,2,">H")
 
+
+def hdCompositePath(hd,data,page):
+	offset = 0
+	res,rid1 = read_recid(data,offset)
+	add_iter (hd,'Graphic Style',"%02x"%rid1,offset,res,">H")
+	L,rid2 = read_recid(data,offset+res)
+	add_iter (hd,'Parent',"%02x"%rid2,offset+res,L,">H")
+	res += L
+	L,rid3 = read_recid(data,offset+8+res)
+	add_iter (hd,'List of paths',"%02x"%rid3,offset+res+8,L,">H")
+
+
 def hdColor6(hd,data,page):
 	offset = 0
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
@@ -620,6 +634,7 @@ hdp = {
 	"MList":hdList,
 	"BrushList":hdList,
 	"Color6":hdColor6,
+	"CompositePath":hdCompositePath,
 	"SpotColor6":hdColor6,
 	"TintColor6":hdColor6,
 	"VMpObj":hdVMpObj,
