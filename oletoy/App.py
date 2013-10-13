@@ -18,7 +18,7 @@ import sys,struct,os
 import tree, gtk, gobject
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
-import abr,rtf, otxml, chdraw,vfb
+import abr,rtf, otxml, chdraw,vfb,fbx
 import lrf
 import pdb
 import sbimp
@@ -164,6 +164,12 @@ class Page:
 			self.type = "REX2"
 			print "Probably REX2"
 			rx2.open(buf,self, parent)
+			return 0
+		
+		if buf[0:20] == "Kaydara FBX Binary  ":
+			self.type = "FBX"
+			print "Probably FBX"
+			fbx.open(buf,self, parent)
 			return 0
 		
 		if buf[4:19] == "Standard Jet DB" or buf[4:19] == "Standard ACE DB":

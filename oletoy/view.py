@@ -43,7 +43,7 @@ try:
 except:
 	pass
 
-version = "0.7.38"
+version = "0.7.39"
 
 ui_info = \
 '''<ui>
