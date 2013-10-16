@@ -190,6 +190,24 @@ def hdTFOnPath(hd,data,page):
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
 
+
+def hdFHTail(hd,data,page):
+	offset = 0
+	L,recid = read_recid(data,2)
+	add_iter (hd,'Block ID',"%02x"%recid,offset,L,">H")
+	offset += L
+	L,recid = read_recid(data,2)
+	add_iter (hd,'PropLst ID',"%02x"%recid,offset,L,">H")
+	offset += L
+	L,recid = read_recid(data,offset)
+	if recid in page.appdoc.recs:
+		at = page.appdoc.recs[recid][1]
+	else:
+		at = "%02x"%recid
+	add_iter (hd,"Default Font ??",at,offset,L,">HH")
+
+
+
 def hdHaftone(hd,data,page):
 	offset = 0
 	# 0-2 -- link to MName with "Screen" string
@@ -678,32 +696,33 @@ def hdColor6(hd,data,page):
 	add_iter (hd,'Name',at,2,2,">H")
 
 hdp = {
+	"AGDFont":hdAGDFont,
 	"ArrowPath":hdArrowPath,
 	"AttributeHolder":hdAttributeHolder,
-	"GraphicStyle":hdGraphicStyle,
-	"Rectangle":hdRectangle,
 	"BasicFill":hdBasicFill,
 	"BasicLine":hdBasicLine,
-	"Oval":hdOval,
+	"BrushList":hdList,
+	"Color6":hdColor6,
+	"CompositePath":hdCompositePath,
+	"FHTail":hdFHTail,
+	"GraphicStyle":hdGraphicStyle,
 	"Group":hdGroup,
-	"AGDFont":hdAGDFont,
 	"ImageImport":hdImageImport,
 	"Layer":hdLayer,
 	"List":hdList,
 	"MList":hdList,
-	"BrushList":hdList,
-	"Color6":hdColor6,
-	"CompositePath":hdCompositePath,
-	"SpotColor6":hdColor6,
-	"TintColor6":hdColor6,
-	"VMpObj":hdVMpObj,
+	"Oval":hdOval,
 	"Path":hdPath,
 	"PropLst":hdPropLst,
+	"Rectangle":hdRectangle,
+	"SpotColor6":hdColor6,
+	"TintColor6":hdColor6,
 	"TFOnPath":hdTFOnPath,
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
 	"TEffect":hdTEffect,
 	"VDict":hdTEffect,
+	"VMpObj":hdVMpObj,
 	"Xform":hdXform,
 	}
 
