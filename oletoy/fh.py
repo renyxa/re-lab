@@ -409,8 +409,24 @@ def hdImageImport(hd,data,page):
 	offset += L5
 	L6,attr = read_recid(data,offset)
 	add_iter (hd,'Xform',"%02x"%attr,offset,L6,">H")
-
-
+	offset += L6+8
+	x = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'?',"%.2f"%x,offset,4,">HH")
+	offset += 4
+	x = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'?',"%.2f"%x,offset,4,">HH")
+	offset += 4+6
+	w = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Orig Image W ?',"%d"%w,offset,2,">H")
+	offset += 2
+	h = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Orig Image H ?',"%d"%h,offset,2,">H")
+	offset += 2+4
+	w = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Orig Image W ?',"%d"%w,offset,2,">H")
+	offset += 2
+	h = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Orig Image H ?',"%d"%h,offset,2,">H")
 
 
 def hdLayer(hd,data,page):
