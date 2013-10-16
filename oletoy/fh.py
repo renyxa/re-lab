@@ -235,6 +235,37 @@ def hdPath(hd,data,page):
 		add_iter (hd,'\tYh2 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
 		shift -=16
 
+
+def hdArrowPath(hd,data,page):
+	offset = 0
+	shift = offset + 30
+	numpts = struct.unpack('>h', data[offset+20:offset+22])[0]
+	for i in range(numpts):
+		ptype = ord(data[shift+1+i*27])
+		add_iter (hd,'Type %d'%i,"%d (%s)"%(ptype,pts_types[ptype]),shift+i*27+1,1,"B")
+		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
+		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
+		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
+		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
+		add_iter (hd,'X %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
+		add_iter (hd,'Y %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
+		shift +=8
+		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
+		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
+		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
+		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
+		add_iter (hd,'\tXh1 %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
+		add_iter (hd,'\tYh1 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
+		shift +=8
+		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
+		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
+		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
+		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
+		add_iter (hd,'\tXh2 %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
+		add_iter (hd,'\tYh2 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
+		shift -=16
+	
+
 def hdAGDFont(hd,data,page):
 	offset = 0
 	num = struct.unpack('>h', data[offset+4:offset+6])[0]
@@ -339,6 +370,28 @@ def hdPropLst(hd,data,page):
 		else:
 			at = "%02x"%rid1
 		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
+
+
+def hdImageImport(hd,data,page):
+	offset = 0
+	L1,gr_style = read_recid(data,offset)
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,L1,">H")
+	offset += L1
+	L2,attr = read_recid(data,offset)
+	add_iter (hd,'Parent',"%02x"%attr,offset,L2,">H")
+	offset += L2+8
+	L3,attr = read_recid(data,offset)
+	add_iter (hd,'??',"%02x"%attr,offset,L3,">H")
+	offset += L3
+	L4,attr = read_recid(data,offset)
+	add_iter (hd,'DataList',"%02x"%attr,offset,L4,">H")
+	offset += L4
+	L5,attr = read_recid(data,offset)
+	add_iter (hd,'FileDescriptor',"%02x"%attr,offset,L5,">H")
+	offset += L5
+	L6,attr = read_recid(data,offset)
+	add_iter (hd,'Xform',"%02x"%attr,offset,L6,">H")
+
 
 
 
@@ -625,6 +678,7 @@ def hdColor6(hd,data,page):
 	add_iter (hd,'Name',at,2,2,">H")
 
 hdp = {
+	"ArrowPath":hdArrowPath,
 	"AttributeHolder":hdAttributeHolder,
 	"GraphicStyle":hdGraphicStyle,
 	"Rectangle":hdRectangle,
@@ -633,6 +687,7 @@ hdp = {
 	"Oval":hdOval,
 	"Group":hdGroup,
 	"AGDFont":hdAGDFont,
+	"ImageImport":hdImageImport,
 	"Layer":hdLayer,
 	"List":hdList,
 	"MList":hdList,
@@ -1149,19 +1204,16 @@ class FHDoc():
 		return 6
 
 	def ImageImport(self,off,recid,mode=0):
-		shift = 34
 		res,rid = self.read_recid(off)
-		res += 10
+		L,rid = self.read_recid(off+res)
+		res += L+10
 		for i in range(4):
 			L,rid = self.read_recid(off+res)
 			res += L
-		while ord(self.data[off+shift+res]) != 0:
-			shift += 1
-		shift += 1
-		if self.version == 11:
-			shift += 2
+		if self.version > 8:
+			shift = 35
 		elif self.version == 8:
-			shift -= 3  # suo.fh8
+			shift = 32  # suo.fh8
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
@@ -1747,7 +1799,7 @@ class FHDoc():
 					res = self.chunks[self.dictitems[i]](offset,j)
 					if -1 < res <= len(self.data)-offset:
 						uid = ""
-						if self.dictitems[i] in ("Layer","Rectangle","Oval","ClipGroup","Group","CompositePath"):
+						if self.dictitems[i] in ("ImageImport","polygonFigure","Extrusion","Layer","Rectangle","Oval","ClipGroup","Group","CompositePath"):
 							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+6:offset+8])[0])
 						elif self.dictitems[i] == "Path":
 							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+8:offset+10])[0])
