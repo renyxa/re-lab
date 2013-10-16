@@ -1208,12 +1208,12 @@ class FHDoc():
 	def ImageImport(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
-		res += L+10
+		res += L+8
 		for i in range(4):
 			L,rid = self.read_recid(off+res)
 			res += L
 		if self.version > 8:
-			shift = 35
+			shift = 37
 		elif self.version == 8:
 			shift = 32  # suo.fh8
 		return shift+res
