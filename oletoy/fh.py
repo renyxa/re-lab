@@ -831,6 +831,7 @@ class FHDoc():
 		"RaggedFilter":self.RaggedFilter,
 		"Rectangle":self.Rectangle,
 		"SketchFilter":self.SketchFilter,
+		"SpotColor":self.SpotColor,
 		"SpotColor6":self.SpotColor6,
 		"StylePropLst":self.StylePropLst,
 		"SwfImport":self.SwfImport,
@@ -846,6 +847,7 @@ class FHDoc():
 		"TextInPath":self.TextInPath,
 		"TFOnPath":self.TFOnPath,
 		"TileFill":self.TileFill,
+		"TintColor":self.TintColor,
 		"TintColor6":self.TintColor6,
 		"TransformFilter":self.TransformFilter,
 		"TString":self.TString,
@@ -1263,10 +1265,10 @@ class FHDoc():
 		for i in range(size):
 			l,rid = self.read_recid(off+res)
 			res += l
-		if self.version == 8: # verify for others
+		if self.version < 9: # verify for others
 			size2 = struct.unpack('>h', self.data[off:off+2])[0]
 			res += (size2-size)*2
-#		if self.version < 9 and (res > 12 or struct.unpack('>h',self.data[off:off+2])[0] > 0) and res < 32:
+#		if self.version == 5:
 #			res = 32 # probably alignment
 		return res
 
@@ -1513,6 +1515,11 @@ class FHDoc():
 	def SketchFilter(self,off,recid,mode=0):
 		return 11
 
+	def SpotColor(self,off,recid,mode=0):
+		# 1st seen in ver5
+		return 26
+
+
 	def SpotColor6(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		shift,recid = self.read_recid(off+2)
@@ -1688,6 +1695,10 @@ class FHDoc():
 		res += L
 		return res+28
 
+	def TintColor(self,off,recid,mode=0):
+		# 1st seen in ver 5
+		return 20
+
 	def TintColor6(self,off,recid,mode=0):
 		res,rif = self.read_recid(off+16)
 		if self.version < 10:
@@ -1703,7 +1714,7 @@ class FHDoc():
 		for i in range(size):
 			L,rif = self.read_recid(off+res)
 			res += L
-		if self.version == 8: # verify for others
+		if self.version < 9: # verify for others
 			size2 = struct.unpack('>h', self.data[off:off+2])[0]
 			res += (size2-size)*2
 
@@ -1779,7 +1790,7 @@ class FHDoc():
 		var2 = ord(self.data[off+len1+3])
 		len2,x = self.xform_calc(var1,var2)
 		length = len1+len2+4
-		if self.version == 8:
+		if self.version < 9:
 			length = 52
 		return length
 
