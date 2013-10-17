@@ -226,6 +226,13 @@ def hr_layout(nodes):
 			dy += 1
 	return devs
 
+gv_colors = {
+	"FHTail":"red",
+	"Block":"orange",
+	"PropLst":"yellow",
+	"Layer":"green",
+	"Path":"blue"
+	}
 
 def gv_layout(nodes,edges,mode="dot"):
 	G = gv.graph("root")
@@ -233,8 +240,8 @@ def gv_layout(nodes,edges,mode="dot"):
 	for i in nodes:
 		sg = "%02x %s"%(i,nodes[i][0])
 		n = gv.node(s,sg)
-		if nodes[i][0] == "FHTail":
-			gv.setv(n,"color","red")
+		if nodes[i][0] in gv_colors:
+			gv.setv(n,"color",gv_colors[nodes[i][0]])
 			gv.setv(n,"style","filled")
 
 	for i in edges:
