@@ -17,6 +17,7 @@
 import sys,struct,tree,zlib,gtk,gobject
 from utils import *
 
+
 # 3 - rgb
 # 4 - cmyk
 # 7 - pantone solid uncoated/mate
@@ -772,6 +773,9 @@ class FHDoc():
 			self.diter = add_pgiter(page,"FH Data","fh","data",self.data,self.iter)
 		self.reclist = []
 		self.recs = {}
+		# for graph
+		self.nodes = {}
+		self.edges = []
 
 		self.chunks = {
 		"FHTail":self.fhtail, # false record for parsing purposes
@@ -918,15 +922,19 @@ class FHDoc():
 
 	def AttributeHolder(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		return res+L
 
 	def BasicFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+4
 
 	def BasicLine(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+18
 	
 	def BendFilter(self,off,recid,mode=0):
@@ -938,15 +946,18 @@ class FHDoc():
 			res = 2
 			for i in range(21):
 				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
 				res += L
 			res += 1
 			for i in range(2):
 				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
 				res += L
 		elif self.version == 8:
 			res = 0
 			for i in range(12):
 				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
 				res += L
 			res += 14
 		else:
@@ -954,14 +965,17 @@ class FHDoc():
 			res = 0
 			for i in range(12):
 				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
 				res += L
 			res += 14
 			for i in range(3):
 				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
 				res += L
 			res +=1
 			for i in range(4):
 				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
 				res += L
 			# verify for v9
 			if self.version < 10:
@@ -970,7 +984,9 @@ class FHDoc():
 
 	def Brush(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		L,rid1 = self.read_recid(off+res)
+		self.edges.append((recid,rid1))
 		res += L
 		return res
 
@@ -979,15 +995,17 @@ class FHDoc():
 		res = 12
 		for i in range(size):
 			L,rid1 = self.read_recid(off+res)
+			self.edges.append((recid,rid1))
 			res += L
 		return res
 
 	def BrushStroke(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		L,rid1 = self.read_recid(off+res)
+		self.edges.append((recid,rid1))
 		res += L
-		L,rid1 = self.read_recid(off+res)
-		res += L
+		res += 2
 		return res
 
 	def BrushTip(self,off,recid,mode=0):
@@ -996,6 +1014,7 @@ class FHDoc():
 		if self.version == 11:
 			length=64
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		return length+res
 
 	def CalligraphicStroke(self,off,recid,mode=0):
@@ -1003,8 +1022,10 @@ class FHDoc():
 		# 12 bytes ??
 		# rec_id2
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		res += 12
 		L,rid1 = self.read_recid(off+res)
+		self.edges.append((recid,rid1))
 		res += L
 		return res
 
@@ -1014,9 +1035,12 @@ class FHDoc():
 
 	def ClipGroup(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		L,rid1 = self.read_recid(off+res)
+		self.edges.append((recid,rid1))
 		res += L
 		L,rid1 = self.read_recid(off+8+res)
+		self.edges.append((recid,rid1))
 		res += L
 		return res+10
 
@@ -1037,22 +1061,30 @@ class FHDoc():
 		if self.version < 10:
 			length-=2
 		res,rid1 = self.read_recid(off+2)
+		self.edges.append((recid,rid1))
 		L,rid = self.read_recid(off+12+res)
+		self.edges.append((recid,rid))
 		return res+length+L
 
 	def CompositePath(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		L,rid1 = self.read_recid(off+res)
+		self.edges.append((recid,rid1))
 		res += L
 		L,rid1 = self.read_recid(off+8+res)
+		self.edges.append((recid,rid1))
 		res += L
 		return res+8
 
 	def ConeFill(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
+		self.edges.append((recid,rid1))
 		L,rid1 = self.read_recid(off+res)
+		self.edges.append((recid,rid1))
 		res += L
 		L,rid1 = self.read_recid(off+16+res)
+		self.edges.append((recid,rid1))
 		res += L
 		return res+30
 
@@ -1086,6 +1118,7 @@ class FHDoc():
 		# records (10 bytes each)
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		res,rid = self.read_recid(off+2)
+		self.edges.append((recid,rid))
 		res += 6  # size and 2 words
 		return res+size*10
 
@@ -1099,6 +1132,7 @@ class FHDoc():
 		res = 10
 		for i in range(size):
 			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res
 
@@ -1125,6 +1159,7 @@ class FHDoc():
 		if size != 0:
 			for i in range(size*2):
 				l,rid = self.read_recid(off+res)
+				self.edges.append((recid,rid))
 				res += l
 		return res
 
@@ -1139,10 +1174,13 @@ class FHDoc():
 		# 4*#ofdwords ??
 		# 27*#ofpts
 		res,rid = self.read_recid(off+2)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+2+res)
+		self.edges.append((recid,rid))
 		res += L
 		num = struct.unpack('>h', self.data[off+res+16:off+res+18])[0]
 		L,rid = self.read_recid(off+res+18)
+		self.edges.append((recid,rid))
 		res += L
 		num2 = struct.unpack('>h', self.data[off+res+37:off+res+39])[0]
 		length = 39+res+num2*4+num*27
@@ -1153,7 +1191,9 @@ class FHDoc():
 
 	def Extrusion(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		var1 = ord(self.data[off+0x60])
 		var2 = ord(self.data[off+0x61])
@@ -1169,16 +1209,21 @@ class FHDoc():
 
 	def FilterAttributeHolder(self,off,recid,mode=0):
 		res,rid = self.read_recid(off+2)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+2+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+2
 
 	def FWSharpenFilter(self,off,recid,mode=0):
+		# FIXME! recid
 		return 16
 
 	def FileDescriptor(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
-		L,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		size = struct.unpack('>h', self.data[off+5+res:off+7+res])[0]
 		res += 7+size
@@ -1186,66 +1231,85 @@ class FHDoc():
 
 	def FWBevelFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+28
 
 	def FWBlurFilter(self,off,recid,mode=0):
+		# FIXME! recid
 		return 12
 
 	def FWFeatherFilter(self,off,recid,mode=0):
+		#FIXME! recid
 		return 8
 
 	def FWGlowFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+20
 
 	def FWShadowFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+20
 
 	def GradientMaskFilter(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res
 
 	def GraphicStyle(self,off,recid,mode=0):
 		size = 2*struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 6
 		for i in range(2+size):
-				L,rid = self.read_recid(off+res)
-				res += L
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
+			res += L
 		return res
 
 	def Group(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+res+8)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+res+8)
+		self.edges.append((recid,rid))
 		res += L
 		return res+8
 
 	def Guides(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off:off+2])[0]
 		res,rid = self.read_recid(off+2)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+2+res)
+		self.edges.append((recid,rid))
 		res += L
 		res += 18 + size*8
 		return res
 
 	def Halftone(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+8
 
 	def ImageFill(self,off,recid,mode=0):
-		#FIXME! recid
-		return 6
+		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		#FIXME! more recid?
+		return 4+res
 
 	def ImageImport(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L+8
 		for i in range(4):
 			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		if self.version > 8:
 			shift = 37
@@ -1256,21 +1320,27 @@ class FHDoc():
 	def Layer(self,off,recid,mode=0):
 		length=14
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+10+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+10+res)
+		self.edges.append((recid,rid))
 		res += L
 		return length+res
 
 	def LensFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		return res+38
 
 	def LinearFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+12+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+28
 
@@ -1291,6 +1361,7 @@ class FHDoc():
 		res = 0
 		for i in range(size):
 			L,rid = self.read_recid(off+52+i*48+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res+4+size*48
 
@@ -1299,6 +1370,7 @@ class FHDoc():
 		res = 12
 		for i in range(size):
 			l,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += l
 		if self.version < 9: # verify for others
 			size2 = struct.unpack('>h', self.data[off:off+2])[0]
@@ -1332,7 +1404,7 @@ class FHDoc():
 		return length
 
 	def MList(self,off,recid,mode=0):
-		return self.List(off,mode)
+		return self.List(off,recid,mode)
 
 	def MName(self,off,recid,mode=0):
 		size = struct.unpack('>H', self.data[off:off+2])[0]
@@ -1357,8 +1429,10 @@ class FHDoc():
 		res = 6
 		for i in range(size):
 			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res
 
@@ -1374,13 +1448,18 @@ class FHDoc():
 		# size*6 ??  FIXME!
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		res,rid = self.read_recid(off+2)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+2+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+10+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+10+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+10+res)
+		self.edges.append((recid,rid))
 		res += L
 		return 42 + size*6 + res
 
@@ -1389,36 +1468,49 @@ class FHDoc():
 		res = 0
 		for i in range(num):
 				L,rid = self.read_recid(off+4+i*8+res)
+				self.edges.append((recid,rid))
 				res += L
 		return num*8+res+4
 
 	def NewBlend(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+8+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+8+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+8+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+34
 
 	def NewContourFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+14+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+14+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+28
 
 	def NewRadialFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+16+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+39
 
@@ -1431,9 +1523,12 @@ class FHDoc():
 		else:
 			length=28
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+12+res)
+		self.edges.append((recid,rid))
 		res += L
 		return length+res
 
@@ -1448,6 +1543,7 @@ class FHDoc():
 		res = 6
 		for i in range(2):
 			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		for i in range(size):
 			L,rid = self.read_recid(off+res+2)
@@ -1468,7 +1564,9 @@ class FHDoc():
 	def Path(self,off,recid,mode=0):
 		size =  struct.unpack('>h', self.data[off:off+2])[0]
 		res,rid = self.read_recid(off+2)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+2+res)
+		self.edges.append((recid,rid))
 		res += L
 		if self.version > 8:
 			size = struct.unpack('>h', self.data[off+16+res:off+18+res])[0]
@@ -1505,9 +1603,12 @@ class FHDoc():
 
 	def PolygonFigure(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+12+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+47
 
@@ -1519,6 +1620,7 @@ class FHDoc():
 		res = 8
 		for i in range(2*size):
 			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res
 
@@ -1528,10 +1630,10 @@ class FHDoc():
 	def RadialFillX(self,off,recid,mode=0):
 		# v11 rec_id from 0x10
 		length=20
-		res,rif = self.read_recid(off+20)
+		res,rid = self.read_recid(off+20)
+		self.edges.append((recid,rid))
 		return length+res
 
-		return length
 
 	def RaggedFilter(self,off,recid,mode=0):
 		return 16
@@ -1541,9 +1643,12 @@ class FHDoc():
 		if self.version < 11:
 			length = 36
 		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		L,rid = self.read_recid(off+12+res)
+		self.edges.append((recid,rid))
 		res += L
 		return length+res
 
@@ -1557,7 +1662,9 @@ class FHDoc():
 
 	def SpotColor6(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
-		shift,recid = self.read_recid(off+2)
+		shift,recid1 = self.read_recid(off+2)
+		self.edges.append((recid,recid1))
+		print "SPC6",recid,recid1
 		res = 26 + size*4 + shift
 #		FIXME! verify it
 		if self.version < 10:
@@ -1575,28 +1682,35 @@ class FHDoc():
 			# v8 seems to reserve space
 			size = struct.unpack('>h', self.data[off:off+2])[0]
 		res = 6
-		L,rif = self.read_recid(off+res)
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
-		L,rif = self.read_recid(off+res)
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		for i in range(size*2):
-			L,rif = self.read_recid(off+res)
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res
 
 	def SymbolClass(self,off,recid,mode=0):
 		res = 0
 		for i in range(5):
-			L,rif = self.read_recid(off+res)
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res
 
 	def SymbolInstance(self,off,recid,mode=0):
 		shift = 0
-		res,rif = self.read_recid(off)
-		L,rif = self.read_recid(off+res)
+		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
-		L,rif = self.read_recid(off+res+8)
+		L,rid = self.read_recid(off+res+8)
+		self.edges.append((recid,rid))
 		res += L
 		var1 = ord(self.data[off+res+8])
 		var2 = ord(self.data[off+res+9])
@@ -1606,7 +1720,8 @@ class FHDoc():
 		size =  struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 12
 		for i in range(size+3):
-			L,rif = self.read_recid(off+res)
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		return res
 
@@ -1624,8 +1739,10 @@ class FHDoc():
 		# rec_id1
 		# 14 bytes ??
 		# rec_id2
-		res,rif = self.read_recid(off)
-		L,rif = self.read_recid(off+14+res)
+		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		L,rid = self.read_recid(off+14+res)
+		self.edges.append((recid,rid))
 		res += L
 		return 14+res
 
@@ -1640,6 +1757,7 @@ class FHDoc():
 			if key == 2:
 				shift+=4
 				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
 				shift += L
 			else:
 				shift+=8
@@ -1656,11 +1774,13 @@ class FHDoc():
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		res = 8
 		for i in range(2):
-			L,rif = self.read_recid(off+res)
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		res += 8  # FIXME! check if those are recIDs
 		for i in range(3):
-			L,rif = self.read_recid(off+res)
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 			
 		for i in range(num):
@@ -1668,6 +1788,7 @@ class FHDoc():
 			if key == 2:
 				res+=4
 				L,rid = self.read_recid(off+res)
+				self.edges.append((recid,rid))
 				res += L
 			else:
 				res+=8
@@ -1683,19 +1804,24 @@ class FHDoc():
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 10
 		L,rid = self.read_recid(off+shift)
+		self.edges.append((recid,rid))
 		shift += L
 		shift += 8
 		L,rid = self.read_recid(off+shift)
+		self.edges.append((recid,rid))
 		shift += L
 		L,rid = self.read_recid(off+shift)
+		self.edges.append((recid,rid))
 		shift += L
 		L,rid = self.read_recid(off+shift)
+		self.edges.append((recid,rid))
 		shift += L
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			if key == 2:
 				shift+=4
 				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
 				shift += L
 			else:
 				shift+=8
@@ -1706,12 +1832,14 @@ class FHDoc():
 		shift = 8
 		for i in range(5):
 			L,rid = self.read_recid(off+shift)
+			self.edges.append((recid,rid))
 			shift += L
 		# hack. no other way so far.
 		if self.data[off+shift:off+shift+4] == "\xFF\xFF\xFF\xFF":
 			shift+=2
 		for i in range(3):
 			L,rid = self.read_recid(off+shift)
+			self.edges.append((recid,rid))
 			shift += L
 		
 		for i in range(num):
@@ -1719,14 +1847,17 @@ class FHDoc():
 			if key == 2:
 				shift+=4
 				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
 				shift += L
 			else:
 				shift+=8
 		return shift
 
 	def TileFill(self,off,recid,mode=0):
-		res,rif = self.read_recid(off)
-		L,rif = self.read_recid(off+res)
+		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
 		res += L
 		return res+28
 
@@ -1735,7 +1866,8 @@ class FHDoc():
 		return 20
 
 	def TintColor6(self,off,recid,mode=0):
-		res,rif = self.read_recid(off+16)
+		res,rid = self.read_recid(off+16)
+		self.edges.append((recid,rid))
 		if self.version < 10:
 			res -= 2
 		return res+36
@@ -1747,7 +1879,8 @@ class FHDoc():
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		res=20
 		for i in range(size):
-			L,rif = self.read_recid(off+res)
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
 			res += L
 		if self.version < 9: # verify for others
 			size2 = struct.unpack('>h', self.data[off:off+2])[0]
@@ -1771,13 +1904,14 @@ class FHDoc():
 			if key == 2:
 				shift+=4
 				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
 				shift += L
 			else:
 				shift+=8
 		return shift
 
 	def AGDFont (self,off,recid,mode=0):
-		res = self.VMpObj(off,mode)
+		res = self.VMpObj(off,recid,mode)
 		return res
 
 	def VMpObj (self,off,recid,mode=0):
@@ -1797,6 +1931,7 @@ class FHDoc():
 			if key == 2:
 				shift+=4
 				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
 				shift += L
 			else:
 				shift+=8
@@ -1831,6 +1966,14 @@ class FHDoc():
 
 	def fhtail(self,off,recid,mode=0):
 		print "FH Tail!"
+		L1,recid1 = self.read_recid(off)
+		L2,recid2 = self.read_recid(off+L1)
+		L3,recid3 = self.read_recid(off+L1+L2)
+		self.edges.append((recid,recid1))
+		self.edges.append((recid,recid2))
+		self.edges.append((recid,recid3))
+		L4,recid4 = self.read_recid(off+L1+L2+L3+100)
+		self.edges.append((recid,recid4))
 		return len(self.data) - off
 
 	def parse_agd_iter (self, step=500, offset=0, start=0, num=-1):
@@ -1841,7 +1984,8 @@ class FHDoc():
 			if j%5000 == 0:
 				print j
 			if self.dictitems[i] in self.chunks:
-				try:
+				#try:
+				if 1:
 					res = self.chunks[self.dictitems[i]](offset,j)
 					if -1 < res <= len(self.data)-offset:
 						uid = ""
@@ -1856,6 +2000,7 @@ class FHDoc():
 						offset += res
 						if uid != "":
 							print self.dictitems[i],uid
+						self.nodes[j] = (self.dictitems[i],niter)
 					else:
 						add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
 						for k in range(10):
@@ -1866,11 +2011,11 @@ class FHDoc():
 						print "Failed on record %d (%s)"%(j,self.dictitems[i]),res
 						print "Next is",self.dictitems[self.reclist[j+1]]
 						return
-				except:
-					add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
-					print "Failed on record %d (%s)"%(j,self.dictitems[i])
-					print "Next is",self.dictitems[self.reclist[j+1]]
-					return
+				#except:
+				#	add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
+				#	print "Failed on record %d (%s)"%(j,self.dictitems[i])
+				#	print "Next is",self.dictitems[self.reclist[j+1]]
+				#	return
 					
 			else:
 					print "Unknown record type: %s (%02x)"%(self.dictitems[i],j)
@@ -1940,6 +2085,7 @@ class FHDoc():
 #---------------------------------------------------------------#
 
 ver = {0x31:5,0x32:7,0x33:8,0x34:9,0x35:10,0x36:11,'mcl':-1}
+
 
 def fh_save (page, fname):
 	model = page.view.get_model()

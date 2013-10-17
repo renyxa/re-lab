@@ -17,6 +17,14 @@
 import sys,struct,base64
 import gtk
 
+try:
+	import gv
+	usegraphviz = True
+except:
+	print 'Graphviz not found. Only used for FreeHand.' # Grid layout will be used.'
+	usegraphviz = False
+
+
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
 	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
@@ -202,3 +210,58 @@ def disp_expose (da,event,pixbuf,scale=1):
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()
 
+
+######## Layout ########
+
+def hr_layout(nodes):
+	sq = int(math.sqrt(len(nodes)))+1
+	dx = 1
+	dy = 1
+	devs = {}
+	for i in nodes:
+		devs["%s"%i] = (dx*70,dy*70)
+		dx += 1
+		if dx > sq:
+			dx = 1
+			dy += 1
+	return devs
+
+
+def gv_layout(nodes,edges,mode="dot"):
+	G = gv.graph("root")
+	s = gv.graph(G,"test")
+	for i in nodes:
+		sg = "%02x %s"%(i,nodes[i][0])
+		n = gv.node(s,sg)
+		if nodes[i][0] == "FHTail":
+			gv.setv(n,"color","red")
+			gv.setv(n,"style","filled")
+
+	for i in edges:
+		if i[0] in nodes and i[1] in nodes:
+			e = gv.edge(G,"%02x %s"%(i[0],nodes[i[0]][0]),"%02x %s"%(i[1],nodes[i[1]][0]))
+			gv.setv(e,"dir","none")
+	gv.layout(G, mode)
+	gv.render(G)
+# for debugging purposes
+	gv.render(G,'svg','test.svg')
+	devs = {}
+	fn = gv.firstnode(G)
+	try:
+		devs[gv.nameof(fn)] = gv.getv(fn,"pos").split(",")
+	except:
+		print 'Failed in gv_render'
+	for i in range(len(nodes)-1):
+		fn = gv.nextnode(G,fn)
+		devs[gv.nameof(fn)] = gv.getv(fn,"pos").split(",")
+
+	return devs
+
+
+
+def graph_layout (app, doc, algo):
+	if usegraphviz and algo in ("fdp","sfdp","neato","circo","osage","dot","twopi"):
+		devs = gv_layout(doc.nodes,doc.edges,algo)
+	else:
+		# hinted random placement
+		devs = hr_layout(doc.nodes)
