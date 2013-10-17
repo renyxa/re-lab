@@ -194,10 +194,10 @@ def hdTFOnPath(hd,data,page):
 
 def hdFHTail(hd,data,page):
 	offset = 0
-	L,recid = read_recid(data,2)
+	L,recid = read_recid(data,0)
 	add_iter (hd,'Block ID',"%02x"%recid,offset,L,">H")
 	offset += L
-	L,recid = read_recid(data,2)
+	L,recid = read_recid(data,offset)
 	add_iter (hd,'PropLst ID',"%02x"%recid,offset,L,">H")
 	offset += L
 	L,recid = read_recid(data,offset)
@@ -412,10 +412,10 @@ def hdImageImport(hd,data,page):
 	add_iter (hd,'Xform',"%02x"%attr,offset,L6,">H")
 	offset += L6+8
 	x = cnvrt22(data[offset:offset+4])
-	add_iter (hd,'?',"%.2f"%x,offset,4,">HH")
+	add_iter (hd,'Actual Image W',"%.2f"%x,offset,4,">HH")
 	offset += 4
 	x = cnvrt22(data[offset:offset+4])
-	add_iter (hd,'?',"%.2f"%x,offset,4,">HH")
+	add_iter (hd,'Actual Image H',"%.2f"%x,offset,4,">HH")
 	offset += 4+6
 	w = struct.unpack(">H",data[offset:offset+2])[0]
 	add_iter (hd,'Orig Image W ?',"%d"%w,offset,2,">H")
