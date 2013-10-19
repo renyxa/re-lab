@@ -1743,18 +1743,22 @@ class FHDoc():
 	def TaperedFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
 		self.edges.append((recid,rid))
-		return 10+res
-
-	def TaperedFillX(self,off,recid,mode=0):
-		# rec_id1
-		# 14 bytes ??
-		# rec_id2
-		res,rid = self.read_recid(off)
-		self.edges.append((recid,rid))
-		L,rid = self.read_recid(off+14+res)
+		L,rid = self.read_recid(off+res)
 		self.edges.append((recid,rid))
 		res += L
-		return 14+res
+		return 8+res
+
+	def TaperedFillX(self,off,recid,mode=0):
+		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
+		# dword for angle
+		res += L+12
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
+		res += L
+		return res
 
 	def TEffect(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
