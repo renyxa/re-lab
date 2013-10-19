@@ -400,7 +400,7 @@ def hdImageImport(hd,data,page):
 	add_iter (hd,'Parent',"%02x"%attr,offset,L2,">H")
 	offset += L2+8
 	L3,attr = read_recid(data,offset)
-	add_iter (hd,'??',"%02x"%attr,offset,L3,">H")
+	add_iter (hd,'Format Name',"%02x"%attr,offset,L3,">H")
 	offset += L3
 	L4,attr = read_recid(data,offset)
 	add_iter (hd,'DataList',"%02x"%attr,offset,L4,">H")
@@ -1307,14 +1307,20 @@ class FHDoc():
 		L,rid = self.read_recid(off+res)
 		self.edges.append((recid,rid))
 		res += L+8
-		for i in range(4):
+		L,rid = self.read_recid(off+res)
+		self.edges.append((recid,rid))
+		res += L
+		shift = 0
+		if rid != 0:
+			shift += 4
+		for i in range(3):
 			L,rid = self.read_recid(off+res)
 			self.edges.append((recid,rid))
 			res += L
 		if self.version > 8:
-			shift = 37
+			shift += 37
 		elif self.version == 8:
-			shift = 32  # suo.fh8
+			shift += 32  # suo.fh8
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
@@ -1733,7 +1739,9 @@ class FHDoc():
 		return res
 
 	def TaperedFill(self,off,recid,mode=0):
-		return 12
+		res,rid = self.read_recid(off)
+		self.edges.append((recid,rid))
+		return 10+res
 
 	def TaperedFillX(self,off,recid,mode=0):
 		# rec_id1
