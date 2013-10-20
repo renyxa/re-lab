@@ -20,7 +20,7 @@ import gtk, ctypes
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2
+import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2, pm6
 import wt602
 import zmf
 from utils import *
@@ -197,7 +197,10 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
 		# choose vsd or vsd2
 			vsd.parse (page, data, iter1)
-
+		if infname == "PageMaker":
+			ftype = "pm"
+			page.model.set_value(iter1,1,("pm",dirflag))
+			pm6.open (page, data, iter1)
 		if infname == "WordDocument":
 			ftype = "doc"
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1

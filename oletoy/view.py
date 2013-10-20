@@ -23,7 +23,7 @@ import hexdump
 import App, cmd
 import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
-import xls, vba, ole, doc, mdb, pub, ppt, rtf
+import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
@@ -43,7 +43,7 @@ try:
 except:
 	pass
 
-version = "0.7.39"
+version = "0.7.40"
 
 ui_info = \
 '''<ui>
