@@ -15,14 +15,23 @@ import struct
 from utils import *
 
 recs = {
+	# 0x1  # size in 10-bytes records? 0xffff as a separator?
+	0x9:"TxtProps [9]",
+	0xb:"TxtProps [B]", 
+	0xc:"TxtProps [C]",
 	0xd:"TextBlock",
 	0xe:"TIFF ?",
 	0xf:"WMF ?",
 	# 0x10 --- embedded images?
+	# 0x11 # size in dwords
 	0x13:"Fonts",
 	0x14:"Styles",
 	0x15:"Colors",
-	0x2f:"Templates",
+	0x1b:"TxtProps [1B]",
+	0x1c:"TxtProps [1C]",
+	0x24:"ImgProps [24]", # ??? size in bytes
+	0x2f:"Templates", # 508 bytes per chunk?
+	#0x31 # 46 bytes per chunk?
 }
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr):
