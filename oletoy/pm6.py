@@ -15,7 +15,9 @@ import struct
 from utils import *
 
 recs = {
-	# 0xd  --- some text like comment to the document
+	0xd:"TextBlock",
+	0xe:"TIFF ?",
+	0xf:"WMF ?",
 	# 0x10 --- embedded images?
 	0x13:"Fonts",
 	0x14:"Styles",
@@ -23,16 +25,21 @@ recs = {
 	0x2f:"Templates",
 }
 
-def parse_trailer(page,data,parent,eflag):
-	tr = {}
-	for i in range(len(data)/16):
-		rid1 = ord(data[i*16+1])
-		flag1 = struct.unpack("%sH"%eflag,data[i*16+2:i*16+4])[0]
-		off = struct.unpack("%sI"%eflag,data[i*16+4:i*16+8])[0]
-		flag2 = ord(data[i*16+10])
-		rid2 = ord(data[i*16+11])
-		add_pgiter(page,"%02x %04x %08x %02x %02x"%(rid1,flag1,off,flag2,rid2),"pm","tr_rec",data[i*16:i*16+16],parent)
-		tr[off] = (rid1,flag1)
+def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr):
+	for i in range(tr_len):
+		rid1 = ord(data[tr_off+1])
+		size = struct.unpack("%sH"%eflag,data[tr_off+2:tr_off+4])[0]
+		off = struct.unpack("%sI"%eflag,data[tr_off+4:tr_off+8])[0]
+		tr_off += 10
+		if rid1 > 0 or size == 0:
+			flag2 = ord(data[tr_off])
+			rid2 = ord(data[tr_off + 1])
+			tr_off += 6
+			add_pgiter(page,"%02x %04x %08x %02x %02x"%(rid1,size,off,flag2,rid2),"pm","tr_rec",data[tr_off-16:tr_off],parent)
+		else:
+			triter = add_pgiter(page,"%02x %04x %08x"%(rid1,size,off),"pm","tr_rec",data[tr_off-10:tr_off],parent)
+			parse_trailer(page,data,off,size,triter,eflag,tr)
+		tr[off] = (rid1,size)
 	return tr
 
 def open (page,buf,parent,off=0):
@@ -44,7 +51,8 @@ def open (page,buf,parent,off=0):
 	tr_off = struct.unpack("%sI"%eflag,buf[0x30:0x34])[0]
 	off += 0x36
 	triter = add_pgiter(page,"Trailer","pm","trailer",buf[tr_off:tr_off+tr_len*16],parent)
-	tr = parse_trailer(page,buf[tr_off:tr_off+tr_len*16],triter,eflag)
+	tr = {}
+	parse_trailer(page,buf,tr_off,tr_len,triter,eflag,tr)
 	tr[tr_off] = (0,0)
 	trsort = sorted(tr.keys())[1:]
 	start = 0x36
