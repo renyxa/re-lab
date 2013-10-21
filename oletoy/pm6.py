@@ -16,21 +16,27 @@ from utils import *
 
 recs = {
 	# 0x1  # size in 10-bytes records? 0xffff as a separator?
-	# 0x5  # 472 bytes per chunk?
+	# 0x4  # 104 bytes per chunk?  text options
+	0x5:"Pages",  # 472 bytes per chunk?
 	0x9:"TxtProps [9]",
 	0xb:"TxtProps [B]", 
 	0xc:"TxtProps [C]",
 	0xd:"TextBlock",
 	0xe:"TIFF ?",
 	0xf:"WMF ?",
-	# 0x10 --- embedded images?
-	# 0x11 # size in dwords
+	# 0x10  # 332 bytes per chunk?
+	# 0x11  # size in dwords
 	0x13:"Fonts",
 	0x14:"Styles",
 	0x15:"Colors",
+	0x19:"Shapes",
 	0x1b:"TxtProps [1B]",
 	0x1c:"TxtProps [1C]",
+	# 0x1f  # 62 bytes per chunk?
 	0x24:"ImgProps [24]", # ??? size in bytes
+	# 0x25  # 562 bytes per chunk?
+	# 0x28  # 26 bytes per chunk?
+	# 0x29  # size in bytes; two dwords of str lengths, than two strings
 	0x2f:"Templates", # 508 bytes per chunk?
 	#0x31 # 46 bytes per chunk?
 }
@@ -50,9 +56,48 @@ def colors (page, data, size, parent):
 		add_pgiter(page,"%s"%cname,"pm","clr",data[i*210:i*210+210],parent)
 
 
+def pages (page, data, size, parent):
+	rlen = 472
+	for i in range(size):
+		id1 = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
+		id2 = struct.unpack("<H",data[i*rlen+2:i*rlen+4])[0]
+		id3 = struct.unpack("<H",data[i*rlen+4:i*rlen+6])[0]
+		add_pgiter(page,"%02x%02x%02x"%(id1,id2,id3),"pm","page",data[i*rlen:i*rlen+rlen],parent)
+
+
+sh_types = {
+	0x1:"Text",
+	0x2:"Image",
+	0x3:"Line",
+	0x4:"Rect",
+	0x5:"Ellipse",
+	0xc:"Polygon",
+	0xe:"Group",
+}
+
+def shapes (page, data, size, parent):
+	rlen = 258
+	if len(data)/size < 258:
+		rlen = 136  # is that version specific?
+	for i in range(size):
+		type_id = ord(data[i*rlen])
+		flag = "%02x"%(ord(data[i*rlen+1]))
+		shapeid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
+		ttxt = key2txt(type_id,sh_types,"%02x"%type_id)
+		if type_id == 0xe:
+			subtype = ord(data[i*rlen+0x28])
+			if subtype == 2:
+				ttxt += " (start)"
+			else:
+				ttxt += " (end)"
+		add_pgiter(page,"%s %s %04x"%(ttxt,flag,shapeid),"pm","shape",data[i*rlen:i*rlen+rlen],parent)
+
+
 recfuncs = {
+	0x05:pages,
 	0x13:fonts,
 	0x15:colors,
+	0x19:shapes,
 } 
 
 

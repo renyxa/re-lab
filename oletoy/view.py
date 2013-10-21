@@ -43,7 +43,7 @@ try:
 except:
 	pass
 
-version = "0.7.40"
+version = "0.7.41"
 
 ui_info = \
 '''<ui>
@@ -1188,9 +1188,11 @@ class ApplicationMainWindow(gtk.Window):
 			
 		if dlen == 2:
 			if self.options_le == 1:
-				txt += "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
+				txt += "LE: %s "%((struct.unpack("<h",buf)[0])/self.options_div)
+				txt += "%s\t"%((struct.unpack("<H",buf)[0])/self.options_div)
 			if self.options_be == 1:
-				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
+				txt += "BE: %s "%((struct.unpack(">h",buf)[0])/self.options_div)
+				txt += "%s\t"%((struct.unpack(">H",buf)[0])/self.options_div)
 		if dlen == 4:
 			if ftype == "pub":
 				v = struct.unpack("<i",buf)[0]
@@ -1201,11 +1203,11 @@ class ApplicationMainWindow(gtk.Window):
 				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
 			else:
 				if self.options_le == 1:
-					txt += "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
-					txt += "\tLEF: %s\t"%((struct.unpack("<f",buf)[0])/self.options_div)
+					txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)
+					txt += "\tLEF: %s\t"%((struct.unpack("<f",buf[0:4])[0])/self.options_div)
 				if self.options_be == 1:
-					txt += "BE: %s\t"%((struct.unpack(">i",buf)[0])/self.options_div)
-					txt += "BEF: %s"%((struct.unpack(">f",buf)[0])/self.options_div)
+					txt += "BE: %s\t"%((struct.unpack(">i",buf[0:4])[0])/self.options_div)
+					txt += "BEF: %s"%((struct.unpack(">f",buf[0:4])[0])/self.options_div)
 
 				if ftype[0:3] == "CDR" or ftype[0:3] == "CMX":
 					c2 = ord(buf[0])/255.
