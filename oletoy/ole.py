@@ -230,10 +230,10 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 		# present in all files I've seen so far
 		if infname == "Header" and data[0xc:0xf] == 'xV4':
 			ftype = 'zmf'
-			zmf.zmf3_open(page, data, iter1, infname)
+			zmf.zmf2_open(page, data, iter1, infname)
 		if infname[-4:] == '.zmf':
 			ftype = 'zmf'
-			zmf.zmf3_open(page, data, iter1, infname)
+			zmf.zmf2_open(page, data, iter1, infname)
 
 		if infname == "VBA":
 			page.type = ftype
@@ -336,10 +336,10 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 		# present in all files I've seen so far
 		if infname == "Header" and data[0xc:0xf] == 'xV4':
 			ftype = 'zmf'
-			zmf.zmf3_open(page, data, iter1, infname)
+			zmf.zmf2_open(page, data, iter1, infname)
 		if infname[-4:] == '.zmf':
 			ftype = 'zmf'
-			zmf.zmf3_open(page, data, iter1, infname)
+			zmf.zmf2_open(page, data, iter1, infname)
 
 		if infname == "VBA":
 			page.type = ftype

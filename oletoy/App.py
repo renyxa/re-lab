@@ -218,7 +218,7 @@ class Page:
 		if buf[8:11] == 'xV4':
 			self.type = 'ZMF'
 			print 'Probably Zoner Draw 4+'
-			zmf.zmf5_open(buf, self, parent)
+			zmf.zmf4_open(buf, self, parent)
 			return 0
 
 		# NOTE: 0x29a is 666 in decimal .-)
