@@ -31,7 +31,7 @@ recs = {
 	0x15:"Colors",
 	0x19:"Shapes",
 	0x1b:"TxtProps [1B]",
-	0x1c:"TxtProps [1C]",
+	0x1c:"Chars",  # 30 bytes per chunk?
 	# 0x1f  # 62 bytes per chunk?
 	0x24:"ImgProps [24]", # ??? size in bytes
 	# 0x25  # 562 bytes per chunk?
@@ -40,6 +40,30 @@ recs = {
 	0x2f:"Templates", # 508 bytes per chunk?
 	#0x31 # 46 bytes per chunk?
 }
+
+
+def chars (page, data, size, parent):
+	rlen = 30
+	for i in range(size):
+		tlen = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
+		add_pgiter(page,"%d"%tlen,"pm","chars",data[i*rlen:i*rlen+rlen],parent)
+		# 0x2: word -- font id starting from 0
+		# 0x4: word -- fontsize*10
+		# 0x6: word -- lead pts*10
+		# 0x8: clr id starting from 0
+		# 0xa: &1 - bold, &2 - italic, &4 - underline
+		# 0xb: &1 - strikethru, &2 - sup, &4 - sub, &8 - allcaps
+		# 0xb: &10 - smallcaps
+		# 0xc: word (ffff -- "normal") -- Horscale%*10
+		# 0xe: track (127 none, 2 very loose, 1 loose, 0 normal, ff tight, fe very tight)
+		# 0xf: &8 -- no break
+		# 0x10:
+		# 0x12: word SmallCaps%*10
+		# 0x14: word sup/sub size%*10
+		# 0x16: word sub pos%*10
+		# 0x18: word sup pos%*10
+		# 0x1a: word baseline shift*20
+		# 0x1c: word tint %
 
 
 def fonts (page, data, size, parent):
@@ -98,6 +122,7 @@ recfuncs = {
 	0x13:fonts,
 	0x15:colors,
 	0x19:shapes,
+	0x1c:chars,
 } 
 
 
