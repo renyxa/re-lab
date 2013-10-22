@@ -19,15 +19,15 @@ recs = {
 	# 0x4  # 104 bytes per chunk?  text options
 	0x5:"Pages",  # 472 bytes per chunk?
 	0x9:"TxtProps [9]",
-	0xb:"TxtProps [B]", 
-	0xc:"TxtProps [C]",
+	0xb:"Paragraphs", 
+	0xc:"TxtStyles", # 164 bytes per record
 	0xd:"TextBlock",
 	0xe:"TIFF ?",
 	0xf:"WMF ?",
 	# 0x10  # 332 bytes per chunk?
 	# 0x11  # size in dwords
 	0x13:"Fonts",
-	0x14:"Styles",
+	0x14:"Styles", # 334 bytes per chunk?
 	0x15:"Colors",
 	0x19:"Shapes",
 	0x1b:"TxtProps [1B]",
@@ -46,7 +46,7 @@ def chars (page, data, size, parent):
 	rlen = 30
 	for i in range(size):
 		tlen = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
-		add_pgiter(page,"%d"%tlen,"pm","chars",data[i*rlen:i*rlen+rlen],parent)
+		add_pgiter(page,"%d"%tlen,"pm","char",data[i*rlen:i*rlen+rlen],parent)
 		# 0x2: word -- font id starting from 0
 		# 0x4: word -- fontsize*10
 		# 0x6: word -- lead pts*10
@@ -70,14 +70,14 @@ def fonts (page, data, size, parent):
 	for i in range(size):
 		pos = data[i*94:].find("\x00")
 		cname = data[i*94:i*94+pos]
-		add_pgiter(page,"%s"%cname,"pm","clr",data[i*94:i*94+94],parent)
+		add_pgiter(page,"%s"%cname,"pm","font",data[i*94:i*94+94],parent)
 
 
 def colors (page, data, size, parent):
 	for i in range(size):
 		pos = data[i*210:].find("\x00")
 		cname = data[i*210:i*210+pos]
-		add_pgiter(page,"%s"%cname,"pm","clr",data[i*210:i*210+210],parent)
+		add_pgiter(page,"%s"%cname,"pm","color",data[i*210:i*210+210],parent)
 
 
 def pages (page, data, size, parent):
@@ -117,9 +117,48 @@ def shapes (page, data, size, parent):
 		add_pgiter(page,"%s %s %04x"%(ttxt,flag,shapeid),"pm","shape",data[i*rlen:i*rlen+rlen],parent)
 
 
+def paras (page, data, size, parent):
+	rlen = 80
+	for i in range(size):
+		tlen = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
+		add_pgiter(page,"%02x"%tlen,"pm","para",data[i*rlen:i*rlen+rlen],parent)
+		# 0x2 0x1c  keep with next offset[0x3] lines
+		# 0x2 &40 -- include in ToC
+		# 0x5 -- dictionary
+		# 0x6: dword -- style id  (& 55 at 0x2)
+		# 0xa: word -- left indent pts*20
+		# 0xc: word -- first indent pts*20
+		# 0xe: word -- right indent pts*20
+		# 0x10: word -- before indent pts*20
+		# 0x12: word -- after indent pts*20
+		# 0x14: word -- auto above pts*10
+		# 0x16: word -- auto leading %
+		# 0x18: word -- word space MIN
+		# 0x1a: word -- word space MAX
+		# 0x1c: word -- word space Desired
+		# 0x1e: word -- letter space MIN
+		# 0x20: word -- letter space MAX
+		# 0x22: word -- letter space Desired
+		# 0x27 &2 -- leading method = top of caps
+		# 0x28 &1 -- keep lines together, &20 -- widow control, &80 -- orphan control
+		# 0x29 &4 -- pg break before, &8 -- column break before
+		# 0x2c -- rule above paragraph
+
+
+def styles (page, data, size, parent):
+	rlen = 334
+	for i in range(size):
+		styleid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
+		pos = data[i*334+276:].find("\x00")
+		cname = data[i*334+276:i*334+276+pos]
+		add_pgiter(page,"%02x %s"%(styleid,cname),"pm","style",data[i*rlen:i*rlen+rlen],parent)
+
+
 recfuncs = {
 	0x05:pages,
+	0x0b:paras,
 	0x13:fonts,
+	0x14:styles,
 	0x15:colors,
 	0x19:shapes,
 	0x1c:chars,
@@ -170,6 +209,6 @@ def open (page,buf,parent,off=0):
 			recfuncs[rec](page,buf[start:i],size,citer)
 		start = i
 		rec,size = tr[i][0],tr[i][1]
-	if rec != 0 and flag != 0:
+	if rec != 0 and size != 0:
 		add_pgiter(page,"%s %04x [%08x-%08x]"%(key2txt(rec,recs,"%02x"%rec),size,start,len(buf)),"pm","rec",buf[start:],parent)
 		

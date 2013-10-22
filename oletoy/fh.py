@@ -863,6 +863,7 @@ class FHDoc():
 		"PerspectiveGrid":self.PerspectiveGrid,
 		"PolygonFigure":self.PolygonFigure,
 		"Procedure":self.Procedure,
+		"ProcessColor":self.ProcessColor, # fh5
 		"PropLst":self.PropLst,
 		"PSLine":self.PSLine,
 		"RadialFill":self.RadialFill,
@@ -960,6 +961,17 @@ class FHDoc():
 				self.edges.append((recid,rid1))
 				res += L
 			res += 14
+		elif self.version < 8:
+			res = 0
+			for i in range(11):
+				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
+				res += L
+			res += 10
+			for i in range(3):
+				L,rid1 = self.read_recid(off+res)
+				self.edges.append((recid,rid1))
+				res += L
 		else:
 			# FIXME! ver11 starts with size==7
 			res = 0
@@ -1623,6 +1635,9 @@ class FHDoc():
 	def Procedure (self,off,recid,mode=0):
 		return 4
 
+	def ProcessColor (self,off,recid,mode=0):
+		return 22
+
 	def PropLst(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 8
@@ -1880,7 +1895,10 @@ class FHDoc():
 		return 20
 
 	def TintColor6(self,off,recid,mode=0):
-		res,rid = self.read_recid(off+16)
+		shift = 16
+		if self.version < 8:
+			shift = 14
+		res,rid = self.read_recid(off+shift)
 		self.edges.append((recid,rid))
 		if self.version < 10:
 			res -= 2
@@ -1986,8 +2004,9 @@ class FHDoc():
 		self.edges.append((recid,recid1))
 		self.edges.append((recid,recid2))
 		self.edges.append((recid,recid3))
-		L4,recid4 = self.read_recid(off+L1+L2+L3+100)
-		self.edges.append((recid,recid4))
+		if self.version > 7:
+			L4,recid4 = self.read_recid(off+L1+L2+L3+100)
+			self.edges.append((recid,recid4))
 		return len(self.data) - off
 
 	def parse_agd_iter (self, step=500, offset=0, start=0, num=-1):
