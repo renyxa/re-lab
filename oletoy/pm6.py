@@ -21,26 +21,30 @@ recs = {
 	0x09:("TxtProps [9]", 16),
 	0x0b:("Paragraphs", 80),
 	0x0c:("TxtStyles", 164),
-	0x0d:("TextBlock", 1),
+	0x0d:("Text", 1),
 	0x0e:("TIFF ?", 1),
 	0x0f:("WMF ?", 1),
 	0x10:("0x10", 332),
 	0x11:("0x11", 4),
+	0x12:("0x12", 298), # FIXME!
 	0x13:("Fonts", 94),
 	0x14:("Styles", 334),
 	0x15:("Colors", 210),
 	0x18:("0x18", 2496),  # FIXME!
+	0x1a:("TextBlock", 36),
 	0x19:("Shapes", 258),  # 136 in ver6?
 	0x1b:("TxtProps [1B]", 0x40), # most likely 0x18
 	0x1c:("Chars", 30),
 	0x1f:("0x1f", 62),
+	0x21:("0x21", 32), # FIXME!
 	0x24:("ImgProps [24]", 1),
 	0x25:("0x25", 562),
 	0x28:("XForms", 26),
 	0x29:("0x29", 1),  # two dwords of str lengths, than two strings
 	0x2a:("0x2a", 192), # FIXME!
+	0x2d:("0x2a", 192), # FIXME!
 	0x2e:("0x2e", 1),
-	0x2f:("Templates", 508),
+	0x2f:("Masters", 508),
 	0x31:("Layers", 46),
 }
 
@@ -93,7 +97,7 @@ def pages (page, data, size, parent):
 		side = "(R)"
 		if lr == 1:
 			side = "(L)"
-		add_pgiter(page,"%02x%02x%02x %s"%(id1,id2,id3,side),"pm","page",data[i*rlen:i*rlen+rlen],parent)
+		add_pgiter(page,"Page %02x, %02x %02x %s"%(id2,id1, id3,side),"pm","page",data[i*rlen:i*rlen+rlen],parent)
 
 
 sh_types = {
@@ -203,7 +207,16 @@ def xforms (page, data, size, parent):
 	rlen = 26
 	for i in range(size):
 		xformid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
-		add_pgiter(page,"%02x"%(xformid),"pm","xform",data[i*rlen:i*rlen+rlen],parent)
+		add_pgiter(page,"XForm %02x"%(xformid),"pm","xform",data[i*rlen:i*rlen+rlen],parent)
+
+
+def masters (page, data, size, parent):
+	rlen = 508
+	for i in range(size):
+		masterid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
+		pos = data[i*rlen:].find("\x00")
+		cname = data[i*rlen:i*rlen+pos]
+		add_pgiter(page,"%02x %s"%(masterid,cname),"pm","layer",data[i*rlen:i*rlen+rlen],parent)
 
 
 def layers (page, data, size, parent):
@@ -215,6 +228,12 @@ def layers (page, data, size, parent):
 		add_pgiter(page,"%02x %s"%(layerid,cname),"pm","layer",data[i*rlen:i*rlen+rlen],parent)
 
 
+def txtblks (page, data, size, parent):
+	rlen = 36
+	for i in range(size):
+		txtblkid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
+		add_pgiter(page,"Txt %02x"%txtblkid,"pm","txtblock",data[i*rlen:i*rlen+rlen],parent)
+
 
 recfuncs = {
 	0x05:pages,
@@ -223,14 +242,17 @@ recfuncs = {
 	0x14:styles,
 	0x15:colors,
 	0x19:shapes,
+	0x1a:txtblks,
 	0x1c:chars,
 	0x28:xforms,
+	0x2f:masters,
 	0x31:layers,
 } 
 
 
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
+#	offsets = []
 	for i in range(tr_len):
 		rid1 = ord(data[tr_off+1])
 		size = struct.unpack("%sH"%eflag,data[tr_off+2:tr_off+4])[0]
@@ -242,12 +264,16 @@ def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 			tr_off += 6
 			triter = add_pgiter(page,"%02x %04x %08x %02x %02x"%(rid1,size,off,flag2,rid2),"pm","tr_rec",data[tr_off-16:tr_off],parent)
 			if rid1 == 1:
-				parse_trailer(page,data,off,size,triter,eflag,tr,1)
+				parse_trailer(page,data,off,size,triter,eflag,tr,off)
 		else:
 			triter = add_pgiter(page,"%02x %04x %08x"%(rid1,size,off),"pm","tr_rec",data[tr_off-10:tr_off],parent)
 			if grp == 0:
 				parse_trailer(page,data,off,size,triter,eflag,tr)
-		tr.append((rid1,size,off))
+		tr.append((rid1,size,off,grp))
+#		offsets.append(off)
+#	for i in sorted(offsets):
+#		print "%04x"%i
+	
 	return tr
 
 def open (page,buf,parent,off=0):
@@ -265,8 +291,8 @@ def open (page,buf,parent,off=0):
 	start = 0x36
 	rec_id = 0
 	size = 0
-	for (rec,size,off) in tr:
-		if off != 0 and rec != 0 and size != 0:
+	for (rec,size,off,grp) in tr:
+		if off != 0 and rec > 1 and size != 0:
 			if rec in recs:
 				rlen = size*recs[rec][1]
 				rname = recs[rec][0]
@@ -277,4 +303,5 @@ def open (page,buf,parent,off=0):
 			citer = add_pgiter(page,"[%02x] %s %02x [%04x]"%(rec_id,rname,size,off),"pm",rname,buf[off:off+rlen],parent)
 			if rec in recfuncs:
 				recfuncs[rec](page,buf[off:off+rlen],size,citer)
-		rec_id += 1
+		if grp == 0:
+			rec_id += 1
