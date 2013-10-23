@@ -854,6 +854,7 @@ class FHDoc():
 		"NewRadialFill":self.NewRadialFill,
 		"OpacityFilter":self.OpacityFilter,
 		"Oval":self.Oval,
+		"PantoneColor":self.PantoneColor,
 		"Paragraph":self.Paragraph,
 		"Path":self.Path,
 		"PathTextLineInfo":self.PathTextLineInfo,
@@ -1335,6 +1336,8 @@ class FHDoc():
 			shift += 35  # Tutorial_1_start.fh9
 		elif self.version == 8:
 			shift += 32  # suo.fh8
+		elif self.version < 8:
+			shift += 28
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
@@ -1552,24 +1555,41 @@ class FHDoc():
 		res += L
 		return length+res
 
+
+	def PantoneColor(self,off,recid,mode=0):
+		# version 5 and earlier
+		return 38
+
 	def Paragraph(self,off,recid,mode=0):
-		# "xx xx 00" -- num of records
-		# rec_id1, rec_id2
-		# records:
-		#  "id" (w)
-		#  rec_id
-		# 20 bytes ?
-		size= struct.unpack('>h', self.data[off+2:off+4])[0]
-		res = 6
-		for i in range(2):
-			L,rid = self.read_recid(off+res)
-			self.edges.append((recid,rid))
-			res += L
-		for i in range(size):
-			L,rid = self.read_recid(off+res+2)
-			res += L + 22
-#		elif size == 0: # version 9
-#			res += 120
+		if self.version > 7:
+			size= struct.unpack('>h', self.data[off+2:off+4])[0]
+			res = 6
+			for i in range(2):
+				L,rid = self.read_recid(off+res)
+				self.edges.append((recid,rid))
+				res += L
+			for i in range(size):
+				L,rid = self.read_recid(off+res+2)
+				res += L + 22
+		else:
+			trsize = struct.unpack('>h', self.data[off:off+2])[0]
+			size2 = struct.unpack('>h', self.data[off+2:off+4])[0]
+			recs = struct.unpack('>h', self.data[off+4:off+6])[0]
+			res = 6
+			for i in range(4):
+				L,rid = self.read_recid(off+res)
+				self.edges.append((recid,rid))
+				res += L
+			res += 20
+			res += recs*24
+			if size2 > 1:
+				for i in range(size2):
+					L,rid = self.read_recid(off+res)
+					self.edges.append((recid,rid))
+					res += L
+				res += 20
+			elif recs > 0:
+				res += trsize+1
 		return res
 
 	def PathTextLineInfo(self,off,recid,mode=0):
@@ -1858,28 +1878,46 @@ class FHDoc():
 
 	def TextInPath(self,off,recid,mode=0):
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
-		shift = 8
-		for i in range(5):
-			L,rid = self.read_recid(off+shift)
-			self.edges.append((recid,rid))
-			shift += L
-		# hack. no other way so far.
-		if self.data[off+shift:off+shift+4] == "\xFF\xFF\xFF\xFF":
-			shift+=2
-		for i in range(3):
-			L,rid = self.read_recid(off+shift)
-			self.edges.append((recid,rid))
-			shift += L
-		
-		for i in range(num):
-			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
-			if key == 2:
-				shift+=4
+		if self.version > 7:
+			shift = 8
+			for i in range(5):
 				L,rid = self.read_recid(off+shift)
 				self.edges.append((recid,rid))
 				shift += L
-			else:
-				shift+=8
+			# hack. no other way so far.
+			if self.data[off+shift:off+shift+4] == "\xFF\xFF\xFF\xFF":
+				shift+=2
+			for i in range(3):
+				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
+				shift += L
+			
+			for i in range(num):
+				key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+				if key == 2:
+					shift+=4
+					L,rid = self.read_recid(off+shift)
+					self.edges.append((recid,rid))
+					shift += L
+				else:
+					shift+=8
+		else:
+			shift = 20
+			for i in range(3):
+				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
+				shift += L
+			if not num%2: #FIXME!
+				num -= 1
+			for i in range(num):
+				key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+				if key == 2:
+					shift+=4
+					L,rid = self.read_recid(off+shift)
+					self.edges.append((recid,rid))
+					shift += L
+				else:
+					shift+=8
 		return shift
 
 	def TileFill(self,off,recid,mode=0):
