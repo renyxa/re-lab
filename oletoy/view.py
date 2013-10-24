@@ -1152,11 +1152,14 @@ class ApplicationMainWindow(gtk.Window):
 		size = model.get_value(iter1,3)
 		offset2 = model.get_value(iter1,5)
 		size2 = model.get_value(iter1,6)
-		hd.hv.hl[0] = offset,size,1,1,0,0.9
+		hlid = len(hd.hv.hl)
+		if hd.hv.hl[hlid-1][2] == 1:
+			hlid -= 1
+		hd.hv.hl[hlid] = offset,size,1,1,0,0.9
 		if size2 > 0:
-			hd.hv.hl[1] = offset2,size2,1,0,1,0.9
-		elif hd.hv.hl.has_key(1):
-			del hd.hv.hl[1]
+			hd.hv.hl[hlid+1] = offset2,size2,1,0,1,0.9
+		elif hd.hv.hl.has_key(hlid+1):
+			del hd.hv.hl[hlid+1]
 
 		hd.hv.offset = offset
 
@@ -1411,6 +1414,26 @@ class ApplicationMainWindow(gtk.Window):
 						else:
 							off = offsmp
 						yep.vprmfunc[ntype[1]](hd,data,off)
+						
+						# add ligthgreen HL for hdrows
+						hditer1 = hd.model.get_iter_first()
+						hlid = 0
+						while None != hditer1:
+							hdoffset = hd.model.get_value(hditer1,2)
+							hdsize = hd.model.get_value(hditer1,3)
+							hdoffset2 = hd.model.get_value(hditer1,5)
+							hdsize2 = hd.model.get_value(hditer1,6)
+							hd.hv.hl[hlid] = hdoffset,hdsize,.9,1,.9,.95
+							hlid += 1
+							if hdsize2 > 0:
+								hd.hv.hl[hlid] = hdoffset2,hdsize2,.9,1,.9,.95
+								hlid += 1
+							hditer1 = hd.model.iter_next(hditer1)
+						hd.hv.expose(None,None)
+
+
+
+						
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
