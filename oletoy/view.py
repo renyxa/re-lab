@@ -1268,6 +1268,8 @@ class ApplicationMainWindow(gtk.Window):
 		model.set_value(iter1,3,hd.hv.data)
 		hd.hv.modified = 0
 		hd.hv.expose(None,None)
+		self.on_row_activated(self.das[pn].view,model.get_path(iter1),self.das[pn].view.get_column(0))
+
 
 	def edited_cb (self, cell, path, new_text):
 		pn = self.notebook.get_current_page()

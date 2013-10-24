@@ -214,6 +214,15 @@ class Page:
 				print "Probably Freehand 9+"
 				fh.fh_open(buf,self, parent)
 				return 0
+		else:
+			fh_off = buf.find('FHDocHeader')
+			if fh_off != -1:
+				if buf[0:2] == "FH":
+					self.type = "FH"
+					print "Probably Freehand <5"
+					fh.fh_open(buf, self, parent, 0)
+					return 0
+		
 
 		if buf[8:11] == 'xV4':
 			self.type = 'ZMF'
