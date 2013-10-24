@@ -48,7 +48,6 @@ class HexView():
 		self.offnum = 0					# offset in lines
 		self.tdx = -1						# width of one glyph
 		self.tht = 0						# height of one glyph
-		self.numtl = 0					# number of lines
 		self.hvlines = []				# cached text of lines
 		self.selr = None
 		self.selc = None
@@ -545,7 +544,7 @@ class HexView():
 				t = len(self.data)-1
 			self.parent.calc_status(self.data[t],1)
 
-		self.vadj.upper = self.lines-self.numtl+1
+#		self.vadj.upper = self.lines-self.numtl+1
 		self.vadj.value = self.offnum
 		if self.curr != self.prer or self.curc != self.prec or self.exposed == 1:
 			self.expose(view,event)
@@ -567,7 +566,7 @@ class HexView():
 		# vertical scroll line
 		if int(vadj.value) != self.offnum:
 			self.offnum = int(vadj.value)
-			self.vadj.upper = self.lines-self.numtl+2
+#			self.vadj.upper = self.lines-self.numtl+2
 			self.hv.hide()
 			self.hv.show()
 		return True
