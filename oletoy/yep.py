@@ -718,11 +718,11 @@ def vvst(hd, data, off):
 
 	offset = 62
 	x = ord(data[offset])-64
-	add_iter(hd,"Octave",x,offset,1,"B")
+	add_iter(hd,"Main Octave",x,offset,1,"B")
 
-#	offset = 63
-#	x = ord(data[offset])-64
-#	add_iter(hd,"Octave",x,offset,1,"B")
+	offset = 63
+	x = ord(data[offset])-64
+	add_iter(hd,"Left Octave",x,offset,1,"B")
 
 	offset = 74
 	x = ord(data[offset])

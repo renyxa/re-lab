@@ -1423,10 +1423,10 @@ class ApplicationMainWindow(gtk.Window):
 							hdsize = hd.model.get_value(hditer1,3)
 							hdoffset2 = hd.model.get_value(hditer1,5)
 							hdsize2 = hd.model.get_value(hditer1,6)
-							hd.hv.hl[hlid] = hdoffset,hdsize,.9,1,.9,.95
+							hd.hv.hl[hlid] = hdoffset,hdsize,.6,.9,.6,.9
 							hlid += 1
 							if hdsize2 > 0:
-								hd.hv.hl[hlid] = hdoffset2,hdsize2,.9,1,.9,.95
+								hd.hv.hl[hlid] = hdoffset2,hdsize2,.6,.9,.6,.9
 								hlid += 1
 							hditer1 = hd.model.iter_next(hditer1)
 						hd.hv.expose(None,None)
