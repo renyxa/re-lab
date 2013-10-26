@@ -716,18 +716,27 @@ class ApplicationMainWindow(gtk.Window):
 		txt = ""
 		txt2 = ""
 		if dlen == 1:
-			txt += "%d\t"%ord(buf)
+			v1 = ord(buf)
+			txt += "%d\t"%v1
 			if self.options_midi == 1:
-				if ord(buf) in midi.pitches:
-					txt += midi.pitches[ord(buf)]
-				if ord(buf) in midi.controllers:
-					txt += "\t["+midi.controllers[ord(buf)]+"]"
+				if v1 in midi.pitches:
+					txt += midi.pitches[v1]
+				if v1 in midi.controllers:
+					txt += "\t["+midi.controllers[v1]+"]"
 			
 		elif dlen == 2:
 			if self.options_le == 1:
 				txt = "LE: %s\t"%((struct.unpack("<h",buf)[0])/self.options_div)
 			if self.options_be == 1:
-				txt += "BE: %s"%((struct.unpack(">h",buf)[0])/self.options_div)
+				txt += "BE: %s\t"%((struct.unpack(">h",buf)[0])/self.options_div)
+			# for etoneyk
+			v1 = ord(buf[0])
+			if v1 > 127:
+				v2 = ord(buf[1])
+			else:
+				v2 = 1
+			txt += "NK: %s"%((v2-1)*128+v1)
+
 		elif dlen == 4:
 			if self.options_le == 1:
 				txt = "LE: %s"%((struct.unpack("<i",buf)[0])/self.options_div)
