@@ -15,7 +15,6 @@
 #
 
 import gtk
-import gobject
 import tree
 import hv2
 import utils

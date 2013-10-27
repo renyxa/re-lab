@@ -15,7 +15,8 @@
 #
 
 import sys,struct,os
-import tree,gtk,gobject,cairo,zlib
+import tree,gtk,cairo,zlib
+import gobject
 import difflib
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx
 from utils import *

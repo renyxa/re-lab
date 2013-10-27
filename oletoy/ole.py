@@ -15,7 +15,6 @@
 
 
 import sys,struct
-import gobject
 import gtk, ctypes
 import tree
 import hexdump
@@ -49,8 +48,8 @@ try:
 	ropen = gsf_open
 	print "Found libgsf python bindings"
 except:
-	print 'libgsf python bindings were not found'
-	ropen = my_open
+		print 'libgsf python bindings were not found'
+		ropen = my_open
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
@@ -307,6 +306,10 @@ def get_children(page,infile,parent,ftype,dirflag=0):
 			ftype = "vsd"
 			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
 			vsd.parse (page, data, iter1)
+		if infname == "PageMaker":
+			ftype = "pm"
+			page.model.set_value(iter1,1,("pm",dirflag))
+			pm6.open (page, data, iter1)
 		if infname == "WordDocument":
 			ftype = "doc"
 			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1

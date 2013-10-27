@@ -147,8 +147,10 @@ def shape_rect():
 
 def shapes (page, data, size, parent):
 	rlen = 258
-#	if len(data)/size < 258:
-#		rlen = 136  # is that version specific?
+	if page.version == 6:
+		rlen = 136
+	if page.version < 6:
+		rlen = 78
 	for i in range(size):
 		type_id = ord(data[i*rlen])
 		flag = "%02x"%(ord(data[i*rlen+1]))
@@ -286,6 +288,17 @@ def open (page,buf,parent,off=0):
 	off += 0x36
 	triter = add_pgiter(page,"Trailer","pm","trailer",buf[tr_off:tr_off+tr_len*16],parent)
 	tr = []
+	# BIPU version detection
+	vd1 = ord(buf[0xa])
+	vd2 = ord(buf[0x10])
+	if vd1 == 6:
+		page.version = 5
+	elif vd2 == 5:
+		page.version = 6
+	else:
+		page.version = 6.5  # 7 seems to be the same
+	print 'Version:',page.version
+	
 	# FIXME! need to modify treatment of grouped records
 	parse_trailer(page,buf,tr_off,tr_len,triter,eflag,tr)
 	start = 0x36

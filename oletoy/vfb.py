@@ -13,7 +13,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
 
-import struct,gtk,gobject
+import struct,gtk
 from utils import *
 
 types = {

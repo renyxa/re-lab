@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct,gtk,gobject
+import sys,struct,gtk
 import cdr
 from utils import *
 

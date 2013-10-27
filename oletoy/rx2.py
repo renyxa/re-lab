@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct,gtk,gobject
+import sys,struct,gtk
 
 def parse (model,buf,offset = 0,parent=None):
 		newT = buf[offset:offset+4]

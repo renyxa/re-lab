@@ -15,7 +15,6 @@
 #
 
 import sys,struct
-import gobject
 import gtk
 from utils import *
 

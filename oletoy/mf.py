@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct,gtk,gobject,emfplus
+import sys,struct,gtk,emfplus
 from utils import *
 
 emrplus_ids = {

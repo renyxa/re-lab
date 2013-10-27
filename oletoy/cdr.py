@@ -14,7 +14,8 @@
 # USA
 #
 
-import sys,struct,gtk,gobject,zlib
+import sys,struct,gtk,zlib
+import gobject
 import icc,cmx
 from utils import *
 

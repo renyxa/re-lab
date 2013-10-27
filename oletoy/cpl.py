@@ -17,7 +17,7 @@
 
 # Corel palettes
 
-import sys,struct,gtk,gobject
+import sys,struct,gtk
 from utils import *
 
 def open(buf,page,parent):

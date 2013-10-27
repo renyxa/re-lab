@@ -20,7 +20,6 @@
 # http://msdn.microsoft.com/en-us/library/dd925837%28v=office.12%29.aspx
 
 import sys,struct
-import gobject
 import gtk
 import tree
 import hexdump

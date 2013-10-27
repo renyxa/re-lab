@@ -14,7 +14,7 @@
 # USA
 #
 
-import sys,struct,gtk,gobject
+import sys,struct,gtk
 from utils import *
 
 def p_patt(page,buf,offset,name,parent):

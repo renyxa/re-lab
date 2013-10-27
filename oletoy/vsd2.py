@@ -15,7 +15,6 @@
 #
 
 import sys,struct
-import gobject
 import gtk
 import tree
 import hexdump

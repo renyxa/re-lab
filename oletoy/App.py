@@ -15,7 +15,7 @@
 #
 
 import sys,struct,os
-import tree, gtk, gobject
+import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf, otxml, chdraw,vfb,fbx
