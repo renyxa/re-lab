@@ -1149,9 +1149,9 @@ class ApplicationMainWindow(gtk.Window):
 			runwin.add(vbox)
 			runwin.set_title("Colupatr CLI")
 			runwin.connect ("destroy", self.del_runwin)
-			run_btn.connect("button-press-event",self.cli_on_run,tb)
-			open_btn.connect("button-press-event",self.cli_on_open,tb)
-			save_btn.connect("button-press-event",self.cli_on_save,tb)
+			run_btn.connect("button-press-event",self.cli_on_run,self.tb)
+			open_btn.connect("button-press-event",self.cli_on_open,self.tb)
+			save_btn.connect("button-press-event",self.cli_on_save,self.tb)
 			runwin.show_all()
 			self.run_win = runwin
 
