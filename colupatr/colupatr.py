@@ -69,6 +69,8 @@ class ApplicationMainWindow(gtk.Window):
 
 		self.set_title("colupatr")
 		self.set_default_size(640, 350)
+		self.snipsdir = os.path.join(os.path.expanduser("~"),".oletoy")
+
 
 		self.lebe = 0
 
@@ -1054,106 +1056,9 @@ class ApplicationMainWindow(gtk.Window):
 		except:
 			print "Not a copy of hexdump"
 
-	def open_cli_old(self):
-		dialog = gtk.Dialog("colupatr CLI",	None,
-			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-			(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-			gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-		tb = gtk.TextBuffer()
-		tv = gtk.TextView(tb)
-		s = gtk.ScrolledWindow()
-		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-		s.set_size_request(660,400)
-		s.add_with_viewport(tv)
-		dialog.vbox.pack_start(s)
-		s.show_all()
-		resp = dialog.run()
-		dialog.destroy()
-		txt = ""
-		if resp == gtk.RESPONSE_ACCEPT:
-			txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
-			print txt
-		return txt
-
-	def cli_on_run (self,wg,event,tb):
-		txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
-		pn = self.notebook.get_current_page()
-		if pn != -1:
-			hv = self.das[pn]
-			exec(txt)
-			hv.expose(None,None)
-
-	def cli_on_open (self,wg,event,tb):
-		home = expanduser("~")
-		self.fname = self.file_open('Open',None,None,home+"/.oletoy")
-		if self.fname:
-			manager = gtk.recent_manager_get_default()
-			manager.add_item(self.fname)
-			offset = 0
-			f = open(self.fname)
-			buf = f.read()
-			if buf:
-				tb.set_text(buf)
-			f.close()
-
-	def cli_on_save (self,wg,event,tb):
-		home = expanduser("~")
-		self.fname = self.file_open('Save',home+"/.oletoy",self.fname)
-		if self.fname:
-			txt = tb.get_text(tb.get_start_iter(),tb.get_end_iter())
-			f = open(self.fname,'w')
-			f.write(txt)
-			f.close()
-			manager = gtk.recent_manager_get_default()
-			manager.add_item(self.fname)
 
 	def open_cli(self):
-		if self.run_win != None:
-			self.run_win.show_all()
-			self.run_win.present()
-		else:
-			open_btn = gtk.Button("Open")
-			save_btn = gtk.Button("Save")
-			run_btn = gtk.Button("Run")
-			if usegtksv2:
-				self.tb = gtksourceview2.Buffer()
-				tv = gtksourceview2.View(self.tb)
-				lm = gtksourceview2.LanguageManager()
-				lp = lm.get_language("python")
-				self.tb.set_highlight_syntax(True)
-				self.tb.set_language(lp)
-				tv.set_show_line_marks(True)
-				tv.set_show_line_numbers(True)
-				tv.set_draw_spaces(True)
-				tv.set_insert_spaces_instead_of_tabs(True)
-				tv.set_tab_width(4)
-			else:
-				tv = gtk.TextView()
-				self.tb = tv.get_buffer()
-			s = gtk.ScrolledWindow()
-			s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
-			s.set_size_request(660,400)
-			s.add(tv)
-			s.show_all()
-			hbox = gtk.HBox()
-			hbox.pack_start(open_btn)
-			hbox.pack_start(save_btn)
-			hbox.pack_start(run_btn)
-			vbox = gtk.VBox()
-			vbox.pack_start(s)
-			vbox.pack_start(hbox)
-			
-			runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-			runwin.set_resizable(True)
-			runwin.set_border_width(2)
-			runwin.add(vbox)
-			runwin.set_title("Colupatr CLI")
-			runwin.connect ("destroy", self.del_runwin)
-			run_btn.connect("button-press-event",self.cli_on_run,self.tb)
-			open_btn.connect("button-press-event",self.cli_on_open,self.tb)
-			save_btn.connect("button-press-event",self.cli_on_save,self.tb)
-			runwin.show_all()
-			self.run_win = runwin
+		cli.CliWindow(self)
 
 
 	def on_entry_keypressed (self, view, event):
