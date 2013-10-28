@@ -27,7 +27,7 @@ recs = {
 	0x10:("0x10", 332),
 	0x11:("0x11", 4),
 	0x12:("0x12", 298), # FIXME!
-	0x13:("Fonts", 94),
+	0x13:("Fonts", 144),
 	0x14:("Styles", 334),
 	0x15:("Colors", 210),
 	0x18:("0x18", 2496),  # FIXME!
@@ -74,29 +74,38 @@ def chars (page, data, size, parent):
 
 
 def fonts (page, data, size, parent):
+	rlen = 94
+	if page.version < 5:
+		rlen = 144
 	for i in range(size):
-		pos = data[i*94:].find("\x00")
-		cname = data[i*94:i*94+pos]
-		add_pgiter(page,"%s"%cname,"pm","font",data[i*94:i*94+94],parent)
+		pos = data[i*rlen:].find("\x00")
+		cname = data[i*rlen:i*rlen+pos]
+		add_pgiter(page,"%s"%cname,"pm","font",data[i*rlen:i*rlen+rlen],parent)
 
 
 def colors (page, data, size, parent):
+	rlen = 210
+	if page.version < 5:
+		rlen = 64
 	for i in range(size):
-		pos = data[i*210:].find("\x00")
-		cname = data[i*210:i*210+pos]
-		add_pgiter(page,"%s"%cname,"pm","color",data[i*210:i*210+210],parent)
+		pos = data[i*rlen:].find("\x00")
+		cname = data[i*rlen:i*rlen+pos]
+		add_pgiter(page,"%s"%cname,"pm","color",data[i*rlen:i*rlen+rlen],parent)
 
 
 def pages (page, data, size, parent):
 	rlen = 472
+	if page.version < 5:
+		rlen = 286
 	for i in range(size):
 		id1 = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
 		id2 = struct.unpack("<H",data[i*rlen+2:i*rlen+4])[0]
 		id3 = struct.unpack("<H",data[i*rlen+4:i*rlen+6])[0]
-		lr = ord(data[i*rlen+0x1bc])
 		side = "(R)"
-		if lr == 1:
-			side = "(L)"
+		if page.version > 4:
+			lr = ord(data[i*rlen+0x1bc])
+			if lr == 1:
+				side = "(L)"
 		add_pgiter(page,"Page %02x, %02x %02x %s"%(id2,id1, id3,side),"pm","page",data[i*rlen:i*rlen+rlen],parent)
 
 
@@ -149,8 +158,10 @@ def shapes (page, data, size, parent):
 	rlen = 258
 	if page.version == 6:
 		rlen = 136
-	if page.version < 6:
+	elif page.version == 5:
 		rlen = 78
+	elif page.version < 5:
+		rlen = 58
 	for i in range(size):
 		type_id = ord(data[i*rlen])
 		flag = "%02x"%(ord(data[i*rlen+1]))
@@ -195,10 +206,14 @@ def paras (page, data, size, parent):
 
 def styles (page, data, size, parent):
 	rlen = 334
+	noff = 276
+	if page.version < 5:
+		rlen = 320
+		noff = 262
 	for i in range(size):
 		styleid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
-		pos = data[i*rlen+276:].find("\x00")
-		cname = data[i*rlen+276:i*rlen+276+pos]
+		pos = data[i*rlen+noff:].find("\x00")
+		cname = data[i*rlen+noff:i*rlen+noff+pos]
 		add_pgiter(page,"%02x %s"%(styleid,cname),"pm","style",data[i*rlen:i*rlen+rlen],parent)
 
 
@@ -291,7 +306,9 @@ def open (page,buf,parent,off=0):
 	# BIPU version detection
 	vd1 = ord(buf[0xa])
 	vd2 = ord(buf[0x10])
-	if vd1 == 6:
+	if vd1 == 1:
+		page.version = 4
+	elif vd1 == 6:
 		page.version = 5
 	elif vd2 == 5:
 		page.version = 6
