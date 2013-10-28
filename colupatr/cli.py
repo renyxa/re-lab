@@ -100,6 +100,71 @@ def create_tbtv(lang="python"):
 	return tb,tv
 
 
+class BTW():
+	def __init__(self, app):
+		self.app = app
+		self.model = gtk.TreeStore(
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			gobject.TYPE_STRING,
+			)
+		self.view = gtk.TreeView(self.model)
+		self.view.set_reorderable(True)
+		self.view.columns_autosize()
+		self.view.set_enable_tree_lines(True)
+		cell0 = gtk.CellRendererText()
+		cell0.set_property('family-set',True)
+		cell0.set_property('font','monospace 10')
+		cell = gtk.CellRendererText()
+		cell.set_property('family-set',True)
+		cell.set_property('font','monospace 9')
+		c0 = gtk.TreeViewColumn('', cell0, text=0)
+		c8 = gtk.TreeViewColumn('8', cell, text=8)
+		c7 = gtk.TreeViewColumn('7', cell, text=7)
+		c6 = gtk.TreeViewColumn('6', cell, text=6)
+		c5 = gtk.TreeViewColumn('5', cell, text=5)
+		c4 = gtk.TreeViewColumn('4', cell, text=4)
+		c3 = gtk.TreeViewColumn('3', cell, text=3)
+		c2 = gtk.TreeViewColumn('2', cell, text=2)
+		c1 = gtk.TreeViewColumn('1', cell, text=1)
+		ct = gtk.TreeViewColumn('', cell0, text=9)
+		c8.set_clickable(True)
+		c7.set_clickable(True)
+		c6.set_clickable(True)
+		c5.set_clickable(True)
+		c4.set_clickable(True)
+		c3.set_clickable(True)
+		c2.set_clickable(True)
+		c1.set_clickable(True)
+		self.view.append_column(c0)
+		self.view.append_column(c8)
+		self.view.append_column(c7)
+		self.view.append_column(c6)
+		self.view.append_column(c5)
+		self.view.append_column(c4)
+		self.view.append_column(c3)
+		self.view.append_column(c2)
+		self.view.append_column(c1)
+		self.view.append_column(ct)
+		self.view.set_headers_visible(False)
+
+		s = gtk.ScrolledWindow()
+		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s.set_size_request(660,400)
+		s.add(self.view)
+		s.show_all()
+		w = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		w.add(s)
+		w.show_all()
+
+
 class CliWindow():
 	def __init__(self, app):
 		self.app = app
