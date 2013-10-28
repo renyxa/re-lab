@@ -19,6 +19,7 @@ import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf, otxml, chdraw,vfb,fbx
+import qxp
 import lrf
 import pdb
 import sbimp
@@ -55,6 +56,10 @@ class Page:
 			offset = 0
 			f = open(self.fname,"rb")
 			buf = f.read()
+
+		if buf[2:0xe] == "IIXPR3E E XP":
+			self.type = qxp.open(self, buf, parent)
+			return 0
 
 		if buf[0:6] == "\x1aWLF10":
 			self.type = vfb.open(self, buf, parent)
