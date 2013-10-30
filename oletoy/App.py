@@ -57,7 +57,7 @@ class Page:
 			f = open(self.fname,"rb")
 			buf = f.read()
 
-		if buf[2:0xe] == "IIXPR3E E XP":
+		if buf[2:8] == "IIXPR3":
 			self.type = qxp.open(self, buf, parent)
 			return 0
 

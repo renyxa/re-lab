@@ -17,7 +17,30 @@ import struct
 from utils import *
 
 
-#def add_pgiter (page, name, ftype, stype, data, parent = None, coltype = None, vprmsmp = None):
+
+
+def parse_block(page,buf,off,noff,parent):
+	iters = [parent]
+	p2 = parent
+	while off < noff:
+		nboff = struct.unpack("<I",buf[off:off+4])[0]
+		propnum = struct.unpack("<I",buf[off+4:off+8])[0]
+		proplen = struct.unpack("<I",buf[off+8:off+12])[0]
+		namelen = ord(buf[off+12])
+		if namelen > 0:
+			name = buf[off+13:off+13+namelen]
+			piter = add_pgiter(page,"%s"%name,"fbx","record",buf[off:off+13+namelen+proplen],parent)
+			if propnum == 0:
+				iters.append(piter)
+				parent = piter
+		else:
+			try:
+				iters.pop()
+				parent = iters[-1]
+			except:
+				parent = p2
+		off+=13+namelen+proplen
+
 
 def open (buf,page,parent,off=0):
 	add_pgiter(page,"FBX Header","fbx","header",buf[0:23],parent)
@@ -29,7 +52,8 @@ def open (buf,page,parent,off=0):
 	while off < len(buf):
 		noff = struct.unpack("<I",buf[off:off+4])[0]
 		if noff != 0:
-			add_pgiter(page,"Block %d"%bid,"fbx","block",buf[off:noff],parent)
+			piter = add_pgiter(page,"Block %d"%bid,"fbx","block",buf[off:noff],parent)
+			parse_block(page,buf,off,noff,piter)
 			off = noff
 			bid += 1
 		else:

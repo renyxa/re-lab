@@ -39,6 +39,9 @@ def collect_block(data,name,buf,off,blk_id):
 	return data,name
 
 def open (page,buf,parent,off=0):
+	# 0x3f - 3
+	# 0x45 - 8
+	
 	add_pgiter(page,"Block 0","qxp","block0",buf[off:off+0x400],parent)
 	lstlen = struct.unpack("<I",buf[off+0x400+0x1c:off+0x400+0x20])[0]
 	lst = []
@@ -56,4 +59,3 @@ def open (page,buf,parent,off=0):
 			# collect chain of blocks
 			data,name = collect_group(data,name,buf,off,abs(nxt))
 		add_pgiter(page,name,"qxp","block%02x"%i,data,parent)
-
