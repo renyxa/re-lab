@@ -68,19 +68,19 @@ def r1008(buf,off,id0,id1):
 	return 28,"r1008"
 
 def r106a(buf,off,id0,id1):
-	return 24,"r106a"
+	return 24,"Color RGB?"
 
 def r106b(buf,off,id0,id1):
-	return 16,"r106b"
+	return 16,"Color Grey?"
 
 def r106c(buf,off,id0,id1):
-	return 20,"r106c"
+	return 20,"Color CMYK?"
 
 def r10cd(buf,off,id0,id1):
-	return 15,"r10cd"
+	return 15,"Line or Fill?"
 
 def r10ce(buf,off,id0,id1):
-	return 24,"r10ce"
+	return 24,"Fill or Line"
 
 def r10d0(buf,off,id0,id1):
 	return 20,"r10d0"
@@ -91,8 +91,9 @@ def r1131(buf,off,id0,id1):
 def r1132(buf,off,id0,id1):
 	return 32,"r1132"
 
-def r1134(buf,off,id0,id1):
-	return 28,"r1134"
+def r1134(buf,off,id0,id1): # path?
+	num1 = struct.unpack(">H",buf[off+26:off+28])[0]
+	return 28+num1*16,"Path (?)"
 
 def r1135(buf,off,id0,id1):
 	return 32,"r1135"
@@ -144,17 +145,23 @@ def fh_open (buf,page,parent=None,mode=1):
 			print 'Complete!'
 			break
 		id2 = struct.unpack(">H",buf[off+4:off+6])[0]
-		if (id1&0xFF == 0x19 or id1&0xFF == 0x1b or id1&0xFF == 0x09 or id1&0xFF == 0x0b) and id2 != 0x03:
-			rlen = 16
-			rtype = "%02x %04x"%(id1,id2)
-			add_pgiter(page,"[%02x] %s"%(rid,rtype),"fh12",rtype,buf[off:off+rlen],piter)
-			off += rlen
-		elif id2 in rec_types:
+		# part of the whole thing
+#		if (id1&0xFF == 0x19 or id1&0xFF == 0x1b or id1&0xFF == 0x09 or id1&0xFF == 0x0b) and id2 != 0x03:
+#			rlen = 16
+#			rtype = "%02x %04x"%(id1,id2)
+#			add_pgiter(page,"[%02x] %s"%(rid,rtype),"fh12",rtype,buf[off:off+rlen],piter)
+#			off += rlen
+		if id2 in rec_types:
 			rlen,rtype = rec_types[id2](buf,off,id0,id1)
-			add_pgiter(page,"[%02x] %s"%(rid,rtype),"fh12",rtype,buf[off:off+rlen],piter)
+			if rlen > 4:
+				ridtxt = "[%02x]"%rid
+				if id2&0xff30 == 0x30:
+					ridtxt = ""
+				add_pgiter(page,"%s\t%s"%(ridtxt,rtype),"fh12",rtype,buf[off:off+rlen],piter)
 			off += rlen
 		else:
 			print "Unknown","%02x%02x"%(id0,id1),"%02x"%id2
 			add_pgiter(page,"[%02x] Unknown %02x"%(rid,id2),"fh12","%02x"%id2,buf[off:off+1000],piter)
 			off += 1000
-		rid += 1
+		if rlen > 4 and not id2&0xFF30==0x30:
+			rid += 1
