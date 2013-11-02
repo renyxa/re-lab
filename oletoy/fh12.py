@@ -44,6 +44,7 @@ def r0039(buf,off,id0,id1):
 	return 30,"r0039"
 
 def r003f(buf,off,id0,id1):
+	# XForm/Rotate?
 	return 30,"r003f"
 
 def r0fa1(buf,off,id0,id1):
@@ -62,7 +63,7 @@ def r1006(buf,off,id0,id1):
 	num2 = struct.unpack(">I",buf[off+off2:off+off2+4])[0]
 	off3 = off2+4+num2
 	num3 = struct.unpack(">I",buf[off+off3:off+off3+4])[0]
-	return off3+4+num3+90,"r1006"
+	return off3+4+num3+90,"Text"
 
 def r1008(buf,off,id0,id1):
 	return 28,"r1008"
@@ -77,26 +78,41 @@ def r106c(buf,off,id0,id1):
 	return 20,"Color CMYK?"
 
 def r10cd(buf,off,id0,id1):
-	return 15,"Line or Fill?"
+	# 0x0a >H FIll Name
+	# 0x0c >H Id of the color rec
+	return 15,"Basic Fill"
 
 def r10ce(buf,off,id0,id1):
-	return 24,"Fill or Line"
+	return 24,"Basic Line"
 
 def r10d0(buf,off,id0,id1):
 	return 20,"r10d0"
 
+def r10d1(buf,off,id0,id1):
+	# Radial fill?
+	return 16,"r10d1"
+
 def r1131(buf,off,id0,id1):
-	return 32,"r1131"
+	# 0x14 >H Fill ID
+	# 0x16 >H Stroke ID
+	# 0x18 >H Left pts*10
+	# 0x1a >H Top
+	# 0x1c >H Right
+	# 0x1e >H Bottom
+	# corner radius?
+	return 32,"Rectangle"
 
 def r1132(buf,off,id0,id1):
-	return 32,"r1132"
+	# same as rectangle
+	return 32,"Ellipse"
 
 def r1134(buf,off,id0,id1): # path?
 	num1 = struct.unpack(">H",buf[off+26:off+28])[0]
-	return 28+num1*16,"Path (?)"
+	return 28+num1*16,"Path"
 
 def r1135(buf,off,id0,id1):
-	return 32,"r1135"
+	# Fill ID, Line ID, L, T, B, R
+	return 32,"Line"
 
 
 def ZeroPad(buf,off,id0,id1):
@@ -123,6 +139,7 @@ rec_types = {
 	0x10cd:r10cd,
 	0x10ce:r10ce,
 	0x10d0:r10d0,
+	0x10d1:r10d1,
 	0x1131:r1131,
 	0x1132:r1132,
 	0x1134:r1134,
