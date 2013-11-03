@@ -1158,9 +1158,14 @@ class FHDoc():
 
 	def DisplayText(self,off,recid,mode=0):
 		# ver < 5
-		size1 = struct.unpack('>h', self.data[off:off+2])[0]
-		size2 = struct.unpack('>h', self.data[off+0x7a:off+0x7c])[0]
-		return 4*size1+69+size2
+		adj = 0
+		size1 = struct.unpack('>h', self.data[off+0x7a:off+0x7c])[0]
+		size2 = struct.unpack('>h', self.data[off+0x7c:off+0x7e])[0]
+		if size2 == 0:
+			adj = 18
+		elif size2 == size1:
+			size2 = 1
+		return 0x86+size1+1+size2*30+adj
 
 	def DuetFilter(self,off,recid,mode=0):
 		return 14
@@ -1559,8 +1564,10 @@ class FHDoc():
 	def Oval(self,off,recid,mode=0):
 		if self.version > 10:
 			length=38
-		else:
+		elif self.version > 3:
 			length=28
+		else:
+			length=24
 		res,rid = self.read_recid(off)
 		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)

@@ -41,10 +41,11 @@ def r0036(buf,off,id0,id1):
 	return 30,"r0036"
 
 def r0039(buf,off,id0,id1):
+	# Xform/Scale
 	return 30,"r0039"
 
 def r003f(buf,off,id0,id1):
-	# XForm/Rotate?
+	# XForm/Rotate-Skew
 	return 30,"r003f"
 
 def r0fa1(buf,off,id0,id1):
