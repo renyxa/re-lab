@@ -51,40 +51,44 @@ def r003f(buf,off,id0,id1):
 def r0fa1(buf,off,id0,id1):
 	return 24,"r0fa1"
 
-def r0fa2(buf,off,id0,id1):
+def Group (buf,off,id0,id1):
 	id_num = struct.unpack(">H",buf[off+18:off+20])[0]
-	return 20+id_num*2,"r0fa2"
+	return 20+id_num*2,"Group"
 
 def r1005(buf,off,id0,id1):
-	return 50,"r1005"
+	# related to group
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	return 50+notelen,"r1005"
 
-def r1006(buf,off,id0,id1):
+def Text (buf,off,id0,id1):
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	off += notelen
 	num1 = struct.unpack(">I",buf[off+20:off+24])[0]
 	off2 = 24+num1
 	num2 = struct.unpack(">I",buf[off+off2:off+off2+4])[0]
 	off3 = off2+4+num2
 	num3 = struct.unpack(">I",buf[off+off3:off+off3+4])[0]
-	return off3+4+num3+90,"Text"
+	return off3+4+num3+90+notelen,"Text"
 
 def r1008(buf,off,id0,id1):
 	return 28,"r1008"
 
 def r106a(buf,off,id0,id1):
-	return 24,"Color RGB?"
+	return 24,"Color RGB"
 
 def r106b(buf,off,id0,id1):
-	return 16,"Color Grey?"
+	return 16,"Color Grey"
 
 def r106c(buf,off,id0,id1):
-	return 20,"Color CMYK?"
+	return 20,"Color CMY"
 
-def r10cd(buf,off,id0,id1):
+def BasicFill (buf,off,id0,id1):
 	# 0x0a >H FIll Name
 	# 0x0c >H Id of the color rec
-	return 15,"Basic Fill"
+	return 15,"BasicFill"
 
-def r10ce(buf,off,id0,id1):
-	return 24,"Basic Line"
+def BasicLine (buf,off,id0,id1):
+	return 24,"BasicLine"
 
 def r10d0(buf,off,id0,id1):
 	return 20,"r10d0"
@@ -93,7 +97,9 @@ def r10d1(buf,off,id0,id1):
 	# Radial fill?
 	return 16,"r10d1"
 
-def r1131(buf,off,id0,id1):
+def Rectangle (buf,off,id0,id1):
+	# 0x08 >H note length
+	# 0x0a >H layer ID
 	# 0x14 >H Fill ID
 	# 0x16 >H Stroke ID
 	# 0x18 >H Left pts*10
@@ -101,25 +107,33 @@ def r1131(buf,off,id0,id1):
 	# 0x1c >H Right
 	# 0x1e >H Bottom
 	# corner radius?
-	return 32,"Rectangle"
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	return 32+notelen,"Rectangle"
 
-def r1132(buf,off,id0,id1):
+def Oval (buf,off,id0,id1):
 	# same as rectangle
-	return 32,"Ellipse"
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	return 32+notelen,"Oval"
 
-def r1134(buf,off,id0,id1): # path?
+def Path (buf,off,id0,id1): # path?
+	# Path flags 0x19, 0x1b, 0x09, 0x0b
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	off += notelen
 	num1 = struct.unpack(">H",buf[off+26:off+28])[0]
-	return 28+num1*16,"Path"
+	return 28+num1*16+notelen,"Path"
 
-def r1135(buf,off,id0,id1):
+def Line (buf,off,id0,id1):
 	# Fill ID, Line ID, L, T, B, R
-	return 32,"Line"
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	return 32+notelen,"Line"
 
 
 def ZeroPad(buf,off,id0,id1):
+	# bad idea, roundrect has 8 zeros, then radii
+	# no indication in rect for it
 	return 4,"Padding"
 
-rec_types = {
+rec_types1 = {
 	0x0000:ZeroPad,
 	0x0002:List,
 	0x0003:String,
@@ -130,30 +144,44 @@ rec_types = {
 	0x0039:r0039,
 	0x003f:r003f,
 	0x0fa1:r0fa1,
-	0x0fa2:r0fa2,
+	0x0fa2:Group,
 	0x1005:r1005,
-	0x1006:r1006,
+	0x1006:Text,
 	0x1008:r1008,
 	0x106a:r106a,
 	0x106b:r106b,
 	0x106c:r106c,
-	0x10cd:r10cd,
-	0x10ce:r10ce,
+	0x10cd:BasicFill,
+	0x10ce:BasicLine,
 	0x10d0:r10d0,
 	0x10d1:r10d1,
-	0x1131:r1131,
-	0x1132:r1132,
-	0x1134:r1134,
-	0x1135:r1135,
+	0x1131:Rectangle,
+	0x1132:Oval,
+	0x1134:Path,
+	0x1135:Line,
 	0x1195:LinePat,
+}
+
+rec_types2 = {
+
 }
 
 def fh_open (buf,page,parent=None,mode=1):
 #	piter = add_pgiter(page,"FH12 file","fh","file",buf,parent)
 	piter = parent
 	off = 0
-	add_pgiter(page,"FH12 Header","fh12","header",buf[0:0x80],piter)
-	off = 0x80
+	if buf[0:4] == "FHD2":
+		page.version = 2
+		hdrlen = 0x178
+		rec_types = rec_types2
+		ftype = "fh02"
+	elif buf[0:4] == "acf3":
+		page.version = 1
+		hdrlen = 0x80
+		rec_types = rec_types1
+		ftype = "fh01"
+	add_pgiter(page,"FH%d Header"%page.version,ftype,"header",buf[0:hdrlen],piter)
+	off = hdrlen
 	lim = len(buf)
 	rid = 1
 	while off < lim:
@@ -163,23 +191,17 @@ def fh_open (buf,page,parent=None,mode=1):
 			print 'Complete!'
 			break
 		id2 = struct.unpack(">H",buf[off+4:off+6])[0]
-		# part of the whole thing
-#		if (id1&0xFF == 0x19 or id1&0xFF == 0x1b or id1&0xFF == 0x09 or id1&0xFF == 0x0b) and id2 != 0x03:
-#			rlen = 16
-#			rtype = "%02x %04x"%(id1,id2)
-#			add_pgiter(page,"[%02x] %s"%(rid,rtype),"fh12",rtype,buf[off:off+rlen],piter)
-#			off += rlen
 		if id2 in rec_types:
 			rlen,rtype = rec_types[id2](buf,off,id0,id1)
 			if rlen > 4:
 				ridtxt = "[%02x]"%rid
 				if id2&0xff30 == 0x30:
 					ridtxt = ""
-				add_pgiter(page,"%s\t%s"%(ridtxt,rtype),"fh12",rtype,buf[off:off+rlen],piter)
+				add_pgiter(page,"%s\t%s"%(ridtxt,rtype),ftype,rtype,buf[off:off+rlen],piter)
 			off += rlen
 		else:
 			print "Unknown","%02x%02x"%(id0,id1),"%02x"%id2
-			add_pgiter(page,"[%02x] Unknown %02x"%(rid,id2),"fh12","%02x"%id2,buf[off:off+1000],piter)
+			add_pgiter(page,"[%02x] Unknown %02x"%(rid,id2),ftype,"%02x"%id2,buf[off:off+1000],piter)
 			off += 1000
 		if rlen > 4 and not id2&0xFF30==0x30:
 			rid += 1
