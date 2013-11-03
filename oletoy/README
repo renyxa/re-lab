@@ -39,6 +39,8 @@ As of now OLE Toy reads and parses:
 - IMP (SoftBook e-book)
 - ZMF (Zoner Callisto, also known as Zoner Draw, BIPU support)
 - ZBR (Zebra Metafile, BIPU support)
+- IWA (Apple iWork '13, BIPU support. This format is used by Keynote 6
+       and Pages 5; I have no idea about Numbers.)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:

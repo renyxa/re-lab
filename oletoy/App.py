@@ -20,6 +20,7 @@ import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf,otxml,chdraw,vfb,fbx
 import qxp
+import iwa
 import lrf
 import pdb
 import sbimp
@@ -242,6 +243,13 @@ class Page:
 			self.type = 'ZBR'
 			print 'Probably Zebra Metafile'
 			zbr.open(buf, self, parent)
+			return 0
+
+		size = (ord(buf[1]) | (ord(buf[2]) << 8) | (ord(buf[3]) << 16)) + 4
+		if buf[0] == '\0' and (size == len(buf) or buf[4:7] == "\x80\x80\x04"):
+			self.type = 'IWA'
+			print('Probably Apple iWork file')
+			iwa.open(buf, self, parent)
 			return 0
 
 		if parent == None:
