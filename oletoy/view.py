@@ -1542,12 +1542,12 @@ class ApplicationMainWindow(gtk.Window):
 		scrolled = doc.scrolled
 		doc.hd = hexdump.hexdump()
 		vpaned = doc.hd.vpaned
-		hpaned = gtk.HPaned()
-		hpaned.add1(scrolled)
-		hpaned.add2(vpaned)
+		doc.hpaned = gtk.HPaned()
+		doc.hpaned.add1(scrolled)
+		doc.hpaned.add2(vpaned)
 		label = cmd.TabLabel("Unnamed")
 		label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
-		self.notebook.append_page(hpaned, label)
+		self.notebook.append_page(doc.hpaned, label)
 		self.notebook.show_tabs = True
 		self.notebook.show_all()
 		doc.view.connect("row-activated", self.on_row_activated)
@@ -1555,7 +1555,6 @@ class ApplicationMainWindow(gtk.Window):
 		doc.view.connect("key-release-event", self.on_row_keyreleased)
 		doc.view.connect("button-release-event", self.on_row_keyreleased)
 		doc.hd.hdview.connect("row-activated", self.on_hdrow_activated)
-		doc.hd.hdview.connect("key-press-event", self.on_hdrow_keypressed)
 		doc.hd.hdview.connect("key-release-event", self.on_hdrow_keyreleased)
 		doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 

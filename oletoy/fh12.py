@@ -162,8 +162,120 @@ rec_types1 = {
 	0x1195:LinePat,
 }
 
-rec_types2 = {
+def r2_1389 (buf,off,id0,id1):
+	return 34,"r1389"
 
+def r2_138a (buf,off,id0,id1):
+	rlen = struct.unpack(">H",buf[off+34:off+36])[0]
+	return 36+rlen*2,"r138a"
+
+def r2_13ed (buf,off,id0,id1):
+	return 48,"r13ed"
+
+def r2_1452 (buf,off,id0,id1):
+	return 20,"Color RGB"
+
+def r2_1453(buf,off,id0,id1):
+	return 18,"Color Grey"
+
+def r2_1454(buf,off,id0,id1):
+	return 22,"Color CMY"
+
+def r2_14b5 (buf,off,id0,id1):
+	return 16,"BasicFill"
+
+def r2_14b6 (buf,off,id0,id1):
+	return 26,"BasicLine"
+
+def r2_14b7 (buf,off,id0,id1):
+	return 20,"r14b7"
+
+def r2_14b8 (buf,off,id0,id1):
+	return 18,"r14b8"  # or 22
+
+def r2_14c9 (buf,off,id0,id1):
+	return 12,"r14c9"
+
+def r2_14ca (buf,off,id0,id1):
+	return 12,"r14ca"
+
+def r2_14d3 (buf,off,id0,id1):
+	return 22,"r14d3"
+
+def r2_14d4 (buf,off,id0,id1):
+	return 30,"r14d4"
+
+def r2_14dd (buf,off,id0,id1):
+	return 54,"r14dd" # or 58 or 62
+
+def r2_1519 (buf,off,id0,id1):
+	return 36,"Rectangle"
+
+def r2_151a (buf,off,id0,id1):
+	return 36,"Oval"
+
+def r2_151c(buf,off,id0,id1):
+	rlen = struct.unpack(">H",buf[off+30:off+32])[0]
+	return 32+rlen*16,"Path"
+
+def r2_151d (buf,off,id0,id1):
+	return 36,"Line"
+
+def r2_157d (buf,off,id0,id1):
+	num = struct.unpack(">H",buf[off+12:off+14])[0]
+	return 14+num*2,"LinePat"
+
+def r2_List(buf,off,id0,id1):
+	rlen = struct.unpack(">H",buf[off+6:off+8])[0]
+	return 12+rlen*2,"List"
+
+def r2_String(buf,off,id0,id1):
+	return 7+ord(buf[off+6]),"String"
+
+def r2_Text (buf,off,id0,id1):
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	off += notelen
+	num1 = struct.unpack(">H",buf[off+138:off+140])[0]
+	num2 = struct.unpack(">H",buf[off+140:off+142])[0]
+	if num2 != 0:
+		if not num1-1 == num2:
+			num1 += 22*num2-11
+		else:
+			num1 += 11
+	return 160+notelen+num1+1,"Text"
+
+
+rec_types2 = {
+	0x0000:ZeroPad,
+	0x0005:r2_List,
+	0x0006:r2_String,
+	0x0019:r0019,
+	0x0029:r0029,
+	0x0030:r0030,
+	0x0036:r0036,
+	0x0039:r0039,
+	0x003f:r003f,
+	0x1389:r2_1389,
+	0x138a:r2_138a,
+	0x13ed:r2_13ed, # like r1005
+	0x13ee:r2_Text,
+	0x1452:r2_1452,
+	0x1453:r2_1453,
+	0x1454:r2_1454,
+	0x14b5:r2_14b5,
+	0x14b6:r2_14b6,
+	0x14b7:r2_14b7,
+	0x14b8:r2_14b8,
+	0x14c9:r2_14c9,
+	0x14ca:r2_14ca,
+	0x14d3:r2_14d3,
+	0x14d4:r2_14d4,
+	0x14dd:r2_14dd,
+	0x1519:r2_1519,
+	0x151a:r2_151a,
+	0x151c:r2_151c,
+	0x151d:r2_151d,
+	0x157d:r2_157d,
 }
 
 def fh_open (buf,page,parent=None,mode=1):
