@@ -17,8 +17,8 @@
 import sys,struct,os
 import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
-import rx2,fh,mdb,cpt,cdw,pkzip,wld,vsd,yep
-import abr,rtf, otxml, chdraw,vfb,fbx
+import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
+import abr,rtf,otxml,chdraw,vfb,fbx
 import qxp
 import lrf
 import pdb
@@ -227,8 +227,10 @@ class Page:
 					print "Probably Freehand <5"
 					fh.fh_open(buf, self, parent, 0)
 					return 0
-		
-
+		if buf[0:4] == "FHD2" or buf[0:4] == "acf3":
+			self.type = "FH12"
+			fh12.fh_open(buf, self, parent, 0)
+			return 0
 		if buf[8:11] == 'xV4':
 			self.type = 'ZMF'
 			print 'Probably Zoner Draw 4+'

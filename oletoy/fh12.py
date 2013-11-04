@@ -108,11 +108,15 @@ def Rectangle (buf,off,id0,id1):
 	# 0x1e >H Bottom
 	# corner radius?
 	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	if buf[off+34+notelen:off+36+notelen] == "\x00\x00":
+		notelen +=8  # roundrect
 	return 32+notelen,"Rectangle"
 
 def Oval (buf,off,id0,id1):
 	# same as rectangle
 	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+#	if buf[off+34+notelen:off+36+notelen] == "\x00\x00":
+#		notelen +=8
 	return 32+notelen,"Oval"
 
 def Path (buf,off,id0,id1): # path?
@@ -169,17 +173,31 @@ def r2_138a (buf,off,id0,id1):
 	rlen = struct.unpack(">H",buf[off+34:off+36])[0]
 	return 36+rlen*2,"r138a"
 
+def r2_138b (buf,off,id0,id1):
+	# FIXME! 
+	rlen = struct.unpack(">H",buf[off+8:off+10])[0]
+	return 6+rlen,"r138b"
+
 def r2_13ed (buf,off,id0,id1):
 	return 48,"r13ed"
 
+def r2_13f0 (buf,off,id0,id1):
+	return 26,"r13f0"
+
+def r2_13f8 (buf,off,id0,id1):
+	return 76,"r13f8"
+
 def r2_1452 (buf,off,id0,id1):
-	return 20,"Color RGB"
+	return 20,"Color"
 
 def r2_1453(buf,off,id0,id1):
 	return 18,"Color Grey"
 
 def r2_1454(buf,off,id0,id1):
 	return 22,"Color CMY"
+
+def r2_1455(buf,off,id0,id1):
+	return 30,"Color PANTONE"
 
 def r2_14b5 (buf,off,id0,id1):
 	return 16,"BasicFill"
@@ -209,17 +227,25 @@ def r2_14dd (buf,off,id0,id1):
 	return 54,"r14dd" # or 58 or 62
 
 def r2_1519 (buf,off,id0,id1):
-	return 36,"Rectangle"
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	if buf[off+38+notelen:off+40+notelen] == "\x00\x00":
+		notelen +=8  # roundrect
+	return 36+notelen,"Rectangle"
 
 def r2_151a (buf,off,id0,id1):
-	return 36,"Oval"
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+#	if buf[off+38+notelen:off+40+notelen] == "\x00\x00":
+#		notelen +=8  # xform
+	return 36+notelen,"Oval"
 
 def r2_151c(buf,off,id0,id1):
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
 	rlen = struct.unpack(">H",buf[off+30:off+32])[0]
-	return 32+rlen*16,"Path"
+	return 32+rlen*16+notelen,"Path"
 
 def r2_151d (buf,off,id0,id1):
-	return 36,"Line"
+	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
+	return 36+notelen,"Line"
 
 def r2_157d (buf,off,id0,id1):
 	num = struct.unpack(">H",buf[off+12:off+14])[0]
@@ -234,15 +260,16 @@ def r2_String(buf,off,id0,id1):
 
 def r2_Text (buf,off,id0,id1):
 	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	off += notelen
-	num1 = struct.unpack(">H",buf[off+138:off+140])[0]
-	num2 = struct.unpack(">H",buf[off+140:off+142])[0]
-	if num2 != 0:
-		if not num1-1 == num2:
-			num1 += 22*num2-11
-		else:
-			num1 += 11
-	return 160+notelen+num1+1,"Text"
+	return id1-18+notelen,"Text"
+#	off += notelen
+#	num1 = struct.unpack(">H",buf[off+138:off+140])[0]
+#	num2 = struct.unpack(">H",buf[off+140:off+142])[0]
+#	if num2 != 0:
+#		if not num1-1 == num2:
+#			num1 += 22*num2-11
+#		else:
+#			num1 += 11
+#	return 160+notelen+num1+1,"Text"
 
 
 rec_types2 = {
@@ -257,11 +284,15 @@ rec_types2 = {
 	0x003f:r003f,
 	0x1389:r2_1389,
 	0x138a:r2_138a,
+	0x138b:r2_138b,
 	0x13ed:r2_13ed, # like r1005
 	0x13ee:r2_Text,
+	0x13f0:r2_13f0,
+	0x13f8:r2_13f8,
 	0x1452:r2_1452,
 	0x1453:r2_1453,
 	0x1454:r2_1454,
+	0x1455:r2_1455,
 	0x14b5:r2_14b5,
 	0x14b6:r2_14b6,
 	0x14b7:r2_14b7,
@@ -279,8 +310,7 @@ rec_types2 = {
 }
 
 def fh_open (buf,page,parent=None,mode=1):
-#	piter = add_pgiter(page,"FH12 file","fh","file",buf,parent)
-	piter = parent
+	piter = add_pgiter(page,"FH12 file","fh","file",buf,parent)
 	off = 0
 	if buf[0:4] == "FHD2":
 		page.version = 2
