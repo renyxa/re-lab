@@ -46,7 +46,7 @@ def open (buf,page,parent):
 			if t[i+1][-2:-1] != "/":
 				d = data.split(">")
 				niter = add_pgiter (page,id,"xml","",d[0]+">",piter)
-				if len(d[1]) > 0:
+				if len(d)>1 and len(d[1]) > 0:
 					add_pgiter (page,id,"xml","sub",d[1],niter)
 				citer.append(piter)
 				piter = niter
