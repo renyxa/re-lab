@@ -65,31 +65,26 @@ def uncompress(data):
 		c = ord(data[off])
 		off += 1
 		typ = c & 0x3
-		length = (c >> 2) + 1
 
-		if typ == 0: # this is the start of a literal run
+		if typ == 0: # literals
 			if c == 0xf0:
 				length = ord(data[off]) + 1
 				off += 1
+			else:
+				length = (c >> 2) + 1
 			result.extend(data[off:off + length])
 			off += length
-		elif typ == 1: # this is a single reference
-			length += 3 # NOTE: do not ask me...
-			offset = ord(data[off])
-			off += 1
-			next = (ord(data[off]) >> 2) + 1
+		elif typ == 1: # near reference
+			length = ((c >> 2) & 0x7) + 4
+			high = c >> 5
+			low = ord(data[off])
+			offset = (high << 8) | low
 			off += 1
 			append_ref(offset, length)
-			result.extend(data[off:off + next])
-			off += next
-		elif typ == 2: # this is a run of references
-			offset = ord(data[off])
-			off += 1
-			next = ord(data[off]) >> 2
-			off += 1
-			if next != 0:
-				print("offset inside block = 0x%x, next = 0x%x" % (off + 4, next))
-			# assert next == 0
+		elif typ == 2: # far reference
+			length = (c >> 2) + 1
+			offset = ord(data[off]) | (ord(data[off + 1]) << 8)
+			off += 2
 			append_ref(offset, length)
 		else:
 			print("unknown type at offset 0x%x inside block" % (off + 4))
