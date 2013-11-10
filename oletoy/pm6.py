@@ -267,6 +267,22 @@ recfuncs = {
 } 
 
 
+def hd_header (hd,data,page):
+	endian = "Big"
+	eflag = ">"
+	if data[6:8] == "\xff\x99":
+		eflag = "<"
+		endian = "Little"
+	add_iter (hd,'Endian:',endian,6,2,">H")
+	tr_len = struct.unpack("%sH"%eflag,data[0x2e:0x30])[0]
+	add_iter (hd,'ToC length:',"%d"%tr_len,0x2e,2,"%sH"%eflag)
+	tr_off = struct.unpack("%sI"%eflag,data[0x30:0x34])[0]
+	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%s"%eflag)
+
+
+hd_ids = {
+	"header":hd_header
+}
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 #	offsets = []
@@ -287,10 +303,6 @@ def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 			if grp == 0:
 				parse_trailer(page,data,off,size,triter,eflag,tr)
 		tr.append((rid1,size,off,grp))
-#		offsets.append(off)
-#	for i in sorted(offsets):
-#		print "%04x"%i
-	
 	return tr
 
 def open (page,buf,parent,off=0):

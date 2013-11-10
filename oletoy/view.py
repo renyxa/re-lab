@@ -1153,8 +1153,9 @@ class ApplicationMainWindow(gtk.Window):
 		offset2 = model.get_value(iter1,5)
 		size2 = model.get_value(iter1,6)
 		hlid = len(hd.hv.hl)
-		if hd.hv.hl[hlid-1][2] == 1:
-			hlid -= 1
+		if hlid > 0:
+			if hd.hv.hl[hlid-1][2] == 1:
+				hlid -= 1
 		hd.hv.hl[hlid] = offset,size,1,1,0,0.9
 		if size2 > 0:
 			hd.hv.hl[hlid+1] = offset2,size2,1,0,1,0.9
@@ -1430,9 +1431,6 @@ class ApplicationMainWindow(gtk.Window):
 								hlid += 1
 							hditer1 = hd.model.iter_next(hditer1)
 						hd.hv.expose(None,None)
-
-
-
 						
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
@@ -1520,6 +1518,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "pdb":
 					if pdb.pdb_ids.has_key(ntype[1]):
 						pdb.pdb_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "pm":
+					if pm6.hd_ids.has_key(ntype[1]):
+						pm6.hd_ids[ntype[1]](hd,data,self.das[pn])
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
