@@ -67,8 +67,10 @@ def uncompress(data):
 		typ = c & 0x3
 
 		if typ == 0: # literals
-			if c == 0xf0:
-				length = ord(data[off]) + 1
+			if (c & 0xf0) == 0xf0:
+				low = ord(data[off])
+				high = (c >> 2) & 0x3
+				length = ((high << 8) | low) + 1
 				off += 1
 			else:
 				length = (c >> 2) + 1
