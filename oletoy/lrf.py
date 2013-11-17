@@ -153,11 +153,12 @@ class lrf_parser(object):
 	def read_metadata(self):
 		start = self.header_size
 		end = start + self.metadata_size
-		metaiter = add_pgiter(self.page, 'Metadata', 'lrf', 0, self.data[start:end], self.parent)
-		# There are 4 bytes at the beginning that might be uncompressed size.
-		# TODO: check
+		metadata = self.data[start:end]
+		metaiter = add_pgiter(self.page, 'Metadata', 'lrf', 'compressed_stream', metadata, self.parent)
+		(uncompressed_size, off) = rdata(metadata, 0, '<I')
 		try:
-			content = zlib.decompress(self.data[start + 4:end])
+			content = zlib.decompress(metadata[off:])
+			assert len(content) == uncompressed_size
 		except zlib.error:
 			content = self.data
 		add_pgiter(self.page, 'Uncompressed content', 'lrf', 'text', content, metaiter)
@@ -191,11 +192,11 @@ class lrf_parser(object):
 		content = data
 		content_name = 'Content'
 		if len(data) > 64:
-			# there are 4 bytes of something that looks like uncompressed size
-			# at the beginning
+			(uncompressed_size, off) = rdata(data, 0, '<I')
 			try:
-				content = zlib.decompress(data[4:])
+				content = zlib.decompress(data[off:])
 				content_name = 'Uncompressed content'
+				assert len(content) == uncompressed_size
 			except zlib.error:
 				pass
 		cntiter = add_pgiter(self.page, content_name, 'lrf', 0, content, strmiter)
@@ -895,6 +896,10 @@ lrf_tags = {
 	0xf5f9 : ('F5F9', 6, chop_tag_f5f9),
 }
 
+def add_compressed_stream(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Uncompressed length', length, off - 4, 4, '<I')
+
 def add_header(hd, size, data):
 	add_iter(hd, 'Version', read(data, 8, '<H'), 8, 2, '<H')
 	add_iter(hd, 'Pseudo Enc. Key', read(data, 0xa, '<H'), 0xa, 2, '<H')
@@ -918,6 +923,7 @@ def add_text(hd, size, data):
 lrf_ids = {
 	'header': add_header,
 	'idxentry': add_index_entry,
+	'compressed_stream': add_compressed_stream,
 	'tag': add_tag,
 	'text': add_text,
 }
