@@ -27,6 +27,14 @@ def get_or_default(dictionary, key, default):
 		return dictionary[key]
 	return default
 
+def read_unistr(data, off, bytelen):
+	text = u''
+	end = off + bytelen
+	while off < end:
+		(c, off) = rdata(data, off, '<H')
+		text += unichr(c)
+	return text
+
 lrf_object_types = {
 	0x1: 'Page Tree',
 	0x2: 'Page',
@@ -316,8 +324,8 @@ def chop_tag_f503(hd, size, data):
 	add_iter(hd, 'Target ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f504(hd, size, data):
-	(size, off) = rdata(data, 2, '<I')
-	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+	(sz, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Size', sz, off - 4, 4, '<I')
 
 def chop_tag_f507(hd, size, data):
 	pass
@@ -341,22 +349,33 @@ def chop_tag_f50e(hd, size, data):
 	pass
 
 def chop_tag_f511(hd, size, data):
-	pass
+	(sz, off) = rdata(data, 2, '<H')
+	# TODO: interpret the size
+	add_iter(hd, 'Size', sz, 2, off - 2, '<H')
 
 def chop_tag_f512(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	# TODO: interpret the width
+	add_iter(hd, 'Width', width, 2, off - 2, '<H')
 
 def chop_tag_f513(hd, size, data):
-	pass
+	(escapement, off) = rdata(data, 2, '<H')
+	# TODO: interpret the escapement
+	add_iter(hd, 'Escapement', escapement, 2, off - 2, '<H')
 
 def chop_tag_f514(hd, size, data):
-	pass
+	(orient, off) = rdata(data, 2, '<H')
+	# TODO: interpret the orientation
+	add_iter(hd, 'Orientation', orient, 2, off - 2, '<H')
 
 def chop_tag_f515(hd, size, data):
-	pass
+	(weight, off) = rdata(data, 2, '<H')
+	# TODO: interpret the weight
+	add_iter(hd, 'Weight', weight, 2, off - 2, '<H')
 
 def chop_tag_f516(hd, size, data):
-	pass
+	name = read_unistr(data, 2, size - 2)
+	add_iter(hd, 'Name', name, 2, size - 2, 's')
 
 def chop_tag_f517(hd, size, data):
 	pass
@@ -365,22 +384,34 @@ def chop_tag_f518(hd, size, data):
 	pass
 
 def chop_tag_f519(hd, size, data):
-	pass
+	(space, off) = rdata(data, 2, '<H')
+	# TODO: interpret the space
+	add_iter(hd, 'Space', space, 2, off - 2, '<H')
 
 def chop_tag_f51a(hd, size, data):
-	pass
+	(space, off) = rdata(data, 2, '<H')
+	# TODO: interpret the space
+	add_iter(hd, 'Space', space, 2, off - 2, '<H')
 
 def chop_tag_f51b(hd, size, data):
-	pass
+	(skip, off) = rdata(data, 2, '<H')
+	# TODO: interpret the skip
+	add_iter(hd, 'Skip', skip, 2, off - 2, '<H')
 
 def chop_tag_f51c(hd, size, data):
-	pass
+	(space, off) = rdata(data, 2, '<H')
+	# TODO: interpret the space
+	add_iter(hd, 'Space', space, 2, off - 2, '<H')
 
 def chop_tag_f51d(hd, size, data):
-	pass
+	(indent, off) = rdata(data, 2, '<H')
+	# TODO: interpret the indent
+	add_iter(hd, 'Indent', indent, 2, off - 2, '<H')
 
 def chop_tag_f51e(hd, size, data):
-	pass
+	(skip, off) = rdata(data, 2, '<H')
+	# TODO: interpret the skip
+	add_iter(hd, 'Skip', skip, 2, off - 2, '<H')
 
 def chop_tag_f521(hd, size, data):
 	pass
@@ -427,13 +458,17 @@ def chop_tag_f52e(hd, size, data):
 	pass
 
 def chop_tag_f531(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f532(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f533(hd, size, data):
-	pass
+	(rule, off) = rdata(data, 2, '<H')
+	# TODO: interpret the rule
+	add_iter(hd, 'Rule', '0x%x' % rule, off - 2, 2, '<H')
 
 def chop_tag_f534(hd, size, data):
 	pass
@@ -511,7 +546,9 @@ def chop_tag_f553(hd, size, data):
 	pass
 
 def chop_tag_f554(hd, size, data):
-	pass
+	(flags, off) = rdata(data, 2, '<H')
+	# TODO: interpret the flags
+	add_iter(hd, 'Flags', '0x%x' % flags, off - 2, 2, '<H')
 
 def chop_tag_f555(hd, size, data):
 	pass
@@ -559,25 +596,37 @@ def chop_tag_f56d(hd, size, data):
 	pass
 
 def chop_tag_f575(hd, size, data):
-	pass
+	(align, off) = rdata(data, 2, '<H')
+	# TODO: interpret the align
+	add_iter(hd, 'Align', '0x%x' % align, off - 2, 2, '<H')
 
 def chop_tag_f576(hd, size, data):
-	pass
+	(pt, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Value in points', pt, off - 2, 2, '<H')
 
 def chop_tag_f577(hd, size, data):
-	pass
+	(pos, off) = rdata(data, 2, '<H')
+	# TODO: interpret the position
+	add_iter(hd, 'Position', '0x%x' % pos, off - 2, 2, '<H')
 
 def chop_tag_f578(hd, size, data):
-	pass
+	(code, off) = rdata(data, 2, '<I')
+	# TODO: interpret the code
+	add_iter(hd, 'Code', '0x%x' % code, off - 4, 4, '<I')
 
 def chop_tag_f579(hd, size, data):
-	pass
+	(pos, off) = rdata(data, 2, '<H')
+	# TODO: interpret the position
+	add_iter(hd, 'Position', '0x%x' % pos, off - 2, 2, '<H')
 
 def chop_tag_f57a(hd, size, data):
-	pass
+	(mode, off) = rdata(data, 2, '<H')
+	# TODO: interpret the mode
+	add_iter(hd, 'Mode', '0x%x' % mode, off - 2, 2, '<H')
 
 def chop_tag_f57b(hd, size, data):
-	pass
+	(tid, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Page tree', '0x%x' % tid, off - 4, 4, '<I')
 
 def chop_tag_f57c(hd, size, data):
 	(oid, off) = rdata(data, 2, '<I')
@@ -638,10 +687,14 @@ def chop_tag_f5dc(hd, size, data):
 	pass
 
 def chop_tag_f5dd(hd, size, data):
-	pass
+	(space, off) = rdata(data, 2, '<H')
+	# TODO: interpret the space
+	add_iter(hd, 'Space', space, 2, off - 2, '<H')
 
 def chop_tag_f5f1(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	# TODO: interpret the width
+	add_iter(hd, 'Width', width, 2, off - 2, '<H')
 
 def chop_tag_f5f2(hd, size, data):
 	pass
@@ -859,11 +912,7 @@ def add_tag(hd, size, data):
 		desc[2](hd, size, data)
 
 def add_text(hd, size, data):
-	text = u''
-	off = 0
-	while off < size:
-		(c, off) = rdata(data, off, '<H')
-		text += unichr(c)
+	text = read_unistr(data, 0, size)
 	add_iter(hd, 'Text', text, 0, size, 's')
 
 lrf_ids = {
