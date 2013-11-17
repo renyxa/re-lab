@@ -182,16 +182,20 @@ class lrf_parser(object):
 		return ''.join(decdata)
 
 	def read_stream(self, data, parent):
-		strmiter = add_pgiter(self.page, 'Stream', 'lrf', 0, data, parent)
+		callback = 0
+		if self.stream_states[-1].stream_flags == 0x100:
+			callback = 'compressed_stream'
+		strmiter = add_pgiter(self.page, 'Stream', 'lrf', callback, data, parent)
 		# data = self.decrypt_stream(self.data[start:start + length])
 		# add_pgiter(self.page, '[Unobfuscated]', 'lrf', 0, data, strmiter)
 
-		# This is what I see for text streams anyway. But it is probably
-		# recorded in the stream's flags.
-		# TODO: check stream flags
 		content = data
 		content_name = 'Content'
-		if len(data) > 64:
+		# TODO: This is speculative. I think that actually the lower
+		# byte contains type (e.g., image types, ToC, tags) and only the
+		# higher byte is flags (or flag). It seems that 0x1 means
+		# 'compressed'.
+		if self.stream_states[-1].stream_flags == 0x100:
 			(uncompressed_size, off) = rdata(data, 0, '<I')
 			try:
 				content = zlib.decompress(data[off:])
