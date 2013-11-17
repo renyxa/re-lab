@@ -303,16 +303,21 @@ class lrf_parser(object):
 		self.read_objects()
 
 def chop_tag_f500(hd, size, data):
-	pass
+	(oid, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
+	(typ, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Type', get_or_default(lrf_object_types, typ, 'Unknown'), off - 2, 2, '<H')
 
 def chop_tag_f502(hd, size, data):
 	pass
 
 def chop_tag_f503(hd, size, data):
-	pass
+	(oid, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Target ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f504(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 
 def chop_tag_f507(hd, size, data):
 	pass
@@ -390,10 +395,12 @@ def chop_tag_f524(hd, size, data):
 	pass
 
 def chop_tag_f525(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f526(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f527(hd, size, data):
 	pass
@@ -528,7 +535,13 @@ def chop_tag_f55b(hd, size, data):
 	pass
 
 def chop_tag_f55c(hd, size, data):
-	pass
+	(count, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Page count', count, off - 2, 2, '<H')
+	i = 0
+	while i != int(count):
+		(pid, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Page %d' % i, '0x%x' % pid, off - 4, 4, '<I')
+		i += 1
 
 def chop_tag_f55d(hd, size, data):
 	pass
@@ -567,7 +580,8 @@ def chop_tag_f57b(hd, size, data):
 	pass
 
 def chop_tag_f57c(hd, size, data):
-	pass
+	(oid, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f5a1(hd, size, data):
 	pass
