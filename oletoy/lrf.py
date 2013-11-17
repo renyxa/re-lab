@@ -375,7 +375,7 @@ class lrf_parser(object):
 
 		callback = 0
 		(tag, off) = rdata(data, start, '<H')
-		name = 'Tag %x' % tag
+		name = 'Tag 0x%x' % tag
 		length = None
 		if ((tag & 0xff00) >> 8) == 0xf5:
 			if lrf_tags.has_key(tag):
@@ -434,7 +434,7 @@ class lrf_parser(object):
 		if lrf_object_types.has_key(otp):
 			otype = lrf_object_types[otp]
 
-		objiter = add_pgiter(self.page, 'Object %x (%s)' % (oid, otype), 'lrf', 0, data[start:start + length], parent)
+		objiter = add_pgiter(self.page, 'Object 0x%x (%s)' % (oid, otype), 'lrf', 0, data[start:start + length], parent)
 		self.object_type = otype
 		self.read_object_tags(data[start:start + length], objiter)
 		self.object_type = None
@@ -456,7 +456,7 @@ class lrf_parser(object):
 		for i in range(self.object_count):
 			off = idxstart + 16 * i
 			oid = read(data, off, '<I')
-			add_pgiter(self.page, 'Entry %x' % (oid), 'lrf', 'idxentry', data[off:off + 16], idxiter)
+			add_pgiter(self.page, 'Entry 0x%x' % (oid), 'lrf', 'idxentry', data[off:off + 16], idxiter)
 			self.read_object(off, objiter)
 
 	def read(self):
