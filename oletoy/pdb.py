@@ -120,6 +120,17 @@ class pdb_parser(object):
 	def parsing_data_records(self, data, count):
 		pass
 
+class generic_parser(pdb_parser):
+
+	def __init__(self, data, page, parent):
+		super(generic_parser, self).__init__(data, page, parent)
+
+	def parse_index_record(self, data, parent):
+		add_pgiter(self.page, 'Index', 'pdb', 'generic_index', data, parent)
+
+	def parse_data_record(self, n, data, parent):
+		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+
 # specification: http://wiki.mobileread.com/wiki/EReader (2013)
 class ereader_parser(pdb_parser):
 
@@ -291,6 +302,9 @@ class ztxt_parser(pdb_parser):
 	def parse_data_record(self, n, data, parent):
 		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
 
+def add_generic_index(hd, size, data):
+	pass
+
 def add_ereader_index(hd, size, data):
 	(compression, off) = rdata(data, 0, '>H')
 	add_iter(hd, 'Compression', compression, 0, 2, '>H')
@@ -452,6 +466,7 @@ def add_ztxt_index(hd, size, data):
 
 pdb_ids = {
 	'ereader_index': add_ereader_index,
+	'generic_index': add_generic_index,
 	'isilo_index': add_isilo_index,
 	'isilo3_index': add_isilo3_index,
 	'palmdoc_index': add_palmdoc_index,
@@ -467,19 +482,28 @@ pdb_ids = {
 }
 
 pdb_types = {
+	'biblPPBL': None, # bibleplus_parser,
+	'BOOKMOBI': None, # mobipocket_parser,
+	'BDOCWrdS': None, # wordsmith_parser,
 	'DataPlkr': plucker_parser,
+	'DataSprd': None, # quicksheet_parser,
+	'DataTlpt': None, # tealpaint_parser,
+	'OutlTFst': None, # thoughtmanager_parser,
 	'PNRdPPrs': ereader_parser,
 	'SDocSilX': isilo3_parser,
 	'TEXtREAd': palmdoc_parser,
 	'TEXtTlDc': tealdoc_parser,
 	'ToGoToGo': isilo_parser,
+	'ToRaTRPW': None, # tomeraider_parser,
 	'TR3DTR3C': tomeraider3_parser,
 	'zTXTGPlm': ztxt_parser,
 }
 
 def open(buf, page, parent, pdbtype):
 	if pdb_types.has_key(pdbtype):
-		parser = pdb_types[pdbtype](buf, page, parent)
-		parser.parse()
+		parser = pdb_types[pdbtype]
+		if parser == None:
+			parser = generic_parser
+		parser(buf, page, parent).parse()
 
 # vim: set ft=python ts=4 sw=4 noet:
