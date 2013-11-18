@@ -66,7 +66,7 @@ class Page:
 			self.type = vfb.open(self, buf, parent)
 			return 0
 
-		if buf[0:6] == "<?xml ":
+		if buf[0:6] == "<?xml " or buf[0:14] == "\xff\xfe<\0?\0x\0m\0l\0 \0" or buf[0:14] == "\xfe\xff\0<\0?\0x\0m\0l\0 ":
 			self.type = otxml.open(buf, self, parent)
 			return 0
 

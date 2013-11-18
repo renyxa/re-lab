@@ -19,6 +19,10 @@ from utils import *
 
 def open (buf,page,parent):
 	print "XML"
+        if buf[0:2] == '\xff\xfe':
+            buf = unicode(buf[2:], 'utf_16le')
+        elif buf[0:2] == '\xfe\xff':
+            buf = unicode(buf[2:], 'utf_16be')
 	t = buf.split("<")
 	piter = parent
 	citer = []
