@@ -446,13 +446,23 @@ def chop_tag_f528(hd, size, data):
 	pass
 
 def chop_tag_f529(hd, size, data):
-	pass
+	(mode, off) = rdata(data, 2, '<H')
+	# TODO: interpret mode
+	add_iter(hd, 'Mode', '0x%x' % mode, off - 2, 2, '<H')
+	(iid, off) = rdata(data, 4, '<I')
+	add_iter(hd, 'Image ID', iid, off - 4, 4, '>I')
 
 def chop_tag_f52a(hd, size, data):
-	pass
+	(empty, off) = rdata(data, 2, '<H')
+	empty_map = {0: 'empty', 1: 'show'}
+	empty_str = get_or_default(empty_map, int(empty), 'unknown')
+	add_iter(hd, 'Empty', empty_str, off - 2, 2, '<H')
 
 def chop_tag_f52b(hd, size, data):
-	pass
+	(pos, off) = rdata(data, 2, '<H')
+	pos_map = {0: 'any', 1: 'upper', 2: 'lower'}
+	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f52c(hd, size, data):
 	pass
@@ -461,7 +471,10 @@ def chop_tag_f52d(hd, size, data):
 	pass
 
 def chop_tag_f52e(hd, size, data):
-	pass
+	(mode, off) = rdata(data, 2, '<H')
+	mode_map = {0: 'none', 1: 'square', 2: 'curve'}
+	mode_str = get_or_default(mode_map, int(mode), 'unknown')
+	add_iter(hd, 'Mode', mode_str, off - 2, 2, '<H')
 
 def chop_tag_f531(hd, size, data):
 	(width, off) = rdata(data, 2, '<H')
@@ -473,14 +486,20 @@ def chop_tag_f532(hd, size, data):
 
 def chop_tag_f533(hd, size, data):
 	(rule, off) = rdata(data, 2, '<H')
-	# TODO: interpret the rule
-	add_iter(hd, 'Rule', '0x%x' % rule, off - 2, 2, '<H')
+	rule_map = {0x12: 'horizontal adjustable', 0x14: 'horizontal fixed',
+			0x21: 'vertical adjustable', 0x22: 'block adjustable',
+			0x41: 'vertical fixed', 0x44: 'block fixed'}
+	rule_str = get_or_default(rule_map, int(rule), 'unknown')
+	add_iter(hd, 'Rule', rule_str, off - 2, 2, '<H')
 
 def chop_tag_f534(hd, size, data):
 	pass
 
 def chop_tag_f535(hd, size, data):
-	pass
+	(layout, off) = rdata(data, 2, '<H')
+	layout_map = {0x41: 'top-to-bottom right-to-left', 0x34: 'left-to-right top-to-bottom'}
+	layout_str = get_or_default(layout_map, int(layout), 'unknown')
+	add_iter(hd, 'Layout', layout_str, off - 2, 2, '<H')
 
 def chop_tag_f536(hd, size, data):
 	pass
@@ -498,7 +517,10 @@ def chop_tag_f53a(hd, size, data):
 	pass
 
 def chop_tag_f53c(hd, size, data):
-	pass
+	(align, off) = rdata(data, 2, '<H')
+	align_map = {1: 'top', 4: 'center', 8: 'bottom'}
+	align_str = get_or_default(align_map, int(align), 'unknown')
+	add_iter(hd, 'Align', align_str, off - 2, 2, '<H')
 
 def chop_tag_f53d(hd, size, data):
 	pass
@@ -525,7 +547,10 @@ def chop_tag_f547(hd, size, data):
 	pass
 
 def chop_tag_f548(hd, size, data):
-	pass
+	(pos, off) = rdata(data, 2, '<H')
+	pos_map = {1: 'bottom left', 2: 'bottom right', 3: 'top right', 4: 'top left', 5: 'base'}
+	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f549(hd, size, data):
 	pass
@@ -607,13 +632,16 @@ def chop_tag_f575(hd, size, data):
 	add_iter(hd, 'Align', '0x%x' % align, off - 2, 2, '<H')
 
 def chop_tag_f576(hd, size, data):
-	(pt, off) = rdata(data, 2, '<H')
-	add_iter(hd, 'Value in points', pt, off - 2, 2, '<H')
+	(overhang, off) = rdata(data, 2, '<H')
+	overhang_map = {0: 'none', 1: 'auto'}
+	overhang_str = get_or_default(overhang_map, int(overhang), 'unknown')
+	add_iter(hd, 'Overhang', overhang_str, off - 2, 2, '<H')
 
 def chop_tag_f577(hd, size, data):
 	(pos, off) = rdata(data, 2, '<H')
-	# TODO: interpret the position
-	add_iter(hd, 'Position', '0x%x' % pos, off - 2, 2, '<H')
+	pos_map = {1: 'before', 2: 'after'}
+	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f578(hd, size, data):
 	(code, off) = rdata(data, 2, '<I')
@@ -622,13 +650,15 @@ def chop_tag_f578(hd, size, data):
 
 def chop_tag_f579(hd, size, data):
 	(pos, off) = rdata(data, 2, '<H')
-	# TODO: interpret the position
-	add_iter(hd, 'Position', '0x%x' % pos, off - 2, 2, '<H')
+	pos_map = {1: 'before', 2: 'after'}
+	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f57a(hd, size, data):
 	(mode, off) = rdata(data, 2, '<H')
-	# TODO: interpret the mode
-	add_iter(hd, 'Mode', '0x%x' % mode, off - 2, 2, '<H')
+	mode_map = {0x0: 'none', 0x10: 'solid', 0x20: 'dashed', 0x30: 'double', 0x40: 'dotted'}
+	mode_str = get_or_default(mode_map, int(mode), 'unknown')
+	add_iter(hd, 'Mode', mode_str, off - 2, 2, '<H')
 
 def chop_tag_f57b(hd, size, data):
 	(tid, off) = rdata(data, 2, '<I')
@@ -672,7 +702,8 @@ def chop_tag_f5d1(hd, size, data):
 	pass
 
 def chop_tag_f5d4(hd, size, data):
-	pass
+	(time, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Time', time, off - 2, 2, '<H')
 
 def chop_tag_f5d7(hd, size, data):
 	pass
@@ -684,7 +715,10 @@ def chop_tag_f5d9(hd, size, data):
 	pass
 
 def chop_tag_f5da(hd, size, data):
-	pass
+	(replay, off) = rdata(data, 2, '<H')
+	replay_map = {1: 'replay', 2: 'noreplay'}
+	replay_str = get_or_default(replay_map, int(replay), 'unknown')
+	add_iter(hd, 'Replay', replay_str, off - 2, 2, '<H')
 
 def chop_tag_f5db(hd, size, data):
 	pass
@@ -737,11 +771,11 @@ lrf_tags = {
 	0xf504 : ('Stream Size', 4, chop_tag_f504),
 	0xf505 : ('Stream Start', 0, None),
 	0xf506 : ('Stream End', 0, None),
-	0xf507 : ('Contained Objects List', 4, chop_tag_f507),
-	0xf508 : ('F508', 4, chop_tag_f508),
-	0xf509 : ('F509', 4, chop_tag_f509),
-	0xf50a : ('F50A', 4, chop_tag_f50a),
-	0xf50b : ('F50B', V, chop_tag_f50b),
+	0xf507 : ('Odd Header ID', V, chop_tag_f507),
+	0xf508 : ('Even Header ID', 4, chop_tag_f508),
+	0xf509 : ('Odd Footer ID', 4, chop_tag_f509),
+	0xf50a : ('Even Footer ID', 4, chop_tag_f50a),
+	0xf50b : ('Contained Objects List', 4, chop_tag_f50b),
 	0xf50d : ('F50D', V, chop_tag_f50d),
 	0xf50e : ('F50E', 2, chop_tag_f50e),
 	0xf511 : ('Font Size', 2, chop_tag_f511),
@@ -758,51 +792,51 @@ lrf_tags = {
 	0xf51c : ('Line Space', 2, chop_tag_f51c),
 	0xf51d : ('Par Indent', 2, chop_tag_f51d),
 	0xf51e : ('Par Skip', 2, chop_tag_f51e),
-	0xf521 : ('F521', 2, chop_tag_f521),
-	0xf522 : ('F522', 2, chop_tag_f522),
-	0xf523 : ('F523', 2, chop_tag_f523),
-	0xf524 : ('F524', 2, chop_tag_f524),
+	0xf521 : ('Top Margin', 2, chop_tag_f521),
+	0xf522 : ('Header Height', 2, chop_tag_f522),
+	0xf523 : ('Header Space', 2, chop_tag_f523),
+	0xf524 : ('Odd Side Margin', 2, chop_tag_f524),
 	0xf525 : ('Page Height', 2, chop_tag_f525),
 	0xf526 : ('Page Width', 2, chop_tag_f526),
-	0xf527 : ('F527', 2, chop_tag_f527),
-	0xf528 : ('F528', 2, chop_tag_f528),
-	0xf529 : ('F529', 6, chop_tag_f529),
-	0xf52a : ('F52A', 2, chop_tag_f52a),
-	0xf52b : ('F52B', 2, chop_tag_f52b),
-	0xf52c : ('F52C', 2, chop_tag_f52c),
+	0xf527 : ('Footer Space', 2, chop_tag_f527),
+	0xf528 : ('Footer Height', 2, chop_tag_f528),
+	0xf529 : ('Background Image', 6, chop_tag_f529),
+	0xf52a : ('Set Empty View', 2, chop_tag_f52a),
+	0xf52b : ('Page Position', 2, chop_tag_f52b),
+	0xf52c : ('Even Side Margin', 2, chop_tag_f52c),
 	0xf52d : ('F52D', 4, chop_tag_f52d),
-	0xf52e : ('F52E', 2, chop_tag_f52e),
+	0xf52e : ('Frame Mode', 2, chop_tag_f52e),
 	0xf531 : ('Block Width', 2, chop_tag_f531),
 	0xf532 : ('Block Height', 2, chop_tag_f532),
 	0xf533 : ('Block Rule', 2, chop_tag_f533),
-	0xf534 : ('F534', 4, chop_tag_f534),
-	0xf535 : ('F535', 2, chop_tag_f535),
-	0xf536 : ('F536', 2, chop_tag_f536),
-	0xf537 : ('F537', 4, chop_tag_f537),
-	0xf538 : ('F538', 2, chop_tag_f538),
-	0xf539 : ('F539', 2, chop_tag_f539),
-	0xf53a : ('F53A', 2, chop_tag_f53a),
-	0xf53c : ('F53C', 2, chop_tag_f53c),
-	0xf53d : ('F53D', 2, chop_tag_f53d),
-	0xf53e : ('F53E', 2, chop_tag_f53e),
+	0xf534 : ('Background Color', 4, chop_tag_f534),
+	0xf535 : ('Layout', 2, chop_tag_f535),
+	0xf536 : ('Frame Width', 2, chop_tag_f536),
+	0xf537 : ('Frame Color', 4, chop_tag_f537),
+	0xf538 : ('Top Skip', 2, chop_tag_f538),
+	0xf539 : ('Side Margin', 2, chop_tag_f539),
+	0xf53a : ('Bottom Skip', 2, chop_tag_f53a),
+	0xf53c : ('Vertical Align', 2, chop_tag_f53c),
+	0xf53d : ('Column', 2, chop_tag_f53d),
+	0xf53e : ('Column Sep', 2, chop_tag_f53e),
 	0xf541 : ('Mini Page Height', 2, chop_tag_f541),
 	0xf542 : ('Mini Page Width', 2, chop_tag_f542),
 	0xf544 : ('F544', 4, chop_tag_f544),
 	0xf545 : ('F545', 4, chop_tag_f545),
 	0xf546 : ('Location Y', 2, chop_tag_f546),
 	0xf547 : ('Location X', 2, chop_tag_f547),
-	0xf548 : ('F548', 2, chop_tag_f548),
+	0xf548 : ('Content Position', 2, chop_tag_f548),
 	0xf549 : ('Put Sound', 8, chop_tag_f549),
 	0xf54a : ('Image Rect', 8, chop_tag_f54a),
 	0xf54b : ('Image Size', 4, chop_tag_f54b),
 	0xf54c : ('Image Stream', 4, chop_tag_f54c),
 	0xf54d : ('F54D', 0, None),
-	0xf54e : ('F54E', 12, chop_tag_f54e),
+	0xf54e : ('Page Div', 12, chop_tag_f54e),
 	0xf551 : ('Canvas Width', 2, chop_tag_f551),
 	0xf552 : ('Canvas Height', 2, chop_tag_f552),
 	0xf553 : ('F553', 4, chop_tag_f553),
 	0xf554 : ('Stream Flags', 2, chop_tag_f554),
-	0xf555 : ('F555', V, chop_tag_f555),
+	0xf555 : ('Comment', V, chop_tag_f555),
 	0xf556 : ('F556', V, chop_tag_f556),
 	0xf557 : ('F557', 2, chop_tag_f557),
 	0xf558 : ('F558', 2, chop_tag_f558),
@@ -812,22 +846,20 @@ lrf_tags = {
 	0xf55c : ('Page List', V, chop_tag_f55c),
 	0xf55d : ('Font Face Name', V, chop_tag_f55d),
 	0xf55e : ('F55E', 2, chop_tag_f55e),
-	0xf561 : ('F561', 2, chop_tag_f561),
-	0xf562 : ('F562', 0, None),
-	0xf563 : ('F563', 0, None),
-	0xf564 : ('F564', 0, None),
-	0xf565 : ('F565', 0, None),
-	0xf566 : ('F566', 0, None),
-	0xf565 : ('F565', 0, None),
-	0xf566 : ('F566', 0, None),
-	0xf567 : ('F567', 0, None),
-	0xf568 : ('F568', 0, None),
-	0xf569 : ('F569', 0, None),
-	0xf56a : ('F56A', 0, None),
-	0xf56b : ('F56B', 0, None),
+	0xf561 : ('Button Flags', 2, chop_tag_f561),
+	0xf562 : ('Begin Base Button', 0, None),
+	0xf563 : ('End Base Button', 0, None),
+	0xf564 : ('Begin Focus In Button', 0, None),
+	0xf565 : ('End Focus In Button', 0, None),
+	0xf566 : ('Begin Push Button', 0, None),
+	0xf567 : ('End Push Button', 0, None),
+	0xf568 : ('Begin Up Button', 0, None),
+	0xf569 : ('End Up Button', 0, None),
+	0xf56a : ('Begin Button Actions', 0, None),
+	0xf56b : ('End Button Actions', 0, None),
 	0xf56c : ('Jump To', 8, chop_tag_f56c),
-	0xf56d : ('F56D', V, chop_tag_f56d),
-	0xf56e : ('F56E', 0, None),
+	0xf56d : ('Send Message', V, chop_tag_f56d),
+	0xf56e : ('Close Window', 0, None),
 	0xf571 : ('F571', 0, None),
 	0xf572 : ('F572', 0, None),
 	0xf573 : ('Ruled Line', 10, None),
@@ -853,8 +885,8 @@ lrf_tags = {
 	0xf5ac : ('End Ruby Base', 0, None),
 	0xf5ad : ('Begin Ruby Text', 0, None),
 	0xf5ae : ('End Ruby Text', 0, None),
-	0xf5b1 : ('Koma Yokomoji', 0, None),
-	0xf5b2 : ('F5B2', 0, None),
+	0xf5b1 : ('Begin Koma Yokomoji', 0, None),
+	0xf5b2 : ('End Koma Yokomoji', 0, None),
 	0xf5b3 : ('Begin Tate', 0, None),
 	0xf5b4 : ('End Tate', 0, None),
 	0xf5b5 : ('Begin Nekase', 0, None),
@@ -863,17 +895,17 @@ lrf_tags = {
 	0xf5b8 : ('End Sup', 0, None),
 	0xf5b9 : ('Begin Sub', 0, None),
 	0xf5ba : ('End Sub', 0, None),
-	0xf5bb : ('F5BB', 0, None),
-	0xf5bc : ('F5BC', 0, None),
-	0xf5bd : ('F5BD', 0, None),
-	0xf5be : ('F5BE', 0, None),
+	0xf5bb : ('Begin Preformatted', 0, None),
+	0xf5bc : ('End Preformatted', 0, None),
+	0xf5bd : ('Begin Emp Dots', 0, None),
+	0xf5be : ('End Emp Dots', 0, None),
 	0xf5c1 : ('Begin Emp Line', 0, None),
-	0xf5c2 : ('F5C2', 0, None),
+	0xf5c2 : ('End Emp Line', 0, None),
 	0xf5c3 : ('Begin Draw Char', 2, chop_tag_f5c3),
 	0xf5c4 : ('End Draw Char', 0, None),
 	0xf5c5 : ('F5C5', 2, chop_tag_f5c5),
-	0xf5c6 : ('F5C6', 2, chop_tag_f5c6),
-	0xf5c7 : ('F5C7', 0, None),
+	0xf5c6 : ('Begin Box', 2, chop_tag_f5c6),
+	0xf5c7 : ('End Box', 0, None),
 	0xf5c8 : ('Koma Auto Spacing', 2, chop_tag_f5c8),
 	0xf5c9 : ('F5C9', 0, None),
 	0xf5ca : ('Space', 2, chop_tag_f5ca),
@@ -886,7 +918,7 @@ lrf_tags = {
 	0xf5d7 : ('Move Obj', 14, chop_tag_f5d7),
 	0xf5d8 : ('Book Font', 4, chop_tag_f5d8),
 	0xf5d9 : ('Koma Plot Text', 8, chop_tag_f5d9),
-	0xf5da : ('F5DA', 2, chop_tag_f5da),
+	0xf5da : ('Set Wait Prop', 2, chop_tag_f5da),
 	0xf5db : ('F5DB', 2, chop_tag_f5db),
 	0xf5dc : ('F5DC', 2, chop_tag_f5dc),
 	0xf5dd : ('Char Space', 2, chop_tag_f5dd),
@@ -898,7 +930,7 @@ lrf_tags = {
 	0xf5f6 : ('Line To', 4, chop_tag_f5f6),
 	0xf5f7 : ('Draw Box', 4, chop_tag_f5f7),
 	0xf5f8 : ('Draw Ellipse', 4, chop_tag_f5f8),
-	0xf5f9 : ('F5F9', 6, chop_tag_f5f9),
+	0xf5f9 : ('Run', 6, chop_tag_f5f9),
 }
 
 def add_compressed_stream(hd, size, data):
