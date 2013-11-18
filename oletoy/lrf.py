@@ -20,6 +20,7 @@
 import struct
 import zlib
 
+import otxml
 from utils import add_iter, add_pgiter, rdata
 
 def get_or_default(dictionary, key, default):
@@ -159,9 +160,9 @@ class lrf_parser(object):
 		try:
 			content = zlib.decompress(metadata[off:])
 			assert len(content) == uncompressed_size
+			otxml.open(content, self.page, metaiter)
 		except zlib.error:
-			content = self.data
-		add_pgiter(self.page, 'Uncompressed content', 'lrf', 'text', content, metaiter)
+			pass
 
 	def read_thumbnail(self):
 		start = self.header_size + self.metadata_size
