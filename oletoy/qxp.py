@@ -38,20 +38,61 @@ def collect_block(data,name,buf,off,blk_id):
 		data,name = collect_group(data,name,buf,off,nxt)
 	return data,name
 
-def open (page,buf,parent,off=0):
+def open (page,buf,parent,off=0,bs=1):
 	# 0x3f - 3
+	# 0x41 - 4
 	# 0x45 - 8
-	
-	add_pgiter(page,"Block 0","qxp","block0",buf[off:off+0x400],parent)
-	lstlen = struct.unpack("<I",buf[off+0x400+0x1c:off+0x400+0x20])[0]
+	if bs!=1 or ord(buf[8]) != 0x45:
+		rlen = 0x100
+		i = bs
+		flag = 0
+		try:
+			while off < len(buf):
+				if flag == 0:
+					nxt = struct.unpack("<i",buf[off+rlen-4:off+rlen])[0]
+					n = "%02x [%02x]"%(i,nxt)
+					if nxt < 0:
+						nxt = abs(nxt)
+						flag = struct.unpack("<H",buf[off+rlen:off+rlen+2])[0]
+						n = "%02x [%02x]"%(i,nxt)
+					add_pgiter(page,n,"qxp","block%02x"%i,buf[off:off+rlen],parent)
+					off += rlen
+					i += 1
+				else:
+					nxt = struct.unpack("<i",buf[off+rlen*flag-4:off+rlen*flag])[0]
+					n = "%02x-%02x [%02x]"%(i,i+flag-1,nxt)
+					flag2 = 0
+					if nxt < 0:
+						nxt = abs(nxt)
+						flag2 = struct.unpack("<H",buf[off+rlen*flag:off+rlen*flag+2])[0]
+						n = "%02x-%02x [%02x]"%(i,i+flag-1,nxt)
+					add_pgiter(page,n,"qxp","block%02x"%i,buf[off:off+rlen*flag],parent)
+					off += rlen*flag
+					i += flag
+					flag = flag2
+				if nxt > i:
+					# need to jump
+					piter = add_pgiter(page,"jump %02x-%02x"%(i,nxt-1),"qxp","block%02x"%i,buf[off:off+rlen*(nxt-i)],parent)
+					open(page,buf[off:off+rlen*(nxt-i)],piter,0,i)
+					off += rlen*(nxt-i)
+					# overwrite flag
+					if flag:
+						flag = struct.unpack("<H",buf[off:off+2])[0]
+					i = nxt
+		except:
+			print "failed in qxd loop"
+		return
+	rlen = 0x400
+	add_pgiter(page,"Block 0","qxp","block0",buf[off:off+rlen],parent)
+	lstlen = struct.unpack("<I",buf[off+rlen+0x1c:off+rlen+0x20])[0]
 	lst = []
 	for i in range(lstlen/4):
-		lst.append(struct.unpack("<I",buf[off+0x400+0x28+i*4:off+0x400+0x2c+i*4])[0])
+		lst.append(struct.unpack("<I",buf[off+rlen+0x28+i*4:off+rlen+0x2c+i*4])[0])
 	for i in lst:
 		# collect chain of blocks
-		data = buf[off+0x400*(i-1):off+0x400*i-4]
+		data = buf[off+rlen*(i-1):off+rlen*i-4]
 		name = "%02x"%i
-		nxt = struct.unpack("<i",buf[off+0x400*i-4:off+0x400*i])[0]
+		nxt = struct.unpack("<i",buf[off+rlen*i-4:off+rlen*i])[0]
 		if nxt > 0:
 			# collect next single block
 			data,name = collect_block(data,name,buf,off,nxt)
