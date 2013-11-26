@@ -41,8 +41,11 @@ def collect_block(data,name,buf,off,blk_id):
 def open (page,buf,parent,off=0,bs=1):
 	# 0x3f - 3
 	# 0x41 - 4
+	# 0x42 - 5
+	# 0x43 - 6
+	# 0x44? -7
 	# 0x45 - 8
-	if bs!=1 or ord(buf[8]) != 0x45:
+	if bs!=1 or ord(buf[8]) < 0x42:
 		rlen = 0x100
 		i = bs
 		flag = 0
@@ -81,8 +84,11 @@ def open (page,buf,parent,off=0,bs=1):
 					i = nxt
 		except:
 			print "failed in qxd loop"
-		return
+		return "QXP5"
+		
 	rlen = 0x400
+	parent = add_pgiter(page,"File","qxp","file",buf,parent)
+
 	add_pgiter(page,"Block 0","qxp","block0",buf[off:off+rlen],parent)
 	lstlen = struct.unpack("<I",buf[off+rlen+0x1c:off+rlen+0x20])[0]
 	lst = []
@@ -100,3 +106,4 @@ def open (page,buf,parent,off=0,bs=1):
 			# collect chain of blocks
 			data,name = collect_group(data,name,buf,off,abs(nxt))
 		add_pgiter(page,name,"qxp","block%02x"%i,data,parent)
+	return "QXP6"
