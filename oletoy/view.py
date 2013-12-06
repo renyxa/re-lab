@@ -43,7 +43,7 @@ try:
 except:
 	pass
 
-version = "0.7.41"
+version = "0.7.42"
 
 ui_info = \
 '''<ui>
@@ -132,6 +132,10 @@ class ApplicationMainWindow(gtk.Window):
 			print "building menus failed: %s" % msg
 		bar = merge.get_widget("/MenuBar")
 		bar.show()
+
+		accgrp = gtk.AccelGroup()
+		accgrp.connect_group(101, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #E
+		self.add_accel_group(accgrp)
 
 		table = gtk.Table(1, 3, False)
 		self.add(table)
@@ -314,6 +318,11 @@ class ApplicationMainWindow(gtk.Window):
 		action_group.add_actions(entries)
 		return action_group
 
+	def on_key_press(self,a1,a2,a3,a4):
+		if a3 == 101:
+			self.open_cli ()
+
+
 	def draw_manual (self, widget, event):
 		mytxt = \
 "<b>Main tree:</b>\n\
@@ -324,6 +333,7 @@ class ApplicationMainWindow(gtk.Window):
 	Right click - copy tree path to entry line.\n\
 	Delete - remove leaf from the tree\n\
 	Type text for quick search (Up/Down for next/prev result).\n\n\
+	^E - open CLI window\n\n\
 <b>Entry line:</b>\n\
 	Up/Down - scroll 'command history'\n\
 	gtk tree path - scroll/expand tree\n\

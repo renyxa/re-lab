@@ -892,23 +892,15 @@ class HexView():
 
 # math.floor(math.log10(self.mtt[2])
 		if self.mtt:
-			sh = 0
-			if self.mtt[2] > 9999:
-				sh = 4
-			elif self.mtt[2] > 999:
-				sh = 3
-			elif self.mtt[2] > 99:
-				sh = 2
-			elif self.mtt[2] > 9:
-				sh = 1
-
+			mttstr = "%s/%x"%(self.mtt[2],self.mtt[2])
+			sh = len(mttstr)
 			ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
 			ctx.set_source_rgba(self.mttclr[0],self.mttclr[1],self.mttclr[2],self.mttclr[3])
 			ctx.fill()
 			ctx.set_source_rgb(self.mttxtclr[0],self.mttxtclr[1],self.mttxtclr[2])
 			ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-			ctx.show_text("%d"%self.mtt[2])
+			ctx.show_text(mttstr)
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
 		self.mode = ""
