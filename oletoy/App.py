@@ -18,7 +18,7 @@ import sys,struct,os
 import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
-import abr,rtf,otxml,chdraw,vfb,fbx
+import abr,rtf,otxml,chdraw,vfb,fbx,nki
 import qxp
 import iwa
 import lrf
@@ -102,6 +102,10 @@ class Page:
 		if buf[0:6] == "VCLMTF":
 			self.type = "SVM"
 			svm.open (buf,self, parent)
+			return 0
+
+		if buf[:4] == "\x12\x90\xa8\x7f":
+			nki.open(self,buf,parent)
 			return 0
 
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
