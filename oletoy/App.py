@@ -26,6 +26,7 @@ import pdb
 import sbimp
 import zmf
 import zbr
+import lit
 
 class Page:
 	def __init__(self):
@@ -206,6 +207,12 @@ class Page:
 			self.type = 'IMP'
 			print 'Probably SoftBook e-book'
 			sbimp.open(buf, self, parent)
+			return 0
+
+		if buf[0:8] == 'ITOLITLS':
+			self.type = 'LIT'
+			print 'Probably LIT'
+			lit.open(buf,self,parent)
 			return 0
 
 		fh_off = buf.find('FreeHand')
