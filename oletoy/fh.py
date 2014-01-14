@@ -705,13 +705,29 @@ def hdCompositePath(hd,data,page):
 def hdColor6(hd,data,page):
 	offset = 0
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
-	ustr1 = struct.unpack('>H', data[offset+0xe:offset+0x10])[0]
+	if pal == 3:
+		ustroff = 0xe
+	else:
+		ustroff = 2
+	ustr1 = struct.unpack('>H', data[offset+ustroff:offset+ustroff+2])[0]
 	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
 	if ustr1 in page.appdoc.recs:
 		at = page.appdoc.recs[ustr1][1]
 	else:
 		at = "%02x"%ustr1
-	add_iter (hd,'Name',at,0xe,2,">H")
+	add_iter (hd,'Name',at,ustroff,2,">H")
+
+def hdSpotColor6(hd,data,page):
+	offset = 0
+	pal = struct.unpack('>H', data[offset:offset+2])[0]
+	ustr1 = struct.unpack('>H', data[offset+2:offset+4])[0]
+	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
+	if ustr1 in page.appdoc.recs:
+		at = page.appdoc.recs[ustr1][1]
+	else:
+		at = "%02x"%ustr1
+	add_iter (hd,'Name',at,2,2,">H")
+
 
 hdp = {
 	"AGDFont":hdAGDFont,
@@ -733,8 +749,8 @@ hdp = {
 	"Path":hdPath,
 	"PropLst":hdPropLst,
 	"Rectangle":hdRectangle,
-	"SpotColor6":hdColor6,
-	"TintColor6":hdColor6,
+	"SpotColor6":hdSpotColor6,
+	"TintColor6":hdSpotColor6,
 	"TFOnPath":hdTFOnPath,
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
