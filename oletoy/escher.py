@@ -519,6 +519,24 @@ def ClientData (hd, size, value):
 
 
 def Blip(hd,size,value,off=0):
+	# intro for BMP header
+	if value[:2] == "BM":
+		add_iter(hd,"BMP signature","BM",off,2,"<H")
+		add_iter(hd,"File size","%02x"%struct.unpack("<I",value[off+2:off+6])[0],off+2,4,"<I")
+		add_iter(hd,"Reserved","00",off+6,4,"<I")
+		add_iter(hd,"Bitmap offset","0x%02x"%struct.unpack("<I",value[off+10:off+14])[0],off+10,4,"<I")
+		add_iter(hd,"DIB header size","0x%02x"%struct.unpack("<I",value[off+14:off+18])[0],off+14,4,"<I")
+		add_iter(hd,"Bitmap Width","%d"%struct.unpack("<I",value[off+18:off+22])[0],off+18,4,"<I")
+		add_iter(hd,"Bitmap Height","%d"%struct.unpack("<I",value[off+22:off+26])[0],off+22,4,"<I")
+		add_iter(hd,"# of Color Planes","%d"%struct.unpack("<H",value[off+26:off+28])[0],off+26,2,"<H")
+		add_iter(hd,"BPP","%d"%struct.unpack("<H",value[off+28:off+30])[0],off+28,2,"<H")
+		add_iter(hd,"Compression method","0x%02x"%struct.unpack("<I",value[off+30:off+34])[0],off+30,4,"<I")
+		add_iter(hd,"Image Size","0x%02x"%struct.unpack("<I",value[off+34:off+38])[0],off+34,4,"<I")
+		add_iter(hd,"HResolution","%d"%struct.unpack("<I",value[off+38:off+42])[0],off+38,4,"<I")
+		add_iter(hd,"VResolution","%d"%struct.unpack("<I",value[off+42:off+46])[0],off+42,4,"<I")
+		add_iter(hd,"# of colors in palette","%d"%struct.unpack("<I",value[off+46:off+50])[0],off+46,4,"<I")
+		add_iter(hd,"# of important colors","%d"%struct.unpack("<I",value[off+50:off+54])[0],off+50,4,"<I")
+
 	pixbufloader = gtk.gdk.PixbufLoader()
 	pixbufloader.write(value[off:])
 	pixbufloader.close()
