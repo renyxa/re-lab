@@ -14,8 +14,8 @@
 # USA
 
 
-import sys,struct
-import gtk, ctypes
+import sys,struct,subprocess
+import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
@@ -26,14 +26,125 @@ from utils import *
 
 ropen = ""
 
+def cdir_to_treeiter(page,parent,cdir,dircache):
+	dirspl = cdir.split("/")
+	pn = parent
+	pnn = ""
+	for i in dirspl:
+		jn = pnn+"/"+i
+		if not jn in dircache.keys():
+			pn = add_pgiter(page,i,"ole",jn,"",pn)
+			dircache[jn] = pn
+		pnn = jn
 
-def my_open (buf,page,iter=None):
-	#parse (buf,page,iter)
-	page.parent.cgsf.gsf_init()
-	src = page.parent.cgsf.gsf_input_memory_new (buf,len(buf),False)
-	infile = page.parent.cgsf.gsf_infile_msole_new(src)
-	ftype = get_children(page,infile,iter,"ole")
-	page.parent.cgsf.gsf_shutdown()
+
+def my_open (buf,page,parent=None):
+	dircache = {}
+	vbaiter = None
+	docdata = ""
+	docdataiter = None
+	tbliter = None
+	dirflag=0
+	try:
+		gsfout = subprocess.check_output(["gsf", "list", page.fname])
+		print gsfout
+		print "-----------------"
+		for i in gsfout.split("\n")[1:-1]:
+			if i[0] == "f":
+				fullname = i.split()[2]
+				if "/" in fullname:
+					fns = fullname.split("/")
+					cdir = "/".join(fns[:-1])
+					fn = fns[-1]
+				else:
+					fn = fullname
+					cdir = ""
+				if ord(fn[0]) < 32: 
+					fn = fn[1:]
+				pn = None
+				if cdir:
+					cdir_to_treeiter(page,parent,cdir,dircache)
+					pn = dircache["/"+cdir]
+				data = subprocess.check_output(["gsf", "cat", page.fname,fullname])
+
+				iter1 = add_pgiter(page,fn,"ole",fn,data,pn)
+
+
+				if (fn == "EscherStm" or fn == "EscherDelayStm"): # and infchild.size()>0:
+					ftype = "escher"
+					page.model.set_value(iter1,1,("escher",dirflag))
+					escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
+				if fn == "CONTENTS":
+					if data[6:11] == "WT602":
+						ftype = "wt602"
+						page.model.set_value(iter1,1,("wt602",dirflag))
+						wt602.parse (page,data,iter1)
+					else:
+						ftype = "quill"
+						page.model.set_value(iter1,1,("quill",dirflag))
+						quill.parse (page,data,iter1)
+				if fn == "Contents":
+					if data[:2] == "\xe8\xac": # take signature into account
+						ftype = "pub"
+						page.model.set_value(iter1,1,("pub",dirflag))
+						pub.parse (page,data,iter1)
+				if fn == "VisioDocument":
+					ftype = "vsd"
+					page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
+					vsd.parse (page, data, iter1)
+				if fn == "PageMaker":
+					ftype = "pm"
+					page.model.set_value(iter1,1,("pm",dirflag))
+					pm6.open (page, data, iter1)
+				if fn == "WordDocument":
+					ftype = "doc"
+					page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
+					doc.parse (page, data, iter1)
+				if fn == "1Table" or fn == "0Table":
+					doc.parse_table (page, data, iter1,docdata,docdataiter)
+				if fn == "Data" and page.type == "DOC":
+					docdataiter = iter1
+					docdata = data
+				if fn == "Book" or fn == "Workbook":
+					page.model.set_value(iter1,1,("xls",dirflag))
+					ftype = xls.parse (page, data, iter1)
+				if fn == "PowerPoint Document" or fn == "Pictures":
+					ftype = "ppt"
+					page.model.set_value(iter1,1,("ppt",dirflag))
+					ppt.parse (page, data, iter1)
+				if fn == "NativeContent_MAIN":
+					ftype = "qpw"
+					page.model.set_value(iter1,1,("qpw",dirflag))
+					qpw.parse (page, data, iter1)
+				if fn == "Signature" and data[:4] == '\x60\x67\x01\x00':
+					ftype = "ppp"  #PagePlus OLE version (9.x?)
+				if (fn == "contents" or fn == "SCFFPreview") and ftype == "ppp":
+					ppp.parse(page,data,iter1,fn)
+		
+				# I've no idea if this is really the signature, but it is
+				# present in all files I've seen so far
+				if fn == "Header" and data[0xc:0xf] == 'xV4':
+					ftype = 'zmf'
+					zmf.zmf2_open(page, data, iter1, fn)
+				if fn[-4:] == '.zmf':
+					ftype = 'zmf'
+					zmf.zmf2_open(page, data, iter1, fn)
+		
+				if fn == "VBA":
+					page.type = "vba"
+					ftype = "vba"
+				if ftype == "vba" and fn == "dir":
+					page.model.set_value(iter1,1,("vba",dirflag))
+					vbaiter = iter1
+					vbadata = data
+				if vbaiter != None:
+					vba.parse (page, vbadata, vbaiter)
+
+	except:
+		print "Failed to run gsf. Please install libgsf."
+		return
+
+	ftype = "TEST"
 	return ftype
 
 def gsf_open(src,page,iter=None):
@@ -48,8 +159,8 @@ try:
 	ropen = gsf_open
 	print "Found libgsf python bindings"
 except:
-		print 'libgsf python bindings were not found'
-		ropen = my_open
+	print 'libgsf python bindings were not found'
+	ropen = my_open
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
@@ -253,112 +364,7 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 
 def ole_open (buf,page,iter=None):
 	return ropen(buf,page,iter)
-	
 
-def get_children(page,infile,parent,ftype,dirflag=0):
-	vbaiter = None
-	docdata = ""
-	docdataiter = None
-	tbliter = None
-	for i in range(page.parent.cgsf.gsf_infile_num_children(infile)):
-		infchild = page.parent.cgsf.gsf_infile_child_by_index(infile,i)
-		infname = ctypes.string_at(page.parent.cgsf.gsf_infile_name_by_index(infile,i))
-#		print "Name ", infname, dirflag
-
-		if ord(infname[0]) < 32: 
-			infname = infname[1:]
-		chsize = page.parent.cgsf.gsf_input_size(infchild)
-		data = ""
-		res = ""
-		pos = -1
-		inc = 1024
-		while page.parent.cgsf.gsf_input_tell(infchild) < chsize:
-			if pos == page.parent.cgsf.gsf_input_tell(infchild):
-				if inc == 1:
-					break
-				else:
-					inc = inc/2
-			else:
-				pos = page.parent.cgsf.gsf_input_tell(infchild)
-			res = ctypes.string_at(page.parent.cgsf.gsf_input_read(infchild,inc,None),inc)
-			if pos != page.parent.cgsf.gsf_input_tell(infchild):
-				data += res
-		iter1 = add_pgiter (page, infname, "ole", dirflag, data)
-		if (infname == "EscherStm" or infname == "EscherDelayStm"): # and infchild.size()>0:
-			ftype = "escher"
-			page.model.set_value(iter1,1,("escher",dirflag))
-			escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
-		if infname == "CONTENTS":
-			if data[6:11] == "WT602":
-				ftype = "wt602"
-				page.model.set_value(iter1,1,("wt602",dirflag))
-				wt602.parse (page,data,iter1)
-			else:
-				ftype = "quill"
-				page.model.set_value(iter1,1,("quill",dirflag))
-				quill.parse (page,data,iter1)
-		if infname == "Contents":
-			if data[:2] == "\xe8\xac": # take signature into account
-				ftype = "pub"
-				page.model.set_value(iter1,1,("pub",dirflag))
-				pub.parse (page,data,iter1)
-		if infname == "VisioDocument":
-			ftype = "vsd"
-			page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?
-			vsd.parse (page, data, iter1)
-		if infname == "PageMaker":
-			ftype = "pm"
-			page.model.set_value(iter1,1,("pm",dirflag))
-			pm6.open (page, data, iter1)
-		if infname == "WordDocument":
-			ftype = "doc"
-			page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
-			doc.parse (page, data, iter1)
-		if infname == "1Table" or infname == "0Table":
-			doc.parse_table (page, data, iter1,docdata,docdataiter)
-		if infname == "Data" and page.type == "DOC":
-			docdataiter = iter1
-			docdata = data
-		if infname == "Book" or infname == "Workbook":
-			page.model.set_value(iter1,1,("xls",dirflag))
-			ftype = xls.parse (page, data, iter1)
-		if infname == "PowerPoint Document" or infname == "Pictures":
-			ftype = "ppt"
-			page.model.set_value(iter1,1,("ppt",dirflag))
-			ppt.parse (page, data, iter1)
-		if infname == "NativeContent_MAIN":
-			ftype = "qpw"
-			page.model.set_value(iter1,1,("qpw",dirflag))
-			qpw.parse (page, data, iter1)
-		if infname == "Signature" and data[:4] == '\x60\x67\x01\x00':
-			ftype = "ppp"  #PagePlus OLE version (9.x?)
-		if (infname == "contents" or infname == "SCFFPreview") and ftype == "ppp":
-			ppp.parse(page,data,iter1,infname)
-
-		# I've no idea if this is really the signature, but it is
-		# present in all files I've seen so far
-		if infname == "Header" and data[0xc:0xf] == 'xV4':
-			ftype = 'zmf'
-			zmf.zmf2_open(page, data, iter1, infname)
-		if infname[-4:] == '.zmf':
-			ftype = 'zmf'
-			zmf.zmf2_open(page, data, iter1, infname)
-
-		if infname == "VBA":
-			page.type = ftype
-			ftype = "vba"
-		if ftype == "vba" and infname == "dir":
-			page.model.set_value(iter1,1,("vba",dirflag))
-			vbaiter = iter1
-			vbadata = data
-		if (page.parent.cgsf.gsf_infile_num_children(infchild)>0):
-			page.model.set_value(iter1,1,(ftype,1))
-			get_children(page,infchild,iter1,ftype,0)
-
-	if vbaiter != None:
-		vba.parse (page, vbadata, vbaiter)
-
-	return ftype
 
 def cfb_hdr (hd,data):
 	off = 0
