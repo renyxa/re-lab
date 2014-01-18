@@ -747,33 +747,37 @@ def parse(page, version, parent, pntr):
 				ch_hdr_len = 19
 				[chnk.type] = struct.unpack('<L', pntr.data[offset:offset+4])
 				if chnk.type == 0:
+					# somehow failed with trailer?
+					print "HERE"
 					offset+=4
-				else:
-					[chnk.IX] = struct.unpack('<L', pntr.data[offset+4:offset+8])
-					if chnk.IX == 0xffffffff:
-						chnk.IX = -1
-					[chnk.list] = struct.unpack('<L', pntr.data[offset+8:offset+12])
-					[chnk.length] = struct.unpack('<L', pntr.data[offset+12:offset+16])
-					[chnk.level] = struct.unpack('<h', pntr.data[offset+16:offset+18])
-					chnk.unkn3 = ord(pntr.data[offset+18])
+					[chnk.type] = struct.unpack('<L', pntr.data[offset:offset+4])
+
+				[chnk.IX] = struct.unpack('<L', pntr.data[offset+4:offset+8])
+				if chnk.IX == 0xffffffff:
+					chnk.IX = -1
+				[chnk.list] = struct.unpack('<L', pntr.data[offset+8:offset+12])
+				[chnk.length] = struct.unpack('<L', pntr.data[offset+12:offset+16])
+				[chnk.level] = struct.unpack('<h', pntr.data[offset+16:offset+18])
+				chnk.unkn3 = ord(pntr.data[offset+18])
+				trailer = 0
+				
+				if (chnk.list != 0) or (chnk.type == 0x71) or (chnk.type==0x70):
+					trailer = 8
+				if (0x64 == chnk.type or 0x6f == chnk.type or 0x6b == chnk.type or 0x6a == chnk.type or 0x69 == chnk.type or 0x66 == chnk.type or 0x65 == chnk.type or 0x2c == chnk.type):
+					trailer = 8
+				
+				if(11 == version): #/* separators were found only in Visio2k3 atm.  trailer means that there is a separator too. */
+					if 0 != chnk.list or\
+						(2 == chnk.level and 0x51 == chnk.unkn3) or\
+						(2 == chnk.level and 0x55 == chnk.unkn3) or\
+						(2 == chnk.level and 0x54 == chnk.unkn3 and 0xaa == chnk.type) or\
+						(3 == chnk.level and 0x50 != chnk.unkn3) or\
+						(0x6f == chnk.type or 0x65 == chnk.type or 0x66 == chnk.type or 0x69 == chnk.type or 0x6a == chnk.type or 0x6b == chnk.type or 0x71 == chnk.type) or\
+						(0x64 == chnk.type or 0xc7 == chnk.type or 0xb4 == chnk.type or 0xb6 == chnk.type or 0xb9 == chnk.type or 0xa9 == chnk.type) or\
+						(0x2c == chnk.type and (0x50 == chnk.unkn3 or 0x54 == chnk.unkn3)):
+						trailer = trailer + 4
+				if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type or 0x2d == chnk.type or 0xd1 == chnk.type)):
 					trailer = 0
-					
-					if (chnk.list != 0) or (chnk.type == 0x71) or (chnk.type==0x70):
-						trailer = 8
-					if (0x64 == chnk.type or 0x6f == chnk.type or 0x6b == chnk.type or 0x6a == chnk.type or 0x69 == chnk.type or 0x66 == chnk.type or 0x65 == chnk.type or 0x2c == chnk.type):
-						trailer = 8
-					
-					if(11 == version): #/* separators were found only in Visio2k3 atm.  trailer means that there is a separator too. */
-						if 0 != chnk.list or\
-							(2 == chnk.level and 0x55 == chnk.unkn3) or\
-							(2 == chnk.level and 0x54 == chnk.unkn3 and 0xaa == chnk.type) or\
-							(3 == chnk.level and 0x50 != chnk.unkn3) or\
-							(0x6f == chnk.type or 0x65 == chnk.type or 0x66 == chnk.type or 0x69 == chnk.type or 0x6a == chnk.type or 0x6b == chnk.type or 0x71 == chnk.type) or\
-							(0x64 == chnk.type or 0xc7 == chnk.type or 0xb4 == chnk.type or 0xb6 == chnk.type or 0xb9 == chnk.type or 0xa9 == chnk.type) or\
-							(0x2c == chnk.type and (0x50 == chnk.unkn3 or 0x54 == chnk.unkn3)):
-							trailer = trailer + 4
-					if(11 == version and (0x1f == chnk.type or 0xc9 == chnk.type or 0x2d == chnk.type or 0xd1 == chnk.type)):
-						trailer = 0
 # for data collection to verify rules
 			chlistflag = 0
 			if chnk.list > 0:
