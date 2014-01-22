@@ -338,6 +338,7 @@ def open (page,buf,parent,off=0):
 	elif vd == 0x33:
 		page.version = 6.5
 	else:
+		print "Unknown version byte: %02x"%(vd)
 		page.version = 6.5  # 7 seems to be the same, fallback to the latest for now
 
 	print 'Version:',page.version
