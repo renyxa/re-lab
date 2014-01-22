@@ -316,16 +316,30 @@ def open (page,buf,parent,off=0):
 	triter = add_pgiter(page,"Trailer","pm","trailer",buf[tr_off:tr_off+tr_len*16],parent)
 	tr = []
 	# BIPU version detection
-	vd1 = ord(buf[0xa])
-	vd2 = ord(buf[0x10])
-	if vd1 == 1:
+#	vd1 = ord(buf[0xa])
+#	vd2 = ord(buf[0x10])
+#	if vd1 == 1:
+#		page.version = 4
+#	elif vd1 == 6:
+#		page.version = 5
+#	elif vd2 == 5:
+#		page.version = 6.5
+#	else:
+#		page.version = 6.5  # 7 seems to be the same
+
+# BIPU version detection v2
+	vd = ord(buf[0x2a])
+	if vd == 0x2a:
 		page.version = 4
-	elif vd1 == 6:
+	elif vd == 0x2f:
 		page.version = 5
-	elif vd2 == 5:
+	elif vd == 0x32:
 		page.version = 6
+	elif vd == 0x33:
+		page.version = 6.5
 	else:
-		page.version = 6.5  # 7 seems to be the same
+		page.version = 6.5  # 7 seems to be the same, fallback to the latest for now
+
 	print 'Version:',page.version
 	
 	# FIXME! need to modify treatment of grouped records

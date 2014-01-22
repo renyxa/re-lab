@@ -18,7 +18,7 @@ import sys,struct,os
 import tree,gtk,cairo,zlib
 import gobject
 import difflib
-import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx
+import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6
 from utils import *
 from os.path import expanduser
 
@@ -1426,6 +1426,9 @@ def parse (cmd, entry, page):
 			model.set_value(iter2,1,("escher","odraw","Blip"))
 		elif "pct" == chtype.lower():
 			pict.parse (page,buf,iter1)
+		elif "pm6" == chtype.lower():
+			off = int(chaddr,16)
+			pm6.open (page,buf,iter1,off)
 		elif "zip" == chtype.lower():
 			try:
 				print int(chaddr,16)
