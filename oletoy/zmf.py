@@ -72,7 +72,7 @@ zmf4_objects = {
 	0x24: "Start of layer",
 	0x25: "End of layer",
 	0x26: "View",
-	0x27: "Document settings?",
+	0x27: "Document settings",
 	0x28: "Stylesheet?",
 	# gap
 	0x32: "Rectangle",
