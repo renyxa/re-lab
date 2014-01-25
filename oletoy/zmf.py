@@ -94,21 +94,37 @@ class ZMF4Parser(object):
 		self.data = data
 		self.page = page
 		self.parent = parent
+		self.preview_offset = 0
 
 	def parse(self):
 		content = self.parse_header()
 		self.parse_content(content)
 
 	def parse_header(self):
-		offset = int(read(self.data, 0x20, '<I'))
-		data = self.data[0:offset]
+		(offset, off) = rdata(self.data, 0x20, '<I')
+		(preview, off) = rdata(self.data, off, '<I')
+		if int(preview) != 0:
+			self.preview_offset = int(preview) - int(offset)
+			assert self.preview_offset == 0x20 # this is what I see in all files
+		data = self.data[0:int(offset)]
 		add_pgiter(self.page, 'Header', 'zmf', 'zmf4_header', data, self.parent)
 		return offset
 
 	def parse_content(self, begin):
 		data = self.data[begin:]
 		content_iter = add_pgiter(self.page, 'Content', 'zmf', 0, data, self.parent)
-		self._parse_group(data, content_iter)
+		if self.preview_offset == 0:
+			self._parse_group(data, content_iter)
+		else:
+			self._parse_group(data[0:self.preview_offset], content_iter)
+			(typ, off) = rdata(data, self.preview_offset, '2s')
+			# TODO: possibly there are other types?
+			assert typ == 'BM'
+			(size, off) = rdata(data, off, '<I')
+			assert int(size) < len(data)
+			add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_bitmap',
+					data[self.preview_offset:self.preview_offset + int(size)], content_iter)
+			self._parse_group(data[self.preview_offset + int(size):], content_iter)
 
 	def parse_object(self, data, parent):
 		off = 4
@@ -146,6 +162,12 @@ def add_zmf2_object_header(hd, size, data):
 	(typ, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Type', typ, off - 2, 2, '<H')
 
+def add_zmf4_bitmap(hd, size, data):
+	(typ, off) = rdata(data, 0, '2s')
+	add_iter(hd, 'Signature', typ, off - 2, 2, '2s')
+	(size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+
 def add_zmf4_header(hd, size, data):
 	off = 8
 	(sig, off) = rdata(data, off, '<I')
@@ -172,6 +194,7 @@ def add_zmf4_object_header(hd, size, data):
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_object_header': add_zmf2_object_header,
+	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
 	'zmf4_object_header': add_zmf4_object_header,
 }
