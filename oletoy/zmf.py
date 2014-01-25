@@ -158,6 +158,8 @@ class ZMF4Parser(object):
 
 zmf4_handlers = {
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
+	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
+	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
 }
 
 def add_zmf2_header(hd, size, data):
@@ -219,6 +221,22 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Page height', height, off - 4, 4, '<I')
 
+def add_zmf4_obj_ellipse(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Height', height, off - 4, 4, '<I')
+
+def add_zmf4_obj_rectangle(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Height', height, off - 4, 4, '<I')
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_object_header': add_zmf2_object_header,
@@ -226,6 +244,8 @@ zmf_ids = {
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
+	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
+	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
 }
 
 def zmf2_open(page, data, parent, fname):
