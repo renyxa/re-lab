@@ -115,8 +115,10 @@ sh_types = {
 	0x3:"Line",
 	0x4:"Rect",
 	0x5:"Ellipse",
+	0x6:"Bitmap",
 	0xc:"Polygon",
 	0xe:"Group",
+	0x10:"Metafile",  # vector img?
 }
 
 
