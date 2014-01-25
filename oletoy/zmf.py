@@ -52,6 +52,42 @@ class ZMF2Parser(object):
 				self.parse_object(data[off:off + length], parent)
 			off += length
 
+zmf4_objects = {
+	# gap
+	0xa: "Object 0xa",
+	# gap
+	0xc: "Object 0xc",
+	# gap
+	0xe: "Bitmap?",
+	# gap
+	0x10: "Object 0x10",
+	0x11: "Object 0x11",
+	0x12: "Object 0x12",
+	# gap
+	0x1e: "Preview bitmap?",
+	# gap
+	0x21: "Start of page",
+	0x22: "Master page?",
+	0x23: "End of page",
+	0x24: "Start of layer",
+	0x25: "End of layer",
+	0x26: "View",
+	0x27: "Document settings?",
+	0x28: "Stylesheet?",
+	# gap
+	0x32: "Rectangle",
+	0x33: "Ellipse",
+	0x34: "Polygon",
+	# gap
+	0x36: "Line",
+	# gap
+	0x3a: "Object 0x3a",
+	0x3b: "Table",
+	# gap
+	0x41: "Start of bar code?",
+	0x42: "End of bar code?",
+}
+
 class ZMF4Parser(object):
 
 	def __init__(self, data, page, parent):
@@ -75,11 +111,15 @@ class ZMF4Parser(object):
 		self._parse_group(data, content_iter)
 
 	def parse_object(self, data, parent):
-		objiter = add_pgiter(self.page, 'Object', 'zmf', 'zmf4_object', data, parent)
-		add_pgiter(self.page, 'Header', 'zmf', 'zmf4_object_header', data[0:32], objiter)
 		off = 4
-		# TODO: this is probably set of flags
-		(typ, off) = rdata(data, off, '<I')
+		(typ, off) = rdata(data, off, '<H')
+		if zmf4_objects.has_key(typ):
+			obj = zmf4_objects[typ]
+		else:
+			obj = 'Unknown object 0x%x' % typ
+		objiter = add_pgiter(self.page, obj, 'zmf', 'zmf4_object', data, parent)
+		# TODO: the object header size probably varies with type
+		add_pgiter(self.page, 'Header', 'zmf', 'zmf4_object_header', data[0:32], objiter)
 		if typ == 0xc or typ == 0xd:
 			self._parse_group(data[32:], objiter)
 		else:
