@@ -88,6 +88,9 @@ zmf4_objects = {
 	0x42: "End of bar code?",
 }
 
+# defined later
+zmf4_handlers = {}
+
 class ZMF4Parser(object):
 
 	def __init__(self, data, page, parent):
@@ -126,33 +129,36 @@ class ZMF4Parser(object):
 					data[self.preview_offset:self.preview_offset + int(size)], content_iter)
 			self._parse_group(data[self.preview_offset + int(size):], content_iter)
 
-	def parse_object(self, data, parent):
+	def parse_object(self, data, parent, typ, callback):
+		self._do_parse_object(data, parent, typ, callback)
+
+	def _parse_object(self, data, parent):
 		off = 4
 		(typ, off) = rdata(data, off, '<H')
+		if zmf4_handlers.has_key(int(typ)):
+			(handler, callback) = zmf4_handlers[int(typ)]
+			handler(self, data, parent, typ, callback)
+		else:
+			self._do_parse_object(data, parent, typ, 'zmf4_obj')
+
+	def _do_parse_object(self, data, parent, typ, callback):
 		if zmf4_objects.has_key(typ):
 			obj = zmf4_objects[typ]
 		else:
 			obj = 'Unknown object 0x%x' % typ
-		objiter = add_pgiter(self.page, obj, 'zmf', 'zmf4_object', data, parent)
-		# TODO: the object header size probably varies with type
-		add_pgiter(self.page, 'Header', 'zmf', 'zmf4_object_header', data[0:32], objiter)
-		if typ == 0xc or typ == 0xd:
-			self._parse_group(data[32:], objiter)
-		else:
-			# TODO: it would make more sense to add this to zmf4_objects
-			objs = { 0x27: 'zmf4_obj_doc_settings' }
-			cb = 0
-			if objs.has_key(typ):
-				cb = objs[typ]
-			add_pgiter(self.page, 'Data', 'zmf', cb, data[32:], objiter)
+		return add_pgiter(self.page, obj, 'zmf', callback, data, parent)
 
 	def _parse_group(self, data, parent):
 		off = 0
 		while off + 4 <= len(data):
 			length = int(read(data, off, '<I'))
 			if off + length <= len(data):
-				self.parse_object(data[off:off + length], parent)
+				self._parse_object(data[off:off + length], parent)
 			off += length
+
+zmf4_handlers = {
+	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
+}
 
 def add_zmf2_header(hd, size, data):
 	off = 10
@@ -190,14 +196,23 @@ def add_zmf4_header(hd, size, data):
 	(size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'File size', size, off - 4, 4, '<I')
 
-def add_zmf4_object_header(hd, size, data):
+def _zmf4_obj_common(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 	(typ, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Type', typ, off - 2, 2, '<I')
+	if zmf4_objects.has_key(typ):
+		obj = zmf4_objects[typ]
+	else:
+		obj = 'Unknown object 0x%x' % typ
+	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
+	return off
+
+def add_zmf4_obj(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
 
 def add_zmf4_obj_doc_settings(hd, size, data):
-	off = 0x24
+	_zmf4_obj_common(hd, size, data)
+	off = 0x44
 	(width, off) = rdata(data, off, '<I')
 	# Note: maximum possible page size is 40305.08 x 28500 mm. Do not ask me why...
 	add_iter(hd, 'Page width', width, off - 4, 4, '<I')
@@ -209,7 +224,7 @@ zmf_ids = {
 	'zmf2_object_header': add_zmf2_object_header,
 	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
-	'zmf4_object_header': add_zmf4_object_header,
+	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 }
 
