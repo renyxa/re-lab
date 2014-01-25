@@ -166,8 +166,8 @@ def add_zmf4_header(hd, size, data):
 def add_zmf4_object_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
-	(typ, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Type', typ, off - 4, 4, '<I')
+	(typ, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Type', typ, off - 2, 2, '<I')
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
