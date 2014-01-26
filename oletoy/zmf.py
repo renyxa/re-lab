@@ -62,7 +62,7 @@ zmf4_objects = {
 	# gap
 	0x10: "Object 0x10",
 	0x11: "Object 0x11",
-	0x12: "Object 0x12",
+	0x12: "Text",
 	# gap
 	0x1e: "Preview bitmap?",
 	# gap
@@ -157,6 +157,7 @@ class ZMF4Parser(object):
 			off += length
 
 zmf4_handlers = {
+	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
@@ -322,6 +323,16 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	(closed, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
 
+def add_zmf4_obj_text(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x3c
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length', count, off - 4, 4, '<I')
+	off += 8
+	length = 2 * int(count)
+	(text, off) = rdata(data, off, '%ds' % length)
+	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_object_header': add_zmf2_object_header,
@@ -333,6 +344,7 @@ zmf_ids = {
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
 	'zmf4_obj_polyline': add_zmf4_obj_polyline,
 	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
+	'zmf4_obj_text': add_zmf4_obj_text,
 }
 
 def zmf2_open(page, data, parent, fname):
