@@ -228,6 +228,10 @@ def _zmf4_obj_common(hd, size, data):
 	return off
 
 def _zmf4_obj_bbox(hd, size, data, off):
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	(x1, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Bounding box: top left corner X', x1, off - 4, 4, '<I')
 	(y1, off) = rdata(data, off, '<I')
@@ -276,10 +280,6 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
-	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(closed, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
@@ -320,10 +320,6 @@ def add_zmf4_obj_polyline(hd, size, data):
 def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
-	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(closed, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
@@ -331,10 +327,6 @@ def add_zmf4_obj_rectangle(hd, size, data):
 def add_zmf4_obj_table(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
-	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	off += 8
 	(rows, off) = rdata(data, off, '<I')
@@ -364,10 +356,6 @@ def add_zmf4_obj_text(hd, size, data):
 def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
-	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	_zmf4_obj_bbox(hd, size, data, off)
 	off = 0x88
 	(text, off) = rdata(data, off, '<I')
