@@ -211,6 +211,14 @@ def _zmf4_obj_common(hd, size, data):
 	else:
 		obj = 'Unknown object 0x%x' % typ
 	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
+	if size >= 0x1c:
+		off = 0x18
+		(tid, off) = rdata(data, off, '<I')
+		if int(tid) == 0xffffffff:
+			tid_str = 'none'
+		else:
+			tid_str = '0x%x' % tid
+		add_iter(hd, 'ID', tid_str, off - 4, 4, '<I')
 	return off
 
 def _zmf4_obj_bbox(hd, size, data, off):
