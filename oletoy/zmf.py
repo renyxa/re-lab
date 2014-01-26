@@ -330,6 +330,20 @@ def add_zmf4_obj_table(hd, size, data):
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	off = _zmf4_obj_bbox(hd, size, data, off)
+	off += 8
+	(rows, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of rows', rows, off - 4, 4, '<I')
+	(cols, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of columns', cols, off - 4, 4, '<I')
+	off += 12
+
+	i = 1
+	while i <= rows * cols:
+		off += 4
+		(text, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Cell %d text reference' % i, '0x%x' % text, off - 4, 4, '<I')
+		off += 12
+		i += 1
 
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
