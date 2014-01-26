@@ -81,7 +81,7 @@ zmf4_objects = {
 	# gap
 	0x36: "Polyline",
 	# gap
-	0x3a: "Object 0x3a",
+	0x3a: "Text frame",
 	0x3b: "Table",
 	# gap
 	0x41: "Start of bar code?",
@@ -168,6 +168,7 @@ zmf4_handlers = {
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
 	0x34: (ZMF4Parser.parse_object, 'zmf4_obj_polygon'),
 	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_polyline'),
+	0x3a: (ZMF4Parser.parse_object, 'zmf4_obj_text_frame'),
 	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
 }
 
@@ -360,6 +361,18 @@ def add_zmf4_obj_text(hd, size, data):
 	(text, off) = rdata(data, off, '%ds' % length)
 	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
+def add_zmf4_obj_text_frame(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Height', height, off - 4, 4, '<I')
+	_zmf4_obj_bbox(hd, size, data, off)
+	off = 0x88
+	(text, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Text reference', '0x%x' % text, off - 4, 4, '<I')
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_object_header': add_zmf2_object_header,
@@ -373,6 +386,7 @@ zmf_ids = {
 	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
 	'zmf4_obj_table': add_zmf4_obj_table,
 	'zmf4_obj_text': add_zmf4_obj_text,
+	'zmf4_obj_text_frame': add_zmf4_obj_text_frame,
 }
 
 def zmf2_open(page, data, parent, fname):
