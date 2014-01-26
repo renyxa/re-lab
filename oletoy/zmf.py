@@ -146,7 +146,12 @@ class ZMF4Parser(object):
 			obj = zmf4_objects[typ]
 		else:
 			obj = 'Unknown object 0x%x' % typ
-		return add_pgiter(self.page, obj, 'zmf', callback, data, parent)
+		obj_str = obj
+		if len(data) >= 0x1c:
+			(oid, off) = rdata(data, 0x18, '<I')
+			if int(oid) != 0xffffffff:
+				obj_str = '%s (0x%x)' % (obj, oid)
+		return add_pgiter(self.page, obj_str, 'zmf', callback, data, parent)
 
 	def _parse_group(self, data, parent):
 		off = 0
@@ -213,12 +218,12 @@ def _zmf4_obj_common(hd, size, data):
 	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
 	if size >= 0x1c:
 		off = 0x18
-		(tid, off) = rdata(data, off, '<I')
-		if int(tid) == 0xffffffff:
-			tid_str = 'none'
+		(oid, off) = rdata(data, off, '<I')
+		if int(oid) == 0xffffffff:
+			oid_str = 'none'
 		else:
-			tid_str = '0x%x' % tid
-		add_iter(hd, 'ID', tid_str, off - 4, 4, '<I')
+			oid_str = '0x%x' % oid
+		add_iter(hd, 'ID', oid_str, off - 4, 4, '<I')
 	return off
 
 def _zmf4_obj_bbox(hd, size, data, off):
