@@ -79,7 +79,7 @@ zmf4_objects = {
 	0x33: "Ellipse",
 	0x34: "Polygon",
 	# gap
-	0x36: "Line",
+	0x36: "Polyline",
 	# gap
 	0x3a: "Object 0x3a",
 	0x3b: "Table",
@@ -160,6 +160,7 @@ zmf4_handlers = {
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
+	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_polyline'),
 }
 
 def add_zmf2_header(hd, size, data):
@@ -244,6 +245,21 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 
+def add_zmf4_obj_polyline(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x5c
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
+	(closed, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
+	i = 1
+	while i <= count:
+		(x, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<I')
+		(y, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
+		i += 1
+
 def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
@@ -278,6 +294,7 @@ zmf_ids = {
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
+	'zmf4_obj_polyline': add_zmf4_obj_polyline,
 	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
 }
 
