@@ -268,6 +268,7 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	add_iter(hd, 'Height', height, off - 4, 4, '<I')
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(closed, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
 
 def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
