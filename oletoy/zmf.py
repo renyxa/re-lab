@@ -220,6 +220,21 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	add_iter(hd, 'Page width', width, off - 4, 4, '<I')
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Page height', height, off - 4, 4, '<I')
+	off = 0x88
+	# The page is placed on a much bigger canvas
+	# NOTE: it seems that positions are in respect to canvas, not to page.
+	(cwidth, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Canvas width', cwidth, off - 4, 4, '<I')
+	(cheight, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Canvas height', cheight, off - 4, 4, '<I')
+	(left, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset of left side of page', left, off - 4, 4, '<I')
+	(top, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset of top side of page', top, off - 4, 4, '<I')
+	(right, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset of right side of page', right, off - 4, 4, '<I')
+	(bottom, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset of bottom side of page', bottom, off - 4, 4, '<I')
 
 def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
