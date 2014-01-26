@@ -163,6 +163,7 @@ zmf4_handlers = {
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
 	0x34: (ZMF4Parser.parse_object, 'zmf4_obj_polygon'),
 	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_polyline'),
+	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
 }
 
 def add_zmf2_header(hd, size, data):
@@ -323,6 +324,30 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	(closed, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
 
+def add_zmf4_obj_table(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Height', height, off - 4, 4, '<I')
+	(x1, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: top left corner X', x1, off - 4, 4, '<I')
+	(y1, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: top left corner Y', y1, off - 4, 4, '<I')
+	(x2, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: top right corner X', x2, off - 4, 4, '<I')
+	(y2, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: top right corner Y', y2, off - 4, 4, '<I')
+	(x3, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: bottom right corner X', x3, off - 4, 4, '<I')
+	(y3, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: bottom right corner Y', y3, off - 4, 4, '<I')
+	(x4, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: bottom left corner X', x4, off - 4, 4, '<I')
+	(y4, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bounding box: bottom left corner Y', y4, off - 4, 4, '<I')
+
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x3c
@@ -344,6 +369,7 @@ zmf_ids = {
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
 	'zmf4_obj_polyline': add_zmf4_obj_polyline,
 	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
+	'zmf4_obj_table': add_zmf4_obj_table,
 	'zmf4_obj_text': add_zmf4_obj_text,
 }
 
