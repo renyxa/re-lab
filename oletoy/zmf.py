@@ -15,6 +15,7 @@
 #
 
 import struct
+import zlib
 
 from utils import add_iter, add_pgiter, rdata
 
@@ -29,28 +30,35 @@ class ZMF2Parser(object):
 		self.parent = parent
 
 	def parse(self):
-		self._parse_group(self.data, self.parent)
+		off = 0
+		while off + 4 <= len(self.data):
+			length = int(read(self.data, off, '<I'))
+			if off + length <= len(self.data):
+				self.parse_block(self.data[off:off + length], self.parent)
+			off += length
 
-	def parse_object(self, data, parent):
-		objiter = add_pgiter(self.page, 'Object', 'zmf', 'zmf2_object', data, parent)
-		# TODO: this seems to fit, but it is not enough... I see two
-		# nested objects in all files, with a lot of opaque data inside
-		# the inner one. Maybe it is compressed?
-		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_object_header', data[0:16], objiter)
+	def parse_block(self, data, parent):
 		# TODO: this is probably set of flags
 		(typ, off) = rdata(data, 4, '<H')
 		if typ == 0x4:
-			self._parse_group(data[16:], objiter)
+			objiter = add_pgiter(self.page, 'Compressed block', 'zmf', 'zmf2_compressed_block', data, parent)
+			off += 10
+			(size, off) = rdata(data, off, '<I')
+			assert off == 0x14
+			assert off + int(size) <= len(data)
+			end = off + int(size)
+			compressed = data[off:end]
+			compiter = add_pgiter(self.page, 'Compressed data', 'zmf', 0, compressed, objiter)
+			try:
+				pass
+				content = zlib.decompress(compressed)
+				add_pgiter(self.page, 'Data', 'zmf', 0, content, compiter)
+			except zlib.error:
+				print("decompression failed")
+			if end < len(data):
+				add_pgiter(self.page, 'Tail', 'zmf', 0, data[end:], objiter)
 		else:
-			add_pgiter(self.page, 'Data', 'zmf', 0, data[16:], objiter)
-
-	def _parse_group(self, data, parent):
-		off = 0
-		while off + 4 <= len(data):
-			length = int(read(data, off, '<I'))
-			if off + length <= len(data):
-				self.parse_object(data[off:off + length], parent)
-			off += length
+			add_pgiter(self.page, 'Block', 'zmf', 'zmf2_block', data, parent)
 
 zmf4_objects = {
 	# gap
@@ -179,11 +187,17 @@ def add_zmf2_header(hd, size, data):
 	(sig, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Signature', '0x%x' % sig, off - 4, 4, '<I')
 
-def add_zmf2_object_header(hd, size, data):
+def add_zmf2_block(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 	(typ, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Type', typ, off - 2, 2, '<H')
+
+def add_zmf2_compressed_block(hd, size, data):
+	add_zmf2_block(hd, size, data)
+	off = 0x10
+	(data_size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Size of data', data_size, off - 4, 4, '<I')
 
 def add_zmf4_bitmap(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
@@ -363,7 +377,8 @@ def add_zmf4_obj_text_frame(hd, size, data):
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
-	'zmf2_object_header': add_zmf2_object_header,
+	'zmf2_block': add_zmf2_block,
+	'zmf2_compressed_block': add_zmf2_compressed_block,
 	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
