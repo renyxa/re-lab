@@ -24,20 +24,38 @@ def read(data, offset, fmt):
 
 class ZMF2Parser(object):
 
-	def __init__(self, data, page, parent):
+	def __init__(self, data, page, parent, parser):
 		self.data = data
 		self.page = page
 		self.parent = parent
+		self.parser = parser
 
 	def parse(self):
-		off = 0
-		while off + 4 <= len(self.data):
-			length = int(read(self.data, off, '<I'))
-			if off + length <= len(self.data):
-				self.parse_block(self.data[off:off + length], self.parent)
-			off += length
+		length = int(read(self.data, 0, '<I'))
+		if length <= len(self.data):
+			self._parse_file(self.data[0:length], self.parent)
 
-	def parse_block(self, data, parent):
+	def parse_bitmap_db_doc(self, data, parent):
+		pass
+
+	def parse_text_styles_doc(self, data, parent):
+		pass
+
+	def parse_doc(self, data, parent):
+		off = self._parse_header(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_dimensions(data, off, parent)
+		off += 4 # something
+		off = self._parse_object(data, off, parent)
+		off += 4 # something
+		off = self._parse_object(data, off, parent, 'Color palette')
+		off += 0x4c # something
+		off = self._parse_object(data, off, parent, 'Document')
+
+	def parse_pages_doc(self, data, parent):
+		pass
+
+	def _parse_file(self, data, parent):
 		# TODO: this is probably set of flags
 		(typ, off) = rdata(data, 4, '<H')
 		if typ == 0x4:
@@ -50,15 +68,51 @@ class ZMF2Parser(object):
 			compressed = data[off:end]
 			compiter = add_pgiter(self.page, 'Compressed data', 'zmf', 0, compressed, objiter)
 			try:
-				pass
 				content = zlib.decompress(compressed)
-				add_pgiter(self.page, 'Data', 'zmf', 0, content, compiter)
+				cntiter = add_pgiter(self.page, 'Data', 'zmf', 0, content, compiter)
+				self.parser(self, content, cntiter)
 			except zlib.error:
 				print("decompression failed")
 			if end < len(data):
 				add_pgiter(self.page, 'Tail', 'zmf', 0, data[end:], objiter)
 		else:
 			add_pgiter(self.page, 'Block', 'zmf', 'zmf2_block', data, parent)
+
+	def _parse_header(self, data, offset, parent):
+		base_length = 0x4c
+		layer_name_length = int(read(data, 0x38, '<I'))
+		length = base_length + layer_name_length
+		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_doc_header', data[offset:length], parent)
+		return length
+
+	def _parse_object(self, data, offset, parent, name='Unknown object'):
+		off = offset
+		(size, off) = rdata(data, offset, '<I')
+		objiter = add_pgiter(self.page, name, 'zmf', 0, data[offset:offset + int(size)], parent)
+
+		# TODO: this is highly speculative
+		(typ, off) = rdata(data, off, '<I')
+		(subtyp, off) = rdata(data, off, '<I')
+		if typ == 4 and subtyp == 3:
+			header_size = 0x14
+		elif typ == 4 and subtyp == 4:
+			header_size = 0x10
+		elif typ == 8 and subtyp == 5:
+			header_size = 0x1c
+		else:
+			header_size = 0
+		if header_size != 0:
+			add_pgiter(self.page, 'Header', 'zmf', 'zmf2_obj_header', data[offset:offset + header_size], objiter)
+
+		# TODO: parse content
+
+		return offset + int(size)
+
+	def _parse_dimensions(self, data, offset, parent):
+		off = offset
+		(size, off) = rdata(data, offset, '<I')
+		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_doc_dimensions', data[offset:offset + int(size)], parent)
+		return offset + int(size)
 
 zmf4_objects = {
 	# gap
@@ -198,6 +252,60 @@ def add_zmf2_compressed_block(hd, size, data):
 	off = 0x10
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size of data', data_size, off - 4, 4, '<I')
+
+def add_zmf2_doc_header(hd, size, data):
+	off = 8
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Total number of objects', count, off - 4, 4, '<I')
+	off = 0x28
+	(lr_margin, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Left & right page margin?', lr_margin, off - 4, 4, '<I')
+	(tb_margin, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top & bottom page margin?', tb_margin, off - 4, 4, '<I')
+	off += 8
+	(strlen, off) = rdata(data, off, '<I')
+	add_iter(hd, 'String length', strlen, off - 4, 4, '<I')
+	layer_len = int(strlen) - 1
+	(layer, off) = rdata(data, off, '%ds' % layer_len)
+	add_iter(hd, 'Default layer name?', unicode(layer, 'cp1250'), off - layer_len, layer_len + 1, '%ds' % layer_len)
+
+def add_zmf2_doc_dimensions(hd, size, data):
+	(size, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+	off += 8
+	(cwidth, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Canvas width', cwidth, off - 4, 4, '<I')
+	(cheight, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Canvas height', cheight, off - 4, 4, '<I')
+	off += 4
+	(tl_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page top left X', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page top left Y', tl_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page bottom right X', br_x, off - 4, 4, '<I')
+	(br_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page bottom right Y', br_y, off - 4, 4, '<I')
+
+def add_zmf2_obj_header(hd, size, data):
+	(size, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+	(typ, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Type', typ, off - 4, 4, '<I')
+	(subtyp, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Subtype', subtyp, off - 4, 4, '<I')
+	if typ == 4 and subtyp == 3:
+		off += 4
+		(obj_type, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Object type', obj_type, off - 4, 4, '<I')
+	elif typ == 4 and subtyp == 4:
+		off += 4
+		(count, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Number of subobjects', count, off - 4, 4, '<I')
+	elif typ == 8 and subtyp == 5:
+		off += 8
+		(count, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Number of subobjects', count, off - 4, 4, '<I')
 
 def add_zmf4_bitmap(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
@@ -379,6 +487,9 @@ zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_block': add_zmf2_block,
 	'zmf2_compressed_block': add_zmf2_compressed_block,
+	'zmf2_doc_header': add_zmf2_doc_header,
+	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
+	'zmf2_obj_header': add_zmf2_obj_header,
 	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
@@ -393,11 +504,17 @@ zmf_ids = {
 }
 
 def zmf2_open(page, data, parent, fname):
+	file_map = {
+		'BitmapDB.zmf': ZMF2Parser.parse_bitmap_db_doc,
+		'TextStyles.zmf': ZMF2Parser.parse_text_styles_doc,
+		'Callisto_doc.zmf': ZMF2Parser.parse_doc,
+		'Callisto_pages.zmf': ZMF2Parser.parse_pages_doc,
+	}
 	if fname == 'Header':
 		add_pgiter(page, 'Header', 'zmf', 'zmf2_header', data, parent)
-	elif fname in ('BitmapDB.zmf', 'TextStyles.zmf', 'Callisto_doc.zmf', 'Callisto_pages.zmf'):
+	elif file_map.has_key(fname):
 		if data != None:
-			parser = ZMF2Parser(data, page, parent)
+			parser = ZMF2Parser(data, page, parent, file_map[fname])
 			parser.parse()
 
 def zmf4_open(data, page, parent):
