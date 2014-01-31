@@ -22,6 +22,9 @@ from utils import add_iter, add_pgiter, rdata
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
+# defined later
+zmf2_handlers = {}
+
 class ZMF2Parser(object):
 
 	def __init__(self, data, page, parent, parser):
@@ -86,7 +89,7 @@ class ZMF2Parser(object):
 		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_doc_header', data[offset:length], parent)
 		return length
 
-	def _parse_object(self, data, offset, parent, name='Unknown object'):
+	def _parse_object(self, data, offset, parent, name='Unknown object', handler=None):
 		off = offset
 		(size, off) = rdata(data, offset, '<I')
 		objiter = add_pgiter(self.page, name, 'zmf', 0, data[offset:offset + int(size)], parent)
@@ -94,26 +97,56 @@ class ZMF2Parser(object):
 		# TODO: this is highly speculative
 		(typ, off) = rdata(data, off, '<I')
 		(subtyp, off) = rdata(data, off, '<I')
+		count = 0
 		if typ == 4 and subtyp == 3:
 			header_size = 0x14
+			off += 8
+			(obj, off) = rdata(data, off, '<I')
+			if not handler and zmf2_handlers.has_key(int(obj)):
+				handler = zmf2_handlers[int(obj)]
 		elif typ == 4 and subtyp == 4:
 			header_size = 0x14
+			off += 4
+			(count, off) = rdata(data, off, '<I')
 		elif typ == 8 and subtyp == 5:
 			header_size = 0x1c
+			off += 8
+			(count, off) = rdata(data, off, '<I')
 		else:
 			header_size = 0
+
 		if header_size != 0:
 			add_pgiter(self.page, 'Header', 'zmf', 'zmf2_obj_header', data[offset:offset + header_size], objiter)
 
-		# TODO: parse content
+		content_data = data[offset + header_size:]
+		if handler:
+			content_offset = handler(self, content_data, objiter)
+		elif int(count) > 0:
+			content_offset = self._parse_object_list(content_data, objiter, int(count))
+		else:
+			content_offset = 0
+
+		if content_offset < len(content_data):
+			add_pgiter(self.page, 'Unknown content', 'zmf', 0, content_data[content_offset:], objiter)
 
 		return offset + int(size)
+
+	def _parse_object_list(self, data, parent, n):
+		off = 0
+		i = 0
+		while i < n:
+			off = self._parse_object(data, off, parent)
+			i += 1
+		return off
 
 	def _parse_dimensions(self, data, offset, parent):
 		off = offset
 		(size, off) = rdata(data, offset, '<I')
 		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_doc_dimensions', data[offset:offset + int(size)], parent)
 		return offset + int(size)
+
+zmf2_handlers = {
+}
 
 zmf4_objects = {
 	# gap
