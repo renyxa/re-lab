@@ -96,7 +96,7 @@ class ZMF2Parser(object):
 		if typ == 4 and subtyp == 3:
 			header_size = 0x14
 		elif typ == 4 and subtyp == 4:
-			header_size = 0x10
+			header_size = 0x14
 		elif typ == 8 and subtyp == 5:
 			header_size = 0x1c
 		else:
