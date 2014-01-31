@@ -31,9 +31,10 @@ class ZMF2Parser(object):
 		self.parser = parser
 
 	def parse(self):
-		length = int(read(self.data, 0, '<I'))
-		if length <= len(self.data):
-			self._parse_file(self.data[0:length], self.parent)
+		if len(self.data) >= 4:
+			length = int(read(self.data, 0, '<I'))
+			if length <= len(self.data):
+				self._parse_file(self.data[0:length], self.parent)
 
 	def parse_bitmap_db_doc(self, data, parent):
 		pass
