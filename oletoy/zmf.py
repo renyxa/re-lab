@@ -59,6 +59,16 @@ class ZMF2Parser(object):
 	def parse_pages_doc(self, data, parent):
 		pass
 
+	def parse_color_palette(self, data, parent):
+		palette_iter = add_pgiter(self.page, 'Color palette object', 'zmf', 0, data, parent)
+		return self._parse_object(data, 0, palette_iter, 'Palette object')
+
+	def parse_color_palette_entry(self, data, parent):
+		(length, off) = rdata(data, 0xd, '<I')
+		(name, off) = rdata(data, off, '%ds' % (int(length) - 1))
+		add_pgiter(self.page, unicode(name, 'cp1250'), 'zmf', 'zmf2_color_palette_entry', data, parent)
+		return len(data)
+
 	def _parse_file(self, data, parent):
 		# TODO: this is probably set of flags
 		(typ, off) = rdata(data, 4, '<H')
@@ -99,8 +109,8 @@ class ZMF2Parser(object):
 		(subtyp, off) = rdata(data, off, '<I')
 		count = 0
 		if typ == 4 and subtyp == 3:
-			header_size = 0x14
-			off += 8
+			header_size = 0x18
+			off += 4
 			(obj, off) = rdata(data, off, '<I')
 			if not handler and zmf2_handlers.has_key(int(obj)):
 				handler = zmf2_handlers[int(obj)]
@@ -118,7 +128,7 @@ class ZMF2Parser(object):
 		if header_size != 0:
 			add_pgiter(self.page, 'Header', 'zmf', 'zmf2_obj_header', data[offset:offset + header_size], objiter)
 
-		content_data = data[offset + header_size:]
+		content_data = data[offset + header_size:offset + int(size)]
 		if handler:
 			content_offset = handler(self, content_data, objiter)
 		elif int(count) > 0:
@@ -146,6 +156,8 @@ class ZMF2Parser(object):
 		return offset + int(size)
 
 zmf2_handlers = {
+	0xa: ZMF2Parser.parse_color_palette_entry,
+	0x100: ZMF2Parser.parse_color_palette,
 }
 
 zmf4_objects = {
@@ -341,6 +353,14 @@ def add_zmf2_obj_header(hd, size, data):
 		(count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Number of subobjects', count, off - 4, 4, '<I')
 
+def add_zmf2_color_palette_entry(hd, size, data):
+	off = 0xd
+	(strlen, off) = rdata(data, off, '<I')
+	add_iter(hd, 'String length', strlen, off - 4, 4, '<I')
+	name_len = int(strlen) - 1
+	(name, off) = rdata(data, off, '%ds' % name_len)
+	add_iter(hd, 'Name', unicode(name, 'cp1250'), off - name_len, name_len + 1, '%ds' % name_len)
+
 def add_zmf4_bitmap(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
 	add_iter(hd, 'Signature', typ, off - 2, 2, '2s')
@@ -520,6 +540,7 @@ def add_zmf4_obj_text_frame(hd, size, data):
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_block': add_zmf2_block,
+	'zmf2_color_palette_entry': add_zmf2_color_palette_entry,
 	'zmf2_compressed_block': add_zmf2_compressed_block,
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
