@@ -61,7 +61,12 @@ class ZMF2Parser(object):
 
 	def parse_color_palette(self, data, parent):
 		palette_iter = add_pgiter(self.page, 'Color palette object', 'zmf', 0, data, parent)
-		return self._parse_object(data, 0, palette_iter, 'Palette object')
+		off = self._parse_object(data, 0, palette_iter, 'Palette object')
+		print('off = %d' % off)
+		if off < len(data):
+			(length, off) = rdata(data, off, '<I')
+			add_pgiter(self.page, 'Palette name?', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
+		return off + int(length)
 
 	def parse_color(self, data, parent):
 		(length, off) = rdata(data, 0xd, '<I')
@@ -283,6 +288,17 @@ zmf4_handlers = {
 	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
 }
 
+def _add_zmf2_string(hd, size, data, offset, name):
+	(length, off) = rdata(data, offset, '<I')
+	add_iter(hd, 'String length', length, off - 4, 4, '<I')
+	text_len = int(length) - 1
+	if text_len > 1:
+		(text, off) = rdata(data, off, '%ds' % text_len)
+		add_iter(hd, name, unicode(text, 'cp1250'), off - text_len, text_len + 1, '%ds' % text_len)
+	else:
+		add_iter(hd, name, '', off, 1, '%ds' % text_len)
+	return off + int(length)
+
 def add_zmf2_header(hd, size, data):
 	off = 10
 	(version, off) = rdata(data, off, '<H')
@@ -364,14 +380,10 @@ def add_zmf2_obj_header(hd, size, data):
 
 def add_zmf2_color(hd, size, data):
 	off = 0xd
-	(strlen, off) = rdata(data, off, '<I')
-	add_iter(hd, 'String length', strlen, off - 4, 4, '<I')
-	name_len = int(strlen) - 1
-	if name_len > 1:
-		(name, off) = rdata(data, off, '%ds' % name_len)
-		add_iter(hd, 'Name', unicode(name, 'cp1250'), off - name_len, name_len + 1, '%ds' % name_len)
-	else:
-		add_iter(hd, 'Name', '', off, 1, '%ds' % name_len)
+	_add_zmf2_string(hd, size, data, off, 'Name')
+
+def add_zmf2_name(hd, size, data):
+	_add_zmf2_string(hd, size, data, 0, 'Name')
 
 def add_zmf4_bitmap(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
@@ -556,6 +568,7 @@ zmf_ids = {
 	'zmf2_compressed_block': add_zmf2_compressed_block,
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
+	'zmf2_name': add_zmf2_name,
 	'zmf2_obj_header': add_zmf2_obj_header,
 	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
