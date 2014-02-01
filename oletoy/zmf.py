@@ -117,7 +117,11 @@ class ZMF2Parser(object):
 		return len(data)
 
 	def parse_polyline(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Points', 'zmf', 'zmf2_points', data[off:], parent)
+		return len(data)
 
 	def parse_rectangle(self, data, parent):
 		off = self._parse_object(data, 0, parent)
@@ -513,6 +517,18 @@ def add_zmf2_color(hd, size, data):
 def add_zmf2_name(hd, size, data):
 	_add_zmf2_string(hd, size, data, 0, 'Name')
 
+def add_zmf2_points(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
+	i = 0
+	while i < int(count):
+		(x, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Point %d X' % (i + 1), x, off - 4, 4, '<I')
+		(y, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Point %d Y' % (i + 1), y, off - 4, 4, '<I')
+		off += 8
+		i += 1
+
 def add_zmf2_polygon(hd, size, data):
 	(tl_x, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Top left X?', tl_x, off - 4, 4, '<I')
@@ -725,6 +741,7 @@ zmf_ids = {
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
 	'zmf2_name': add_zmf2_name,
+	'zmf2_points': add_zmf2_points,
 	'zmf2_polygon': add_zmf2_polygon,
 	'zmf2_star': add_zmf2_star,
 	'zmf2_obj_header': add_zmf2_obj_header,
