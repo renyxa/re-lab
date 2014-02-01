@@ -22,6 +22,21 @@ from utils import add_iter, add_pgiter, rdata
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
+zmf2_objects = {
+	0x3: 'Page',
+	0x4: 'Layer',
+	0x8: 'Rectangle',
+	0x9: 'Image',
+	0xa: 'Color',
+	0xe: 'Polyline',
+	0x10: 'Ellipse',
+	0x11: 'Star',
+	0x12: 'Polygon',
+	0x13: 'Text frame',
+	0x14: 'Table',
+	0x100: 'Color palette',
+}
+
 # defined later
 zmf2_handlers = {}
 
@@ -54,14 +69,13 @@ class ZMF2Parser(object):
 		off += 4 # something
 		off = self._parse_object(data, off, parent, 'Color palette')
 		off += 0x4c # something
-		off = self._parse_object(data, off, parent, 'Document')
+		off = self._parse_object(data, off, parent, 'Page')
 
 	def parse_pages_doc(self, data, parent):
 		pass
 
 	def parse_color_palette(self, data, parent):
-		palette_iter = add_pgiter(self.page, 'Color palette object', 'zmf', 0, data, parent)
-		off = self._parse_object(data, 0, palette_iter, 'Palette object')
+		off = self._parse_object(data, 0, parent, 'Color')
 		if off < len(data):
 			(length, off) = rdata(data, off, '<I')
 			add_pgiter(self.page, 'Palette name?', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
@@ -83,13 +97,13 @@ class ZMF2Parser(object):
 		pass
 
 	def parse_layer(self, data, parent):
-		off = self._parse_object(data, 0, parent, 'Layer')
+		off = self._parse_object(data, 0, parent, 'Drawable')
 		(length, off) = rdata(data, off, '<I')
 		add_pgiter(self.page, 'Layer name', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
 		return off + int(length)
 
 	def parse_page(self, data, parent):
-		return self._parse_object(data, 0, parent, 'Page')
+		return self._parse_object(data, 0, parent, 'Layer')
 
 	def parse_polygon(self, data, parent):
 		pass
@@ -166,10 +180,11 @@ class ZMF2Parser(object):
 		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_doc_header', data[offset:length], parent)
 		return length
 
-	def _parse_object(self, data, offset, parent, name='Unknown object', handler=None):
+	def _parse_object(self, data, offset, parent, name=None, handler=None):
 		off = offset
 		(size, off) = rdata(data, offset, '<I')
-		objiter = add_pgiter(self.page, name, 'zmf', 0, data[offset:offset + int(size)], parent)
+
+		name_str = name
 
 		# TODO: this is highly speculative
 		(typ, off) = rdata(data, off, '<I')
@@ -181,16 +196,24 @@ class ZMF2Parser(object):
 			(obj, off) = rdata(data, off, '<I')
 			if not handler and zmf2_handlers.has_key(int(obj)):
 				handler = zmf2_handlers[int(obj)]
+			if zmf2_objects.has_key(int(obj)):
+				name_str = '%s object' % zmf2_objects[int(obj)]
 		elif typ == 4 and subtyp == 4:
 			header_size = 0x14
 			off += 4
 			(count, off) = rdata(data, off, '<I')
+			name_str = name + 's'
 		elif typ == 8 and subtyp == 5:
 			header_size = 0x1c
 			off += 8
 			(count, off) = rdata(data, off, '<I')
 		else:
 			header_size = 0
+
+		if not name_str:
+			name_str = 'Unknown object'
+
+		objiter = add_pgiter(self.page, name_str, 'zmf', 0, data[offset:offset + int(size)], parent)
 
 		if header_size != 0:
 			add_pgiter(self.page, 'Header', 'zmf', 'zmf2_obj_header', data[offset:offset + header_size], objiter)
@@ -199,7 +222,7 @@ class ZMF2Parser(object):
 		if handler:
 			content_offset = handler(self, content_data, objiter)
 		elif int(count) > 0:
-			content_offset = self._parse_object_list(content_data, objiter, int(count))
+			content_offset = self._parse_object_list(content_data, objiter, int(count), name)
 		else:
 			content_offset = 0
 
@@ -208,11 +231,11 @@ class ZMF2Parser(object):
 
 		return offset + int(size)
 
-	def _parse_object_list(self, data, parent, n):
+	def _parse_object_list(self, data, parent, n, name='Object'):
 		off = 0
 		i = 0
 		while i < n:
-			off = self._parse_object(data, off, parent, 'Object %d' % (i + 1))
+			off = self._parse_object(data, off, parent, '%s %d' % (name, (i + 1)))
 			i += 1
 		return off
 
