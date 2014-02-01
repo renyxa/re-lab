@@ -83,10 +83,13 @@ class ZMF2Parser(object):
 		pass
 
 	def parse_layer(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent, 'Layer')
+		(length, off) = rdata(data, off, '<I')
+		add_pgiter(self.page, 'Layer name', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
+		return off + int(length)
 
 	def parse_page(self, data, parent):
-		pass
+		return self._parse_object(data, 0, parent, 'Page')
 
 	def parse_polygon(self, data, parent):
 		pass
