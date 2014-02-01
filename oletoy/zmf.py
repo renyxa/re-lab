@@ -91,7 +91,11 @@ class ZMF2Parser(object):
 		return len(data)
 
 	def parse_ellipse(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		return off + 0x20
 
 	def parse_image(self, data, parent):
 		pass
