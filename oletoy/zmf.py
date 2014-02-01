@@ -153,7 +153,7 @@ class ZMF2Parser(object):
 		off = 0
 		i = 0
 		while i < n:
-			off = self._parse_object(data, off, parent)
+			off = self._parse_object(data, off, parent, 'Object %d' % (i + 1))
 			i += 1
 		return off
 
