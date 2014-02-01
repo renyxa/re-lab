@@ -111,7 +111,30 @@ class ZMF2Parser(object):
 		pass
 
 	def parse_text_frame(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		off += 0x20
+		(count, off) = rdata(data, off, '<I')
+
+		chars = []
+		chars_len = 0
+		i = 0
+		while i < int(count):
+			(length, off) = rdata(data, off, '<I')
+			i += 1
+			chars.append(data[off - 4:off + int(length)])
+			chars_len += 4 + int(length)
+			off += int(length)
+
+		charsiter = add_pgiter(self.page, 'Characters', 'zmf', 0, data[off:off + chars_len], parent)
+		i = 0
+		while i != len(chars):
+			add_pgiter(self.page, 'Character %d' % (i + 1), 'zmf', 'zmf2_character', chars[i], charsiter)
+			i += 1
+
+		return off
 
 	def _parse_file(self, data, parent):
 		# TODO: this is probably set of flags
@@ -362,6 +385,12 @@ def add_zmf2_bbox(hd, size, data):
 	add_iter(hd, 'Bottom left X', bl_x, off - 4, 4, '<I')
 	(bl_y, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Bottom left Y', bl_y, off - 4, 4, '<I')
+
+def add_zmf2_character(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, off - 4, 4, '<I')
+	(c, off) = rdata(data, off, '1s')
+	add_iter(hd, 'Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
 
 def add_zmf2_header(hd, size, data):
 	off = 10
@@ -629,6 +658,7 @@ zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
 	'zmf2_block': add_zmf2_block,
+	'zmf2_character': add_zmf2_character,
 	'zmf2_color': add_zmf2_color,
 	'zmf2_compressed_block': add_zmf2_compressed_block,
 	'zmf2_doc_header': add_zmf2_doc_header,
