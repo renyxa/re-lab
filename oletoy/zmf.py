@@ -106,7 +106,11 @@ class ZMF2Parser(object):
 		return self._parse_object(data, 0, parent, 'Layer')
 
 	def parse_polygon(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_polygon', data[off:], parent)
+		return len(data)
 
 	def parse_polyline(self, data, parent):
 		pass
@@ -505,6 +509,18 @@ def add_zmf2_color(hd, size, data):
 def add_zmf2_name(hd, size, data):
 	_add_zmf2_string(hd, size, data, 0, 'Name')
 
+def add_zmf2_polygon(hd, size, data):
+	(tl_x, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Top left X?', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top left Y?', tl_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom right X?', br_x, off - 4, 4, '<I')
+	(br_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom right Y?', br_y, off - 4, 4, '<I')
+	(points, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of edges', points, off - 4, 4, '<I')
+
 def add_zmf2_star(hd, size, data):
 	(tl_x, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Top left X?', tl_x, off - 4, 4, '<I')
@@ -705,6 +721,7 @@ zmf_ids = {
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
 	'zmf2_name': add_zmf2_name,
+	'zmf2_polygon': add_zmf2_polygon,
 	'zmf2_star': add_zmf2_star,
 	'zmf2_obj_header': add_zmf2_obj_header,
 	'zmf4_bitmap': add_zmf4_bitmap,
