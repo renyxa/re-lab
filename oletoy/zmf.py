@@ -62,7 +62,6 @@ class ZMF2Parser(object):
 	def parse_color_palette(self, data, parent):
 		palette_iter = add_pgiter(self.page, 'Color palette object', 'zmf', 0, data, parent)
 		off = self._parse_object(data, 0, palette_iter, 'Palette object')
-		print('off = %d' % off)
 		if off < len(data):
 			(length, off) = rdata(data, off, '<I')
 			add_pgiter(self.page, 'Palette name?', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
