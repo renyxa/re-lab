@@ -35,6 +35,7 @@ zmf2_objects = {
 	0x13: 'Text frame',
 	0x14: 'Table',
 	0x100: 'Color palette',
+	0x201: 'Bitmap definition',
 }
 
 # defined later
@@ -55,7 +56,16 @@ class ZMF2Parser(object):
 				self._parse_file(self.data[0:length], self.parent)
 
 	def parse_bitmap_db_doc(self, data, parent):
-		pass
+		bitmaps_iter = add_pgiter(self.page, 'Bitmaps', 'zmf', 'zmf2_bitmap_db', data, parent)
+		off = 4
+		i = 1
+		while off < len(data):
+			off = self._parse_object(data, off, bitmaps_iter, 'Bitmap %d' % i)
+			i += 1
+
+	def parse_bitmap_def(self, data, parent):
+		add_pgiter(self.page, 'ID', 'zmf', 'zmf2_bitmap_id', data, parent)
+		return len(data)
 
 	def parse_text_styles_doc(self, data, parent):
 		pass
@@ -98,7 +108,11 @@ class ZMF2Parser(object):
 		return off + 0x20
 
 	def parse_image(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		return off + 0x20
 
 	def parse_layer(self, data, parent):
 		off = self._parse_object(data, 0, parent, 'Drawable')
@@ -274,6 +288,7 @@ zmf2_handlers = {
 	0x13: ZMF2Parser.parse_text_frame,
 	0x14: ZMF2Parser.parse_table,
 	0x100: ZMF2Parser.parse_color_palette,
+	0x201: ZMF2Parser.parse_bitmap_def,
 }
 
 zmf4_objects = {
@@ -424,6 +439,14 @@ def add_zmf2_bbox(hd, size, data):
 	add_iter(hd, 'Bottom left X', bl_x, off - 4, 4, '<I')
 	(bl_y, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Bottom left Y', bl_y, off - 4, 4, '<I')
+
+def add_zmf2_bitmap_db(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Number of bitmaps?', count, off - 4, 4, '<I')
+
+def add_zmf2_bitmap_id(hd, size, data):
+	(bid, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'ID', bid, off - 4, 4, '<I')
 
 def add_zmf2_character(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -734,6 +757,8 @@ def add_zmf4_obj_text_frame(hd, size, data):
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
+	'zmf2_bitmap_db': add_zmf2_bitmap_db,
+	'zmf2_bitmap_id': add_zmf2_bitmap_id,
 	'zmf2_block': add_zmf2_block,
 	'zmf2_character': add_zmf2_character,
 	'zmf2_color': add_zmf2_color,
