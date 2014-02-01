@@ -98,7 +98,11 @@ class ZMF2Parser(object):
 		pass
 
 	def parse_rectangle(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		return off + 0x20
 
 	def parse_star(self, data, parent):
 		pass
@@ -340,6 +344,24 @@ def _add_zmf2_string(hd, size, data, offset, name):
 	else:
 		add_iter(hd, name, '', off, 1, '%ds' % text_len)
 	return off + int(length)
+
+def add_zmf2_bbox(hd, size, data):
+	(tl_x, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Top left X', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top left Y', tl_y, off - 4, 4, '<I')
+	(tr_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top right X', tr_x, off - 4, 4, '<I')
+	(tr_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top right Y', tr_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom right X', br_x, off - 4, 4, '<I')
+	(br_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom right Y', br_y, off - 4, 4, '<I')
+	(bl_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom left X', bl_x, off - 4, 4, '<I')
+	(bl_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom left Y', bl_y, off - 4, 4, '<I')
 
 def add_zmf2_header(hd, size, data):
 	off = 10
@@ -605,6 +627,7 @@ def add_zmf4_obj_text_frame(hd, size, data):
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
+	'zmf2_bbox': add_zmf2_bbox,
 	'zmf2_block': add_zmf2_block,
 	'zmf2_color': add_zmf2_color,
 	'zmf2_compressed_block': add_zmf2_compressed_block,
