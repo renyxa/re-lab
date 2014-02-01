@@ -140,7 +140,7 @@ def my_open (buf,page,parent=None):
 				if vbaiter != None:
 					vba.parse (page, vbadata, vbaiter)
 
-	except:
+	except subprocess.CalledProcessError:
 		print "Failed to run gsf. Please install libgsf."
 		return
 
