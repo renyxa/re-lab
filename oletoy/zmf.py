@@ -47,7 +47,7 @@ class ZMF2Parser(object):
 
 	def parse_doc(self, data, parent):
 		off = self._parse_header(data, 0, parent)
-		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent, 'Default color?')
 		off = self._parse_dimensions(data, off, parent)
 		off += 4 # something
 		off = self._parse_object(data, off, parent)
@@ -63,10 +63,13 @@ class ZMF2Parser(object):
 		palette_iter = add_pgiter(self.page, 'Color palette object', 'zmf', 0, data, parent)
 		return self._parse_object(data, 0, palette_iter, 'Palette object')
 
-	def parse_color_palette_entry(self, data, parent):
+	def parse_color(self, data, parent):
 		(length, off) = rdata(data, 0xd, '<I')
-		(name, off) = rdata(data, off, '%ds' % (int(length) - 1))
-		add_pgiter(self.page, unicode(name, 'cp1250'), 'zmf', 'zmf2_color_palette_entry', data, parent)
+		name_str = 'Color'
+		if length > 1:
+			(name, off) = rdata(data, off, '%ds' % (int(length) - 1))
+			name_str += ' (%s)' % unicode(name, 'cp1250')
+		add_pgiter(self.page, name_str, 'zmf', 'zmf2_color', data, parent)
 		return len(data)
 
 	def _parse_file(self, data, parent):
@@ -156,7 +159,7 @@ class ZMF2Parser(object):
 		return offset + int(size)
 
 zmf2_handlers = {
-	0xa: ZMF2Parser.parse_color_palette_entry,
+	0xa: ZMF2Parser.parse_color,
 	0x100: ZMF2Parser.parse_color_palette,
 }
 
@@ -359,13 +362,16 @@ def add_zmf2_obj_header(hd, size, data):
 		(count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Number of subobjects', count, off - 4, 4, '<I')
 
-def add_zmf2_color_palette_entry(hd, size, data):
+def add_zmf2_color(hd, size, data):
 	off = 0xd
 	(strlen, off) = rdata(data, off, '<I')
 	add_iter(hd, 'String length', strlen, off - 4, 4, '<I')
 	name_len = int(strlen) - 1
-	(name, off) = rdata(data, off, '%ds' % name_len)
-	add_iter(hd, 'Name', unicode(name, 'cp1250'), off - name_len, name_len + 1, '%ds' % name_len)
+	if name_len > 1:
+		(name, off) = rdata(data, off, '%ds' % name_len)
+		add_iter(hd, 'Name', unicode(name, 'cp1250'), off - name_len, name_len + 1, '%ds' % name_len)
+	else:
+		add_iter(hd, 'Name', '', off, 1, '%ds' % name_len)
 
 def add_zmf4_bitmap(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
@@ -546,7 +552,7 @@ def add_zmf4_obj_text_frame(hd, size, data):
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_block': add_zmf2_block,
-	'zmf2_color_palette_entry': add_zmf2_color_palette_entry,
+	'zmf2_color': add_zmf2_color,
 	'zmf2_compressed_block': add_zmf2_compressed_block,
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
