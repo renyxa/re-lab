@@ -76,6 +76,36 @@ class ZMF2Parser(object):
 		add_pgiter(self.page, name_str, 'zmf', 'zmf2_color', data, parent)
 		return len(data)
 
+	def parse_ellipse(self, data, parent):
+		pass
+
+	def parse_image(self, data, parent):
+		pass
+
+	def parse_layer(self, data, parent):
+		pass
+
+	def parse_page(self, data, parent):
+		pass
+
+	def parse_polygon(self, data, parent):
+		pass
+
+	def parse_polyline(self, data, parent):
+		pass
+
+	def parse_rectangle(self, data, parent):
+		pass
+
+	def parse_star(self, data, parent):
+		pass
+
+	def parse_table(self, data, parent):
+		pass
+
+	def parse_text_frame(self, data, parent):
+		pass
+
 	def _parse_file(self, data, parent):
 		# TODO: this is probably set of flags
 		(typ, off) = rdata(data, 4, '<H')
@@ -163,7 +193,17 @@ class ZMF2Parser(object):
 		return offset + int(size)
 
 zmf2_handlers = {
+	0x3: ZMF2Parser.parse_page,
+	0x4: ZMF2Parser.parse_layer,
+	0x8: ZMF2Parser.parse_rectangle,
+	0x9: ZMF2Parser.parse_image,
 	0xa: ZMF2Parser.parse_color,
+	0xe: ZMF2Parser.parse_polyline,
+	0x10: ZMF2Parser.parse_ellipse,
+	0x11: ZMF2Parser.parse_star,
+	0x12: ZMF2Parser.parse_polygon,
+	0x13: ZMF2Parser.parse_text_frame,
+	0x14: ZMF2Parser.parse_table,
 	0x100: ZMF2Parser.parse_color_palette,
 }
 
