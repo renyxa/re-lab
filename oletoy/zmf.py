@@ -152,7 +152,13 @@ class ZMF2Parser(object):
 		return len(data)
 
 	def parse_table(self, data, parent):
-		pass
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		off += 0x20
+		add_pgiter(self.page, 'Def', 'zmf', 'zmf2_table', data[off:], parent)
+		return off
 
 	def parse_text_frame(self, data, parent):
 		off = self._parse_object(data, 0, parent)
@@ -578,6 +584,36 @@ def add_zmf2_star(hd, size, data):
 	(angle, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Point angle?', angle, off - 4, 4, '<I')
 
+def add_zmf2_table(hd, size, data):
+	off = 4
+	(rows, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of rows', rows, off - 4, 4, '<I')
+	(cols, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of columns', cols, off - 4, 4, '<I')
+
+	off += 8
+
+	for i in range(int(cols)):
+		(width, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Width of column %d' % (i + 1), width, off - 4, 4, '<I')
+		off += 4
+
+	for i in range(int(rows)):
+		(height, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Height of row %d' % (i + 1), height, off - 4, 4, '<I')
+		off += 0x2c
+		for j in range(int(cols)):
+			(length, off) = rdata(data, off, '<I')
+			add_iter(hd, 'String length', length, off - 4, 4, '<I')
+			fix = 0
+			if int(length) > 0:
+				(text, off) = rdata(data, off, '%ds' % int(length))
+				add_iter(hd, 'Content', text, off - int(length), int(length), '%ds' % int(length))
+				off += 0x29
+				fix = 0x29
+		off -= fix
+		off += 5
+
 def add_zmf4_bitmap(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
 	add_iter(hd, 'Signature', typ, off - 2, 2, '2s')
@@ -769,6 +805,7 @@ zmf_ids = {
 	'zmf2_points': add_zmf2_points,
 	'zmf2_polygon': add_zmf2_polygon,
 	'zmf2_star': add_zmf2_star,
+	'zmf2_table': add_zmf2_table,
 	'zmf2_obj_header': add_zmf2_obj_header,
 	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
