@@ -314,6 +314,12 @@ def add_zmf2_doc_header(hd, size, data):
 	layer_len = int(strlen) - 1
 	(layer, off) = rdata(data, off, '%ds' % layer_len)
 	add_iter(hd, 'Default layer name?', unicode(layer, 'cp1250'), off - layer_len, layer_len + 1, '%ds' % layer_len)
+	off += 1
+	(tl_x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page top left X?', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page top left Y?', tl_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
 
 def add_zmf2_doc_dimensions(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
