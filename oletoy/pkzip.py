@@ -33,5 +33,7 @@ def open(fname,page,parent=None):
 			if len(data) > 0:
 				page.fload(data,iter)
 			
-	except:
+	except zipfile.BadZipfile:
+		print "Open as PKZIP failed"
+	except zipfile.LargeZipFile:
 		print "Open as PKZIP failed"
