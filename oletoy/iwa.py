@@ -126,19 +126,33 @@ def uncompress(data):
 
 	return result
 
+def add_iwa_compressed_block(hd, size, data):
+	(length, off) = rdata(data, 1, '<H')
+	add_iter(hd, 'Compressed length', length, off - 2, 2, '<H')
+	off += 1
+	var_off = off
+	(ulength, off) = read_var(data, off)
+	add_iter(hd, 'Uncompressed length', ulength, var_off, off - var_off, '%ds' % (off - var_off))
+
+iwa_ids = {
+	'iwa_compressed_block': add_iwa_compressed_block,
+}
+
 def open(data, page, parent):
-	(length, off) = rdata(data, 0, '<I')
-	length = int(length) >> 8
 	n = 0
+	off = 0
+
 	while off < len(data):
-		block = data[off:off + length]
-		uncompressed = uncompress(block)
-		blockiter = add_pgiter(page, 'Block %d' % n, 'iwa', 0, block, parent)
+		off += 1
+		(length, off) = rdata(data, off, '<H')
+		off += 1
+
+		block = data[off - 4:off + int(length)]
+		blockiter = add_pgiter(page, 'Block %d' % n, 'iwa', 'iwa_compressed_block', block, parent)
+		uncompressed = uncompress(block[4:])
 		add_pgiter(page, 'Uncompressed', 'iwa', 0, uncompressed, blockiter)
 
 		n += 1
 		off += length
-		if off < len(data):
-			(length, off) = rdata(data, off, '<I')
 
 # vim: set ft=python sts=4 sw=4 noet:

@@ -1541,6 +1541,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "zbr":
 					if zbr.zbr_ids.has_key(ntype[1]):
 						zbr.zbr_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "iwa":
+					if iwa.iwa_ids.has_key(ntype[1]):
+						iwa.iwa_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 
