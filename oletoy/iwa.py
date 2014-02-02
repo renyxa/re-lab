@@ -44,8 +44,10 @@ def read_var(data, offset):
 
 # The compression method (as I currently understand it)
 #
-# Compressed data are broken into references and sequences of literals.
-# They are recongized by the first byte, as follows:
+# Compressed data are broken sequences of literals and references into
+# previously uncompressed data. A reference consists of offset (taken
+# backwards from the end of uncompressed data) and length. They are
+# recongized by the first byte, as follows:
 # + xxxxxx00 - a literal run
 #   - In case this is not ffffxx00, this byte is followed by a single
 #   byte containing count. This is in turn followed by count + 1
