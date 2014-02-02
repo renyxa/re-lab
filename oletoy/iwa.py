@@ -62,6 +62,7 @@ def uncompress(data):
 	(uncompressed_length, off) = read_var(data, off)
 
 	while off < len(data):
+		# print('at offset %x:' % (off + 4))
 		c = ord(data[off])
 		off += 1
 		typ = c & 0x3
@@ -79,6 +80,7 @@ def uncompress(data):
 					off += 1
 			else:
 				length = (c >> 2) + 1
+			# print('  literal run: length = %x' % length)
 			result.extend(data[off:off + length])
 			off += length
 		elif typ == 1: # near reference
@@ -87,11 +89,13 @@ def uncompress(data):
 			low = ord(data[off])
 			offset = (high << 8) | low
 			off += 1
+			# print('  near ref: offset = %x, length = %x' % (offset, length))
 			append_ref(offset, length)
 		elif typ == 2: # far reference
 			length = (c >> 2) + 1
 			offset = ord(data[off]) | (ord(data[off + 1]) << 8)
 			off += 2
+			# print('  far ref: offset = %x, length = %x' % (offset, length))
 			append_ref(offset, length)
 		else:
 			print("unknown type at offset 0x%x inside block" % (off + 4))
