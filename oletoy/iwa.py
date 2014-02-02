@@ -141,6 +141,7 @@ iwa_ids = {
 def open(data, page, parent):
 	n = 0
 	off = 0
+	uncompressed_data = []
 
 	while off < len(data):
 		off += 1
@@ -150,9 +151,12 @@ def open(data, page, parent):
 		block = data[off - 4:off + int(length)]
 		blockiter = add_pgiter(page, 'Block %d' % n, 'iwa', 'iwa_compressed_block', block, parent)
 		uncompressed = uncompress(block[4:])
+		uncompressed_data.extend(uncompressed)
 		add_pgiter(page, 'Uncompressed', 'iwa', 0, uncompressed, blockiter)
 
 		n += 1
 		off += length
+
+	add_pgiter(page, 'Uncompressed', 'iwa', 0, uncompressed_data, parent)
 
 # vim: set ft=python sts=4 sw=4 noet:
