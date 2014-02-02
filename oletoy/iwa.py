@@ -67,8 +67,8 @@ def uncompress(data):
 	result = []
 
 	def append_ref(offset, length):
-		assert offset < len(result)
-		if offset > length:
+		assert offset <= len(result)
+		if offset >= length:
 			start = len(result) - offset
 			result.extend(result[start:start + length])
 		else:
