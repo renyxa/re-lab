@@ -34,6 +34,7 @@ import pdb
 import sbimp
 import zmf
 import zbr
+import iwa
 import hv2, utils
 from utils import *
 from hv2 import HexView
