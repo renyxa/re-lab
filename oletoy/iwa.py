@@ -68,10 +68,15 @@ def uncompress(data):
 
 		if typ == 0: # literals
 			if (c & 0xf0) == 0xf0:
-				low = ord(data[off])
-				high = (c >> 2) & 0x3
-				length = ((high << 8) | low) + 1
+				count = (c >> 2) & 0x3
+				length = ord(data[off]) + 1
 				off += 1
+				i = 1
+				while i <= count:
+					b = ord(data[off])
+					length += (b << i * 8)
+					i += 1
+					off += 1
 			else:
 				length = (c >> 2) + 1
 			result.extend(data[off:off + length])
