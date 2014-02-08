@@ -45,13 +45,14 @@ def my_open (buf,page,parent=None):
 	docdataiter = None
 	tbliter = None
 	dirflag=0
+	ftype = ""
 	try:
 		gsfout = subprocess.check_output(["gsf", "list", page.fname])
 		print gsfout
 		print "-----------------"
 		for i in gsfout.split("\n")[1:-1]:
 			if i[0] == "f":
-				fullname = i.split()[2]
+				fullname = " ".join(i.split()[2:])
 				if "/" in fullname:
 					fns = fullname.split("/")
 					cdir = "/".join(fns[:-1])
@@ -62,13 +63,12 @@ def my_open (buf,page,parent=None):
 				if ord(fn[0]) < 32: 
 					fn = fn[1:]
 				pn = None
+
 				if cdir:
 					cdir_to_treeiter(page,parent,cdir,dircache)
 					pn = dircache["/"+cdir]
 				data = subprocess.check_output(["gsf", "cat", page.fname,fullname])
-
 				iter1 = add_pgiter(page,fn,"ole",fn,data,pn)
-
 
 				if (fn == "EscherStm" or fn == "EscherDelayStm"): # and infchild.size()>0:
 					ftype = "escher"
@@ -137,6 +137,9 @@ def my_open (buf,page,parent=None):
 					page.model.set_value(iter1,1,("vba",dirflag))
 					vbaiter = iter1
 					vbadata = data
+				if "SummaryInformation" in fn:
+					page.model.set_value(iter1,1,("ole","propset"))
+
 				if vbaiter != None:
 					vba.parse (page, vbadata, vbaiter)
 
@@ -187,78 +190,118 @@ prop_set_ids = {
 }
 
 prop_types = {
-	0x0000:"EMPTY",
-	0x0001:"NULL",
-	0x0002:"I2",
-	0x0003:"I4",
-	0x0004:"R4",
-	0x0005:"R8",
-	0x0006:"CY",
-	0x0007:"DATE",
-	0x0008:"BSTR",
-	0x000A:"ERROR",
-	0x000B:"BOOL",
-	0x000E:"DECIMAL",
-	0x0010:"I1",
-	0x0011:"UI1",
-	0x0012:"UI2",
-	0x0013:"UI4",
-	0x0014:"I8",
-	0x0015:"UI8",
-	0x0016:"INT",
-	0x0017:"UINT",
-	0x001E:"LPSTR",
-	0x001F:"LPWSTR",
-	0x0040:"FILETIME",
-	0x0041:"BLOB",
-	0x0042:"STREAM",
-	0x0043:"STORAGE",
-	0x0044:"STREAMED_Object",
-	0x0045:"STORED_Object",
-	0x0046:"BLOB_Object",
-	0x0047:"CF",
-	0x0048:"CLSID",
-	0x0049:"VERSIONED_STREAM",
-	0x1002:"VECTOR_I2",
-	0x1003:"VECTOR_I4",
-	0x1004:"VECTOR_R4",
-	0x1005:"VECTOR_R8",
-	0x1006:"VECTOR_CY",
-	0x1007:"VECTOR_DATE",
-	0x1008:"VECTOR_BSTR",
-	0x100A:"VECTOR_ERROR",
-	0x100B:"VECTOR_BOOL",
-	0x100C:"VECTOR_VARIANT",
-	0x1010:"VECTOR_I1",
-	0x1011:"VECTOR_UI1",
-	0x1012:"VECTOR_UI2",
-	0x1013:"VECTOR_UI4",
-	0x1014:"VECTOR_I8",
-	0x1015:"VECTOR_UI8",
-	0x101E:"VECTOR_LPSTR",
-	0x101F:"VECTOR_LPWSTR",
-	0x1040:"VECTOR_FILETIME",
-	0x1047:"VECTOR_CF",
-	0x1048:"VECTOR_CLSID",
-	0x2002:"ARRAY_I2",
-	0x2003:"ARRAY_I4",
-	0x2004:"ARRAY_R4",
-	0x2005:"ARRAY_R8",
-	0x2006:"ARRAY_CY",
-	0x2007:"ARRAY_DATE",
-	0x2008:"ARRAY_BSTR",
-	0x200A:"ARRAY_ERROR",
-	0x200B:"ARRAY_BOOL",
-	0x200C:"ARRAY_VARIANT",
-	0x200E:"ARRAY_DECIMAL",
-	0x2010:"ARRAY_I1",
-	0x2011:"ARRAY_UI1",
-	0x2012:"ARRAY_UI2",
-	0x2013:"ARRAY_UI4",
-	0x2016:"ARRAY_INT",
-	0x2017:"ARRAY_UINT"
+	0x0000:("EMPTY",),
+	0x0001:("NULL",),
+	0x0002:("I2","pt_h"),
+	0x0003:("I4","pt_i"),
+	0x0004:("R4","pt_f"),
+	0x0005:("R8","pt_d"),
+	0x0006:("CY","pt_q"), # currency
+	0x0007:("DATE","pt_d"),
+	0x0008:("BSTR","pt_size4str"),
+	0x000A:("ERROR","pt_i"),
+	0x000B:("BOOL","pt_h"),
+	0x000E:("DECIMAL","pt_dec"), # 16 bytes
+	0x0010:("I1",),
+	0x0011:("UI1",),
+	0x0012:("UI2",),
+	0x0013:("UI4",),
+	0x0014:("I8",),
+	0x0015:("UI8",),
+	0x0016:("INT",),
+	0x0017:("UINT",),
+	0x001E:("LPSTR",),
+	0x001F:("LPWSTR",),
+	0x0040:("FILETIME",),
+	0x0041:("BLOB",),
+	0x0042:("STREAM",),
+	0x0043:("STORAGE",),
+	0x0044:("STREAMED_Object",),
+	0x0045:("STORED_Object",),
+	0x0046:("BLOB_Object",),
+	0x0047:("CF",),
+	0x0048:("CLSID",),
+	0x0049:("VERSIONED_STREAM",),
+	0x1002:("VECTOR_I2",),
+	0x1003:("VECTOR_I4",),
+	0x1004:("VECTOR_R4",),
+	0x1005:("VECTOR_R8",),
+	0x1006:("VECTOR_CY",),
+	0x1007:("VECTOR_DATE",),
+	0x1008:("VECTOR_BSTR",),
+	0x100A:("VECTOR_ERROR",),
+	0x100B:("VECTOR_BOOL",),
+	0x100C:("VECTOR_VARIANT",),
+	0x1010:("VECTOR_I1",),
+	0x1011:("VECTOR_UI1",),
+	0x1012:("VECTOR_UI2",),
+	0x1013:("VECTOR_UI4",),
+	0x1014:("VECTOR_I8",),
+	0x1015:("VECTOR_UI8",),
+	0x101E:("VECTOR_LPSTR",),
+	0x101F:("VECTOR_LPWSTR",),
+	0x1040:("VECTOR_FILETIME",),
+	0x1047:("VECTOR_CF",),
+	0x1048:("VECTOR_CLSID",),
+	0x2002:("ARRAY_I2",),
+	0x2003:("ARRAY_I4",),
+	0x2004:("ARRAY_R4",),
+	0x2005:("ARRAY_R8",),
+	0x2006:("ARRAY_CY",),
+	0x2007:("ARRAY_DATE",),
+	0x2008:("ARRAY_BSTR",),
+	0x200A:("ARRAY_ERROR",),
+	0x200B:("ARRAY_BOOL",),
+	0x200C:("ARRAY_VARIANT",),
+	0x200E:("ARRAY_DECIMAL",),
+	0x2010:("ARRAY_I1",),
+	0x2011:("ARRAY_UI1",),
+	0x2012:("ARRAY_UI2",),
+	0x2013:("ARRAY_UI4",),
+	0x2016:("ARRAY_INT",),
+	0x2017:("ARRAY_UINT",),
 }
 
+#def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,tip=None):
+
+def suminfo(hd,data):
+	# byte order; 2 bytes
+	off = 0
+	add_iter(hd,"ByteOrder",d2hex(data[off:off+2]),off,2,"<H")
+	off += 2
+	add_iter(hd,"Version",d2hex(data[off:off+2]),off,2,"<H")
+	off += 2
+	add_iter(hd,"SysID",d2hex(data[off:off+4]),off,4,"<I")
+	off += 4
+	add_iter(hd,"CLSID",d2hex(data[off:off+16]),off,16,"txt")
+	off += 16
+	nps = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"#PropSets",nps,off,4,"<I")
+	off += 4
+	add_iter(hd,"FMTID 0",d2hex(data[off:off+16]),off,16,"txt")
+	off += 16
+	psoff0 = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"Offset 0",psoff0,off,4,"<I")
+	off += 4
+	if nps > 1:
+		off += 20 # skip 20 bytes of FMTID1/Offset1 for now
+		print "FMTID1 was skipped"
+	shift = off
+
+	ps0size = struct.unpack("<I",data[off:off+4])[0]
+	ps0 = add_iter(hd,"PropSet 0","",off,ps0size,"txt")
+	add_iter(hd,"PropSet 0 Size",ps0size,off,4,"<I",0,0,ps0)
+	off += 4
+	ps0nump = struct.unpack("<I",data[off:off+4])[0]
+	add_iter(hd,"PropSet 0 #Props",ps0nump,off,4,"<I",0,0,ps0) 
+	off += 4
+
+	for i in range(ps0nump):
+		p = struct.unpack("<I",data[off:off+4])[0]
+		poff = struct.unpack("<I",data[off+4:off+8])[0]+shift
+		ptxt = "%s (%02x) [%02x]"%(key2txt(p,prop_set_ids),p,poff)
+		add_iter(hd,ptxt,"",off,8,"<II",poff,5,ps0) # FIXME: "5" is temporary
+		off += 8
 
 def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 	vbaiter = None
@@ -352,9 +395,12 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 			page.model.set_value(iter1,1,("vba",dirflag))
 			vbaiter = iter1
 			vbadata = data
+
 		if (infile.num_children()>0):
 			page.model.set_value(iter1,1,(ftype,1))
 			gsf_get_children(page,infchild,iter1,ftype,0)
+		if "SummaryInformation" in infname:
+			page.model.set_value(iter1,1,("ole","propset"))
 
 	if vbaiter != None:
 		vba.parse (page, vbadata, vbaiter)

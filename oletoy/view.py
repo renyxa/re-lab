@@ -1546,6 +1546,8 @@ class ApplicationMainWindow(gtk.Window):
 						iwa.iwa_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
+				elif ntype[0] == "ole" and ntype[1] == "propset":
+					ole.suminfo(hd,data)
 
 	def tab_button_clicked(self, button):
 		print 'Close tab clicked',button.get_parent().get_parent()
