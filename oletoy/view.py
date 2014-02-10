@@ -495,7 +495,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.run_win.show_all()
 			self.run_win.present()
 		else:
-			self.run_win = cmd.CliWindow(self)
+			cmd.CliWindow(self)
 
 
 	def on_off_entry_activate(self,entry):
