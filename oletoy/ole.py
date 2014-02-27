@@ -101,10 +101,9 @@ def my_open (buf,page,parent=None):
 					page.model.set_value(iter1,1,("doc",dirflag)) #level = 1
 					doc.parse (page, data, iter1)
 				if fn == "1Table" or fn == "0Table":
-					doc.parse_table (page, data, iter1,docdata,docdataiter)
+					page.wtable = iter1
 				if fn == "Data" and page.type == "DOC":
-					docdataiter = iter1
-					docdata = data
+					page.wdata = iter1
 				if fn == "Book" or fn == "Workbook":
 					page.model.set_value(iter1,1,("xls",dirflag))
 					ftype = xls.parse (page, data, iter1)
