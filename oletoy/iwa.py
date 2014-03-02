@@ -140,21 +140,35 @@ class IWAParser(object):
 	off = 0
 	i = 0
 	while off < len(self.data):
-	    start = off
+	    obj_start = off
 	    (off, length) = self._parse_header(off)
-	    header_end = off
+	    header_data = self.data[obj_start:off]
+	    reflist_data = []
+	    unknown1_data = []
+
 	    # TODO: maybe the reflist is allowed even if there is no content?
 	    if length > 0:
 		c = int(read(self.data, off, '<B'))
 		if c & 0xf0 == 0x20:
+		    start = off
 		    off = self._parse_reflist(off)
+		    reflist_data = self.data[start:off]
 
-	    objiter = add_pgiter(self.page, 'Object %d' % i, 'iwa', 0, self.data[start:off + length], self.parent)
-	    add_pgiter(self.page, 'Header', 'iwa', 'iwa_object_header', self.data[start:header_end], objiter)
+		c = int(read(self.data, off, '<B'))
+		if c & 0xf0 == 0x30:
+		    start = off
+		    off = self._parse_unknown1(off)
+		    unknown1_data = self.data[start:off]
+
+	    objiter = add_pgiter(self.page, 'Object %d' % i, 'iwa', 0, self.data[obj_start:off + length], self.parent)
+	    add_pgiter(self.page, 'Header', 'iwa', 'iwa_object_header', header_data, objiter)
+	    if len(reflist_data) > 0:
+		# TODO: what does this mean, exactly? Should it perhaps be a part of header?
+		add_pgiter(self.page, 'List of references', 'iwa', 'iwa_reflist', reflist_data, objiter)
+	    if len(unknown1_data) > 0:
+		add_pgiter(self.page, 'Unknown optional block', 'iwa', 0, unknown1_data, objiter)
+
 	    if length > 0:
-		if c & 0xf0 == 0x20:
-		    # TODO: what does this mean, exactly? Should it perhaps be a part of header?
-		    add_pgiter(self.page, 'List of references', 'iwa', 'iwa_reflist', self.data[header_end:off], objiter)
 		off = self._parse_content(off, length, objiter)
 
 	    i += 1
@@ -162,16 +176,37 @@ class IWAParser(object):
 	# assert off == len(self.data)
 
     def _parse_header(self, offset):
-	(oid, off) = read_var(self.data, offset + 2)
-	off += 3
+	(tag, off) = read_var(self.data, offset)
+	(eight, off) = rdata(self.data, off, '<B')
+	assert int(eight) == 0x8
+	(oid, off) = read_var(self.data, off)
+	(twelve, off) = rdata(self.data, off, '<B')
+	assert int(twelve) == 0x12
+	(xtag, off) = read_var(self.data, off)
+	(eight, off) = rdata(self.data, off, '<B')
+	assert int(eight) == 0x8
 	(xid, off) = read_var(self.data, off)
-	off += 6
+	(twelve, off) = rdata(self.data, off, '<B')
+	assert int(twelve) == 0x12
+	(more, off) = rdata(self.data, off, '5s')
+	assert ord(more[0]) == 0x3
+	assert ord(more[1]) == 0x1
+	assert ord(more[2]) == 0x0
+	assert ord(more[3]) == 0x5
+	assert ord(more[4]) == 0x18
 	(length, off) = read_var(self.data, off)
 	return (off, length)
 
     def _parse_reflist(self, offset):
 	(c, off) = rdata(self.data, offset, '<B')
 	assert int(c) & 0xf0 == 0x20
+	(length, off) = read_var(self.data, off)
+	return off + int(length)
+
+    def _parse_unknown1(self, offset):
+	# FIXME: this is just a band-aid for what I see in some files.
+	(c, off) = rdata(self.data, offset, '<B')
+	assert int(c) & 0xf0 == 0x30
 	(length, off) = read_var(self.data, off)
 	return off + int(length)
 
@@ -188,16 +223,17 @@ def add_iwa_compressed_block(hd, size, data):
 	add_iter(hd, 'Uncompressed length', ulength, var_off, off - var_off, '%ds' % (off - var_off))
 
 def add_iwa_object_header(hd, size, data):
-    (flags, off) = rdata(data, 0, '<B')
-    # Flags? or a type of the object?
-    add_iter(hd, 'Flags???', '0x%x' % flags, off - 1, 1, '<B')
+    orig = 0
+    (tag, off) = read_var(data, 0)
+    add_iter(hd, 'Tag ID', tag, orig, off - orig, '%ds' % (off - orig))
     off += 1
     orig = off
     (oid, off) = read_var(data, off)
     add_iter(hd, 'Object ID', oid, orig, off - orig, '%ds' % (off - orig))
     off += 1
-    (more_flags, off) = rdata(data, off, '<B')
-    add_iter(hd, 'More flags???', '0x%x' % more_flags, off - 1, 1, '<B')
+    orig = off
+    (xtag, off) = read_var(data, off)
+    add_iter(hd, 'Tag ID', xtag, orig, off - orig, '%ds' % (off - orig))
     off += 1
     orig = off
     (ref, off) = read_var(data, off)
