@@ -138,10 +138,9 @@ class IWAParser(object):
 
     def parse(self):
 	off = 0
-	i = 0
 	while off < len(self.data):
 	    obj_start = off
-	    (off, length) = self._parse_header(off)
+	    (off, length, oid) = self._parse_header(off)
 	    header_data = self.data[obj_start:off]
 	    reflist_data = []
 	    unknown1_data = []
@@ -160,7 +159,7 @@ class IWAParser(object):
 		    off = self._parse_unknown1(off)
 		    unknown1_data = self.data[start:off]
 
-	    objiter = add_pgiter(self.page, 'Object %d' % i, 'iwa', 0, self.data[obj_start:off + length], self.parent)
+	    objiter = add_pgiter(self.page, 'Object %d' % oid, 'iwa', 0, self.data[obj_start:off + length], self.parent)
 	    add_pgiter(self.page, 'Header', 'iwa', 'iwa_object_header', header_data, objiter)
 	    if len(reflist_data) > 0:
 		# TODO: what does this mean, exactly? Should it perhaps be a part of header?
@@ -170,8 +169,6 @@ class IWAParser(object):
 
 	    if length > 0:
 		off = self._parse_content(off, length, objiter)
-
-	    i += 1
 
 	# assert off == len(self.data)
 
@@ -195,7 +192,7 @@ class IWAParser(object):
 	assert ord(more[3]) == 0x5
 	assert ord(more[4]) == 0x18
 	(length, off) = read_var(self.data, off)
-	return (off, length)
+	return (off, length, oid)
 
     def _parse_reflist(self, offset):
 	(c, off) = rdata(self.data, offset, '<B')
