@@ -27,6 +27,7 @@ import sbimp
 import zmf
 import zbr
 import lit
+import pcap
 
 class Page:
 	def __init__(self):
@@ -187,6 +188,13 @@ class Page:
 			self.type = "MDB"
 			print "Probably MDB"
 			mdb.parse (buf,self, parent)
+			return 0
+
+		if buf[0:4] == "\xd4\xc3\xb2\xa1":
+			self.type = "PCAP"
+			print "Probably PCAP"
+			f.close()
+			pcap.open (self, buf, parent)
 			return 0
 		
 		if buf[0:4] == "\x50\x4b\x03\x04":
