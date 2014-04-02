@@ -2564,9 +2564,7 @@ class record:
 				off1 = struct.unpack("<I",self.data[8:12])[0]
 				off2 = off1 + struct.unpack("<I",self.data[4:8])[0]
 				if strid != -1:
-					if page.version > 16:
-						strid += 1
-					ci = page.model.iter_nth_child(None,strid)
+					ci = page.wdata[page.wtable[strid]]
 					data = page.model.get_value(ci,3)[off1:off2]
 					p_iter = add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data,ci)
 					page.model.set_value(p_iter,8,("path",page.model.get_string_from_iter(f_iter)))

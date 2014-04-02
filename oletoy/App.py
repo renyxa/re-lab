@@ -43,9 +43,9 @@ class Page:
 		self.dictview = None
 		self.dictwin = None
 		self.search = None
-		self.wdoc = None  # need to store 'WordDocument' stream, use in CDR v17for dataFileList.dat
-		self.wtable = None # need to store 'xTable' stream of ms-doc
-		self.wdata = None # need to store 'Data' stream
+		self.wdoc = None  # need to store 'WordDocument' stream
+		self.wtable = None # need to store 'xTable' stream of ms-doc; use for CDRs map of dat-files IDs to names
+		self.wdata = None # need to store 'Data' stream; use for CDR to store iters of "dat" files
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
 		self.win = None # for preview
 		self.debug = 0
@@ -114,7 +114,12 @@ class Page:
 			parname = self.model.get_value(parent,0)
 			if parname == "[content]/dataFileList.dat":
 				print "Found XMLish CDR version"
-				self.wdoc = parent
+				self.wtable = self.model.get_value(parent,3).split("\n")
+			elif "[content/" in parname and ".dat" in parname:
+				if self.wdata == None:
+					self.wdata = {}
+				p = parname.rfind("/")
+				self.wdata[parname[p+1:]] = parent
 			
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
