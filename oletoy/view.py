@@ -1224,7 +1224,7 @@ class ApplicationMainWindow(gtk.Window):
 					txt += "BE: %s\t"%((struct.unpack(">i",buf[0:4])[0])/self.options_div)
 					txt += "BEF: %s"%((struct.unpack(">f",buf[0:4])[0])/self.options_div)
 
-				if ftype[0:3] == "CDR" or ftype[0:3] == "CMX":
+				if 1:  #ftype[0:3].lower() == "cdr" or ftype[0:3] == "CMX":
 					c2 = ord(buf[0])/255.
 					m2 = ord(buf[1])/255.
 					y2 = ord(buf[2])/255.

@@ -21,6 +21,9 @@ from utils import *
 
 ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 
+
+#x19	03	Pantone Matching system Corel 8
+
 #x19	08	FOCOLTONE
 #x19	09	SpectraMaster
 #x19	0a	Toyo
@@ -529,13 +532,26 @@ def fild (hd,size,data):
 	add_iter (hd,"Fill ID","%08x"%(struct.unpack("<I",data[0:4])[0]),0,4,"<I")
 	ftype_off = 4
 	if hd.version > 12:
-		ftype_off = 12
-		v13flag = struct.unpack('<h', data[8:10])[0]
-	fill_type = struct.unpack('<h', data[ftype_off:ftype_off+2])[0]
+		v13flag = struct.unpack('<h', data[4:6])[0]
+		v13offset = 4
+		while v13flag > 0:
+			add_iter(hd,"Flag: %d"%v13offset,d2hex(data[v13offset:v13offset+8]),v13offset,10,"txt")
+			v13offset += 10
+			v13flag = struct.unpack('<h', data[v13offset:v13offset+2])[0]
+			
+		ftype_off = v13offset-4
+		fill_type = struct.unpack('<h', data[0xc:0xe])[0]
+	else:
+		fill_type = struct.unpack('<h', data[4:6])[0]
+		
 	ft_txt = "%d"%fill_type
 	if fild_types.has_key(fill_type):
 		ft_txt += " "+fild_types[fill_type]
-	add_iter (hd,"Fill Type", ft_txt,ftype_off,2,"txt")
+	if hd.version > 12:
+		add_iter (hd,"Fill Type", ft_txt,0xc,2,"txt")
+	else:
+		add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
+		
 	if fill_type > 0:
 		if fill_type == 1:
 			clrm_off = 8
@@ -567,7 +583,7 @@ def fild (hd,size,data):
 				pal_len = 24
 				pal_off = 3
 				prcnt_off = 8
-				if v13flag >= 0x9e or (hd.version == 16 and v13flag >= 0x96):
+				if v13flag >= 0x9e or (hd.version >= 16 and v13flag >= 0x96):
 					prcnt_off = 29
 					pal_len = 45
 			grdmode = ord(data[grd_offset])
@@ -1901,7 +1917,7 @@ def txsm6 (hd,size,data):
 
 
 def txsm (hd,size,data):
-	if hd.version == 16:
+	if hd.version >= 16:
 		txsm16 (hd,size,data)
 		return
 	elif hd.version < 7:
@@ -2509,6 +2525,8 @@ class record:
 				page.version = struct.unpack("<H",self.data)[0]/100.
 				print page.version
 
+		page.hd.version = page.version
+
 		if self.fourcc == 'RIFF' or self.fourcc == 'LIST':
 			if self.fourcc == 'RIFF' and fmttype == "cdr":
 				v = ord(self.data[3])
@@ -2540,12 +2558,14 @@ class record:
 					chunk = record()
 					chunk.load(buf, page, parent, offset, blocksizes, fmttype)
 					offset += 8 + chunk.size
-		elif page.version == 16:
+		elif page.version >= 16:
 			try:
 				strid = struct.unpack("<i",self.data[:4])[0]
 				off1 = struct.unpack("<I",self.data[8:12])[0]
 				off2 = off1 + struct.unpack("<I",self.data[4:8])[0]
 				if strid != -1:
+					if page.version > 16:
+						strid += 1
 					ci = page.model.iter_nth_child(None,strid)
 					data = page.model.get_value(ci,3)[off1:off2]
 					p_iter = add_pgiter(page,"%s [%04x - %04x]"%(self.fourcc,off1,off2),"cdr",self.fourcc,data,ci)
@@ -2578,4 +2598,4 @@ class record:
 							page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
 							page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
 			except:
-				print 'Failed in v16 dat'
+				print 'Failed in v16 or v17 dat'

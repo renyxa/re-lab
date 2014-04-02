@@ -18,7 +18,7 @@ import sys,struct,gtk
 from utils import *
 
 def open (buf,page,parent):
-	print "XML"
+#	print "XML"
         if buf[0:2] == '\xff\xfe':
             buf = unicode(buf[2:], 'utf_16le')
         elif buf[0:2] == '\xfe\xff':

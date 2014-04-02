@@ -27,7 +27,6 @@ import sbimp
 import zmf
 import zbr
 import lit
-import pcap
 
 class Page:
 	def __init__(self):
@@ -44,7 +43,7 @@ class Page:
 		self.dictview = None
 		self.dictwin = None
 		self.search = None
-		self.wdoc = None  # need to store 'WordDocument' stream
+		self.wdoc = None  # need to store 'WordDocument' stream, use in CDR v17for dataFileList.dat
 		self.wtable = None # need to store 'xTable' stream of ms-doc
 		self.wdata = None # need to store 'Data' stream
 		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
@@ -110,6 +109,13 @@ class Page:
 			nki.open(self,buf,parent)
 			return 0
 
+#		This one should be before CDR to properly handle v17
+		if parent != None:
+			parname = self.model.get_value(parent,0)
+			if parname == "[content]/dataFileList.dat":
+				print "Found XMLish CDR version"
+				self.wdoc = parent
+			
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
 			print 'Probably CDR',
@@ -188,13 +194,6 @@ class Page:
 			self.type = "MDB"
 			print "Probably MDB"
 			mdb.parse (buf,self, parent)
-			return 0
-
-		if buf[0:4] == "\xd4\xc3\xb2\xa1":
-			self.type = "PCAP"
-			print "Probably PCAP"
-			f.close()
-			pcap.open (self, buf, parent)
 			return 0
 		
 		if buf[0:4] == "\x50\x4b\x03\x04":
