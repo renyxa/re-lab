@@ -19,7 +19,7 @@ import gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
-import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2, pm6
+import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2, pm6, dsf
 import wt602
 import zmf
 from utils import *
@@ -69,6 +69,11 @@ def my_open (buf,page,parent=None):
 					pn = dircache["/"+cdir]
 				data = subprocess.check_output(["gsf", "cat", page.fname,fullname])
 				iter1 = add_pgiter(page,fn,"ole",fn,data,pn)
+
+				if fn == "DesignerDoc":
+					ftype = "dsf"
+					page.model.set_value(iter1,1,("dsf",dirflag))
+					dsf.open (page, data, iter1)
 
 				if (fn == "EscherStm" or fn == "EscherDelayStm"): # and infchild.size()>0:
 					ftype = "escher"
@@ -156,9 +161,10 @@ def gsf_open(src,page,iter=None):
 	return ftype
 
 
+# FIXME! need to remove gsf_open
 try:
 	import gsf
-	ropen = gsf_open
+	ropen = my_open
 	print "Found libgsf python bindings"
 except:
 	print 'libgsf python bindings were not found'

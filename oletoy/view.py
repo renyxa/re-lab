@@ -26,7 +26,7 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6, qxp
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
-import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
+import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi,riff
 import vfb
 import lrf
 import wt602

@@ -1432,8 +1432,12 @@ def parse (cmd, entry, page):
 		elif "zip" == chtype.lower():
 			try:
 				print int(chaddr,16)
-				output = zlib.decompress(buf[int(chaddr,16):])
+				decobj = zlib.decompressobj()
+				output = decobj.decompress(buf[int(chaddr,16):])
 				add_pgiter (page,"[Decompressed data]","",0,output,iter1)
+				tail = decobj.unused_data
+				if len(tail) > 0:
+					add_pgiter (page,"[Tail]","",0,tail,iter1)
 			except:
 				print "Failed to decompress"
 
