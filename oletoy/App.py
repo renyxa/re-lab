@@ -19,6 +19,7 @@ import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf,otxml,chdraw,vfb,fbx,nki
+import drw
 import qxp
 import iwa
 import lrf
@@ -27,6 +28,7 @@ import sbimp
 import zmf
 import zbr
 import lit
+from utils import *
 
 class Page:
 	def __init__(self):
@@ -274,13 +276,19 @@ class Page:
 			print('Probably Apple iWork file')
 			iwa.open(buf, self, parent)
 			return 0
+			
 
 		if parent == None:
-			iter1 = self.model.append(None, None)
-			self.model.set_value(iter1, 0, "File")
-			self.model.set_value(iter1, 1, 0)
-			self.model.set_value(iter1, 2, len(buf))
-			self.model.set_value(iter1, 3, buf)
+			parent = add_pgiter(self, "File", "file","unknown",buf) 
+
+		# Likely false detection for DRW
+		if buf[0:3] == "\x01\xff\x02":
+			try:
+				drw.open(self,buf,parent)
+				self.model.set_value(parent, 0, "DRW")
+			except:
+				print "Failed after attempt to parse as DRW..."
+
 		return 0
 
 	def show_search(self,carg):

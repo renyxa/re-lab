@@ -19,6 +19,7 @@ from utils import *
 
 def parse_dsf_toc(page, data, toc, dsfditer):
 	off = 0
+	old_chid = 0
 	while off < len(data):
 		chtype = ord(data[off])
 		chid = ord(data[off+1])
@@ -27,8 +28,11 @@ def parse_dsf_toc(page, data, toc, dsfditer):
 			chid = ord(data[off+2])
 			shift = 3
 		chlen = struct.unpack("<I",toc[chid*4-4:chid*4])[0]
-		add_pgiter(page,"Chunk %x [%02x]"%(chid,chtype),"dsf","chunk",data[off+shift:off+shift+chlen],dsfditer)
+		chiter = add_pgiter(page,"Chunk %x [%02x]"%(chid,chtype),"dsf","chunk",data[off+shift:off+shift+chlen],dsfditer)
+		if old_chid + 1 < chid:
+			pass
 		off += shift+chlen
+
 
 def open (page,buf,parent,off=0):
 	add_pgiter(page,"DSF Header","dsf","header",buf[0:0x10],parent)

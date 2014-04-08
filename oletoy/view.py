@@ -26,7 +26,8 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6, qxp
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
-import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi,riff,dsf
+import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
+import riff,dsf,drw
 import vfb
 import lrf
 import wt602
@@ -866,8 +867,8 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_about(self, action):
 		dialog = gtk.AboutDialog()
 		dialog.set_name("OLE toy v"+version)
-		dialog.set_copyright("\302\251 Copyright 2010-2012 V.F.")
-		dialog.set_website("http://www.gnome.ru/")
+		dialog.set_copyright("\302\251 Copyright 2010-2014 V.F.")
+		dialog.set_website("http://www.documentliberation.org/")
 		## Close dialog on user response
 		dialog.connect ("response", lambda d, r: d.destroy())
 		dialog.show()
@@ -1442,7 +1443,9 @@ class ApplicationMainWindow(gtk.Window):
 								hlid += 1
 							hditer1 = hd.model.iter_next(hditer1)
 						hd.hv.expose(None,None)
-						
+				if ntype[0] == "drw":
+					if drw.recfuncs.has_key(ntype[1]):
+						drw.recfuncs[ntype[1]](hd, data, self.das[pn])
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
