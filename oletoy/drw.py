@@ -19,19 +19,49 @@ from utils import *
 
 rectypes = {1:"Background",2:"FaceName",3:"Version",4:"ID",\
 			5:"Overlay",6:"Polygon",7:"Symbol",8:"Text",9:"Color",\
-			10:"ColorFlag",14:"View",15:"OldGrid",16:"CurrOverlay",\
+			10:"ColorFlag",11:"Preview (DIB)",14:"View",15:"OldGrid",16:"CurrOverlay",\
 			17:"Visible",18:"Comment",19:"Info",20:"Bitmap",21:"Font",\
 			22:"Grid",23:"OverlayName",24:"Dimensions",25:"Resolution",\
 			26:"Ruler",27:"Page",28:"Pattern",29:"Locked",30:"Gradient",\
 			31:"TextHdr",32:"Band",33:"SymbolVersion",34:"TextPara",\
 			35:"ColorTable",36:"TextExtra",37:"MaxLinkID",\
-			44:"ChartSkipSymbols",254:"EOF",255:"RecordVersion"}
+			44:"ChartSkipSymbols",
+			51:"Multichunk OBJ",52:"DataChunk",56:"Layer",
+			60:"Group",
+			254:"EOF",255:"RecordVersion"}
 
 
-shapetypes = {1:'1 (Polygon)',2:'2 (Group)',3:'3 (Ellipse)',6:'6 (Line)',8:'8 (Polyline)',\
-			9:'9 (Pie)',10:'10 (Rectangle)',11:'11 (RoundRect)',14:'14 (Arc)',16:'16 (Curve Closed)',
-			17:'17 (Connect)',19:'19 (Curve)',22:'22 (Bitmap ?)',23:'23 (Freeline)',24:'24 (Path)',25:'25 (Text)'}
+shapetypes = {
+		0:'0 (Elliptic Arc)',
+		1:'1 (Polygon)',
+		2:'2 (Group)',
+		3:'3 (Ellipse)',
+		5:'5 (Scale line)',
+		6:'6 (Line)',
+		8:'8 (Polyline)',
+		9:'9 (Pie)',
+		10:'10 (Rectangle)',
+		11:'11 (RoundRect)',
+		13:'13 (Ellipse)',
+		14:'14 (Arc)',
+		15:'15 (Parabolic Line)',
+		16:'16 (Quadratic Curve)',
+		17:'17 (Connect)',
+		18:'18 (Parabolic Line)',
+		19:'19 (Quadratic Spline)',
+		20:'20 (Polygon)',
+		22:'22 (Bitmap ?)',
+		23:'23 (Freeline)',
+		24:'24 (Bezier)',
+		25:'25 (Rich Text Block)',
+		26:'26 (Virtual Bitmap)',
+		27:'27 (Clip Path)',
+		28:'28 (Tiled Clip Path)',
+		29:'29 (Text on Curve?)',}
 
+def sym5_connect:
+	# 0x2b -- num of connected symbols
+	pass
 
 def symbolversion(page,rdata):
 	page.version = struct.unpack('<H', rdata[0:2])[0]
@@ -102,8 +132,16 @@ def open (page,buf,parent,off=0):
 		rname = rtype
 		if rectypes.has_key(rtype):
 			rname = rectypes[rtype]
+		else:
+			print "DRW: unknown record type",rtype
 		if rtype == 4: # ID
 			rname += " [%s]"%rdata[:0x10]
+		if rtype == 7: # Symbol
+			stype = ord(rdata[0])
+			sname = " (%02x)"%stype
+			if stype in shapetypes.keys():
+				sname = " " +shapetypes[stype]
+			rname += sname
 		riter = add_pgiter(page, rname, "drw",rtype,rdata,parent) 
 		if rtype == 33:
 			symbolversion(page,rdata)

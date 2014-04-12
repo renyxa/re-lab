@@ -48,6 +48,7 @@ recs = {
 	0x31:("Layers", 46),
 }
 
+eflag = ">"
 
 def chars (page, data, size, parent):
 	rlen = 30
@@ -120,40 +121,6 @@ sh_types = {
 	0xc:"Polygon",
 	0xe:"Group",
 }
-
-
-def shape_rect():
-	pass
-	# 0x01: &20 lock position
-	# 0x02: &2 no xparent BG, &4 - non-printing
-	# 0x04: word fill clr ID
-	# 0x0e: frame text wrap option
-	# 0x0f: frame text flow option 1/2/8
-	# 0x10: word frame standoff left pts*20
-	# 0x12: word frame standoff right pts*20
-	# 0x14: word frame standoff top pts*20
-	# 0x16: word frame standoff bottom pts*20
-	# 0x1c: dword xform ID
-	
-	# 0x20: stroke type
-	# 0-single, 1-dbl fine, 2-thick/fine, 3-fine/thick,
-	# 4-triple fine, 5-dashes, 6-dots, 7-diamonds, 
-	#
-	# 0x21: &1 reverse
-	# 0x23: stroke width*5
-	# 0x26: fill type 2-solid, 3-|, 4-|| etc
-	# 0x27: rounded corners (num -- degree)
-	# 0x28: word stroke clr ID
-	# 0x2a: &1 overprint
-	# 0x2c: word? stroke tint %
-	# 0x34: frame inset pts*20
-	# 0x3b: frame halign: 0-left,1-center,2-right
-	# 0x3c: frame valign: 0-top,1-center,2-bottom
-	# 0x3d: 1-size frame to fit content,2-scale content to fit frame
-	# 0x3e: frame maintain aspect ratio 
-	# 0x90: fill tint %
-	# 0xda ?
-	# 0xdc: group ID
 
 
 def shapes (page, data, size, parent):
@@ -271,19 +238,76 @@ recfuncs = {
 
 def hd_header (hd,data,page):
 	endian = "Big"
-	eflag = ">"
-	if data[6:8] == "\xff\x99":
-		eflag = "<"
+	if eflag == "<":
 		endian = "Little"
 	add_iter (hd,'Endian:',endian,6,2,">H")
 	tr_len = struct.unpack("%sH"%eflag,data[0x2e:0x30])[0]
 	add_iter (hd,'ToC length:',"%d"%tr_len,0x2e,2,"%sH"%eflag)
 	tr_off = struct.unpack("%sI"%eflag,data[0x30:0x34])[0]
-	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%s"%eflag)
+	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%sI"%eflag)
+
+
+def hd_shape_rect_oval(hd,data,page):
+	# 0x01: &20 lock position
+	# 0x02: &2 no xparent BG, &4 - non-printing
+	
+	# 0x04: word fill clr ID
+	fclrid = "0x%s"%d2hex(data[4:6])
+	add_iter (hd,'Fill Clr ID:',fclrid,4,2,"%sH"%eflag)
+
+	# 0x06: word for Xs in twips
+	# 0x08: word for Ys in twips
+	# 0x0a: word for Xe in twips
+	# 0x0c: word for Ye in twips
+	xs = struct.unpack("%sh"%eflag,data[6:8])[0]
+	add_iter (hd,'X start (inches):',xs/1440.,6,2,"%sh"%eflag)
+	ys = struct.unpack("%sh"%eflag,data[8:0xa])[0]
+	add_iter (hd,'Y start (inches):',ys/1440.,8,2,"%sh"%eflag)
+	xe = struct.unpack("%sh"%eflag,data[0xa:0xc])[0]
+	add_iter (hd,'X end (inches):',xe/1440.,0xa,2,"%sh"%eflag)
+	ye = struct.unpack("%sh"%eflag,data[0xc:0xe])[0]
+	add_iter (hd,'Y end (inches):',ye/1440.,0xc,2,"%sh"%eflag)
+	
+	# 0x0e: frame text wrap option
+	# 0x0f: frame text flow option 1/2/8
+	# 0x10: word frame standoff left pts*20
+	# 0x12: word frame standoff right pts*20
+	# 0x14: word frame standoff top pts*20
+	# 0x16: word frame standoff bottom pts*20
+	# 0x1c: dword xform ID
+	
+	# 0x20: stroke type
+	# 0-single, 1-dbl fine, 2-thick/fine, 3-fine/thick,
+	# 4-triple fine, 5-dashes, 6-dots, 7-diamonds, 
+	#
+	# 0x21: &1 reverse
+	# 0x23: stroke width*5
+	# 0x26: fill type 2-solid, 3-|, 4-|| etc
+	# 0x27: rounded corners (num -- degree)
+	# 0x28: word stroke clr ID
+	# 0x2a: &1 overprint
+	# 0x2c: word? stroke tint %
+	# 0x34: frame inset pts*20
+	# 0x3b: frame halign: 0-left,1-center,2-right
+	# 0x3c: frame valign: 0-top,1-center,2-bottom
+	# 0x3d: 1-size frame to fit content,2-scale content to fit frame
+	# 0x3e: frame maintain aspect ratio 
+	# 0x90: fill tint %
+	# 0xda ?
+	# 0xdc: group ID
+
+
+def hd_shape (hd,data,page):
+	sh_type = ord(data[0])
+	ttxt = key2txt(sh_type,sh_types,"%02x"%sh_type)
+	add_iter (hd,'Type:',ttxt,0,1,"%sB"%eflag)
+	if sh_type in (4,5):
+		hd_shape_rect_oval(hd,data,page)
 
 
 hd_ids = {
-	"header":hd_header
+	"header":hd_header,
+	"shape":hd_shape,
 }
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
@@ -308,6 +332,7 @@ def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 	return tr
 
 def open (page,buf,parent,off=0):
+	global eflag
 	add_pgiter(page,"PM Header","pm","header",buf[0:0x36],parent)
 	eflag = "<"
 	if buf[6:8] == "\x99\xff":

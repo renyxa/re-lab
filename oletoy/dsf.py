@@ -36,15 +36,17 @@ def parse_dsf_toc(page, data, toc, dsfditer):
 
 def open (page,buf,parent,off=0):
 	add_pgiter(page,"DSF Header","dsf","header",buf[0:0x10],parent)
-	decobj = zlib.decompressobj()
-	output1 = decobj.decompress(buf[0x10:])
-	tail = decobj.unused_data
-	dsfditer = add_pgiter(page,"DSF Data","dsf","data",output1,parent)
+	try:
+		decobj = zlib.decompressobj()
+		output1 = decobj.decompress(buf[0x10:])
+		tail = decobj.unused_data
+		dsfditer = add_pgiter(page,"DSF Data","dsf","data",output1,parent)
 
-	decobj2 = zlib.decompressobj()
-	output2 = decobj2.decompress(tail)
-	tail2 = decobj2.unused_data
-	add_pgiter(page,"DSF ToC","dsf","toc",output2,parent)
-	parse_dsf_toc(page, output1, output2, dsfditer)
-	add_pgiter(page,"DSF Tail","dsf","tail",tail2,parent)
-
+		decobj2 = zlib.decompressobj()
+		output2 = decobj2.decompress(tail)
+		tail2 = decobj2.unused_data
+		add_pgiter(page,"DSF ToC","dsf","toc",output2,parent)
+		parse_dsf_toc(page, output1, output2, dsfditer)
+		add_pgiter(page,"DSF Tail","dsf","tail",tail2,parent)
+	except:
+		print "Decompression failed"

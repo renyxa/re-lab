@@ -1253,10 +1253,11 @@ class ApplicationMainWindow(gtk.Window):
 					txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
 					dictm = self.das[pn].dictmod
 					bstr = d2hex(buf)
-					for i in range(dictm.iter_n_children(None)):
-						if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
-							txt += '<span background="#FFFF00">'+txt+'</span>  '
-							break
+					if dictm:
+						for i in range(dictm.iter_n_children(None)):
+							if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
+								txt += '<span background="#FFFF00">'+txt+'</span>  '
+								break
 
 		if dlen == 8:
 			if self.options_le == 1:
