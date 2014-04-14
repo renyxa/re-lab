@@ -59,7 +59,7 @@ shapetypes = {
 		28:'28 (Tiled Clip Path)',
 		29:'29 (Text on Curve?)',}
 
-def sym5_connect:
+def sym5_connect():
 	# 0x2b -- num of connected symbols
 	pass
 

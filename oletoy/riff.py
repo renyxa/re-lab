@@ -37,7 +37,7 @@ def parse2 (page, data, parent):
 		if data[8:12] == "MGX ":
 			off = 12
 	liter = parent
-	while off < len(data):
+	while off < len(data)-8:
 		fourcc = data[off:off+4]
 		length = struct.unpack("<I",data[off+4:off+8])[0]
 		if fourcc == "LIST":
