@@ -1204,12 +1204,13 @@ class HexView():
 				ctx.show_text("%08x"%(self.lines[self.curr][0]))
 		if self.mtt:
 			mttstr = "%s/%x (%s)"%(self.mtt[2],self.mtt[2],self.mtt[3])
+			self.parent.update_statusbar(mttstr)
 			sh = len(mttstr)
-			ctx.rectangle(self.mtt[0]-self.tdx*0.5,self.mtt[1]-self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
+			ctx.rectangle((self.curc*3+10.5)*self.tdx,(self.curr-self.offnum+3)*self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
 			ctx.set_source_rgba(0.9,0.95,0.95,0.85)
 			ctx.fill()
 			ctx.set_source_rgb(0.5,0,0)
-			ctx.move_to(self.mtt[0],self.mtt[1]-6) #-6
+			ctx.move_to((self.curc*3+11.5)*self.tdx,(self.curr-self.offnum+3.5)*self.tht)
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 			ctx.show_text(mttstr)
 			ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
