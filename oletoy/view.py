@@ -886,7 +886,7 @@ class ApplicationMainWindow(gtk.Window):
 		except:
 			pass
 
-	def on_entry_activate (self,action):
+	def on_entry_activate (self, action):
 		goto = self.entry.get_text()
 		if len(goto) > 0:
 			if self.curcmd == -1 or self.cmdhistory[self.curcmd] != goto:
@@ -898,25 +898,25 @@ class ApplicationMainWindow(gtk.Window):
 				pos = goto.find("+")
 				try:
 					if pos != -1:
-						addr1 = int(goto[1:pos],16)
-						addr2 = int(goto[pos+1:],16)
-						addr = addr1+addr2
+						addr1 = int(goto[1:pos], 16)
+						addr2 = int(goto[pos+1:], 16)
+						addr = addr1 + addr2
 					else:
 						pos = goto.find("-")
 						if pos != -1:
-							addr1 = int(goto[1:pos],16)
-							addr2 = int(goto[pos+1:],16)
-							addr = addr1-addr2
+							addr1 = int(goto[1:pos], 16)
+							addr2 = int(goto[pos + 1:], 16)
+							addr = addr1 - addr2
 						else:
 							addr = int(goto[1:], 16)
 					self.entry.set_text("#%02x"%addr)
 					hd = self.das[pn].hd
-					buffer_hex = hd.txtdump_hex.get_buffer()
-					vadj = hd.vscroll2.get_vadjustment()
-					newval = addr/16*vadj.get_upper()/buffer_hex.get_line_count()
-					vadj.set_value(newval)
+					lnum = len(hd.hv.data) / 16
+					newval = addr / 16 * hd.hv.vadj.get_upper() / lnum
+					hd.hv.vadj.set_value(newval)
 				except:
 					self.update_statusbar("<span foreground='#ff0000'>Wrong address</span>")
+
 			elif goto[0] == "$" or goto[0] == "?":
 				cmd.parse (goto,self.entry,self.das[pn])
 			elif goto[0] == "=":
