@@ -50,6 +50,8 @@ recs = {
 
 eflag = ">"
 
+unkn_records = []  # for deduplication of warnings on unknown records
+
 def chars (page, data, size, parent):
 	rlen = 30
 	for i in range(size):
@@ -332,7 +334,7 @@ def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 	return tr
 
 def open (page,buf,parent,off=0):
-	global eflag
+	global eflag,unkn_records
 	add_pgiter(page,"PM Header","pm","header",buf[0:0x36],parent)
 	eflag = "<"
 	if buf[6:8] == "\x99\xff":
@@ -381,7 +383,9 @@ def open (page,buf,parent,off=0):
 				rlen = size*recs[rec][1]
 				rname = recs[rec][0]
 			else:
-				print "Unknown record: %02x"%rec
+				if not rec in unkn_records:
+					print "Unknown record: %02x"%rec
+					unkn_records.append(rec)
 				rlen = size*800
 				rname = "%02x"%rec
 			citer = add_pgiter(page,"[%02x] %s %02x [%04x]"%(rec_id,rname,size,off),"pm",rname,buf[off:off+rlen],parent)
@@ -389,3 +393,4 @@ def open (page,buf,parent,off=0):
 				recfuncs[rec](page,buf[off:off+rlen],size,citer)
 		if grp == 0:
 			rec_id += 1
+	page.type = "PM"

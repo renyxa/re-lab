@@ -233,18 +233,24 @@ class Page:
 		if buf[0:3] == 'AGD':
 			agd_off = 0
 			agd_ver = ord(buf[agd_off+3])
-			self.type = "FH"
-			print "Probably Freehand"
-			fh.fh_open(buf,self)
-			return 0
+			try:
+				self.type = "FH"
+				print "Probably Freehand"
+				fh.fh_open(buf,self)
+				return 0
+			except:
+				print "Check for Freehand failed..."
 		elif fh_off != -1:
 			agd_off = buf.find('AGD')
 			if agd_off > fh_off:
 				agd_ver = ord(buf[agd_off+3])
-				self.type = "FH"
-				print "Probably Freehand 9+"
-				fh.fh_open(buf,self, parent)
-				return 0
+				try:
+					self.type = "FH"
+					print "Probably Freehand 9+"
+					fh.fh_open(buf,self, parent)
+					return 0
+				except:
+					print "Check for Freehand 9+ failed..."
 		else:
 			fh_off = buf.find('FHDocHeader')
 			if fh_off != -1:

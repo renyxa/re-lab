@@ -2295,8 +2295,6 @@ def read1c(buf,page,parent,off):
 
 
 def fh_open (buf,page,parent=None,mode=1):
-	piter = add_pgiter(page,"FH file","fh","file",buf,parent)
-	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 	if mode:
 		offset = buf.find('AGD')
 		page.version = ver[ord(buf[offset+3])]
@@ -2316,6 +2314,9 @@ def fh_open (buf,page,parent=None,mode=1):
 		off = 0
 		while off < len(buf):
 			off = read1c(buf,page,piter,off)
+
+	piter = add_pgiter(page,"FH file","fh","file",buf,parent)
+	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
 
 	page.appdoc = FHDoc(output,page,piter)
 	offset = offset + size

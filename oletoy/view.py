@@ -111,7 +111,7 @@ class OldTabLabel(gtk.HBox):
 
 
 class ApplicationMainWindow(gtk.Window):
-	def __init__(self, parent=None):
+	def __init__(self, parent = None):
 		register_stock_icons()
 		# Create the toplevel window
 		gtk.Window.__init__(self)
@@ -148,8 +148,8 @@ class ApplicationMainWindow(gtk.Window):
 			gtk.EXPAND | gtk.FILL,	 0,
 			0,						 0);
 		
-		self.notebook =gtk.Notebook()
-		self.notebook.connect("page-reordered",self.on_page_reordered)
+		self.notebook = gtk.Notebook()
+		self.notebook.connect("page-reordered", self.on_page_reordered)
 		self.notebook.set_tab_pos(gtk.POS_BOTTOM)
 		self.notebook.set_scrollable(True)
 		table.attach(self.notebook,
@@ -161,12 +161,12 @@ class ApplicationMainWindow(gtk.Window):
 		# Create statusbar
 		self.statusbar = gtk.HBox()
 		self.entry = gtk.Entry()
-		self.statusbar.pack_start(self.entry, False,False,2)
-		self.entry.connect ("activate",self.on_entry_activate)
+		self.statusbar.pack_start(self.entry, False, False, 2)
+		self.entry.connect ("activate", self.on_entry_activate)
 		self.entry.connect ("key-press-event", self.on_entry_keypressed)
 		self.label = gtk.Label()
 		self.label.set_use_markup(True)
-		self.statusbar.pack_start(self.label, True,True,2)
+		self.statusbar.pack_start(self.label, True, True, 2)
 		
 		table.attach(self.statusbar,
 			# X direction		   Y direction
@@ -206,8 +206,8 @@ class ApplicationMainWindow(gtk.Window):
 
 
 		if len(sys.argv) > 1:
-			for i in range(len(sys.argv)-1):
-				self.fname = sys.argv[i+1]
+			for i in range(len(sys.argv) - 1):
+				self.fname = sys.argv[i + 1]
 				self.activate_open()
 
 	def on_win_destroy(self,widget):
@@ -218,7 +218,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.font = "Monospace"
 		self.fontsize = 14
 		self.gsfname = 'libgsf-1.so'
-		self.snipsdir = os.path.join(os.path.expanduser("~"),".oletoy")
+		self.snipsdir = os.path.join(os.path.expanduser("~"), ".oletoy")
 
 		try:
 			execfile("oletoy.cfg")
@@ -227,7 +227,7 @@ class ApplicationMainWindow(gtk.Window):
 			pass
 
 	def save_config(self):
-		cfg = open("oletoy.cfg","w")
+		cfg = open("oletoy.cfg", "w")
 		cfg.write("# Monospace font for HexView\nself.font='%s'\n\n"%self.font)
 		cfg.write("# Font size for HexView\nself.fontsize=%s\n\n"%self.fontsize)
 		cfg.write("# Name of the libgsf\nself.gsfname='%s'\n\n"%self.gsfname)
@@ -240,19 +240,19 @@ class ApplicationMainWindow(gtk.Window):
 			( "ViewMenu", None, "_View" ),			   # name, stock id, label
 			( "HelpMenu", None, "_Help" ),			   # name, stock id, label
 			( "Insert", gtk.STOCK_ADD,					# name, stock id
-				"_Insert Record","<control>I",					# label, accelerator
+				"_Insert Record", "<control>I",					# label, accelerator
 				"Insert MF Record after the current one",							 # tooltip
 				self.activate_add),
 			( "More", gtk.STOCK_ADD,					# name, stock id
-				"_More bytes","<control>M",					  # label, accelerator
+				"_More bytes", "<control>M",					  # label, accelerator
 				"Add more bytes at the end of the current record",							 # tooltip
 				self.activate_more),
 			( "Less", gtk.STOCK_ADD,					# name, stock id
-				"_Less bytes","<control>L",					  # label, accelerator
+				"_Less bytes", "<control>L",					  # label, accelerator
 				"Remove some bytes at the end of the current record",							 # tooltip
 				self.activate_less),
 			( "Config", gtk.STOCK_SAVE,						# name, stock id
-				"Con_fig","<control>F",					  # label, accelerator
+				"Con_fig", "<control>F",					  # label, accelerator
 				"Configure OLE Toy",							 # tooltip
 				self.activate_config),
 			( "Dump", gtk.STOCK_SAVE,						# name, stock id
@@ -260,7 +260,7 @@ class ApplicationMainWindow(gtk.Window):
 				"Dump record to file",							 # tooltip
 				self.activate_dump),
 			( "New", gtk.STOCK_NEW,					# name, stock id
-				"_New","<control>N",					  # label, accelerator
+				"_New", "<control>N",					  # label, accelerator
 				"Create file",							 # tooltip
 				self.activate_new),
 			( "Open", gtk.STOCK_OPEN,					# name, stock id
@@ -268,7 +268,7 @@ class ApplicationMainWindow(gtk.Window):
 				"Open a file",							 # tooltip
 				self.activate_open),
 			( "Reload", gtk.STOCK_OPEN,					# name, stock id
-				"_Reload","<control>R",					  # label, accelerator
+				"_Reload", "<control>R",					  # label, accelerator
 				"Reload a file",							 # tooltip
 				self.activate_reload),
 			( "Dict", gtk.STOCK_INDEX,					# name, stock id
@@ -276,28 +276,28 @@ class ApplicationMainWindow(gtk.Window):
 				"Show type dependant dictionary",							 # tooltip
 				self.activate_dict),
 			( "Graph", gtk.STOCK_INDEX,					# name, stock id
-				"_Graph","<control>G",					  # label, accelerator
+				"_Graph", "<control>G",					  # label, accelerator
 				"Show graph",							 # tooltip
 				self.activate_graph),
 			( "Sync Panels", gtk.STOCK_INDEX,					# name, stock id
-				"S_ync","<control>Y",					  # label, accelerator
+				"S_ync", "<control>Y",					  # label, accelerator
 				"Sync Panels",							 # tooltip
 				self.activate_syncpanels),
 			( "Diff", gtk.STOCK_INDEX,					# name, stock id
-				"Diff","<control>X",					  # label, accelerator
+				"Diff", "<control>X",					  # label, accelerator
 				"Diff for two records",							 # tooltip
 				self.activate_diff),
 
 			( "Options", None,                    # name, stock id
-				"Op_tions","<control>T",                      # label, accelerator
+				"Op_tions", "<control>T",                      # label, accelerator
 				"Configuration options",                             # tooltip
 				self.activate_options),
 			( "Save", gtk.STOCK_SAVE,                    # name, stock id
-				"_Save","<control>S",                      # label, accelerator
+				"_Save", "<control>S",                      # label, accelerator
 				"Save the file",                             # tooltip
 				self.activate_save),
 			( "Close", gtk.STOCK_CLOSE,                    # name, stock id
-				"Close","<control>Z",                      # label, accelerator
+				"Close", "<control>Z",                      # label, accelerator
 				"Close the file",                             # tooltip
 				self.activate_close),
 			( "Quit", gtk.STOCK_QUIT,					# name, stock id
