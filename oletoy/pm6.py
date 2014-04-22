@@ -249,7 +249,12 @@ def hd_header (hd,data,page):
 	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%sI"%eflag)
 
 
-def hd_shape_rect_oval(hd,data,page):
+def hd_shape_text(hd, data, page):
+	txtblk_id = struct.unpack("%sI"%eflag,data[0x20:0x24])[0]
+	add_iter (hd,'Txt block ID:',"0x%02x"%txtblk_id,0x20,4,"%sI"%eflag)
+	
+
+def hd_shape_rect_oval(hd, data, page):
 	# 0x01: &20 lock position
 	# 0x02: &2 no xparent BG, &4 - non-printing
 	
@@ -304,7 +309,9 @@ def hd_shape (hd,data,page):
 	ttxt = key2txt(sh_type,sh_types,"%02x"%sh_type)
 	add_iter (hd,'Type:',ttxt,0,1,"%sB"%eflag)
 	if sh_type in (4,5):
-		hd_shape_rect_oval(hd,data,page)
+		hd_shape_rect_oval(hd, data, page)
+	if sh_type == 1:
+		hd_shape_text(hd, data, page)
 
 
 hd_ids = {
