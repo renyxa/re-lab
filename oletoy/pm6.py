@@ -48,6 +48,8 @@ recs = {
 	0x31:("Layers", 46),
 }
 
+fonts_dir = []
+
 eflag = ">"
 
 unkn_records = []  # for deduplication of warnings on unknown records
@@ -56,27 +58,11 @@ def chars (page, data, size, parent):
 	rlen = 30
 	for i in range(size):
 		tlen = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
-		add_pgiter(page,"%d"%tlen,"pm","char",data[i*rlen:i*rlen+rlen],parent)
-		# 0x2: word -- font id starting from 0
-		# 0x4: word -- fontsize*10
-		# 0x6: word -- lead pts*10
-		# 0x8: clr id starting from 0
-		# 0xa: &1 - bold, &2 - italic, &4 - underline
-		# 0xb: &1 - strikethru, &2 - sup, &4 - sub, &8 - allcaps
-		# 0xb: &10 - smallcaps
-		# 0xc: word (ffff -- "normal") -- Horscale%*10
-		# 0xe: track (127 none, 2 very loose, 1 loose, 0 normal, ff tight, fe very tight)
-		# 0xf: &8 -- no break
-		# 0x10:
-		# 0x12: word SmallCaps%*10
-		# 0x14: word sup/sub size%*10
-		# 0x16: word sub pos%*10
-		# 0x18: word sup pos%*10
-		# 0x1a: word baseline shift*20
-		# 0x1c: word tint %
+		add_pgiter(page,"Length: %d"%tlen,"pm","char",data[i*rlen:i*rlen+rlen],parent)
 
 
 def fonts (page, data, size, parent):
+	global fonts_dir
 	rlen = 94
 	if page.version < 5:
 		rlen = 144
@@ -84,6 +70,7 @@ def fonts (page, data, size, parent):
 		pos = data[i*rlen:].find("\x00")
 		cname = data[i*rlen:i*rlen+pos]
 		add_pgiter(page,"%s"%cname,"pm","font",data[i*rlen:i*rlen+rlen],parent)
+		fonts_dir.append(cname)
 
 
 def colors (page, data, size, parent):
@@ -220,7 +207,10 @@ def txtblks (page, data, size, parent):
 	rlen = 36
 	for i in range(size):
 		txtblkid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
-		add_pgiter(page,"Txt %02x"%txtblkid,"pm","txtblock",data[i*rlen:i*rlen+rlen],parent)
+		items = ""
+		for j in range(6):
+			items += "%02x "%struct.unpack("<H",data[i*rlen+j*2:i*rlen+2+j*2])[0]
+		add_pgiter(page,"Txt %02x [%s]"%(txtblkid,items[:-1]),"pm","txtblock",data[i*rlen:i*rlen+rlen],parent)
 
 
 recfuncs = {
@@ -310,13 +300,44 @@ def hd_shape (hd,data,page):
 	add_iter (hd,'Type:',ttxt,0,1,"%sB"%eflag)
 	if sh_type in (4,5):
 		hd_shape_rect_oval(hd, data, page)
-	if sh_type == 1:
+	elif sh_type == 1:
 		hd_shape_text(hd, data, page)
+
+
+def hd_char (hd, data, page):
+	# 0x2: word -- font id starting from 0
+	# 0x4: word -- fontsize*10
+	# 0x6: word -- lead pts*10
+	# 0x8: clr id starting from 0
+	# 0xa: &1 - bold, &2 - italic, &4 - underline
+	# 0xb: &1 - strikethru, &2 - sup, &4 - sub, &8 - allcaps
+	# 0xb: &10 - smallcaps
+	# 0xc: word (ffff -- "normal") -- Horscale%*10
+	# 0xe: track (127 none, 2 very loose, 1 loose, 0 normal, ff tight, fe very tight)
+	# 0xf: &8 -- no break
+	# 0x10:
+	# 0x12: word SmallCaps%*10
+	# 0x14: word sup/sub size%*10
+	# 0x16: word sub pos%*10
+	# 0x18: word sup pos%*10
+	# 0x1a: word baseline shift*20
+	# 0x1c: word tint %
+	char_len = struct.unpack("%sh"%eflag,data[0:2])[0]
+	add_iter (hd,'Length:',"%d"%char_len,0,2,"%sh"%eflag)
+
+	fnt_id = struct.unpack("%sh"%eflag,data[2:4])[0]
+	fnt_name = fonts_dir[fnt_id]
+	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),2,2,"%sh"%eflag)
+
+	fnt_size = struct.unpack("%sh"%eflag,data[4:6])[0]/10.
+	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%eflag)
+
 
 
 hd_ids = {
 	"header":hd_header,
 	"shape":hd_shape,
+	"char":hd_char,
 }
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
