@@ -176,9 +176,6 @@ def styles (page, data, size, parent):
 
 
 def xforms (page, data, size, parent):
-	# 0x0: dword? rotation degree*1000
-	# 0x4: dword? skew degree*1000
-	# 0x8: flip FL
 	rlen = 26
 	for i in range(size):
 		xformid = struct.unpack("<I",data[i*rlen+rlen-4:i*rlen+rlen])[0]
@@ -333,11 +330,19 @@ def hd_char (hd, data, page):
 	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%eflag)
 
 
+def hd_xform (hd,data,page):
+	# 0x8: flip FL
+	rot = struct.unpack("%sI"%eflag,data[0:4])[0]/1000.
+	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%eflag)
+	skew = struct.unpack("%sI"%eflag,data[4:8])[0]/1000.
+	add_iter (hd,'Skew (deg):',"%d"%skew,4,4,"%sI"%eflag)
+
 
 hd_ids = {
 	"header":hd_header,
 	"shape":hd_shape,
 	"char":hd_char,
+	"xform":hd_xform,
 }
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
