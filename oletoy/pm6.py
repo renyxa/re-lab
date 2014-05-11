@@ -332,13 +332,13 @@ def hd_char (hd, data, page):
 
 def hd_xform (hd,data,page):
 	# 0x8: flip FL
-	rot = struct.unpack("%sI"%eflag,data[0:4])[0]/1000.
+	rot = struct.unpack("%si"%eflag,data[0:4])[0]/1000.
 	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%eflag)
-	skew = struct.unpack("%sI"%eflag,data[4:8])[0]/1000.
+	skew = struct.unpack("%si"%eflag,data[4:8])[0]/1000.
 	add_iter (hd,'Skew (deg):',"%d"%skew,4,4,"%sI"%eflag)
 	for i in range(6):
 		v = struct.unpack("%sh"%eflag,data[10+i*2:12+i*2])[0]
-		add_iter (hd,'Var%d:'%i,"%d"%v,10+i*2,2,"%sh"%eflag)
+		add_iter (hd,'Var%d (inches):'%i,v/1440.,10+i*2,2,"%sh"%eflag)
 	xformnum = struct.unpack("%sI"%eflag,data[22:26])[0]
 	add_iter (hd,'Num of transforms:',"%d"%xformnum,22,4,"%sI"%eflag)
 	
