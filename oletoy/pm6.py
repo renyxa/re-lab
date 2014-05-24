@@ -295,7 +295,7 @@ def hd_shape (hd,data,page):
 	sh_type = ord(data[0])
 	ttxt = key2txt(sh_type,sh_types,"%02x"%sh_type)
 	add_iter (hd,'Type:',ttxt,0,1,"%sB"%eflag)
-	if sh_type in (4,5):
+	if sh_type in (3,4,5,12):
 		hd_shape_rect_oval(hd, data, page)
 	elif sh_type == 1:
 		hd_shape_text(hd, data, page)
@@ -336,11 +336,22 @@ def hd_xform (hd,data,page):
 	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%eflag)
 	skew = struct.unpack("%si"%eflag,data[4:8])[0]/1000.
 	add_iter (hd,'Skew (deg):',"%d"%skew,4,4,"%sI"%eflag)
-	for i in range(6):
-		v = struct.unpack("%sh"%eflag,data[10+i*2:12+i*2])[0]
-		add_iter (hd,'Var%d (inches):'%i,v/1440.,10+i*2,2,"%sh"%eflag)
+
+	v = struct.unpack("%sh"%eflag,data[10:12])[0]
+	add_iter (hd,'X start (inches):',v/1440.,10,2,"%sh"%eflag)
+	v = struct.unpack("%sh"%eflag,data[12:14])[0]
+	add_iter (hd,'Y start (inches):',v/1440.,12,2,"%sh"%eflag)
+	v = struct.unpack("%sh"%eflag,data[14:16])[0]
+	add_iter (hd,'X end (inches):',v/1440.,14,2,"%sh"%eflag)
+	v = struct.unpack("%sh"%eflag,data[16:18])[0]
+	add_iter (hd,'Y end (inches):',v/1440.,16,2,"%sh"%eflag)
+	v = struct.unpack("%sh"%eflag,data[18:20])[0]
+	add_iter (hd,'Rotating Point X (inches):',v/1440.,18,2,"%sh"%eflag)
+	v = struct.unpack("%sh"%eflag,data[20:22])[0]
+	add_iter (hd,'Rotating Point Y (inches):',v/1440.,20,2,"%sh"%eflag)
+
 	xformnum = struct.unpack("%sI"%eflag,data[22:26])[0]
-	add_iter (hd,'Num of transforms:',"%d"%xformnum,22,4,"%sI"%eflag)
+	add_iter (hd,'Xform-Shape ID:',"%d"%xformnum,22,4,"%sI"%eflag)
 	
 
 hd_ids = {
