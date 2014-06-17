@@ -379,6 +379,7 @@ def hd_color (hd, data, page):
 		k = struct.unpack("%sH"%eflag,data[0x2c:0x2e])[0]/655.
 		add_iter (hd,'Color [CMYK]:',"%d%% %d%% %d%% %d%%"%(c,m,y,k),0x26,8,"clr")
 		
+
 hd_ids = {
 	"header":hd_header,
 	"shape":hd_shape,
