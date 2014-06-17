@@ -330,7 +330,7 @@ def hd_char (hd, data, page):
 	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%eflag)
 
 
-def hd_xform (hd,data,page):
+def hd_xform (hd, data, page):
 	# 0x8: flip FL
 	rot = struct.unpack("%si"%eflag,data[0:4])[0]/1000.
 	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%eflag)
@@ -352,13 +352,39 @@ def hd_xform (hd,data,page):
 
 	xformnum = struct.unpack("%sI"%eflag,data[22:26])[0]
 	add_iter (hd,'Xform-Shape ID:',"%d"%xformnum,22,4,"%sI"%eflag)
-	
 
+
+def hd_color (hd, data, page):
+	mods = {0x18:"RGB",0x8:"CMYK",0x10:"HLS"}
+	type_id ="Spot"
+	mod_id = ord(data[0x22])
+	add_iter (hd,'Model:',key2txt(mod_id,mods),0x22,1,"%sB"%eflag)
+	
+	tid = ord(data[0x21])
+	if tid&1:
+		type_id = "Process"
+	if tid&0x20:
+		type_id = "Tint"
+	add_iter (hd,'Type:',type_id,0x21,1,"%sB"%eflag)
+	if ord(data[0x20])&0x80:
+		add_iter (hd,'Overprint',"",0x20,1,"%sB"%eflag)
+		
+	if mod_id == 0x18:
+		r,g,b = ord(data[0x26]),ord(data[0x27]),ord(data[0x28])
+		add_iter (hd,'Color [RGB]:',"%d %d %d"%(r,g,b),0x26,3,"clr")
+	elif mod_id == 0x8:
+		c = struct.unpack("%sH"%eflag,data[0x26:0x28])[0]/655.
+		m = struct.unpack("%sH"%eflag,data[0x28:0x2a])[0]/655.
+		y = struct.unpack("%sH"%eflag,data[0x2a:0x2c])[0]/655.
+		k = struct.unpack("%sH"%eflag,data[0x2c:0x2e])[0]/655.
+		add_iter (hd,'Color [CMYK]:',"%d%% %d%% %d%% %d%%"%(c,m,y,k),0x26,8,"clr")
+		
 hd_ids = {
 	"header":hd_header,
 	"shape":hd_shape,
 	"char":hd_char,
 	"xform":hd_xform,
+	"color":hd_color,
 }
 
 def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
