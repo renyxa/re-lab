@@ -48,10 +48,6 @@ recs = {
 	0x31:("Layers", 46),
 }
 
-fonts_dir = []
-
-eflag = ">"
-
 unkn_records = []  # for deduplication of warnings on unknown records
 
 def chars (page, data, size, parent):
@@ -62,7 +58,6 @@ def chars (page, data, size, parent):
 
 
 def fonts (page, data, size, parent):
-	global fonts_dir
 	rlen = 94
 	if page.version < 5:
 		rlen = 144
@@ -70,7 +65,7 @@ def fonts (page, data, size, parent):
 		pos = data[i*rlen:].find("\x00")
 		cname = data[i*rlen:i*rlen+pos]
 		add_pgiter(page,"%s"%cname,"pm","font",data[i*rlen:i*rlen+rlen],parent)
-		fonts_dir.append(cname)
+		page.fonts_dir.append(cname)
 
 
 def colors (page, data, size, parent):
@@ -227,18 +222,18 @@ recfuncs = {
 
 def hd_header (hd,data,page):
 	endian = "Big"
-	if eflag == "<":
+	if page.eflag == "<":
 		endian = "Little"
 	add_iter (hd,'Endian:',endian,6,2,">H")
-	tr_len = struct.unpack("%sH"%eflag,data[0x2e:0x30])[0]
-	add_iter (hd,'ToC length:',"%d"%tr_len,0x2e,2,"%sH"%eflag)
-	tr_off = struct.unpack("%sI"%eflag,data[0x30:0x34])[0]
-	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%sI"%eflag)
+	tr_len = struct.unpack("%sH"%page.eflag,data[0x2e:0x30])[0]
+	add_iter (hd,'ToC length:',"%d"%tr_len,0x2e,2,"%sH"%page.eflag)
+	tr_off = struct.unpack("%sI"%page.eflag,data[0x30:0x34])[0]
+	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%sI"%page.eflag)
 
 
 def hd_shape_text(hd, data, page):
-	txtblk_id = struct.unpack("%sI"%eflag,data[0x20:0x24])[0]
-	add_iter (hd,'Txt block ID:',"0x%02x"%txtblk_id,0x20,4,"%sI"%eflag)
+	txtblk_id = struct.unpack("%sI"%page.eflag,data[0x20:0x24])[0]
+	add_iter (hd,'Txt block ID:',"0x%02x"%txtblk_id,0x20,4,"%sI"%page.eflag)
 	
 
 def hd_shape_rect_oval(hd, data, page):
@@ -247,20 +242,20 @@ def hd_shape_rect_oval(hd, data, page):
 	
 	# 0x04: word fill clr ID
 	fclrid = "0x%s"%d2hex(data[4:6])
-	add_iter (hd,'Fill Clr ID:',fclrid,4,2,"%sH"%eflag)
+	add_iter (hd,'Fill Clr ID:',fclrid,4,2,"%sH"%page.eflag)
 
 	# 0x06: word for Xs in twips
 	# 0x08: word for Ys in twips
 	# 0x0a: word for Xe in twips
 	# 0x0c: word for Ye in twips
-	xs = struct.unpack("%sh"%eflag,data[6:8])[0]
-	add_iter (hd,'X start (inches):',xs/1440.,6,2,"%sh"%eflag)
-	ys = struct.unpack("%sh"%eflag,data[8:0xa])[0]
-	add_iter (hd,'Y start (inches):',ys/1440.,8,2,"%sh"%eflag)
-	xe = struct.unpack("%sh"%eflag,data[0xa:0xc])[0]
-	add_iter (hd,'X end (inches):',xe/1440.,0xa,2,"%sh"%eflag)
-	ye = struct.unpack("%sh"%eflag,data[0xc:0xe])[0]
-	add_iter (hd,'Y end (inches):',ye/1440.,0xc,2,"%sh"%eflag)
+	xs = struct.unpack("%sh"%page.eflag,data[6:8])[0]
+	add_iter (hd,'X start (inches):',xs/1440.,6,2,"%sh"%page.eflag)
+	ys = struct.unpack("%sh"%page.eflag,data[8:0xa])[0]
+	add_iter (hd,'Y start (inches):',ys/1440.,8,2,"%sh"%page.eflag)
+	xe = struct.unpack("%sh"%page.eflag,data[0xa:0xc])[0]
+	add_iter (hd,'X end (inches):',xe/1440.,0xa,2,"%sh"%page.eflag)
+	ye = struct.unpack("%sh"%page.eflag,data[0xc:0xe])[0]
+	add_iter (hd,'Y end (inches):',ye/1440.,0xc,2,"%sh"%page.eflag)
 	
 	# 0x0e: frame text wrap option
 	# 0x0f: frame text flow option 1/2/8
@@ -294,7 +289,7 @@ def hd_shape_rect_oval(hd, data, page):
 def hd_shape (hd,data,page):
 	sh_type = ord(data[0])
 	ttxt = key2txt(sh_type,sh_types,"%02x"%sh_type)
-	add_iter (hd,'Type:',ttxt,0,1,"%sB"%eflag)
+	add_iter (hd,'Type:',ttxt,0,1,"%sB"%page.eflag)
 	if sh_type in (3,4,5,12):
 		hd_shape_rect_oval(hd, data, page)
 	elif sh_type == 1:
@@ -319,64 +314,64 @@ def hd_char (hd, data, page):
 	# 0x18: word sup pos%*10
 	# 0x1a: word baseline shift*20
 	# 0x1c: word tint %
-	char_len = struct.unpack("%sh"%eflag,data[0:2])[0]
-	add_iter (hd,'Length:',"%d"%char_len,0,2,"%sh"%eflag)
+	char_len = struct.unpack("%sh"%page.eflag,data[0:2])[0]
+	add_iter (hd,'Length:',"%d"%char_len,0,2,"%sh"%page.eflag)
 
-	fnt_id = struct.unpack("%sh"%eflag,data[2:4])[0]
-	fnt_name = fonts_dir[fnt_id]
-	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),2,2,"%sh"%eflag)
+	fnt_id = struct.unpack("%sh"%page.eflag,data[2:4])[0]
+	fnt_name = page.fonts_dir[fnt_id]
+	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),2,2,"%sh"%page.eflag)
 
-	fnt_size = struct.unpack("%sh"%eflag,data[4:6])[0]/10.
-	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%eflag)
+	fnt_size = struct.unpack("%sh"%page.eflag,data[4:6])[0]/10.
+	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%page.eflag)
 
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
-	rot = struct.unpack("%si"%eflag,data[0:4])[0]/1000.
-	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%eflag)
-	skew = struct.unpack("%si"%eflag,data[4:8])[0]/1000.
-	add_iter (hd,'Skew (deg):',"%d"%skew,4,4,"%sI"%eflag)
+	rot = struct.unpack("%si"%page.eflag,data[0:4])[0]/1000.
+	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%page.eflag)
+	skew = struct.unpack("%si"%page.eflag,data[4:8])[0]/1000.
+	add_iter (hd,'Skew (deg):',"%d"%skew,4,4,"%sI"%page.eflag)
 
-	v = struct.unpack("%sh"%eflag,data[10:12])[0]
-	add_iter (hd,'X start (inches):',v/1440.,10,2,"%sh"%eflag)
-	v = struct.unpack("%sh"%eflag,data[12:14])[0]
-	add_iter (hd,'Y start (inches):',v/1440.,12,2,"%sh"%eflag)
-	v = struct.unpack("%sh"%eflag,data[14:16])[0]
-	add_iter (hd,'X end (inches):',v/1440.,14,2,"%sh"%eflag)
-	v = struct.unpack("%sh"%eflag,data[16:18])[0]
-	add_iter (hd,'Y end (inches):',v/1440.,16,2,"%sh"%eflag)
-	v = struct.unpack("%sh"%eflag,data[18:20])[0]
-	add_iter (hd,'Rotating Point X (inches):',v/1440.,18,2,"%sh"%eflag)
-	v = struct.unpack("%sh"%eflag,data[20:22])[0]
-	add_iter (hd,'Rotating Point Y (inches):',v/1440.,20,2,"%sh"%eflag)
+	v = struct.unpack("%sh"%page.eflag,data[10:12])[0]
+	add_iter (hd,'X start (inches):',v/1440.,10,2,"%sh"%page.eflag)
+	v = struct.unpack("%sh"%page.eflag,data[12:14])[0]
+	add_iter (hd,'Y start (inches):',v/1440.,12,2,"%sh"%page.eflag)
+	v = struct.unpack("%sh"%page.eflag,data[14:16])[0]
+	add_iter (hd,'X end (inches):',v/1440.,14,2,"%sh"%page.eflag)
+	v = struct.unpack("%sh"%page.eflag,data[16:18])[0]
+	add_iter (hd,'Y end (inches):',v/1440.,16,2,"%sh"%page.eflag)
+	v = struct.unpack("%sh"%page.eflag,data[18:20])[0]
+	add_iter (hd,'Rotating Point X (inches):',v/1440.,18,2,"%sh"%page.eflag)
+	v = struct.unpack("%sh"%page.eflag,data[20:22])[0]
+	add_iter (hd,'Rotating Point Y (inches):',v/1440.,20,2,"%sh"%page.eflag)
 
-	xformnum = struct.unpack("%sI"%eflag,data[22:26])[0]
-	add_iter (hd,'Xform-Shape ID:',"%d"%xformnum,22,4,"%sI"%eflag)
+	xformnum = struct.unpack("%sI"%page.eflag,data[22:26])[0]
+	add_iter (hd,'Xform-Shape ID:',"%d"%xformnum,22,4,"%sI"%page.eflag)
 
 
 def hd_color (hd, data, page):
 	mods = {0x18:"RGB",0x8:"CMYK",0x10:"HLS"}
 	type_id ="Spot"
 	mod_id = ord(data[0x22])
-	add_iter (hd,'Model:',key2txt(mod_id,mods),0x22,1,"%sB"%eflag)
+	add_iter (hd,'Model:',key2txt(mod_id,mods),0x22,1,"%sB"%page.eflag)
 	
 	tid = ord(data[0x21])
 	if tid&1:
 		type_id = "Process"
 	if tid&0x20:
 		type_id = "Tint"
-	add_iter (hd,'Type:',type_id,0x21,1,"%sB"%eflag)
+	add_iter (hd,'Type:',type_id,0x21,1,"%sB"%page.eflag)
 	if ord(data[0x20])&0x80:
-		add_iter (hd,'Overprint',"",0x20,1,"%sB"%eflag)
+		add_iter (hd,'Overprint',"",0x20,1,"%sB"%page.eflag)
 		
 	if mod_id == 0x18:
 		r,g,b = ord(data[0x26]),ord(data[0x27]),ord(data[0x28])
 		add_iter (hd,'Color [RGB]:',"%d %d %d"%(r,g,b),0x26,3,"clr")
 	elif mod_id == 0x8:
-		c = struct.unpack("%sH"%eflag,data[0x26:0x28])[0]/655.
-		m = struct.unpack("%sH"%eflag,data[0x28:0x2a])[0]/655.
-		y = struct.unpack("%sH"%eflag,data[0x2a:0x2c])[0]/655.
-		k = struct.unpack("%sH"%eflag,data[0x2c:0x2e])[0]/655.
+		c = struct.unpack("%sH"%page.eflag,data[0x26:0x28])[0]/655.
+		m = struct.unpack("%sH"%page.eflag,data[0x28:0x2a])[0]/655.
+		y = struct.unpack("%sH"%page.eflag,data[0x2a:0x2c])[0]/655.
+		k = struct.unpack("%sH"%page.eflag,data[0x2c:0x2e])[0]/655.
 		add_iter (hd,'Color [CMYK]:',"%d%% %d%% %d%% %d%%"%(c,m,y,k),0x26,8,"clr")
 		
 
@@ -392,8 +387,8 @@ def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 #	offsets = []
 	for i in range(tr_len):
 		rid1 = ord(data[tr_off+1])
-		size = struct.unpack("%sH"%eflag,data[tr_off+2:tr_off+4])[0]
-		off = struct.unpack("%sI"%eflag,data[tr_off+4:tr_off+8])[0]
+		size = struct.unpack("%sH"%page.eflag,data[tr_off+2:tr_off+4])[0]
+		off = struct.unpack("%sI"%page.eflag,data[tr_off+4:tr_off+8])[0]
 		tr_off += 10
 		if grp == 0 and (rid1 > 0 or size == 0):
 			flag2 = ord(data[tr_off])
@@ -410,13 +405,14 @@ def parse_trailer(page,data,tr_off,tr_len,parent,eflag,tr,grp=0):
 	return tr
 
 def open (page,buf,parent,off=0):
-	global eflag,unkn_records
+	global unkn_records
+	page.fonts_dir = []
 	add_pgiter(page,"PM Header","pm","header",buf[0:0x36],parent)
-	eflag = "<"
+	page.eflag = "<"
 	if buf[6:8] == "\x99\xff":
-		eflag = ">"
-	tr_len = struct.unpack("%sH"%eflag,buf[0x2e:0x30])[0]
-	tr_off = struct.unpack("%sI"%eflag,buf[0x30:0x34])[0]
+		page.eflag = ">"
+	tr_len = struct.unpack("%sH"%page.eflag,buf[0x2e:0x30])[0]
+	tr_off = struct.unpack("%sI"%page.eflag,buf[0x30:0x34])[0]
 	off += 0x36
 	triter = add_pgiter(page,"Trailer","pm","trailer",buf[tr_off:tr_off+tr_len*16],parent)
 	tr = []
@@ -449,7 +445,7 @@ def open (page,buf,parent,off=0):
 	print 'Version:',page.version
 	
 	# FIXME! need to modify treatment of grouped records
-	parse_trailer(page,buf,tr_off,tr_len,triter,eflag,tr)
+	parse_trailer(page,buf,tr_off,tr_len,triter,page.eflag,tr)
 	start = 0x36
 	rec_id = 0
 	size = 0
