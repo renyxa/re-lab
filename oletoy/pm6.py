@@ -133,7 +133,7 @@ def paras (page, data, size, parent):
 	rlen = 80
 	for i in range(size):
 		tlen = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
-		add_pgiter(page,"%02x"%tlen,"pm","para",data[i*rlen:i*rlen+rlen],parent)
+		add_pgiter(page,"Length : %d"%tlen,"pm","para",data[i*rlen:i*rlen+rlen],parent)
 		# 0x2 0x1c  keep with next offset[0x3] lines
 		# 0x2 &40 -- include in ToC
 		# 0x5 -- dictionary
@@ -232,31 +232,78 @@ def hd_header (hd,data,page):
 
 
 def hd_shape_text(hd, data, page):
+
+	xs = struct.unpack("%sh"%page.eflag,data[6:8])[0]
+	add_iter (hd,'Bbox X start (inches):',xs/1440.,6,2,"%sh"%page.eflag)
+	ys = struct.unpack("%sh"%page.eflag,data[8:0xa])[0]
+	add_iter (hd,'Bbox Y start (inches):',ys/1440.,8,2,"%sh"%page.eflag)
+	xe = struct.unpack("%sh"%page.eflag,data[0xa:0xc])[0]
+	add_iter (hd,'Bbox X end (inches):',xe/1440.,0xa,2,"%sh"%page.eflag)
+	ye = struct.unpack("%sh"%page.eflag,data[0xc:0xe])[0]
+	add_iter (hd,'Bbox Y end (inches):',ye/1440.,0xc,2,"%sh"%page.eflag)
+
+	xform_id = struct.unpack("%sI"%page.eflag,data[0x1c:0x20])[0]
+	add_iter (hd,'Xform Id:',"0x%02x"%xform_id,0x1c,4,"%sI"%page.eflag)
+
 	txtblk_id = struct.unpack("%sI"%page.eflag,data[0x20:0x24])[0]
 	add_iter (hd,'Txt block ID:',"0x%02x"%txtblk_id,0x20,4,"%sI"%page.eflag)
+
+	shapenum = struct.unpack("%sI"%page.eflag,data[0xfe:0x102])[0]
+	add_iter (hd,'Shape Id:',"%d"%shapenum,0xfe,4,"%sI"%page.eflag)
 	
 
-def hd_shape_rect_oval(hd, data, page):
+def hd_shape_rect_oval(hd, data, page,sh_type):
 	# 0x01: &20 lock position
 	# 0x02: &2 no xparent BG, &4 - non-printing
-	
+
+	add_iter (hd,'Fill Overprint:',"0x%s"%d2hex(data[2:3]),2,1,"%sH"%page.eflag)
+
 	# 0x04: word fill clr ID
-	fclrid = "0x%s"%d2hex(data[4:6])
-	add_iter (hd,'Fill Clr ID:',fclrid,4,2,"%sH"%page.eflag)
+	fclrid = struct.unpack("%sh"%page.eflag,data[0x04:0x06])[0]
+	add_iter (hd,'Fill Clr ID:',"0x%02x"%fclrid,4,2,"%sH"%page.eflag)
 
 	# 0x06: word for Xs in twips
 	# 0x08: word for Ys in twips
 	# 0x0a: word for Xe in twips
 	# 0x0c: word for Ye in twips
 	xs = struct.unpack("%sh"%page.eflag,data[6:8])[0]
-	add_iter (hd,'X start (inches):',xs/1440.,6,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox X start (inches):',xs/1440.,6,2,"%sh"%page.eflag)
 	ys = struct.unpack("%sh"%page.eflag,data[8:0xa])[0]
-	add_iter (hd,'Y start (inches):',ys/1440.,8,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox Y start (inches):',ys/1440.,8,2,"%sh"%page.eflag)
 	xe = struct.unpack("%sh"%page.eflag,data[0xa:0xc])[0]
-	add_iter (hd,'X end (inches):',xe/1440.,0xa,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox X end (inches):',xe/1440.,0xa,2,"%sh"%page.eflag)
 	ye = struct.unpack("%sh"%page.eflag,data[0xc:0xe])[0]
-	add_iter (hd,'Y end (inches):',ye/1440.,0xc,2,"%sh"%page.eflag)
-	
+	add_iter (hd,'Bbox Y end (inches):',ye/1440.,0xc,2,"%sh"%page.eflag)
+
+	xform_id = struct.unpack("%sI"%page.eflag,data[0x1c:0x20])[0]
+	add_iter (hd,'Xform Id:',"0x%02x"%xform_id,0x1c,4,"%sI"%page.eflag)
+
+	stroke_type = struct.unpack("%sh"%page.eflag,data[0x20:0x22])[0]
+	add_iter (hd,'Stroke Type:',"0x%02x"%stroke_type,0x20,2,"%sh"%page.eflag)
+
+	stroke_width = struct.unpack("%sh"%page.eflag,data[0x23:0x25])[0]
+	add_iter (hd,'Stroke Width (pt):',stroke_width/5.0,0x23,2,"%sh"%page.eflag)
+
+	fill_type = struct.unpack("%sh"%page.eflag,data[0x26:0x28])[0]
+	add_iter (hd,'Fill Type:',"0x%02x"%fill_type,0x26,2,"%sh"%page.eflag)
+
+	stroke_color = struct.unpack("%sh"%page.eflag,data[0x28:0x2a])[0]
+	add_iter (hd,'Stroke Color:',"0x%02x"%stroke_color,0x28,2,"%sh"%page.eflag)
+
+	add_iter (hd,'Stroke Overprint:',"0x%s"%d2hex(data[0x2a:0x2b]),0x2a,1,"%sh"%page.eflag)
+
+	add_iter (hd,'Stroke Tint:',"0x%s"%d2hex(data[0x2c:0x2d]),0x2c,1,"%sh"%page.eflag)
+
+	if sh_type == 12: # Polygon
+		lineset = struct.unpack("%sh"%page.eflag,data[0x2e:0x30])[0]
+		add_iter (hd,'LineSet Seq Number:',"0x%02x"%lineset,0x2e,2,"%sh"%page.eflag)
+		add_iter (hd,'Closed Marker:',"0x%s"%d2hex(data[0x37:0x38]),0x37,1,"%sh"%page.eflag)
+
+	add_iter (hd,'Fill Tint:',"0x%s"%d2hex(data[0xe0:0xe1]),0xe0,1,"%sh"%page.eflag)
+
+	shapenum = struct.unpack("%sI"%page.eflag,data[0xfe:0x102])[0]
+	add_iter (hd,'Shape Id:',"%d"%shapenum,0xfe,4,"%sI"%page.eflag)
+
 	# 0x0e: frame text wrap option
 	# 0x0f: frame text flow option 1/2/8
 	# 0x10: word frame standoff left pts*20
@@ -290,8 +337,8 @@ def hd_shape (hd,data,page):
 	sh_type = ord(data[0])
 	ttxt = key2txt(sh_type,sh_types,"%02x"%sh_type)
 	add_iter (hd,'Type:',ttxt,0,1,"%sB"%page.eflag)
-	if sh_type in (3,4,5,12):
-		hd_shape_rect_oval(hd, data, page)
+	if sh_type in (3,4,5,6,12):
+		hd_shape_rect_oval(hd, data, page,sh_type)
 	elif sh_type == 1:
 		hd_shape_text(hd, data, page)
 
@@ -324,6 +371,112 @@ def hd_char (hd, data, page):
 	fnt_size = struct.unpack("%sh"%page.eflag,data[4:6])[0]/10.
 	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%page.eflag)
 
+	fnt_color = struct.unpack("%sh"%page.eflag,data[8:10])[0]
+	add_iter (hd,'Font color:',"0x%02x"%fnt_color,8,2,"%sh"%page.eflag)
+
+	biu_props = "0x%s"%d2hex(data[10:11]) # Bold Italic Underline Flag
+
+	if biu_props == "0x01":
+	    add_iter (hd,'BIU:',"Bold",10,1,"%sh"%page.eflag)
+	elif biu_props == "0x02":
+	    add_iter (hd,'BIU:',"Italic",10,1,"%sh"%page.eflag)
+	elif biu_props == "0x03":
+	    add_iter (hd,'BIU:',"Bold Italic",10,1,"%sh"%page.eflag)
+	elif biu_props == "0x04":
+	    add_iter (hd,'BIU:',"Underline",10,1,"%sh"%page.eflag)
+	elif biu_props == "0x05":
+	    add_iter (hd,'BIU:',"Bold Underline",10,1,"%sh"%page.eflag)
+	elif biu_props == "0x06":
+	    add_iter (hd,'BIU:',"Italic Underline",10,1,"%sh"%page.eflag)
+	elif biu_props == "0x07":
+	    add_iter (hd,'BIU:',"Bold Italic Underline",10,1,"%sh"%page.eflag)
+	else:
+	    add_iter (hd,'BIU:',"None",10,1,"%sh"%page.eflag)
+
+	strike_props = "0x%s"%d2hex(data[11:12]) # StrikeThrough SuperScript SubScript SmallCaps and AllCaps Flag
+
+	if strike_props == "0x01":
+	    add_iter (hd,'Strike:',"Strike Through",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x02":
+	    add_iter (hd,'Strike:',"SuperScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x03":
+	    add_iter (hd,'Strike:',"Strike Through and SuperScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x04":
+	    add_iter (hd,'Strike:',"SubScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x05":
+	    add_iter (hd,'Strike:',"Strike Through and SubScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x08":
+	    add_iter (hd,'Strike:',"Small Caps",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x09":
+	    add_iter (hd,'Strike:',"Strike Through and Small Caps",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x0a":
+	    add_iter (hd,'Strike:',"Small Caps and SuperScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x0b":
+	    add_iter (hd,'Strike:',"Strike Through , SuperScript and Small Caps",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x0c":
+	    add_iter (hd,'Strike:',"Small Caps and SubScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x0d":
+	    add_iter (hd,'Strike:',"Strike Through , SubScript and Small Caps",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x10":
+	    add_iter (hd,'Strike:',"All Caps",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x11":
+	    add_iter (hd,'Strike:',"All Caps and Strike Through",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x12":
+	    add_iter (hd,'Strike:',"All Caps and SuperScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x13":
+	    add_iter (hd,'Strike:',"All Caps , Strike Through and SuperScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x14":
+	    add_iter (hd,'Strike:',"All Caps and SubScript",11,1,"%sh"%page.eflag)
+	elif strike_props == "0x15":
+	    add_iter (hd,'Strike:',"All Caps , Strike Through and SubScript",11,1,"%sh"%page.eflag)
+	else:
+	    add_iter (hd,'Strike:',"None",11,1,"%sh"%page.eflag)
+
+
+	kerning = struct.unpack("%sh"%page.eflag,data[16:18])[0]/1000.
+	add_iter (hd,'Kerning (em):',"%d"%kerning,16,2,"%sI"%page.eflag)
+
+	super_sub_size = struct.unpack("%sh"%page.eflag,data[20:22])[0]/10.
+	add_iter (hd,'Super/SubScript Size (percent):',"%d"%super_sub_size,20,2,"%sI"%page.eflag)
+
+	sub_pos = struct.unpack("%sh"%page.eflag,data[22:24])[0]/10.
+	add_iter (hd,'SubScript Position (percent):',"%d"%sub_pos,22,2,"%sI"%page.eflag)
+
+	super_pos = struct.unpack("%sh"%page.eflag,data[24:26])[0]/10.
+	add_iter (hd,'SuperScript Position (percent):',"%d"%super_pos,24,2,"%sI"%page.eflag)
+
+def hd_para(hd, data, page):
+
+	para_len = struct.unpack("%sh"%page.eflag,data[0:2])[0]
+	add_iter (hd,'Length:',"%d"%para_len,0,2,"%sh"%page.eflag)
+
+
+	align = "0x%s"%d2hex(data[3:4])
+	if align == "0x01":
+		add_iter (hd,'ALign:',"Right",3,1,"%sh"%page.eflag)
+	elif align == "0x02":
+		add_iter (hd,'ALign:',"Center",3,1,"%sh"%page.eflag)
+	elif align == "0x03":
+		add_iter (hd,'ALign:',"Justify",3,1,"%sh"%page.eflag)
+	elif align == "0x04":
+		add_iter (hd,'ALign:',"Force-Justify",3,1,"%sh"%page.eflag)
+	else:
+		add_iter (hd,'ALign:',"Left",3,1,"%sh"%page.eflag)
+
+	left_indent = struct.unpack("%sh"%page.eflag,data[10:12])[0]/1440.
+	add_iter (hd,'Left Indent (Inches):',left_indent,10,2,"%sh"%page.eflag)
+
+	first_indent = struct.unpack("%sh"%page.eflag,data[12:14])[0]/1440.
+	add_iter (hd,'First Indent (Inches):',first_indent,12,2,"%sh"%page.eflag)
+
+	right_indent = struct.unpack("%sh"%page.eflag,data[14:16])[0]/1440.
+	add_iter (hd,'Right Indent (Inches):',right_indent,14,2,"%sh"%page.eflag)
+
+	before_indent = struct.unpack("%sh"%page.eflag,data[16:18])[0]/1440.
+	add_iter (hd,'Before Indent (Inches):',before_indent,16,2,"%sh"%page.eflag)
+
+	after_indent = struct.unpack("%sh"%page.eflag,data[18:20])[0]/1440.
+	add_iter (hd,'After Indent (Inches):',after_indent,18,2,"%sh"%page.eflag)
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
@@ -367,7 +520,7 @@ def hd_color (hd, data, page):
 	if mod_id == 0x18:
 		r,g,b = ord(data[0x26]),ord(data[0x27]),ord(data[0x28])
 		add_iter (hd,'Color [RGB]:',"%d %d %d"%(r,g,b),0x26,3,"clr")
-	elif mod_id == 0x8:
+	elif mod_id == 0x8 or mod_id == 0x10:
 		c = struct.unpack("%sH"%page.eflag,data[0x26:0x28])[0]/655.
 		m = struct.unpack("%sH"%page.eflag,data[0x28:0x2a])[0]/655.
 		y = struct.unpack("%sH"%page.eflag,data[0x2a:0x2c])[0]/655.
@@ -379,6 +532,7 @@ hd_ids = {
 	"header":hd_header,
 	"shape":hd_shape,
 	"char":hd_char,
+	"para":hd_para,
 	"xform":hd_xform,
 	"color":hd_color,
 }
