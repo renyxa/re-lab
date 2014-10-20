@@ -16,7 +16,7 @@ from utils import *
 
 recs = {
 	0x01:("0x01", 10),
-	0x04:("0x04", 104),
+	0x04:("Print Ops?", 104),
 	0x05:("Pages", 472),
 	0x09:("TxtProps [9]", 16),
 	0x0b:("Paragraphs", 80),

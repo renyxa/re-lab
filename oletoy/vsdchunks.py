@@ -217,7 +217,7 @@ def XForm (hd, size, value, off = 19):
 	add_iter(hd,"Width","%.2f"%struct.unpack("<d",value[off+19:off+19+8]),off+19,8,"<d")
 	add_iter(hd,"Height","%.2f"%struct.unpack("<d",value[off+28:off+28+8]),off+28,8,"<d")
 	add_iter(hd,"LocPinX","%.2f"%struct.unpack("<d",value[off+37:off+37+8]),off+37,8,"<d")
-	add_iter(hd,"LocPinY","%.2f"%struct.unpack("<d",value[off+47:off+46+8]),off+46,8,"<d")
+	add_iter(hd,"LocPinY","%.2f"%struct.unpack("<d",value[off+46:off+46+8]),off+46,8,"<d")
 	add_iter(hd,"Angle","%.2f"%struct.unpack("<d",value[off+55:off+55+8]),off+55,8,"<d")
 	add_iter(hd,"FlipX","%2x"%ord(value[off+63]),off+63,1,"<I")
 	add_iter(hd,"FlipY","%2x"%ord(value[off+64]),off+64,1,"<I")
@@ -252,6 +252,11 @@ def TxtXForm (hd, size, value, off = 19):
 	add_iter(hd,"TxtAngle","%.2f"%struct.unpack("<d",value[off+55:off+55+8]),off+55,8,"<d")
 	if len(value)>off+69: # both 6 and 11
 		vsdblock.parse(hd, size, value, off+69)
+
+def Misc (hd, size, value, off = 19):
+	if len(value)>off+45: # 11, probably v6 too
+		vsdblock.parse(hd, size, value, off+45)
+
 
 def MoveTo (hd, size, value, off = 19):
 	add_iter(hd,"X","%.2f"%struct.unpack("<d",value[off+1:off+1+8]),off+1,8,"<d")
@@ -681,7 +686,7 @@ chnk_func = {
 	0x8f:Ellipse,0x90:EllArcTo,
 	0x92:PageProps,0x93:StyleProps,
 	0x94:Char,0x95:Para,0x98:FrgnType,0x99:ConnPts,0x9b:XForm,0x9c:TxtXForm,0x9d:XForm1D,
-	0xa1:TextField,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
+	0xa1:TextField,0xa4:Misc,0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 0xc9:NameID,
 	0xd1:ShapeData
 }
