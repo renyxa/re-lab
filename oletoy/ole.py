@@ -52,7 +52,13 @@ def my_open (buf,page,parent=None):
 		print "-----------------"
 		for i in gsfout.split("\n")[1:-1]:
 			if i[0] == "f":
-				fullname = " ".join(i.split()[2:])
+				# gsf sometimes lists date even for files. Or, rather, it
+				# seems that it misrepresents empty dirs as (empty) files.
+				# I have observed this with 'Objects' in many .pub files.
+				if i[5] != ' ':
+					fullname = " ".join(i.split()[4:])
+				else:
+					fullname = " ".join(i.split()[2:])
 				if "/" in fullname:
 					fns = fullname.split("/")
 					cdir = "/".join(fns[:-1])
