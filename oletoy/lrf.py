@@ -771,7 +771,7 @@ lrf_tags = {
 	0xf504 : ('Stream Size', 4, chop_tag_f504),
 	0xf505 : ('Stream Start', 0, None),
 	0xf506 : ('Stream End', 0, None),
-	0xf507 : ('Odd Header ID', V, chop_tag_f507),
+	0xf507 : ('Odd Header ID', 4, chop_tag_f507),
 	0xf508 : ('Even Header ID', 4, chop_tag_f508),
 	0xf509 : ('Odd Footer ID', 4, chop_tag_f509),
 	0xf50a : ('Even Footer ID', 4, chop_tag_f50a),
