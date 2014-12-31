@@ -380,8 +380,10 @@ def chop_tag_f515(hd, size, data):
 	add_iter(hd, 'Weight', weight, 2, off - 2, '<H')
 
 def chop_tag_f516(hd, size, data):
-	name = read_unistr(data, 2, size - 2)
-	add_iter(hd, 'Name', name, 2, size - 2, 's')
+	(length, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Length', length, 2, off - 2, '<H')
+	name = read_unistr(data, off, length)
+	add_iter(hd, 'Name', name, off, length, 's')
 
 def chop_tag_f517(hd, size, data):
 	pass
