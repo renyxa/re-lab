@@ -972,6 +972,17 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Version', read(data, 8, '<H'), 8, 2, '<H')
 	add_iter(hd, 'Pseudo Enc. Key', read(data, 0xa, '<H'), 0xa, 2, '<H')
 	add_iter(hd, 'Number of objects', read(data, 0x10, '<Q'), 0x10, 8, '<Q')
+	off = 0x26
+	(dpi, off) = rdata(data, off, '<H')
+	add_iter(hd, 'DPI', dpi, off - 2, 2, '<H')
+	off += 2
+	(width, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
+	off = 0x44
+	(tocID, off) = rdata(data, off, '<I')
+	add_iter(hd, 'ToC Object Id', '0x%x' % tocID, off - 4, 4, '<I')
 
 def add_index_entry(hd, size, data):
 	add_iter(hd, 'Offset', read(data, 4, '<I'), 4, 4, '<I')
