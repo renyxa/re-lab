@@ -227,9 +227,6 @@ class lrf_parser(object):
 		if ((tag & 0xff00) >> 8) == 0xf5:
 			if lrf_tags.has_key(tag):
 				(name, length, f) = lrf_tags[tag]
-		else:
-			callback = 'text'
-			name = 'Data'
 
 		# try to find the next tag
 		if length is None:
@@ -698,7 +695,10 @@ def chop_tag_f5cb(hd, size, data):
 	pass
 
 def chop_tag_f5cc(hd, size, data):
-	pass
+	(length, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Length', length, 2, off - 2, '<H')
+	text = read_unistr(data, off, length)
+	add_iter(hd, 'Text', text, off, length, 's')
 
 def chop_tag_f5d1(hd, size, data):
 	pass
@@ -912,7 +912,7 @@ lrf_tags = {
 	0xf5c9 : ('F5C9', 0, None),
 	0xf5ca : ('Space', 2, chop_tag_f5ca),
 	0xf5cb : ('F5CB', V, chop_tag_f5cb),
-	0xf5cc : ('Text Size', 2, chop_tag_f5cc),
+	0xf5cc : ('Text', V, chop_tag_f5cc),
 	0xf5d1 : ('Koma Plot', V, chop_tag_f5d1),
 	0xf5d2 : ('EOL', 0, None),
 	0xf5d4 : ('Wait', 2, chop_tag_f5d4),
@@ -955,16 +955,11 @@ def add_tag(hd, size, data):
 	if desc[1] != 0:
 		desc[2](hd, size, data)
 
-def add_text(hd, size, data):
-	text = read_unistr(data, 0, size)
-	add_iter(hd, 'Text', text, 0, size, 's')
-
 lrf_ids = {
 	'header': add_header,
 	'idxentry': add_index_entry,
 	'compressed_stream': add_compressed_stream,
 	'tag': add_tag,
-	'text': add_text,
 }
 
 def open(buf, page, parent):
