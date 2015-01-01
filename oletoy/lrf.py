@@ -422,7 +422,8 @@ def chop_tag_f521(hd, size, data):
 	pass
 
 def chop_tag_f522(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f523(hd, size, data):
 	pass
@@ -442,7 +443,8 @@ def chop_tag_f527(hd, size, data):
 	pass
 
 def chop_tag_f528(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f529(hd, size, data):
 	(mode, off) = rdata(data, 2, '<H')
