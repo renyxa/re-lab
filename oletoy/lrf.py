@@ -562,13 +562,24 @@ def chop_tag_f549(hd, size, data):
 	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f54a(hd, size, data):
-	pass
+	(left, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Left', left, off - 2, 2, '<H')
+	(top, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Top', top, off - 2, 2, '<H')
+	(right, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Right', right, off - 2, 2, '<H')
+	(bottom, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Bottom', bottom, off - 2, 2, '<H')
 
 def chop_tag_f54b(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f54c(hd, size, data):
-	pass
+	(oid, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f54e(hd, size, data):
 	pass
