@@ -556,7 +556,9 @@ def chop_tag_f548(hd, size, data):
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f549(hd, size, data):
-	pass
+	off = 6
+	(oid, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f54a(hd, size, data):
 	pass
@@ -834,7 +836,7 @@ lrf_tags = {
 	0xf546 : ('Location Y', 2, chop_tag_f546),
 	0xf547 : ('Location X', 2, chop_tag_f547),
 	0xf548 : ('Content Position', 2, chop_tag_f548),
-	0xf549 : ('Put Sound', 8, chop_tag_f549),
+	0xf549 : ('Put Object', 8, chop_tag_f549),
 	0xf54a : ('Image Rect', 8, chop_tag_f54a),
 	0xf54b : ('Image Size', 4, chop_tag_f54b),
 	0xf54c : ('Image Stream', 4, chop_tag_f54c),
