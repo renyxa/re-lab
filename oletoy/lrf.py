@@ -503,7 +503,8 @@ def chop_tag_f535(hd, size, data):
 	add_iter(hd, 'Layout', layout_str, off - 2, 2, '<H')
 
 def chop_tag_f536(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f537(hd, size, data):
 	pass
