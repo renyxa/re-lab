@@ -519,7 +519,7 @@ def chop_tag_f53a(hd, size, data):
 
 def chop_tag_f53c(hd, size, data):
 	(align, off) = rdata(data, 2, '<H')
-	align_map = {1: 'top', 4: 'center', 8: 'bottom'}
+	align_map = {1: 'start', 4: 'center', 8: 'end'}
 	align_str = get_or_default(align_map, int(align), 'unknown')
 	add_iter(hd, 'Align', align_str, off - 2, 2, '<H')
 
@@ -824,7 +824,7 @@ lrf_tags = {
 	0xf538 : ('Top Skip', 2, chop_tag_f538),
 	0xf539 : ('Side Margin', 2, chop_tag_f539),
 	0xf53a : ('Bottom Skip', 2, chop_tag_f53a),
-	0xf53c : ('Vertical Align', 2, chop_tag_f53c),
+	0xf53c : ('Align', 2, chop_tag_f53c),
 	0xf53d : ('Column', 2, chop_tag_f53d),
 	0xf53e : ('Column Sep', 2, chop_tag_f53e),
 	0xf541 : ('Mini Page Height', 2, chop_tag_f541),
