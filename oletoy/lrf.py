@@ -567,10 +567,12 @@ def chop_tag_f54e(hd, size, data):
 	pass
 
 def chop_tag_f551(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f552(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f553(hd, size, data):
 	pass
