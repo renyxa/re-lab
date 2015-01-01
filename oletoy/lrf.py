@@ -710,7 +710,16 @@ def chop_tag_f5cc(hd, size, data):
 	add_iter(hd, 'Text', text, off, length, 's')
 
 def chop_tag_f5d1(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, 2, off - 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'height', height, 2, off - 2, '<H')
+	(oid, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
+	(adjustment, off) = rdata(data, off, '<H')
+	adjustment_map = {1: 'top', 2: 'center', 3: 'baseline', 4: 'bottom'}
+	adjustment_str = get_or_default(adjustment_map, int(adjustment), 'unknown')
+	add_iter(hd, 'Adjustment', adjustment_str, off - 2, 2, '<H')
 
 def chop_tag_f5d4(hd, size, data):
 	(time, off) = rdata(data, 2, '<H')
@@ -922,7 +931,7 @@ lrf_tags = {
 	0xf5ca : ('Space', 2, chop_tag_f5ca),
 	0xf5cb : ('F5CB', V, chop_tag_f5cb),
 	0xf5cc : ('Text', V, chop_tag_f5cc),
-	0xf5d1 : ('Koma Plot', V, chop_tag_f5d1),
+	0xf5d1 : ('Koma Plot', 12, chop_tag_f5d1),
 	0xf5d2 : ('EOL', 0, None),
 	0xf5d4 : ('Wait', 2, chop_tag_f5d4),
 	0xf5d6 : ('Sound Stop', 0, None),
