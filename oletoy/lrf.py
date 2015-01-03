@@ -980,9 +980,9 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Root Object ID', '0x%x' % rootID, off - 4, 4, '<I')
 	(objCount, off) = rdata(data, off, '<Q')
 	add_iter(hd, 'Number of objects', objCount, off - 8, 8, '<Q')
-	(objIndexOffset, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Object index offset', objIndexOffset, off - 4, 4, '<I')
-	off += 0xa
+	(objIndexOffset, off) = rdata(data, off, '<Q')
+	add_iter(hd, 'Object index offset', objIndexOffset, off - 8, 8, '<Q')
+	off += 6
 	(dpi, off) = rdata(data, off, '<H')
 	add_iter(hd, 'DPI', '%.1f' % (int(dpi) / 10), off - 2, 2, '<H')
 	off += 2
