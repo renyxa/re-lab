@@ -976,7 +976,8 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Version', version, off - 2, 2, '<H')
 	(encKey, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Pseudo Enc. Key', encKey, off - 2, 2, '<H')
-	off += 4
+	(rootID, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Root Object ID', '0x%x' % rootID, off - 4, 4, '<I')
 	(objCount, off) = rdata(data, off, '<Q')
 	add_iter(hd, 'Number of objects', objCount, off - 8, 8, '<Q')
 	(objIndexOffset, off) = rdata(data, off, '<I')
