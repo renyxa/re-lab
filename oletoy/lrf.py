@@ -999,11 +999,12 @@ def add_header(hd, size, data):
 	add_iter(hd, 'ToC Object offset', tocOffset, off - 4, 4, '<I')
 	(metadataLen, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length of metadata', metadataLen, off - 2, 2, '<I')
-	(thumbnailType, off) = rdata(data, off, '<H')
-	thumbnailStr = get_or_default(lrf_thumbnail_types, int(thumbnailType), 'Unknown')
-	add_iter(hd, 'Thumbnail type', thumbnailStr, off - 2, 2, '<I')
-	(thumbnailLen, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Length of thumbnail', thumbnailLen, off - 2, 2, '<I')
+	if int(version) >= 800:
+		(thumbnailType, off) = rdata(data, off, '<H')
+		thumbnailStr = get_or_default(lrf_thumbnail_types, int(thumbnailType), 'Unknown')
+		add_iter(hd, 'Thumbnail type', thumbnailStr, off - 2, 2, '<I')
+		(thumbnailLen, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Length of thumbnail', thumbnailLen, off - 2, 2, '<I')
 
 def add_index_entry(hd, size, data):
 	add_iter(hd, 'Offset', read(data, 4, '<I'), 4, 4, '<I')
