@@ -969,20 +969,40 @@ def add_compressed_stream(hd, size, data):
 	add_iter(hd, 'Uncompressed length', length, off - 4, 4, '<I')
 
 def add_header(hd, size, data):
-	add_iter(hd, 'Version', read(data, 8, '<H'), 8, 2, '<H')
-	add_iter(hd, 'Pseudo Enc. Key', read(data, 0xa, '<H'), 0xa, 2, '<H')
-	add_iter(hd, 'Number of objects', read(data, 0x10, '<Q'), 0x10, 8, '<Q')
-	off = 0x26
+	magic = read_unistr(data, 0, 8)
+	add_iter(hd, 'Format identifier', magic, 0, 8, 's')
+	off = 8
+	(version, off) = rdata(data, 8, '<H')
+	add_iter(hd, 'Version', version, off - 2, 2, '<H')
+	(encKey, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Pseudo Enc. Key', encKey, off - 2, 2, '<H')
+	off += 4
+	(objCount, off) = rdata(data, off, '<Q')
+	add_iter(hd, 'Number of objects', objCount, off - 8, 8, '<Q')
+	(objIndexOffset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Object index offset', objIndexOffset, off - 4, 4, '<I')
+	off += 0xa
 	(dpi, off) = rdata(data, off, '<H')
 	add_iter(hd, 'DPI', dpi, off - 2, 2, '<H')
 	off += 2
 	(width, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+	add_iter(hd, 'Page width', width, off - 2, 2, '<H')
 	(height, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Height', height, off - 2, 2, '<H')
-	off = 0x44
+	add_iter(hd, 'Page height', height, off - 2, 2, '<H')
+	(status, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Status bar height', status, off - 2, 2, '<H')
+	off += 0x14
 	(tocID, off) = rdata(data, off, '<I')
 	add_iter(hd, 'ToC Object Id', '0x%x' % tocID, off - 4, 4, '<I')
+	(tocOffset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'ToC Object offset', tocOffset, off - 4, 4, '<I')
+	(metadataLen, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length of metadata', metadataLen, off - 2, 2, '<I')
+	(thumbnailType, off) = rdata(data, off, '<H')
+	thumbnailStr = get_or_default(lrf_thumbnail_types, int(thumbnailType), 'Unknown')
+	add_iter(hd, 'Thumbnail type', thumbnailStr, off - 2, 2, '<I')
+	(thumbnailLen, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length of thumbnail', thumbnailLen, off - 2, 2, '<I')
 
 def add_index_entry(hd, size, data):
 	add_iter(hd, 'Offset', read(data, 4, '<I'), 4, 4, '<I')
