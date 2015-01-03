@@ -983,7 +983,7 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Object index offset', objIndexOffset, off - 4, 4, '<I')
 	off += 0xa
 	(dpi, off) = rdata(data, off, '<H')
-	add_iter(hd, 'DPI', dpi, off - 2, 2, '<H')
+	add_iter(hd, 'DPI', '%.1f' % (int(dpi) / 10), off - 2, 2, '<H')
 	off += 2
 	(width, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Page width', width, off - 2, 2, '<H')
