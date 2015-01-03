@@ -313,6 +313,21 @@ class lrf_parser(object):
 		# self.read_toc()
 		self.read_objects()
 
+def chop_color(hd, size, data):
+	(alpha, off) = rdata(data, 2, '<B')
+	alpha_val = int(alpha)
+	if alpha_val < 0x80:
+		alpha_desc = "%d%% opaque" % (100 * (0xff - alpha_val) / 255)
+	else:
+		alpha_desc = "%d%% transparent" % (100 * alpha_val / 255)
+	add_iter(hd, 'Alpha', '%s (%s)' % (alpha, alpha_desc), off - 1, 1, '<B')
+	(red, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Red', red, off - 1, 1, '<B')
+	(green, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Green', green, off - 1, 1, '<B')
+	(blue, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Blue', blue, off - 1, 1, '<B')
+
 def chop_tag_f500(hd, size, data):
 	(oid, off) = rdata(data, 2, '<I')
 	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
@@ -383,10 +398,10 @@ def chop_tag_f516(hd, size, data):
 	add_iter(hd, 'Name', name, off, length, 's')
 
 def chop_tag_f517(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f518(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f519(hd, size, data):
 	(space, off) = rdata(data, 2, '<H')
@@ -494,7 +509,7 @@ def chop_tag_f533(hd, size, data):
 	add_iter(hd, 'Rule', rule_str, off - 2, 2, '<H')
 
 def chop_tag_f534(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f535(hd, size, data):
 	(layout, off) = rdata(data, 2, '<H')
@@ -507,7 +522,7 @@ def chop_tag_f536(hd, size, data):
 	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f537(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f538(hd, size, data):
 	pass
@@ -768,10 +783,10 @@ def chop_tag_f5f1(hd, size, data):
 	add_iter(hd, 'Width', width, 2, off - 2, '<H')
 
 def chop_tag_f5f2(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f5f3(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f5f4(hd, size, data):
 	pass
