@@ -358,7 +358,11 @@ def chop_tag_f50a(hd, size, data):
 	pass
 
 def chop_tag_f50b(hd, size, data):
-	pass
+	(count, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Number of objects', count, off - 2, 2, '<H')
+	for i in range(int(count)):
+		(oid, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Object ID %d' % i, "0x%x" % oid, off - 4, 4, '<I')
 
 def chop_tag_f50d(hd, size, data):
 	pass
@@ -821,7 +825,7 @@ lrf_tags = {
 	0xf508 : ('Even Header ID', 4, chop_tag_f508),
 	0xf509 : ('Odd Footer ID', 4, chop_tag_f509),
 	0xf50a : ('Even Footer ID', 4, chop_tag_f50a),
-	0xf50b : ('Contained Objects List', 4, chop_tag_f50b),
+	0xf50b : ('Contained Objects List', V, chop_tag_f50b),
 	0xf50d : ('F50D', V, chop_tag_f50d),
 	0xf50e : ('F50E', 2, chop_tag_f50e),
 	0xf511 : ('Font Size', 2, chop_tag_f511),
