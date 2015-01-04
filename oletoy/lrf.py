@@ -438,7 +438,8 @@ def chop_tag_f51e(hd, size, data):
 	add_iter(hd, 'Skip', skip, 2, off - 2, '<H')
 
 def chop_tag_f521(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f522(hd, size, data):
 	(height, off) = rdata(data, 2, '<H')
@@ -448,7 +449,8 @@ def chop_tag_f523(hd, size, data):
 	pass
 
 def chop_tag_f524(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f525(hd, size, data):
 	(height, off) = rdata(data, 2, '<H')
@@ -485,7 +487,8 @@ def chop_tag_f52b(hd, size, data):
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f52c(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f52d(hd, size, data):
 	pass
@@ -532,7 +535,8 @@ def chop_tag_f538(hd, size, data):
 	pass
 
 def chop_tag_f539(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f53a(hd, size, data):
 	pass
