@@ -98,8 +98,6 @@ class lrf_parser(object):
 		self.root_oid = 0
 		self.object_count = 0
 		self.object_index_offset = 0
-		self.toc_oid = None
-		self.toc_offset = 0
 		self.metadata_size = 0
 		self.thumbnail_type = None
 		self.thumbnail_size = 0
@@ -130,9 +128,7 @@ class lrf_parser(object):
 		self.pseudo_encryption_key = read(data, 0xa, '<H')
 		self.object_count = read(data, 0x10, '<Q')
 		self.object_index_offset = read(data, 0x18, '<Q')
-		(self.toc_oid, off) = rdata(data, 0x44, '<I')
-		(self.toc_offset, off) = rdata(data, off, '<I')
-		(self.metadata_size, off) = rdata(data, off, '<H')
+		(self.metadata_size, off) = rdata(data, 0x4c, '<H')
 		if (self.version > 800):
 			(self.thumbnail_type, off) = rdata(data, off, '<H')
 			(self.thumbnail_size, off) = rdata(data, off, '<I')
@@ -140,16 +136,6 @@ class lrf_parser(object):
 		self.header_size = off
 
 		add_pgiter(self.page, 'Header', 'lrf', 'header', data[0:off], self.parent)
-
-	def read_toc(self):
-		data = self.data
-		off = self.toc_offset
-		(oid, off) = rdata(data, off, '<I')
-		assert(oid == self.toc_oid)
-		(start, off) = rdata(data, off, '<I')
-		(length, off) = rdata(data, off, '<I')
-		end = start + length
-		add_pgiter(self.page, 'TOC', 'lrf', 0, data[start:end], self.parent)
 
 	def read_metadata(self):
 		start = self.header_size
@@ -204,10 +190,11 @@ class lrf_parser(object):
 				assert len(content) == uncompressed_size
 			except zlib.error:
 				pass
-		cntiter = add_pgiter(self.page, content_name, 'lrf', 0, content, strmiter)
+		callback = 0
+		if self.stream_states[-1].stream_flags == 0x51:
+			callback = 'toc'
+		cntiter = add_pgiter(self.page, content_name, 'lrf', callback, content, strmiter)
 		self.stream_level += 1
-		# There are streams that do not contain tags. Maybe only text
-		# streams contain tags.
 		if len(content) > 1 and ord(content[1]) == 0xf5:
 			self.read_object_tags(content, cntiter)
 		self.stream_level -= 1
@@ -310,7 +297,6 @@ class lrf_parser(object):
 		self.read_metadata()
 		if (self.version > 800):
 			self.read_thumbnail()
-		# self.read_toc()
 		self.read_objects()
 
 def chop_color(hd, size, data):
@@ -1040,11 +1026,36 @@ def add_tag(hd, size, data):
 	if desc[1] != 0:
 		desc[2](hd, size, data)
 
+def add_toc(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Number of entries', count, off - 4, 4, '<I')
+
+	offsets = []
+	for i in range(int(count)):
+		(offset, off) = rdata(data, off, '<I')
+		offsets.append(int(offset))
+		add_iter(hd, 'Offset of entry %d' % i, offset, off - 4, 4, '<I')
+
+	offsets.append(size)
+	offsets = [o + off for o in offsets]
+
+	for i in range(int(count)):
+		off = offsets[i]
+		(page, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Page ID of entry %d' % i, '0x%x' % page, off - 4, 4, '<I')
+		(block, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Block ID of entry %d' % i, '0x%x' % block, off - 4, 4, '<I')
+		(length, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Text length of entry %d' % i, length, off - 2, 2, '<H')
+		text = read_unistr(data, off, int(length))
+		add_iter(hd, 'Text of entry %d' % i, text, off, int(length), 's')
+
 lrf_ids = {
 	'header': add_header,
 	'idxentry': add_index_entry,
 	'compressed_stream': add_compressed_stream,
 	'tag': add_tag,
+	'toc': add_toc,
 }
 
 def open(buf, page, parent):
