@@ -737,9 +737,9 @@ def chop_tag_f5cc(hd, size, data):
 
 def chop_tag_f5d1(hd, size, data):
 	(width, off) = rdata(data, 2, '<H')
-	add_iter(hd, 'Width', width, 2, off - 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 	(height, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Height', height, 2, off - 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 	(oid, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 	(adjustment, off) = rdata(data, off, '<H')
