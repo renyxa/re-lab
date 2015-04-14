@@ -442,9 +442,9 @@ def hdLayer(hd,data,page):
 		lmtxt += ' Locked'
 	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,L1,">H")
 	add_iter (hd,'View mode',lmtxt,L1+7,1,"txt")
-	L2,attr = read_recid(data,offset+8)
+	L2,attr = read_recid(data,offset+10)
 	offset += L2
-	L3,name = read_recid(data,offset+8)
+	L3,name = read_recid(data,offset+10)
 	if name in page.appdoc.recs:
 		at = page.appdoc.recs[name][1]
 	else:
@@ -1382,7 +1382,7 @@ class FHDoc():
 		L,rid = self.read_recid(off+10+res)
 		self.edges.append((recid,rid))
 		res += L
-		L,rid = self.read_recid(off+10+res)
+		L,rid = self.read_recid(off+12+res)
 		self.edges.append((recid,rid))
 		res += L
 		if self.version < 5:
