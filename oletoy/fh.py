@@ -374,6 +374,59 @@ def hdBendFilter(hd,data,page):
 	# 6-8.8-10 -- Y
 	pass
 
+def hdBlock (hd,data,page):
+		off = 0
+		if page.version == 10:
+			flags =  struct.unpack('>h', data[off:off+2])[0]
+			res = 2
+			for i in range(21):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+			res += 1
+			for i in range(2):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+		elif page.version == 8:
+			res = 0
+			for i in range(12):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+			res += 14
+		elif page.version < 8:
+			res = 0
+			for i in range(11):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+			res += 10
+			for i in range(3):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+		else:
+			# FIXME! ver11 starts with size==7
+			res = 0
+			for i in range(12):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+			res += 14
+			for i in range(3):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+			res +=1
+			for i in range(4):
+				L,rid1 = read_recid(data,off+res)
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				res += L
+			# verify for v9
+			if page.version < 10:
+				res -= 6
+
 
 def hdPropLst(hd,data,page):
 	off = 0
@@ -689,6 +742,12 @@ def hdList(hd,data,page):
 	if page.dict.has_key(ltype):
 		ltxt += " (%s)"%page.dict[ltype]
 		add_iter (hd,'List Type',ltxt,10,2,">H")
+	size = struct.unpack('>h', data[offset+2:offset+4])[0]
+	offset = 12
+	for i in range(size):
+		l,rid = read_recid(data,offset)
+		add_iter (hd,'List Elem',"%02x (%s)"%(rid,page.dict[page.reclist[rid+1]]),offset,l,">H")
+		offset += l
 
 
 def hdCompositePath(hd,data,page):
@@ -736,6 +795,7 @@ hdp = {
 	"BasicFill":hdBasicFill,
 	"BasicLine":hdBasicLine,
 	"BrushList":hdList,
+	"Block":hdBlock,
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
 	"FHTail":hdFHTail,
@@ -2158,6 +2218,7 @@ class FHDoc():
 			key = struct.unpack('>h', data[offset:offset+2])[0]
 			offset+= 2
 			self.reclist.append(key)
+		self.page.reclist = self.reclist
 
 	def parse_dict (self,data,offset):
 		dictsize = struct.unpack('>h', data[offset:offset+2])[0]
