@@ -660,6 +660,7 @@ def parse (page, data, parent):
 			rname = ""
 			if rec_ids.has_key(rtype):
 				rname = rec_ids[rtype]
+			print rtype, rname, offset
 			if rtype == 0x809:
 				iters.append(iter1)
 				curiter = iter1

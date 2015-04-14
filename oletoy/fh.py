@@ -2313,7 +2313,7 @@ def fh_open (buf,page,parent=None,mode=1):
 	if page.version > 9:
 		off = 0
 		while off < len(buf):
-			off = read1c(buf,page,piter,off)
+			off = read1c(buf,page,parent,off)
 
 	piter = add_pgiter(page,"FH file","fh","file",buf,parent)
 	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
