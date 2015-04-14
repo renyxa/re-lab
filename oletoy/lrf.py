@@ -98,8 +98,6 @@ class lrf_parser(object):
 		self.root_oid = 0
 		self.object_count = 0
 		self.object_index_offset = 0
-		self.toc_oid = None
-		self.toc_offset = 0
 		self.metadata_size = 0
 		self.thumbnail_type = None
 		self.thumbnail_size = 0
@@ -130,9 +128,7 @@ class lrf_parser(object):
 		self.pseudo_encryption_key = read(data, 0xa, '<H')
 		self.object_count = read(data, 0x10, '<Q')
 		self.object_index_offset = read(data, 0x18, '<Q')
-		(self.toc_oid, off) = rdata(data, 0x44, '<I')
-		(self.toc_offset, off) = rdata(data, off, '<I')
-		(self.metadata_size, off) = rdata(data, off, '<H')
+		(self.metadata_size, off) = rdata(data, 0x4c, '<H')
 		if (self.version > 800):
 			(self.thumbnail_type, off) = rdata(data, off, '<H')
 			(self.thumbnail_size, off) = rdata(data, off, '<I')
@@ -140,16 +136,6 @@ class lrf_parser(object):
 		self.header_size = off
 
 		add_pgiter(self.page, 'Header', 'lrf', 'header', data[0:off], self.parent)
-
-	def read_toc(self):
-		data = self.data
-		off = self.toc_offset
-		(oid, off) = rdata(data, off, '<I')
-		assert(oid == self.toc_oid)
-		(start, off) = rdata(data, off, '<I')
-		(length, off) = rdata(data, off, '<I')
-		end = start + length
-		add_pgiter(self.page, 'TOC', 'lrf', 0, data[start:end], self.parent)
 
 	def read_metadata(self):
 		start = self.header_size
@@ -204,10 +190,11 @@ class lrf_parser(object):
 				assert len(content) == uncompressed_size
 			except zlib.error:
 				pass
-		cntiter = add_pgiter(self.page, content_name, 'lrf', 0, content, strmiter)
+		callback = 0
+		if self.stream_states[-1].stream_flags == 0x51:
+			callback = 'toc'
+		cntiter = add_pgiter(self.page, content_name, 'lrf', callback, content, strmiter)
 		self.stream_level += 1
-		# There are streams that do not contain tags. Maybe only text
-		# streams contain tags.
 		if len(content) > 1 and ord(content[1]) == 0xf5:
 			self.read_object_tags(content, cntiter)
 		self.stream_level -= 1
@@ -227,9 +214,6 @@ class lrf_parser(object):
 		if ((tag & 0xff00) >> 8) == 0xf5:
 			if lrf_tags.has_key(tag):
 				(name, length, f) = lrf_tags[tag]
-		else:
-			callback = 'text'
-			name = 'Data'
 
 		# try to find the next tag
 		if length is None:
@@ -313,8 +297,22 @@ class lrf_parser(object):
 		self.read_metadata()
 		if (self.version > 800):
 			self.read_thumbnail()
-		# self.read_toc()
 		self.read_objects()
+
+def chop_color(hd, size, data):
+	(alpha, off) = rdata(data, 2, '<B')
+	alpha_val = int(alpha)
+	if alpha_val < 0x80:
+		alpha_desc = "%d%% opaque" % (100 * (0xff - alpha_val) / 255)
+	else:
+		alpha_desc = "%d%% transparent" % (100 * alpha_val / 255)
+	add_iter(hd, 'Alpha', '%s (%s)' % (alpha, alpha_desc), off - 1, 1, '<B')
+	(red, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Red', red, off - 1, 1, '<B')
+	(green, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Green', green, off - 1, 1, '<B')
+	(blue, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Blue', blue, off - 1, 1, '<B')
 
 def chop_tag_f500(hd, size, data):
 	(oid, off) = rdata(data, 2, '<I')
@@ -346,7 +344,11 @@ def chop_tag_f50a(hd, size, data):
 	pass
 
 def chop_tag_f50b(hd, size, data):
-	pass
+	(count, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Number of objects', count, off - 2, 2, '<H')
+	for i in range(int(count)):
+		(oid, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Object ID %d' % i, "0x%x" % oid, off - 4, 4, '<I')
 
 def chop_tag_f50d(hd, size, data):
 	pass
@@ -380,14 +382,16 @@ def chop_tag_f515(hd, size, data):
 	add_iter(hd, 'Weight', weight, 2, off - 2, '<H')
 
 def chop_tag_f516(hd, size, data):
-	name = read_unistr(data, 2, size - 2)
-	add_iter(hd, 'Name', name, 2, size - 2, 's')
+	(length, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Length', length, 2, off - 2, '<H')
+	name = read_unistr(data, off, length)
+	add_iter(hd, 'Name', name, off, length, 's')
 
 def chop_tag_f517(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f518(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f519(hd, size, data):
 	(space, off) = rdata(data, 2, '<H')
@@ -420,16 +424,19 @@ def chop_tag_f51e(hd, size, data):
 	add_iter(hd, 'Skip', skip, 2, off - 2, '<H')
 
 def chop_tag_f521(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f522(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f523(hd, size, data):
 	pass
 
 def chop_tag_f524(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f525(hd, size, data):
 	(height, off) = rdata(data, 2, '<H')
@@ -443,7 +450,8 @@ def chop_tag_f527(hd, size, data):
 	pass
 
 def chop_tag_f528(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f529(hd, size, data):
 	(mode, off) = rdata(data, 2, '<H')
@@ -465,7 +473,8 @@ def chop_tag_f52b(hd, size, data):
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f52c(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f52d(hd, size, data):
 	pass
@@ -493,7 +502,7 @@ def chop_tag_f533(hd, size, data):
 	add_iter(hd, 'Rule', rule_str, off - 2, 2, '<H')
 
 def chop_tag_f534(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f535(hd, size, data):
 	(layout, off) = rdata(data, 2, '<H')
@@ -502,23 +511,25 @@ def chop_tag_f535(hd, size, data):
 	add_iter(hd, 'Layout', layout_str, off - 2, 2, '<H')
 
 def chop_tag_f536(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f537(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f538(hd, size, data):
 	pass
 
 def chop_tag_f539(hd, size, data):
-	pass
+	(size, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Size', size, off - 2, 2, '<H')
 
 def chop_tag_f53a(hd, size, data):
 	pass
 
 def chop_tag_f53c(hd, size, data):
 	(align, off) = rdata(data, 2, '<H')
-	align_map = {1: 'top', 4: 'center', 8: 'bottom'}
+	align_map = {1: 'start', 4: 'center', 8: 'end'}
 	align_str = get_or_default(align_map, int(align), 'unknown')
 	add_iter(hd, 'Align', align_str, off - 2, 2, '<H')
 
@@ -529,10 +540,12 @@ def chop_tag_f53e(hd, size, data):
 	pass
 
 def chop_tag_f541(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f542(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f544(hd, size, data):
 	pass
@@ -553,25 +566,40 @@ def chop_tag_f548(hd, size, data):
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f549(hd, size, data):
-	pass
+	off = 6
+	(oid, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f54a(hd, size, data):
-	pass
+	(left, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Left', left, off - 2, 2, '<H')
+	(top, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Top', top, off - 2, 2, '<H')
+	(right, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Right', right, off - 2, 2, '<H')
+	(bottom, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Bottom', bottom, off - 2, 2, '<H')
 
 def chop_tag_f54b(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f54c(hd, size, data):
-	pass
+	(oid, off) = rdata(data, 2, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 
 def chop_tag_f54e(hd, size, data):
 	pass
 
 def chop_tag_f551(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
 def chop_tag_f552(hd, size, data):
-	pass
+	(height, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
 
 def chop_tag_f553(hd, size, data):
 	pass
@@ -696,10 +724,22 @@ def chop_tag_f5cb(hd, size, data):
 	pass
 
 def chop_tag_f5cc(hd, size, data):
-	pass
+	(length, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Length', length, 2, off - 2, '<H')
+	text = read_unistr(data, off, length)
+	add_iter(hd, 'Text', text, off, length, 's')
 
 def chop_tag_f5d1(hd, size, data):
-	pass
+	(width, off) = rdata(data, 2, '<H')
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', height, off - 2, 2, '<H')
+	(oid, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
+	(adjustment, off) = rdata(data, off, '<H')
+	adjustment_map = {1: 'top', 2: 'center', 3: 'baseline', 4: 'bottom'}
+	adjustment_str = get_or_default(adjustment_map, int(adjustment), 'unknown')
+	add_iter(hd, 'Adjustment', adjustment_str, off - 2, 2, '<H')
 
 def chop_tag_f5d4(hd, size, data):
 	(time, off) = rdata(data, 2, '<H')
@@ -737,10 +777,10 @@ def chop_tag_f5f1(hd, size, data):
 	add_iter(hd, 'Width', width, 2, off - 2, '<H')
 
 def chop_tag_f5f2(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f5f3(hd, size, data):
-	pass
+	chop_color(hd, size, data)
 
 def chop_tag_f5f4(hd, size, data):
 	pass
@@ -771,11 +811,11 @@ lrf_tags = {
 	0xf504 : ('Stream Size', 4, chop_tag_f504),
 	0xf505 : ('Stream Start', 0, None),
 	0xf506 : ('Stream End', 0, None),
-	0xf507 : ('Odd Header ID', V, chop_tag_f507),
+	0xf507 : ('Odd Header ID', 4, chop_tag_f507),
 	0xf508 : ('Even Header ID', 4, chop_tag_f508),
 	0xf509 : ('Odd Footer ID', 4, chop_tag_f509),
 	0xf50a : ('Even Footer ID', 4, chop_tag_f50a),
-	0xf50b : ('Contained Objects List', 4, chop_tag_f50b),
+	0xf50b : ('Contained Objects List', V, chop_tag_f50b),
 	0xf50d : ('F50D', V, chop_tag_f50d),
 	0xf50e : ('F50E', 2, chop_tag_f50e),
 	0xf511 : ('Font Size', 2, chop_tag_f511),
@@ -816,7 +856,7 @@ lrf_tags = {
 	0xf538 : ('Top Skip', 2, chop_tag_f538),
 	0xf539 : ('Side Margin', 2, chop_tag_f539),
 	0xf53a : ('Bottom Skip', 2, chop_tag_f53a),
-	0xf53c : ('Vertical Align', 2, chop_tag_f53c),
+	0xf53c : ('Align', 2, chop_tag_f53c),
 	0xf53d : ('Column', 2, chop_tag_f53d),
 	0xf53e : ('Column Sep', 2, chop_tag_f53e),
 	0xf541 : ('Mini Page Height', 2, chop_tag_f541),
@@ -826,7 +866,7 @@ lrf_tags = {
 	0xf546 : ('Location Y', 2, chop_tag_f546),
 	0xf547 : ('Location X', 2, chop_tag_f547),
 	0xf548 : ('Content Position', 2, chop_tag_f548),
-	0xf549 : ('Put Sound', 8, chop_tag_f549),
+	0xf549 : ('Put Object', 8, chop_tag_f549),
 	0xf54a : ('Image Rect', 8, chop_tag_f54a),
 	0xf54b : ('Image Size', 4, chop_tag_f54b),
 	0xf54c : ('Image Stream', 4, chop_tag_f54c),
@@ -910,8 +950,8 @@ lrf_tags = {
 	0xf5c9 : ('F5C9', 0, None),
 	0xf5ca : ('Space', 2, chop_tag_f5ca),
 	0xf5cb : ('F5CB', V, chop_tag_f5cb),
-	0xf5cc : ('Text Size', 2, chop_tag_f5cc),
-	0xf5d1 : ('Koma Plot', V, chop_tag_f5d1),
+	0xf5cc : ('Text', V, chop_tag_f5cc),
+	0xf5d1 : ('Koma Plot', 12, chop_tag_f5d1),
 	0xf5d2 : ('EOL', 0, None),
 	0xf5d4 : ('Wait', 2, chop_tag_f5d4),
 	0xf5d6 : ('Sound Stop', 0, None),
@@ -938,9 +978,42 @@ def add_compressed_stream(hd, size, data):
 	add_iter(hd, 'Uncompressed length', length, off - 4, 4, '<I')
 
 def add_header(hd, size, data):
-	add_iter(hd, 'Version', read(data, 8, '<H'), 8, 2, '<H')
-	add_iter(hd, 'Pseudo Enc. Key', read(data, 0xa, '<H'), 0xa, 2, '<H')
-	add_iter(hd, 'Number of objects', read(data, 0x10, '<Q'), 0x10, 8, '<Q')
+	magic = read_unistr(data, 0, 8)
+	add_iter(hd, 'Format identifier', magic, 0, 8, 's')
+	off = 8
+	(version, off) = rdata(data, 8, '<H')
+	add_iter(hd, 'Version', version, off - 2, 2, '<H')
+	(encKey, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Pseudo Enc. Key', encKey, off - 2, 2, '<H')
+	(rootID, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Root Object ID', '0x%x' % rootID, off - 4, 4, '<I')
+	(objCount, off) = rdata(data, off, '<Q')
+	add_iter(hd, 'Number of objects', objCount, off - 8, 8, '<Q')
+	(objIndexOffset, off) = rdata(data, off, '<Q')
+	add_iter(hd, 'Object index offset', objIndexOffset, off - 8, 8, '<Q')
+	off += 6
+	(dpi, off) = rdata(data, off, '<H')
+	add_iter(hd, 'DPI', '%.1f' % (int(dpi) / 10), off - 2, 2, '<H')
+	off += 2
+	(width, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Page width', width, off - 2, 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Page height', height, off - 2, 2, '<H')
+	(status, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Status bar height', status, off - 2, 2, '<H')
+	off += 0x14
+	(tocID, off) = rdata(data, off, '<I')
+	add_iter(hd, 'ToC Object Id', '0x%x' % tocID, off - 4, 4, '<I')
+	(tocOffset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'ToC Object offset', tocOffset, off - 4, 4, '<I')
+	(metadataLen, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length of metadata', metadataLen, off - 2, 2, '<I')
+	if int(version) >= 800:
+		(thumbnailType, off) = rdata(data, off, '<H')
+		thumbnailStr = get_or_default(lrf_thumbnail_types, int(thumbnailType), 'Unknown')
+		add_iter(hd, 'Thumbnail type', thumbnailStr, off - 2, 2, '<I')
+		(thumbnailLen, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Length of thumbnail', thumbnailLen, off - 2, 2, '<I')
 
 def add_index_entry(hd, size, data):
 	add_iter(hd, 'Offset', read(data, 4, '<I'), 4, 4, '<I')
@@ -953,16 +1026,36 @@ def add_tag(hd, size, data):
 	if desc[1] != 0:
 		desc[2](hd, size, data)
 
-def add_text(hd, size, data):
-	text = read_unistr(data, 0, size)
-	add_iter(hd, 'Text', text, 0, size, 's')
+def add_toc(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Number of entries', count, off - 4, 4, '<I')
+
+	offsets = []
+	for i in range(int(count)):
+		(offset, off) = rdata(data, off, '<I')
+		offsets.append(int(offset))
+		add_iter(hd, 'Offset of entry %d' % i, offset, off - 4, 4, '<I')
+
+	offsets.append(size)
+	offsets = [o + off for o in offsets]
+
+	for i in range(int(count)):
+		off = offsets[i]
+		(page, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Page ID of entry %d' % i, '0x%x' % page, off - 4, 4, '<I')
+		(block, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Block ID of entry %d' % i, '0x%x' % block, off - 4, 4, '<I')
+		(length, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Text length of entry %d' % i, length, off - 2, 2, '<H')
+		text = read_unistr(data, off, int(length))
+		add_iter(hd, 'Text of entry %d' % i, text, off, int(length), 's')
 
 lrf_ids = {
 	'header': add_header,
 	'idxentry': add_index_entry,
 	'compressed_stream': add_compressed_stream,
 	'tag': add_tag,
-	'text': add_text,
+	'toc': add_toc,
 }
 
 def open(buf, page, parent):
