@@ -381,47 +381,47 @@ def hdBlock (hd,data,page):
 			res = 2
 			for i in range(21):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 			res += 1
 			for i in range(2):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 		elif page.version == 8:
 			res = 0
 			for i in range(12):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 			res += 14
 		elif page.version < 8:
 			res = 0
 			for i in range(11):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 			res += 10
 			for i in range(3):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 		else:
 			# FIXME! ver11 starts with size==7
 			res = 0
 			for i in range(12):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 			res += 14
 			for i in range(3):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 			res +=1
 			for i in range(4):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1+1]]),off+res,L,">H")
+				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
 				res += L
 			# verify for v9
 			if page.version < 10:
@@ -503,10 +503,10 @@ def hdLayer(hd,data,page):
 	else:
 		at = "%02x"%name
 
-	add_iter (hd,'Layer name',at,offset+8,L3,"B")
+	add_iter (hd,'Layer name',at,offset+10,L3,"B")
 	offset += L3
-	visib = ord(data[offset+9])
-	add_iter (hd,'Visible',visib,offset+9,1,"B")
+	visib = ord(data[offset+11])
+	add_iter (hd,'Visible',visib,offset+11,1,"B")
 
 
 def xform_calc(var1,var2):
@@ -746,7 +746,7 @@ def hdList(hd,data,page):
 	offset = 12
 	for i in range(size):
 		l,rid = read_recid(data,offset)
-		add_iter (hd,'List Elem',"%02x (%s)"%(rid,page.dict[page.reclist[rid+1]]),offset,l,">H")
+		add_iter (hd,'List Elem',"%02x (%s)"%(rid,page.dict[page.reclist[rid-1]]),offset,l,">H")
 		offset += l
 
 
