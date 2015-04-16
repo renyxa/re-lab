@@ -394,7 +394,9 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
+
 				res += L
 			res += 1
 			for i in range(2):
@@ -412,7 +414,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 		elif page.version == 8:
 			res = 0
@@ -431,7 +434,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 			res += 14
 		elif page.version < 8:
@@ -451,7 +455,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 			res += 10
 			for i in range(3):
@@ -469,7 +474,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 		else:
 			# FIXME! ver11 starts with size==7
@@ -489,7 +495,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 			res += 14
 			for i in range(3):
@@ -507,7 +514,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 			res +=1
 			for i in range(4):
@@ -525,7 +533,8 @@ def hdBlock (hd,data,page):
 							typestr = " -> (%s)"%(page.dict[itrtype])
 					except:
 						pass
-				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				iter = add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
+				hd.model.set (iter, 7,("fh goto",rid1-1))
 				res += L
 			# verify for v9
 			if page.version < 10:

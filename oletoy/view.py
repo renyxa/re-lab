@@ -1114,6 +1114,8 @@ class ApplicationMainWindow(gtk.Window):
 					try:
 						self.das[pn].view.expand_to_path(goto)
 						self.das[pn].view.set_cursor_on_cell(goto)
+						self.das[pn].view.row_activated(goto,self.das[pn].view.get_column(0))
+
 					except:
 						print "No such path for back path"
 
@@ -1142,6 +1144,21 @@ class ApplicationMainWindow(gtk.Window):
 									self.das[pn].view.set_cursor_on_cell(goto)
 								except:
 									print "No such path"
+					elif val[0] == "fh goto":
+						pn = self.notebook.get_current_page()
+						itr = self.das[pn].model.iter_nth_child(self.das[pn].diter,val[1])
+						ts = self.das[pn].view.get_selection()
+						m,i = ts.get_selected()
+						if i:
+							self.das[pn].backpath = m.get_string_from_iter(i)
+						mpath = self.das[pn].model.get_path(itr)
+						try:
+							self.das[pn].view.expand_to_path(mpath)
+							self.das[pn].view.set_cursor_on_cell(mpath)
+							self.das[pn].view.row_activated(mpath,self.das[pn].view.get_column(0))
+						except:
+							print "No such path"
+						 
 				elif model.iter_n_children(iter1)>0:
 					intPath = model.get_path(iter1)
 					view.expand_row(intPath,False)
