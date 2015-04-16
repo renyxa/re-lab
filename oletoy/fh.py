@@ -381,47 +381,151 @@ def hdBlock (hd,data,page):
 			res = 2
 			for i in range(21):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 			res += 1
 			for i in range(2):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 		elif page.version == 8:
 			res = 0
 			for i in range(12):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 			res += 14
 		elif page.version < 8:
 			res = 0
 			for i in range(11):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 			res += 10
 			for i in range(3):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 		else:
 			# FIXME! ver11 starts with size==7
 			res = 0
 			for i in range(12):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 			res += 14
 			for i in range(3):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 			res +=1
 			for i in range(4):
 				L,rid1 = read_recid(data,off+res)
-				add_iter (hd,'List Elem',"%02x (%s)"%(rid1,page.dict[page.reclist[rid1-1]]),off+res,L,">H")
+				elemtype = page.dict[page.reclist[rid1-1]]
+				typestr = ""
+				if "List" in elemtype:
+					try:
+						itr = page.model.iter_nth_child(page.diter,rid1-1)
+						itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+						if itrtype == 0:
+							t,r = read_recid(page.model.get_value(itr,3),0xc)
+							typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+						elif itrtype in page.dict:
+							typestr = " -> (%s)"%(page.dict[itrtype])
+					except:
+						pass
+				add_iter (hd,'List Elem',"%02x (%s)%s"%(rid1,elemtype,typestr),off+res,L,">H")
 				res += L
 			# verify for v9
 			if page.version < 10:
@@ -848,6 +952,7 @@ class FHDoc():
 			self.page = page
 			self.version = page.version
 			self.diter = add_pgiter(page,"FH Data","fh","data",self.data,self.iter)
+		self.page.diter = self.diter
 		self.reclist = []
 		self.recs = {}
 		# for graph
