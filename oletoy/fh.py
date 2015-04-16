@@ -609,8 +609,15 @@ def hdLayer(hd,data,page):
 
 	add_iter (hd,'Layer name',at,offset+10,L3,"B")
 	offset += L3
-	visib = ord(data[offset+11])
-	add_iter (hd,'Visible',visib,offset+11,1,"B")
+	vis = ""
+	vval = ord(data[offset+11])
+	if vval&1:
+		vis += "Show "
+	if vval&2:
+		vis += "Print "
+	if vval&8:
+		vis += "Guides"
+	add_iter (hd,'Visibility',vis,offset+11,1,"B")
 
 
 def xform_calc(var1,var2):
