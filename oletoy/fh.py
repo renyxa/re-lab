@@ -1890,6 +1890,11 @@ class FHDoc():
 			L,rid = self.read_recid(off+res)
 			self.edges.append((recid,rid))
 			res += L
+		if self.version < 9: # verify for others
+			size2 = struct.unpack('>h', self.data[off:off+2])[0]
+			for i in range(2*(size2-size)):
+				L,rid = self.read_recid(off+res)
+				res += L
 		return res
 
 	def RadialFill(self,off,recid,mode=0):
@@ -2269,7 +2274,7 @@ class FHDoc():
 		self.edges.append((recid,recid1))
 		self.edges.append((recid,recid2))
 		self.edges.append((recid,recid3))
-		if self.version > 7:
+		if self.version > 8:
 			L4,recid4 = self.read_recid(off+L1+L2+L3+100)
 			self.edges.append((recid,recid4))
 		return len(self.data) - off
