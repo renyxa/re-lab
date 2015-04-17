@@ -206,7 +206,12 @@ def hdFHTail(hd,data,page):
 	else:
 		at = "%02x"%recid
 	add_iter (hd,"Default Font ??",at,offset,L,">HH")
-
+	x2 = struct.unpack('>H', data[0x32:0x34])[0]
+	x2f = struct.unpack('>H', data[0x34:0x36])[0]
+	y2 = struct.unpack('>H', data[0x36:0x38])[0]
+	y2f = struct.unpack('>H', data[0x38:0x3a])[0]
+	add_iter (hd,'Page W',"%.4f"%(x2+x2f/65536.),0x32,4,"txt")
+	add_iter (hd,'Page H',"%.4f"%(y2+y2f/65536.),0x36,4,"txt")
 
 
 def hdHaftone(hd,data,page):
