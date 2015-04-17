@@ -206,12 +206,18 @@ def hdFHTail(hd,data,page):
 	else:
 		at = "%02x"%recid
 	add_iter (hd,"Default Font ??",at,offset,L,">HH")
+	x1 = struct.unpack('>H', data[0x1a:0x1c])[0]
+	x1f = struct.unpack('>H', data[0x1c:0x1e])[0]
+	y1 = struct.unpack('>H', data[0x1e:0x20])[0]
+	y1f = struct.unpack('>H', data[0x20:0x22])[0]
 	x2 = struct.unpack('>H', data[0x32:0x34])[0]
 	x2f = struct.unpack('>H', data[0x34:0x36])[0]
 	y2 = struct.unpack('>H', data[0x36:0x38])[0]
 	y2f = struct.unpack('>H', data[0x38:0x3a])[0]
-	add_iter (hd,'Page W',"%.4f"%(x2+x2f/65536.),0x32,4,"txt")
-	add_iter (hd,'Page H',"%.4f"%(y2+y2f/65536.),0x36,4,"txt")
+	add_iter (hd,'Page Max X',"%.4f"%((x1+x1f/65536.)/72.),0x1a,4,"txt")
+	add_iter (hd,'Page Max Y',"%.4f"%((y1+y1f/65536.)/72.),0x1e,4,"txt")
+	add_iter (hd,'Page W',"%.4f"%((x2+x2f/65536.)/72.),0x32,4,"txt")
+	add_iter (hd,'Page H',"%.4f"%((y2+y2f/65536.)/72.),0x36,4,"txt")
 
 
 def hdHaftone(hd,data,page):
