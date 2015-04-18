@@ -148,7 +148,6 @@ def hdVMpObj(hd,data,page):
 			add_iter (hd,rname,at,shift,8,"txt")
 			shift+=8
 
-
 def hdTString(hd,data,page):
 	offset = 0
 	num = struct.unpack('>h', data[offset+2:offset+4])[0]
@@ -263,6 +262,8 @@ def hdFHTail(hd,data,page):
 
 
 def hdParagraph(hd,data,page):
+	offset = 0
+	num = struct.unpack('>h', data[offset+2:offset+4])[0]
 	offset = 6
 	L,rid1 = read_recid(data,offset)
 	elemtype,typestr = get_typestr(page,rid1)
@@ -271,11 +272,13 @@ def hdParagraph(hd,data,page):
 	L,rid1 = read_recid(data,offset)
 	elemtype,typestr = get_typestr(page,rid1)
 	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
-	offset += L + 2  # could be rec_id?
-	L,rid1 = read_recid(data,offset)
-	elemtype,typestr = get_typestr(page,rid1)
-	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
-
+	offset += L
+	for i in range(num):
+		offset += 2
+		L,rid1 = read_recid(data,offset)
+		elemtype,typestr = get_typestr(page,rid1)
+		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
+		offset += L + 20
 
 def hdHaftone(hd,data,page):
 	offset = 0
