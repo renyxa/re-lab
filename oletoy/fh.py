@@ -96,6 +96,7 @@ vmp_rec = {
 	}
 
 teff_rec = {
+	0x1369:("LineTable","recid"),
 	0x1a91:("Effect Name","?"),
 	0x1ab9:("Underline Clr ID",""),  # underline color ID
 	0x1ac1:("Underline Dash ID",""),  # underline dash ID
@@ -147,6 +148,14 @@ def hdVMpObj(hd,data,page):
 			add_iter (hd,rname,at,shift,8,"txt")
 			shift+=8
 
+
+def hdTString(hd,data,page):
+	offset = 0x14
+	L,rid1 = read_recid(data,offset)
+	elemtype,typestr = get_typestr(page,rid1)
+	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
+
+
 def hdTEffect(hd,data,page):
 	offset = 0
 	[num] = struct.unpack('>h', data[offset+4:offset+6])
@@ -155,7 +164,7 @@ def hdTEffect(hd,data,page):
 		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
 		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
 		if teff_rec.has_key(rec):
-			rname = teff_rec[rec]
+			rname = teff_rec[rec][0]
 		else:
 			rname = '\t\t%04x'%rec
 		if rname == "?":
@@ -169,15 +178,45 @@ def hdTEffect(hd,data,page):
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
 
+def get_typestr(page, id):
+	elemtype = page.dict[page.reclist[id-1]]
+	typestr = ""
+	if "List" in elemtype:
+		try:
+			itr = page.model.iter_nth_child(page.diter,id-1)
+			itrtype = struct.unpack(">H",page.model.get_value(itr,3)[0xa:0xc])[0]
+			if itrtype == 0:
+				t,r = read_recid(page.model.get_value(itr,3),0xc)
+				typestr = " -> (%s)"%(page.dict[page.reclist[r-1]])
+			elif itrtype in page.dict:
+				typestr = " -> (%s)"%(page.dict[itrtype])
+		except:
+			pass
+	return elemtype,typestr
+
 def hdTFOnPath(hd,data,page):
 	offset = 0
 	[num] = struct.unpack('>h', data[offset+4:offset+6])
+	L,rid1 = read_recid(data,offset+8)
+	elemtype,typestr = get_typestr(page,rid1)
+	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,">H")
+	offset += L
+	L,rid1 = read_recid(data,offset+8)
+	elemtype,typestr = get_typestr(page,rid1)
+	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,">H")
+	offset += L+8
+	for i in range(3):
+		L,rid1 = read_recid(data,offset+8)
+		elemtype,typestr = get_typestr(page,rid1)
+		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,">H")
+		offset += L
+	offset -= 18 
 	shift = 26
 	for i in range(num):
 		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
 		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
 		if teff_rec.has_key(rec):
-			rname = teff_rec[rec]
+			rname = teff_rec[rec][0]
 		else:
 			rname = '\t\t%04x'%rec
 		if rname == "?":
@@ -218,6 +257,21 @@ def hdFHTail(hd,data,page):
 	add_iter (hd,'Page Max Y',"%.4f"%((y1+y1f/65536.)/72.),0x1e,4,"txt")
 	add_iter (hd,'Page W',"%.4f"%((x2+x2f/65536.)/72.),0x32,4,"txt")
 	add_iter (hd,'Page H',"%.4f"%((y2+y2f/65536.)/72.),0x36,4,"txt")
+
+
+def hdParagraph(hd,data,page):
+	offset = 6
+	L,rid1 = read_recid(data,offset)
+	elemtype,typestr = get_typestr(page,rid1)
+	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
+	offset += L
+	L,rid1 = read_recid(data,offset)
+	elemtype,typestr = get_typestr(page,rid1)
+	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
+	offset += L + 2  # could be rec_id?
+	L,rid1 = read_recid(data,offset)
+	elemtype,typestr = get_typestr(page,rid1)
+	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
 
 
 def hdHaftone(hd,data,page):
@@ -620,6 +674,7 @@ def hdLayer(hd,data,page):
 	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,L1,">H")
 	add_iter (hd,'View mode',lmtxt,L1+7,1,"txt")
 	L2,attr = read_recid(data,offset+10)
+	add_iter (hd,'List',"%02x"%attr,offset+10,L2,"txt")
 	offset += L2
 	L3,name = read_recid(data,offset+10)
 	if name in page.appdoc.recs:
@@ -938,6 +993,7 @@ hdp = {
 	"MList":hdList,
 	"Oval":hdOval,
 	"Path":hdPath,
+	"Paragraph":hdParagraph,
 	"PropLst":hdPropLst,
 	"Rectangle":hdRectangle,
 	"SpotColor6":hdSpotColor6,
@@ -946,6 +1002,7 @@ hdp = {
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
 	"TEffect":hdTEffect,
+	"TString":hdTString,
 	"VDict":hdTEffect,
 	"VMpObj":hdVMpObj,
 	"Xform":hdXform,
