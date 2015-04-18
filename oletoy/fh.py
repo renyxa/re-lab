@@ -274,11 +274,11 @@ def hdParagraph(hd,data,page):
 	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
 	offset += L
 	for i in range(num):
-		offset += 2
-		L,rid1 = read_recid(data,offset)
+		numchar = struct.unpack(">H",data[offset:offset+2])[0]
+		L,rid1 = read_recid(data,offset+2)
 		elemtype,typestr = get_typestr(page,rid1)
-		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
-		offset += L + 20
+		iter = add_iter (hd,'Rfr',"Start char: %d, Style: %02x (%s)%s"%(numchar,rid1,elemtype,typestr),offset,L,">H",offset2=offset+2,length2=2)
+		offset += L + 22
 
 def hdHaftone(hd,data,page):
 	offset = 0
