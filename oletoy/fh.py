@@ -150,11 +150,14 @@ def hdVMpObj(hd,data,page):
 
 
 def hdTString(hd,data,page):
+	offset = 0
+	num = struct.unpack('>h', data[offset+2:offset+4])[0]
 	offset = 0x14
-	L,rid1 = read_recid(data,offset)
-	elemtype,typestr = get_typestr(page,rid1)
-	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
-
+	for i in range(num):
+		L,rid1 = read_recid(data,offset)
+		elemtype,typestr = get_typestr(page,rid1)
+		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
+		offset += L
 
 def hdTEffect(hd,data,page):
 	offset = 0
