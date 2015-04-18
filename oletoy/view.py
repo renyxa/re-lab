@@ -1181,27 +1181,18 @@ class ApplicationMainWindow(gtk.Window):
 		size = model.get_value(iter1,3)
 		offset2 = model.get_value(iter1,5)
 		size2 = model.get_value(iter1,6)
-		hlid = len(hd.hv.hl)
-		if hlid > 0:
-			if hd.hv.hl[hlid-1][2] == 1:
-				hlid -= 1
-		hd.hv.hl[hlid] = offset,size,1,1,0,0.9
+		hd.hv.hl = {}
+		hd.hv.hl[0] = offset,size,1,1,0,0.9
 		if size2 > 0:
-			hd.hv.hl[hlid+1] = offset2,size2,1,0,1,0.9
-		elif hd.hv.hl.has_key(hlid+1):
-			del hd.hv.hl[hlid+1]
-
+			hd.hv.hl[1] = offset2,size2,1,0,1,0.9
 		hd.hv.offset = offset
-
 		lnum = offset/16
 		hd.hv.curr = lnum
 		hd.hv.curc = offset - lnum*16
-
 		if hd.hv.offnum > lnum or lnum > hd.hv.offnum + hd.hv.numtl:
 			hd.hv.offnum = lnum-2
 			if hd.hv.offnum < 0:
 				hd.hv.offnum = 0
-
 		hd.hv.expose(None,None)
 
 
