@@ -96,6 +96,15 @@ vmp_rec = {
 	}
 
 teff_rec = {
+	0x1302:("Display Border",""),
+	0x130c:("Inset B",""),
+	0x131c:("Dimension H",""),
+	0x134c:("Dimension L",""),
+	0x1354:("Inset L",""),
+	0x13ac:("Inset R",""),
+	0x13dc:("Dimension T",""),
+	0x13e4:("Inset T",""),
+	0x140c:("Dimension W",""),
 	0x1369:("LineTable","recid"),
 	0x1a91:("Effect Name","?"),
 	0x1ab9:("Underline Clr ID",""),  # underline color ID
