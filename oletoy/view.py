@@ -1221,52 +1221,52 @@ class ApplicationMainWindow(gtk.Window):
 			if ftype == "pub":
 				v = struct.unpack("<i",buf)[0]
 				txt += "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],round(v/12700.,2),round(v/360000.,3),round(v/914400.,4))
-			elif ftype == "FH":
+			if ftype == "FH":
 				v1 = struct.unpack(">h",buf[0:2])[0]
 				v2 = struct.unpack(">h",buf[2:4])[0]
 				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
-			else:
-				if self.options_le == 1:
-					txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)
-					txt += "\tLEF: %s\t"%((struct.unpack("<f",buf[0:4])[0])/self.options_div)
+			
+			if self.options_le == 1:
+				txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)
+				txt += "\tLEF: %s\t"%((struct.unpack("<f",buf[0:4])[0])/self.options_div)
 				if self.options_be == 1:
 					txt += "BE: %s\t"%((struct.unpack(">i",buf[0:4])[0])/self.options_div)
 					txt += "BEF: %s"%((struct.unpack(">f",buf[0:4])[0])/self.options_div)
-
-				if 1:  #ftype[0:3].lower() == "cdr" or ftype[0:3] == "CMX":
-					c2 = ord(buf[0])/255.
-					m2 = ord(buf[1])/255.
-					y2 = ord(buf[2])/255.
-					k2 = ord(buf[3])/255.
-					c22 = (c2 * (1 - k2) + k2)
-					m22 = (m2 * (1 - k2) + k2)
-					y22 = (y2 * (1 - k2) + k2)
-					c1 = ord(buf[0])/100.
-					m1 = ord(buf[1])/100.
-					y1 = ord(buf[2])/100.
-					k1 = ord(buf[3])/100.
-					if c1 <= 1 and m1 <= 1 and y1 <= 1 and k1 <= 1:
-						c = (c1 * (1 - k1) + k1)
-						m = (m1 * (1 - k1) + k1)
-						y = (y1 * (1 - k1) + k1)
-						r1 = 255*(1 - c)
-						g1 = 255*(1 - m)
-						b1 = 255*(1 - y)
-						txt += '<span background="#%02x%02x%02x">CMYK100</span> '%(r1,g1,b1)
-						#print r1,g1,b1
-					r2 = 255*(1 - c22)
-					g2 = 255*(1 - m22)
-					b2 = 255*(1 - y22)
-					#print r2,g2,b2
-					txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
-					dictm = self.das[pn].dictmod
-					bstr = d2hex(buf)
-					if dictm:
-						for i in range(dictm.iter_n_children(None)):
-							if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
-								txt += '<span background="#FFFF00">'+txt+'</span>  '
-								break
-
+				c2 = ord(buf[0])/255.
+				m2 = ord(buf[1])/255.
+				y2 = ord(buf[2])/255.
+				k2 = ord(buf[3])/255.
+				c22 = (c2 * (1 - k2) + k2)
+				m22 = (m2 * (1 - k2) + k2)
+				y22 = (y2 * (1 - k2) + k2)
+				c1 = ord(buf[0])/100.
+				m1 = ord(buf[1])/100.
+				y1 = ord(buf[2])/100.
+				k1 = ord(buf[3])/100.
+				if c1 <= 1 and m1 <= 1 and y1 <= 1 and k1 <= 1:
+					c = (c1 * (1 - k1) + k1)
+					m = (m1 * (1 - k1) + k1)
+					y = (y1 * (1 - k1) + k1)
+					r1 = 255*(1 - c)
+					g1 = 255*(1 - m)
+					b1 = 255*(1 - y)
+					txt += '<span background="#%02x%02x%02x">CMYK100</span> '%(r1,g1,b1)
+					#print r1,g1,b1
+				r2 = 255*(1 - c22)
+				g2 = 255*(1 - m22)
+				b2 = 255*(1 - y22)
+				#print r2,g2,b2
+				txt += '<span background="#%02x%02x%02x">CMYK</span>'%(r2,g2,b2)
+				dictm = self.das[pn].dictmod
+				bstr = d2hex(buf)
+				if dictm:
+					for i in range(dictm.iter_n_children(None)):
+						if bstr == dictm.get_value(dictm.iter_nth_child(None,i),2):
+							txt += '<span background="#FFFF00">'+txt+'</span>  '
+							break
+		if dlen == 6 and ftype == "FH":
+			txt += '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[2]),ord(buf[4]))
+			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[4]),ord(buf[2]),ord(buf[0]))
 		if dlen == 8:
 			if self.options_le == 1:
 				txt += "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)

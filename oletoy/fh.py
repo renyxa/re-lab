@@ -962,6 +962,21 @@ def hdCompositePath(hd,data,page):
 	add_iter (hd,'List of paths',"%02x"%rid3,offset+res+8,L,">H")
 
 
+def hdProcessColor(hd,data,page):
+	offset = 0
+	ustr1 = struct.unpack('>H', data[offset:offset+2])[0]
+	if ustr1 in page.appdoc.recs:
+		at = page.appdoc.recs[ustr1][1]
+	else:
+		at = "%02x"%ustr1
+	add_iter (hd,'Name',at,0,2,">H")
+	offset = 14
+	cmpntnames = ["K","C","M","Y"]
+	for i in range(4):
+		cmpnt = struct.unpack(">H",data[offset+i*2:offset+i*2+2])[0]/256
+		add_iter (hd,cmpntnames[i],"%d"%cmpnt,offset+i*2,2,">H")
+
+
 def hdColor6(hd,data,page):
 	offset = 0
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
@@ -976,6 +991,16 @@ def hdColor6(hd,data,page):
 	else:
 		at = "%02x"%ustr1
 	add_iter (hd,'Name',at,ustroff,2,">H")
+	if pal == 4:  # CMYK
+		offset = 14
+		if page.version > 9:
+			offset += 2
+		cmpntnames = ["C","M","Y","K"]
+		for i in range(4):
+			cmpnt = struct.unpack(">I",data[offset+i*4:offset+i*4+4])[0]/256
+			add_iter (hd,cmpntnames[i],"%d"%cmpnt,offset+i*4,4,">I")
+			
+
 
 def hdSpotColor6(hd,data,page):
 	offset = 0
@@ -1009,6 +1034,7 @@ hdp = {
 	"Oval":hdOval,
 	"Path":hdPath,
 	"Paragraph":hdParagraph,
+	"ProcessColor":hdProcessColor,
 	"PropLst":hdPropLst,
 	"Rectangle":hdRectangle,
 	"SpotColor6":hdSpotColor6,
