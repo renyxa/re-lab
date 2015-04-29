@@ -726,9 +726,13 @@ def xform_calc(var1,var2):
 
 def hdXform(hd,data,page):
 	offset = 0
-	var1 = ord(data[offset])
-	var2 = ord(data[offset+1])
-	len1,x = xform_calc(var1,var2)
+	if page.version < 9:
+		x =[1,1,1,1,1,1]
+		len1 = 1
+	else:
+		var1 = ord(data[offset])
+		var2 = ord(data[offset+1])
+		len1,x = xform_calc(var1,var2)
 	offset += 2
 	if len1 > 0:
 		if x[0]:
