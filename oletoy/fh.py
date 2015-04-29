@@ -1002,6 +1002,20 @@ def hdColor6(hd,data,page):
 			
 
 
+def hdSpotColor(hd,data,page):
+	offset = 0
+	ustr1 = struct.unpack('>H', data[offset:offset+2])[0]
+	if ustr1 in page.appdoc.recs:
+		at = page.appdoc.recs[ustr1][1]
+	else:
+		at = "%02x"%ustr1
+	add_iter (hd,'Name',at,2,2,">H")
+	cmpntnames = ["R","G","B"]
+	for i in range(3):
+		cmpnt = struct.unpack('>H', data[offset+4+i*2:offset+6+i*2])[0]/256
+		add_iter (hd,cmpntnames[i],"%d"%cmpnt,offset+i*2+4,2,">H")
+
+
 def hdSpotColor6(hd,data,page):
 	offset = 0
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
@@ -1037,7 +1051,9 @@ hdp = {
 	"ProcessColor":hdProcessColor,
 	"PropLst":hdPropLst,
 	"Rectangle":hdRectangle,
+	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
+	"TintColor":hdSpotColor,
 	"TintColor6":hdSpotColor6,
 	"TFOnPath":hdTFOnPath,
 	"TextColumn":hdTFOnPath,
