@@ -1675,10 +1675,10 @@ class FHDoc():
 			L,rid = self.read_recid(off+res)
 			self.edges.append((recid,rid))
 			res += L
-		if self.version > 9:
-			shift += 37
-		elif self.version == 9:
-			shift += 35  # Tutorial_1_start.fh9
+		if self.version > 10:
+			shift += 36
+		elif self.version > 8:
+			shift += 34  # Tutorial_1_start.fh9
 		elif self.version == 8:
 			shift += 32  # suo.fh8
 		elif self.version < 8:
