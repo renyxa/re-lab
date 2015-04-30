@@ -1696,6 +1696,8 @@ class FHDoc():
 			while ord(self.data[off+shift+res+till0-4]) != 0:
 				till0 += 1
 			shift += till0-3
+		if self.version > 10:
+			shift += 2
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
