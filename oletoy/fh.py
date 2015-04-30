@@ -1683,8 +1683,10 @@ class FHDoc():
 			shift += 34  # Tutorial_1_start.fh9
 		elif self.version == 8:
 			shift += 32  # suo.fh8
-		elif self.version < 8:
+		elif self.version > 4:
 			shift += 28
+		else:
+			shift += 24
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
