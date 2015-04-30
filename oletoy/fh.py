@@ -1415,10 +1415,12 @@ class FHDoc():
 		L,rid1 = self.read_recid(off+res)
 		self.edges.append((recid,rid1))
 		res += L
-		L,rid1 = self.read_recid(off+8+res)
-		self.edges.append((recid,rid1))
-		res += L
-		return res+8
+		if self.version > 4:
+			L,rid1 = self.read_recid(off+8+res)
+			self.edges.append((recid,rid1))
+			res += L
+			res += 2
+		return res+6
 
 	def ConeFill(self,off,recid,mode=0):
 		res,rid1 = self.read_recid(off)
