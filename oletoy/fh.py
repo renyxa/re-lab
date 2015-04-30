@@ -1626,14 +1626,13 @@ class FHDoc():
 		L,rid = self.read_recid(off+res)
 		self.edges.append((recid,rid))
 		res += L
-		L,rid = self.read_recid(off+res+8)
-		self.edges.append((recid,rid))
-		res += L
-		L,rid = self.read_recid(off+res+8)
-		self.edges.append((recid,rid))
-		res += L
-		if self.version < 5:
-			res -= 4
+		if self.version > 4:
+			L,rid = self.read_recid(off+res+8)
+			self.edges.append((recid,rid))
+			res += L
+			L,rid = self.read_recid(off+res+8)
+			self.edges.append((recid,rid))
+			res += L
 		return res+8
 
 	def Guides(self,off,recid,mode=0):
