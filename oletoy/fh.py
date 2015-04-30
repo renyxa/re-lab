@@ -645,9 +645,10 @@ def hdImageImport(hd,data,page):
 	L2,attr = read_recid(data,offset)
 	add_iter (hd,'Parent',"%02x"%attr,offset,L2,">H")
 	offset += L2+8
-	L3,attr = read_recid(data,offset)
-	add_iter (hd,'Format Name',"%02x"%attr,offset,L3,">H")
-	offset += L3
+	if page.version > 7:
+		L3,attr = read_recid(data,offset)
+		add_iter (hd,'Format Name',"%02x"%attr,offset,L3,">H")
+		offset += L3
 	L4,attr = read_recid(data,offset)
 	add_iter (hd,'DataList',"%02x"%attr,offset,L4,">H")
 	offset += L4
@@ -1213,6 +1214,7 @@ class FHDoc():
 		"TEffect":self.TEffect,
 		"TextBlok":self.TextBlok,
 		"TextColumn":self.TextColumn,
+		"TextEffs":self.TextEffs, # ver3 for TEffect?
 		"TextInPath":self.TextInPath,
 		"TFOnPath":self.TFOnPath,
 		"TileFill":self.TileFill,
@@ -1689,6 +1691,11 @@ class FHDoc():
 			shift += 28
 		else:
 			shift += 24
+		if self.version > 7:
+			till0 = 0
+			while ord(self.data[off+shift+res+till0-4]) != 0:
+				till0 += 1
+			shift += till0-3
 		return shift+res
 
 	def Layer(self,off,recid,mode=0):
@@ -2175,6 +2182,27 @@ class FHDoc():
 			else:
 				shift+=8
 		return shift
+
+	def TextEffs(self,off,recid,mode=0):
+		return 0xf4 # I only have one file for it
+		
+		# ver 3 only?
+		num = struct.unpack('>h', self.data[off:off+2])[0] # or @0x12
+		shift = 0x18
+		for i in range(num):
+			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
+			if not rec in teff_rec:
+				print 'Unknown TEffect record: %04x'%rec
+			if key == 2:
+				shift+=4
+				L,rid = self.read_recid(off+shift)
+				self.edges.append((recid,rid))
+				shift += L
+			else:
+				shift+=8
+		return shift
+
 
 	def TextBlok(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
