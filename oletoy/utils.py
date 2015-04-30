@@ -84,7 +84,7 @@ def hex2d(data):
 
 def cnvrt22(data,end=">"):
 	i = struct.unpack("%sh"%end,data[0:2])[0]
-	f = struct.unpack("%sh"%end,data[2:4])[0]/65536.
+	f = struct.unpack("%sH"%end,data[2:4])[0]/65536.
 	return i+f
 
 
