@@ -2048,11 +2048,12 @@ class FHDoc():
 		L,rid = self.read_recid(off+res)
 		self.edges.append((recid,rid))
 		res += L
-		L,rid = self.read_recid(off+12+res)
-		self.edges.append((recid,rid))
-		res += L
+		if self.version > 3:
+			L,rid = self.read_recid(off+12+res)
+			self.edges.append((recid,rid))
+			res += L
 		if self.version < 5:
-			length -= 4
+			length -= 2
 		return length+res
 
 	def SketchFilter(self,off,recid,mode=0):
