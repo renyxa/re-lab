@@ -1494,6 +1494,8 @@ class FHDoc():
 			adj = 18
 		elif size2 == size1:
 			size2 = 1
+		if self.version < 5:
+			adj -= 60
 		return 0x86+size1+1+size2*30+adj
 
 	def DuetFilter(self,off,recid,mode=0):
