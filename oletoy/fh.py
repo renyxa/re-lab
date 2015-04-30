@@ -1489,16 +1489,11 @@ class FHDoc():
 
 	def DisplayText(self,off,recid,mode=0):
 		# ver < 5
-		adj = 0
+		size0 = struct.unpack('>h', self.data[off+0x46:off+0x48])[0]
 		size1 = struct.unpack('>h', self.data[off+0x7a:off+0x7c])[0]
-		size2 = struct.unpack('>h', self.data[off+0x7c:off+0x7e])[0]
-		if size2 == 0:
-			adj = 18
-		elif size2 == size1:
-			size2 = 1
-		if self.version < 5:
-			adj -= 60
-		return 0x86+size1+1+size2*30+adj
+		size3 = ord(self.data[off+0x4e])
+		return 0x68+size1+1+size0*(1+size3)
+
 
 	def DuetFilter(self,off,recid,mode=0):
 		return 14
