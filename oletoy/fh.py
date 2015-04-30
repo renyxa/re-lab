@@ -1897,15 +1897,16 @@ class FHDoc():
 		elif self.version > 3:
 			length=28
 		else:
-			length=24
+			length=26
 		res,rid = self.read_recid(off)
 		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
 		self.edges.append((recid,rid))
 		res += L
-		L,rid = self.read_recid(off+12+res)
-		self.edges.append((recid,rid))
-		res += L
+		if self.version > 3:
+			L,rid = self.read_recid(off+12+res)
+			self.edges.append((recid,rid))
+			res += L
 		return length+res
 
 
