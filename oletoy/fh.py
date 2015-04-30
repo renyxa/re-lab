@@ -645,7 +645,7 @@ def hdImageImport(hd,data,page):
 	L2,attr = read_recid(data,offset)
 	add_iter (hd,'Parent',"%02x"%attr,offset,L2,">H")
 	offset += L2+8
-	if page.version > 7:
+	if page.version > 8:
 		L3,attr = read_recid(data,offset)
 		add_iter (hd,'Format Name',"%02x"%attr,offset,L3,">H")
 		offset += L3
@@ -1685,13 +1685,13 @@ class FHDoc():
 			shift += 36
 		elif self.version > 8:
 			shift += 34  # Tutorial_1_start.fh9
-		elif self.version == 8:
-			shift += 32  # suo.fh8
+#		elif self.version == 8:
+#			shift += 32  # suo.fh8
 		elif self.version > 4:
 			shift += 28
 		else:
 			shift += 24
-		if self.version > 7:
+		if self.version > 8:
 			till0 = 0
 			while ord(self.data[off+shift+res+till0-4]) != 0:
 				till0 += 1
