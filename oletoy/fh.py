@@ -956,6 +956,10 @@ def hdList(hd,data,page):
 		offset += l
 
 
+def hdDisplayText(hd,data,page):
+	pass
+
+
 def hdCompositePath(hd,data,page):
 	offset = 0
 	res,rid1 = read_recid(data,offset)
@@ -1488,7 +1492,6 @@ class FHDoc():
 		return 14
 
 	def DT_fh3_styles(self,off,offset):
-		print "DT_FH3_STYLES"
 		offset += 2
 		flags = struct.unpack(">h", self.data[off+offset:off+offset+2])[0]
 		offset += 2
@@ -1514,10 +1517,16 @@ class FHDoc():
 			if self.data[off+offset:off+offset+2] == "\xff\xff":
 				offset += 2
 			offset += 2
-		if flags & 0x100 or flags & 0x200 or flags & 0x400 or flags >= 0x1000:
-			print "NEW FLAG IN DISPLAY TEXT!"
+		if flags & 0x100: # ???
+			offset += 4
+		if flags & 0x200: # ???
+			offset += 4
+		if flags & 0x400: # para hor.scale
+			offset += 4
 		if flags & 0x800: # baseline shift
 			offset += 4
+		if flags >= 0x1000:
+			print "NEW FLAG IN DISPLAY TEXT!"
 		return offset
 
 	def DisplayText(self,off,recid,mode=0):
