@@ -1487,20 +1487,51 @@ class FHDoc():
 	def DateTime(self,off,recid,mode=0):
 		return 14
 
+	def DT_fh3_styles(self,off,offset):
+		print "DT_FH3_STYLES"
+		offset += 2
+		flags = struct.unpack(">h", self.data[off+offset:off+offset+2])[0]
+		offset += 2
+		if flags & 1:  # 2.2 float
+			offset += 4
+		if flags & 2: # 2.2 kerning
+			offset += 4
+		if flags & 4: # font name rec_id
+			if self.data[off+offset:off+offset+2] == "\xff\xff":
+				offset += 2
+			offset += 2
+		if flags & 8: # font size
+			offset += 4
+		if flags & 0x10: # never seen
+			print "NEW FLAG IN DISPLAY TEXT!"
+		if flags & 0x20: # font style bytes
+			offset += 4
+		if flags & 0x40: # font clr rec_id
+			if self.data[off+offset:off+offset+2] == "\xff\xff":
+				offset += 2
+			offset += 2
+		if flags & 0x80: # font TextEffs rec_id
+			if self.data[off+offset:off+offset+2] == "\xff\xff":
+				offset += 2
+			offset += 2
+		if flags & 0x100 or flags & 0x200 or flags & 0x400 or flags >= 0x1000:
+			print "NEW FLAG IN DISPLAY TEXT!"
+		if flags & 0x800: # baseline shift
+			offset += 4
+		return offset
+
 	def DisplayText(self,off,recid,mode=0):
 		# ver < 5
-		flag = struct.unpack('>h', self.data[off+0x46:off+0x48])[0]&0xF
 		txtlen = struct.unpack('>h', self.data[off+0x4c:off+0x4e])[0]
+		style0 = struct.unpack('>h', self.data[off+0x50:off+0x52])[0]
 		offset = 0x7a
-		try:
-			if flag:
-				while struct.unpack(">h", self.data[off+offset:off+offset+2])[0] != txtlen:
-					offset += 12
-				offset += 12
+		if style0 < txtlen:
+			# read small style updates
 			while struct.unpack(">h", self.data[off+offset:off+offset+2])[0] != txtlen:
-				offset += 30
-		except:
-			pass
+				offset = self.DT_fh3_styles(off,offset)
+			offset = self.DT_fh3_styles(off,offset)
+		while struct.unpack(">h", self.data[off+offset:off+offset+2])[0] != txtlen:
+			offset += 30
 		offset += 30
 		return offset+1+txtlen
 
