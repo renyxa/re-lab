@@ -2230,23 +2230,19 @@ class FHDoc():
 		return shift
 
 	def TextEffs(self,off,recid,mode=0):
-		return 0xf4 # I only have one file for it
-		
 		# ver 3 only?
 		num = struct.unpack('>h', self.data[off:off+2])[0] # or @0x12
 		shift = 0x18
 		for i in range(num):
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
-			if not rec in teff_rec:
-				print 'Unknown TEffect record: %04x'%rec
-			if key == 2:
-				shift+=4
-				L,rid = self.read_recid(off+shift)
-				self.edges.append((recid,rid))
-				shift += L
+			if rec == 7:
+				shift += 12
+				key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
+				if key == 0:
+					shift += 4
 			else:
-				shift+=8
+				shift += 16 
 		return shift
 
 
