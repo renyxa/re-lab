@@ -644,11 +644,13 @@ def hdImageImport(hd,data,page):
 	offset += L1
 	L2,attr = read_recid(data,offset)
 	add_iter (hd,'Parent',"%02x"%attr,offset,L2,">H")
-	offset += L2+8
 	if page.version > 8:
+		offset += L2+8
 		L3,attr = read_recid(data,offset)
 		add_iter (hd,'Format Name',"%02x"%attr,offset,L3,">H")
 		offset += L3
+	else:
+		offset += L2+4
 	L4,attr = read_recid(data,offset)
 	add_iter (hd,'DataList',"%02x"%attr,offset,L4,">H")
 	offset += L4
@@ -1714,32 +1716,35 @@ class FHDoc():
 		self.edges.append((recid,rid))
 		L,rid = self.read_recid(off+res)
 		self.edges.append((recid,rid))
-		res += L+8
-		L,rid = self.read_recid(off+res)
-		self.edges.append((recid,rid))
-		res += L
-		shift = 0
-		if rid != 0:
-			shift += 4
-		for i in range(3):
+		res += L+4
+		if self.version > 8:
+			res += 4
+			# Format Name
 			L,rid = self.read_recid(off+res)
 			self.edges.append((recid,rid))
 			res += L
-		if self.version > 10:
-			shift += 36
-		elif self.version > 8:
-			shift += 34  # Tutorial_1_start.fh9
-#		elif self.version == 8:
-#			shift += 32  # suo.fh8
-		elif self.version > 4:
-			shift += 28
-		else:
-			shift += 24
+		shift = 0
+		for i in range(3):  # DataList, FileDsecriptor, XForm
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
+			res += L
+		shift += 8
+		# Size W/H
+		shift += 8
+		# skip 6
+		shift += 6
+		# Size W/H
+		shift += 4
+		# skip 4
+		shift += 4
+		# Size W/H
+		shift += 4
+		# skip format name string
 		if self.version > 8:
 			till0 = 0
-			while ord(self.data[off+shift+res+till0-4]) != 0:
+			while ord(self.data[off+shift+res+till0]) != 0:
 				till0 += 1
-			shift += till0-3
+			shift += till0+1
 		if self.version > 10:
 			shift += 2
 		return shift+res
