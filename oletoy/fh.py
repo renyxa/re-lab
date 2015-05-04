@@ -1164,6 +1164,7 @@ class FHDoc():
 		"Halftone":self.Halftone,
 		"ImageFill":self.ImageFill,
 		"ImageImport":self.ImageImport,
+		"Import":self.Import,
 		"Layer":self.Layer,
 		"LensFill":self.LensFill,
 		"LinearFill":self.LinearFill,
@@ -1749,6 +1750,9 @@ class FHDoc():
 		if self.version > 10:
 			shift += 2
 		return shift+res
+
+	def Import(self, off,recid,mode=0):
+		return 34;
 
 	def Layer(self,off,recid,mode=0):
 		length=14
