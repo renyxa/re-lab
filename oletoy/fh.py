@@ -399,14 +399,37 @@ def hdAGDFont(hd,data,page):
 
 def hdLinearFill(hd,data,page):
 	offset = 0
-	# 2-4 -- angle1
-	# 11 -- overprint
-	# 16-20 -- X
-	# 20-24 -- Y
-	# 24-28 -- <->1
-	# 28-30 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
-	# 30-32 -- repeat
-	pass
+	res,rid = read_recid(data,offset)
+	add_iter (hd,"Color 1",rid,0,res,">H")
+	L,rid = read_recid(data,offset+res)
+	add_iter (hd,"Color 2",rid,res,L,">H")
+	res += L
+	hndl = struct.unpack(">H",data[res:res+2])[0]
+	add_iter (hd,"Handle 1 (ang)",hndl,res,2,">H")
+	res += 4
+	res += 4
+	ovrp = struct.unpack(">H",data[res:res+2])[0]
+	add_iter (hd,"Overprint",ovrp,res,2,">H")
+	res += 4
+	L,rid = read_recid(data,res)
+	add_iter (hd,"MultiClr Lst",rid,res,2,">H")
+	res += L
+	res += 1
+	X = struct.unpack(">I",data[res:res+4])[0]
+	add_iter (hd,"Start X",X/167772.16,res,4,">I")
+	res += 4
+	Y = struct.unpack(">I",data[res:res+4])[0]
+	add_iter (hd,"Start Y",Y/167772.16,res,4,">I")
+	res += 4
+	W = struct.unpack(">I",data[res:res+4])[0]
+	add_iter (hd,"Handle 1 |<->|",W/167772.16,res,4,">I")
+	res += 4
+	# 0 normal, 1 repeat, 2 reflect, 3 autosize
+	add_iter (hd,"Type",ord(data[res]),res,1,"B")
+	res += 1
+	R = struct.unpack(">H",data[res:res+2])[0]
+	add_iter (hd,"Repeat",R,res,2,">H")
+
 
 def hdNewRadialFill(hd,data,page):
 	offset = 0
@@ -1054,6 +1077,7 @@ hdp = {
 	"Group":hdGroup,
 	"ImageImport":hdImageImport,
 	"Layer":hdLayer,
+	"LinearFill":hdLinearFill,
 	"List":hdList,
 	"MList":hdList,
 	"Oval":hdOval,
