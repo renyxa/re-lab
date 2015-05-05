@@ -1049,6 +1049,36 @@ def hdSpotColor(hd,data,page):
 		cmpnt = struct.unpack('>H', data[offset+4+i*2:offset+6+i*2])[0]/256
 		add_iter (hd,cmpntnames[i],"%d"%cmpnt,offset+i*2+4,2,">H")
 
+def hdTintColor6(hd,data,page):
+	offset = 0
+	pal = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
+	l,rid = read_recid(data,2)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	fmt = ">H"
+	if l == 4:
+		fmt = ">I"
+	add_iter (hd,'Name',at,2,l,fmt)
+	r = struct.unpack(">H",data[offset+2+l:offset+2+l+2])[0]/256
+	g = struct.unpack(">H",data[offset+2+l+2:offset+2+l+4])[0]/256
+	b = struct.unpack(">H",data[offset+2+l+4:offset+2+l+6])[0]/256
+	add_iter (hd,'RGB',"%d %d %d"%(r,g,b),l+2,6,">HHH")
+	offset += 8+l+6
+	l,rid = read_recid(data,offset)
+	fmt = ">H"
+	if l == 4:
+		fmt = ">I"
+	add_iter (hd,'Tint of',rid,offset,l,fmt)
+	offset += l
+	tint = struct.unpack(">H",data[offset:offset+2])[0]*100./0xffff
+	add_iter (hd,'Tint',"%.0f%%"%tint,offset,2,">H")
+	
+	
+	
+
 
 def hdSpotColor6(hd,data,page):
 	offset = 0
@@ -1089,7 +1119,7 @@ hdp = {
 	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
 	"TintColor":hdSpotColor,
-	"TintColor6":hdSpotColor6,
+	"TintColor6":hdTintColor6,
 	"TFOnPath":hdTFOnPath,
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
