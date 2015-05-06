@@ -708,35 +708,37 @@ def hdImageImport(hd,data,page):
 def hdLayer(hd,data,page):
 	offset = 0
 	L1,gr_style = read_recid(data,offset)
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,L1,">H")
 	offset += L1
-	mode = ord(data[offset+7])
+	if page.version > 3:
+		offset += 4
+	mode = ord(data[offset+3])
 	lmtxt = 'Normal'
 	if mode&0x10 == 0x10:
 		lmtxt = 'Wire'
 	if mode&0x1 == 1:
 		lmtxt += ' Locked'
-	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,L1,">H")
-	add_iter (hd,'View mode',lmtxt,L1+7,1,"txt")
-	L2,attr = read_recid(data,offset+10)
-	add_iter (hd,'List',"%02x"%attr,offset+10,L2,"txt")
+	add_iter (hd,'View mode',lmtxt,offset+3,1,"txt")
+	L2,attr = read_recid(data,offset+6)
+	add_iter (hd,'List',"%02x"%attr,offset+6,L2,"txt")
 	offset += L2
-	L3,name = read_recid(data,offset+10)
+	L3,name = read_recid(data,offset+6)
 	if name in page.appdoc.recs:
 		at = page.appdoc.recs[name][1]
 	else:
 		at = "%02x"%name
 
-	add_iter (hd,'Layer name',at,offset+10,L3,"B")
+	add_iter (hd,'Layer name',at,offset+6,L3,"B")
 	offset += L3
 	vis = ""
-	vval = ord(data[offset+11])
+	vval = ord(data[offset+7])
 	if vval&1:
 		vis += "Show "
 	if vval&2:
 		vis += "Print "
 	if vval&8:
 		vis += "Guides"
-	add_iter (hd,'Visibility',vis,offset+11,1,"B")
+	add_iter (hd,'Visibility',vis,offset+7,1,"B")
 
 
 def xform_calc(var1,var2):
