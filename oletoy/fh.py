@@ -307,28 +307,31 @@ def hdPath(hd,data,page):
 	if L == 4:
 		recid = 0x1ff00 - recid
 	add_iter (hd,'Graphic Style ID',"%02x"%recid,2,2,">H")
-	shift = offset + 22
-	numpts = struct.unpack('>h', data[offset+20:offset+22])[0]
+	shift = offset + 18
+	if page.version > 3:
+		offset += 4
+		shift += 4
+	numpts = struct.unpack('>h', data[offset+16:offset+18])[0]
 	for i in range(numpts):
 		ptype = ord(data[shift+1+i*27])
 		add_iter (hd,'Type %d'%i,"%d (%s)"%(ptype,pts_types[ptype]),shift+i*27+1,1,"B")
-		x1 = struct.unpack('>H', data[shift+i*27+3:shift+i*27+5])[0] - 1692
+		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
 		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
-		y1 = struct.unpack('>H', data[shift+i*27+7:shift+i*27+9])[0] - 1584
+		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
 		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
 		add_iter (hd,'X %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
 		add_iter (hd,'Y %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
 		shift +=8
-		x1 = struct.unpack('>H', data[shift+i*27+3:shift+i*27+5])[0] - 1692
+		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
 		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
-		y1 = struct.unpack('>H', data[shift+i*27+7:shift+i*27+9])[0] - 1584
+		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
 		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
 		add_iter (hd,'\tXh1 %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
 		add_iter (hd,'\tYh1 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
 		shift +=8
-		x1 = struct.unpack('>H', data[shift+i*27+3:shift+i*27+5])[0] - 1692
+		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
 		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
-		y1 = struct.unpack('>H', data[shift+i*27+7:shift+i*27+9])[0] - 1584
+		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
 		y1f = struct.unpack('>H', data[shift+i*27+9:shift+i*27+11])[0]
 		add_iter (hd,'\tXh2 %d'%i,"%.4f"%(x1+x1f/65536.),shift+i*27+3,4,"txt")
 		add_iter (hd,'\tYh2 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
@@ -891,13 +894,19 @@ def hdOval(hd,data,page):
 
 def hdGroup(hd,data,page):
 	offset = 0
-	gr_style = struct.unpack('>H', data[offset:offset+2])[0]
-	layer = struct.unpack('>H', data[offset+2:offset+4])[0]
-	add_iter (hd,'Graphic Style',"%02x"%gr_style,0,2,">H")
-	add_iter (hd,'Parent',"%02x"%layer,2,2,">h")
-	if data[offset+2:offset+4] == '\xFF\xFF':
-		xform = struct.unpack('>H', data[offset+16:offset+18])[0]
-		add_iter (hd,'XForm',"%02x"%xform,16,2,">h")
+	res,gr_style = read_recid(data,offset)
+	add_iter (hd,'Graphic Style',"%02x"%gr_style,offset,2,">H")
+	offset += res;
+	res,layer = read_recid(data,offset)
+	add_iter (hd,'Parent',"%02x"%layer,offset,2,">h")
+	offset += res + 4;
+	if page.version > 3:
+		offset += 4
+	res,mlist = read_recid(data,offset)
+	add_iter (hd,'MList',"%02x"%mlist,offset,2,">h")
+	offset += res
+	res,xform = read_recid(data,offset)
+	add_iter (hd,'XForm',"%02x"%xform,offset,2,">h")
 
 def hdGraphicStyle(hd,data,page):
 	off = 2
@@ -992,8 +1001,11 @@ def hdCompositePath(hd,data,page):
 	L,rid2 = read_recid(data,offset+res)
 	add_iter (hd,'Parent',"%02x"%rid2,offset+res,L,">H")
 	res += L
-	L,rid3 = read_recid(data,offset+8+res)
-	add_iter (hd,'List of paths',"%02x"%rid3,offset+res+8,L,">H")
+	if page.version > 3:
+		res += 4
+	res += 4
+	L,rid3 = read_recid(data,offset+res)
+	add_iter (hd,'List of paths',"%02x"%rid3,offset+res,L,">H")
 
 
 def hdProcessColor(hd,data,page):
