@@ -679,6 +679,30 @@ def hdPropLst(hd,data,page):
 			at = "%02x"%rid1
 		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
 
+def hdStylePropLst(hd,data,page):
+	off = 0
+	size = struct.unpack('>h', data[off+2:off+4])[0]
+	res = 6
+	L,attr = read_recid(data,off+res)
+	add_iter (hd,'Parent',"%02x"%attr,off+res,L,">H")
+	res += L
+	L,name = read_recid(data,off+res)
+	if name in page.appdoc.recs:
+		at = page.appdoc.recs[name][1]
+	else:
+		at = "%02x"%name
+	add_iter (hd,'Name',at,off+res,L,">H")
+	res += L
+	for i in range(size):
+		L1,rid1 = read_recid(data,off+res)
+		res += L1
+		L2,rid2 = read_recid(data,off+res)
+		res += L2
+		if rid1 in page.appdoc.recs:
+			at = page.appdoc.recs[rid1][1]
+		else:
+			at = "%02x"%rid1
+		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
 
 def hdImageImport(hd,data,page):
 	offset = 0
@@ -1013,7 +1037,6 @@ def hdList(hd,data,page):
 		add_iter (hd,'List Elem',"%02x (%s)"%(rid,page.dict[page.reclist[rid-1]]),offset,l,">H")
 		offset += l
 
-
 def hdDisplayText(hd,data,page):
 	pass
 
@@ -1135,6 +1158,7 @@ hdp = {
 	"Block":hdBlock,
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
+	"ElemPropLst":hdStylePropLst,
 	"FHTail":hdFHTail,
 	"GraphicStyle":hdGraphicStyle,
 	"Group":hdGroup,
@@ -1152,6 +1176,7 @@ hdp = {
 	"Rectangle":hdRectangle,
 	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
+	"StylePropLst":hdStylePropLst,
 	"TintColor":hdSpotColor,
 	"TintColor6":hdTintColor6,
 	"TFOnPath":hdTFOnPath,
