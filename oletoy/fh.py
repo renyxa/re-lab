@@ -463,12 +463,29 @@ def hdNewContourFill(hd,data,page):
 
 def hdLensFill(hd,data,page):
 	offset = 0
-	# 39: 0 -- Transparency, 1 -- Magnify, 2 -- Lighten, 3 -- Darken, 4 -- Invert, 5 -- Monochrome
-	# Transparency
-	# 8-10.10-12 -- Opacity
-	# 26-30 -- X
-	# 30-34 -- Y
-	# 37: 1 -- CenterPoint, 2 -- ObjOnly, 4 -- Snapshot (flags)
+	l,rid = read_recid(data,0)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Color',at,0,2,">H")
+	mode = ord(data[l+0x25])
+	modes = {0:"Transparency",1:"Magnify",2:"Lighten",3:"Darken",4:"Invert",5:"Monochrome"}
+	add_iter (hd,'Mode',modes[mode],0x25+l,1,"B")
+	if mode == 0:
+		offset = l+6
+		opc = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'Opacity',opc,offset,4,">HH")
+		offset+=4
+#		offset+=16
+#		x = cnvrt22(data[offset:offset+4])
+#		add_iter (hd,'X',x,offset,4,">HH")
+#		offset+=4
+#		y = cnvrt22(data[offset:offset+4])
+#		add_iter (hd,'Y',y,offset,4,">HH")
+#		offset+=4
+		# Transparency
+		# 37: 1 -- CenterPoint, 2 -- ObjOnly, 4 -- Snapshot (flags)
 	# Magnify
 	# 8-10.10-12 -- mag.coeff
 	pass
@@ -1089,9 +1106,6 @@ def hdTintColor6(hd,data,page):
 	offset += l
 	tint = struct.unpack(">H",data[offset:offset+2])[0]*100./0xffff
 	add_iter (hd,'Tint',"%.0f%%"%tint,offset,2,">H")
-	
-	
-	
 
 
 def hdSpotColor6(hd,data,page):
@@ -1121,6 +1135,7 @@ hdp = {
 	"Group":hdGroup,
 	"ImageImport":hdImageImport,
 	"Layer":hdLayer,
+	"LensFill":hdLensFill,
 	"LinearFill":hdLinearFill,
 	"List":hdList,
 	"MList":hdList,
