@@ -886,30 +886,33 @@ def hdOval(hd,data,page):
 	L,layer = read_recid(data,offset)
 	add_iter (hd,'Parent',"%02x"%layer,offset,L,">h")
 	offset += L
-	L,xform = read_recid(data,offset+12)
-	add_iter (hd,'XForm',"%02x"%xform,offset+12,L,">h")
+	if page.version > 3:
+		offset += 4
+	offset += 4
+	L,xform = read_recid(data,offset+4)
+	add_iter (hd,'XForm',"%02x"%xform,offset+4,L,">h")
 	offset += L
-	x1 = struct.unpack('>H', data[offset+12:offset+14])[0] - 1692
-	x1f = struct.unpack('>H', data[offset+14:offset+16])[0]
-	y1 = struct.unpack('>H', data[offset+16:offset+18])[0] - 1584
-	y1f = struct.unpack('>H', data[offset+18:offset+20])[0]
-	x2 = struct.unpack('>H', data[offset+20:offset+22])[0] - 1692
-	x2f = struct.unpack('>H', data[offset+22:offset+24])[0]
-	y2 = struct.unpack('>H', data[offset+24:offset+26])[0] - 1584
-	y2f = struct.unpack('>H', data[offset+26:offset+28])[0]
-	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),offset+12,4,"txt")
-	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),offset+16,4,"txt")
-	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),offset+20,4,"txt")
-	add_iter (hd,'Y2',"%.4f"%(y2+y2f/65536.),offset+24,4,"txt")
+	x1 = struct.unpack('>H', data[offset+4:offset+6])[0] - 1692
+	x1f = struct.unpack('>H', data[offset+6:offset+8])[0]
+	y1 = struct.unpack('>H', data[offset+8:offset+10])[0] - 1584
+	y1f = struct.unpack('>H', data[offset+10:offset+12])[0]
+	x2 = struct.unpack('>H', data[offset+12:offset+14])[0] - 1692
+	x2f = struct.unpack('>H', data[offset+14:offset+16])[0]
+	y2 = struct.unpack('>H', data[offset+16:offset+18])[0] - 1584
+	y2f = struct.unpack('>H', data[offset+18:offset+20])[0]
+	add_iter (hd,'X1',"%.4f"%(x1+x1f/65536.),offset+4,4,"txt")
+	add_iter (hd,'Y1',"%.4f"%(y1+y1f/65536.),offset+8,4,"txt")
+	add_iter (hd,'X2',"%.4f"%(x2+x2f/65536.),offset+12,4,"txt")
+	add_iter (hd,'Y2',"%.4f"%(y2+y2f/65536.),offset+16,4,"txt")
 	if page.version > 10:
-		arc1 = struct.unpack('>H', data[offset+28:offset+30])[0]
-		arc1f = struct.unpack('>H', data[offset+30:offset+32])[0]
-		arc2 = struct.unpack('>H', data[offset+32:offset+34])[0]
-		arc2f = struct.unpack('>H', data[offset+34:offset+36])[0]
+		arc1 = struct.unpack('>H', data[offset+20:offset+22])[0]
+		arc1f = struct.unpack('>H', data[offset+22:offset+24])[0]
+		arc2 = struct.unpack('>H', data[offset+24:offset+26])[0]
+		arc2f = struct.unpack('>H', data[offset+26:offset+28])[0]
 		clsd = ord(data[offset+36])
-		add_iter (hd,'Arc <>',"%.4f"%(arc1+arc1f/65536.),offset+28,4,"txt")
-		add_iter (hd,'Arc ()',"%.4f"%(arc2+arc2f/65536.),offset+32,4,"txt")
-		add_iter (hd,'Closed',clsd,offset+36,1,"B")
+		add_iter (hd,'Arc <>',"%.4f"%(arc1+arc1f/65536.),offset+20,4,"txt")
+		add_iter (hd,'Arc ()',"%.4f"%(arc2+arc2f/65536.),offset+24,4,"txt")
+		add_iter (hd,'Closed',clsd,offset+28,1,"B")
 
 def hdGroup(hd,data,page):
 	offset = 0
