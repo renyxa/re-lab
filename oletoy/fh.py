@@ -1961,7 +1961,7 @@ class FHDoc():
 	def MName(self,off,recid,mode=0):
 		size = struct.unpack('>H', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
-		self.recs[recid] = ("str",self.data[off+4:off+4+length])
+		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length],"mac-roman"))
 		return 4*(size+1)
 
 	def MQuickDict(self,off,recid,mode=0):
@@ -1971,7 +1971,7 @@ class FHDoc():
 	def MString(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
-		self.recs[recid] = ("str",self.data[off+4:off+4+length])
+		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length],"mac-roman"))
 		return 4*(size+1)
 
 	def MDict(self,off,recid,mode=0):
