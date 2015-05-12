@@ -1223,7 +1223,7 @@ class ApplicationMainWindow(gtk.Window):
 				txt += "LE: %s\t(pt/cm/in) %s/%s/%s"%(struct.unpack("<i",buf)[0],round(v/12700.,2),round(v/360000.,3),round(v/914400.,4))
 			if ftype == "FH":
 				v1 = struct.unpack(">h",buf[0:2])[0]
-				v2 = struct.unpack(">h",buf[2:4])[0]
+				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
 			
 			if self.options_le == 1:
