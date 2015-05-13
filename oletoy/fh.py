@@ -167,6 +167,10 @@ def hdTString(hd,data,page):
 		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
 		offset += L
 
+
+def hdTaperedFillX (hd,data,page):
+	pass
+
 def hdTEffect(hd,data,page):
 	offset = 0
 	[num] = struct.unpack('>h', data[offset+4:offset+6])
@@ -434,6 +438,26 @@ def hdLinearFill(hd,data,page):
 	add_iter (hd,"Repeat",R,res,2,">H")
 
 
+def hdMultiColorList(hd,data,page):
+	offset = 0
+	lstlen = struct.unpack(">H",data[offset:offset+2])[0]
+	offset += 4
+	for i in range(lstlen):
+		l,rid = read_recid(data,offset)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		piter = add_iter (hd,'Color %d'%(i+1),at,offset,2,">H")
+		offset += l
+		prcnt = int(cnvrt22(data[offset:offset+4])*100)
+		add_iter (hd,'%',prcnt,offset,4,">HH",parent=piter)
+		offset += 4
+		unkn = int(cnvrt22(data[offset:offset+4])*100)
+		add_iter (hd,'??',unkn,offset,4,">HH",parent=piter)
+		offset += 4
+
+
 def hdNewRadialFill(hd,data,page):
 	offset = 0
 	# 2-6 -- X
@@ -445,7 +469,54 @@ def hdNewRadialFill(hd,data,page):
 	# 34-38 -- <-> Hndl2
 	# 38-40 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
 	# 40-42 -- repeat
-	pass
+	if page.version > 10:
+		l,rid = read_recid(data,0)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		add_iter (hd,'Color 1',at,0,2,">H")
+		offset += l
+		l,rid = read_recid(data,offset)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		add_iter (hd,'Color 2',at,offset,2,">H")
+		offset += l
+		x = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'X (%)',int(x*100),offset,4,">HH")
+		offset += 4
+		y = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'Y (%)',int(y*100),offset,4,">HH")
+		offset += 4
+		offset += 8
+		l,rid = read_recid(data,offset)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		add_iter (hd,'MultiColorList',at,offset,2,">H")
+		offset += l
+		offset += 2
+		handleang = struct.unpack(">H",data[offset:offset+2])[0]
+		add_iter (hd,'Handle 1 Angle',handleang,offset,2,">H")
+		offset += 2
+		offset += 2
+		hndlwide = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'Handle 1 Wide (%)',int(100*hndlwide),offset,4,">HH")
+		offset += 4
+		handleang = struct.unpack(">H",data[offset:offset+2])[0]
+		add_iter (hd,'Handle 2 Angle',handleang,offset,2,">H")
+		offset += 2
+		offset += 2
+		hndlwide = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'Handle 2 Wide (%)',int(100*hndlwide),offset,4,">HH")
+		offset += 4
+		# 0 normal, 1 repeat, 2 reflect, 3 autosize
+		add_iter (hd,"Type",ord(data[offset+1]),offset+1,1,"B")
+		
+
 
 def hdNewContourFill(hd,data,page):
 	offset = 0
@@ -459,7 +530,47 @@ def hdNewContourFill(hd,data,page):
 	# 26-30 -- <-> Hndl1
 	# 31 -- 1 normal, 0 repeat, 2 reflect, 3 autosize
 	# 32-34 -- repeat
-	pass 
+	if page.version > 10:
+		l,rid = read_recid(data,0)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		add_iter (hd,'Color 1',at,0,2,">H")
+		offset += l
+		l,rid = read_recid(data,offset)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		add_iter (hd,'Color 2',at,offset,2,">H")
+		offset += l
+		x = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'X (%)',int(x*100),offset,4,">HH")
+		offset += 4
+		y = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'Y (%)',int(y*100),offset,4,">HH")
+		offset += 4
+		taper = struct.unpack(">H",data[offset:offset+2])[0]
+		add_iter (hd,'Taper',taper,offset,2,">H")
+		offset += 2
+		offset += 6
+		l,rid = read_recid(data,offset)
+		if rid in page.appdoc.recs:
+			at = page.appdoc.recs[rid][1]
+		else:
+			at = "%02x"%rid
+		add_iter (hd,'MultiColorList',at,offset,2,">H")
+		offset += l
+		offset += 2
+		handleang = struct.unpack(">H",data[offset:offset+2])[0]
+		add_iter (hd,'Handle Angle',handleang,offset,2,">H")
+		offset += 2
+		offset += 2
+		hndlwide = cnvrt22(data[offset:offset+4])
+		add_iter (hd,'Handle Wide (%)',int(100*hndlwide),offset,4,">HH")
+		offset += 4
+
 
 def hdLensFill(hd,data,page):
 	offset = 0
@@ -1168,6 +1279,9 @@ hdp = {
 	"LinearFill":hdLinearFill,
 	"List":hdList,
 	"MList":hdList,
+	"MultiColorList":hdMultiColorList,
+	"NewContourFill":hdNewContourFill,
+	"NewRadialFill":hdNewRadialFill,
 	"Oval":hdOval,
 	"Path":hdPath,
 	"Paragraph":hdParagraph,
@@ -1177,6 +1291,7 @@ hdp = {
 	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
 	"StylePropLst":hdStylePropLst,
+	"TaperedFillX":hdTaperedFillX,
 	"TintColor":hdSpotColor,
 	"TintColor6":hdTintColor6,
 	"TFOnPath":hdTFOnPath,
