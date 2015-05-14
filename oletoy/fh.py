@@ -245,6 +245,15 @@ def hdTFOnPath(hd,data,page):
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
 
+def hdFilterAttributeHolder(hd,data,page):
+	offset = 0
+	offset += 2
+	L,recid = read_recid(data,offset)
+	add_iter (hd,'Filter ID',"%02x"%recid,offset,L,">H")
+	offset += L
+	L,recid = read_recid(data,offset)
+	add_iter (hd,'GraphicStyle ID',"%02x"%recid,offset,L,">H")
+
 
 def hdFHTail(hd,data,page):
 	offset = 0
@@ -272,6 +281,31 @@ def hdFHTail(hd,data,page):
 	add_iter (hd,'Page Max Y',"%.4f"%((y1+y1f/65536.)/72.),0x1e,4,"txt")
 	add_iter (hd,'Page W',"%.4f"%((x2+x2f/65536.)/72.),0x32,4,"txt")
 	add_iter (hd,'Page H',"%.4f"%((y2+y2f/65536.)/72.),0x36,4,"txt")
+
+
+def hdFWGlowFilter(hd,data,page):
+	offset = 0
+	l,rid = read_recid(data,0)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Color',at,0,2,">H")
+	offset += l
+	offset += 4
+	w = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Width',w,offset,4,">HH")
+	offset += 4
+	offset += 2
+	cntrst = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Contrast',cntrst,offset,2,">H")
+	offset += 2
+	sm = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Smoothness',sm,offset,4,">HH")
+	offset += 4
+	dstr = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Distribution? <|>',dstr,offset,2,">H")
+	
 
 
 def hdParagraph(hd,data,page):
@@ -1270,7 +1304,9 @@ hdp = {
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
 	"ElemPropLst":hdStylePropLst,
+	"FilterAttributeHolder":hdFilterAttributeHolder,
 	"FHTail":hdFHTail,
+	"FWGlowFilter":hdFWGlowFilter,
 	"GraphicStyle":hdGraphicStyle,
 	"Group":hdGroup,
 	"ImageImport":hdImageImport,
