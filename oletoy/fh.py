@@ -1267,6 +1267,7 @@ hdp = {
 	"BasicLine":hdBasicLine,
 	"BrushList":hdList,
 	"Block":hdBlock,
+	"ClipGroup":hdGroup,
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
 	"ElemPropLst":hdStylePropLst,
