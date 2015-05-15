@@ -283,6 +283,18 @@ def hdFHTail(hd,data,page):
 	add_iter (hd,'Page H',"%.4f"%((y2+y2f/65536.)/72.),0x36,4,"txt")
 
 
+def hdFWBlurFilter(hd,data,page):
+	offset = 0
+	offset += 3
+	add_iter (hd,'Basic (1)/Gaussian (0)',ord(data[offset]),offset,1,"B")
+	offset += 1
+	brad = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Radius (Basic)',brad,offset,4,">I")
+	offset += 4
+	grad = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Radius (Gaussian)',grad,offset,4,">HH")
+	
+
 def hdFWGlowFilter(hd,data,page):
 	offset = 0
 	l,rid = read_recid(data,0)
@@ -671,7 +683,14 @@ def hdBendFilter(hd,data,page):
 	# 0-2  -- Size
 	# 2-4.4-6 -- X
 	# 6-8.8-10 -- Y
-	pass
+	size = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Size',size,offset,2,">H")
+	offset += 2
+	x = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'X',x,offset,4,">HH")
+	offset += 4
+	y = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Y',y,offset,4,">HH")
 
 def hdBlock (hd,data,page):
 		off = 0
@@ -1330,6 +1349,7 @@ hdp = {
 	"AttributeHolder":hdAttributeHolder,
 	"BasicFill":hdBasicFill,
 	"BasicLine":hdBasicLine,
+	"BendFilter":hdBendFilter,
 	"BrushList":hdList,
 	"Block":hdBlock,
 	"ClipGroup":hdGroup,
@@ -1338,6 +1358,7 @@ hdp = {
 	"ElemPropLst":hdStylePropLst,
 	"FilterAttributeHolder":hdFilterAttributeHolder,
 	"FHTail":hdFHTail,
+	"FWBlurFilter":hdFWBlurFilter,
 	"FWGlowFilter":hdFWGlowFilter,
 	"FWShadowFilter":hdFWShadowFilter,
 	"GraphicStyle":hdGraphicStyle,
