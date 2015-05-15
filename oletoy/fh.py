@@ -594,6 +594,56 @@ def hdNewRadialFill(hd,data,page):
 		add_iter (hd,"Type",ord(data[offset+1]),offset+1,1,"B")
 		
 
+def hdNewBlend(hd,data,page):
+	offset = 0
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Graphic Style',at,0,2,">H")
+	offset += l
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Parent',at,offset,2,">H")
+	offset += l
+	offset += 8
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'List (Content)',at,offset,2,">H")
+	offset += l
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'List (Path 1)',at,offset,2,">H")
+	offset += l
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'List (Path 2)',at,offset,2,">H")
+	offset += l
+	offset += 2
+	steps = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Steps',steps,offset,2,">H")
+	offset += 2
+	offset += 4
+	rng1 = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Range start (%)',rng1,offset,4,">HH")
+	offset += 4
+	rng2 = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Range end (%)',rng2,offset,4,">HH")
+	offset += 4
+
 
 def hdNewContourFill(hd,data,page):
 	offset = 0
@@ -680,9 +730,6 @@ def hdLensFill(hd,data,page):
 
 def hdBendFilter(hd,data,page):
 	offset = 0
-	# 0-2  -- Size
-	# 2-4.4-6 -- X
-	# 6-8.8-10 -- Y
 	size = struct.unpack(">H",data[offset:offset+2])[0]
 	add_iter (hd,'Size',size,offset,2,">H")
 	offset += 2
@@ -1370,6 +1417,7 @@ hdp = {
 	"List":hdList,
 	"MList":hdList,
 	"MultiColorList":hdMultiColorList,
+	"NewBlend":hdNewBlend,
 	"NewContourFill":hdNewContourFill,
 	"NewRadialFill":hdNewRadialFill,
 	"Oval":hdOval,
