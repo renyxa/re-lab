@@ -292,7 +292,9 @@ def hdFWGlowFilter(hd,data,page):
 		at = "%02x"%rid
 	add_iter (hd,'Color',at,0,2,">H")
 	offset += l
-	offset += 4
+	offset += 3
+	add_iter (hd,'Inner',ord(data[offset]),offset,1,"B")
+	offset += 1
 	w = cnvrt22(data[offset:offset+4])
 	add_iter (hd,'Width',w,offset,4,">HH")
 	offset += 4
@@ -305,7 +307,36 @@ def hdFWGlowFilter(hd,data,page):
 	offset += 4
 	dstr = struct.unpack(">H",data[offset:offset+2])[0]
 	add_iter (hd,'Distribution? <|>',dstr,offset,2,">H")
-	
+
+
+def hdFWShadowFilter(hd,data,page):
+	offset = 0
+	l,rid = read_recid(data,0)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Color',at,0,2,">H")
+	offset += l
+	offset += 2
+	add_iter (hd,'Knock out',ord(data[offset]),offset,1,"B")
+	offset += 1
+	add_iter (hd,'Inner',not(ord(data[offset])),offset,1,"B")
+	offset += 1
+	d = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Distribution? <|>',d,offset,4,">HH")
+	offset += 4
+	offset += 2
+	cntrst = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Contrast',cntrst,offset,2,">H")
+	offset += 2
+	sm = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Smoothness',sm,offset,4,">HH")
+	offset += 4
+	offset += 2
+	ang = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,'Angle',ang,offset,2,">H")
+
 
 
 def hdParagraph(hd,data,page):
@@ -1308,6 +1339,7 @@ hdp = {
 	"FilterAttributeHolder":hdFilterAttributeHolder,
 	"FHTail":hdFHTail,
 	"FWGlowFilter":hdFWGlowFilter,
+	"FWShadowFilter":hdFWShadowFilter,
 	"GraphicStyle":hdGraphicStyle,
 	"Group":hdGroup,
 	"ImageImport":hdImageImport,
