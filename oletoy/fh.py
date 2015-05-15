@@ -245,6 +245,31 @@ def hdTFOnPath(hd,data,page):
 			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
 			shift+=8
 
+def hdTileFill(hd,data,page):
+	offset = 0
+	L,recid = read_recid(data,offset)
+	add_iter (hd,'XForm ID',"%02x"%recid,offset,L,">H")
+	offset += L
+	L,recid = read_recid(data,offset)
+	add_iter (hd,'Group ID',"%02x"%recid,offset,L,">H")
+	offset += L
+	offset += 8
+	x1 = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'X1',x1*100,offset,4,">HH")
+	offset += 4
+	y1 = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Y1',y1*100,offset,4,">HH")
+	offset += 4
+	x2 = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'X2',x2,offset,4,">HH")
+	offset += 4
+	y2 = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Y2',y2,offset,4,">HH")
+	offset += 4
+	ang = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Angle',ang,offset,4,">HH")
+
+
 def hdFilterAttributeHolder(hd,data,page):
 	offset = 0
 	offset += 2
@@ -1430,6 +1455,7 @@ hdp = {
 	"SpotColor6":hdSpotColor6,
 	"StylePropLst":hdStylePropLst,
 	"TaperedFillX":hdTaperedFillX,
+	"TileFill":hdTileFill,
 	"TintColor":hdSpotColor,
 	"TintColor6":hdTintColor6,
 	"TFOnPath":hdTFOnPath,
