@@ -930,6 +930,94 @@ def hdBlock (hd,data,page):
 			if page.version < 10:
 				res -= 6
 
+def hdBrush (hd,data,page):
+	offset = 0
+	L,name = read_recid(data,offset)
+	if name in page.appdoc.recs:
+		at = page.appdoc.recs[name][1]
+	else:
+		at = "%02x"%name
+	add_iter (hd,'Name',at,offset,L,">H")
+	offset += L
+	L,name = read_recid(data,offset)
+	if name in page.appdoc.recs:
+		at = page.appdoc.recs[name][1]
+	else:
+		at = "%02x"%name
+	add_iter (hd,'List',at,offset,L,">H")
+
+
+def hdBrushStroke (hd,data,page):
+	offset = 0
+	L,name = read_recid(data,offset)
+	if name in page.appdoc.recs:
+		at = page.appdoc.recs[name][1]
+	else:
+		at = "%02x"%name
+	add_iter (hd,'Brush ID',at,offset,L,">H")
+	offset += L
+	w = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Width',w,offset,L,">HH")
+
+
+def hdBrushTip (hd,data,page):
+	btiptype = {0:"Fixed",1:"Random",2:"Variable",3:"Flare"}
+	offset = 0
+	L,name = read_recid(data,offset)
+	if name in page.appdoc.recs:
+		at = page.appdoc.recs[name][1]
+	else:
+		at = "%02x"%name
+	add_iter (hd,'SymbolClass',at,offset,L,">H")
+	offset += L
+	oop = bool(struct.unpack(">I",data[offset:offset+4])[0])
+	add_iter (hd,'Orient on Path',oop,offset,4,">I")
+	offset += 4
+	cnt = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Count',cnt,offset,4,">I")
+	offset += 4
+	scltype = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Scaling Type',btiptype[scltype],offset,4,">I")
+	offset += 4
+	scltype = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Angle Type',btiptype[scltype],offset,4,">I")
+	offset += 4
+	scltype = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Offset Type',btiptype[scltype],offset,4,">I")
+	offset += 4
+	scltype = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Spacing Type',btiptype[scltype],offset,4,">I")
+	offset += 4
+	oop = struct.unpack(">I",data[offset:offset+4])[0]
+	add_iter (hd,'Paint (0)/Spray (1)',oop,offset,4,">I")
+	offset += 4
+	sclmin = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Scaling Min',sclmin,offset,4,">HH")
+	offset += 4
+	sclmax = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Scaling Max',sclmax,offset,4,">HH")
+	offset += 4
+	amin = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Angle Min',amin,offset,4,">HH")
+	offset += 4
+	amax = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Angle Max',amax,offset,4,">HH")
+	offset += 4
+	omin = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Offset Min',omin,offset,4,">HH")
+	offset += 4
+	omax = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Offset Max',omax,offset,4,">HH")
+	offset += 4
+	spcmin = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Spacing Min',spcmin,offset,4,">HH")
+	offset += 4
+	spcmax = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Spacing Max',spcmax,offset,4,">HH")
+	offset += 4
+	fcrn = bool(struct.unpack(">I",data[offset:offset+4])[0])
+	add_iter (hd,'Fold Corners',fcrn,offset,4,">I")
+
 
 def hdPropLst(hd,data,page):
 	off = 0
@@ -1422,8 +1510,11 @@ hdp = {
 	"BasicFill":hdBasicFill,
 	"BasicLine":hdBasicLine,
 	"BendFilter":hdBendFilter,
-	"BrushList":hdList,
 	"Block":hdBlock,
+	"Brush":hdBrush,
+	"BrushList":hdList,
+	"BrushTip":hdBrushTip,
+	"BrushStroke":hdBrushStroke,
 	"ClipGroup":hdGroup,
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
