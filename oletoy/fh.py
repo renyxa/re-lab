@@ -1059,6 +1059,45 @@ def hdStylePropLst(hd,data,page):
 			at = "%02x"%rid1
 		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
 
+def hdSymbolClass (hd,data,page):
+	offset = 0
+	L,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Name',at,offset,L,">H")
+	offset += L
+	L,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'Group ID',at,offset,L,">H")
+	offset += L
+	L,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'DateTime ID',at,offset,L,">H")
+	offset += L
+	L,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'SymbolLibrary ID',at,offset,L,">H")
+	offset += L
+	L,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	add_iter (hd,'List ID',at,offset,L,">H")
+	offset += L
+
+
 def hdImageImport(hd,data,page):
 	offset = 0
 	L1,gr_style = read_recid(data,offset)
@@ -1424,6 +1463,36 @@ def hdProcessColor(hd,data,page):
 		cmpnt = struct.unpack(">H",data[offset+i*2:offset+i*2+2])[0]/256
 		add_iter (hd,cmpntnames[i],"%d"%cmpnt,offset+i*2,2,">H")
 
+def hdCalligraphicStroke (hd,data,page):
+	offset = 0
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	fmt = ">H"
+	if l == 4:
+		fmt = ">I"
+	add_iter (hd,'Color',at,offset,l,fmt)
+	offset += l
+	ang = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'Angle',ang,offset,4,">HH")
+	offset += 4
+	w = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'W',w,offset,4,">HH")
+	offset += 4
+	h = cnvrt22(data[offset:offset+4])
+	add_iter (hd,'H',h,offset,4,">HH")
+	offset += 4
+	l,rid = read_recid(data,offset)
+	if rid in page.appdoc.recs:
+		at = page.appdoc.recs[rid][1]
+	else:
+		at = "%02x"%rid
+	fmt = ">H"
+	if l == 4:
+		fmt = ">I"
+	add_iter (hd,'Path',at,offset,l,fmt)
 
 def hdColor6(hd,data,page):
 	offset = 0
@@ -1502,6 +1571,41 @@ def hdSpotColor6(hd,data,page):
 		at = "%02x"%ustr1
 	add_iter (hd,'Name',at,2,2,">H")
 
+def hdTransformFilter(hd,data,page):
+	offset = 0
+	cp = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,"Copies",cp,offset,2,">h")
+	offset += 2
+	xsc = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Scale X",xsc,offset,4,">h")
+	offset += 4
+	ysc = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Scale Y",ysc,offset,4,">h")
+	offset += 4
+	xsk = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Skew X",xsk,offset,4,">h")
+	offset += 4
+	ysk = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Skew Y",ysk,offset,4,">h")
+	offset += 4
+	rot = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Rotate",rot,offset,4,">h")
+	offset += 4
+	xof = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Offset X",xof,offset,4,">h")
+	offset += 4
+	yof = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Offset Y",yof,offset,4,">h")
+	offset += 4
+	xc = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Center X",xc,offset,4,">h")
+	offset += 4
+	yc = cnvrt22(data[offset:offset+4])
+	add_iter (hd,"Center Y",yc,offset,4,">h")
+	offset += 4
+	uni = bool(ord(data[offset]))
+	add_iter (hd,"Uniform Scale",uni,offset,1,"B")
+
 
 hdp = {
 	"AGDFont":hdAGDFont,
@@ -1515,6 +1619,7 @@ hdp = {
 	"BrushList":hdList,
 	"BrushTip":hdBrushTip,
 	"BrushStroke":hdBrushStroke,
+	"CalligraphicStroke":hdCalligraphicStroke,
 	"ClipGroup":hdGroup,
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
@@ -1545,6 +1650,7 @@ hdp = {
 	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
 	"StylePropLst":hdStylePropLst,
+	"SymbolClass":hdSymbolClass,
 	"TaperedFillX":hdTaperedFillX,
 	"TileFill":hdTileFill,
 	"TintColor":hdSpotColor,
@@ -1554,6 +1660,7 @@ hdp = {
 	"TextInPath":hdTFOnPath,
 	"TEffect":hdTEffect,
 	"TString":hdTString,
+	"TransformFilter":hdTransformFilter,
 	"VDict":hdTEffect,
 	"VMpObj":hdVMpObj,
 	"Xform":hdXform,
