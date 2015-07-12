@@ -18,8 +18,21 @@ import struct
 
 from utils import add_iter, add_pgiter, rdata
 
+### General utils
+
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
+
+def find_var(data, offset):
+	"""Seek to the end of a variable-length number."""
+	assert len(data) > offset
+	off = offset
+	c = ord(data[off])
+	while off < len(data) and c & 0x80:
+		off += 1
+		c = ord(data[off])
+	off += 1
+	return off
 
 def read_var(data, offset):
 	"""Read a variable length number."""
@@ -44,6 +57,13 @@ def read_var(data, offset):
 		n += c
 
 	return (n, off)
+
+def get_or_default(dictionary, key, default):
+	if dictionary.has_key(key):
+		return dictionary[key]
+	return default
+
+### Compression
 
 # The compression method (as I currently understand it)
 #
@@ -129,87 +149,207 @@ def uncompress(data):
 
 	return result
 
+### Protocol buffers parser
+
+class result:
+	def __init__(self, value, desc, start, end):
+		self.value = value
+		self.desc = desc
+		self.start = start
+		self.end = end
+
+class varlen:
+	def __init__(self, parser):
+		self.size = None
+		self.parser = parser
+
+	def __call__(self, data, off):
+		return self.parser(data, off)
+
+class fixed:
+	def __init__(self, size, fmt):
+		self.size = size
+		self.fmt = fmt
+
+	def __call__(self, data, off):
+		return rdata(data, off, self.fmt)[0]
+
+class primitive:
+	def __init__(self, parser):
+		self.parser = parser
+		self.primitive = True
+		self.structured = False
+		self.size = parser.size
+
+	def __call__(self, data, off, start, end):
+		return result(self.parser(data, off), self, start, end)
+
+def parse_bool(data, off):
+	return bool(read_var(data, off)[0])
+
+def parse_int64(data, off):
+	return read_var(data, off)[0]
+
+def parse_sint64(data, off):
+	return read_var(data, off)[0]
+
+bool_ = primitive(varlen(parse_bool))
+int64 = primitive(varlen(parse_int64))
+sint64 = primitive(varlen(parse_sint64))
+fixed32 = primitive(fixed(4, '<I'))
+sfixed32 = primitive(fixed(4, '<i'))
+fixed64 = primitive(fixed(8, '<Q'))
+sfixed64 = primitive(fixed(8, '<q'))
+float_ = primitive(fixed(4, '<f'))
+double_ = primitive(fixed(8, '<d'))
+
+class string:
+	def __init__(self):
+		self.primitive = False
+		self.structured = False
+
+	def __call__(self, data, off, start, end):
+		return result(data[off:end], self, start, end)
+
+class packed:
+	def __init__(self, item):
+		self.item = item
+		self.primitive = False
+		self.structured = False
+
+	def __call__(self, data, off, start, end):
+		values = []
+		extents = []
+		while off < end:
+			if self.item.size == None:
+				orig = off
+				off = find_var(data, off)
+				values.append(self.item.parser(data, orig))
+				extents.append((orig, off))
+			else:
+				values.append(self.item.parser(data, off))
+				extents.append((off, off + self.item.size))
+				off += self.item.size
+		return self._result(values, extents, self, start, end)
+
+	def _result(self, values, extents, desc, start, end):
+		r = result(values, desc, start, end)
+		r.extents = extents
+		return r
+
+class message:
+	def __init__(self, desc):
+		if desc:
+			self.desc = desc
+		else:
+			self.desc = {}
+		self.primitive = False
+		self.structured = True
+
+	def __call__(self, data, off, start, end):
+		msg = {}
+		while off < end:
+			stt = off
+			(key, off) = read_var(data, off)
+			field_num = key >> 3
+			wire_type = key & 0x7
+			stt_data = off
+			if wire_type == 0:
+				off = find_var(data, off)
+			elif wire_type == 1:
+				off += 8
+			elif wire_type == 2:
+				(length, off) = read_var(data, off)
+				stt_data = off
+				off += length
+			elif wire_type == 3 or wire_type == 4:
+				print("unexpected type: group")
+			elif wire_type == 5:
+				off += 4
+			if not msg.has_key(field_num):
+				msg[field_num] = []
+			if self.desc.has_key(field_num):
+				# print("parsing field %d at %d in [%d, %d) as %s" %
+						# (field_num, stt_data, stt, off, self.desc[field_num][1]))
+				msg[field_num].append(self.desc[field_num][1](data, stt_data, stt, off))
+			else:
+				# print("parsing generic field %d of size %d at %d in [%d, %d)" %
+						# (field_num, off - stt_data, stt_data, stt, off))
+				msg[field_num].append(self._result(data[stt_data:off], stt, off))
+		return result(msg, self, start, end)
+
+	def _result(self, values, start, end):
+		r = result(values, None, start, end)
+		class empty:
+			pass
+		r.desc = empty()
+		r.desc.primitive = False
+		r.desc.structured = False
+		return r
+
+### File parser
+
+MESSAGES = {}
+
 class IWAParser(object):
 
-    def __init__(self, data, page, parent):
-	self.data = data
-	self.page = page
-	self.parent = parent
+	def __init__(self, data, page, parent):
+		self.data = data
+		self.page = page
+		self.parent = parent
 
-    def parse(self):
-	off = 0
-	while off < len(self.data):
-	    obj_start = off
-	    (off, length, oid) = self._parse_header(off)
-	    header_data = self.data[obj_start:off]
-	    reflist_data = []
-	    unknown1_data = []
+	def parse(self):
+		off = 0
+		obj_num = 0
+		while off < len(self.data):
+			obj_start = off
+			(hdr_len, off) = read_var(self.data, off)
+			hdr = self._parse_header(off, hdr_len)
+			data_len = 0
+			if hdr.value.has_key(2):
+				if hdr.value[2][0].value.has_key(3):
+					data_len = hdr.value[2][0].value[3][0].value
+			obj_data = self.data[obj_start:off + hdr_len + data_len]
+			objiter = add_pgiter(self.page, 'Object %d' % obj_num, 'iwa', 'iwa_object', obj_data, self.parent)
+			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
+			off += hdr_len
+			if data_len > 0:
+				data = self._parse_object(off, data_len)
+				self._add_pgiter('Data', data, off, off + data_len, objiter)
+				off += data_len
+			obj_num += 1
 
-	    # TODO: maybe the reflist is allowed even if there is no content?
-	    if length > 0:
-		c = int(read(self.data, off, '<B'))
-		if c & 0xf0 == 0x20:
-		    start = off
-		    off = self._parse_reflist(off)
-		    reflist_data = self.data[start:off]
+	_HEADER_MSG = message({2: ('Data info', message({3: ('Data size', int64), 5: ('Object IDs', packed(int64))}))})
 
-		c = int(read(self.data, off, '<B'))
-		if c & 0xf0 == 0x30:
-		    start = off
-		    off = self._parse_unknown1(off)
-		    unknown1_data = self.data[start:off]
+	def _parse_header(self, off, length):
+		return self._HEADER_MSG(self.data, off, off, off + length)
 
-	    objiter = add_pgiter(self.page, 'Object %d' % oid, 'iwa', 0, self.data[obj_start:off + length], self.parent)
-	    add_pgiter(self.page, 'Header', 'iwa', 'iwa_object_header', header_data, objiter)
-	    if len(reflist_data) > 0:
-		# TODO: what does this mean, exactly? Should it perhaps be a part of header?
-		add_pgiter(self.page, 'List of references', 'iwa', 'iwa_reflist', reflist_data, objiter)
-	    if len(unknown1_data) > 0:
-		add_pgiter(self.page, 'Unknown optional block', 'iwa', 0, unknown1_data, objiter)
+	def _parse_object(self, off, length):
+		r = result(None, off, off, off + length)
+		class empty:
+			pass
+		r.desc = empty()
+		r.desc.structured = False
+		r.desc.primitive = False
+		return r
 
-	    if length > 0:
-		off = self._parse_content(off, length, objiter)
+	def _add_pgiter(self, name, obj, start, end, parent):
+		it = add_pgiter(self.page, name, 'iwa', 0, self.data[start:end], parent)
+		if obj.desc.structured:
+			for (k, v) in obj.value.iteritems():
+				single = len(v) == 1
+				for (i, e) in zip(xrange(len(v)), iter(v)):
+					if single:
+						n = '%d' % k
+					else:
+						n = "%d[%d]" % (k, i)
+					if obj.desc.desc.has_key(k):
+						n = '%s (%s)' % (n, obj.desc.desc[k][0])
+					if obj.desc.primitive:
+						n = '%s: %s' % (n, e.value)
+					self._add_pgiter(n, e, e.start, e.end, it)
 
-	# assert off == len(self.data)
-
-    def _parse_header(self, offset):
-	(tag, off) = read_var(self.data, offset)
-	(eight, off) = rdata(self.data, off, '<B')
-	assert int(eight) == 0x8
-	(oid, off) = read_var(self.data, off)
-	(twelve, off) = rdata(self.data, off, '<B')
-	assert int(twelve) == 0x12
-	(xtag, off) = read_var(self.data, off)
-	(eight, off) = rdata(self.data, off, '<B')
-	assert int(eight) == 0x8
-	(xid, off) = read_var(self.data, off)
-	(twelve, off) = rdata(self.data, off, '<B')
-	assert int(twelve) == 0x12
-	(more, off) = rdata(self.data, off, '5s')
-	assert ord(more[0]) == 0x3
-	assert ord(more[1]) == 0x1
-	assert ord(more[2]) == 0x0
-	assert ord(more[3]) == 0x5
-	assert ord(more[4]) == 0x18
-	(length, off) = read_var(self.data, off)
-	return (off, length, oid)
-
-    def _parse_reflist(self, offset):
-	(c, off) = rdata(self.data, offset, '<B')
-	assert int(c) & 0xf0 == 0x20
-	(length, off) = read_var(self.data, off)
-	return off + int(length)
-
-    def _parse_unknown1(self, offset):
-	# FIXME: this is just a band-aid for what I see in some files.
-	(c, off) = rdata(self.data, offset, '<B')
-	assert int(c) & 0xf0 == 0x30
-	(length, off) = read_var(self.data, off)
-	return off + int(length)
-
-    def _parse_content(self, offset, length, parent):
-	add_pgiter(self.page, 'Content', 'iwa', 0, self.data[offset:offset + length], parent)
-	return offset + length
+### Data view callbacks
 
 def add_iwa_compressed_block(hd, size, data):
 	(length, off) = rdata(data, 1, '<H')
@@ -219,48 +359,16 @@ def add_iwa_compressed_block(hd, size, data):
 	(ulength, off) = read_var(data, off)
 	add_iter(hd, 'Uncompressed length', ulength, var_off, off - var_off, '%ds' % (off - var_off))
 
-def add_iwa_object_header(hd, size, data):
-    orig = 0
-    (tag, off) = read_var(data, 0)
-    add_iter(hd, 'Tag ID', tag, orig, off - orig, '%ds' % (off - orig))
-    off += 1
-    orig = off
-    (oid, off) = read_var(data, off)
-    add_iter(hd, 'Object ID', oid, orig, off - orig, '%ds' % (off - orig))
-    off += 1
-    orig = off
-    (xtag, off) = read_var(data, off)
-    add_iter(hd, 'Tag ID', xtag, orig, off - orig, '%ds' % (off - orig))
-    off += 1
-    orig = off
-    (ref, off) = read_var(data, off)
-    add_iter(hd, 'ID / Reference???', ref, orig, off - orig, '%ds' % (off - orig))
-    off += 1
-    off += 5
-    orig = off
-    (length, off) = read_var(data, off)
-    add_iter(hd, 'Length of content', length, orig, off - orig, '%ds' % (off - orig))
-
-def add_iwa_reflist(hd, size, data):
-    (flags, off) = rdata(data, 0, '<B')
-    add_iter(hd, 'Flags???', '0x%x' % flags, off - 1, 1, '<B')
-    orig = off
-    (length, off) = read_var(data, off)
-    add_iter(hd, 'Length', length, orig, off - orig, '%ds' % (off - orig))
-
-    i = 0
-    end = off + int(length)
-    while off < end:
-	orig = off
-	(ref, off) = read_var(data, off)
-	add_iter(hd, 'Reference %d' % i, ref, orig, off - orig, '%ds' % (off - orig))
-	i += 1
+def add_iwa_object(hd, size, data):
+	(length, off) = read_var(data, 0)
+	add_iter(hd, 'Header length', length, 0, off, '%ds' % off)
 
 iwa_ids = {
 	'iwa_compressed_block': add_iwa_compressed_block,
-	'iwa_object_header': add_iwa_object_header,
-	'iwa_reflist': add_iwa_reflist,
+	'iwa_object': add_iwa_object,
 }
+
+### Entry point
 
 def open(data, page, parent):
 	n = 0
