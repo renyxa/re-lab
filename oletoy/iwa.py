@@ -175,11 +175,13 @@ class fixed:
 		return rdata(data, off, self.fmt)[0]
 
 class primitive:
-	def __init__(self, parser):
+	def __init__(self, parser, name):
 		self.parser = parser
+		self.name = name # A hack to get showing of packed arrays working
 		self.primitive = True
 		self.structured = False
 		self.size = parser.size
+		self.visualizer = 0
 
 	def __call__(self, data, off, start, end):
 		return result(self.parser(data, off), self, start, end)
@@ -193,20 +195,21 @@ def parse_int64(data, off):
 def parse_sint64(data, off):
 	return read_var(data, off)[0]
 
-bool_ = primitive(varlen(parse_bool))
-int64 = primitive(varlen(parse_int64))
-sint64 = primitive(varlen(parse_sint64))
-fixed32 = primitive(fixed(4, '<I'))
-sfixed32 = primitive(fixed(4, '<i'))
-fixed64 = primitive(fixed(8, '<Q'))
-sfixed64 = primitive(fixed(8, '<q'))
-float_ = primitive(fixed(4, '<f'))
-double_ = primitive(fixed(8, '<d'))
+bool_ = primitive(varlen(parse_bool), 'bool')
+int64 = primitive(varlen(parse_int64), 'int64')
+sint64 = primitive(varlen(parse_sint64), 'sint64')
+fixed32 = primitive(fixed(4, '<I'), 'fixed32')
+sfixed32 = primitive(fixed(4, '<i'), 'sfixed32')
+fixed64 = primitive(fixed(8, '<Q'), 'fixed64')
+sfixed64 = primitive(fixed(8, '<q'), 'sfixed64')
+float_ = primitive(fixed(4, '<f'), 'float')
+double_ = primitive(fixed(8, '<d'), 'double')
 
 class string:
 	def __init__(self):
 		self.primitive = False
 		self.structured = False
+		self.visualizer = 'string'
 
 	def __call__(self, data, off, start, end):
 		return result(data[off:end], self, start, end)
@@ -216,6 +219,10 @@ class packed:
 		self.item = item
 		self.primitive = False
 		self.structured = False
+		if item.name:
+			self.visualizer = 'packed_%s' % item.name
+		else:
+			self.visualizer = 0
 
 	def __call__(self, data, off, start, end):
 		values = []
@@ -245,6 +252,7 @@ class message:
 			self.desc = {}
 		self.primitive = False
 		self.structured = True
+		self.visualizer = 0
 
 	def __call__(self, data, off, start, end):
 		msg = {}
@@ -285,6 +293,7 @@ class message:
 		r.desc = empty()
 		r.desc.primitive = False
 		r.desc.structured = False
+		r.desc.visualizer = 0
 		return r
 
 ### File parser
@@ -331,10 +340,11 @@ class IWAParser(object):
 		r.desc = empty()
 		r.desc.structured = False
 		r.desc.primitive = False
+		r.desc.visualizer = 0
 		return r
 
 	def _add_pgiter(self, name, obj, start, end, parent):
-		it = add_pgiter(self.page, name, 'iwa', 0, self.data[start:end], parent)
+		it = add_pgiter(self.page, name, 'iwa', obj.desc.visualizer, self.data[start:end], parent)
 		if obj.desc.structured:
 			for (k, v) in obj.value.iteritems():
 				single = len(v) == 1
@@ -363,9 +373,65 @@ def add_iwa_object(hd, size, data):
 	(length, off) = read_var(data, 0)
 	add_iter(hd, 'Header length', length, 0, off, '%ds' % off)
 
+def add_packed(hd, size, data, parser, p16=False):
+	off = find_var(data, 0) # skip key
+	len_off = off
+	(length, off) = read_var(data, off)
+	add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
+	obj = parser(data, off, 0, size)
+	i = 0
+	for (v, e) in zip(obj.value, obj.extents):
+		add_iter(hd, 'Value %d' % i, v, e[0], e[1] - e[0], '%ds' % (e[1] - e[0]))
+		i += 1
+
+def add_packed_bool(hd, size, data):
+	add_packed(hd, size, data, packed(bool_))
+
+def add_packed_int64(hd, size, data):
+	add_packed(hd, size, data, packed(int64))
+
+def add_packed_sint64(hd, size, data):
+	add_packed(hd, size, data, packed(sint64))
+
+def add_packed_fixed32(hd, size, data):
+	add_packed(hd, size, data, packed(fixed32))
+
+def add_packed_sfixed32(hd, size, data):
+	add_packed(hd, size, data, packed(sfixed32))
+
+def add_packed_fixed64(hd, size, data):
+	add_packed(hd, size, data, packed(fixed64))
+
+def add_packed_sfixed64(hd, size, data):
+	add_packed(hd, size, data, packed(sfixed64))
+
+def add_packed_float(hd, size, data):
+	add_packed(hd, size, data, packed(float_))
+
+def add_packed_double(hd, size, data):
+	add_packed(hd, size, data, packed(double_))
+
+def add_string(hd, size, data):
+	off = find_var(data, 0) # skip key
+	len_off = off
+	(length, off) = read_var(data, off)
+	add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
+	obj = string(data, off, 0, size)
+	add_iter(hd, 'String', off, size - off, '%ds' % (size - off))
+
 iwa_ids = {
 	'iwa_compressed_block': add_iwa_compressed_block,
 	'iwa_object': add_iwa_object,
+	'packed_bool': add_packed_bool,
+	'packed_int64': add_packed_int64,
+	'packed_sint64': add_packed_sint64,
+	'packed_fixed32': add_packed_fixed32,
+	'packed_sfixed32': add_packed_sfixed32,
+	'packed_fixed64': add_packed_fixed64,
+	'packed_sfixed64': add_packed_sfixed64,
+	'packed_float': add_packed_float,
+	'packed_double': add_packed_double,
+	'string': add_string,
 }
 
 ### Entry point
