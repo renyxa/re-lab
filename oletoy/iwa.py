@@ -360,9 +360,9 @@ class IWAParser(object):
 					else:
 						n = "%d[%d]" % (k, i)
 					if obj.desc.desc.has_key(k):
-						n = '%s (%s)' % (n, obj.desc.desc[k][0])
+						n = '%s: %s' % (n, obj.desc.desc[k][0])
 					if obj.desc.primitive:
-						n = '%s: %s' % (n, e.value)
+						n = '%s = %s' % (n, e.value)
 					self._add_pgiter(n, e, e.start, e.end, it)
 
 ### Data view callbacks
