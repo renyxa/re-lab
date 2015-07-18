@@ -350,6 +350,8 @@ class IWAParser(object):
 		return r
 
 	def _add_pgiter(self, name, obj, start, end, parent):
+		if obj.desc.primitive:
+			name = '%s = %s' % (name, obj.value)
 		it = add_pgiter(self.page, name, 'iwa', obj.desc.visualizer, self.data[start:end], parent)
 		if obj.desc.structured:
 			for (k, v) in obj.value.iteritems():
@@ -361,8 +363,6 @@ class IWAParser(object):
 						n = "%d[%d]" % (k, i)
 					if obj.desc.desc.has_key(k):
 						n = '%s: %s' % (n, obj.desc.desc[k][0])
-					if obj.desc.primitive:
-						n = '%s = %s' % (n, e.value)
 					self._add_pgiter(n, e, e.start, e.end, it)
 
 ### Data view callbacks
