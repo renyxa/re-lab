@@ -328,7 +328,13 @@ class IWAParser(object):
 				off += data_len
 			obj_num += 1
 
-	_HEADER_MSG = message({2: ('Data info', message({3: ('Data size', int64), 5: ('Object IDs', packed(int64))}))})
+	_HEADER_MSG = message({2: ('Data info', message(
+		{
+			1: ('Object type?', int64),
+			3: ('Data size', int64),
+			5: ('Object IDs', packed(int64))
+		}
+	))})
 
 	def _parse_header(self, off, length):
 		return self._HEADER_MSG(self.data, off, off, off + length)
