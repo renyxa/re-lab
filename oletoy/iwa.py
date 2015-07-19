@@ -298,12 +298,18 @@ class message:
 				self.visualizer = None
 
 			def __call__(self, data, off, start, end):
-				if wire_type == 2: # try to parse as a message
+				if wire_type == 0:
+					self.visualizer = 'iwa_varint'
+				elif wire_type == 1:
+					self.visualizer = 'iwa_64bit'
+				elif wire_type == 2: # try to parse as a message
 					try:
 						desc = message()
 						return desc(data, off, start, end)
 					except:
 						pass
+				elif wire_type == 5:
+					self.visualizer = 'iwa_32bit'
 				return result(data[start:end], self, start, end)
 
 		if self.desc.has_key(field):
@@ -367,6 +373,7 @@ class IWAParser(object):
 	_HEADER_MSG = message({2: ('Data info', message(
 		{
 			1: ('Object type?', int64),
+			2: (None, packed(int64)),
 			3: ('Data size', int64),
 			5: ('Object IDs', packed(int64))
 		}
@@ -427,6 +434,24 @@ def add_field(hd, size, data):
 		add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
 	return off
 
+def add_32bit(hd, size, data):
+	off = add_field(hd, size, data)
+	f32 = read(data, off, '<I')
+	s32 = read(data, off, '<i')
+	f = read(data, off, '<f')
+	add_iter(hd, 'Fixed32', f32, off, off + 4, '<I')
+	add_iter(hd, 'Signed fixed32', s32, off, off + 4, '<i')
+	add_iter(hd, 'Float', f, off, off + 4, '<f')
+
+def add_64bit(hd, size, data):
+	off = add_field(hd, size, data)
+	f64 = read(data, off, '<Q')
+	s64 = read(data, off, '<q')
+	d = read(data, off, '<d')
+	add_iter(hd, 'Fixed64', f64, off, off + 8, '<Q')
+	add_iter(hd, 'Signed fixed64', s64, off, off + 8, '<q')
+	add_iter(hd, 'Double', d, off, off + 8, '<d')
+
 def add_packed(hd, size, data, parser, p16=False):
 	off = add_field(hd, size, data)
 	obj = parser(data, off, 0, size)
@@ -467,7 +492,18 @@ def add_string(hd, size, data):
 	obj = string()(data, off, 0, size)
 	add_iter(hd, 'String', obj.value, off, size - off, '%ds' % (size - off))
 
+def add_varint(hd, size, data):
+	off = add_field(hd, size, data)
+	i = parse_int64(data, off)
+	s = parse_sint64(data, off)
+	b = parse_bool(data, off)
+	add_iter(hd, 'Int', i, off, size - off, '%ds' % (size - off))
+	add_iter(hd, 'Signed int', s, off, size - off, '%ds' % (size - off))
+	add_iter(hd, 'Bool', b, off, size - off, '%ds' % (size - off))
+
 iwa_ids = {
+	'iwa_32bit': add_32bit,
+	'iwa_64bit': add_64bit,
 	'iwa_compressed_block': add_iwa_compressed_block,
 	'iwa_field': add_field,
 	'iwa_object': add_iwa_object,
@@ -481,6 +517,7 @@ iwa_ids = {
 	'iwa_packed_float': add_packed_float,
 	'iwa_packed_double': add_packed_double,
 	'iwa_string': add_string,
+	'iwa_varint': add_varint,
 }
 
 ### Entry point
