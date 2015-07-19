@@ -151,6 +151,10 @@ def uncompress(data):
 
 ### Protocol buffers parser
 
+# Description of the wire format: https://developers.google.com/protocol-buffers/docs/encoding
+# Note: this is rather simplified parser, tailored to the purpose of
+# displaying the complete structure and values.
+
 class result:
 	def __init__(self, value, desc, start, end):
 		self.value = value
