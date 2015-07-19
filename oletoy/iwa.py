@@ -209,7 +209,7 @@ class string:
 	def __init__(self):
 		self.primitive = False
 		self.structured = False
-		self.visualizer = 'string'
+		self.visualizer = 'iwa_string'
 
 	def __call__(self, data, off, start, end):
 		return result(data[off:end], self, start, end)
@@ -220,7 +220,7 @@ class packed:
 		self.primitive = False
 		self.structured = False
 		if item.name:
-			self.visualizer = 'packed_%s' % item.name
+			self.visualizer = 'iwa_packed_%s' % item.name
 		else:
 			self.visualizer = None
 
@@ -471,16 +471,16 @@ iwa_ids = {
 	'iwa_compressed_block': add_iwa_compressed_block,
 	'iwa_field': add_field,
 	'iwa_object': add_iwa_object,
-	'packed_bool': add_packed_bool,
-	'packed_int64': add_packed_int64,
-	'packed_sint64': add_packed_sint64,
-	'packed_fixed32': add_packed_fixed32,
-	'packed_sfixed32': add_packed_sfixed32,
-	'packed_fixed64': add_packed_fixed64,
-	'packed_sfixed64': add_packed_sfixed64,
-	'packed_float': add_packed_float,
-	'packed_double': add_packed_double,
-	'string': add_string,
+	'iwa_packed_bool': add_packed_bool,
+	'iwa_packed_int64': add_packed_int64,
+	'iwa_packed_sint64': add_packed_sint64,
+	'iwa_packed_fixed32': add_packed_fixed32,
+	'iwa_packed_sfixed32': add_packed_sfixed32,
+	'iwa_packed_fixed64': add_packed_fixed64,
+	'iwa_packed_sfixed64': add_packed_sfixed64,
+	'iwa_packed_float': add_packed_float,
+	'iwa_packed_double': add_packed_double,
+	'iwa_string': add_string,
 }
 
 ### Entry point
