@@ -276,29 +276,34 @@ class message:
 				off += 4
 			if not msg.has_key(field_num):
 				msg[field_num] = []
-			if self.desc.has_key(field_num):
-				# print("parsing field %d at %d in [%d, %d) as %s" %
-						# (field_num, stt_data, stt, off, self.desc[field_num][1]))
-				msg[field_num].append(self.desc[field_num][1](data, stt_data, stt, off))
-			else:
-				# print("parsing generic field %d of size %d at %d in [%d, %d)" %
-						# (field_num, off - stt_data, stt_data, stt, off))
-				msg[field_num].append(self._result(data[stt_data:off], stt, off))
+			desc = self._desc(field_num)
+			msg[field_num].append(desc(data, stt_data, stt, off))
 		return result(msg, self, start, end)
 
-	def _result(self, values, start, end):
-		r = result(values, None, start, end)
-		class empty:
-			pass
-		r.desc = empty()
-		r.desc.primitive = False
-		r.desc.structured = False
-		r.desc.visualizer = 0
-		return r
+	def _desc(self, field):
+		class generic_desc:
+			def __init__(self):
+				self.primitive = False
+				self.structured = False
+				self.visualizer = 0
+
+			def __call__(self, data, off, start, end):
+				return result(data[start:end], self, start, end)
+
+		if self.desc.has_key(field):
+			if self.desc[field][1]:
+				return self.desc[field][1]
+			elif self.desc[field][0]:
+				global MESSAGES
+				if MESSAGES[self.desc[field][0]]:
+					return MESSAGES[self.desc[field][0]]
+		return generic_desc()
 
 ### File parser
 
 MESSAGES = {}
+
+OBJ_TYPES = {}
 
 class IWAParser(object):
 
@@ -362,7 +367,8 @@ class IWAParser(object):
 					else:
 						n = "%d[%d]" % (k, i)
 					if obj.desc.desc.has_key(k):
-						n = '%s: %s' % (n, obj.desc.desc[k][0])
+						if obj.desc.desc[k][0]:
+							n = '%s: %s' % (n, obj.desc.desc[k][0])
 					self._add_pgiter(n, e, e.start, e.end, it)
 
 ### Data view callbacks
