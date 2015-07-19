@@ -245,7 +245,7 @@ class packed:
 		return r
 
 class message:
-	def __init__(self, desc):
+	def __init__(self, desc=None):
 		if desc:
 			self.desc = desc
 		else:
@@ -323,7 +323,7 @@ class IWAParser(object):
 			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
 			off += hdr_len
 			if data_len > 0:
-				data = self._parse_object(off, data_len)
+				data = self._parse_object(off, data_len, message())
 				self._add_pgiter('Data', data, off, off + data_len, objiter)
 				off += data_len
 			obj_num += 1
@@ -339,15 +339,8 @@ class IWAParser(object):
 	def _parse_header(self, off, length):
 		return self._HEADER_MSG(self.data, off, off, off + length)
 
-	def _parse_object(self, off, length):
-		r = result(None, off, off, off + length)
-		class empty:
-			pass
-		r.desc = empty()
-		r.desc.structured = False
-		r.desc.primitive = False
-		r.desc.visualizer = 0
-		return r
+	def _parse_object(self, off, length, desc):
+		return desc(self.data, off, off, off + length)
 
 	def _add_pgiter(self, name, obj, start, end, parent):
 		if obj.desc.primitive:
