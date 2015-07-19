@@ -271,16 +271,26 @@ class message:
 				stt_data = off
 				off += length
 			elif wire_type == 3 or wire_type == 4:
-				print("unexpected type: group")
+				pass
 			elif wire_type == 5:
 				off += 4
+			else:
+				raise self.unknown_type()
 			if not msg.has_key(field_num):
 				msg[field_num] = []
-			desc = self._desc(field_num)
+			desc = self._desc(field_num, wire_type)
 			msg[field_num].append(desc(data, stt_data, stt, off))
+		if off != end:
+			raise self.bad_format()
 		return result(msg, self, start, end)
 
-	def _desc(self, field):
+	class unknown_type:
+		pass
+
+	class bad_format:
+		pass
+
+	def _desc(self, field, wire_type):
 		class generic_desc:
 			def __init__(self):
 				self.primitive = False
@@ -288,6 +298,12 @@ class message:
 				self.visualizer = None
 
 			def __call__(self, data, off, start, end):
+				if wire_type == 2: # try to parse as a message
+					try:
+						desc = message()
+						return desc(data, off, start, end)
+					except:
+						pass
 				return result(data[start:end], self, start, end)
 
 		if self.desc.has_key(field):
@@ -299,33 +315,13 @@ class message:
 					return MESSAGES[self.desc[field][0]]
 		return generic_desc()
 
-# Helper functions for defining unnamed fields
-
-def make_message(*fields):
-	d = {}
-	for f in fields:
-		d.update(f)
-	return message(d)
-
-def messages(*fields):
-	return dict([(f, (None, message())) for f in fields])
-
-def strings(*fields):
-	return dict([(f, (None, string())) for f in fields])
-
 ### File parser
 
 MESSAGES = {}
 
 OBJ_NAMES = {}
 
-OBJ_TYPES = {
-	1: make_message(messages(2, 3)),
-	4: make_message(messages(2, 10)),
-	5: make_message(messages(1, 4, 5, 6, 7, 17, 20, 27, 36)),
-	10: make_message(messages(1, 2, 5)),
-	15: make_message(messages(1)),
-}
+OBJ_TYPES = {}
 
 class IWAParser(object):
 
