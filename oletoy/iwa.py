@@ -374,7 +374,7 @@ class IWAParser(object):
 				off += data_len
 			obj_num += 1
 
-	_HEADER_MSG = message({2: ('Data info', message(
+	_HEADER_MSG = message({1: ('ID', int64), 2: ('Data info', message(
 		{
 			1: ('Object type?', int64),
 			2: (None, packed(int64)),
