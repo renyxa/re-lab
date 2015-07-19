@@ -181,7 +181,7 @@ class primitive:
 		self.primitive = True
 		self.structured = False
 		self.size = parser.size
-		self.visualizer = 0
+		self.visualizer = None
 
 	def __call__(self, data, off, start, end):
 		return result(self.parser(data, off), self, start, end)
@@ -222,7 +222,7 @@ class packed:
 		if item.name:
 			self.visualizer = 'packed_%s' % item.name
 		else:
-			self.visualizer = 0
+			self.visualizer = None
 
 	def __call__(self, data, off, start, end):
 		values = []
@@ -252,7 +252,7 @@ class message:
 			self.desc = {}
 		self.primitive = False
 		self.structured = True
-		self.visualizer = 0
+		self.visualizer = None
 
 	def __call__(self, data, off, start, end):
 		msg = {}
@@ -285,7 +285,7 @@ class message:
 			def __init__(self):
 				self.primitive = False
 				self.structured = False
-				self.visualizer = 0
+				self.visualizer = None
 
 			def __call__(self, data, off, start, end):
 				return result(data[start:end], self, start, end)
@@ -357,7 +357,11 @@ class IWAParser(object):
 	def _add_pgiter(self, name, obj, start, end, parent):
 		if obj.desc.primitive:
 			name = '%s = %s' % (name, obj.value)
-		it = add_pgiter(self.page, name, 'iwa', obj.desc.visualizer, self.data[start:end], parent)
+		if obj.desc.visualizer:
+			visualizer = obj.desc.visualizer
+		else:
+			visualizer = 'iwa_field'
+		it = add_pgiter(self.page, name, 'iwa', visualizer, self.data[start:end], parent)
 		if obj.desc.structured:
 			for (k, v) in obj.value.iteritems():
 				single = len(v) == 1
@@ -385,11 +389,22 @@ def add_iwa_object(hd, size, data):
 	(length, off) = read_var(data, 0)
 	add_iter(hd, 'Header length', length, 0, off, '%ds' % off)
 
+def add_field(hd, size, data):
+	(key, off) = read_var(data, 0)
+	field_num = key >> 3
+	wire_type = key & 0x7
+	wire_type_map = {0: 'Varint', 1: '64-bit', 2: 'Length-delimited', 3: 'Start group', 4: 'End group', 5: '32-bit'}
+	wire_type_str = get_or_default(wire_type_map, wire_type, 'Unknown')
+	add_iter(hd, 'Field', field_num, 0, off, '%ds' % off)
+	add_iter(hd, 'Wire type', wire_type_str, 0, off, '%ds' % off)
+	if wire_type == 2:
+		len_off = off
+		(length, off) = read_var(data, off)
+		add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
+	return off
+
 def add_packed(hd, size, data, parser, p16=False):
-	off = find_var(data, 0) # skip key
-	len_off = off
-	(length, off) = read_var(data, off)
-	add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
+	off = add_field(hd, size, data)
 	obj = parser(data, off, 0, size)
 	i = 0
 	for (v, e) in zip(obj.value, obj.extents):
@@ -424,7 +439,7 @@ def add_packed_double(hd, size, data):
 	add_packed(hd, size, data, packed(double_))
 
 def add_string(hd, size, data):
-	off = find_var(data, 0) # skip key
+	off = add_field(hd, size, data)
 	len_off = off
 	(length, off) = read_var(data, off)
 	add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
@@ -433,6 +448,7 @@ def add_string(hd, size, data):
 
 iwa_ids = {
 	'iwa_compressed_block': add_iwa_compressed_block,
+	'iwa_field': add_field,
 	'iwa_object': add_iwa_object,
 	'packed_bool': add_packed_bool,
 	'packed_int64': add_packed_int64,
