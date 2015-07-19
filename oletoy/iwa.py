@@ -299,11 +299,33 @@ class message:
 					return MESSAGES[self.desc[field][0]]
 		return generic_desc()
 
+# Helper functions for defining unnamed fields
+
+def make_message(*fields):
+	d = {}
+	for f in fields:
+		d.update(f)
+	return message(d)
+
+def messages(*fields):
+	return dict([(f, (None, message())) for f in fields])
+
+def strings(*fields):
+	return dict([(f, (None, string())) for f in fields])
+
 ### File parser
 
 MESSAGES = {}
 
-OBJ_TYPES = {}
+OBJ_NAMES = {}
+
+OBJ_TYPES = {
+	1: make_message(messages(2, 3)),
+	4: make_message(messages(2, 10)),
+	5: make_message(messages(1, 4, 5, 6, 7, 17, 20, 27, 36)),
+	10: make_message(messages(1, 2, 5)),
+	15: make_message(messages(1)),
+}
 
 class IWAParser(object):
 
@@ -328,14 +350,20 @@ class IWAParser(object):
 					data_len = hdr.value[2][0].value[3][0].value
 			obj_data = self.data[obj_start:off + hdr_len + data_len]
 			if obj_type:
-				obj_name = 'Object %d' % obj_type
+				if OBJ_NAMES.has_key(obj_type):
+					obj_name = OBJ_NAMES[obj_type]
+				else:
+					obj_name = 'Object %d' % obj_type
 			else:
 				obj_name = 'Object'
 			objiter = add_pgiter(self.page, '[%d] %s' % (obj_num, obj_name), 'iwa', 'iwa_object', obj_data, self.parent)
 			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
 			off += hdr_len
 			if data_len > 0:
-				data = self._parse_object(off, data_len, message())
+				desc = message()
+				if OBJ_TYPES.has_key(obj_type):
+					desc = OBJ_TYPES[obj_type]
+				data = self._parse_object(off, data_len, desc)
 				self._add_pgiter('Data', data, off, off + data_len, objiter)
 				off += data_len
 			obj_num += 1
