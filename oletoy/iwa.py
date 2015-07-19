@@ -468,11 +468,8 @@ def add_packed_double(hd, size, data):
 
 def add_string(hd, size, data):
 	off = add_field(hd, size, data)
-	len_off = off
-	(length, off) = read_var(data, off)
-	add_iter(hd, 'Length', length, len_off, off - len_off, '%ds' % (off - len_off))
-	obj = string(data, off, 0, size)
-	add_iter(hd, 'String', off, size - off, '%ds' % (size - off))
+	obj = string()(data, off, 0, size)
+	add_iter(hd, 'String', obj.value, off, size - off, '%ds' % (size - off))
 
 iwa_ids = {
 	'iwa_compressed_block': add_iwa_compressed_block,
