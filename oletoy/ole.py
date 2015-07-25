@@ -14,7 +14,7 @@
 # USA
 
 
-import sys,struct,subprocess
+import sys,struct,subprocess,time
 import gtk
 import tree
 import hexdump
@@ -47,7 +47,15 @@ def my_open (buf,page,parent=None):
 	dirflag=0
 	ftype = ""
 	try:
-		gsfout = subprocess.check_output(["gsf", "list", page.fname])
+		if parent is None:
+			gsffilename = page.fname
+		else:
+		# need to save tmp file to pass to gsf
+			gsffilename = "tmp%s"%time.time()
+			f = open(gsffilename,"wb")
+			f.write(buf)
+			f.close()
+		gsfout = subprocess.check_output(["gsf", "list", gsffilename])
 		print gsfout
 		print "-----------------"
 		for i in gsfout.split("\n")[1:-1]:
@@ -59,6 +67,8 @@ def my_open (buf,page,parent=None):
 					fullname = " ".join(i.split()[4:])
 				else:
 					fullname = " ".join(i.split()[2:])
+				if not len(fullname):
+					fullname = " ".join(i.split()[2:])
 				if "/" in fullname:
 					fns = fullname.split("/")
 					cdir = "/".join(fns[:-1])
@@ -66,21 +76,20 @@ def my_open (buf,page,parent=None):
 				else:
 					fn = fullname
 					cdir = ""
-				if ord(fn[0]) < 32: 
+				if len(fn) and ord(fn[0]) < 32: 
 					fn = fn[1:]
 				pn = None
-
 				if cdir:
 					cdir_to_treeiter(page,parent,cdir,dircache)
 					pn = dircache["/"+cdir]
-				data = subprocess.check_output(["gsf", "cat", page.fname,fullname])
+				data = subprocess.check_output(["gsf", "cat", gsffilename, fullname])
 				iter1 = add_pgiter(page,fn,"ole",fn,data,pn)
-
+				
 				if fn == "DesignerDoc":
 					ftype = "dsf"
 					page.model.set_value(iter1,1,("dsf",dirflag))
 					dsf.open (page, data, iter1)
-
+				
 				if (fn == "EscherStm" or fn == "EscherDelayStm"): # and infchild.size()>0:
 					ftype = "escher"
 					page.model.set_value(iter1,1,("escher",dirflag))
@@ -130,7 +139,7 @@ def my_open (buf,page,parent=None):
 					ftype = "ppp"  #PagePlus OLE version (9.x?)
 				if (fn == "contents" or fn == "SCFFPreview") and ftype == "ppp":
 					ppp.parse(page,data,iter1,fn)
-		
+				
 				# I've no idea if this is really the signature, but it is
 				# present in all files I've seen so far
 				if fn == "Header" and data[0xc:0xf] == 'xV4':
@@ -139,7 +148,7 @@ def my_open (buf,page,parent=None):
 				if fn[-4:] == '.zmf':
 					ftype = 'zmf'
 					zmf.zmf2_open(page, data, iter1, fn)
-		
+				
 				if fn == "VBA":
 					page.type = "vba"
 					ftype = "vba"
@@ -147,12 +156,20 @@ def my_open (buf,page,parent=None):
 					page.model.set_value(iter1,1,("vba",dirflag))
 					vbaiter = iter1
 					vbadata = data
+
 				if "SummaryInformation" in fn:
 					page.model.set_value(iter1,1,("ole","propset"))
-
-				if vbaiter != None:
-					vba.parse (page, vbadata, vbaiter)
-
+				
+				if parent is None:
+					try: os.remove(gsffilename)
+					except: pass
+			else:
+				if i.split()[2] == "VBA":
+					page.type = "vba"
+					ftype = "vba"
+		if vbaiter != None:
+			vba.parse (page, vbadata, vbaiter)
+	
 	except subprocess.CalledProcessError:
 		print "Failed to run gsf. Please install libgsf."
 		return
@@ -420,6 +437,11 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 
 
 def ole_open (buf,page,iter=None):
+	print 'Open as OLE',
+	if iter:
+		print page.model.get_value(iter,0)
+	else:
+		print
 	return ropen(buf,page,iter)
 
 

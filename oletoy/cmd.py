@@ -18,7 +18,7 @@ import sys,struct,os
 import tree,gtk,cairo,zlib
 import gobject
 import difflib
-import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6
+import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6,vba
 from utils import *
 from os.path import expanduser
 
@@ -1429,6 +1429,9 @@ def parse (cmd, entry, page):
 		elif "pm6" == chtype.lower():
 			off = int(chaddr,16)
 			pm6.open (page,buf,iter1,off)
+		elif "vba" == chtype.lower():
+			# off = int(chaddr,16)
+			vba.parse (page,buf,iter1)
 		elif "zip" == chtype.lower():
 			try:
 				print int(chaddr,16)
