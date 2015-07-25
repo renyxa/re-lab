@@ -92,7 +92,7 @@ def parse (page, data, parent):
 	value = data
 	if ord(data[0]) == 1:
 		# compressed stream
-#		try:
+		try:
 			if model:
 				value = inflate.inflate_vba(data,page.type)
 				iter1 = model.append(parent,None)
@@ -101,8 +101,8 @@ def parse (page, data, parent):
 				model.set_value(iter1,2,len(value))
 				model.set_value(iter1,3,value)
 				model.set_value(iter1,6,model.get_string_from_iter(iter1))
-#		except:
-#			print 'VBA Inflate failed'
+		except:
+			print 'VBA Inflate failed'
 	off = 0
 	mods = {}
 	while off < len(value):

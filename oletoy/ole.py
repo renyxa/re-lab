@@ -156,7 +156,7 @@ def my_open (buf,page,parent=None):
 					page.model.set_value(iter1,1,("vba",dirflag))
 					vbaiter = iter1
 					vbadata = data
-
+				
 				if "SummaryInformation" in fn:
 					page.model.set_value(iter1,1,("ole","propset"))
 				
