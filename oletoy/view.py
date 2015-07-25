@@ -321,6 +321,7 @@ class ApplicationMainWindow(gtk.Window):
 		return action_group
 
 	def on_key_press(self,a1,a2,a3,a4):
+		return
 		if a3 == 101:
 			self.open_cli ()
 

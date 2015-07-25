@@ -18,6 +18,26 @@ import sys,struct,zlib
 import gtk
 from utils import *
 
+def firewrk_mkbs (page, buf, parent=None):
+	piters = []
+	if parent:
+		piters.append(parent)
+	spl = buf.split("{")
+	i = 0
+	while i < len(spl):
+		name = spl[i]
+		i += 1
+		value = spl[i]
+		if "}" in value:
+			i += 1
+			if len(value) > 1:
+				add_pgiter(page,"%s"%name,"mk*s","",value[:-1],parent)
+			else:
+				parent = piters.pop()
+		else:
+			parent = add_pgiter(page,name,"mk*s","","",parent)
+			piters.append(parent)
+
 def open (page, buf, parent=None):
 	if buf[:8] != "\x89PNG\x0d\x0a\x1a\x0a":
 		print 'No PNG signature'

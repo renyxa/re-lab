@@ -1348,9 +1348,9 @@ def parse (cmd, entry, page):
 			if 1:
 				addr,bpp,w,h = chaddr.split(":")
 				dib_data = "\x28\x00\x00\x00"+struct.pack("<I",int(w))+struct.pack("<I",int(h))+"\x01\x00"
-				dib_data += struct.pack("<I",int(bpp))+"\x00"*8+struct.pack("<I",4000)*2+"\x00"*8
+				dib_data += struct.pack("<H",int(bpp))+"\x00"*8+struct.pack("<I",160)*2+"\x00"*8
 				dib_data += buf[int(addr,16):]
-				iter2 = add_pgiter (page,"[BMP]","",0,dib2bmp(dib_data),iter1)
+				iter2 = add_pgiter (page,"[BMP]","escher","Blip",dib2bmp(dib_data),iter1)
 				model.set_value(iter2,1,("escher","odraw","Blip"))
 			#except:
 			#	print 'Failed to construct DIB data'

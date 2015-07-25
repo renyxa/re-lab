@@ -15,7 +15,7 @@
 #
 
 import sys,struct,base64
-import gtk
+import gtk, cairo
 
 try:
 	import gv
@@ -204,12 +204,15 @@ def graph(hd,data):
 	hd.da.show_all()
 
 
-def disp_expose (da,event,pixbuf,scale=1):
+def disp_expose (da,event,hd,scale=1):
+	x,y,width,height = da.allocation
 	ctx = da.window.cairo_create()
-	ctx.scale(scale,scale)
-	ctx.set_source_pixbuf(pixbuf,0,0)
+	if event and event.area:
+		ctx.rectangle(event.area[0],event.area[1],event.area[2],event.area[3])
+		ctx.clip()
+	ctx.set_source_pixbuf(hd.pixbuf,0,0)
 	ctx.paint()
-
+	ctx.stroke()
 
 ######## Layout ########
 

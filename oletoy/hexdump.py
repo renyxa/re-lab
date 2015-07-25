@@ -39,14 +39,14 @@ class hexdump:
 	def update():
 		pass
 
-	def disp_expose(self,da,event,pixbuf):
-		utils.disp_expose(da,event,pixbuf,self.dispscale)
+	def disp_expose(self,da,event):
+		utils.disp_expose(da,event,self,self.dispscale)
 
-	def disp_on_button_press(self,da,event,pixbuf):
+	def disp_on_button_press(self,da,event):
 		if event.type  == gtk.gdk.BUTTON_PRESS:
 			if event.button == 1:
 				self.dispscale *= 1.4
-				self.disp_expose(da,event,pixbuf)
+				self.disp_expose(da,event)
 			if event.button == 2:
 				self.dispscale = 1
 				self.da.hide()

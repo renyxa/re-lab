@@ -239,7 +239,16 @@ class HexView():
 				else:
 					self.hv.hide()
 					self.hv.show()
-
+			pn = self.parent.notebook.get_current_page()
+			if pn != -1:
+				treeSelection = self.parent.das[pn].view.get_selection()
+				model, iter1 = treeSelection.get_selected()
+				ntype = model.get_value(iter1,1)
+				if ntype == ("escher","odraw","Blip"):
+					pixbufloader = gtk.gdk.PixbufLoader()
+					pixbufloader.write(self.data)
+					pixbufloader.close()
+					self.parent.das[pn].hd.pixbuf = pixbufloader.get_pixbuf()
 
 
 	def okp_left(self,event):
