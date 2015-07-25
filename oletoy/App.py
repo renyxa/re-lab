@@ -18,7 +18,7 @@ import sys,struct,os
 import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
-import abr,rtf,otxml,chdraw,vfb,fbx,nki
+import abr,rtf,otxml,chdraw,vfb,fbx,nki,pngot
 import drw
 import qxp
 import iwa
@@ -63,6 +63,10 @@ class Page:
 
 		if buf[2:8] == "IIXPR3":
 			self.type = qxp.open(self, buf, parent)
+			return 0
+
+		if buf[:8] == "\x89PNG\x0d\x0a\x1a\x0a":
+			self.type = pngot.open(self, buf, parent)
 			return 0
 
 		if buf[0:6] == "\x1aWLF10":
