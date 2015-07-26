@@ -23,19 +23,44 @@ def firewrk_mkbs (page, buf, parent=None):
 	if parent:
 		piters.append(parent)
 	spl = buf.split("{")
-	i = 0
-	while i < len(spl):
-		name = spl[i]
-		i += 1
-		value = spl[i]
+	ind = 0
+	while len(spl) > 1:
+		name = spl[0]
+		value = spl[1]
+		print ind,name,value,len(spl),"%02x"%(len(buf)-len(" ".join(spl))),"%d%%"%(100-100*len(" ".join(spl))/len(buf)) 
+		ind += 1
+		spl.remove(name)
+		spl.remove(value)
+		flag = 0
+		if name[3] == "s":
+			print "STR",name
+			vlen = struct.unpack(">H",value[:2])[0]*2
+			while vlen > len(value[2:]):
+				rval = spl[0]
+				value += "{"+rval
+				spl.remove(rval)
+				flag = 1
 		if "}" in value:
-			i += 1
-			if len(value) > 1:
-				add_pgiter(page,"%s"%name,"mk*s","",value[:-1],parent)
-			else:
-				parent = piters.pop()
+			pos = value.find("}")
+			v = ""
+			if name[3] == "s":
+				v = value[2:pos+flag].decode('utf-16-be')
+			elif len(value[:pos]):
+				v = str(value[:pos])
+			add_pgiter(page,"%s [%s]"%(name,v),"mk*s","",value[:pos+flag],parent)
+			if not flag:
+				if pos+1 < len(value):
+					cnt = value.count("}")
+					if cnt > 1:
+						for i in range(cnt-1):
+							piters.pop()
+						parent = piters[-1]
+					spl.insert(0,value[pos+cnt:])
+				else:
+					parent = piters.pop()
 		else:
 			parent = add_pgiter(page,name,"mk*s","","",parent)
+			spl.insert(0,value)
 			piters.append(parent)
 
 def open (page, buf, parent=None):
