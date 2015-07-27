@@ -319,7 +319,7 @@ class message:
 				return result(data[start:end], self, start, end)
 
 		if self.desc.has_key(field):
-			if self.desc[field][1]:
+			if len(self.desc[field]) > 1 and self.desc[field][1]:
 				return self.desc[field][1]
 			elif self.desc[field][0]:
 				global MESSAGES
@@ -347,7 +347,7 @@ OBJ_NAMES = {
 }
 
 OBJ_TYPES = {
-	11006: message({3: ('IWA file', None), 4: ('Other file', None)}),
+	11006: message({3: ('IWA file',), 4: ('Other file',)}),
 }
 
 class IWAParser(object):
