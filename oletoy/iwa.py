@@ -333,10 +333,16 @@ MESSAGES = {
 	'IWA file': message({1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
 		6: ('Reference', message({1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)}))}),
 	'Other file': message({1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)}),
+	'Size': message({1: ('Width', float_), 2: ('Height', float_)}),
 }
+
+# special messages
+
+REF = message({1: ('Ref', int64)})
 
 OBJ_NAMES = {
 	1: 'Document',
+	2: 'Presentation',
 	5: 'Slide',
 	210: 'View State',
 	213: 'Annotation Author Storage',
@@ -347,6 +353,17 @@ OBJ_NAMES = {
 }
 
 OBJ_TYPES = {
+	1: message({
+		2: ('Presentation ref', REF),
+		3: (None, message({
+			3: ('Language', string),
+			4: ('Calculation Engine Ref', REF),
+			5: ('View State Ref', REF),
+			7: ('Data List Ref', REF),
+			9: ('Template', string)
+		}))
+	}),
+	2: message({4: ('Size',), 5: ('Stylesheet ref', REF)}),
 	11006: message({3: ('IWA file',), 4: ('Other file',)}),
 }
 
