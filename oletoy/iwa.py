@@ -576,17 +576,14 @@ def open(data, page, parent):
 		off += 1
 
 		block = data[off - 4:off + int(length)]
-		blockiter = add_pgiter(page, 'Block %d' % n, 'iwa', 'iwa_compressed_block', block, parent)
 		uncompressed = uncompress(block[4:])
 		uncompressed_data.extend(uncompressed)
-		add_pgiter(page, 'Uncompressed', 'iwa', 0, str(uncompressed), blockiter)
 
 		n += 1
 		off += length
 
 	uncompressed_data = str(uncompressed_data)
-	dataiter = add_pgiter(page, 'Uncompressed', 'iwa', 0, uncompressed_data, parent)
-	parser = IWAParser(uncompressed_data, page, dataiter)
+	parser = IWAParser(uncompressed_data, page, parent)
 	parser.parse()
 
 # vim: set ft=python sts=4 sw=4 noet:
