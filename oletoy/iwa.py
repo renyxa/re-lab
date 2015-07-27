@@ -348,6 +348,9 @@ class IWAParser(object):
 			(hdr_len, off) = read_var(self.data, off)
 			hdr = self._parse_header(off, hdr_len)
 			data_len = 0
+			obj_id = None
+			if hdr.value.has_key(1):
+				obj_id = hdr.value[1][0].value
 			obj_type = None
 			if hdr.value.has_key(2):
 				if hdr.value[2][0].value.has_key(1):
@@ -362,6 +365,8 @@ class IWAParser(object):
 					obj_name = 'Object %d' % obj_type
 			else:
 				obj_name = 'Object'
+			if obj_id:
+				obj_name = '%s (%d)' % (obj_name, obj_id)
 			objiter = add_pgiter(self.page, '[%d] %s' % (obj_num, obj_name), 'iwa', 'iwa_object', obj_data, self.parent)
 			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
 			off += hdr_len
