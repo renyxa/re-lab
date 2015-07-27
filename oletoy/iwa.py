@@ -329,7 +329,16 @@ class message:
 
 MESSAGES = {}
 
-OBJ_NAMES = {}
+OBJ_NAMES = {
+	1: 'Document',
+	5: 'Slide',
+	210: 'View State',
+	213: 'Annotation Author Storage',
+	401: 'Stylesheet',
+	4000: 'Calculation Engine',
+	6005: 'Data List',
+	11006: 'Object Index',
+}
 
 OBJ_TYPES = {}
 
