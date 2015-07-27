@@ -209,7 +209,7 @@ sfixed64 = primitive(fixed(8, '<q'), 'sfixed64')
 float_ = primitive(fixed(4, '<f'), 'float')
 double_ = primitive(fixed(8, '<d'), 'double')
 
-class string:
+class string_:
 	def __init__(self):
 		self.primitive = False
 		self.structured = False
@@ -217,6 +217,8 @@ class string:
 
 	def __call__(self, data, off, start, end):
 		return result(data[off:end], self, start, end)
+
+string = string_()
 
 class packed:
 	def __init__(self, item):
@@ -507,7 +509,7 @@ def add_packed_double(hd, size, data):
 
 def add_string(hd, size, data):
 	off = add_field(hd, size, data)
-	obj = string()(data, off, 0, size)
+	obj = string(data, off, 0, size)
 	add_iter(hd, 'String', obj.value, off, size - off, '%ds' % (size - off))
 
 def add_varint(hd, size, data):
