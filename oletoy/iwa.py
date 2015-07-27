@@ -393,7 +393,7 @@ class IWAParser(object):
 			1: ('Object type?', int64),
 			2: (None, packed(int64)),
 			3: ('Data size', int64),
-			5: ('Object IDs', packed(int64))
+			5: ('References', packed(int64))
 		}
 	))})
 
