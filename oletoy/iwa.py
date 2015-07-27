@@ -329,7 +329,11 @@ class message:
 
 ### File parser
 
-MESSAGES = {}
+MESSAGES = {
+	'IWA file': message({1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
+		6: ('Reference', message({1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)}))}),
+	'Other file': message({1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)}),
+}
 
 OBJ_NAMES = {
 	1: 'Document',
@@ -342,7 +346,9 @@ OBJ_NAMES = {
 	11006: 'Object Index',
 }
 
-OBJ_TYPES = {}
+OBJ_TYPES = {
+	11006: message({3: ('IWA file', None), 4: ('Other file', None)}),
+}
 
 class IWAParser(object):
 
