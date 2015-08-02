@@ -334,6 +334,7 @@ MESSAGES = {
 		6: ('Reference', message({1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)}))}),
 	'Other file': message({1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)}),
 	'Size': message({1: ('Width', float_), 2: ('Height', float_)}),
+	'Style info': message({1: ('UI name', string), 2: ('Name', string), 3: ('Parent', REF), 5: ('Stylesheet', REF)}),
 }
 
 # special messages
@@ -344,10 +345,17 @@ OBJ_NAMES = {
 	1: 'Document',
 	2: 'Presentation',
 	5: 'Slide',
+	9: 'Slide style',
 	210: 'View State',
 	213: 'Annotation Author Storage',
 	401: 'Stylesheet',
+	2022: 'Paragraph style',
+	2023: 'List style',
+	2025: 'Graphic style',
+	3016: 'Image style',
 	4000: 'Calculation Engine',
+	6003: 'Table style',
+	6004: 'Cell style',
 	6005: 'Data List',
 	11006: 'Object Index',
 }
@@ -364,6 +372,21 @@ OBJ_TYPES = {
 		}))
 	}),
 	2: message({4: ('Size',), 5: ('Stylesheet ref', REF)}),
+	9: message({1: ('Style info',), 11: ('Properties', message())}),
+	401: message({
+		1: (None, REF),
+		2: (None, message({
+			1: ('Name', string),
+			2: ('Ref', REF),
+		})),
+		3: ('Parent ref', REF)
+	}),
+	2022: message({1: ('Style info',), 11: ('Character properties?', message()), 12: ('Paragraph properties?', message())}),
+	2023: message({1: ('Style info',)}),
+	2025: message({1: ('Style info',), 11: ('Properties', message())}),
+	3016: message({1: ('Style info',), 11: ('Properties', message())}),
+	6003: message({1: ('Style info',), 11: ('Properties', message())}),
+	6004: message({1: ('Style info',), 11: ('Properties', message())}),
 	11006: message({3: ('IWA file',), 4: ('Other file',)}),
 }
 
