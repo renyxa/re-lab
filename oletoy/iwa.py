@@ -431,6 +431,27 @@ OBJ_TYPES = {
 	11006: {3: ('IWA file',), 4: ('Other file',)},
 }
 
+# Parser for internal IWA files.
+#
+# Because the underlying Google Protobuf format does not retain info
+# about nested messages (a message is represented in the same way as a
+# string or binary data), the parser tries to detect them. This might
+# lead to false positives.
+#
+# It is possible to set name and type to interesting pieces of content.
+# There are three global dicts that contain various parts of the data:
+# * OBJ_NAMES dict contains names of objects. The key is the object type.
+# * OBJ_TYPES dict contains message types of objects. The key is the
+#	object type.
+# * MESSAGES dict contains message types for commonly used sub-messages.
+#   The key is the name of the message.
+# The value in OBJ_TYPES and MESSAGES is a dict, mapping a field number
+# to its name and type. The name and type are passed as a list; name is
+# the first element, type the second. If there is no good name for the
+# field, name should be None. Type is optional; if it is not given, the
+# parser tries to look up name in MESSAGES and use that type. Similarly,
+# if the type is a string, the parser again tries to look up the real
+# type in MESSAGES.
 class IWAParser(object):
 
 	def __init__(self, data, page, parent):
