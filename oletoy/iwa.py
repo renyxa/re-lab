@@ -319,10 +319,15 @@ class message:
 				return result(data[start:end], self, start, end)
 
 		if self.desc.has_key(field):
+			global MESSAGES
 			if len(self.desc[field]) > 1 and self.desc[field][1]:
-				return self.desc[field][1]
+				desc = self.desc[field][1]
+				if isinstance(desc, str):
+					if MESSAGES.has_key(desc):
+						return MESSAGES[desc]
+				else:
+					return desc
 			elif self.desc[field][0]:
-				global MESSAGES
 				if MESSAGES[self.desc[field][0]]:
 					return MESSAGES[self.desc[field][0]]
 		return generic_desc()
@@ -340,13 +345,10 @@ MESSAGES = {
 		2: ('Coords', message({1: ('X', float_), 2: ('Y', float_)})),
 	}),
 	'Position': message({1: ('X', float_), 2: ('Y', float_)}),
+	'Ref': message({1: ('Ref', int64)}),
 	'Size': message({1: ('Width', float_), 2: ('Height', float_)}),
-	'Style info': message({1: ('UI name', string), 2: ('Name', string), 3: ('Parent', REF), 5: ('Stylesheet', REF)}),
+	'Style info': message({1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', REF)}),
 }
-
-# special messages
-
-REF = message({1: ('Ref', int64)})
 
 OBJ_NAMES = {
 	1: 'Document',
@@ -372,52 +374,52 @@ OBJ_NAMES = {
 
 OBJ_TYPES = {
 	1: message({
-		2: ('Presentation ref', REF),
+		2: ('Presentation ref', 'Ref'),
 		3: (None, message({
 			3: ('Language', string),
-			4: ('Calculation Engine Ref', REF),
-			5: ('View State Ref', REF),
-			7: ('Data List Ref', REF),
+			4: ('Calculation Engine Ref', 'Ref'),
+			5: ('View State Ref', 'Ref'),
+			7: ('Data List Ref', 'Ref'),
 			9: ('Template', string)
 		}))
 	}),
-	2: message({4: ('Size',), 5: ('Stylesheet ref', REF)}),
+	2: message({4: ('Size',), 5: ('Stylesheet ref', 'Ref')}),
 	5: message({
-		1: ('Style ref', REF),
-		17: ('Master ref', REF),
+		1: ('Style ref', 'Ref'),
+		17: ('Master ref', 'Ref'),
 	}),
 	9: message({1: ('Style info',), 11: ('Properties', message())}),
 	212: message({1: ('Author', string)}),
-	213: message({1: ('Annotation ref', REF)}),
+	213: message({1: ('Annotation ref', 'Ref')}),
 	401: message({
-		1: (None, REF),
+		1: (None, 'Ref'),
 		2: (None, message({
 			1: ('Name', string),
-			2: ('Ref', REF),
+			2: ('Ref', 'Ref'),
 		})),
-		3: ('Parent ref', REF)
+		3: ('Parent ref', 'Ref')
 	}),
 	2014: message({
 		1: (None, message({
 			1: (None, message({
 				1: (None, message({
 					1: ('Geometry',),
-					2: ('Slide ref', REF),
+					2: ('Slide ref', 'Ref'),
 				})),
-				2: ('Graphic style ref', REF),
+				2: ('Graphic style ref', 'Ref'),
 				3: ('Bezier path', message({
 					5: ('Bezier', message({2: ('Size',), 3: ('Path',)}))
 				})),
 			})),
-			2: ('Text ref', REF),
+			2: ('Text ref', 'Ref'),
 		})),
-		2: (None, REF),
+		2: (None, 'Ref'),
 	}),
 	2022: message({1: ('Style info',), 11: ('Character properties?', message()), 12: ('Paragraph properties?', message())}),
 	2023: message({1: ('Style info',)}),
 	2025: message({1: ('Style info',), 11: ('Properties', message())}),
 	3016: message({1: ('Style info',), 11: ('Properties', message())}),
-	3056: message({3: ('Author ref', REF)}),
+	3056: message({3: ('Author ref', 'Ref')}),
 	6003: message({1: ('Style info',), 11: ('Properties', message())}),
 	6004: message({1: ('Style info',), 11: ('Properties', message())}),
 	11006: message({3: ('IWA file',), 4: ('Other file',)}),
