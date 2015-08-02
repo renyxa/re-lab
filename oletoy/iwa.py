@@ -357,7 +357,7 @@ MESSAGES = {
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
-	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', REF)},
+	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 }
 
 OBJ_NAMES = {
