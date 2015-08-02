@@ -405,6 +405,13 @@ OBJ_TYPES = {
 		}),
 		3: ('Parent ref', 'Ref')
 	},
+	2001: {
+		2: ('Stylesheet ref', 'Ref'),
+		3: ('Text', string),
+		5: ('Paragraphs', {
+			1: ('Paragraph', {1: ('Start', int64), 2: ('Style ref', 'Ref')})
+		})
+	},
 	2014: {
 		1: (None, {
 			1: (None, {
