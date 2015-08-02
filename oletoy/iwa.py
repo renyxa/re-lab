@@ -343,8 +343,11 @@ class message:
 MESSAGES = {
 	'Bezier path': {5: ('Bezier', {2: ('Size',), 3: ('Path',)})},
 	'Geometry': {1: ('Position',), 2: ('Size',)},
-	'IWA file': {1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
-		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})},
+	'IWA file': {
+		1: ('First Object ID', int64),
+		2: ('Kind', string), 3: ('Path', string),
+		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
+	},
 	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
 	'Path': {1: ('Path element',)},
 	'Path element': {
@@ -468,7 +471,11 @@ OBJ_TYPES = {
 	6003: {1: ('Style info',), 11: ('Properties', {})},
 	6004: {1: ('Style info',), 11: ('Properties', {})},
 	6008: {3: (None, 'Ref')},
-	11006: {3: ('IWA file',), 4: ('Other file',)},
+	11006: {
+		1: ('Active object ref?', int64),
+		3: ('IWA file',),
+		4: ('Other file',),
+	},
 }
 
 # Parser for internal IWA files.
