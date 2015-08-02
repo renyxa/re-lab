@@ -360,6 +360,7 @@ MESSAGES = {
 OBJ_NAMES = {
 	1: 'Document',
 	2: 'Presentation',
+	4: 'Master slide?',
 	5: 'Slide',
 	7: 'Placeholder',
 	9: 'Slide style',
@@ -384,14 +385,23 @@ OBJ_TYPES = {
 	1: {
 		2: ('Presentation ref', 'Ref'),
 		3: (None, {
+			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
 			3: ('Language', string),
 			4: ('Calculation Engine Ref', 'Ref'),
 			5: ('View State Ref', 'Ref'),
+			6: (None, 'Ref'),
 			7: ('Data List Ref', 'Ref'),
 			9: ('Template', string)
 		})
 	},
-	2: {4: ('Size',), 5: ('Stylesheet ref', 'Ref')},
+	2: {
+		2: (None, 'Ref'),
+		4: ('Size',),
+		5: ('Stylesheet ref', 'Ref')
+	},
+	4: {
+		2: ('Master slide ref', 'Ref'),
+	},
 	5: {
 		1: ('Style ref', 'Ref'),
 		7: ('Drawable ref', 'Ref'),
@@ -412,6 +422,13 @@ OBJ_TYPES = {
 		2: ('Type?', int64),
 	},
 	9: {1: ('Style info',), 11: ('Properties', {})},
+	10: {
+		1: (None, {
+			1: ('Theme stylesheet ref', 'Ref'),
+			3: ('Theme?', string),
+			5: (None, 'Ref'),
+		}),
+	},
 	212: {1: ('Author', string)},
 	213: {1: ('Annotation ref', 'Ref')},
 	401: {
@@ -450,6 +467,7 @@ OBJ_TYPES = {
 	3056: {3: ('Author ref', 'Ref')},
 	6003: {1: ('Style info',), 11: ('Properties', {})},
 	6004: {1: ('Style info',), 11: ('Properties', {})},
+	6008: {3: (None, 'Ref')},
 	11006: {3: ('IWA file',), 4: ('Other file',)},
 }
 
