@@ -324,7 +324,7 @@ class message:
 			if len(self.desc[field]) > 1 and self.desc[field][1]:
 				desc1 = self.desc[field][1]
 				if isinstance(desc1, str):
-					if MESSAGES.has_key(desc):
+					if MESSAGES.has_key(desc1):
 						desc = MESSAGES[desc1]
 				else:
 					desc = desc1
