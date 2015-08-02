@@ -320,34 +320,40 @@ class message:
 
 		if self.desc.has_key(field):
 			global MESSAGES
+			desc = None
 			if len(self.desc[field]) > 1 and self.desc[field][1]:
-				desc = self.desc[field][1]
-				if isinstance(desc, str):
+				desc1 = self.desc[field][1]
+				if isinstance(desc1, str):
 					if MESSAGES.has_key(desc):
-						return MESSAGES[desc]
+						desc = MESSAGES[desc1]
 				else:
-					return desc
+					desc = desc1
 			elif self.desc[field][0]:
-				if MESSAGES.has_key(self.desc[field][0]):
-					return MESSAGES[self.desc[field][0]]
+				name = self.desc[field][0]
+				if MESSAGES.has_key(name):
+					desc = MESSAGES[name]
+			if isinstance(desc, dict):
+				desc = message(desc)
+			if desc:
+				return desc
 		return generic_desc()
 
 ### File parser
 
 MESSAGES = {
-	'Geometry': message({1: ('Position',), 2: ('Size',)}),
-	'IWA file': message({1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
-		6: ('Reference', message({1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)}))}),
-	'Other file': message({1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)}),
-	'Path': message({1: ('Path element',)}),
-	'Path element': message({
+	'Geometry': {1: ('Position',), 2: ('Size',)},
+	'IWA file': {1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
+		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})},
+	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
+	'Path': {1: ('Path element',)},
+	'Path element': {
 		1: ('Type', int64), # TODO: special type
-		2: ('Coords', message({1: ('X', float_), 2: ('Y', float_)})),
-	}),
-	'Position': message({1: ('X', float_), 2: ('Y', float_)}),
-	'Ref': message({1: ('Ref', int64)}),
-	'Size': message({1: ('Width', float_), 2: ('Height', float_)}),
-	'Style info': message({1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', REF)}),
+		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
+	},
+	'Position': {1: ('X', float_), 2: ('Y', float_)},
+	'Ref': {1: ('Ref', int64)},
+	'Size': {1: ('Width', float_), 2: ('Height', float_)},
+	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', REF)},
 }
 
 OBJ_NAMES = {
@@ -373,56 +379,56 @@ OBJ_NAMES = {
 }
 
 OBJ_TYPES = {
-	1: message({
+	1: {
 		2: ('Presentation ref', 'Ref'),
-		3: (None, message({
+		3: (None, {
 			3: ('Language', string),
 			4: ('Calculation Engine Ref', 'Ref'),
 			5: ('View State Ref', 'Ref'),
 			7: ('Data List Ref', 'Ref'),
 			9: ('Template', string)
-		}))
-	}),
-	2: message({4: ('Size',), 5: ('Stylesheet ref', 'Ref')}),
-	5: message({
+		})
+	},
+	2: {4: ('Size',), 5: ('Stylesheet ref', 'Ref')},
+	5: {
 		1: ('Style ref', 'Ref'),
 		17: ('Master ref', 'Ref'),
-	}),
-	9: message({1: ('Style info',), 11: ('Properties', message())}),
-	212: message({1: ('Author', string)}),
-	213: message({1: ('Annotation ref', 'Ref')}),
-	401: message({
+	},
+	9: {1: ('Style info',), 11: ('Properties', {})},
+	212: {1: ('Author', string)},
+	213: {1: ('Annotation ref', 'Ref')},
+	401: {
 		1: (None, 'Ref'),
-		2: (None, message({
+		2: (None, {
 			1: ('Name', string),
 			2: ('Ref', 'Ref'),
-		})),
+		}),
 		3: ('Parent ref', 'Ref')
-	}),
-	2014: message({
-		1: (None, message({
-			1: (None, message({
-				1: (None, message({
+	},
+	2014: {
+		1: (None, {
+			1: (None, {
+				1: (None, {
 					1: ('Geometry',),
 					2: ('Slide ref', 'Ref'),
-				})),
+				}),
 				2: ('Graphic style ref', 'Ref'),
-				3: ('Bezier path', message({
-					5: ('Bezier', message({2: ('Size',), 3: ('Path',)}))
-				})),
-			})),
+				3: ('Bezier path', {
+					5: ('Bezier', {2: ('Size',), 3: ('Path',)})
+				}),
+			}),
 			2: ('Text ref', 'Ref'),
-		})),
+		}),
 		2: (None, 'Ref'),
-	}),
-	2022: message({1: ('Style info',), 11: ('Character properties?', message()), 12: ('Paragraph properties?', message())}),
-	2023: message({1: ('Style info',)}),
-	2025: message({1: ('Style info',), 11: ('Properties', message())}),
-	3016: message({1: ('Style info',), 11: ('Properties', message())}),
-	3056: message({3: ('Author ref', 'Ref')}),
-	6003: message({1: ('Style info',), 11: ('Properties', message())}),
-	6004: message({1: ('Style info',), 11: ('Properties', message())}),
-	11006: message({3: ('IWA file',), 4: ('Other file',)}),
+	},
+	2022: {1: ('Style info',), 11: ('Character properties?', {}), 12: ('Paragraph properties?', {})},
+	2023: {1: ('Style info',)},
+	2025: {1: ('Style info',), 11: ('Properties', {})},
+	3016: {1: ('Style info',), 11: ('Properties', {})},
+	3056: {3: ('Author ref', 'Ref')},
+	6003: {1: ('Style info',), 11: ('Properties', {})},
+	6004: {1: ('Style info',), 11: ('Properties', {})},
+	11006: {3: ('IWA file',), 4: ('Other file',)},
 }
 
 class IWAParser(object):
@@ -471,19 +477,21 @@ class IWAParser(object):
 				off += data_len
 			obj_num += 1
 
-	_HEADER_MSG = message({1: ('ID', int64), 2: ('Data info', message(
+	_HEADER_MSG = message({1: ('ID', int64), 2: ('Data info',
 		{
 			1: ('Object type?', int64),
 			2: (None, packed(int64)),
 			3: ('Data size', int64),
 			5: ('References', packed(int64))
 		}
-	))})
+	)})
 
 	def _parse_header(self, off, length):
 		return self._HEADER_MSG(self.data, off, off, off + length)
 
 	def _parse_object(self, off, length, desc):
+		if isinstance(desc, dict):
+			desc = message(desc)
 		return desc(self.data, off, off, off + length)
 
 	def _add_pgiter(self, name, obj, start, end, parent):
