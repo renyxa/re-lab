@@ -341,6 +341,7 @@ class message:
 ### File parser
 
 MESSAGES = {
+	'Bezier path': {5: ('Bezier', {2: ('Size',), 3: ('Path',)})},
 	'Geometry': {1: ('Position',), 2: ('Size',)},
 	'IWA file': {1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})},
@@ -360,6 +361,7 @@ OBJ_NAMES = {
 	1: 'Document',
 	2: 'Presentation',
 	5: 'Slide',
+	7: 'Placeholder',
 	9: 'Slide style',
 	210: 'View State',
 	212: 'Annotation',
@@ -392,7 +394,22 @@ OBJ_TYPES = {
 	2: {4: ('Size',), 5: ('Stylesheet ref', 'Ref')},
 	5: {
 		1: ('Style ref', 'Ref'),
+		7: ('Drawable ref', 'Ref'),
 		17: ('Master ref', 'Ref'),
+	},
+	7: {
+		1: (None, {
+			1: (None, {
+				1: (None, {
+					1: ('Geometry',),
+					2: ('Slide ref', 'Ref'),
+				}),
+				2: ('Graphic style ref', 'Ref'),
+				3: ('Bezier path',),
+			}),
+			2: ('Text ref', 'Ref'),
+		}),
+		2: ('Type?', int64),
 	},
 	9: {1: ('Style info',), 11: ('Properties', {})},
 	212: {1: ('Author', string)},
@@ -420,9 +437,7 @@ OBJ_TYPES = {
 					2: ('Slide ref', 'Ref'),
 				}),
 				2: ('Graphic style ref', 'Ref'),
-				3: ('Bezier path', {
-					5: ('Bezier', {2: ('Size',), 3: ('Path',)})
-				}),
+				3: ('Bezier path',),
 			}),
 			2: ('Text ref', 'Ref'),
 		}),
