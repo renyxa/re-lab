@@ -330,9 +330,16 @@ class message:
 ### File parser
 
 MESSAGES = {
+	'Geometry': message({1: ('Position',), 2: ('Size',)}),
 	'IWA file': message({1: ('First Object ID', int64), 2: ('Kind', string), 3: ('Path', string),
 		6: ('Reference', message({1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)}))}),
 	'Other file': message({1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)}),
+	'Path': message({1: ('Path element',)}),
+	'Path element': message({
+		1: ('Type', int64), # TODO: special type
+		2: ('Coords', message({1: ('X', float_), 2: ('Y', float_)})),
+	}),
+	'Position': message({1: ('X', float_), 2: ('Y', float_)}),
 	'Size': message({1: ('Width', float_), 2: ('Height', float_)}),
 	'Style info': message({1: ('UI name', string), 2: ('Name', string), 3: ('Parent', REF), 5: ('Stylesheet', REF)}),
 }
@@ -350,6 +357,8 @@ OBJ_NAMES = {
 	212: 'Annotation',
 	213: 'Annotation Author Storage',
 	401: 'Stylesheet',
+	2001: 'Text',
+	2014: 'Sticky note',
 	2022: 'Paragraph style',
 	2023: 'List style',
 	2025: 'Graphic style',
@@ -373,6 +382,10 @@ OBJ_TYPES = {
 		}))
 	}),
 	2: message({4: ('Size',), 5: ('Stylesheet ref', REF)}),
+	5: message({
+		1: ('Style ref', REF),
+		17: ('Master ref', REF),
+	}),
 	9: message({1: ('Style info',), 11: ('Properties', message())}),
 	212: message({1: ('Author', string)}),
 	213: message({1: ('Annotation ref', REF)}),
@@ -384,10 +397,27 @@ OBJ_TYPES = {
 		})),
 		3: ('Parent ref', REF)
 	}),
+	2014: message({
+		1: (None, message({
+			1: (None, message({
+				1: (None, message({
+					1: ('Geometry',),
+					2: ('Slide ref', REF),
+				})),
+				2: ('Graphic style ref', REF),
+				3: ('Bezier path', message({
+					5: ('Bezier', message({2: ('Size',), 3: ('Path',)}))
+				})),
+			})),
+			2: ('Text ref', REF),
+		})),
+		2: (None, REF),
+	}),
 	2022: message({1: ('Style info',), 11: ('Character properties?', message()), 12: ('Paragraph properties?', message())}),
 	2023: message({1: ('Style info',)}),
 	2025: message({1: ('Style info',), 11: ('Properties', message())}),
 	3016: message({1: ('Style info',), 11: ('Properties', message())}),
+	3056: message({3: ('Author ref', REF)}),
 	6003: message({1: ('Style info',), 11: ('Properties', message())}),
 	6004: message({1: ('Style info',), 11: ('Properties', message())}),
 	11006: message({3: ('IWA file',), 4: ('Other file',)}),
