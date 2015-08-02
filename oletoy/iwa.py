@@ -360,32 +360,8 @@ MESSAGES = {
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 }
 
-OBJ_NAMES = {
-	1: 'Document',
-	2: 'Presentation',
-	4: 'Master slide?',
-	5: 'Slide',
-	7: 'Placeholder',
-	9: 'Slide style',
-	210: 'View State',
-	212: 'Annotation',
-	213: 'Annotation Author Storage',
-	401: 'Stylesheet',
-	2001: 'Text',
-	2014: 'Sticky note',
-	2022: 'Paragraph style',
-	2023: 'List style',
-	2025: 'Graphic style',
-	3016: 'Image style',
-	4000: 'Calculation Engine',
-	6003: 'Table style',
-	6004: 'Cell style',
-	6005: 'Data List',
-	11006: 'Object Index',
-}
-
-OBJ_TYPES = {
-	1: {
+OBJECTS = {
+	1: ('Document', {
 		2: ('Presentation ref', 'Ref'),
 		3: (None, {
 			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
@@ -396,21 +372,21 @@ OBJ_TYPES = {
 			7: ('Data List Ref', 'Ref'),
 			9: ('Template', string)
 		})
-	},
-	2: {
+	}),
+	2: ('Presentation', {
 		2: (None, 'Ref'),
 		4: ('Size',),
 		5: ('Stylesheet ref', 'Ref')
-	},
-	4: {
+	}),
+	4: ('Master slide?', {
 		2: ('Master slide ref', 'Ref'),
-	},
-	5: {
+	}),
+	5: ('Slide', {
 		1: ('Style ref', 'Ref'),
 		7: ('Drawable ref', 'Ref'),
 		17: ('Master ref', 'Ref'),
-	},
-	7: {
+	}),
+	7: ('Placeholder', {
 		1: (None, {
 			1: (None, {
 				1: (None, {
@@ -423,33 +399,34 @@ OBJ_TYPES = {
 			2: ('Text ref', 'Ref'),
 		}),
 		2: ('Type?', int64),
-	},
-	9: {1: ('Style info',), 11: ('Properties', {})},
-	10: {
+	}),
+	9: ('Slide style', {1: ('Style info',), 11: ('Properties', {})}),
+	10: (None, {
 		1: (None, {
 			1: ('Theme stylesheet ref', 'Ref'),
 			3: ('Theme?', string),
 			5: (None, 'Ref'),
 		}),
-	},
-	212: {1: ('Author', string)},
-	213: {1: ('Annotation ref', 'Ref')},
-	401: {
+	}),
+	210: ('View State', {}),
+	212: ('Annotation', {1: ('Author', string)}),
+	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
+	401: ('Stylesheet', {
 		1: (None, 'Ref'),
 		2: (None, {
 			1: ('Name', string),
 			2: ('Ref', 'Ref'),
 		}),
 		3: ('Parent ref', 'Ref')
-	},
-	2001: {
+	}),
+	2001: ('Text', {
 		2: ('Stylesheet ref', 'Ref'),
 		3: ('Text', string),
 		5: ('Paragraphs', {
 			1: ('Paragraph', {1: ('Start', int64), 2: ('Style ref', 'Ref')})
 		})
-	},
-	2014: {
+	}),
+	2014: ('Sticky note', {
 		1: (None, {
 			1: (None, {
 				1: (None, {
@@ -462,20 +439,26 @@ OBJ_TYPES = {
 			2: ('Text ref', 'Ref'),
 		}),
 		2: (None, 'Ref'),
-	},
-	2022: {1: ('Style info',), 11: ('Character properties?', {}), 12: ('Paragraph properties?', {})},
-	2023: {1: ('Style info',)},
-	2025: {1: ('Style info',), 11: ('Properties', {})},
-	3016: {1: ('Style info',), 11: ('Properties', {})},
-	3056: {3: ('Author ref', 'Ref')},
-	6003: {1: ('Style info',), 11: ('Properties', {})},
-	6004: {1: ('Style info',), 11: ('Properties', {})},
-	6008: {3: (None, 'Ref')},
-	11006: {
+	}),
+	2022: ('Paragraph style', {
+		1: ('Style info',),
+		11: ('Character properties?', {}),
+		12: ('Paragraph properties?', {})
+	}),
+	2023: ('List style', {1: ('Style info',)}),
+	2025: ('Graphic style', {1: ('Style info',), 11: ('Properties', {})}),
+	3016: ('Image style', {1: ('Style info',), 11: ('Properties', {})}),
+	3056: (None, {3: ('Author ref', 'Ref')}),
+	4000: ('Calculation Engine', {}),
+	6003: ('Table style', {1: ('Style info',), 11: ('Properties', {})}),
+	6004: ('Cell style', {1: ('Style info',), 11: ('Properties', {})}),
+	6005: ('Data List', {}),
+	6008: (None, {3: (None, 'Ref')}),
+	11006: ('Object index', {
 		1: ('Active object ref?', int64),
 		3: ('IWA file',),
 		4: ('Other file',),
-	},
+	}),
 }
 
 # Parser for internal IWA files.
@@ -486,15 +469,14 @@ OBJ_TYPES = {
 # lead to false positives.
 #
 # It is possible to set name and type to interesting pieces of content.
-# There are three global dicts that contain various parts of the data:
-# * OBJ_NAMES dict contains names of objects. The key is the object type.
-# * OBJ_TYPES dict contains message types of objects. The key is the
-#	object type.
+# There are two global dicts that contain specifications of the data:
+# * OBJECTS dict contains names and message types of objects. The key is
+#   the object type.
 # * MESSAGES dict contains message types for commonly used sub-messages.
 #   The key is the name of the message.
-# The value in OBJ_TYPES and MESSAGES is a dict, mapping a field number
-# to its name and type. The name and type are passed as a list; name is
-# the first element, type the second. If there is no good name for the
+# The value for both of them is a dict, mapping a field number to its
+# name and type. The name and type are passed as a list; name is the
+# first element, type the second. If there is no good name for the
 # field, name should be None. Type is optional; if it is not given, the
 # parser tries to look up name in MESSAGES and use that type. Similarly,
 # if the type is a string, the parser again tries to look up the real
@@ -525,9 +507,9 @@ class IWAParser(object):
 					data_len = hdr.value[2][0].value[3][0].value
 			obj_data = self.data[obj_start:off + hdr_len + data_len]
 			if obj_type:
-				if OBJ_NAMES.has_key(obj_type):
-					obj_name = OBJ_NAMES[obj_type]
-				else:
+				if OBJECTS.has_key(obj_type):
+					obj_name = OBJECTS[obj_type][0]
+				if not obj_name:
 					obj_name = 'Object %d' % obj_type
 			else:
 				obj_name = 'Object'
@@ -537,9 +519,10 @@ class IWAParser(object):
 			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
 			off += hdr_len
 			if data_len > 0:
-				desc = message()
-				if OBJ_TYPES.has_key(obj_type):
-					desc = OBJ_TYPES[obj_type]
+				if OBJECTS.has_key(obj_type):
+					desc = OBJECTS[obj_type][1]
+				else:
+					desc = message()
 				data = self._parse_object(off, data_len, desc)
 				self._add_pgiter('Data', data, off, off + data_len, objiter)
 				off += data_len
