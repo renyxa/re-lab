@@ -347,6 +347,7 @@ OBJ_NAMES = {
 	5: 'Slide',
 	9: 'Slide style',
 	210: 'View State',
+	212: 'Annotation',
 	213: 'Annotation Author Storage',
 	401: 'Stylesheet',
 	2022: 'Paragraph style',
@@ -373,6 +374,8 @@ OBJ_TYPES = {
 	}),
 	2: message({4: ('Size',), 5: ('Stylesheet ref', REF)}),
 	9: message({1: ('Style info',), 11: ('Properties', message())}),
+	212: message({1: ('Author', string)}),
+	213: message({1: ('Annotation ref', REF)}),
 	401: message({
 		1: (None, REF),
 		2: (None, message({
