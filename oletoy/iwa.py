@@ -328,7 +328,7 @@ class message:
 				else:
 					return desc
 			elif self.desc[field][0]:
-				if MESSAGES[self.desc[field][0]]:
+				if MESSAGES.has_key(self.desc[field][0]):
 					return MESSAGES[self.desc[field][0]]
 		return generic_desc()
 
