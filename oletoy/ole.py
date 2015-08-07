@@ -152,7 +152,8 @@ def my_open (buf,page,parent=None):
 				if fn == "VBA":
 					page.type = "vba"
 					ftype = "vba"
-				if ftype == "vba" and fn == "dir":
+				#if (ftype == "vba" and fn == "dir") or 
+				if "vba/dir" in fullname.lower():
 					page.model.set_value(iter1,1,("vba",dirflag))
 					vbaiter = iter1
 					vbadata = data
