@@ -506,6 +506,7 @@ class IWAParser(object):
 				if hdr.value[2][0].value.has_key(3):
 					data_len = hdr.value[2][0].value[3][0].value
 			obj_data = self.data[obj_start:off + hdr_len + data_len]
+			obj_name = None
 			if obj_type:
 				if OBJECTS.has_key(obj_type):
 					obj_name = OBJECTS[obj_type][0]
