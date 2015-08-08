@@ -520,10 +520,7 @@ class IWAParser(object):
 			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
 			off += hdr_len
 			if data_len > 0:
-				if OBJECTS.has_key(obj_type):
-					desc = OBJECTS[obj_type][1]
-				else:
-					desc = message()
+				desc = self._desc(obj_type)
 				data = self._parse_object(off, data_len, desc)
 				self._add_pgiter('Data', data, off, off + data_len, objiter)
 				off += data_len
@@ -542,8 +539,6 @@ class IWAParser(object):
 		return self._HEADER_MSG(self.data, off, off, off + length)
 
 	def _parse_object(self, off, length, desc):
-		if isinstance(desc, dict):
-			desc = message(desc)
 		return desc(self.data, off, off, off + length)
 
 	def _add_pgiter(self, name, obj, start, end, parent):
@@ -566,6 +561,26 @@ class IWAParser(object):
 						if obj.desc.desc[k][0]:
 							n = '%s: %s' % (n, obj.desc.desc[k][0])
 					self._add_pgiter(n, e, e.start, e.end, it)
+
+	def _desc(self, obj_type):
+		desc = None
+		if OBJECTS.has_key(obj_type):
+			if len(OBJECTS[obj_type]) > 1 and OBJECTS[obj_type][1]:
+				desc1 = OBJECTS[obj_type][1]
+				if isinstance(desc1, str):
+					if MESSAGES.has_key(desc1):
+						desc = MESSAGES[desc1]
+				else:
+					desc = desc1
+			elif OBJECTS[obj_type][0]:
+				name = OBJECTS[obj_type][0]
+				if MESSAGES.has_key(name):
+					desc = MESSAGES[name]
+			if isinstance(desc, dict):
+				desc = message(desc)
+		if not desc:
+			desc = message()
+		return desc
 
 ### Data view callbacks
 
