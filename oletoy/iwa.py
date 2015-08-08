@@ -400,7 +400,7 @@ OBJECTS = {
 		}),
 		2: ('Type?', int64),
 	}),
-	9: ('Slide style', {1: ('Style info',), 11: ('Properties', {})}),
+	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
 	10: (None, {
 		1: (None, {
 			1: ('Theme stylesheet ref', 'Ref'),
@@ -408,7 +408,7 @@ OBJECTS = {
 			5: (None, 'Ref'),
 		}),
 	}),
-	210: ('View State', {}),
+	210: ('View State',),
 	212: ('Annotation', {1: ('Author', string)}),
 	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
 	401: ('Stylesheet', {
@@ -442,17 +442,17 @@ OBJECTS = {
 	}),
 	2022: ('Paragraph style', {
 		1: ('Style info',),
-		11: ('Character properties?', {}),
-		12: ('Paragraph properties?', {})
+		11: ('Character properties?',),
+		12: ('Paragraph properties?',)
 	}),
 	2023: ('List style', {1: ('Style info',)}),
-	2025: ('Graphic style', {1: ('Style info',), 11: ('Properties', {})}),
-	3016: ('Image style', {1: ('Style info',), 11: ('Properties', {})}),
+	2025: ('Graphic style', {1: ('Style info',), 11: ('Properties',)}),
+	3016: ('Image style', {1: ('Style info',), 11: ('Properties',)}),
 	3056: (None, {3: ('Author ref', 'Ref')}),
-	4000: ('Calculation Engine', {}),
-	6003: ('Table style', {1: ('Style info',), 11: ('Properties', {})}),
-	6004: ('Cell style', {1: ('Style info',), 11: ('Properties', {})}),
-	6005: ('Data List', {}),
+	4000: ('Calculation Engine',),
+	6003: ('Table style', {1: ('Style info',), 11: ('Properties',)}),
+	6004: ('Cell style', {1: ('Style info',), 11: ('Properties',)}),
+	6005: ('Data List',),
 	6008: (None, {3: (None, 'Ref')}),
 	11006: ('Object index', {
 		1: ('Active object ref?', int64),
