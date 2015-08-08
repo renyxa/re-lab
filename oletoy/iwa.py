@@ -356,6 +356,17 @@ MESSAGES = {
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
+	'Shape': {
+		1: (None, {
+			1: (None, {
+				1: ('Geometry',),
+				2: ('Slide ref', 'Ref'),
+			}),
+			2: ('Graphic style ref', 'Ref'),
+			3: ('Bezier path',),
+		}),
+		2: ('Text ref', 'Ref'),
+	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 }
@@ -426,18 +437,9 @@ OBJECTS = {
 			1: ('Paragraph', {1: ('Start', int64), 2: ('Style ref', 'Ref')})
 		})
 	}),
+	2011: ('Shape',),
 	2014: ('Sticky note', {
-		1: (None, {
-			1: (None, {
-				1: (None, {
-					1: ('Geometry',),
-					2: ('Slide ref', 'Ref'),
-				}),
-				2: ('Graphic style ref', 'Ref'),
-				3: ('Bezier path',),
-			}),
-			2: ('Text ref', 'Ref'),
-		}),
+		1: ('Shape',),
 		2: (None, 'Ref'),
 	}),
 	2022: ('Paragraph style', {
