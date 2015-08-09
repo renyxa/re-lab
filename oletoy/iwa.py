@@ -446,7 +446,7 @@ OBJECTS = {
 			}),
 			2: ('Text ref', 'Ref'),
 		}),
-		2: ('Type?', int64),
+		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
 	}),
 	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
 	10: (None, {
