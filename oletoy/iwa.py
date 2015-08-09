@@ -185,7 +185,7 @@ class primitive:
 		self.primitive = True
 		self.structured = False
 		self.size = parser.size
-		self.visualizer = None
+		self.visualizer = 'iwa_%s' % name
 
 	def __call__(self, data, off, start, end):
 		return result(self.parser(data, off), self, start, end)
@@ -633,6 +633,51 @@ def add_64bit(hd, size, data):
 	add_iter(hd, 'Signed fixed64', s64, off, off + 8, '<q')
 	add_iter(hd, 'Double', d, off, off + 8, '<d')
 
+def add_bool(hd, size, data):
+	off = add_field(hd, size, data)
+	b = parse_bool(data, off)
+	add_iter(hd, 'Bool', b, off, size - off, '%ds' % (size - off))
+
+def add_int64(hd, size, data):
+	off = add_field(hd, size, data)
+	i = parse_int64(data, off)
+	add_iter(hd, 'Int', i, off, size - off, '%ds' % (size - off))
+
+def add_sint64(hd, size, data):
+	off = add_field(hd, size, data)
+	s = parse_sint64(data, off)
+	add_iter(hd, 'Signed int', s, off, size - off, '%ds' % (size - off))
+
+def add_fixed32(hd, size, data):
+	off = add_field(hd, size, data)
+	f32 = read(data, off, '<I')
+	add_iter(hd, 'Fixed32', f32, off, off + 4, '<I')
+
+def add_sfixed32(hd, size, data):
+	off = add_field(hd, size, data)
+	s32 = read(data, off, '<i')
+	add_iter(hd, 'Signed fixed32', s32, off, off + 4, '<i')
+
+def add_fixed64(hd, size, data):
+	off = add_field(hd, size, data)
+	f64 = read(data, off, '<Q')
+	add_iter(hd, 'Fixed64', f64, off, off + 8, '<Q')
+
+def add_sfixed64(hd, size, data):
+	off = add_field(hd, size, data)
+	s64 = read(data, off, '<q')
+	add_iter(hd, 'Signed fixed64', s64, off, off + 8, '<q')
+
+def add_float(hd, size, data):
+	off = add_field(hd, size, data)
+	f = read(data, off, '<f')
+	add_iter(hd, 'Float', f, off, off + 4, '<f')
+
+def add_double(hd, size, data):
+	off = add_field(hd, size, data)
+	d = read(data, off, '<d')
+	add_iter(hd, 'Double', d, off, off + 8, '<d')
+
 def add_packed(hd, size, data, parser, p16=False):
 	off = add_field(hd, size, data)
 	obj = parser(data, off, 0, size)
@@ -685,8 +730,14 @@ def add_varint(hd, size, data):
 iwa_ids = {
 	'iwa_32bit': add_32bit,
 	'iwa_64bit': add_64bit,
+	'iwa_bool': add_bool,
 	'iwa_compressed_block': add_iwa_compressed_block,
+	'iwa_double': add_double,
 	'iwa_field': add_field,
+	'iwa_fixed32': add_fixed32,
+	'iwa_fixed64': add_fixed64,
+	'iwa_float': add_float,
+	'iwa_int64': add_int64,
 	'iwa_object': add_iwa_object,
 	'iwa_packed_bool': add_packed_bool,
 	'iwa_packed_int64': add_packed_int64,
@@ -697,6 +748,9 @@ iwa_ids = {
 	'iwa_packed_sfixed64': add_packed_sfixed64,
 	'iwa_packed_float': add_packed_float,
 	'iwa_packed_double': add_packed_double,
+	'iwa_sfixed32': add_sfixed32,
+	'iwa_sfixed64': add_sfixed64,
+	'iwa_sint64': add_sint64,
 	'iwa_string': add_string,
 	'iwa_varint': add_varint,
 }
