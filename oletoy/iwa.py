@@ -486,6 +486,7 @@ OBJECTS = {
 	}),
 	2023: ('List style', {1: ('Style info',)}),
 	2025: ('Graphic style', {1: ('Style info',), 11: ('Properties',)}),
+	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
 	3016: ('Image style', {1: ('Style info',), 11: ('Properties',)}),
 	3056: (None, {3: ('Author ref', 'Ref')}),
