@@ -362,6 +362,13 @@ MESSAGES = {
 		1: ('Type', enum({1: 'M', 2: 'L', 5: 'C'})),
 		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
 	},
+	'Character properties': {
+		1: ('Bold', bool_),
+		2: ('Italic', bool_),
+		3: ('Font size', float_),
+		7: ('Font color', 'Color'),
+	},
+	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
 	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
 	'Geometry': {1: ('Position',), 2: ('Size',)},
 	'IWA file': {
@@ -370,6 +377,9 @@ MESSAGES = {
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
 	},
 	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
+	'Paragraph properties': {
+		40: ('List style ref', 'Ref'),
+	},
 	'Path': {
 		3: ('Point path', {
 			1: ('Type', enum({0: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
@@ -406,6 +416,7 @@ MESSAGES = {
 	'Shape placement': {1: ('Geometry',), 2: ('Slide ref', 'Ref')},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
+	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
 }
 
 OBJECTS = {
@@ -470,29 +481,34 @@ OBJECTS = {
 	2001: ('Text', {
 		2: ('Stylesheet ref', 'Ref'),
 		3: ('Text', string),
-		5: ('Paragraphs', {
-			1: ('Paragraph', {1: ('Start', int64), 2: ('Style ref', 'Ref')})
-		})
+		5: ('Paragraphs', {1: ('Paragraph', 'Text address')}),
+		8: ('Spans', {1: ('Span', 'Text address')}),
 	}),
 	2011: ('Drawable shape',),
 	2014: ('Sticky note', {
 		1: ('Drawable shape',),
 		2: (None, 'Ref'),
 	}),
+	2021: ('Character style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Properties', 'Character properties'),
+	}),
 	2022: ('Paragraph style', {
 		1: ('Style info',),
-		11: ('Character properties?',),
-		12: ('Paragraph properties?',)
+		10: ('Number of properties', int64),
+		11: ('Character properties',),
+		12: ('Paragraph properties',)
 	}),
-	2023: ('List style', {1: ('Style info',)}),
-	2025: ('Graphic style', {1: ('Style info',), 11: ('Properties',)}),
+	2023: ('List style', {1: ('Style info',), 10: ('Number of properties', int64),}),
+	2025: ('Graphic style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
-	3016: ('Image style', {1: ('Style info',), 11: ('Properties',)}),
+	3016: ('Image style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
 	3056: (None, {3: ('Author ref', 'Ref')}),
 	4000: ('Calculation Engine',),
-	6003: ('Table style', {1: ('Style info',), 11: ('Properties',)}),
-	6004: ('Cell style', {1: ('Style info',), 11: ('Properties',)}),
+	6003: ('Table style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
+	6004: ('Cell style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
 	6005: ('Data List',),
 	6008: (None, {3: (None, 'Ref')}),
 	11006: ('Object index', {
