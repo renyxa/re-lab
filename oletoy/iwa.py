@@ -268,10 +268,13 @@ class message:
 			field_num = key >> 3
 			wire_type = key & 0x7
 			stt_data = off
+			visualizer = None
 			if wire_type == 0:
 				off = find_var(data, off)
+				visualizer = 'iwa_varint'
 			elif wire_type == 1:
 				off += 8
+				visualizer = 'iwa_64bit'
 			elif wire_type == 2:
 				(length, off) = read_var(data, off)
 				stt_data = off
@@ -280,11 +283,12 @@ class message:
 				pass
 			elif wire_type == 5:
 				off += 4
+				visualizer = 'iwa_32bit'
 			else:
 				raise self.unknown_type()
 			if not msg.has_key(field_num):
 				msg[field_num] = []
-			desc = self._desc(field_num, wire_type)
+			desc = self._desc(field_num, wire_type == 2, visualizer)
 			msg[field_num].append(desc(data, stt_data, stt, off))
 		if off != end:
 			raise self.bad_format()
@@ -296,7 +300,7 @@ class message:
 	class bad_format:
 		pass
 
-	def _desc(self, field, wire_type):
+	def _desc(self, field, structured, visualizer):
 		class generic_desc:
 			def __init__(self):
 				self.primitive = False
@@ -304,23 +308,18 @@ class message:
 				self.visualizer = None
 
 			def __call__(self, data, off, start, end):
-				if wire_type == 0:
-					self.visualizer = 'iwa_varint'
-				elif wire_type == 1:
-					self.visualizer = 'iwa_64bit'
-				elif wire_type == 2: # try to parse as a message
+				if structured: # try to parse as a message
 					try:
 						desc = message()
 						return desc(data, off, start, end)
 					except:
 						pass
-				elif wire_type == 5:
-					self.visualizer = 'iwa_32bit'
 				return result(data[start:end], self, start, end)
+
+		desc = None
 
 		if self.desc.has_key(field):
 			global MESSAGES
-			desc = None
 			if len(self.desc[field]) > 1 and self.desc[field][1]:
 				desc1 = self.desc[field][1]
 				if isinstance(desc1, str):
@@ -334,9 +333,13 @@ class message:
 					desc = MESSAGES[name]
 			if isinstance(desc, dict):
 				desc = message(desc)
-			if desc:
-				return desc
-		return generic_desc()
+
+		if not desc:
+			desc = generic_desc()
+		if not desc.visualizer:
+			desc.visualizer = visualizer
+
+		return desc
 
 ### File parser
 
