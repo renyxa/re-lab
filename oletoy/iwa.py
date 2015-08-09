@@ -199,6 +199,21 @@ def parse_int64(data, off):
 def parse_sint64(data, off):
 	return read_var(data, off)[0]
 
+def enum(values={}):
+	class _enum:
+		def __init__(self, parser):
+			self.parser = parser
+
+		def __call__(self, data, off):
+			i = self.parser(data, off)
+			print("calling enum for %d" % i)
+			if values.has_key(i):
+				return values[i]
+			print("value not found")
+			return 'Unknown'
+
+	return primitive(varlen(_enum(parse_int64)), 'enum')
+
 bool_ = primitive(varlen(parse_bool), 'bool')
 int64 = primitive(varlen(parse_int64), 'int64')
 sint64 = primitive(varlen(parse_sint64), 'sint64')
@@ -354,7 +369,7 @@ MESSAGES = {
 	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
 	'Path': {1: ('Path element',)},
 	'Path element': {
-		1: ('Type', int64), # TODO: special type
+		1: ('Type', enum({1: 'M', 2: 'L', 5: 'C'})),
 		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
@@ -638,6 +653,11 @@ def add_bool(hd, size, data):
 	b = parse_bool(data, off)
 	add_iter(hd, 'Bool', b, off, size - off, '%ds' % (size - off))
 
+def add_enum(hd, size, data):
+	off = add_field(hd, size, data)
+	i = parse_int64(data, off)
+	add_iter(hd, 'Enum value', i, off, size - off, '%ds' % (size - off))
+
 def add_int64(hd, size, data):
 	off = add_field(hd, size, data)
 	i = parse_int64(data, off)
@@ -733,6 +753,7 @@ iwa_ids = {
 	'iwa_bool': add_bool,
 	'iwa_compressed_block': add_iwa_compressed_block,
 	'iwa_double': add_double,
+	'iwa_enum': add_enum,
 	'iwa_field': add_field,
 	'iwa_fixed32': add_fixed32,
 	'iwa_fixed64': add_fixed64,
