@@ -206,10 +206,8 @@ def enum(values={}):
 
 		def __call__(self, data, off):
 			i = self.parser(data, off)
-			print("calling enum for %d" % i)
 			if values.has_key(i):
 				return values[i]
-			print("value not found")
 			return 'Unknown'
 
 	return primitive(varlen(_enum(parse_int64)), 'enum')
