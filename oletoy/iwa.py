@@ -359,7 +359,11 @@ class message:
 ### File parser
 
 MESSAGES = {
-	'Bezier path': {5: ('Bezier', {2: ('Size',), 3: ('Path',)})},
+	'Bezier': {1: ('Bezier element',)},
+	'Bezier element': {
+		1: ('Type', enum({1: 'M', 2: 'L', 5: 'C'})),
+		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
+	},
 	'Geometry': {1: ('Position',), 2: ('Size',)},
 	'IWA file': {
 		1: ('First Object ID', int64),
@@ -367,10 +371,25 @@ MESSAGES = {
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
 	},
 	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
-	'Path': {1: ('Path element',)},
-	'Path element': {
-		1: ('Type', enum({1: 'M', 2: 'L', 5: 'C'})),
-		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
+	'Path': {
+		3: ('Point path', {
+			1: ('Type', enum({0: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
+			2: ('Point', 'Position'),
+			3: ('Size',)
+		}),
+		4: ('Scalar path', {
+			1: ('Type', enum({0: 'Rounded rectangle', 1: 'Regular polygon'})),
+			2: ('Value', float_),
+			3: ('Size',)
+		}),
+		5: ('Bezier path', {2: ('Size',), 3: ('Bezier',)}),
+		6: ('Callout2 path', {
+			1: ('Size',),
+			2: ('Tail position', 'Position'),
+			3: ('Tail size', float_),
+			4: ('Corner radius', float_),
+			5: ('Tail at center', bool_),
+		}),
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
@@ -381,7 +400,7 @@ MESSAGES = {
 				2: ('Slide ref', 'Ref'),
 			}),
 			2: ('Graphic style ref', 'Ref'),
-			3: ('Bezier path',),
+			3: ('Path',),
 		}),
 		2: ('Text ref', 'Ref'),
 	},
@@ -423,7 +442,7 @@ OBJECTS = {
 					2: ('Slide ref', 'Ref'),
 				}),
 				2: ('Graphic style ref', 'Ref'),
-				3: ('Bezier path',),
+				3: ('Path',),
 			}),
 			2: ('Text ref', 'Ref'),
 		}),
