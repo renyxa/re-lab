@@ -388,6 +388,12 @@ MESSAGES = {
 			4: ('Corner radius', float_),
 			5: ('Tail at center', bool_),
 		}),
+		7: ('Connection path', {
+			1: (None, {
+				2: ('Size',),
+				3: ('Bezier',),
+			}),
+		}),
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
@@ -484,6 +490,18 @@ OBJECTS = {
 	}),
 	2023: ('List style', {1: ('Style info',)}),
 	2025: ('Graphic style', {1: ('Style info',), 11: ('Properties',)}),
+	3009: ('Connection line', {
+		1: (None, {
+			1: (None, {
+				1: ('Geometry',),
+				2: ('Slide ref', 'Ref'),
+			}),
+			2: ('Graphic style ref', 'Ref'),
+			3: ('Path',),
+		}),
+		2: ('Shape 1 ref', 'Ref'),
+		3: ('Shape 2 ref', 'Ref'),
+	}),
 	3016: ('Image style', {1: ('Style info',), 11: ('Properties',)}),
 	3056: (None, {3: ('Author ref', 'Ref')}),
 	4000: ('Calculation Engine',),
