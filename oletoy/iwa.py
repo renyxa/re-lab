@@ -381,6 +381,9 @@ MESSAGES = {
 	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
 	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
 	'Geometry': {1: ('Position',), 2: ('Size',)},
+	'Graphic properties': {
+		10: ('Paragraph style ref', 'Ref'),
+	},
 	'IWA file': {
 		1: ('First Object ID', int64),
 		2: ('Name', string),
@@ -470,21 +473,15 @@ OBJECTS = {
 	}),
 	5: ('Slide', {
 		1: ('Style ref', 'Ref'),
-		7: ('Drawable ref', 'Ref'),
+		5: ('Title placeholder ref', 'Ref'),
+		6: ('Body placeholder ref', 'Ref'),
+		7: ('Shape ref', 'Ref'),
 		17: ('Master ref', 'Ref'),
+		20: ('Slide number placeholder ref', 'Ref'),
+		42: (None, 'Ref'),
 	}),
 	7: ('Placeholder', {
-		1: (None, {
-			1: (None, {
-				1: (None, {
-					1: ('Geometry',),
-					2: ('Slide ref', 'Ref'),
-				}),
-				2: ('Graphic style ref', 'Ref'),
-				3: ('Path',),
-			}),
-			2: ('Text ref', 'Ref'),
-		}),
+		1: ('Drawable shape',),
 		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
 	}),
 	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
@@ -533,7 +530,11 @@ OBJECTS = {
 	}),
 	2022: ('Paragraph style',),
 	2023: ('List style', {1: ('Style info',), 10: ('Number of properties', int64),}),
-	2025: ('Graphic style', {1: ('Paragraph style',), 10: ('Number of properties', int64), 11: ('Properties',)}),
+	2025: ('Graphic style', {
+		1: ('Paragraph style',),
+		10: ('Number of properties', int64),
+		11: ('Properties', 'Graphic properties'),
+	}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
 	3016: ('Image style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
