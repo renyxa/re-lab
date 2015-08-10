@@ -390,7 +390,7 @@ MESSAGES = {
 		3: ('Path', string),
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
 	},
-	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
+	'Other file': {1: ('ID', int64), 3: ('Path', string), 5: ('Template', string)},
 	'Paragraph properties': {
 		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify'})),
 		7: ('First line indent', float_),
@@ -441,7 +441,7 @@ MESSAGES = {
 		2: ('Graphic style ref', 'Ref'),
 		3: ('Path',),
 	},
-	'Shape placement': {1: ('Geometry',), 2: ('Slide ref', 'Ref')},
+	'Shape placement': {1: ('Geometry',), 2: ('Parent ref', 'Ref')},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
@@ -535,6 +535,29 @@ OBJECTS = {
 		10: ('Number of properties', int64),
 		11: ('Properties', 'Graphic properties'),
 	}),
+	3005: ('Image', {
+		1: ('Shape placement',),
+		3: ('Image style ref', 'Ref'),
+		4: ('Size',),
+		5: ('Mask ref', 'Ref'),
+		9: ('Natural size', 'Size'),
+		10: ('Alpha mask path', 'Bezier'),
+		11: ('File ref?', 'Ref'),
+		13: ('File ref?', 'Ref'),
+		15: ('Filtered ref', 'Ref'),
+	}),
+	3006: ('Mask', {
+		1: ('Mask placement', 'Shape placement',),
+		2: ('Masking shape path source', 'Path'),
+	}),
+	3007: ('Movie', {
+		1: ('Shape placement',),
+		14: ('Main movie ref', 'Ref'),
+		15: ('Poster image ref', 'Ref'),
+		16: ('Audio-only image ref', 'Ref'),
+		19: ('Style ref', 'Ref'),
+		20: ('Size',),
+	}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
 	3016: ('Image style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
@@ -621,7 +644,8 @@ class IWAParser(object):
 			1: ('Object type', int64),
 			2: (None, packed(int64)),
 			3: ('Data size', int64),
-			5: ('References', packed(int64))
+			5: ('References', packed(int64)),
+			6: ('File ID', int64),
 		}
 	)})
 
