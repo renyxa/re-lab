@@ -398,6 +398,12 @@ MESSAGES = {
 		25: ('Tabs', {1: ('Tab stop', {1: ('Pos', float_)})}),
 		40: ('List style ref', 'Ref'),
 	},
+	'Paragraph style': {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Character properties',),
+		12: ('Paragraph properties',),
+	},
 	'Path': {
 		3: ('Point path', {
 			1: ('Type', enum({0: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
@@ -513,14 +519,9 @@ OBJECTS = {
 		10: ('Number of properties', int64),
 		11: ('Properties', 'Character properties'),
 	}),
-	2022: ('Paragraph style', {
-		1: ('Style info',),
-		10: ('Number of properties', int64),
-		11: ('Character properties',),
-		12: ('Paragraph properties',)
-	}),
+	2022: ('Paragraph style',),
 	2023: ('List style', {1: ('Style info',), 10: ('Number of properties', int64),}),
-	2025: ('Graphic style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
+	2025: ('Graphic style', {1: ('Paragraph style',), 10: ('Number of properties', int64), 11: ('Properties',)}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
 	3016: ('Image style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
