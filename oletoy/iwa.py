@@ -605,7 +605,7 @@ class IWAParser(object):
 
 	_HEADER_MSG = message({1: ('ID', int64), 2: ('Data info',
 		{
-			1: ('Object type?', int64),
+			1: ('Object type', int64),
 			2: (None, packed(int64)),
 			3: ('Data size', int64),
 			5: ('References', packed(int64))
