@@ -489,12 +489,13 @@ OBJECTS = {
 	212: ('Annotation', {1: ('Author', string)}),
 	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
 	401: ('Stylesheet', {
-		1: (None, 'Ref'),
-		2: (None, {
+		1: ('Style ref', 'Ref'),
+		2: ('Style name', {
 			1: ('Name', string),
 			2: ('Ref', 'Ref'),
 		}),
-		3: ('Parent ref', 'Ref')
+		3: ('Parent ref', 'Ref'),
+		5: ('Parent association', {1: ('Parent ref', 'Ref'), 2: ('Style ref', 'Ref')}),
 	}),
 	2001: ('Text', {
 		2: ('Stylesheet ref', 'Ref'),
