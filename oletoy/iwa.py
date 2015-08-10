@@ -441,13 +441,14 @@ MESSAGES = {
 	'Shape placement': {1: ('Geometry',), 2: ('Slide ref', 'Ref')},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
+	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
 	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
 }
 
 OBJECTS = {
 	1: ('Document', {
 		2: ('Presentation ref', 'Ref'),
-		3: (None, {
+		3: ('Document info', {
 			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
 			3: ('Language', string),
 			4: ('Calculation Engine Ref', 'Ref'),
@@ -458,12 +459,14 @@ OBJECTS = {
 		})
 	}),
 	2: ('Presentation', {
-		2: (None, 'Ref'),
+		2: ('Theme ref?', 'Ref'),
+		3: ('Slide list', {1: ('Slide list ref', 'Ref')}),
 		4: ('Size',),
 		5: ('Stylesheet ref', 'Ref')
 	}),
-	4: ('Master slide?', {
-		2: ('Master slide ref', 'Ref'),
+	4: ('Slide list', {
+		1: ('Slide list ref', 'Ref'),
+		2: ('Slide ref', 'Ref'),
 	}),
 	5: ('Slide', {
 		1: ('Style ref', 'Ref'),
@@ -485,22 +488,30 @@ OBJECTS = {
 		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
 	}),
 	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
-	10: (None, {
-		1: (None, {
+	10: ('Theme?', {
+		1: ('Theme info', {
 			1: ('Theme stylesheet ref', 'Ref'),
-			3: ('Theme?', string),
+			3: ('Name', string),
 			5: (None, 'Ref'),
 		}),
+		2: ('Slide list ref', 'Ref'),
+		3: ('Group UUID', string),
+	}),
+	19: ('Style name map', {
+		1: ('Style name association',),
+		2: ('Theme ref?', 'Ref'),
+	}),
+	20: (None, {
+		1: ('Group UUID', string),
+		2: ('Style name map ref', 'Ref'),
+		3: ('Slide ref', 'Ref'),
 	}),
 	210: ('View State',),
 	212: ('Annotation', {1: ('Author', string)}),
 	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
 	401: ('Stylesheet', {
 		1: ('Style ref', 'Ref'),
-		2: ('Style name', {
-			1: ('Name', string),
-			2: ('Ref', 'Ref'),
-		}),
+		2: ('Style name association',),
 		3: ('Parent ref', 'Ref'),
 		5: ('Parent association', {1: ('Parent ref', 'Ref'), 2: ('Style ref', 'Ref')}),
 	}),
