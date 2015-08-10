@@ -383,7 +383,8 @@ MESSAGES = {
 	'Geometry': {1: ('Position',), 2: ('Size',)},
 	'IWA file': {
 		1: ('First Object ID', int64),
-		2: ('Kind', string), 3: ('Path', string),
+		2: ('Name', string),
+		3: ('Path', string),
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
 	},
 	'Other file': {1: ('Number', int64), 3: ('Path', string), 5: ('Template', string)},
