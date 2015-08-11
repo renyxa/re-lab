@@ -494,6 +494,7 @@ OBJECTS = {
 		7: ('Shape ref', 'Ref'),
 		17: ('Master ref', 'Ref'),
 		20: ('Slide number placeholder ref', 'Ref'),
+		27: ('Notes ref', 'Ref'),
 		42: (None, 'Ref'),
 	}),
 	7: ('Placeholder', {
@@ -510,6 +511,7 @@ OBJECTS = {
 		2: ('Slide list ref', 'Ref'),
 		3: ('Group UUID', string),
 	}),
+	15: ('Notes', {1: ('Text ref', 'Ref')}),
 	19: ('Style name map', {
 		1: ('Style name association',),
 		2: ('Theme ref?', 'Ref'),
