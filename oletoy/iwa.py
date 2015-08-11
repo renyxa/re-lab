@@ -387,7 +387,12 @@ MESSAGES = {
 	},
 	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
 	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
-	'Geometry': {1: ('Position',), 2: ('Size',)},
+	'Geometry': {
+		1: ('Position',),
+		2: ('Size',),
+		3: ('Transformation?', enum({3: 'Normal', 7: 'Horizontal flip'})),
+		4: ('Angle', float_),
+	},
 	'Graphic properties': {
 		10: ('Paragraph style ref', 'Ref'),
 	},
@@ -448,7 +453,11 @@ MESSAGES = {
 		2: ('Graphic style ref', 'Ref'),
 		3: ('Path',),
 	},
-	'Shape placement': {1: ('Geometry',), 2: ('Parent ref', 'Ref')},
+	'Shape placement': {
+		1: ('Geometry',),
+		2: ('Parent ref', 'Ref'),
+		7: ('Aspect ratio locked?', bool_),
+	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
