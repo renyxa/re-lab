@@ -1282,6 +1282,14 @@ class ApplicationMainWindow(gtk.Window):
 			except:
 				print sys.exc_info()
 
+		if ftype == "IWA":
+			try:
+				if iwa.find_var(buf, 0) == dlen:
+					txt += '\tVarint: %d %d\t' % (
+							iwa.parse_int64(buf, 0), iwa.parse_sint64(buf, 0))
+			except:
+				pass
+
 		if ftype == "RTF":
 			txt = '<span background="#DDFFDD">'+rtf.recode(buf,self.options_enc)+'</span>'
 		self.update_statusbar(txt)

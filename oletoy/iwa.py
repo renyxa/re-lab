@@ -25,12 +25,17 @@ def read(data, offset, fmt):
 
 def find_var(data, offset):
 	"""Seek to the end of a variable-length number."""
-	assert len(data) > offset
+	class bad_format:
+		pass
+	if len(data) <= offset:
+		raise bad_format()
 	off = offset
 	c = ord(data[off])
 	while off < len(data) and c & 0x80:
 		off += 1
 		c = ord(data[off])
+	if c & 0x80:
+		raise bad_format()
 	off += 1
 	return off
 
