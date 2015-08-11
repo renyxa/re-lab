@@ -202,7 +202,9 @@ def parse_int64(data, off):
 	return read_var(data, off)[0]
 
 def parse_sint64(data, off):
-	return read_var(data, off)[0]
+	val = read_var(data, off)[0]
+	mod = val % 2
+	return (val + mod) / 2 * (1, -1)[mod]
 
 def enum(values={}):
 	class _enum:
