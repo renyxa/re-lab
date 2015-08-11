@@ -534,6 +534,8 @@ OBJECTS = {
 		2: ('Stylesheet ref', 'Ref'),
 		3: ('Text', string),
 		5: ('Paragraphs', {1: ('Paragraph', 'Text address')}),
+		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
+		7: (None, {1: (None, {2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
 	}),
 	2011: ('Drawable shape',),
@@ -547,7 +549,12 @@ OBJECTS = {
 		11: ('Properties', 'Character properties'),
 	}),
 	2022: ('Paragraph style',),
-	2023: ('List style', {1: ('Style info',), 10: ('Number of properties', int64),}),
+	2023: ('List style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		13: ('List label indent', float_),
+		14: ('List label geometry', {1: ('Scale', float_), 2: ('Offset', float_), 3: ('Align?', int64)}),
+	}),
 	2025: ('Graphic style', {
 		1: ('Paragraph style',),
 		10: ('Number of properties', int64),
