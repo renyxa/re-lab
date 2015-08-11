@@ -641,7 +641,15 @@ OBJECTS = {
 	6004: ('Cell style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
 	6005: ('Data list', {
 		2: ('Next cell index?', int64),
-		3: ('Cell', {1: ('Index', int64), 2: ('Type?', int64), 3: ('Value', string)}),
+		3: ('Cell', {
+			1: ('Index', int64),
+			2: ('Type?', int64),
+			3: ('Value', string),
+			6: (None, {
+				1: ('Implicit format type', int64),
+				14: ('Date format', string),
+			}),
+		}),
 	}),
 	6006: ('Headers', {
 		2: ('Header', {2: ('Size', float_)}),
