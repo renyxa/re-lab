@@ -584,6 +584,16 @@ OBJECTS = {
 		3: ('A ref', 'Ref'),
 		5: ('Language', string),
 	}),
+	5021: ('Chart info', {
+		1: ('Shape placement',),
+		10000: ('Chart model', {
+			7: ('Chart data', {
+				1: ('Chart row name', string),
+				2: ('Chart column name', string),
+				3: ('Chart row data', {1: ('Number', {1: ('Number', double_)})}),
+			}),
+		}),
+	}),
 	6000: ('Tabular info', {
 		1: ('Shape placement',),
 		2: ('Tabular model ref', 'Ref'),
