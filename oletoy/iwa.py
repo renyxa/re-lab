@@ -374,6 +374,13 @@ FUNCTIONS = {
 }
 
 MESSAGES = {
+	'Animation': {
+		1: ('Kind', string),
+		2: ('Type', string),
+		3: ('Animation duration', double_),
+		4: ('Direction', int64), # TODO: identify directions
+		5: ('Animation delay', double_),
+	},
 	'Bezier': {1: ('Bezier element',)},
 	'Bezier element': {
 		1: ('Type', enum({1: 'M', 2: 'L', 5: 'C'})),
@@ -499,16 +506,12 @@ OBJECTS = {
 	}),
 	5: ('Slide', {
 		1: ('Style ref', 'Ref'),
+		2: ('Build ref', 'Ref'),
+		3: ('Build chunk', {1: ('Parent build ref', 'Ref'), 2: ('Order?', int64)}),
 		4: ('Transition', {
 			2: ('Transition attributes', {
 				6: ('Animation auto?', bool_),
-				8: (None, {
-					1: ('Name?', string),
-					2: ('Type', string),
-					3: ('Animation duration', double_),
-					4: ('Direction', int64), # TODO: identify directions
-					5: ('Animation delay', double_),
-				}),
+				8: ('Animation',),
 				10: ('Number of particles', int64),
 				11: ('Type', int64),
 			}),
@@ -524,6 +527,14 @@ OBJECTS = {
 	7: ('Placeholder', {
 		1: ('Drawable shape',),
 		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
+	}),
+	8: ('Build', {
+		1: ('Info ref', 'Ref'),
+		2: ('Mode?', string),
+		4: ('Style', {
+			6: ('Animation delay automatic after?', double_),
+			18: ('Animation',),
+		}),
 	}),
 	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
 	10: ('Theme?', {
