@@ -363,6 +363,16 @@ class message:
 
 ### File parser
 
+FUNCTIONS = {
+	20: 'CLEAN',
+	22: 'COLUMN',
+	65: 'INT',
+	96: 'NOT',
+	97: 'NOW',
+	156: 'TRUE',
+	264: 'DEC2HEX',
+}
+
 MESSAGES = {
 	'Bezier': {1: ('Bezier element',)},
 	'Bezier element': {
@@ -645,6 +655,19 @@ OBJECTS = {
 			1: ('Index', int64),
 			2: ('Type?', int64),
 			3: ('Value', string),
+			5: ('Formula', {
+				1: ('Token array', { # formula is saved in RPN
+					1: ('Token', {
+						1: ('Type', enum({16: 'Function', 17: 'Double', 19: 'String', 36: 'Address'})),
+						2: ('Function', enum(FUNCTIONS)),
+						3: ('Number of arguments', int64),
+						4: ('Double', double_),
+						6: ('String', string),
+						26: ('Row?', {2: ('Row', int64)}),
+						27: ('Column?', {2: ('Column', int64)}),
+					}),
+				}),
+			}),
 			6: (None, {
 				1: ('Implicit format type', int64),
 				14: ('Date format', string),
