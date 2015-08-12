@@ -991,10 +991,10 @@ def parse_ppi (page, data, parent,align=4.,prefix="",offset=0):
 				vprs (page, data[off:off+length], citer, off, vwdtiter,vwdtoff)
 			except:
 				print 'Failed in VPRS'
-		if fourcc in ("PACK", "BLOB","XPIH","FBIN","IADM"):
-			if fourcc in ("FBIN","IADM"):
+		if fourcc in ("PACK", "BLOB","XPIH","FBIN","IADM","CASM","CSEG"):
+			if fourcc in ("FBIN","IADM","CSEG","CASM"):
 				try:
-					parse_ppi (page, data[off:off+length], citer, 1., "%s/"%fourcc,off)
+					parse_ppi (page, data[off:off+length], citer, 0, "%s/"%fourcc,off)
 				except:
 					print 'Failed in %s'%fourcc,page.model.get_path(citer)
 			else:
