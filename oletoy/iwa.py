@@ -499,6 +499,20 @@ OBJECTS = {
 	}),
 	5: ('Slide', {
 		1: ('Style ref', 'Ref'),
+		4: ('Transition', {
+			2: ('Transition attributes', {
+				6: ('Animation auto?', bool_),
+				8: (None, {
+					1: ('Name?', string),
+					2: ('Type', string),
+					3: ('Animation duration', double_),
+					4: ('Direction', int64), # TODO: identify directions
+					5: ('Animation delay', double_),
+				}),
+				10: ('Number of particles', int64),
+				11: ('Type', int64),
+			}),
+		}),
 		5: ('Title placeholder ref', 'Ref'),
 		6: ('Body placeholder ref', 'Ref'),
 		7: ('Shape ref', 'Ref'),
