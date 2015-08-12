@@ -89,6 +89,10 @@ class Page:
 			self.type = yep.parse(self, buf, parent)
 			return 0
 
+		if buf[0:4] == "XPIH":
+			self.type = yep.parse_ppi(self, buf, parent)
+			return 0
+
 		if buf[0:5].lower() == "{\\rtf":
 			self.type = rtf.open(buf, self, parent)
 			return 0

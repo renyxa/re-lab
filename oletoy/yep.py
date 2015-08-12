@@ -959,6 +959,52 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 			print 'Failed in the loop at lines 737..747'
 		ind += 1
 
+def vprs(page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
+	sig = data[:32]
+	add_pgiter(page,"Signature","vprs","sign",data[:32],parent,"%02x  "%offset)
+	off = 32
+
+def parse_ppi (page, data, parent,align=4.,prefix="",offset=0):
+	off = 0
+	vvstgrpiter = None
+	sstygrpiter = None
+	vwdtiter = None
+	while off < len(data)-8:
+		piter = parent
+		fourcc = data[off:off+4]
+		off += 4
+		l = struct.unpack(">I",data[off:off+4])[0]
+		if align:
+			length = int(math.ceil(l/align)*align)
+		else:
+			length = l
+		off += 4
+		iname = "%s"%fourcc
+		citer = add_pgiter(page,"%s [%04x]"%(iname,l),"yep","%s%s"%(prefix,fourcc),data[off:off+length],piter,"%02x  "%(offset+off))
+		if fourcc == "VWST":
+			vwdtiter = citer
+			vwdtoff = off
+		if fourcc == "VPRS":
+			# change 'off' to '0' to show offsets from start of VPRM
+			# currently from the start of the file
+			try:
+				vprs (page, data[off:off+length], citer, off, vwdtiter,vwdtoff)
+			except:
+				print 'Failed in VPRS'
+		if fourcc in ("PACK", "BLOB","XPIH","FBIN","IADM"):
+			if fourcc in ("FBIN","IADM"):
+				try:
+					parse_ppi (page, data[off:off+length], citer, 1., "%s/"%fourcc,off)
+				except:
+					print 'Failed in %s'%fourcc,page.model.get_path(citer)
+			else:
+				parse_ppi (page, data[off:off+length], citer, 4., "%s/"%fourcc,off)
+		off += length
+	page.view.get_column(1).set_title("Offset")
+	return "PPI"
+	
+
+
 def parse (page, data, parent,align=4.,prefix="",offset=0):
 	off = 0
 	vvstgrpiter = None
@@ -984,9 +1030,9 @@ def parse (page, data, parent,align=4.,prefix="",offset=0):
 				sstygrpiter = add_pgiter(page,"SSTYs","ssty","dontsave","",parent,"%02x  "%(offset+off))
 			piter = sstygrpiter
 		elif fourcc == "VVST":
-                        na = ord(data[off+0x18])
-                	nb = ord(data[off+0x19])
-                	nc = ord(data[off+0x1a])	
+			na = ord(data[off+0x18])
+			nb = ord(data[off+0x19])
+			nc = ord(data[off+0x1a])
 			if ord(data[off+0x14]) == 0x3f or ord(data[off+0x14]) == 0x00:
 				f = "[Voice %d-%d-%d]"%(na,nb,nc)
 			else:
