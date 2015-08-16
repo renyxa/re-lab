@@ -483,8 +483,8 @@ MESSAGES = {
 }
 
 OBJECTS = {
-	1: ('Document', {
-		2: ('Presentation ref', 'Ref'),
+	1: ('Presentation', {
+		2: ('Presentation info ref', 'Ref'),
 		3: ('Document info', {
 			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
 			3: ('Language', string),
@@ -495,7 +495,7 @@ OBJECTS = {
 			9: ('Template', string)
 		})
 	}),
-	2: ('Presentation', {
+	2: ('Presentation info', {
 		2: ('Theme ref?', 'Ref'),
 		3: ('Slide list', {1: ('Slide list ref', 'Ref')}),
 		4: ('Size',),
@@ -706,6 +706,15 @@ OBJECTS = {
 		2: ('Header', {2: ('Size', float_)}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
+	10000: ('Document', {
+		30: ('Page width?', float_),
+		31: ('Page height?', float_),
+		32: ('A page margin?', float_),
+		33: ('A page margin?', float_),
+		34: ('A page margin?', float_),
+		35: ('A page margin?', float_),
+		44: ('Paper size?', string),
+	}),
 	11006: ('Object index', {
 		1: ('Active object ref?', int64),
 		3: ('IWA file',),
