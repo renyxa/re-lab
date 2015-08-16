@@ -411,6 +411,7 @@ MESSAGES = {
 		4: ('Angle', float_),
 	},
 	'Graphic properties': {
+		2: ('Vertical content alignment?', enum({0: 'Top', 2: 'Bottom'})),
 		10: ('Paragraph style ref', 'Ref'),
 	},
 	'IWA file': {
@@ -572,6 +573,7 @@ OBJECTS = {
 		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
 		7: (None, {1: (None, {2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
+		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 	}),
 	2011: ('Drawable shape',),
 	2014: ('Sticky note', {
@@ -587,6 +589,7 @@ OBJECTS = {
 	2023: ('List style', {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
+		11: ('List label type?', enum({2: 'Bullet', 3: 'A'})),
 		13: ('List label indent', float_),
 		14: ('List label geometry', {1: ('Scale', float_), 2: ('Offset', float_), 3: ('Align?', int64)}),
 	}),
