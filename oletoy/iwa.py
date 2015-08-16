@@ -411,7 +411,9 @@ MESSAGES = {
 		4: ('Angle', float_),
 	},
 	'Graphic properties': {
-		2: ('Vertical content alignment?', enum({0: 'Top', 2: 'Bottom'})),
+		2: ('Vertical alignment', enum({0: 'Top', 1: 'Center', 2: 'Bottom'})),
+		4: ('Layout properties?', {1: ('Columns?', {1: ('Number of columns?', int64)})}),
+		6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
 		10: ('Paragraph style ref', 'Ref'),
 	},
 	'IWA file': {
@@ -423,13 +425,24 @@ MESSAGES = {
 	'Other file': {1: ('ID', int64), 3: ('Path', string), 5: ('Template', string)},
 	'Paragraph properties': {
 		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify'})),
+		6: ('Text background', 'Color'),
 		7: ('First line indent', float_),
 		11: ('Left indent', float_),
 		13: ('Line spacing', {2: ('Amount', float_)}),
+		15: ('Border type', enum({1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
+		17: ('Border offset', {1: ('A side', float_), 2: ('A side', float_)}),
 		19: ('Right indent', float_),
 		20: ('Space after', float_),
 		21: ('Space before', float_),
 		25: ('Tabs', {1: ('Tab stop', {1: ('Pos', float_)})}),
+		32: ('Paragraph stroke', {
+			1: ('Color',),
+			2: ('Width', float_),
+			6: ('Stroke', {
+				3: ('Number of elements', int64),
+				4: ('Pattern element', float_),
+			}),
+		}),
 		40: ('List style ref', 'Ref'),
 	},
 	'Paragraph style': {
