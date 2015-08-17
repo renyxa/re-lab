@@ -185,14 +185,7 @@ def gsf_open(src,page,iter=None):
 	return ftype
 
 
-# FIXME! need to remove gsf_open
-try:
-	import gsf
-	ropen = my_open
-	print "Found libgsf python bindings"
-except:
-	print 'libgsf python bindings were not found'
-	ropen = my_open
+ropen = my_open
 
 objtype_ids = {0:"Unknown",1:"Storage",2:"Stream",5:"Root Storage"}
 
