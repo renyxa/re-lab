@@ -46,9 +46,6 @@ As of now OLE Toy reads and parses:
 The scripts depend on libgsf. You can find libgsf source code here:
 http://ftp.gnome.org/pub/GNOME/sources/libgsf/
 
-On non-x86 systems it's recommended to compile libgsf with python bindings support.
-OLE Toy will detect presence of those and use them.
-
 To start OLE Toy just run:
 
 $ ./view.py
