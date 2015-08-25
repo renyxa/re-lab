@@ -203,33 +203,43 @@ def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', c, 0, 4, '<I')
 
+def convert_flags(flags, names):
+	"""Convert a number representing a set of flags into names.
+
+	The names dict maps a bit to a name. Bits are counted from 0.
+	"""
+	ret = []
+	for b in xrange(0, sorted(names.keys())[-1] + 1):
+		if flags & 0x1:
+			if names.has_key(b):
+				ret.append(names[b])
+			else:
+				ret.append('unknown')
+		flags = flags >> 1
+	if flags: # more flags than we have names for
+		ret.append('unknowns')
+	return ret
+
+def print_flags(flags, names):
+	return ' + '.join(convert_flags(flags, names))
+
 def get_char_format(flags):
-	fmt = []
-	if flags & 0x2:
-		fmt.append('bold')
-	if flags & 0x4:
-		fmt.append('italic')
-	if flags & 0x8:
-		fmt.append('underline')
-	return ' + '.join(fmt)
+	names = {1: 'bold', 2: 'italic', 3: 'underline'}
+	return print_flags(flags, names)
 
 def get_para_flags(flags):
-	ret = []
-	if flags & 0x8:
-		ret.append('page break')
-	if flags & 0x100:
-		ret.append('paragraph break')
-	return ' + '.join(ret)
+	names = {3: 'page break', 8: 'paragraph break'}
+	return print_flags(flags, names)
 
 def add_text_info(hd, size, data):
 	(flags, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Flags', '%x' % flags, off - 2, 2, '<H')
 	off += 2
 	(para_flags, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Text flags', '%x (%s)' % (para_flags, get_para_flags(para_flags)), off - 2, 2, '<H')
+	add_iter(hd, 'Text flags', '%s' % get_para_flags(para_flags), off - 2, 2, '<H')
 	off += 6
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Format', '%x (%s)' % (attribs, get_char_format(attribs)), off - 2, 2, '<H')
+	add_iter(hd, 'Format', '%s' % get_char_format(attribs), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 
