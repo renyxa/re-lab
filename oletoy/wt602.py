@@ -224,7 +224,20 @@ def print_flags(flags, names):
 	return ' + '.join(convert_flags(flags, names))
 
 def get_char_format(flags):
-	names = {1: 'bold', 2: 'italic', 3: 'underline'}
+	names = {
+		0: 'font size',
+		1: 'bold',
+		2: 'italic',
+		3: 'underline type',
+		4: 'position',
+		5: 'transform',
+		6: 'color',
+		7: 'font name',
+		8: 'letter spacing',
+		9: 'shaded',
+		10: 'line-through type',
+		11: 'outline',
+	}
 	return print_flags(flags, names)
 
 def get_para_flags(flags):
@@ -239,7 +252,7 @@ def add_text_info(hd, size, data):
 	add_iter(hd, 'Text flags', '%s' % get_para_flags(para_flags), off - 2, 2, '<H')
 	off += 6
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Format', '%s' % get_char_format(attribs), off - 2, 2, '<H')
+	add_iter(hd, 'Changed attributes', '%s' % get_char_format(attribs), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 
