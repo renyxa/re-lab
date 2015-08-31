@@ -110,15 +110,13 @@ class wt602_parser(object):
 		add_pgiter(self.page, 'Header', 'wt602', 'header', self.data[0:0x72], self.parent)
 
 	def parse_offset_table(self):
-		offiter = add_pgiter(self.page, 'Offset table', 'wt602', 0,
+		offiter = add_pgiter(self.page, 'Offset table', 'wt602', 'offsets',
 				self.data[0x72:0x72 + 4 * WT602_SECTION_COUNT], self.parent)
 		begin = 0
 		end = 0
 		idx = 0
 		off = 0x72
 		for i in range(0, WT602_SECTION_COUNT):
-			name = get_or_default(wt602_section_names, i, 'Section %d' % i)
-			add_pgiter(self.page, name, 'wt602', 0, self.data[off:off + 4], offiter)
 			(cur, off) = rdata(self.data, off, '<I')
 			if cur != 0:
 				end = cur
@@ -171,6 +169,13 @@ def add_fonts(hd, size, data):
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', c, 0, 4, '<I')
+
+def add_offsets(hd, size, data):
+	off = 0
+	for i in range(0, WT602_SECTION_COUNT):
+		(offset, off) = rdata(data, off, '<I')
+		name = get_or_default(wt602_section_names, i, 'Section %d' % i)
+		add_iter(hd, name, offset, off - 4, 4, '<I')
 
 def convert_flags(flags, names):
 	"""Convert a number representing a set of flags into names.
@@ -257,6 +262,7 @@ wt602_ids = {
 	'font' : add_font,
 	'fonts' : add_fonts,
 	'header': add_header,
+	'offsets': add_offsets,
 	'span_text': add_span_text,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
