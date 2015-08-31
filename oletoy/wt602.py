@@ -39,7 +39,7 @@ wt602_sections = (
 	'Section 17',
 	'Styles',
 	'Section 19',
-	'Section 20',
+	'Color table',
 	'Fields',
 	'Hard formats',
 	'Section 23',
@@ -96,6 +96,13 @@ def handle_styles(page, data, parent, parser = None):
 		off += 0x20
 	add_pgiter(page, 'Definitions', 'wt602', 0, data[hdrsize + 0x10:], parent)
 
+def handle_colormap(page, data, parent, parser = None):
+	(count, off) = rdata(data, 0, '<I')
+	(size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, 'Color %d' % i, 'wt602', 'color', data[off:off + size], parent)
+		off += size
+
 wt602_section_handlers = (
 	None,
 	None,
@@ -117,7 +124,7 @@ wt602_section_handlers = (
 	None,
 	(handle_styles, 'styles'),
 	None,
-	None,
+	(handle_colormap, 'colormap'),
 	None,
 	None,
 	None,
@@ -186,6 +193,22 @@ class wt602_parser(object):
 			sectiter = add_pgiter(self.page, name, 'wt602', adder, self.data[begin:end], self.parent)
 			if handler != None:
 				handler(self.page, self.data[begin:end], sectiter, self)
+
+def add_color(hd, size, data):
+	(r, off) = rdata(data, 0, '<B')
+	add_iter(hd, 'Red', r, off - 1, 1, '<B')
+	(g, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Green', g, off - 1, 1, '<B')
+	(b, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Blue', b, off - 1, 1, '<B')
+	(a, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Alpha', a, off - 1, 1, '<B')
+
+def add_colormap(hd, size, data):
+	(c, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', c, off - 4, 4, '<I')
+	(size, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry size?', size, off - 2, 2, '<H')
 
 def add_font(hd, size, data):
 	i = 2
@@ -283,6 +306,8 @@ def add_text(hd, size, data):
 	add_iter(hd, 'Text', text, off, length, fmt)
 
 wt602_ids = {
+	'color': add_color,
+	'colormap': add_colormap,
 	'font' : add_font,
 	'fonts' : add_fonts,
 	'header': add_header,
