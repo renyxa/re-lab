@@ -98,12 +98,12 @@ class wt602_parser(object):
 		self.page = page
 		self.parent = parent
 
-		self.sections = [(0, 0) for i in range(0, WT602_SECTION_COUNT)]
+		self.sections = []
 
 	def parse(self):
 		self.parse_header()
 		self.parse_offset_table()
-		for i in range(0, WT602_SECTION_COUNT):
+		for i in range(0, len(self.sections)):
 			self.parse_section(i)
 
 	def parse_header(self):
@@ -112,18 +112,16 @@ class wt602_parser(object):
 	def parse_offset_table(self):
 		offiter = add_pgiter(self.page, 'Offset table', 'wt602', 'offsets',
 				self.data[0x72:0x72 + 4 * WT602_SECTION_COUNT], self.parent)
-		begin = 0
-		end = 0
-		idx = 0
+		offsets = [0x72]
 		off = 0x72
 		for i in range(0, WT602_SECTION_COUNT):
 			(cur, off) = rdata(self.data, off, '<I')
-			if cur != 0:
-				end = cur
-				if i != 0:
-					self.sections[idx] = (begin + 0x72, end + 0x72)
-				begin = cur
-				idx = i
+			if cur == 0:
+				offsets.append(offsets[-1])
+			else:
+				offsets.append(cur + 0x72)
+		offsets.append(len(self.data))
+		self.sections = zip(offsets[1:len(offsets) - 1], offsets[2:])
 
 	def parse_section(self, n):
 		(begin, end) = self.sections[n]
