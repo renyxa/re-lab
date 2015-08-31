@@ -23,13 +23,18 @@ def get_or_default(dictionary, key, default):
 		return dictionary[key]
 	return default
 
+def values(d, default='unknown'):
+	def lookup(val):
+		return get_or_default(d, val, default)
+	return lookup
+
 WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
 	16: 'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
 	19: 'Styles',
 	21: 'Color table',
-	22: 'Hard formats',
+	22: 'Character formats',
 	26: 'Text info',
 	27: 'Text',
 }
@@ -79,10 +84,35 @@ def handle_colormap(page, data, parent, parser = None):
 		add_pgiter(page, 'Color %d' % i, 'wt602', 'color', data[off:off + size], parent)
 		off += size
 
+def handle_char_formats(page, data, parent, parser = None):
+	off = 8
+	(count, off) = rdata(data, off, '<H')
+	ids = []
+	off = len(data) - 2 * count
+	start_ids = off - 2
+	while off < len(data):
+		(id, off) = rdata(data, off, '<H')
+		ids.append(id)
+	off = 10
+	fmt_size = 28
+	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', '', data[off:off + fmt_size * count], parent)
+	for (n, id) in zip(range(0, count), ids):
+		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset', data[off:off + fmt_size], attrsiter)
+		off += fmt_size
+	descsiter = add_pgiter(page, 'Formats', 'wt602', 'formats', data[off:start_ids], parent)
+	off += 2
+	n = 0
+	while off < start_ids:
+		add_pgiter(page, 'Format %d' % n, 'wt602', 'format', data[off:off + 6], descsiter)
+		off += 6
+		n += 1
+	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
+
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
 	19: (handle_styles, 'styles'),
 	21: (handle_colormap, 'colormap'),
+	22: (handle_char_formats, 'char_formats'),
 	26: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
 }
@@ -203,7 +233,7 @@ def get_char_format(flags):
 		4: 'position',
 		5: 'transform',
 		6: 'color',
-		7: 'font name',
+		7: 'font',
 		8: 'letter spacing',
 		9: 'shaded',
 		10: 'line-through type',
@@ -221,7 +251,9 @@ def add_text_info(hd, size, data):
 	off += 2
 	(para_flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Text flags', '%s' % get_para_flags(para_flags), off - 2, 2, '<H')
-	off += 6
+	off += 4
+	(attrset, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Attribute set ID', attrset, off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Changed attributes', '%s' % get_char_format(attribs), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
@@ -230,6 +262,46 @@ def add_text_info(hd, size, data):
 def add_text_infos(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', count, 0, 4, '<I')
+
+def add_attrset(hd, size, data):
+	off = 0
+	(font_size, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Font size', font_size, off - 2, 2, '<H')
+	(bold, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Bold', bool(bold), off - 2, 2, '<H')
+	(italic, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Italic', bool(italic), off - 2, 2, '<H')
+	(underline, off) = rdata(data, off, '<H')
+	underline_map = values({0: 'none', 1: 'single', 2: 'words', 3: 'double'})
+	add_iter(hd, 'Underline type', underline_map(underline), off - 2, 2, '<H')
+	(position, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Position', position, off - 2, 2, '<H')
+	(transform, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Transform', transform, off - 2, 2, '<H')
+	(color, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Color', color, off - 2, 2, '<H')
+	(font, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Font', font, off - 2, 2, '<H')
+	(spacing, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Letter spacing', spacing, off - 2, 2, '<H')
+	(shaded, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Shaded', shaded, off - 2, 2, '<H')
+	(line_through, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Line-through type', line_through, off - 2, 2, '<H')
+	(outline, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Outline type', outline, off - 2, 2, '<H')
+
+def add_format(hd, size, data):
+	off = 0
+	(attribs, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Changed attributes', '%s' % get_char_format(attribs), off - 2, 2, '<H')
+	off += 2
+	(attrset, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
+
+def add_formats(hd, size, data):
+	(count, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Number of formats', count, off - 2, 2, '<H')
 
 def add_span_text(hd, size, data):
 	fmt = '%ds' % len(data)
@@ -246,6 +318,13 @@ def add_styles(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', c / 0x20, 0, 4, '<I')
 
+def add_char_formats(hd, size, data):
+	off = 6
+	(style, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Active format?', style, off - 2, 2, '<H')
+	(count, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of formats', count, off - 2, 2, '<H')
+
 def add_text(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Length', length, 0, 4, '<I')
@@ -253,11 +332,26 @@ def add_text(hd, size, data):
 	text = read(data[off:], 0, fmt)
 	add_iter(hd, 'Text', text, off, length, fmt)
 
+def add_attrset_ids(hd, size, data):
+	off = 0
+	(count, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of attr. sets', count, off - 2, 2, '<H')
+	n = 0
+	while off < len(data):
+		(id, off) = rdata(data, off, '<H')
+		add_iter(hd, 'ID of attr. set %d' % n, id, off - 2, 2, '<H')
+		n += 1
+
 wt602_ids = {
+	'attrset': add_attrset,
+	'attrset_ids': add_attrset_ids,
+	'char_formats': add_char_formats,
 	'color': add_color,
 	'colormap': add_colormap,
 	'font' : add_font,
 	'fonts' : add_fonts,
+	'format': add_format,
+	'formats': add_formats,
 	'header': add_header,
 	'offsets': add_offsets,
 	'span_text': add_span_text,
