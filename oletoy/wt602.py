@@ -18,45 +18,22 @@ import struct
 
 from utils import add_iter, add_pgiter, rdata
 
-wt602_sections = (
-	'Section 0',
-	'Section 1',
-	'Section 2',
-	'Section 3',
-	'Section 4',
-	'Section 5',
-	'Section 6',
-	'Section 7',
-	'Section 8',
-	'Section 9',
-	'Used fonts',
-	'Section 11',
-	'Section 12',
-	'Section 13',
-	'Section 14',
-	'Section 15',
-	'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
-	'Section 17',
-	'Styles',
-	'Section 19',
-	'Color table',
-	'Fields',
-	'Hard formats',
-	'Section 23',
-	'Section 24',
-	'Text info',
-	'Section 26',
-	'Text',
-	'Section 28',
-	'Section 29',
-	'Section 30',
-	'Section 31',
-	'Section 32',
-	'Section 33',
-	'Section 34',
-	'Section 35',
-	'Section 36',
-)
+def get_or_default(dictionary, key, default):
+	if dictionary.has_key(key):
+		return dictionary[key]
+	return default
+
+WT602_SECTION_COUNT = 37
+wt602_section_names = {
+	10: 'Used fonts',
+	16: 'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
+	18: 'Styles',
+	20: 'Color table',
+	21: 'Fields',
+	22: 'Hard formats',
+	25: 'Text info',
+	27: 'Text',
+}
 
 def handle_fonts(page, data, parent, parser = None):
 	(count, off) = rdata(data, 0, '<I')
@@ -103,45 +80,13 @@ def handle_colormap(page, data, parent, parser = None):
 		add_pgiter(page, 'Color %d' % i, 'wt602', 'color', data[off:off + size], parent)
 		off += size
 
-wt602_section_handlers = (
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	(handle_fonts, 'fonts'),
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	(handle_styles, 'styles'),
-	None,
-	(handle_colormap, 'colormap'),
-	None,
-	None,
-	None,
-	None,
-	(handle_text_infos, 'text_infos'),
-	None,
-	(None, 'text'),
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-	None,
-)
+wt602_section_handlers = {
+	10: (handle_fonts, 'fonts'),
+	18: (handle_styles, 'styles'),
+	20: (handle_colormap, 'colormap'),
+	25: (handle_text_infos, 'text_infos'),
+	27: (None, 'text'),
+}
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -153,12 +98,12 @@ class wt602_parser(object):
 		self.page = page
 		self.parent = parent
 
-		self.sections = [(0, 0) for i in range(0, len(wt602_sections))]
+		self.sections = [(0, 0) for i in range(0, WT602_SECTION_COUNT)]
 
 	def parse(self):
 		self.parse_header()
 		self.parse_offset_table()
-		for i in range(0, len(wt602_sections)):
+		for i in range(0, WT602_SECTION_COUNT):
 			self.parse_section(i)
 
 	def parse_header(self):
@@ -166,13 +111,14 @@ class wt602_parser(object):
 
 	def parse_offset_table(self):
 		offiter = add_pgiter(self.page, 'Offset table', 'wt602', 0,
-				self.data[0x72:0x72 + 4 * len(wt602_sections)], self.parent)
+				self.data[0x72:0x72 + 4 * WT602_SECTION_COUNT], self.parent)
 		begin = 0
 		end = 0
 		idx = 0
 		off = 0x72
-		for i in range(0, len(wt602_sections)):
-			add_pgiter(self.page, wt602_sections[i], 'wt602', 0, self.data[off:off + 4], offiter)
+		for i in range(0, WT602_SECTION_COUNT):
+			name = get_or_default(wt602_section_names, i, 'Section %d' % i)
+			add_pgiter(self.page, name, 'wt602', 0, self.data[off:off + 4], offiter)
 			(cur, off) = rdata(self.data, off, '<I')
 			if cur != 0:
 				end = cur
@@ -183,8 +129,8 @@ class wt602_parser(object):
 
 	def parse_section(self, n):
 		(begin, end) = self.sections[n]
-		name = wt602_sections[n]
-		func = wt602_section_handlers[n]
+		name = get_or_default(wt602_section_names, n, 'Section %d' % n)
+		func = get_or_default(wt602_section_handlers, n, None)
 		adder = 0
 		if end > begin:
 			handler = None
