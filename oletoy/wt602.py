@@ -27,11 +27,10 @@ WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
 	16: 'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
-	18: 'Styles',
-	20: 'Color table',
-	21: 'Fields',
+	19: 'Styles',
+	21: 'Color table',
 	22: 'Hard formats',
-	25: 'Text info',
+	26: 'Text info',
 	27: 'Text',
 }
 
@@ -82,9 +81,9 @@ def handle_colormap(page, data, parent, parser = None):
 
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
-	18: (handle_styles, 'styles'),
-	20: (handle_colormap, 'colormap'),
-	25: (handle_text_infos, 'text_infos'),
+	19: (handle_styles, 'styles'),
+	21: (handle_colormap, 'colormap'),
+	26: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
 }
 
