@@ -20,6 +20,7 @@ import tree
 import hexdump
 import pub, pubblock, escher, quill
 import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2, pm6, dsf
+import wls
 import wt602
 import zmf
 from utils import *
@@ -94,6 +95,10 @@ def my_open (buf,page,parent=None):
 					ftype = "escher"
 					page.model.set_value(iter1,1,("escher",dirflag))
 					escher.parse (page.model,data,iter1,"pub") # currently I don't parse it automagically for MSDOC
+				if fn == "MagicTab":
+					ftype = "wls"
+					page.model.set_value(iter1,1,("wls",dirflag))
+					wls.parse (page,data,iter1)
 				if fn == "CONTENTS":
 					if data[6:11] == "WT602":
 						ftype = "wt602"

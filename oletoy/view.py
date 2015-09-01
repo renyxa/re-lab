@@ -30,6 +30,7 @@ import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import riff,dsf,drw
 import vfb
 import lrf
+import wls
 import wt602
 import pdb
 import sbimp
@@ -1523,6 +1524,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "lrf":
 					if lrf.lrf_ids.has_key(ntype[1]):
 						lrf.lrf_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "wls":
+					if wls.wls_ids.has_key(ntype[1]):
+						wls.wls_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "wt602":
 					if wt602.wt602_ids.has_key(ntype[1]):
 						wt602.wt602_ids[ntype[1]](hd, size, data)
