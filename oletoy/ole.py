@@ -99,6 +99,9 @@ def my_open (buf,page,parent=None):
 						ftype = "wt602"
 						page.model.set_value(iter1,1,("wt602",dirflag))
 						wt602.parse (page,data,iter1)
+                                        elif fullname.split('/')[0] == "OleObjects":
+						# Nested OLE objects (or images) in WT602
+						wt602.parse_object(page, data, iter1)
 					else:
 						ftype = "quill"
 						page.model.set_value(iter1,1,("quill",dirflag))
