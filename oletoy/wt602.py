@@ -32,7 +32,7 @@ WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
-	16: 'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
+	16: 'Frames', # this includes tables and headers+footers
 	19: 'Named styles',
 	21: 'Color table',
 	22: 'Character styles',
