@@ -504,7 +504,7 @@ def add_tab_stop(hd, size, data):
 
 def add_footnotes(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Count', c, off - 4, 4, '<I')
+	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
 wt602_ids = {
 	'attrset': add_attrset,
