@@ -96,19 +96,23 @@ def handle_char_styles(page, data, parent, parser = None):
 	while off < len(data):
 		(id, off) = rdata(data, off, '<H')
 		ids.append(id)
-	off = 10
+	off = 8
 	fmt_size = 28
-	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', '', data[off:off + fmt_size * count], parent)
+	start_styles = off + 2 + fmt_size * count
+	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
+	off += 2
 	for (n, id) in zip(range(0, count), ids):
 		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
-	descsiter = add_pgiter(page, 'Styles', 'wt602', 'styles', data[off:start_ids], parent)
+	assert(off == start_styles)
+	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
 		add_pgiter(page, 'Style %d' % n, 'wt602', 'style', data[off:off + 6], descsiter)
 		off += 6
 		n += 1
+	assert(off == start_ids)
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
 def handle_para_styles(page, data, parent, parser = None):
@@ -120,19 +124,23 @@ def handle_para_styles(page, data, parent, parser = None):
 	while off < len(data):
 		(id, off) = rdata(data, off, '<H')
 		ids.append(id)
-	off = 10
+	off = 8
 	fmt_size = 46
-	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', '', data[off:off + fmt_size * count], parent)
+	start_styles = off + 2 + fmt_size * count
+	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
+	off += 2
 	for (n, id) in zip(range(0, count), ids):
 		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
-	descsiter = add_pgiter(page, 'Styles', 'wt602', 'styles_para', data[off:start_ids], parent)
+	assert(off == start_styles)
+	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
 		add_pgiter(page, 'Style %d' % n, 'wt602', 'style_para', data[off:off + 6], descsiter)
 		off += 6
 		n += 1
+	# assert(off == start_ids)
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
 def handle_tabs(page, data, parent, parser=None):
@@ -143,7 +151,7 @@ def handle_tabs(page, data, parent, parser=None):
 	for i in range(0, count):
 		add_pgiter(page, 'Tabs %d' % i, 'wt602', 'tabs_def', data[off:off + tab_size], parent)
 		off += tab_size
-	stops_iter = add_pgiter(page, 'Tab stops', 'wt602', 'tab_stops', data[off:], parent)
+	stops_iter = add_pgiter(page, 'Tab stops', 'wt602', 'container', data[off:], parent)
 	(stops, off) = rdata(data, off, '<H')
 	for i in range(0, stops):
 		end = off + 4 * (i + 1)
@@ -412,10 +420,6 @@ def add_style_para(hd, size, data):
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
 
-def add_styles_para(hd, size, data):
-	(count, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
-
 def add_span_text(hd, size, data):
 	fmt = '%ds' % len(data)
 	text = read(data, 0, fmt)
@@ -435,15 +439,11 @@ def add_char_styles(hd, size, data):
 	off = 6
 	(style, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
-	(count, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
 
 def add_para_styles(hd, size, data):
 	off = 6
 	(style, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
-	(count, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
 
 def add_text(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -451,6 +451,10 @@ def add_text(hd, size, data):
 	fmt = '<%ds' % length
 	text = read(data[off:], 0, fmt)
 	add_iter(hd, 'Text', text, off, length, fmt)
+
+def add_container(hd, size, data):
+	(count, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Count', count, off - 2, 2, '<H')
 
 def add_attrset_ids(hd, size, data):
 	off = 0
@@ -471,11 +475,6 @@ def add_tabs_def(hd, size, data):
 	off = 4
 	(stops, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Number of stops?', stops, off - 2, 2, '<H')
-
-def add_tab_stops(hd, size, data):
-	off = 0
-	(count, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of stops', count, off - 2, 2, '<H')
 
 def add_tab_stop(hd, size, data):
 	i = 0
@@ -498,18 +497,17 @@ wt602_ids = {
 	'char_styles': add_char_styles,
 	'color': add_color,
 	'colormap': add_colormap,
+	'container': add_container,
 	'font' : add_font,
 	'fonts' : add_fonts,
 	'style': add_style,
 	'style_para': add_style_para,
 	'styles': add_styles,
-	'styles_para': add_styles_para,
 	'header': add_header,
 	'offsets': add_offsets,
 	'para_styles': add_para_styles,
 	'span_text': add_span_text,
 	'tab_stop': add_tab_stop,
-	'tab_stops': add_tab_stops,
 	'tabs': add_tabs,
 	'tabs_def': add_tabs_def,
 	'text_info': add_text_info,
