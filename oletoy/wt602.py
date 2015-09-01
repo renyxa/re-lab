@@ -36,6 +36,7 @@ wt602_section_names = {
 	21: 'Color table',
 	22: 'Character styles',
 	23: 'Paragraph styles',
+	25: 'List styles',
 	26: 'Text info',
 	27: 'Text',
 }
