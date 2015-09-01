@@ -122,7 +122,7 @@ def handle_para_styles(page, data, parent, parser = None):
 		ids.append(id)
 	off = 10
 	# FIXME: just a guess
-	fmt_size = 30
+	fmt_size = 44
 	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', '', data[off:off + fmt_size * count], parent)
 	for (n, id) in zip(range(0, count), ids):
 		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
@@ -356,7 +356,10 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'First line indent', '%.2fcm' % to_cm(first_line), off - 2, 2, '<H')
 	(tabs, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Tabs', tabs, off - 2, 2, '<H')
-	off += 4
+	(column_gap, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Column gap', '%.2fcm' % to_cm(column_gap), off - 2, 2, '<H')
+	(columns, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of columns', columns, off - 2, 2, '<H')
 	(top, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Top margin', '%.2fpt' % (top / 20.0), off - 2, 2, '<H')
 	(bottom, off) = rdata(data, off, '<H')
@@ -367,14 +370,14 @@ def add_attrset_para(hd, size, data):
 		12: '100%', 16: '50%', 18: '25%', 19: '0%'
 	})
 	add_iter(hd, 'Shading type', shading_map(shading), off - 2, 2, '<H')
-	(border_width, off) = rdata(data, off, '<H')
-	border_width_map = values({
+	(border_line, off) = rdata(data, off, '<H')
+	line_map = values({
 		0: '1pt',
 		1: 'hairline',
 		2: '0.5pt', 3: '1pt', 4: '2pt', 5: '4pt', 6: '6pt', 7: '8pt', 8: '12pt',
-		9: 'double', 10: 'double, inner 2x', 11: 'double, outer 2x'
+		9: 'double', 10: 'double, inner thicker', 11: 'double, outer thicker'
 	})
-	add_iter(hd, 'Border width', border_width_map(border_width), off - 2, 2, '<H')
+	add_iter(hd, 'Border line', line_map(border_line), off - 2, 2, '<H')
 	(border, off) = rdata(data, off, '<H')
 	# TODO: complete
 	border_map = values({
@@ -385,6 +388,14 @@ def add_attrset_para(hd, size, data):
 	off += 4
 	(line_height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Line height', '%d%%' % line_height, off - 2, 2, '<H')
+	off += 4
+	(section_height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Section height', '%.2fcm' % to_cm(section_height), off - 2, 2, '<H')
+	(section_inc, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Section increment', '%.2fcm' % to_cm(section_inc), off - 2, 2, '<H')
+	off += 4
+	(column_line, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Inter-column line', line_map(column_line), off - 2, 2, '<H')
 
 def add_style(hd, size, data):
 	off = 0
