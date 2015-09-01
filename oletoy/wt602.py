@@ -32,10 +32,10 @@ WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
 	16: 'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
-	19: 'Styles',
+	19: 'Named styles',
 	21: 'Color table',
-	22: 'Character formats',
-	23: 'Paragraph formats',
+	22: 'Character styles',
+	23: 'Paragraph styles',
 	26: 'Text info',
 	27: 'Text',
 }
@@ -85,7 +85,7 @@ def handle_colormap(page, data, parent, parser = None):
 		add_pgiter(page, 'Color %d' % i, 'wt602', 'color', data[off:off + size], parent)
 		off += size
 
-def handle_char_formats(page, data, parent, parser = None):
+def handle_char_styles(page, data, parent, parser = None):
 	off = 8
 	(count, off) = rdata(data, off, '<H')
 	ids = []
@@ -100,16 +100,16 @@ def handle_char_formats(page, data, parent, parser = None):
 	for (n, id) in zip(range(0, count), ids):
 		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
-	descsiter = add_pgiter(page, 'Formats', 'wt602', 'formats', data[off:start_ids], parent)
+	descsiter = add_pgiter(page, 'Styles', 'wt602', 'styles', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
-		add_pgiter(page, 'Format %d' % n, 'wt602', 'format', data[off:off + 6], descsiter)
+		add_pgiter(page, 'Style %d' % n, 'wt602', 'style', data[off:off + 6], descsiter)
 		off += 6
 		n += 1
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
-def handle_para_formats(page, data, parent, parser = None):
+def handle_para_styles(page, data, parent, parser = None):
 	off = 8
 	(count, off) = rdata(data, off, '<H')
 	ids = []
@@ -125,11 +125,11 @@ def handle_para_formats(page, data, parent, parser = None):
 	for (n, id) in zip(range(0, count), ids):
 		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
-	descsiter = add_pgiter(page, 'Formats', 'wt602', 'formats', data[off:start_ids], parent)
+	descsiter = add_pgiter(page, 'Styles', 'wt602', 'styles', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
-		add_pgiter(page, 'Format %d' % n, 'wt602', 'format_para', data[off:off + 6], descsiter)
+		add_pgiter(page, 'Style %d' % n, 'wt602', 'style_para', data[off:off + 6], descsiter)
 		off += 6
 		n += 1
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
@@ -138,8 +138,8 @@ wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
 	19: (handle_styles, 'styles'),
 	21: (handle_colormap, 'colormap'),
-	22: (handle_char_formats, 'char_formats'),
-	23: (handle_para_formats, 'para_formats'),
+	22: (handle_char_styles, 'char_styles'),
+	23: (handle_para_styles, 'para_styles'),
 	26: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
 }
@@ -251,7 +251,7 @@ def convert_flags(flags, names):
 def print_flags(flags, names):
 	return ' + '.join(convert_flags(flags, names))
 
-def get_char_format(flags):
+def get_char_style(flags):
 	names = {
 		0: 'font size',
 		1: 'bold',
@@ -282,7 +282,7 @@ def add_text_info(hd, size, data):
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ID', attrset, off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Changed attributes', '%s' % get_char_format(attribs), off - 2, 2, '<H')
+	add_iter(hd, 'Changed attributes', '%s' % get_char_style(attribs), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 
@@ -360,25 +360,25 @@ def add_attrset_para(hd, size, data):
 	(line_height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Line height', '%d%%' % line_height, off - 2, 2, '<H')
 
-def add_format(hd, size, data):
+def add_style(hd, size, data):
 	off = 0
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Changed attributes', '%s' % get_char_format(attribs), off - 2, 2, '<H')
+	add_iter(hd, 'Changed attributes', '%s' % get_char_style(attribs), off - 2, 2, '<H')
 	off += 2
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
 
-def add_format_para(hd, size, data):
+def add_style_para(hd, size, data):
 	off = 0
 	(attribs, off) = rdata(data, off, '<H')
-	# add_iter(hd, 'Changed attributes', '%s' % get_para_format(attribs), off - 2, 2, '<H')
+	# add_iter(hd, 'Changed attributes', '%s' % get_para_style(attribs), off - 2, 2, '<H')
 	off += 2
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
 
-def add_formats(hd, size, data):
+def add_styles(hd, size, data):
 	(count, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Number of formats', count, off - 2, 2, '<H')
+	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
 
 def add_span_text(hd, size, data):
 	fmt = '%ds' % len(data)
@@ -395,19 +395,19 @@ def add_styles(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', c / 0x20, 0, 4, '<I')
 
-def add_char_formats(hd, size, data):
+def add_char_styles(hd, size, data):
 	off = 6
 	(style, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Active format?', style, off - 2, 2, '<H')
+	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
 	(count, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of formats', count, off - 2, 2, '<H')
+	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
 
-def add_para_formats(hd, size, data):
+def add_para_styles(hd, size, data):
 	off = 6
 	(style, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Active format?', style, off - 2, 2, '<H')
+	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
 	(count, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of formats', count, off - 2, 2, '<H')
+	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
 
 def add_text(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -430,17 +430,17 @@ wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
 	'attrset_ids': add_attrset_ids,
-	'char_formats': add_char_formats,
+	'char_styles': add_char_styles,
 	'color': add_color,
 	'colormap': add_colormap,
 	'font' : add_font,
 	'fonts' : add_fonts,
-	'format': add_format,
-	'format_para': add_format_para,
-	'formats': add_formats,
+	'style': add_style,
+	'style_para': add_style_para,
+	'styles': add_styles,
 	'header': add_header,
 	'offsets': add_offsets,
-	'para_formats': add_para_formats,
+	'para_styles': add_para_styles,
 	'span_text': add_span_text,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
