@@ -121,13 +121,12 @@ def handle_para_styles(page, data, parent, parser = None):
 		(id, off) = rdata(data, off, '<H')
 		ids.append(id)
 	off = 10
-	# FIXME: just a guess
-	fmt_size = 44
+	fmt_size = 46
 	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', '', data[off:off + fmt_size * count], parent)
 	for (n, id) in zip(range(0, count), ids):
 		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
-	descsiter = add_pgiter(page, 'Styles', 'wt602', 'styles', data[off:start_ids], parent)
+	descsiter = add_pgiter(page, 'Styles', 'wt602', 'styles_para', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
@@ -366,7 +365,7 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Bottom margin', '%.2fpt' % (bottom / 20.0), off - 2, 2, '<H')
 	(shading, off) = rdata(data, off, '<H')
 	shading_map = values({
-		5: 'vertical lines', 6: 'raster',
+		0: 'none', 5: 'vertical lines', 6: 'raster',
 		12: '100%', 16: '50%', 18: '25%', 19: '0%'
 	})
 	add_iter(hd, 'Shading type', shading_map(shading), off - 2, 2, '<H')
@@ -413,7 +412,7 @@ def add_style_para(hd, size, data):
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
 
-def add_styles(hd, size, data):
+def add_styles_para(hd, size, data):
 	(count, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Number of styles', count, off - 2, 2, '<H')
 
@@ -504,6 +503,7 @@ wt602_ids = {
 	'style': add_style,
 	'style_para': add_style_para,
 	'styles': add_styles,
+	'styles_para': add_styles_para,
 	'header': add_header,
 	'offsets': add_offsets,
 	'para_styles': add_para_styles,
