@@ -113,7 +113,7 @@ def handle_char_styles(page, data, parent, parser = None):
 		add_pgiter(page, 'Style %d' % n, 'wt602', 'style', data[off:off + 6], descsiter)
 		off += 6
 		n += 1
-	assert(off == start_ids)
+	# assert(off == start_ids)
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
 def handle_para_styles(page, data, parent, parser = None):
@@ -361,6 +361,10 @@ def add_attrset(hd, size, data):
 	(outline, off) = rdata(data, off, '<H')
 	outline_map = values({0: 'none', 1: 'outline', 2: 'embossed', 3: 'engraved'})
 	add_iter(hd, 'Outline type', outline_map(outline), off - 2, 2, '<H')
+	(lang, off) = rdata(data, off, '<H')
+	# MS lang ID, just a few useful entries here
+	lang_map = values({0x0: 'default', 0x0405: 'cs-CZ', 0x0409: 'en-US', 0x0415: 'pl-PL', 0x0809: 'en-GB'})
+	add_iter(hd, 'Language code', lang_map(lang), off - 2, 2, '<H')
 
 def add_attrset_para(hd, size, data):
 	off = 0
