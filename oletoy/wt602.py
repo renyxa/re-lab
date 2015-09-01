@@ -37,6 +37,7 @@ wt602_section_names = {
 	21: 'Color table',
 	22: 'Character styles',
 	23: 'Paragraph styles',
+	24: 'Footnotes',
 	25: 'List styles',
 	26: 'Text info',
 	27: 'Text',
@@ -158,6 +159,16 @@ def handle_tabs(page, data, parent, parser=None):
 		add_pgiter(page, 'Tab stops %d' % i, 'wt602', 'tab_stop', data[off:end], stops_iter)
 		off = end
 
+def handle_footnotes(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	entry_size = 24 # FIXME: a guess
+	off += 8
+	for i in range(0, count):
+		add_pgiter(page, 'Footnote %d' % i, 'wt602', '', data[off:off + entry_size], parent)
+		off += entry_size
+	if off < len(data):
+		add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
+
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
 	11: (handle_tabs, 'tabs'),
@@ -165,6 +176,7 @@ wt602_section_handlers = {
 	21: (handle_colormap, 'colormap'),
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
+	24: (handle_footnotes, 'footnotes'),
 	26: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
 }
@@ -490,6 +502,10 @@ def add_tab_stop(hd, size, data):
 		add_iter(hd, 'Fill %d' % i, fill_map(fill), off - 1, 1, '<B')
 		i += 1
 
+def add_footnotes(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', c, off - 4, 4, '<I')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -500,6 +516,7 @@ wt602_ids = {
 	'container': add_container,
 	'font' : add_font,
 	'fonts' : add_fonts,
+	'footnotes' : add_footnotes,
 	'style': add_style,
 	'style_para': add_style_para,
 	'styles': add_styles,
