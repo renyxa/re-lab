@@ -31,6 +31,7 @@ def values(d, default='unknown'):
 WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
+	11: 'Tabs',
 	16: 'Headers & Footers', # Or is it? Adding a table adds this sectioni too. So does a frame.
 	19: 'Named styles',
 	21: 'Color table',
@@ -135,8 +136,24 @@ def handle_para_styles(page, data, parent, parser = None):
 		n += 1
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
+def handle_tabs(page, data, parent, parser=None):
+	off = 0
+	(count, off) = rdata(data, off, '<H')
+	tab_size = 16
+	off += 8
+	for i in range(0, count):
+		add_pgiter(page, 'Tabs %d' % i, 'wt602', 'tabs_def', data[off:off + tab_size], parent)
+		off += tab_size
+	stops_iter = add_pgiter(page, 'Tab stops', 'wt602', 'tab_stops', data[off:], parent)
+	(stops, off) = rdata(data, off, '<H')
+	for i in range(0, stops):
+		end = off + 4 * (i + 1)
+		add_pgiter(page, 'Tab stops %d' % i, 'wt602', 'tab_stop', data[off:end], stops_iter)
+		off = end
+
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
+	11: (handle_tabs, 'tabs'),
 	19: (handle_styles, 'styles'),
 	21: (handle_colormap, 'colormap'),
 	22: (handle_char_styles, 'char_styles'),
@@ -192,6 +209,9 @@ class wt602_parser(object):
 			sectiter = add_pgiter(self.page, name, 'wt602', adder, self.data[begin:end], self.parent)
 			if handler != None:
 				handler(self.page, self.data[begin:end], sectiter, self)
+
+def to_cm(val):
+	return val / 20.0 * 0.353 / 10
 
 def add_color(hd, size, data):
 	(r, off) = rdata(data, 0, '<B')
@@ -324,8 +344,6 @@ def add_attrset(hd, size, data):
 	add_iter(hd, 'Outline type', outline_map(outline), off - 2, 2, '<H')
 
 def add_attrset_para(hd, size, data):
-	def to_cm(val):
-		return val / 20.0 * 0.353 / 10
 	off = 0
 	(alignment, off) = rdata(data, off, '<H')
 	alignment_map = values({0: 'left', 1: 'center', 2: 'right', 3: 'justify'})
@@ -336,7 +354,9 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Right indent', '%.2fcm' % to_cm(right), off - 2, 2, '<H')
 	(first_line, off) = rdata(data, off, '<H')
 	add_iter(hd, 'First line indent', '%.2fcm' % to_cm(first_line), off - 2, 2, '<H')
-	off += 6
+	(tabs, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Tabs', tabs, off - 2, 2, '<H')
+	off += 4
 	(top, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Top margin', '%.2fpt' % (top / 20.0), off - 2, 2, '<H')
 	(bottom, off) = rdata(data, off, '<H')
@@ -432,6 +452,35 @@ def add_attrset_ids(hd, size, data):
 		add_iter(hd, 'ID of attr. set %d' % n, id, off - 2, 2, '<H')
 		n += 1
 
+def add_tabs(hd, size, data):
+	off = 0
+	(count, off) = rdata(data, off, '<H') # or is it 4 bytes?
+	add_iter(hd, 'Number of tabs', count, off - 2, 2, '<H')
+
+def add_tabs_def(hd, size, data):
+	off = 4
+	(stops, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of stops?', stops, off - 2, 2, '<H')
+
+def add_tab_stops(hd, size, data):
+	off = 0
+	(count, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of stops', count, off - 2, 2, '<H')
+
+def add_tab_stop(hd, size, data):
+	i = 0
+	off = 0
+	while off < len(data):
+		(skip, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Skip %d' % i, '%.2fcm' % to_cm(skip), off - 2, 2, '<H')
+		(align, off) = rdata(data, off, '<B')
+		align_map = values({0: 'left', 1: 'center', 2: 'right', 3: 'number'})
+		add_iter(hd, 'Alignment %d' % i, align_map(align), off - 1, 1, '<B')
+		(fill, off) = rdata(data, off, '<B')
+		fill_map = values({0: 'none', ord('-'): 'dashes', ord('_'): 'underlines', ord('.'): 'dots'})
+		add_iter(hd, 'Fill %d' % i, fill_map(fill), off - 1, 1, '<B')
+		i += 1
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -448,6 +497,10 @@ wt602_ids = {
 	'offsets': add_offsets,
 	'para_styles': add_para_styles,
 	'span_text': add_span_text,
+	'tab_stop': add_tab_stop,
+	'tab_stops': add_tab_stops,
+	'tabs': add_tabs,
+	'tabs_def': add_tabs_def,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
 	'style_header': add_style_header,
