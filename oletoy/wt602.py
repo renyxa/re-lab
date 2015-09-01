@@ -340,7 +340,12 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Top margin', '%.2fpt' % (top / 20.0), off - 2, 2, '<H')
 	(bottom, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Bottom margin', '%.2fpt' % (bottom / 20.0), off - 2, 2, '<H')
-	off += 2
+	(shading, off) = rdata(data, off, '<H')
+	shading_map = values({
+		5: 'vertical lines', 6: 'raster',
+		12: '100%', 16: '50%', 18: '25%', 19: '0%'
+	})
+	add_iter(hd, 'Shading type', shading_map(shading), off - 2, 2, '<H')
 	(border_width, off) = rdata(data, off, '<H')
 	border_width_map = values({
 		0: '1pt',
