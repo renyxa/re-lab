@@ -77,12 +77,11 @@ def get_or_default(dictionary, key, default):
 # backwards from the end of uncompressed data) and length. They are
 # recongized by the first byte, as follows:
 # + xxxxxx00 - a literal run
-#   - In case this is not ffffxx00, this byte is followed by a single
-#   byte containing count. This is in turn followed by count + 1
-#   literals.
 #   - If it is ffffnn00, nn is the number of bytes that contain the
-#     count, minus 1. These bytes are in little endian order. Again,
-#     this is followed by count + 1 literals.
+#     count. These bytes are in little endian order. This is in turn
+#     followed by count + 1 literals.
+#   - Otherwise, the upper six bits contain the count. Again, this is
+#     followed by count + 1 literals.
 # + hhhnnn01 - a "near" reference
 #   - This is followed by another byte containing lower bits of offset
 #     minus 1. The hhh bits of reference form higher bits of offset.
