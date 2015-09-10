@@ -78,8 +78,8 @@ def get_or_default(dictionary, key, default):
 # recongized by the first byte, as follows:
 # + xxxxxx00 - a literal run
 #   - If it is ffffnn00, nn is the number of bytes that contain the
-#     count. These bytes are in little endian order. This is in turn
-#     followed by count + 1 literals.
+#     count, minus 1. These bytes are in little endian order. This is in
+#     turn followed by count + 1 literals.
 #   - Otherwise, the upper six bits contain the count. Again, this is
 #     followed by count + 1 literals.
 # + hhhnnn01 - a "near" reference
