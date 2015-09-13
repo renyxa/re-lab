@@ -18,6 +18,11 @@ import struct
 
 from utils import add_iter, add_pgiter, rdata
 
+def get_or_default(dictionary, key, default):
+	if dictionary.has_key(key):
+		return dictionary[key]
+	return default
+
 obfuscation_map = {}
 
 def deobfuscate(data, orig_pos):
@@ -64,6 +69,11 @@ def deobfuscate(data, orig_pos):
 		pos += 1
 	return new_data
 
+WLS_RECORDS = {
+	0xc4: ('Start something', None), # I don't know what this 'something' means yet .-)
+	0xc5: ('End something', None),
+}
+
 class wls_parser(object):
 
 	def __init__(self, page, data, parent):
@@ -99,14 +109,15 @@ class wls_parser(object):
 					seq = next_size < 0
 			recdata = data[start:end]
 			assert(typ)
-			rec_str = '[%d] Record %x' % (n, typ)
+			rec = get_or_default(WLS_RECORDS, typ, ('Record %x' % typ, None))
+			rec_str = '[%d] %s' % (n, rec[0])
 			if flags != 0:
 				rec_str += ' (flags %x)' % flags
 			if seq:
 				rec_str += ' [%d]' % index
 			reciter = add_pgiter(self.page, rec_str, 'wls', '', recdata, self.parent)
 			content = list(recdata[0:4]) + deobfuscate(recdata[4:], 4)
-			add_pgiter(self.page, 'Deobfuscated content', 'wls', '', content, reciter)
+			add_pgiter(self.page, 'Deobfuscated content', 'wls', rec[1], content, reciter)
 			off = end
 			n += 1
 		if off < len(data):
