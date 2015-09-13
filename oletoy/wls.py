@@ -75,7 +75,9 @@ def deobfuscate(data, orig_pos):
 	return packed(new_data)
 
 WLS_RECORDS = {
-	0xb7: ('Cell', 'cell'),
+	0xb7: ('Text cell', 'text_cell'),
+	0xb9: ('Formula cell', None),
+	0xbe: ('Number cell', 'number_cell'),
 	0xc4: ('Start something', None), # I don't know what this 'something' means yet .-)
 	0xc5: ('End something', None),
 	0xca: ('Tab', 'tab'),
@@ -144,7 +146,13 @@ def add_record(hd, size, data):
 	add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
 	return off
 
-def add_cell(hd, size, data):
+def add_number_cell(hd, size, data):
+	off = add_record(hd, size, data)
+	off += 6
+	(val, off) = rdata(data, off, '<d')
+	add_iter(hd, 'Value', val, off - 8, 8, '<d')
+
+def add_text_cell(hd, size, data):
 	off = add_record(hd, size, data)
 	off += 6
 	(length, off) = rdata(data, off, '<H')
@@ -159,7 +167,8 @@ def add_tab(hd, size, data):
 
 wls_ids = {
 	'record': add_record,
-	'cell': add_cell,
+	'number_cell': add_number_cell,
+	'text_cell': add_text_cell,
 	'tab': add_tab,
 }
 
