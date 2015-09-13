@@ -77,6 +77,7 @@ def deobfuscate(data, orig_pos):
 WLS_RECORDS = {
 	0xc4: ('Start something', None), # I don't know what this 'something' means yet .-)
 	0xc5: ('End something', None),
+	0xca: ('Tab', 'tab'),
 }
 
 class wls_parser(object):
@@ -142,8 +143,16 @@ def add_record(hd, size, data):
 	add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
 	return off
 
+def add_tab(hd, size, data):
+	off = add_record(hd, size, data)
+	(length, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Name length', length, off - 1, 1, '<B')
+	(name, off) = rdata(data, off, '%ds' % length)
+	add_iter(hd, 'Name', name, off - length, length, '%ds' % length)
+
 wls_ids = {
 	'record': add_record,
+	'tab': add_tab,
 }
 
 def parse(page, data, parent):
