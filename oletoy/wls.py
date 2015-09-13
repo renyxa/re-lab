@@ -62,12 +62,17 @@ def deobfuscate(data, orig_pos):
 			assert(len(d) == 0x100)
 			obfuscation_map[pos] = d
 		return obfuscation_map[pos]
+	def packed(bytes):
+		bytestring = ''
+		for b in bytes:
+			bytestring += struct.pack('<B', ord(b))
+		return bytestring
 	new_data = []
 	pos = orig_pos
 	for b in data:
 		new_data.append(get_obfuscation_map(pos)[b])
 		pos += 1
-	return new_data
+	return packed(new_data)
 
 WLS_RECORDS = {
 	0xc4: ('Start something', None), # I don't know what this 'something' means yet .-)
@@ -115,8 +120,11 @@ class wls_parser(object):
 				rec_str += ' (flags %x)' % flags
 			if seq:
 				rec_str += ' [%d]' % index
-			content = list(recdata[0:4]) + deobfuscate(recdata[4:], 4)
-			reciter = add_pgiter(self.page, rec_str, 'wls', rec[1], content, self.parent)
+			content = recdata[0:4] + deobfuscate(recdata[4:], 4)
+			handler = rec[1]
+			if not handler:
+				handler = 'record'
+			reciter = add_pgiter(self.page, rec_str, 'wls', handler, content, self.parent)
 			if size > 2:
 				add_pgiter(self.page, 'Obfuscated', 'wls', '', recdata, reciter)
 			off = end
@@ -124,7 +132,18 @@ class wls_parser(object):
 		if off < len(data):
 			add_pgiter(self.page, 'Trailer', 'wls', '', data[off:], self.parent)
 
+def add_record(hd, size, data):
+	off = 0
+	(size, off) = rdata(data, off, '<h')
+	add_iter(hd, 'Size', size, off - 2, 2, '<h')
+	(typ, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Type', typ, off - 1, 1, '<B')
+	(flags, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
+	return off
+
 wls_ids = {
+	'record': add_record,
 }
 
 def parse(page, data, parent):
