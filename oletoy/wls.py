@@ -115,9 +115,9 @@ class wls_parser(object):
 				rec_str += ' (flags %x)' % flags
 			if seq:
 				rec_str += ' [%d]' % index
-			reciter = add_pgiter(self.page, rec_str, 'wls', '', recdata, self.parent)
 			content = list(recdata[0:4]) + deobfuscate(recdata[4:], 4)
-			add_pgiter(self.page, 'Deobfuscated content', 'wls', rec[1], content, reciter)
+			reciter = add_pgiter(self.page, rec_str, 'wls', rec[1], content, self.parent)
+			add_pgiter(self.page, 'Obfuscated', 'wls', '', recdata, reciter)
 			off = end
 			n += 1
 		if off < len(data):
