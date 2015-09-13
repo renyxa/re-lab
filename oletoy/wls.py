@@ -85,7 +85,7 @@ class wls_parser(object):
 			reciter = add_pgiter(self.page, 'Record %d' % n, 'wls', '', recdata, self.parent)
 			global recnum
 			recnum = n
-			content = deobfuscate(recdata[2:], 2)
+			content = list(recdata[0:2]) + deobfuscate(recdata[2:], 2)
 			add_pgiter(self.page, 'Deobfuscated content', 'wls', '', content, reciter)
 			off += size
 			n += 1
