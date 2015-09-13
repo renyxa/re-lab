@@ -75,19 +75,41 @@ class wls_parser(object):
 		data = self.data
 		n = 0
 		off = 0
-		while off < len(data):
+		typ = None
+		flags = 0
+		index = 0
+		while off + 1 < len(data):
+			start = off
 			(size, off) = rdata(data, off, '<h')
+			seq = size < 0
 			if size < 0:
 				size = -size
-			if off + size > len(data):
+				index += 1
+			end = off + size
+			assert(end >= off)
+			if end > len(data):
 				break
-			recdata = data[off - 2:off + size]
-			reciter = add_pgiter(self.page, 'Record %d' % n, 'wls', '', recdata, self.parent)
+			if not seq:
+				# NOTE: this would read nonsense if size == 0, but that should never happen
+				(typ, off) = rdata(data, off, '<B')
+				(flags, off) = rdata(data, off, '<B')
+				index = 0
+				if end < len(data):
+					(next_size, off) = rdata(data, end, '<h')
+					seq = next_size < 0
+			recdata = data[start:end]
+			assert(typ)
+			rec_str = '[%d] Record %x' % (n, typ)
+			if flags != 0:
+				rec_str += ' (flags %x)' % flags
+			if seq:
+				rec_str += ' [%d]' % index
+			reciter = add_pgiter(self.page, rec_str, 'wls', '', recdata, self.parent)
 			global recnum
 			recnum = n
 			content = list(recdata[0:4]) + deobfuscate(recdata[4:], 4)
 			add_pgiter(self.page, 'Deobfuscated content', 'wls', '', content, reciter)
-			off += size
+			off = end
 			n += 1
 		if off < len(data):
 			add_pgiter(self.page, 'Trailer', 'wls', '', data[off:], self.parent)
