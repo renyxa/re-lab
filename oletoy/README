@@ -41,6 +41,7 @@ As of now OLE Toy reads and parses:
 - ZBR (Zebra Metafile, BIPU support)
 - IWA (Apple iWork '13, BIPU support. This format is used by Keynote 6
        and Pages 5; I have no idea about Numbers.)
+- WLS (Software602 602Tab, aka MagicTab, BIPU support)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:
