@@ -35,12 +35,13 @@ As of now OLE Toy reads and parses:
        PalmDoc, TealDoc, zTXT, iSilo ver. 1 to 3 and TomeRaider3. iSilo
        and TomeRaider3 only shows basic structure, because the format is
        not known.)
-- WT602 (Software602 602Text, BIPU support)
+- WT602 (Software602 602Text)
 - IMP (SoftBook e-book)
 - ZMF (Zoner Callisto, also known as Zoner Draw, BIPU support)
 - ZBR (Zebra Metafile, BIPU support)
-- IWA (Apple iWork '13, BIPU support. This format is used by Keynote 6
-       and Pages 5; I have no idea about Numbers.)
+- IWA (Apple iWork '13. This format is used by Keynote 6, Pages 5 and
+       Numbers 3, with a big chunk of the internals shared among all
+       three applications. Support for Numbers is BIPU.)
 - WLS (Software602 602Tab, aka MagicTab, BIPU support)
 
 
