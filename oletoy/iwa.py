@@ -815,13 +815,15 @@ class IWAParser(object):
 	def _parse_object(self, off, length, desc):
 		return desc(self.data, off, off, off + length)
 
-	def _add_pgiter(self, name, obj, start, end, parent):
+	def _add_pgiter(self, name, obj, start, end, parent, field=False):
 		if obj.desc.primitive:
 			name = '%s = %s' % (name, obj.value)
 		if obj.desc.visualizer:
 			visualizer = obj.desc.visualizer
-		else:
+		elif field:
 			visualizer = 'iwa_field'
+		else:
+			visualizer = ''
 		it = add_pgiter(self.page, name, 'iwa', visualizer, self.data[start:end], parent)
 		if obj.desc.structured:
 			for (k, v) in obj.value.iteritems():
@@ -834,7 +836,7 @@ class IWAParser(object):
 					if obj.desc.desc.has_key(k):
 						if obj.desc.desc[k][0]:
 							n = '%s: %s' % (n, obj.desc.desc[k][0])
-					self._add_pgiter(n, e, e.start, e.end, it)
+					self._add_pgiter(n, e, e.start, e.end, it, True)
 
 	def _desc(self, obj_type):
 		desc = None
