@@ -494,81 +494,7 @@ MESSAGES = {
 	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
 }
 
-OBJECTS = {
-	1: ('Presentation', {
-		2: ('Presentation info ref', 'Ref'),
-		3: ('Document info', {
-			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
-			3: ('Language', string),
-			4: ('Calculation Engine Ref', 'Ref'),
-			5: ('View State Ref', 'Ref'),
-			6: (None, 'Ref'),
-			7: ('Data List Ref', 'Ref'),
-			9: ('Template', string)
-		})
-	}),
-	2: ('Presentation info', {
-		2: ('Theme ref?', 'Ref'),
-		3: ('Slide list', {1: ('Slide list ref', 'Ref')}),
-		4: ('Size',),
-		5: ('Stylesheet ref', 'Ref')
-	}),
-	4: ('Slide list', {
-		1: ('Slide list ref', 'Ref'),
-		2: ('Slide ref', 'Ref'),
-	}),
-	5: ('Slide', {
-		1: ('Style ref', 'Ref'),
-		2: ('Build ref', 'Ref'),
-		3: ('Build chunk', {1: ('Parent build ref', 'Ref'), 2: ('Order?', int64)}),
-		4: ('Transition', {
-			2: ('Transition attributes', {
-				6: ('Animation auto?', bool_),
-				8: ('Animation',),
-				10: ('Number of particles', int64),
-				11: ('Type', int64),
-			}),
-		}),
-		5: ('Title placeholder ref', 'Ref'),
-		6: ('Body placeholder ref', 'Ref'),
-		7: ('Shape ref', 'Ref'),
-		17: ('Master ref', 'Ref'),
-		20: ('Slide number placeholder ref', 'Ref'),
-		27: ('Notes ref', 'Ref'),
-		42: (None, 'Ref'),
-	}),
-	7: ('Placeholder', {
-		1: ('Drawable shape',),
-		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
-	}),
-	8: ('Build', {
-		1: ('Info ref', 'Ref'),
-		2: ('Mode?', string),
-		4: ('Style', {
-			6: ('Animation delay automatic after?', double_),
-			18: ('Animation',),
-		}),
-	}),
-	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
-	10: ('Theme?', {
-		1: ('Theme info', {
-			1: ('Theme stylesheet ref', 'Ref'),
-			3: ('Name', string),
-			5: (None, 'Ref'),
-		}),
-		2: ('Slide list ref', 'Ref'),
-		3: ('Group UUID', string),
-	}),
-	15: ('Notes', {1: ('Text ref', 'Ref')}),
-	19: ('Style name map', {
-		1: ('Style name association',),
-		2: ('Theme ref?', 'Ref'),
-	}),
-	20: (None, {
-		1: ('Group UUID', string),
-		2: ('Style name map ref', 'Ref'),
-		3: ('Slide ref', 'Ref'),
-	}),
+COMMON_OBJECTS = {
 	210: ('View State',),
 	212: ('Annotation', {1: ('Author', string)}),
 	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
@@ -718,6 +644,93 @@ OBJECTS = {
 		2: ('Header', {2: ('Size', float_)}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
+}
+
+KEYNOTE_OBJECTS = COMMON_OBJECTS.copy()
+KEYNOTE_OBJECTS.update({
+	1: ('Document', {
+		2: ('Document info ref', 'Ref'),
+		3: ('Document info', {
+			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
+			3: ('Language', string),
+			4: ('Calculation Engine Ref', 'Ref'),
+			5: ('View State Ref', 'Ref'),
+			6: (None, 'Ref'),
+			7: ('Data List Ref', 'Ref'),
+			9: ('Template', string)
+		})
+	}),
+	2: ('Document info', {
+		2: ('Theme ref?', 'Ref'),
+		3: ('Slide list', {1: ('Slide list ref', 'Ref')}),
+		4: ('Size',),
+		5: ('Stylesheet ref', 'Ref')
+	}),
+	4: ('Slide list', {
+		1: ('Slide list ref', 'Ref'),
+		2: ('Slide ref', 'Ref'),
+	}),
+	5: ('Slide', {
+		1: ('Style ref', 'Ref'),
+		2: ('Build ref', 'Ref'),
+		3: ('Build chunk', {1: ('Parent build ref', 'Ref'), 2: ('Order?', int64)}),
+		4: ('Transition', {
+			2: ('Transition attributes', {
+				6: ('Animation auto?', bool_),
+				8: ('Animation',),
+				10: ('Number of particles', int64),
+				11: ('Type', int64),
+			}),
+		}),
+		5: ('Title placeholder ref', 'Ref'),
+		6: ('Body placeholder ref', 'Ref'),
+		7: ('Shape ref', 'Ref'),
+		17: ('Master ref', 'Ref'),
+		20: ('Slide number placeholder ref', 'Ref'),
+		27: ('Notes ref', 'Ref'),
+		42: (None, 'Ref'),
+	}),
+	7: ('Placeholder', {
+		1: ('Drawable shape',),
+		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
+	}),
+	8: ('Build', {
+		1: ('Info ref', 'Ref'),
+		2: ('Mode?', string),
+		4: ('Style', {
+			6: ('Animation delay automatic after?', double_),
+			18: ('Animation',),
+		}),
+	}),
+	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
+	10: ('Theme?', {
+		1: ('Theme info', {
+			1: ('Theme stylesheet ref', 'Ref'),
+			3: ('Name', string),
+			5: (None, 'Ref'),
+		}),
+		2: ('Slide list ref', 'Ref'),
+		3: ('Group UUID', string),
+	}),
+	15: ('Notes', {1: ('Text ref', 'Ref')}),
+	19: ('Style name map', {
+		1: ('Style name association',),
+		2: ('Theme ref?', 'Ref'),
+	}),
+	20: (None, {
+		1: ('Group UUID', string),
+		2: ('Style name map ref', 'Ref'),
+		3: ('Slide ref', 'Ref'),
+	}),
+})
+
+NUMBERS_OBJECTS = COMMON_OBJECTS.copy()
+NUMBERS_OBJECTS.update({
+	1: ('Document', {}),
+})
+
+PAGES_OBJECTS = COMMON_OBJECTS.copy()
+PAGES_OBJECTS.update({
 	10000: ('Document', {
 		30: ('Page width?', float_),
 		31: ('Page height?', float_),
@@ -732,7 +745,7 @@ OBJECTS = {
 		3: ('IWA file',),
 		4: ('Other file',),
 	}),
-}
+})
 
 # Parser for internal IWA files.
 #
@@ -742,9 +755,13 @@ OBJECTS = {
 # lead to false positives.
 #
 # It is possible to set name and type to interesting pieces of content.
-# There are two global dicts that contain specifications of the data:
-# * OBJECTS dict contains names and message types of objects. The key is
-#   the object type.
+# There are several global dicts that contain specifications of the data:
+# * *_OBJECTS dicts contain names and message types of objects. The key is
+#   the object type. Most of the objects (I suppose everything in the
+#   range 200-9999) are shared among all 3 applications; these are defined
+#   in COMMON_OBJECTS. The application-specific objects, which can be
+#   defined in overlapping ranges, are defined in KEYNOTE_OBJECTS,
+#   NUMBERS_OBJECTS and PAGES_OBJECTS.
 # * MESSAGES dict contains message types for commonly used sub-messages.
 #   The key is the name of the message.
 # The value for both of them is a dict, mapping a field number to its
@@ -760,6 +777,7 @@ class IWAParser(object):
 		self.data = data
 		self.page = page
 		self.parent = parent
+		self.objects = COMMON_OBJECTS
 
 	def parse(self):
 		off = 0
@@ -781,8 +799,8 @@ class IWAParser(object):
 			obj_data = self.data[obj_start:off + hdr_len + data_len]
 			obj_name = None
 			if obj_type:
-				if OBJECTS.has_key(obj_type):
-					obj_name = OBJECTS[obj_type][0]
+				if self.objects.has_key(obj_type):
+					obj_name = self.objects[obj_type][0]
 				if not obj_name:
 					obj_name = 'Object %d' % obj_type
 			else:
@@ -840,16 +858,16 @@ class IWAParser(object):
 
 	def _desc(self, obj_type):
 		desc = None
-		if OBJECTS.has_key(obj_type):
-			if len(OBJECTS[obj_type]) > 1 and OBJECTS[obj_type][1]:
-				desc1 = OBJECTS[obj_type][1]
+		if self.objects.has_key(obj_type):
+			if len(self.objects[obj_type]) > 1 and self.objects[obj_type][1]:
+				desc1 = self.objects[obj_type][1]
 				if isinstance(desc1, str):
 					if MESSAGES.has_key(desc1):
 						desc = MESSAGES[desc1]
 				else:
 					desc = desc1
-			elif OBJECTS[obj_type][0]:
-				name = OBJECTS[obj_type][0]
+			elif self.objects[obj_type][0]:
+				name = self.objects[obj_type][0]
 				if MESSAGES.has_key(name):
 					desc = MESSAGES[name]
 			if isinstance(desc, dict):
