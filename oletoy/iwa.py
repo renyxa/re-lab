@@ -646,8 +646,7 @@ COMMON_OBJECTS = {
 	6008: (None, {3: ('A ref', 'Ref')}),
 }
 
-KEYNOTE_OBJECTS = COMMON_OBJECTS.copy()
-KEYNOTE_OBJECTS.update({
+KEYNOTE_OBJECTS = {
 	1: ('Document', {
 		2: ('Document info ref', 'Ref'),
 		3: ('Document info', {
@@ -722,15 +721,13 @@ KEYNOTE_OBJECTS.update({
 		2: ('Style name map ref', 'Ref'),
 		3: ('Slide ref', 'Ref'),
 	}),
-})
+}
 
-NUMBERS_OBJECTS = COMMON_OBJECTS.copy()
-NUMBERS_OBJECTS.update({
+NUMBERS_OBJECTS = {
 	1: ('Document', {}),
-})
+}
 
-PAGES_OBJECTS = COMMON_OBJECTS.copy()
-PAGES_OBJECTS.update({
+PAGES_OBJECTS = {
 	10000: ('Document', {
 		30: ('Page width?', float_),
 		31: ('Page height?', float_),
@@ -745,7 +742,7 @@ PAGES_OBJECTS.update({
 		3: ('IWA file',),
 		4: ('Other file',),
 	}),
-})
+}
 
 # Parser for internal IWA files.
 #
@@ -773,11 +770,11 @@ PAGES_OBJECTS.update({
 # type in MESSAGES.
 class IWAParser(object):
 
-	def __init__(self, data, page, parent):
+	def __init__(self, data, page, parent, objects):
 		self.data = data
 		self.page = page
 		self.parent = parent
-		self.objects = COMMON_OBJECTS
+		self.objects = objects
 
 	def parse(self):
 		off = 0
@@ -1052,7 +1049,23 @@ iwa_ids = {
 
 ### Entry point
 
-def open(data, page, parent):
+def detect(package):
+	names = package.namelist()
+	if "Index/MasterSlide.iwa" in names:
+		return "Keynote"
+	# I see no way to differentiate Pages and Numbers document just from
+	# the structure. Luckily, the app-specific object numbers for these
+	# two are in distinct ranges.
+	return "Pages/Numbers"
+
+def open(data, page, parent, subtype):
+	objects = COMMON_OBJECTS.copy()
+	if subtype == "Keynote":
+		objects.update(KEYNOTE_OBJECTS)
+	else:
+		objects.update(NUMBERS_OBJECTS)
+		objects.update(PAGES_OBJECTS)
+
 	n = 0
 	off = 0
 	uncompressed_data = bytearray()
@@ -1070,7 +1083,7 @@ def open(data, page, parent):
 		off += length
 
 	uncompressed_data = str(uncompressed_data)
-	parser = IWAParser(uncompressed_data, page, parent)
+	parser = IWAParser(uncompressed_data, page, parent, objects)
 	parser.parse()
 
 # vim: set ft=python sts=4 sw=4 noet:

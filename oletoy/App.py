@@ -34,6 +34,7 @@ class Page:
 	def __init__(self):
 		self.parent = None
 		self.type = ''
+		self.subtype = None # used by IWA
 		self.fname = ''
 		self.pname = ''
 		self.items = ''
@@ -54,7 +55,7 @@ class Page:
 		self.appdoc = None
 		self.backpath = None
 
-	def fload(self,buf="",parent=None):
+	def fload(self,buf="",parent=None,package=None):
 		self.pname = os.path.split(self.fname)[1]
 		if buf == "":
 			offset = 0
@@ -287,8 +288,10 @@ class Page:
 		size = (ord(buf[1]) | (ord(buf[2]) << 8)) + 4
 		if buf[0] == '\0' and (size == len(buf) or (size < len(buf) and buf[4:7] == "\x80\x80\x04")):
 			self.type = 'IWA'
+			if not self.subtype:
+				self.subtype = iwa.detect(package)
 			print('Probably Apple iWork file')
-			iwa.open(buf, self, parent)
+			iwa.open(buf, self, parent, self.subtype)
 			return 0
 			
 
