@@ -37,6 +37,7 @@ import sbimp
 import zmf
 import zbr
 import iwa
+import plist
 import hv2, utils
 from utils import *
 from hv2 import HexView
@@ -1569,6 +1570,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "iwa":
 					if iwa.iwa_ids.has_key(ntype[1]):
 						iwa.iwa_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "plist":
+					if plist.plist_ids.has_key(ntype[1]):
+						plist.plist_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 				elif ntype[0] == "ole" and ntype[1] == "propset":

@@ -28,6 +28,7 @@ import sbimp
 import zmf
 import zbr
 import lit
+import plist
 from utils import *
 
 class Page:
@@ -236,6 +237,12 @@ class Page:
 			self.type = 'LIT'
 			print 'Probably LIT'
 			lit.open(buf,self,parent)
+			return 0
+
+		if buf[0:6] == 'bplist':
+			self.type = 'PLIST'
+			print 'Probably PLIST'
+			plist.open(buf,self,parent)
 			return 0
 
 		fh_off = buf.find('FreeHand')
