@@ -644,6 +644,11 @@ COMMON_OBJECTS = {
 		2: ('Header', {2: ('Size', float_)}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
+	11006: ('Object index', {
+		1: ('Active object ref?', int64),
+		3: ('IWA file',),
+		4: ('Other file',),
+	}),
 }
 
 KEYNOTE_OBJECTS = {
@@ -736,11 +741,6 @@ PAGES_OBJECTS = {
 		34: ('A page margin?', float_),
 		35: ('A page margin?', float_),
 		44: ('Paper size?', string),
-	}),
-	11006: ('Object index', {
-		1: ('Active object ref?', int64),
-		3: ('IWA file',),
-		4: ('Other file',),
 	}),
 }
 
