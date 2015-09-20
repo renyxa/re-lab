@@ -78,6 +78,7 @@ WLS_RECORDS = {
 	0xb7: ('Text cell', 'text_cell'),
 	0xb9: ('Formula cell', None),
 	0xbe: ('Number cell', 'number_cell'),
+	0xc3: ('Row height', 'row_height'),
 	0xc4: ('Start something', None), # I don't know what this 'something' means yet .-)
 	0xc5: ('End something', None),
 	0xca: ('Tab', 'tab'),
@@ -165,9 +166,18 @@ def add_tab(hd, size, data):
 	(name, off) = rdata(data, off, '%ds' % length)
 	add_iter(hd, 'Name', name, off - length, length, '%ds' % length)
 
+def add_row_height(hd, size, data):
+	off = add_record(hd, size, data)
+	(row, off) = rdata(data, off, '<H') # TODO: maybe this is <I?
+	add_iter(hd, 'Row', row, off - 2, 2, '<H')
+	off += 4
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', '%.2fpt' % (height / 20.0), off - 2, 2, '<H')
+
 wls_ids = {
 	'record': add_record,
 	'number_cell': add_number_cell,
+	'row_height': add_row_height,
 	'text_cell': add_text_cell,
 	'tab': add_tab,
 }
