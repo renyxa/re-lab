@@ -75,6 +75,7 @@ def deobfuscate(data, orig_pos):
 	return packed(new_data)
 
 WLS_RECORDS = {
+	0x70: ('Column width', 'column_width'),
 	0xb7: ('Text cell', 'text_cell'),
 	0xb9: ('Formula cell', None),
 	0xbe: ('Number cell', 'number_cell'),
@@ -174,8 +175,19 @@ def add_row_height(hd, size, data):
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Height', '%.2fpt' % (height / 20.0), off - 2, 2, '<H')
 
+def add_column_width(hd, size, data):
+	off = add_record(hd, size, data)
+	(first, off) = rdata(data, off, '<H')
+	add_iter(hd, 'First column', first, off - 2, 2, '<H')
+	(last, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Last column', last, off - 2, 2, '<H')
+	(width, off) = rdata(data, off, '<H')
+	# the conversion factor to pt seems to be something around 275
+	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+
 wls_ids = {
 	'record': add_record,
+	'column_width': add_column_width,
 	'number_cell': add_number_cell,
 	'row_height': add_row_height,
 	'text_cell': add_text_cell,
