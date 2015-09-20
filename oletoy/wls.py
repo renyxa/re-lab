@@ -75,13 +75,14 @@ def deobfuscate(data, orig_pos):
 	return packed(new_data)
 
 WLS_RECORDS = {
+	0x38: ('Sheet def?', 'sheet_def'),
 	0x70: ('Column width', 'column_width'),
 	0xb7: ('Text cell', 'text_cell'),
 	0xb9: ('Formula cell', None),
 	0xbe: ('Number cell', 'number_cell'),
 	0xc3: ('Row height', 'row_height'),
-	0xc4: ('Start something', None), # I don't know what this 'something' means yet .-)
-	0xc5: ('End something', None),
+	0xc4: ('Start something (sheet?)', None),
+	0xc5: ('End something (sheet?)', None),
 	0xca: ('Tab', 'tab'),
 }
 
@@ -185,11 +186,22 @@ def add_column_width(hd, size, data):
 	# the conversion factor to pt seems to be something around 275
 	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
+def add_sheet_def(hd, size, data):
+	off = add_record(hd, size, data)
+	(offset, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Offset of something (sheet?)', offset, off - 2, 2, '<H')
+	off += 4
+	(length, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Name length', length, off - 1, 1, '<B')
+	(name, off) = rdata(data, off, '%ds' % length)
+	add_iter(hd, 'Name', name, off - length, length, '%ds' % length)
+
 wls_ids = {
 	'record': add_record,
 	'column_width': add_column_width,
 	'number_cell': add_number_cell,
 	'row_height': add_row_height,
+	'sheet_def': add_sheet_def,
 	'text_cell': add_text_cell,
 	'tab': add_tab,
 }
