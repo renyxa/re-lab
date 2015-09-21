@@ -186,10 +186,12 @@ def add_row_height(hd, size, data):
 
 def add_column_width(hd, size, data):
 	off = add_record(hd, size, data)
-	(first, off) = rdata(data, off, '<H')
-	add_iter(hd, 'First column', first, off - 2, 2, '<H')
-	(last, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Last column', last, off - 2, 2, '<H')
+	(first, off) = rdata(data, off, '<B')
+	add_iter(hd, 'First column', first, off - 1, 1, '<B')
+	off += 1
+	(last, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Last column', last, off - 1, 1, '<B')
+	off += 1
 	(width, off) = rdata(data, off, '<H')
 	# the conversion factor to pt seems to be something around 275
 	add_iter(hd, 'Width', width, off - 2, 2, '<H')
@@ -234,12 +236,13 @@ def add_page_setup(hd, size, data):
 	off += 0x1c
 	(range_start_col, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Range start column', range_start_col, off - 2, 2, '<H')
-	(range_start_row, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Range start row', range_start_row, off - 2, 2, '<H')
+	(range_start_row, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Range start row', range_start_row, off - 1, 1, '<B')
+	off += 1
 	(range_end_col, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Range end column', range_end_col, off - 2, 2, '<H')
-	(range_end_row, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Range end row', range_end_row, off - 2, 2, '<H')
+	(range_end_row, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Range end row', range_end_row, off - 1, 1, '<B')
 
 def add_sheet_count(hd, size, data):
 	off = add_record(hd, size, data)
