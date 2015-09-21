@@ -88,6 +88,7 @@ WLS_RECORDS = {
 	0xc8: ('Page footer', 'page_header_footer'),
 	0xc9: ('Number of sheets', 'sheet_count'),
 	0xca: ('Tab', 'tab'),
+	0xd3: ('Named range', 'named_range'),
 }
 
 class wls_parser(object):
@@ -245,9 +246,28 @@ def add_sheet_count(hd, size, data):
 	(count, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Number', count, off - 2, 2, '<H')
 
+def add_named_range(hd, size, data):
+	off = add_record(hd, size, data)
+	off += 3
+	(name_length, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Name length', name_length, off - 1, 1, '<B')
+	off += 0xa
+	(name, off) = rdata(data, off, '%ds' % name_length)
+	add_iter(hd, 'Name', name, off - name_length, name_length, '<%ds' % name_length)
+	off += 0xf
+	(start_col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Start column', start_col, off - 2, 2, '<H')
+	(end_col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'End column', end_col, off - 2, 2, '<H')
+	(start_row, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Start row', start_row, off - 1, 1, '<B')
+	(end_row, off) = rdata(data, off, '<B')
+	add_iter(hd, 'End row', end_row, off - 1, 1, '<B')
+
 wls_ids = {
 	'record': add_record,
 	'column_width': add_column_width,
+	'named_range': add_named_range,
 	'number_cell': add_number_cell,
 	'page_setup': add_page_setup,
 	'page_header_footer': add_page_header_footer,
