@@ -79,10 +79,13 @@ WLS_RECORDS = {
 	0x70: ('Column width', 'column_width'),
 	0xb7: ('Text cell', 'text_cell'),
 	0xb9: ('Formula cell', None),
+	0xbc: ('Page setup', 'page_setup'),
 	0xbe: ('Number cell', 'number_cell'),
 	0xc3: ('Row height', 'row_height'),
 	0xc4: ('Start something (sheet?)', None),
 	0xc5: ('End something (sheet?)', None),
+	0xc7: ('Page header', 'page_header_footer'),
+	0xc8: ('Page footer', 'page_header_footer'),
 	0xca: ('Tab', 'tab'),
 }
 
@@ -153,7 +156,7 @@ def add_short_string(hd, size, data, off, name):
 	(length, off) = rdata(data, off, '<B')
 	add_iter(hd, '%s length' % name, length, off - 1, 1, '<B')
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, name, text, off - length, length, '%ds' % length)
+	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
 
 def add_number_cell(hd, size, data):
 	off = add_record(hd, size, data)
@@ -196,10 +199,52 @@ def add_sheet_def(hd, size, data):
 	off += 4
 	add_short_string(hd, size, data, off, 'Name')
 
+def add_page_header_footer(hd, size, data):
+	off = add_record(hd, size, data)
+	add_short_string(hd, size, data, off, 'Text')
+
+def add_page_setup(hd, size, data):
+	def format_cm(val):
+		return '%.2f cm' % (2.54 * val)
+
+	off = add_record(hd, size, data)
+	(first_page_num, off) = rdata(data, off, '<I')
+	add_iter(hd, 'First page number', first_page_num, off - 4, 4, '<I')
+	off += 4
+	(scale, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Scale', '%d%%' % scale, off - 4, 4, '<I')
+	(fit_vert, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of pages vertically', fit_vert, off - 4, 4, '<I')
+	(fit_hor, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of pages horizontally', fit_hor, off - 4, 4, '<I')
+	(top, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Top margin', format_cm(top), off - 4, 4, '<f')
+	(bottom, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Bottom margin', format_cm(bottom), off - 4, 4, '<f')
+	(left, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Left margin', format_cm(left), off - 4, 4, '<f')
+	(right, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Right margin', format_cm(right), off - 4, 4, '<f')
+	(header, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Header height', format_cm(header), off - 4, 4, '<f')
+	(footer, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Footer height', format_cm(footer), off - 4, 4, '<f')
+	off += 0x1c
+	(range_start_col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Range start column', range_start_col, off - 2, 2, '<H')
+	(range_start_row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Range start row', range_start_row, off - 2, 2, '<H')
+	(range_end_col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Range end column', range_end_col, off - 2, 2, '<H')
+	(range_end_row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Range end row', range_end_row, off - 2, 2, '<H')
+
 wls_ids = {
 	'record': add_record,
 	'column_width': add_column_width,
 	'number_cell': add_number_cell,
+	'page_setup': add_page_setup,
+	'page_header_footer': add_page_header_footer,
 	'row_height': add_row_height,
 	'sheet_def': add_sheet_def,
 	'text_cell': add_text_cell,
