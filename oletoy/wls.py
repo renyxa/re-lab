@@ -144,6 +144,20 @@ class wls_parser(object):
 		if off < len(data):
 			add_pgiter(self.page, 'Trailer', 'wls', '', data[off:], self.parent)
 
+def format_row(number):
+	return '%d' % (number + 1)
+
+def format_column(number):
+	assert number >= 0
+	assert number <= 0xff
+	low = number % 26
+	high = number / 26
+	if high > 0:
+		row = chr(0x40 + high)
+	else:
+		row = ''
+	return row + chr(0x40 + low + 1)
+
 def add_record(hd, size, data):
 	off = 0
 	(size, off) = rdata(data, off, '<h')
@@ -178,8 +192,8 @@ def add_tab(hd, size, data):
 
 def add_row_height(hd, size, data):
 	off = add_record(hd, size, data)
-	(row, off) = rdata(data, off, '<H') # TODO: maybe this is <I?
-	add_iter(hd, 'Row', row, off - 2, 2, '<H')
+	(row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
 	off += 4
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Height', '%.2fpt' % (height / 20.0), off - 2, 2, '<H')
@@ -187,10 +201,10 @@ def add_row_height(hd, size, data):
 def add_column_width(hd, size, data):
 	off = add_record(hd, size, data)
 	(first, off) = rdata(data, off, '<B')
-	add_iter(hd, 'First column', first, off - 1, 1, '<B')
+	add_iter(hd, 'First column', format_column(first), off - 1, 1, '<B')
 	off += 1
 	(last, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Last column', last, off - 1, 1, '<B')
+	add_iter(hd, 'Last column', format_column(last), off - 1, 1, '<B')
 	off += 1
 	(width, off) = rdata(data, off, '<H')
 	# the conversion factor to pt seems to be something around 275
@@ -235,14 +249,14 @@ def add_page_setup(hd, size, data):
 	add_iter(hd, 'Footer height', format_cm(footer), off - 4, 4, '<f')
 	off += 0x1c
 	(range_start_col, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Range start column', range_start_col, off - 2, 2, '<H')
+	add_iter(hd, 'Range start column', format_column(range_start_col), off - 2, 2, '<H')
 	(range_start_row, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Range start row', range_start_row, off - 1, 1, '<B')
+	add_iter(hd, 'Range start row', format_row(range_start_row), off - 1, 1, '<B')
 	off += 1
 	(range_end_col, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Range end column', range_end_col, off - 2, 2, '<H')
+	add_iter(hd, 'Range end column', format_column(range_end_col), off - 2, 2, '<H')
 	(range_end_row, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Range end row', range_end_row, off - 1, 1, '<B')
+	add_iter(hd, 'Range end row', format_row(range_end_row), off - 1, 1, '<B')
 
 def add_sheet_count(hd, size, data):
 	off = add_record(hd, size, data)
@@ -259,13 +273,13 @@ def add_named_range(hd, size, data):
 	add_iter(hd, 'Name', name, off - name_length, name_length, '<%ds' % name_length)
 	off += 0xf
 	(start_col, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Start column', start_col, off - 2, 2, '<H')
+	add_iter(hd, 'Start column', format_column(start_col), off - 2, 2, '<H')
 	(end_col, off) = rdata(data, off, '<H')
-	add_iter(hd, 'End column', end_col, off - 2, 2, '<H')
+	add_iter(hd, 'End column', format_column(end_col), off - 2, 2, '<H')
 	(start_row, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Start row', start_row, off - 1, 1, '<B')
+	add_iter(hd, 'Start row', format_row(start_row), off - 1, 1, '<B')
 	(end_row, off) = rdata(data, off, '<B')
-	add_iter(hd, 'End row', end_row, off - 1, 1, '<B')
+	add_iter(hd, 'End row', format_row(end_row), off - 1, 1, '<B')
 
 wls_ids = {
 	'record': add_record,
