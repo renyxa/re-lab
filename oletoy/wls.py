@@ -149,6 +149,12 @@ def add_record(hd, size, data):
 	add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
 	return off
 
+def add_short_string(hd, size, data, off, name):
+	(length, off) = rdata(data, off, '<B')
+	add_iter(hd, '%s length' % name, length, off - 1, 1, '<B')
+	(text, off) = rdata(data, off, '%ds' % length)
+	add_iter(hd, name, text, off - length, length, '%ds' % length)
+
 def add_number_cell(hd, size, data):
 	off = add_record(hd, size, data)
 	off += 6
@@ -163,10 +169,7 @@ def add_text_cell(hd, size, data):
 
 def add_tab(hd, size, data):
 	off = add_record(hd, size, data)
-	(length, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Name length', length, off - 1, 1, '<B')
-	(name, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, 'Name', name, off - length, length, '%ds' % length)
+	add_short_string(hd, size, data, off, 'Name')
 
 def add_row_height(hd, size, data):
 	off = add_record(hd, size, data)
@@ -191,10 +194,7 @@ def add_sheet_def(hd, size, data):
 	(offset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Offset of something (sheet?)', offset, off - 2, 2, '<H')
 	off += 4
-	(length, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Name length', length, off - 1, 1, '<B')
-	(name, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, 'Name', name, off - length, length, '%ds' % length)
+	add_short_string(hd, size, data, off, 'Name')
 
 wls_ids = {
 	'record': add_record,
