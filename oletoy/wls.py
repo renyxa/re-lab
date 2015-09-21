@@ -272,14 +272,14 @@ def add_named_range(hd, size, data):
 	(name, off) = rdata(data, off, '%ds' % name_length)
 	add_iter(hd, 'Name', name, off - name_length, name_length, '<%ds' % name_length)
 	off += 0xf
-	(start_col, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Start column', format_column(start_col), off - 2, 2, '<H')
-	(end_col, off) = rdata(data, off, '<H')
-	add_iter(hd, 'End column', format_column(end_col), off - 2, 2, '<H')
-	(start_row, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Start row', format_row(start_row), off - 1, 1, '<B')
-	(end_row, off) = rdata(data, off, '<B')
-	add_iter(hd, 'End row', format_row(end_row), off - 1, 1, '<B')
+	(start_row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Start row', format_row(start_row), off - 2, 2, '<H')
+	(end_row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'End row', format_row(end_row), off - 2, 2, '<H')
+	(start_column, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Start column', format_column(start_column), off - 1, 1, '<B')
+	(end_column, off) = rdata(data, off, '<B')
+	add_iter(hd, 'End column', format_column(end_column), off - 1, 1, '<B')
 
 wls_ids = {
 	'record': add_record,
