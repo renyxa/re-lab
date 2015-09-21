@@ -86,6 +86,7 @@ WLS_RECORDS = {
 	0xc5: ('End something (sheet?)', None),
 	0xc7: ('Page header', 'page_header_footer'),
 	0xc8: ('Page footer', 'page_header_footer'),
+	0xc9: ('Number of sheets', 'sheet_count'),
 	0xca: ('Tab', 'tab'),
 }
 
@@ -239,6 +240,11 @@ def add_page_setup(hd, size, data):
 	(range_end_row, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Range end row', range_end_row, off - 2, 2, '<H')
 
+def add_sheet_count(hd, size, data):
+	off = add_record(hd, size, data)
+	(count, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Number', count, off - 2, 2, '<H')
+
 wls_ids = {
 	'record': add_record,
 	'column_width': add_column_width,
@@ -246,6 +252,7 @@ wls_ids = {
 	'page_setup': add_page_setup,
 	'page_header_footer': add_page_header_footer,
 	'row_height': add_row_height,
+	'sheet_count': add_sheet_count,
 	'sheet_def': add_sheet_def,
 	'text_cell': add_text_cell,
 	'tab': add_tab,
