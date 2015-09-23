@@ -78,8 +78,11 @@ WLS_RECORDS = {
 	0x38: ('Sheet def?', 'sheet_def'),
 	0x70: ('Column width', 'column_width'),
 	0xb7: ('Text cell', 'text_cell'),
-	0xb9: ('Formula cell', None),
+	0xb9: ('Formula cell', 'formula_cell'),
 	0xbc: ('Page setup', 'page_setup'),
+	# 0xbc: ('Empty cell', None), # TODO: clearly the code is either
+	# continued in lower bits of the 'flags' byte or the flags modify
+	# its meaning
 	0xbe: ('Number cell', 'number_cell'),
 	0xc3: ('Row height', 'row_height'),
 	0xc4: ('Start something (sheet?)', None),
@@ -89,6 +92,13 @@ WLS_RECORDS = {
 	0xc9: ('Number of sheets', 'sheet_count'),
 	0xca: ('Tab', 'tab'),
 	0xd3: ('Named range', 'named_range'),
+}
+
+WLS_FUNCTIONS = {
+	0x0: 'Count',
+	0x1: 'If',
+	0x4: 'Sum',
+	0x6: 'Min',
 }
 
 class wls_parser(object):
@@ -173,6 +183,7 @@ def add_short_string(hd, size, data, off, name):
 	add_iter(hd, '%s length' % name, length, off - 1, 1, '<B')
 	(text, off) = rdata(data, off, '%ds' % length)
 	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
+	return off
 
 def add_number_cell(hd, size, data):
 	off = add_record(hd, size, data)
@@ -281,9 +292,68 @@ def add_named_range(hd, size, data):
 	(end_column, off) = rdata(data, off, '<B')
 	add_iter(hd, 'End column', format_column(end_column), off - 1, 1, '<B')
 
+def add_formula_cell(hd, size, data):
+	rel_map = {0: 'none', 1: 'column', 2: 'row', 3: 'row and column'}
+	def add_address(off):
+		(row, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Row', format_row(row & 0x3fff), off - 2, 2, '<H')
+		rel = (row >> 14) & 0x3
+		add_iter(hd, 'Relative', get_or_default(rel_map, rel, 'unknown'), off - 1, 1, '<B')
+		(col, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
+		return off
+
+	off = add_record(hd, size, data)
+	off += 0x14
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length', length, off - 2, 2, '<H')
+	opcode_map = {
+		0x3: '+', 0x4: '-', 0x5: '*', 0x6: '/', # binary
+		0x13: '-', 0x17: 'string', 0x1d: 'bool', 0x1e: 'integer', # unary
+		0x25: 'range',
+		0x42: 'function',
+		0x44: 'address',
+		0x5a: 'sheet address',
+	}
+	while off < size:
+		(opcode, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Opcode', get_or_default(opcode_map, opcode, 'unknown'), off - 1, 1, '<B')
+		if opcode == 0x17:
+			off = add_short_string(hd, size, data, off, 'Text')
+		elif opcode == 0x1d:
+			(val, off) = rdata(data, off, '<B')
+			add_iter(hd, 'Value', bool(val), off - 1, 1, '<B')
+		elif opcode == 0x1e:
+			(val, off) = rdata(data, off, '<h')
+			add_iter(hd, 'Value', val, off - 2, 2, '<h')
+		elif opcode == 0x25:
+			(start_row, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Start row', format_row(start_row & 0x3fff), off - 2, 2, '<H')
+			start_rel = (start_row >> 14) & 0x3
+			add_iter(hd, 'First address relative', get_or_default(rel_map, start_rel, 'unknown'), off - 1, 1, '<B')
+			(end_row, off) = rdata(data, off, '<H')
+			add_iter(hd, 'End row', format_row(end_row & 0x3fff), off - 2, 2, '<H')
+			end_rel = (end_row >> 14) & 0x3
+			add_iter(hd, 'Second address relative', get_or_default(rel_map, end_rel, 'unknown'), off - 1, 1, '<B')
+			(start_column, off) = rdata(data, off, '<B')
+			add_iter(hd, 'Start column', format_column(start_column), off - 1, 1, '<B')
+			(end_column, off) = rdata(data, off, '<B')
+			add_iter(hd, 'End column', format_column(end_column), off - 1, 1, '<B')
+		elif opcode == 0x42:
+			(argc, off) = rdata(data, off, '<B')
+			add_iter(hd, 'Number of arguments', argc, off - 1, 1, '<B')
+			(fname, off) = rdata(data, off, '<B')
+			add_iter(hd, 'Function', get_or_default(WLS_FUNCTIONS, fname, 'unknown'), off - 1, 1, '<B')
+		elif opcode == 0x44:
+			off = add_address(off)
+		elif opcode == 0x5a:
+			off += 14
+			off = add_address(off)
+
 wls_ids = {
 	'record': add_record,
 	'column_width': add_column_width,
+	'formula_cell': add_formula_cell,
 	'named_range': add_named_range,
 	'number_cell': add_number_cell,
 	'page_setup': add_page_setup,
