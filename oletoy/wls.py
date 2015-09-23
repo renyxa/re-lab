@@ -114,34 +114,39 @@ class wls_parser(object):
 		off = 0
 		typ = None
 		flags = 0
-		index = 0
 		while off + 1 < len(data):
 			start = off
 			(size, off) = rdata(data, off, '<h')
-			seq = size < 0
+			# NOTE on compression: a consecutive sequence of records of
+			# the same type is saved in a compressed form. The first
+			# record is always complete; the following ones drop common
+			# suffix. The base for determining common suffix is
+			# accumulated result of previous writes, i.e., the bytes of
+			# the current record are compared to the base, then the
+			# bytes of the base are overwritten by current record.
+			# Illustrative example: A sequence of strings "abcd", "ab",
+			# "d", "ab" is saved as "abcd", ("", 2), ("d", 0), ("a", 1).
+			# The comparison base changes as follows: None, "abcd",
+			# "abcd", "dbcd".
+			compressed = size < 0
 			if size < 0:
 				size = -size
-				index += 1
 			end = off + size
 			assert(end >= off)
 			if end > len(data):
 				break
-			if not seq:
+			if not compressed:
 				# NOTE: this would read nonsense if size == 0, but that should never happen
 				(typ, off) = rdata(data, off, '<B')
 				(flags, off) = rdata(data, off, '<B')
-				index = 0
-				if end < len(data):
-					(next_size, off) = rdata(data, end, '<h')
-					seq = next_size < 0
 			recdata = data[start:end]
 			assert(typ)
 			rec = get_or_default(WLS_RECORDS, typ, ('Record %x' % typ, None))
 			rec_str = '[%d] %s' % (n, rec[0])
 			if flags != 0:
 				rec_str += ' (flags %x)' % flags
-			if seq:
-				rec_str += ' [%d]' % index
+			if compressed:
+				rec_str += ', compressed'
 			content = recdata[0:4] + deobfuscate(recdata[4:], 4)
 			handler = rec[1]
 			if not handler:
@@ -168,15 +173,26 @@ def format_column(number):
 		row = ''
 	return row + chr(0x40 + low + 1)
 
-def add_record(hd, size, data):
-	off = 0
-	(size, off) = rdata(data, off, '<h')
-	add_iter(hd, 'Size', size, off - 2, 2, '<h')
-	(typ, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Type', typ, off - 1, 1, '<B')
-	(flags, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
-	return off
+def record_wrapper(wrapped):
+	def wrapper(hd, size, data):
+		off = 0
+		(sz, off) = rdata(data, off, '<h')
+		add_iter(hd, 'Size', abs(sz), off - 2, 2, '<h')
+		if sz > 0:
+			(typ, off) = rdata(data, off, '<B')
+			add_iter(hd, 'Type', typ, off - 1, 1, '<B')
+			(flags, off) = rdata(data, off, '<B')
+			add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
+		else:
+			(compressed, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Compressed bytes', compressed, off - 2, 2, '<H')
+		if wrapped:
+			try:
+				wrapped(hd, size, data, off)
+			except struct.error, e:
+				if not compressed:
+					raise e
+	return wrapper
 
 def add_short_string(hd, size, data, off, name):
 	(length, off) = rdata(data, off, '<B')
@@ -185,32 +201,27 @@ def add_short_string(hd, size, data, off, name):
 	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
 	return off
 
-def add_number_cell(hd, size, data):
-	off = add_record(hd, size, data)
+def add_number_cell(hd, size, data, off):
 	off += 6
 	(val, off) = rdata(data, off, '<d')
 	add_iter(hd, 'Value', val, off - 8, 8, '<d')
 
-def add_text_cell(hd, size, data):
-	off = add_record(hd, size, data)
+def add_text_cell(hd, size, data, off):
 	off += 6
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Content length', length, off - 2, 2, '<H')
 
-def add_tab(hd, size, data):
-	off = add_record(hd, size, data)
+def add_tab(hd, size, data, off):
 	add_short_string(hd, size, data, off, 'Name')
 
-def add_row_height(hd, size, data):
-	off = add_record(hd, size, data)
+def add_row_height(hd, size, data, off):
 	(row, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
 	off += 4
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Height', '%.2fpt' % (height / 20.0), off - 2, 2, '<H')
 
-def add_column_width(hd, size, data):
-	off = add_record(hd, size, data)
+def add_column_width(hd, size, data, off):
 	(first, off) = rdata(data, off, '<B')
 	add_iter(hd, 'First column', format_column(first), off - 1, 1, '<B')
 	off += 1
@@ -221,22 +232,19 @@ def add_column_width(hd, size, data):
 	# the conversion factor to pt seems to be something around 275
 	add_iter(hd, 'Width', width, off - 2, 2, '<H')
 
-def add_sheet_def(hd, size, data):
-	off = add_record(hd, size, data)
+def add_sheet_def(hd, size, data, off):
 	(offset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Offset of something (sheet?)', offset, off - 2, 2, '<H')
 	off += 4
 	add_short_string(hd, size, data, off, 'Name')
 
-def add_page_header_footer(hd, size, data):
-	off = add_record(hd, size, data)
+def add_page_header_footer(hd, size, data, off):
 	add_short_string(hd, size, data, off, 'Text')
 
-def add_page_setup(hd, size, data):
+def add_page_setup(hd, size, data, off):
 	def format_cm(val):
 		return '%.2f cm' % (2.54 * val)
 
-	off = add_record(hd, size, data)
 	(first_page_num, off) = rdata(data, off, '<I')
 	add_iter(hd, 'First page number', first_page_num, off - 4, 4, '<I')
 	off += 4
@@ -269,13 +277,11 @@ def add_page_setup(hd, size, data):
 	(range_end_row, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Range end row', format_row(range_end_row), off - 1, 1, '<B')
 
-def add_sheet_count(hd, size, data):
-	off = add_record(hd, size, data)
+def add_sheet_count(hd, size, data, off):
 	(count, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Number', count, off - 2, 2, '<H')
 
-def add_named_range(hd, size, data):
-	off = add_record(hd, size, data)
+def add_named_range(hd, size, data, off):
 	off += 3
 	(name_length, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Name length', name_length, off - 1, 1, '<B')
@@ -292,7 +298,7 @@ def add_named_range(hd, size, data):
 	(end_column, off) = rdata(data, off, '<B')
 	add_iter(hd, 'End column', format_column(end_column), off - 1, 1, '<B')
 
-def add_formula_cell(hd, size, data):
+def add_formula_cell(hd, size, data, off):
 	rel_map = {0: 'none', 1: 'column', 2: 'row', 3: 'row and column'}
 	def add_address(off):
 		(row, off) = rdata(data, off, '<H')
@@ -303,7 +309,6 @@ def add_formula_cell(hd, size, data):
 		add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
 		return off
 
-	off = add_record(hd, size, data)
 	off += 0x14
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
@@ -351,18 +356,18 @@ def add_formula_cell(hd, size, data):
 			off = add_address(off)
 
 wls_ids = {
-	'record': add_record,
-	'column_width': add_column_width,
-	'formula_cell': add_formula_cell,
-	'named_range': add_named_range,
-	'number_cell': add_number_cell,
-	'page_setup': add_page_setup,
-	'page_header_footer': add_page_header_footer,
-	'row_height': add_row_height,
-	'sheet_count': add_sheet_count,
-	'sheet_def': add_sheet_def,
-	'text_cell': add_text_cell,
-	'tab': add_tab,
+	'record': record_wrapper(None),
+	'column_width': record_wrapper(add_column_width),
+	'formula_cell': record_wrapper(add_formula_cell),
+	'named_range': record_wrapper(add_named_range),
+	'number_cell': record_wrapper(add_number_cell),
+	'page_setup': record_wrapper(add_page_setup),
+	'page_header_footer': record_wrapper(add_page_header_footer),
+	'row_height': record_wrapper(add_row_height),
+	'sheet_count': record_wrapper(add_sheet_count),
+	'sheet_def': record_wrapper(add_sheet_def),
+	'text_cell': record_wrapper(add_text_cell),
+	'tab': record_wrapper(add_tab),
 }
 
 def parse(page, data, parent):
