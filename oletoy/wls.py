@@ -201,13 +201,21 @@ def add_short_string(hd, size, data, off, name):
 	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
 	return off
 
+def add_cell(hd, size, data, off):
+	(row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
+	(col, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
+	off += 3
+	return off
+
 def add_number_cell(hd, size, data, off):
-	off += 6
+	off = add_cell(hd, size, data, off)
 	(val, off) = rdata(data, off, '<d')
 	add_iter(hd, 'Value', val, off - 8, 8, '<d')
 
 def add_text_cell(hd, size, data, off):
-	off += 6
+	off = add_cell(hd, size, data, off)
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Content length', length, off - 2, 2, '<H')
 
@@ -309,7 +317,8 @@ def add_formula_cell(hd, size, data, off):
 		add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
 		return off
 
-	off += 0x14
+	off = add_cell(hd, size, data, off)
+	off += 0xe
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 	opcode_map = {
