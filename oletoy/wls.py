@@ -171,7 +171,11 @@ class wls_parser(object):
 				rec_str += ' (flags %x)' % flags
 			if compressed and compressed_size > 0:
 				rec_str += ', compressed'
-			content = recdata[0:4] + deobfuscate(recdata[4:], 4)
+			if typ == 0xb7:
+				# in text cells, the text is not obfuscated
+				content = recdata[0:4] + deobfuscate(recdata[4:0xc], 4) + recdata[0xc:]
+			else:
+				content = recdata[0:4] + deobfuscate(recdata[4:], 4)
 			handler = rec[1]
 			if not handler:
 				handler = 'record'
