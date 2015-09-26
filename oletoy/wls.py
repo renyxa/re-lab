@@ -315,7 +315,7 @@ def add_page_setup(hd, size, data, off):
 	add_iter(hd, 'Range end row', format_row(range_end_row), off - 1, 1, '<B')
 
 def add_sheet_count(hd, size, data, off):
-	(count, off) = rdata(data, 0, '<H')
+	(count, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Number', count, off - 2, 2, '<H')
 
 def add_named_range(hd, size, data, off):
