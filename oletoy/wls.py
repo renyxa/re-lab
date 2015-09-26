@@ -223,12 +223,19 @@ def record_wrapper(wrapped):
 					raise e
 	return wrapper
 
-def add_short_string(hd, size, data, off, name):
-	(length, off) = rdata(data, off, '<B')
-	add_iter(hd, '%s length' % name, length, off - 1, 1, '<B')
+def add_string(hd, size, data, off, name, fmt):
+	fmtlen = struct.calcsize(fmt)
+	(length, off) = rdata(data, off, fmt)
+	add_iter(hd, '%s length' % name, length, off - fmtlen, fmtlen, fmt)
 	(text, off) = rdata(data, off, '%ds' % length)
 	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
 	return off
+
+def add_short_string(hd, size, data, off, name):
+	return add_string(hd, size, data, off, name, '<B')
+
+def add_long_string(hd, size, data, off, name):
+	return add_string(hd, size, data, off, name, '<H')
 
 def add_cell(hd, size, data, off):
 	(row, off) = rdata(data, off, '<H')
@@ -245,8 +252,7 @@ def add_number_cell(hd, size, data, off):
 
 def add_text_cell(hd, size, data, off):
 	off = add_cell(hd, size, data, off)
-	(length, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Content length', length, off - 2, 2, '<H')
+	add_long_string(hd, size, data, off, 'Text')
 
 def add_tab(hd, size, data, off):
 	add_short_string(hd, size, data, off, 'Name')
