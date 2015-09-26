@@ -77,6 +77,7 @@ def deobfuscate(data, orig_pos):
 WLS_RECORDS = {
 	0x38: ('Sheet def?', 'sheet_def'),
 	0x70: ('Column width', 'column_width'),
+	0xac: ('Text attributes', 'text_attrs'),
 	0xb7: ('Text cell', 'text_cell'),
 	0xb9: ('Formula cell', 'formula_cell'),
 	0xbc: ('Page setup', 'page_setup'),
@@ -92,6 +93,7 @@ WLS_RECORDS = {
 	0xc9: ('Number of sheets', 'sheet_count'),
 	0xca: ('Tab', 'tab'),
 	0xd3: ('Named range', 'named_range'),
+	0xdb: ('Cell style', 'cell_style'),
 }
 
 # I assume this is actually one list, but I'm not sure enough...
@@ -242,7 +244,9 @@ def add_cell(hd, size, data, off):
 	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
 	(col, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
-	off += 3
+	off += 1
+	(style, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Style', style, off - 2, 2, '<H')
 	return off
 
 def add_number_cell(hd, size, data, off):
@@ -410,8 +414,80 @@ def add_formula_cell(hd, size, data, off):
 			off += 14
 			off = add_address(off)
 
+def convert_flags(flags, names):
+	"""Convert a number representing a set of flags into names.
+
+	The names dict maps a bit to a name. Bits are counted from 0.
+	"""
+	ret = []
+	for b in xrange(0, sorted(names.keys())[-1] + 1):
+		if flags & 0x1:
+			if names.has_key(b):
+				ret.append(names[b])
+			else:
+				ret.append('unknown')
+		flags = flags >> 1
+	if flags: # more flags than we have names for
+		ret.append('unknowns')
+	return ret
+
+def print_flags(flags, names):
+	return ' + '.join(convert_flags(flags, names))
+
+def get_text_flags(flags):
+	names = {
+		1: 'italic',
+		3: 'line through',
+	}
+	return print_flags(flags, names)
+
+def add_text_attrs(hd, size, data, off):
+	(size, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Font size', '%d pt' % (size / 20), off - 2, 2, '<H')
+	(flags, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Flags?', get_text_flags(flags), off - 2, 2, '<H')
+	(color, off) = rdata(data, off, '<H')
+	if color == 0x7fff:
+		color_str = "default"
+	else:
+		color_str = '%d' % color
+	# I can see no record that'd look like a palette, though. Maybe it is implicit?
+	add_iter(hd, 'Color index', color_str, off - 2, 2, '<H')
+	font_weight_map = {400: 'normal', 700: 'bold'}
+	(font_weight, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Font weight', get_or_default(font_weight_map, font_weight, 'unknown'), off - 2, 2, '<H')
+	off += 2
+	(underline, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Underline', bool(underline), off - 1, 1, '<B')
+	(line_through, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Line-through?', line_through, off - 1, 1, '<B')
+	off += 2
+	add_short_string(hd, size, data, off, 'Font name')
+
+def add_cell_style(hd, size, data, off):
+	(attrs, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Text attributes', attrs, off - 2, 2, '<H')
+	off += 4
+	halign_map = {0: 'generic', 1: 'left', 2: 'center', 3: 'right', 4: 'repeat', 5: 'paragraph', 6: 'selection center'}
+	valign_map = {0: 'top', 1: 'center', 2: 'bottom', 3: 'paragraph'}
+	(align, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Vertical alignment', get_or_default(valign_map, (align >> 4), 'unknown'), off - 1, 1, '<B')
+	add_iter(hd, 'Wrap text', bool(align & 0x8), off - 1, 1, '<B')
+	add_iter(hd, 'Horizontal alignment', get_or_default(halign_map, (align & 0x7), 'unknown'), off - 1, 1, '<B')
+	orient_map = {0x10: 'horizontal', 0x12: 'vertical 90 degrees', 0x13: 'vertical 270 degrees'}
+	(orient, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Text orientation?', get_or_default(orient_map, orient, 'unknown'), off - 1, 1, '<B')
+	(color, off) = rdata(data, off, '<B')
+	# TODO: verify this
+	add_iter(hd, 'Color index', color - 0x80, off - 1, 1, '<B')
+	(pattern, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Fill pattern?', pattern, off - 1, 1, '<B')
+	off += 6 # border type and color, seems completely chaotic
+
 wls_ids = {
 	'record': record_wrapper(None),
+	'text_attrs': record_wrapper(add_text_attrs),
+	'cell_style': record_wrapper(add_cell_style),
 	'column_width': record_wrapper(add_column_width),
 	'formula_cell': record_wrapper(add_formula_cell),
 	'named_range': record_wrapper(add_named_range),
