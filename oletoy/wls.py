@@ -157,7 +157,9 @@ class wls_parser(object):
 			assert(end >= off)
 			if end > len(data):
 				break
-			if not compressed:
+			if compressed:
+				(compressed_size, off) = rdata(data, off, '<H')
+			else:
 				# NOTE: this would read nonsense if size == 0, but that should never happen
 				(typ, off) = rdata(data, off, '<B')
 				(flags, off) = rdata(data, off, '<B')
@@ -167,7 +169,7 @@ class wls_parser(object):
 			rec_str = '[%d] %s' % (n, rec[0])
 			if flags != 0:
 				rec_str += ' (flags %x)' % flags
-			if compressed:
+			if compressed and compressed_size > 0:
 				rec_str += ', compressed'
 			content = recdata[0:4] + deobfuscate(recdata[4:], 4)
 			handler = rec[1]
