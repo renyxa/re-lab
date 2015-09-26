@@ -94,11 +94,29 @@ WLS_RECORDS = {
 	0xd3: ('Named range', 'named_range'),
 }
 
-WLS_FUNCTIONS = {
+# I assume this is actually one list, but I'm not sure enough...
+WLS_FUNCTIONS_FIXED = {
+	0xa: 'Na',
+	0x13: 'Pi',
+	0x22: 'True',
+	0x23: 'False',
+	0x26: 'Not',
+	0x41: 'Date',
+	0x4a: 'Now',
+	0x75: 'Exact',
+	0xdd: 'Today',
+}
+
+WLS_FUNCTIONS_VAR = {
 	0x0: 'Count',
 	0x1: 'If',
 	0x4: 'Sum',
 	0x6: 'Min',
+	0x7: 'Max',
+	0xe: 'Fixed',
+	0x24: 'And',
+	0x25: 'Or',
+	0x7c: 'Find',
 }
 
 class wls_parser(object):
@@ -123,7 +141,11 @@ class wls_parser(object):
 			# suffix. The base for determining common suffix is
 			# accumulated result of previous writes, i.e., the bytes of
 			# the current record are compared to the base, then the
-			# bytes of the base are overwritten by current record.
+			# bytes of the base are overwritten by current record. In
+			# addition, it seems that the base is filled with 0 to the
+			# right, so a record that ends with a number of 0 can still
+			# be compressed, even if it's longer than any previous
+			# record in the sequence.
 			# Illustrative example: A sequence of strings "abcd", "ab",
 			# "d", "ab" is saved as "abcd", ("", 2), ("d", 0), ("a", 1).
 			# The comparison base changes as follows: None, "abcd",
@@ -323,9 +345,10 @@ def add_formula_cell(hd, size, data, off):
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 	opcode_map = {
 		0x3: '+', 0x4: '-', 0x5: '*', 0x6: '/', # binary
-		0x13: '-', 0x17: 'string', 0x1d: 'bool', 0x1e: 'integer', # unary
-		0x25: 'range',
-		0x42: 'function',
+		0x13: '-', 0x17: 'string', 0x19: 'something', 0x1d: 'bool', 0x1e: 'integer', 0x1f: 'double', # unary
+		0x22: 'function with variable number of args', 0x24: 'address', 0x25: 'range',
+		0x41: 'function with fixed number of args', 0x42: 'function with variable number of args',
+		# TODO: what's the difference between 0x24 and 0x44?
 		0x44: 'address',
 		0x5a: 'sheet address',
 	}
@@ -334,12 +357,19 @@ def add_formula_cell(hd, size, data, off):
 		add_iter(hd, 'Opcode', get_or_default(opcode_map, opcode, 'unknown'), off - 1, 1, '<B')
 		if opcode == 0x17:
 			off = add_short_string(hd, size, data, off, 'Text')
+		elif opcode == 0x19:
+			off += 3
 		elif opcode == 0x1d:
 			(val, off) = rdata(data, off, '<B')
 			add_iter(hd, 'Value', bool(val), off - 1, 1, '<B')
 		elif opcode == 0x1e:
 			(val, off) = rdata(data, off, '<h')
 			add_iter(hd, 'Value', val, off - 2, 2, '<h')
+		elif opcode == 0x1f:
+			(val, off) = rdata(data, off, '<d')
+			add_iter(hd, 'Value', val, off - 8, 8, '<d')
+		elif opcode == 0x24:
+			off = add_address(off)
 		elif opcode == 0x25:
 			(start_row, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Start row', format_row(start_row & 0x3fff), off - 2, 2, '<H')
@@ -353,11 +383,14 @@ def add_formula_cell(hd, size, data, off):
 			add_iter(hd, 'Start column', format_column(start_column), off - 1, 1, '<B')
 			(end_column, off) = rdata(data, off, '<B')
 			add_iter(hd, 'End column', format_column(end_column), off - 1, 1, '<B')
-		elif opcode == 0x42:
+		elif opcode == 0x41:
+			(fname, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Function', get_or_default(WLS_FUNCTIONS_FIXED, fname, 'unknown'), off - 2, 2, '<H')
+		elif opcode == 0x22 or opcode == 0x42:
 			(argc, off) = rdata(data, off, '<B')
 			add_iter(hd, 'Number of arguments', argc, off - 1, 1, '<B')
-			(fname, off) = rdata(data, off, '<B')
-			add_iter(hd, 'Function', get_or_default(WLS_FUNCTIONS, fname, 'unknown'), off - 1, 1, '<B')
+			(fname, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Function', get_or_default(WLS_FUNCTIONS_VAR, fname, 'unknown'), off - 2, 2, '<H')
 		elif opcode == 0x44:
 			off = add_address(off)
 		elif opcode == 0x5a:
