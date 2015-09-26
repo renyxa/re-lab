@@ -206,6 +206,7 @@ def record_wrapper(wrapped):
 		off = 0
 		(sz, off) = rdata(data, off, '<h')
 		add_iter(hd, 'Size', abs(sz), off - 2, 2, '<h')
+		compressed = 0
 		if sz > 0:
 			(typ, off) = rdata(data, off, '<B')
 			add_iter(hd, 'Type', typ, off - 1, 1, '<B')
@@ -218,7 +219,7 @@ def record_wrapper(wrapped):
 			try:
 				wrapped(hd, size, data, off)
 			except struct.error, e:
-				if not compressed:
+				if compressed == 0:
 					raise e
 	return wrapper
 
