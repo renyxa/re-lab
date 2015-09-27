@@ -136,6 +136,7 @@ class wls_parser(object):
 		off = 0
 		typ = None
 		flags = 0
+		index = 0
 		while off + 1 < len(data):
 			start = off
 			(size, off) = rdata(data, off, '<h')
@@ -155,7 +156,8 @@ class wls_parser(object):
 			# The comparison base changes as follows: None, "abcd",
 			# "abcd", "dbcd".
 			compressed = size < 0
-			if size < 0:
+			seq = compressed
+			if compressed:
 				size = -size
 			end = off + size
 			assert(end >= off)
@@ -163,16 +165,24 @@ class wls_parser(object):
 				break
 			if compressed:
 				(compressed_size, off) = rdata(data, off, '<H')
+				index += 1
 			else:
 				# NOTE: this would read nonsense if size == 0, but that should never happen
 				(typ, off) = rdata(data, off, '<B')
 				(flags, off) = rdata(data, off, '<B')
+				index = 0
+				# peek at the next record to determine if this record is a start of a sequence
+				if end < len(data):
+					(next_size, next_off) = rdata(data, end, '<h')
+					seq = next_size < 0
 			recdata = data[start:end]
 			assert(typ)
 			rec = get_or_default(WLS_RECORDS, typ, ('Record %x' % typ, None))
 			rec_str = '[%d] %s' % (n, rec[0])
 			if flags != 0:
 				rec_str += ' (flags %x)' % flags
+			if seq:
+				rec_str += ' [%d]' % index
 			if compressed and compressed_size > 0:
 				rec_str += ', compressed'
 			if typ == 0xb7:
