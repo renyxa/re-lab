@@ -519,7 +519,17 @@ def add_cell_style(hd, size, data, off):
 	add_iter(hd, 'Color index', color - 0x80, off - 1, 1, '<B')
 	(pattern, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Fill pattern?', pattern, off - 1, 1, '<B')
-	off += 6 # border type and color, seems completely chaotic
+	border_map = {0: 'none', 1: 'line', 2: 'thick line', 3: 'dashed', 4: 'dashed 2', 5: 'very thick line', 6: 'double', 7: 'dotted'}
+	(bottom, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Bottom', border_map[(bottom >> 6) & 0x7], off - 2, 2, '<H')
+	add_iter(hd, 'Bottom color index', bottom >> 9, off - 2, 2, '<H')
+	(others, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top', border_map[others & 0x7], off - 4, 4, '<I')
+	add_iter(hd, 'Left', border_map[(others >> 3) & 0x7], off - 4, 4, '<I')
+	add_iter(hd, 'Right', border_map[(others >> 6) & 0x7], off - 4, 4, '<I')
+	add_iter(hd, 'Top color index', (others >> 9) & 0x7f, off - 4, 4, '<I')
+	add_iter(hd, 'Left color index', (others >> 16) & 0x7f, off - 4, 4, '<I')
+	add_iter(hd, 'Right color index', (others >> 23) & 0x7f, off - 4, 4, '<I')
 
 def add_comment(hd, size, data, off):
 	(row, off) = rdata(data, off, '<H')
