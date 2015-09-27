@@ -289,9 +289,13 @@ def add_column_width(hd, size, data, off):
 	(last, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Last column', format_column(last), off - 1, 1, '<B')
 	off += 1
-	(width, off) = rdata(data, off, '<H')
-	# the conversion factor to pt seems to be something around 275
-	add_iter(hd, 'Width', width, off - 2, 2, '<H')
+	(raw_width, off) = rdata(data, off, '<H')
+	if raw_width > 0x1b6:
+		raw_width -= 0xb6
+		width = (raw_width >> 8) + (raw_width & 0xff) / 256.0
+	else:
+		width = raw_width / float(0x1b6)
+	add_iter(hd, 'Width', '%.2f' % width, off - 2, 2, '<H')
 
 def add_sheet_def(hd, size, data, off):
 	(offset, off) = rdata(data, off, '<H')
