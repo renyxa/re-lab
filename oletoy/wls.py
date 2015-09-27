@@ -79,24 +79,24 @@ WLS_RECORDS = {
 	0x70: ('Column width', 'column_width'),
 	0xac: ('Text attributes', 'text_attrs'),
 	0xb9: ('Formula cell', 'formula_cell'),
-	0xc5: ('End something (sheet?)', None),
+	0xc5: ('End sheet', None),
 	0xc7: ('Page header', 'page_header_footer'),
 	0xc8: ('Page footer', 'page_header_footer'),
 	0xc9: ('Number of sheets', 'sheet_count'),
-	0xca: ('Tab', 'tab'),
+	0xca: ('Sheet name', 'sheet_name'),
 	0xcf: ('Comment', 'comment'),
 	0xd3: ('Named range', 'named_range'),
 	0xd6: ('Page breaks', 'page_breaks'),
 	0xdb: ('Cell style', 'cell_style'),
 	# 01xx
-	0x138: ('Sheet def?', 'sheet_def'),
+	0x138: ('Sheet def', 'sheet_def'),
 	# 02xx
 	0x2b7: ('Text cell', 'text_cell'),
 	0x2bc: ('Empty cell', 'cell'),
 	0x2be: ('Number cell', 'number_cell'),
 	0x2c3: ('Row height', 'row_height'),
 	# 08xx
-	0x8c4: ('Start something (sheet?)', None),
+	0x8c4: ('Start sheet', None),
 	# 77xx
 	0x77bc: ('Page setup', 'page_setup'),
 }
@@ -267,7 +267,7 @@ def add_text_cell(hd, size, data, off):
 	off = add_cell(hd, size, data, off)
 	add_long_string(hd, size, data, off, 'Text')
 
-def add_tab(hd, size, data, off):
+def add_sheet_name(hd, size, data, off):
 	add_short_string(hd, size, data, off, 'Name')
 
 def add_row_height(hd, size, data, off):
@@ -290,7 +290,7 @@ def add_column_width(hd, size, data, off):
 
 def add_sheet_def(hd, size, data, off):
 	(offset, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Offset of something (sheet?)', offset, off - 2, 2, '<H')
+	add_iter(hd, 'Offset of sheet', offset, off - 2, 2, '<H')
 	off += 4
 	add_short_string(hd, size, data, off, 'Name')
 
@@ -539,8 +539,8 @@ wls_ids = {
 	'row_height': record_wrapper(add_row_height),
 	'sheet_count': record_wrapper(add_sheet_count),
 	'sheet_def': record_wrapper(add_sheet_def),
+	'sheet_name': record_wrapper(add_sheet_name),
 	'text_cell': record_wrapper(add_text_cell),
-	'tab': record_wrapper(add_tab),
 }
 
 def parse(page, data, parent):
