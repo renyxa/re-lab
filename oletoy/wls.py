@@ -92,6 +92,7 @@ WLS_RECORDS = {
 	0x138: ('Sheet def', 'sheet_def'),
 	# 02xx
 	0x2b7: ('Text cell', 'text_cell'),
+	0x2ba: ('Text result', 'text_result'),
 	0x2bc: ('Empty cell', 'cell'),
 	0x2be: ('Number cell', 'number_cell'),
 	0x2c3: ('Row height', 'row_height'),
@@ -184,9 +185,11 @@ class wls_parser(object):
 				rec_str += ' [%d]' % index
 			if compressed and compressed_size > 0:
 				rec_str += ', compressed'
+			# in some record types, containing long text, the text is not obfuscated
 			if typ == 0x2b7:
-				# in text cells, the text is not obfuscated
 				content = recdata[0:4] + deobfuscate(recdata[4:0xc], 4) + recdata[0xc:]
+			elif typ == 0x2ba:
+				content = recdata[0:4] + deobfuscate(recdata[4:6], 4) + recdata[6:]
 			else:
 				content = recdata[0:4] + deobfuscate(recdata[4:], 4)
 			handler = rec[1]
@@ -523,6 +526,9 @@ def add_page_breaks(hd, size, data, off):
 		add_iter(hd, 'Break before row [%d]' % i, format_row(row), off - 2, 2, '<H')
 		i += 1
 
+def add_text_result(hd, size, data, off):
+	add_long_string(hd, size, data, off, 'Text')
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
@@ -541,6 +547,7 @@ wls_ids = {
 	'sheet_def': record_wrapper(add_sheet_def),
 	'sheet_name': record_wrapper(add_sheet_name),
 	'text_cell': record_wrapper(add_text_cell),
+	'text_result': record_wrapper(add_text_result),
 }
 
 def parse(page, data, parent):
