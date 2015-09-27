@@ -479,7 +479,20 @@ def add_text_attrs(hd, size, data, off):
 def add_cell_style(hd, size, data, off):
 	(attrs, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Text attributes', attrs, off - 2, 2, '<H')
-	off += 4
+	numfmt_map = {
+		0x0: 'Generic',
+		0x1: '0', 0x2: '0.00', 0x3: '#,##0', 0x4: '#,##0,00',
+		0x9: '0%', 0xa: '0.00%',
+		0xb: '0.00E+00',
+		0xe: 'm/d/yy', 0xf: 'd/mmm/yy', 0x10: 'd/mmm', 0x11: 'mmm/yy',
+		0x14: 'h:mm', 0x15: 'h:mm:ss', 0x16: 'm/d/yy h:mm',
+		0x2a: '"$"#,##0', 0x2c: '"$"#,##0.00',
+		0x30: '##0.0E+0',
+		0x31: 'Text',
+	}
+	(numfmt, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number format', get_or_default(numfmt_map, numfmt, "unknown"), off - 2, 2, '<H')
+	off += 2
 	halign_map = {0: 'generic', 1: 'left', 2: 'center', 3: 'right', 4: 'repeat', 5: 'paragraph', 6: 'selection center'}
 	valign_map = {0: 'top', 1: 'center', 2: 'bottom', 3: 'paragraph'}
 	(align, off) = rdata(data, off, '<B')
