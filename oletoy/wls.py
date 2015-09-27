@@ -75,18 +75,10 @@ def deobfuscate(data, orig_pos):
 	return packed(new_data)
 
 WLS_RECORDS = {
-	0x38: ('Sheet def?', 'sheet_def'),
+	# 00xx
 	0x70: ('Column width', 'column_width'),
 	0xac: ('Text attributes', 'text_attrs'),
-	0xb7: ('Text cell', 'text_cell'),
 	0xb9: ('Formula cell', 'formula_cell'),
-	0xbc: ('Page setup', 'page_setup'),
-	# 0xbc: ('Empty cell', None), # TODO: clearly the code is either
-	# continued in lower bits of the 'flags' byte or the flags modify
-	# its meaning
-	0xbe: ('Number cell', 'number_cell'),
-	0xc3: ('Row height', 'row_height'),
-	0xc4: ('Start something (sheet?)', None),
 	0xc5: ('End something (sheet?)', None),
 	0xc7: ('Page header', 'page_header_footer'),
 	0xc8: ('Page footer', 'page_header_footer'),
@@ -96,6 +88,17 @@ WLS_RECORDS = {
 	0xd3: ('Named range', 'named_range'),
 	0xd6: ('Page breaks', 'page_breaks'),
 	0xdb: ('Cell style', 'cell_style'),
+	# 01xx
+	0x138: ('Sheet def?', 'sheet_def'),
+	# 02xx
+	0x2b7: ('Text cell', 'text_cell'),
+	0x2bc: ('Empty cell', None),
+	0x2be: ('Number cell', 'number_cell'),
+	0x2c3: ('Row height', 'row_height'),
+	# 08xx
+	0x8c4: ('Start something (sheet?)', None),
+	# 77xx
+	0x77bc: ('Page setup', 'page_setup'),
 }
 
 # I assume this is actually one list, but I'm not sure enough...
@@ -135,7 +138,6 @@ class wls_parser(object):
 		n = 0
 		off = 0
 		typ = None
-		flags = 0
 		index = 0
 		while off + 1 < len(data):
 			start = off
@@ -168,8 +170,7 @@ class wls_parser(object):
 				index += 1
 			else:
 				# NOTE: this would read nonsense if size == 0, but that should never happen
-				(typ, off) = rdata(data, off, '<B')
-				(flags, off) = rdata(data, off, '<B')
+				(typ, off) = rdata(data, off, '<H')
 				index = 0
 				# peek at the next record to determine if this record is a start of a sequence
 				if end < len(data):
@@ -179,13 +180,11 @@ class wls_parser(object):
 			assert(typ)
 			rec = get_or_default(WLS_RECORDS, typ, ('Record %x' % typ, None))
 			rec_str = '[%d] %s' % (n, rec[0])
-			if flags != 0:
-				rec_str += ' (flags %x)' % flags
 			if seq:
 				rec_str += ' [%d]' % index
 			if compressed and compressed_size > 0:
 				rec_str += ', compressed'
-			if typ == 0xb7:
+			if typ == 0x2b7:
 				# in text cells, the text is not obfuscated
 				content = recdata[0:4] + deobfuscate(recdata[4:0xc], 4) + recdata[0xc:]
 			else:
@@ -222,10 +221,8 @@ def record_wrapper(wrapped):
 		add_iter(hd, 'Size', abs(sz), off - 2, 2, '<h')
 		compressed = 0
 		if sz > 0:
-			(typ, off) = rdata(data, off, '<B')
-			add_iter(hd, 'Type', typ, off - 1, 1, '<B')
-			(flags, off) = rdata(data, off, '<B')
-			add_iter(hd, 'Flags', '0x%x' % flags, off - 1, 1, '<B')
+			(typ, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Type', get_or_default(WLS_RECORDS, typ, ("Unknown",))[0], off - 2, 2, '<H')
 		else:
 			(compressed, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Compressed bytes', compressed, off - 2, 2, '<H')
