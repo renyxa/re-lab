@@ -16,12 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, rdata
-
-def get_or_default(dictionary, key, default):
-	if dictionary.has_key(key):
-		return dictionary[key]
-	return default
+from utils import add_iter, add_pgiter, key2txt, rdata
 
 obfuscation_map = {}
 
@@ -181,7 +176,7 @@ class wls_parser(object):
 					seq = next_size < 0
 			recdata = data[start:end]
 			assert(typ)
-			rec = get_or_default(WLS_RECORDS, typ, ('Record %x' % typ, None))
+			rec = key2txt(typ, WLS_RECORDS)
 			rec_str = '[%d] %s' % (n, rec[0])
 			if seq:
 				rec_str += ' [%d]' % index
@@ -247,7 +242,7 @@ def record_wrapper(wrapped):
 		compressed = 0
 		if sz > 0:
 			(typ, off) = rdata(data, off, '<H')
-			add_iter(hd, 'Type', get_or_default(WLS_RECORDS, typ, ("Unknown",))[0], off - 2, 2, '<H')
+			add_iter(hd, 'Type', key2txt(typ, WLS_RECORDS)[0], off - 2, 2, '<H')
 		else:
 			(compressed, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Compressed bytes', compressed, off - 2, 2, '<H')
@@ -385,7 +380,7 @@ def add_formula_cell(hd, size, data, off):
 		(row, off) = rdata(data, off, '<H')
 		add_iter(hd, 'Row', format_row(row & 0x3fff), off - 2, 2, '<H')
 		rel = (row >> 14) & 0x3
-		add_iter(hd, 'Relative', get_or_default(rel_map, rel, 'unknown'), off - 1, 1, '<B')
+		add_iter(hd, 'Relative', key2txt(rel_map, rel), off - 1, 1, '<B')
 		(col, off) = rdata(data, off, '<B')
 		add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
 		return off
@@ -405,7 +400,7 @@ def add_formula_cell(hd, size, data, off):
 	}
 	while off < size:
 		(opcode, off) = rdata(data, off, '<B')
-		add_iter(hd, 'Opcode', get_or_default(opcode_map, opcode, 'unknown'), off - 1, 1, '<B')
+		add_iter(hd, 'Opcode', key2txt(opcode, opcode_map), off - 1, 1, '<B')
 		if opcode == 0x17:
 			off = add_short_string(hd, size, data, off, 'Text')
 		elif opcode == 0x19:
@@ -425,23 +420,23 @@ def add_formula_cell(hd, size, data, off):
 			(start_row, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Start row', format_row(start_row & 0x3fff), off - 2, 2, '<H')
 			start_rel = (start_row >> 14) & 0x3
-			add_iter(hd, 'First address relative', get_or_default(rel_map, start_rel, 'unknown'), off - 1, 1, '<B')
+			add_iter(hd, 'First address relative', key2txt(start_rel, rel_map), off - 1, 1, '<B')
 			(end_row, off) = rdata(data, off, '<H')
 			add_iter(hd, 'End row', format_row(end_row & 0x3fff), off - 2, 2, '<H')
 			end_rel = (end_row >> 14) & 0x3
-			add_iter(hd, 'Second address relative', get_or_default(rel_map, end_rel, 'unknown'), off - 1, 1, '<B')
+			add_iter(hd, 'Second address relative', key2txt(end_rel, rel_map), off - 1, 1, '<B')
 			(start_column, off) = rdata(data, off, '<B')
 			add_iter(hd, 'Start column', format_column(start_column), off - 1, 1, '<B')
 			(end_column, off) = rdata(data, off, '<B')
 			add_iter(hd, 'End column', format_column(end_column), off - 1, 1, '<B')
 		elif opcode == 0x41:
 			(fname, off) = rdata(data, off, '<H')
-			add_iter(hd, 'Function', get_or_default(WLS_FUNCTIONS_FIXED, fname, 'unknown'), off - 2, 2, '<H')
+			add_iter(hd, 'Function', key2txt(fname, WLS_FUNCTIONS_FIXED), off - 2, 2, '<H')
 		elif opcode == 0x22 or opcode == 0x42:
 			(argc, off) = rdata(data, off, '<B')
 			add_iter(hd, 'Number of arguments', argc, off - 1, 1, '<B')
 			(fname, off) = rdata(data, off, '<H')
-			add_iter(hd, 'Function', get_or_default(WLS_FUNCTIONS_VAR, fname, 'unknown'), off - 2, 2, '<H')
+			add_iter(hd, 'Function', key2txt(fname, WLS_FUNCTIONS_VAR), off - 2, 2, '<H')
 		elif opcode == 0x44:
 			off = add_address(off)
 		elif opcode == 0x5a:
@@ -489,7 +484,7 @@ def add_text_attrs(hd, size, data, off):
 	add_iter(hd, 'Color index', color_str, off - 2, 2, '<H')
 	font_weight_map = {400: 'normal', 700: 'bold'}
 	(font_weight, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Font weight', get_or_default(font_weight_map, font_weight, 'unknown'), off - 2, 2, '<H')
+	add_iter(hd, 'Font weight', key2txt(font_weight, font_weight_map), off - 2, 2, '<H')
 	off += 2
 	(underline, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Underline', bool(underline), off - 1, 1, '<B')
@@ -513,11 +508,11 @@ def add_cell_style(hd, size, data, off):
 		0x31: 'Text',
 	}
 	(numfmt, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number format', get_or_default(numfmt_map, numfmt, "unknown"), off - 2, 2, '<H')
+	add_iter(hd, 'Number format', key2txt(numfmt, numfmt_map), off - 2, 2, '<H')
 	(style, off) = rdata(data, off, '<H')
 	type_map = {1: 'named', 5: 'anonymous'}
 	type = style & 0xf
-	add_iter(hd, 'Type', get_or_default(type_map, type, "unknown"), off - 2, 1, '<B')
+	add_iter(hd, 'Type', key2txt(type, type_map), off - 2, 1, '<B')
 	if type == 1:
 		add_iter(hd, 'Real style?', style >> 4, off - 2, 2, '<H')
 	halign_map = {0: 'generic', 1: 'left', 2: 'center', 3: 'right', 4: 'repeat', 5: 'paragraph', 6: 'selection center'}
@@ -528,7 +523,7 @@ def add_cell_style(hd, size, data, off):
 	add_iter(hd, 'Horizontal alignment', get_or_default(halign_map, (align & 0x7), 'unknown'), off - 1, 1, '<B')
 	orient_map = {0x10: 'horizontal', 0x12: 'vertical 90 degrees', 0x13: 'vertical 270 degrees'}
 	(orient, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Text orientation?', get_or_default(orient_map, orient, 'unknown'), off - 1, 1, '<B')
+	add_iter(hd, 'Text orientation?', key2txt(orient, orient_map), off - 1, 1, '<B')
 	(color, off) = rdata(data, off, '<B')
 	# TODO: verify this
 	add_iter(hd, 'Color index', color - 0x80, off - 1, 1, '<B')
@@ -571,12 +566,12 @@ def add_cell_style_def(hd, size, data, off):
 	add_iter(hd, 'Style?', style, off - 1, 1, '<B')
 	(type, off) = rdata(data, off, '<B')
 	type_map = {0: 'user defined', 0x80: 'predefined'}
-	add_iter(hd, 'Type?', get_or_default(type_map, type, 'unknown'), off - 1, 1, '<B')
+	add_iter(hd, 'Type?', key2txt(type, type_map), off - 1, 1, '<B')
 	(name_length, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Name length', name_length, off - 1, 1, '<B')
 	(name_type, off) = rdata(data, off, '<B')
 	name_type_map = {0: 'user defined', 0xff: 'predefined'}
-	add_iter(hd, 'Name type?', get_or_default(name_type_map, name_type, 'unknown'), off - 1, 1, '<B')
+	add_iter(hd, 'Name type?', key2txt(name_type, name_type_map), off - 1, 1, '<B')
 	if name_type != 0xff:
 		name_length -= 1 # It seems the last byte of the name is not saved because of a bug
 		(name, off) = rdata(data, off, '%ds' % name_length)
