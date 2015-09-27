@@ -156,6 +156,7 @@ class wls_parser(object):
 		off = 0
 		typ = None
 		index = 0
+		current = bytearray()
 		while off + 1 < len(data):
 			start = off
 			(size, off) = rdata(data, off, '<h')
@@ -193,6 +194,26 @@ class wls_parser(object):
 				content = recdata[0:4] + deobfuscate(recdata[4:6], 4) + recdata[6:]
 			else:
 				content = recdata[0:4] + deobfuscate(recdata[4:], 4)
+
+			# complete compressed records
+			buf = bytearray(content)
+			if compressed:
+				if compressed_size > 0:
+					if len(current) > len(buf):
+						avail = len(current) - len(buf)
+						buf.extend(current[len(buf):len(buf) + min(compressed_size, avail)])
+					else:
+						avail = 0
+					if compressed_size > avail:
+						buf.extend([0 for i in range(compressed_size - avail)])
+				if len(buf) >= len(current):
+					current = buf
+				else:
+					current = buf + current[len(buf):]
+				content = str(buf)
+			else:
+				current = buf
+
 			handler = rec[1]
 			if not handler:
 				handler = 'record'
@@ -231,11 +252,7 @@ def record_wrapper(wrapped):
 			(compressed, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Compressed bytes', compressed, off - 2, 2, '<H')
 		if wrapped:
-			try:
-				wrapped(hd, size, data, off)
-			except struct.error, e:
-				if compressed == 0:
-					raise e
+			wrapped(hd, size, data, off)
 	return wrapper
 
 def add_string(hd, size, data, off, name, fmt):
