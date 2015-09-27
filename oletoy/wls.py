@@ -92,6 +92,7 @@ WLS_RECORDS = {
 	0xc8: ('Page footer', 'page_header_footer'),
 	0xc9: ('Number of sheets', 'sheet_count'),
 	0xca: ('Tab', 'tab'),
+	0xcf: ('Comment', 'comment'),
 	0xd3: ('Named range', 'named_range'),
 	0xdb: ('Cell style', 'cell_style'),
 }
@@ -484,11 +485,20 @@ def add_cell_style(hd, size, data, off):
 	add_iter(hd, 'Fill pattern?', pattern, off - 1, 1, '<B')
 	off += 6 # border type and color, seems completely chaotic
 
+def add_comment(hd, size, data, off):
+	(row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
+	(col, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
+	off += 1
+	add_long_string(hd, size, data, off, 'Comment')
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
 	'cell_style': record_wrapper(add_cell_style),
 	'column_width': record_wrapper(add_column_width),
+	'comment': record_wrapper(add_comment),
 	'formula_cell': record_wrapper(add_formula_cell),
 	'named_range': record_wrapper(add_named_range),
 	'number_cell': record_wrapper(add_number_cell),
