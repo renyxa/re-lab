@@ -92,7 +92,7 @@ WLS_RECORDS = {
 	0x138: ('Sheet def?', 'sheet_def'),
 	# 02xx
 	0x2b7: ('Text cell', 'text_cell'),
-	0x2bc: ('Empty cell', None),
+	0x2bc: ('Empty cell', 'cell'),
 	0x2be: ('Number cell', 'number_cell'),
 	0x2c3: ('Row height', 'row_height'),
 	# 08xx
@@ -526,6 +526,7 @@ def add_page_breaks(hd, size, data, off):
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
+	'cell': record_wrapper(add_cell),
 	'cell_style': record_wrapper(add_cell_style),
 	'column_width': record_wrapper(add_column_width),
 	'comment': record_wrapper(add_comment),
