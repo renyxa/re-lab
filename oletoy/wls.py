@@ -94,6 +94,7 @@ WLS_RECORDS = {
 	0xca: ('Tab', 'tab'),
 	0xcf: ('Comment', 'comment'),
 	0xd3: ('Named range', 'named_range'),
+	0xd6: ('Page breaks', 'page_breaks'),
 	0xdb: ('Cell style', 'cell_style'),
 }
 
@@ -493,6 +494,15 @@ def add_comment(hd, size, data, off):
 	off += 1
 	add_long_string(hd, size, data, off, 'Comment')
 
+def add_page_breaks(hd, size, data, off):
+	(count, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of breaks', count, off - 2, 2, '<H')
+	i = 0
+	while off + 2 <= size:
+		(row, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Break before row [%d]' % i, format_row(row), off - 2, 2, '<H')
+		i += 1
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
@@ -502,6 +512,7 @@ wls_ids = {
 	'formula_cell': record_wrapper(add_formula_cell),
 	'named_range': record_wrapper(add_named_range),
 	'number_cell': record_wrapper(add_number_cell),
+	'page_breaks': record_wrapper(add_page_breaks),
 	'page_setup': record_wrapper(add_page_setup),
 	'page_header_footer': record_wrapper(add_page_header_footer),
 	'row_height': record_wrapper(add_row_height),
