@@ -130,6 +130,19 @@ WLS_FUNCTIONS_VAR = {
 	0x7c: 'Find',
 }
 
+# NOTE on record compression: a consecutive sequence of records of the
+# same type is saved in a compressed form. The first record is always
+# complete; the following ones drop common suffix. The base for
+# determining common suffix is accumulated result of previous writes,
+# i.e., the bytes of the current record are compared to the base, then
+# the bytes of the base are overwritten by current record. In addition,
+# it seems that the base is filled with 0 to the right, so a record that
+# ends with a number of 0 can still be compressed, even if it's longer
+# than any previous record in the sequence.
+# Illustrative example: A sequence of strings "abcd", "ab", "d", "ab" is
+# saved as "abcd", ("", 2), ("d", 0), ("a", 1). The comparison base
+# changes as follows: None, "abcd", "abcd", "dbcd".
+
 class wls_parser(object):
 
 	def __init__(self, page, data, parent):
@@ -146,21 +159,6 @@ class wls_parser(object):
 		while off + 1 < len(data):
 			start = off
 			(size, off) = rdata(data, off, '<h')
-			# NOTE on compression: a consecutive sequence of records of
-			# the same type is saved in a compressed form. The first
-			# record is always complete; the following ones drop common
-			# suffix. The base for determining common suffix is
-			# accumulated result of previous writes, i.e., the bytes of
-			# the current record are compared to the base, then the
-			# bytes of the base are overwritten by current record. In
-			# addition, it seems that the base is filled with 0 to the
-			# right, so a record that ends with a number of 0 can still
-			# be compressed, even if it's longer than any previous
-			# record in the sequence.
-			# Illustrative example: A sequence of strings "abcd", "ab",
-			# "d", "ab" is saved as "abcd", ("", 2), ("d", 0), ("a", 1).
-			# The comparison base changes as follows: None, "abcd",
-			# "abcd", "dbcd".
 			compressed = size < 0
 			seq = compressed
 			if compressed:
