@@ -91,6 +91,7 @@ WLS_RECORDS = {
 	# 01xx
 	0x138: ('Sheet def', 'sheet_def'),
 	# 02xx
+	0x298: ('Default row height?', None),
 	0x2b7: ('Text cell', 'text_cell'),
 	0x2ba: ('Text result', 'text_result'),
 	0x2bc: ('Empty cell', 'cell'),
