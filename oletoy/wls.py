@@ -96,6 +96,8 @@ WLS_RECORDS = {
 	0x2bc: ('Empty cell', 'cell'),
 	0x2be: ('Number cell', 'number_cell'),
 	0x2c3: ('Row height', 'row_height'),
+	# 03xx
+	0x34e: ('Cell style def', 'cell_style_def'),
 	# 08xx
 	0x8c4: ('Start sheet', None),
 	# 77xx
@@ -492,7 +494,12 @@ def add_cell_style(hd, size, data, off):
 	}
 	(numfmt, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Number format', get_or_default(numfmt_map, numfmt, "unknown"), off - 2, 2, '<H')
-	off += 2
+	(style, off) = rdata(data, off, '<H')
+	type_map = {1: 'named', 5: 'anonymous'}
+	type = style & 0xf
+	add_iter(hd, 'Type', get_or_default(type_map, type, "unknown"), off - 2, 1, '<B')
+	if type == 1:
+		add_iter(hd, 'Real style?', style >> 4, off - 2, 2, '<H')
 	halign_map = {0: 'generic', 1: 'left', 2: 'center', 3: 'right', 4: 'repeat', 5: 'paragraph', 6: 'selection center'}
 	valign_map = {0: 'top', 1: 'center', 2: 'bottom', 3: 'paragraph'}
 	(align, off) = rdata(data, off, '<B')
@@ -529,11 +536,28 @@ def add_page_breaks(hd, size, data, off):
 def add_text_result(hd, size, data, off):
 	add_long_string(hd, size, data, off, 'Text')
 
+def add_cell_style_def(hd, size, data, off):
+	(style, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Style?', style, off - 1, 1, '<B')
+	(type, off) = rdata(data, off, '<B')
+	type_map = {0: 'user defined', 0x80: 'predefined'}
+	add_iter(hd, 'Type?', get_or_default(type_map, type, 'unknown'), off - 1, 1, '<B')
+	(name_length, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Name length', name_length, off - 1, 1, '<B')
+	(name_type, off) = rdata(data, off, '<B')
+	name_type_map = {0: 'user defined', 0xff: 'predefined'}
+	add_iter(hd, 'Name type?', get_or_default(name_type_map, name_type, 'unknown'), off - 1, 1, '<B')
+	if name_type != 0xff:
+		name_length -= 1 # It seems the last byte of the name is not saved because of a bug
+		(name, off) = rdata(data, off, '%ds' % name_length)
+		add_iter(hd, 'Name', name, off - name_length, name_length, '<%ds' % name_length)
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
 	'cell': record_wrapper(add_cell),
 	'cell_style': record_wrapper(add_cell_style),
+	'cell_style_def': record_wrapper(add_cell_style_def),
 	'column_width': record_wrapper(add_column_width),
 	'comment': record_wrapper(add_comment),
 	'formula_cell': record_wrapper(add_formula_cell),
