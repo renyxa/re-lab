@@ -37,7 +37,7 @@ As of now OLE Toy reads and parses:
        not known.)
 - WT602 (Software602 602Text)
 - IMP (SoftBook e-book)
-- ZMF (Zoner Callisto, also known as Zoner Draw, BIPU support)
+- ZMF (Zoner Callisto, also known as Zoner Draw)
 - ZBR (Zebra Metafile, BIPU support)
 - IWA (Apple iWork '13. This format is used by Keynote 6, Pages 5 and
        Numbers 3, with a big chunk of the internals shared among all
