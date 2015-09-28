@@ -176,7 +176,7 @@ class wls_parser(object):
 					seq = next_size < 0
 			recdata = data[start:end]
 			assert(typ)
-			rec = key2txt(typ, WLS_RECORDS)
+			rec = key2txt(typ, WLS_RECORDS, ('Record %x' % typ, None))
 			rec_str = '[%d] %s' % (n, rec[0])
 			if seq:
 				rec_str += ' [%d]' % index
@@ -242,7 +242,7 @@ def record_wrapper(wrapped):
 		compressed = 0
 		if sz > 0:
 			(typ, off) = rdata(data, off, '<H')
-			add_iter(hd, 'Type', key2txt(typ, WLS_RECORDS)[0], off - 2, 2, '<H')
+			add_iter(hd, 'Type', key2txt(typ, WLS_RECORDS, ('Unknown',))[0], off - 2, 2, '<H')
 		else:
 			(compressed, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Compressed bytes', compressed, off - 2, 2, '<H')
