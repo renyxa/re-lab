@@ -84,6 +84,7 @@ WLS_RECORDS = {
 	0xd6: ('Page breaks', 'page_breaks'),
 	0xdb: ('Cell style', 'cell_style'),
 	# 01xx
+	0x11b: ('Zoom', 'zoom'),
 	0x138: ('Sheet def', 'sheet_def'),
 	# 02xx
 	0x298: ('Default row height?', None),
@@ -577,6 +578,12 @@ def add_cell_style_def(hd, size, data, off):
 		(name, off) = rdata(data, off, '%ds' % name_length)
 		add_iter(hd, 'Name', name, off - name_length, name_length, '<%ds' % name_length)
 
+def add_zoom(hd, size, data, off):
+	(zoom, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Zoom', '%d%%' % zoom, off - 2, 2, '<H')
+	(default, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Default?', '%d%%' % default, off - 2, 2, '<H')
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
@@ -597,6 +604,7 @@ wls_ids = {
 	'sheet_name': record_wrapper(add_sheet_name),
 	'text_cell': record_wrapper(add_text_cell),
 	'text_result': record_wrapper(add_text_result),
+	'zoom': record_wrapper(add_zoom),
 }
 
 def parse(page, data, parent):
