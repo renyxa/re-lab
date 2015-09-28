@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, rdata
+from utils import add_iter, add_pgiter, key2txt, rdata
 
 ### General utils
 
@@ -62,11 +62,6 @@ def read_var(data, offset):
 		n += c
 
 	return (n, off)
-
-def get_or_default(dictionary, key, default):
-	if dictionary.has_key(key):
-		return dictionary[key]
-	return default
 
 ### Compression
 
@@ -892,9 +887,8 @@ def add_field(hd, size, data):
 	field_num = key >> 3
 	wire_type = key & 0x7
 	wire_type_map = {0: 'Varint', 1: '64-bit', 2: 'Length-delimited', 3: 'Start group', 4: 'End group', 5: '32-bit'}
-	wire_type_str = get_or_default(wire_type_map, wire_type, 'Unknown')
 	add_iter(hd, 'Field', field_num, 0, off, '%ds' % off)
-	add_iter(hd, 'Wire type', wire_type_str, 0, off, '%ds' % off)
+	add_iter(hd, 'Wire type', key2txt(wire_type, wire_type_map), 0, off, '%ds' % off)
 	if wire_type == 2:
 		len_off = off
 		(length, off) = read_var(data, off)
