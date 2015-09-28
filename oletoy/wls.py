@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, key2txt, rdata
+from utils import add_iter, add_pgiter, bflag2txt, key2txt, rdata
 
 obfuscation_map = {}
 
@@ -99,6 +99,8 @@ WLS_RECORDS = {
 	0x8c4: ('Start sheet', None),
 	# 77xx
 	0x77bc: ('Page setup', 'page_setup'),
+	# d7xx
+	0xd7b9: ('Autofilter', 'autofilter'),
 }
 
 # I assume this is actually one list, but I'm not sure enough...
@@ -290,7 +292,10 @@ def add_sheet_name(hd, size, data, off):
 def add_row_height(hd, size, data, off):
 	(row, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
-	off += 4
+	off += 2
+	flags_map = {1: 'visible', 2: 'autofilter'}
+	(flags, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 2, 2, '<H')
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Height', '%.2fpt' % (height / 20.0), off - 2, 2, '<H')
 
@@ -584,9 +589,20 @@ def add_zoom(hd, size, data, off):
 	(default, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Default?', '%d%%' % default, off - 2, 2, '<H')
 
+def add_autofilter(hd, size, data, off):
+	(start_row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Start row', format_row(start_row), off - 2, 2, '<H')
+	(start_col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Start column', format_column(start_col), off - 2, 2, '<H')
+	(end_row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'End row', format_row(end_row), off - 2, 2, '<H')
+	(end_col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'End column', format_column(end_col), off - 2, 2, '<H')
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
+	'autofilter': record_wrapper(add_autofilter),
 	'cell': record_wrapper(add_cell),
 	'cell_style': record_wrapper(add_cell_style),
 	'cell_style_def': record_wrapper(add_cell_style_def),
