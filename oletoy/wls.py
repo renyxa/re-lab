@@ -450,38 +450,12 @@ def add_formula_cell(hd, size, data, off):
 			off += 14
 			off = add_address(off)
 
-def convert_flags(flags, names):
-	"""Convert a number representing a set of flags into names.
-
-	The names dict maps a bit to a name. Bits are counted from 0.
-	"""
-	ret = []
-	for b in xrange(0, sorted(names.keys())[-1] + 1):
-		if flags & 0x1:
-			if names.has_key(b):
-				ret.append(names[b])
-			else:
-				ret.append('unknown')
-		flags = flags >> 1
-	if flags: # more flags than we have names for
-		ret.append('unknowns')
-	return ret
-
-def print_flags(flags, names):
-	return ' + '.join(convert_flags(flags, names))
-
-def get_text_flags(flags):
-	names = {
-		1: 'italic',
-		3: 'line through',
-	}
-	return print_flags(flags, names)
-
 def add_text_attrs(hd, size, data, off):
 	(size, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Font size', '%d pt' % (size / 20), off - 2, 2, '<H')
+	flags_map = {2: 'italic', 8: 'line through',}
 	(flags, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Flags?', get_text_flags(flags), off - 2, 2, '<H')
+	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 2, 2, '<H')
 	(color, off) = rdata(data, off, '<H')
 	if color == 0x7fff:
 		color_str = "default"
