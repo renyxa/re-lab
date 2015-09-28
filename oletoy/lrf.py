@@ -21,12 +21,7 @@ import struct
 import zlib
 
 import otxml
-from utils import add_iter, add_pgiter, rdata
-
-def get_or_default(dictionary, key, default):
-	if dictionary.has_key(key):
-		return dictionary[key]
-	return default
+from utils import add_iter, add_pgiter, key2txt, rdata
 
 def read_unistr(data, off, bytelen):
 	text = u''
@@ -318,7 +313,7 @@ def chop_tag_f500(hd, size, data):
 	(oid, off) = rdata(data, 2, '<I')
 	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 	(typ, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Type', get_or_default(lrf_object_types, typ, 'Unknown'), off - 2, 2, '<H')
+	add_iter(hd, 'Type', key2txt(typ, lrf_object_types), off - 2, 2, '<H')
 
 def chop_tag_f502(hd, size, data):
 	pass
@@ -463,13 +458,13 @@ def chop_tag_f529(hd, size, data):
 def chop_tag_f52a(hd, size, data):
 	(empty, off) = rdata(data, 2, '<H')
 	empty_map = {0: 'empty', 1: 'show'}
-	empty_str = get_or_default(empty_map, int(empty), 'unknown')
+	empty_str = key2txt(int(empty), empty_map)
 	add_iter(hd, 'Empty', empty_str, off - 2, 2, '<H')
 
 def chop_tag_f52b(hd, size, data):
 	(pos, off) = rdata(data, 2, '<H')
 	pos_map = {0: 'any', 1: 'upper', 2: 'lower'}
-	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	pos_str = key2txt(int(pos), pos_map)
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f52c(hd, size, data):
@@ -482,7 +477,7 @@ def chop_tag_f52d(hd, size, data):
 def chop_tag_f52e(hd, size, data):
 	(mode, off) = rdata(data, 2, '<H')
 	mode_map = {0: 'none', 1: 'square', 2: 'curve'}
-	mode_str = get_or_default(mode_map, int(mode), 'unknown')
+	mode_str = key2txt(int(mode), mode_map)
 	add_iter(hd, 'Mode', mode_str, off - 2, 2, '<H')
 
 def chop_tag_f531(hd, size, data):
@@ -498,7 +493,7 @@ def chop_tag_f533(hd, size, data):
 	rule_map = {0x12: 'horizontal adjustable', 0x14: 'horizontal fixed',
 			0x21: 'vertical adjustable', 0x22: 'block adjustable',
 			0x41: 'vertical fixed', 0x44: 'block fixed'}
-	rule_str = get_or_default(rule_map, int(rule), 'unknown')
+	rule_str = key2txt(int(rule), rule_map)
 	add_iter(hd, 'Rule', rule_str, off - 2, 2, '<H')
 
 def chop_tag_f534(hd, size, data):
@@ -507,7 +502,7 @@ def chop_tag_f534(hd, size, data):
 def chop_tag_f535(hd, size, data):
 	(layout, off) = rdata(data, 2, '<H')
 	layout_map = {0x41: 'top-to-bottom right-to-left', 0x34: 'left-to-right top-to-bottom'}
-	layout_str = get_or_default(layout_map, int(layout), 'unknown')
+	layout_str = key2txt(int(layout), layout_map)
 	add_iter(hd, 'Layout', layout_str, off - 2, 2, '<H')
 
 def chop_tag_f536(hd, size, data):
@@ -530,7 +525,7 @@ def chop_tag_f53a(hd, size, data):
 def chop_tag_f53c(hd, size, data):
 	(align, off) = rdata(data, 2, '<H')
 	align_map = {1: 'start', 4: 'center', 8: 'end'}
-	align_str = get_or_default(align_map, int(align), 'unknown')
+	align_str = key2txt(int(align), align_map)
 	add_iter(hd, 'Align', align_str, off - 2, 2, '<H')
 
 def chop_tag_f53d(hd, size, data):
@@ -562,7 +557,7 @@ def chop_tag_f547(hd, size, data):
 def chop_tag_f548(hd, size, data):
 	(pos, off) = rdata(data, 2, '<H')
 	pos_map = {1: 'bottom left', 2: 'bottom right', 3: 'top right', 4: 'top left', 5: 'base'}
-	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	pos_str = key2txt(int(pos), pos_map)
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f549(hd, size, data):
@@ -662,13 +657,13 @@ def chop_tag_f575(hd, size, data):
 def chop_tag_f576(hd, size, data):
 	(overhang, off) = rdata(data, 2, '<H')
 	overhang_map = {0: 'none', 1: 'auto'}
-	overhang_str = get_or_default(overhang_map, int(overhang), 'unknown')
+	overhang_str = key2txt(int(overhang), overhang_map)
 	add_iter(hd, 'Overhang', overhang_str, off - 2, 2, '<H')
 
 def chop_tag_f577(hd, size, data):
 	(pos, off) = rdata(data, 2, '<H')
 	pos_map = {1: 'before', 2: 'after'}
-	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	pos_str = key2txt(int(pos), pos_map)
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f578(hd, size, data):
@@ -679,13 +674,13 @@ def chop_tag_f578(hd, size, data):
 def chop_tag_f579(hd, size, data):
 	(pos, off) = rdata(data, 2, '<H')
 	pos_map = {1: 'before', 2: 'after'}
-	pos_str = get_or_default(pos_map, int(pos), 'unknown')
+	pos_str = key2txt(int(pos), pos_map)
 	add_iter(hd, 'Position', pos_str, off - 2, 2, '<H')
 
 def chop_tag_f57a(hd, size, data):
 	(mode, off) = rdata(data, 2, '<H')
 	mode_map = {0x0: 'none', 0x10: 'solid', 0x20: 'dashed', 0x30: 'double', 0x40: 'dotted'}
-	mode_str = get_or_default(mode_map, int(mode), 'unknown')
+	mode_str = key2txt(int(mode), mode_map)
 	add_iter(hd, 'Mode', mode_str, off - 2, 2, '<H')
 
 def chop_tag_f57b(hd, size, data):
@@ -738,7 +733,7 @@ def chop_tag_f5d1(hd, size, data):
 	add_iter(hd, 'Object ID', '0x%x' % oid, off - 4, 4, '<I')
 	(adjustment, off) = rdata(data, off, '<H')
 	adjustment_map = {1: 'top', 2: 'center', 3: 'baseline', 4: 'bottom'}
-	adjustment_str = get_or_default(adjustment_map, int(adjustment), 'unknown')
+	adjustment_str = key2txt(int(adjustment), adjustment_map)
 	add_iter(hd, 'Adjustment', adjustment_str, off - 2, 2, '<H')
 
 def chop_tag_f5d4(hd, size, data):
@@ -757,7 +752,7 @@ def chop_tag_f5d9(hd, size, data):
 def chop_tag_f5da(hd, size, data):
 	(replay, off) = rdata(data, 2, '<H')
 	replay_map = {1: 'replay', 2: 'noreplay'}
-	replay_str = get_or_default(replay_map, int(replay), 'unknown')
+	replay_str = key2txt(int(replay), replay_map)
 	add_iter(hd, 'Replay', replay_str, off - 2, 2, '<H')
 
 def chop_tag_f5db(hd, size, data):
@@ -1010,7 +1005,7 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Length of metadata', metadataLen, off - 2, 2, '<I')
 	if int(version) >= 800:
 		(thumbnailType, off) = rdata(data, off, '<H')
-		thumbnailStr = get_or_default(lrf_thumbnail_types, int(thumbnailType), 'Unknown')
+		thumbnailStr = key2txt(int(thumbnailType), lrf_thumbnail_types)
 		add_iter(hd, 'Thumbnail type', thumbnailStr, off - 2, 2, '<I')
 		(thumbnailLen, off) = rdata(data, off, '<H')
 		add_iter(hd, 'Length of thumbnail', thumbnailLen, off - 2, 2, '<I')
@@ -1021,7 +1016,7 @@ def add_index_entry(hd, size, data):
 
 def add_tag(hd, size, data):
 	(tag, off) = rdata(data, 0, '<H')
-	desc = get_or_default(lrf_tags, tag, ('Unknown', 0))
+	desc = key2txt(tag, lrf_tags, ('Unknown', 0))
 	add_iter(hd, 'Tag', desc[0], off - 2, 2, '<H')
 	if desc[1] != 0:
 		desc[2](hd, size, data)
