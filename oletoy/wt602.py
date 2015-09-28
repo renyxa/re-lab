@@ -16,16 +16,11 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, rdata
-
-def get_or_default(dictionary, key, default):
-	if dictionary.has_key(key):
-		return dictionary[key]
-	return default
+from utils import add_iter, add_pgiter, key2txt, rdata
 
 def values(d, default='unknown'):
 	def lookup(val):
-		return get_or_default(d, val, default)
+		return key2txt(val, d, default)
 	return lookup
 
 WT602_SECTION_COUNT = 37
@@ -218,8 +213,8 @@ class wt602_parser(object):
 
 	def parse_section(self, n):
 		(begin, end) = self.sections[n]
-		name = get_or_default(wt602_section_names, n, 'Section %d' % n)
-		func = get_or_default(wt602_section_handlers, n, None)
+		name = key2txt(n, wt602_section_names, 'Section %d' % n)
+		func = key2txt(n, wt602_section_handlers, None)
 		adder = 0
 		if end > begin:
 			handler = None
@@ -268,7 +263,7 @@ def add_offsets(hd, size, data):
 	off = 0
 	for i in range(0, WT602_SECTION_COUNT):
 		(offset, off) = rdata(data, off, '<I')
-		name = get_or_default(wt602_section_names, i, 'Section %d' % i)
+		name = key2txt(i, wt602_section_names, 'Section %d' % i)
 		add_iter(hd, name, offset, off - 4, 4, '<I')
 
 def convert_flags(flags, names):
