@@ -20,7 +20,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, ins_pgiter, rdata
+from utils import add_iter, add_pgiter, ins_pgiter, key2txt, rdata
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -33,11 +33,6 @@ def read_cstring(data, offset):
 	if offset < len(data):
 		offset += 1
 	return (data[begin:offset], offset, offset - begin)
-
-def get_or_default(dictionary, key, default):
-	if dictionary.has_key(key):
-		return dictionary[key]
-	return default
 
 class lzss_error:
 	pass
@@ -959,7 +954,7 @@ def add_imp_hrle(hd, size, data):
 
 	(align, off) = rdata(data, off, fmtH)
 	align_map = {0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
-	align_str = get_or_default(align_map, int(align), 'unknown')
+	align_str = key2txt(int(align), align_map)
 	add_iter(hd, 'Alignment', align_str, off - 2, 2, fmtH)
 
 	off += 2
@@ -1180,12 +1175,12 @@ def add_imp_ppic(hd, size, data):
 	(borders, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Count of cell and table borders', borders, off - 4, 4, '>I')
 	(has_borders, off) = rdata(data, off, '>I')
-	has_borders_str = get_or_default({0: False, 0x64: True}, int(has_borders), 'unknown')
+	has_borders_str = key2txt(int(has_borders), {0: False, 0x64: True})
 	add_iter(hd, 'Has any borders?', has_borders_str, off - 4, 4, '>I')
 	(pictures, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Count of pictures', pictures, off - 4, 4, '>I')
 	(has_pictures, off) = rdata(data, off, '>I')
-	has_pictures_str = get_or_default({0: False, 0x64: True}, int(has_pictures), 'unknown')
+	has_pictures_str = key2txt(int(has_pictures), {0: False, 0x64: True})
 	add_iter(hd, 'Has any pictures?', has_pictures_str, off - 4, 4, '>I')
 
 def add_imp_resource_0x64(hd, size, data):
@@ -1202,7 +1197,7 @@ def add_imp_resource_0x65(hd, size, data):
 	add_iter(hd, 'Byte position in compressed data', compressed_pos, off - 4, 4, '>I')
 	bit_pos_map = {0x1: 7, 0x2: 6, 0x4: 5, 0x8: 4, 0x10: 3, 0x20: 2, 0x40: 1, 0x80: 0}
 	(bit_pos, off) = rdata(data, off, 'B')
-	bit_pos_val = get_or_default(bit_pos_map, int(bit_pos), 0)
+	bit_pos_val = key2txt(int(bit_pos), bit_pos_map, 0)
 	add_iter(hd, 'Bit position in compressed data', bit_pos_val, off - 1, 1, 'B')
 	off += 1
 	assert off == size
@@ -1256,29 +1251,29 @@ def add_imp_styl(hd, size, data):
 
 	(decoration, off) = rdata(data, off, fmtH)
 	decoration_map = {0: 'none', 1: 'subscript', 2: 'superscript', 4: 'line-through'}
-	decoration_str = get_or_default(decoration_map, int(decoration), 'unknown')
+	decoration_str = key2txt(int(decoration), decoration_map)
 	add_iter(hd, 'Text decoration', decoration_str, off - 2, 2, fmtH)
 
 	off += 2
 
 	(font_family, off) = rdata(data, off, fmtH)
 	font_family_map = {0x14: 'serif', 0x15: 'sans-serif', 3: 'smallfont', 4: 'monospace'}
-	font_family_str = get_or_default(font_family_map, int(font_family), 'unknown')
+	font_family_str = key2txt(int(font_family), font_family_map)
 	add_iter(hd, 'Font family', font_family_str, off - 2, 2, fmtH)
 
 	(font_style, off) = rdata(data, off, fmtH)
 	font_style_map = {0: 'regular', 1: 'bold', 2: 'italic', 3: 'bold italic', 4: 'underlined', 5: 'bold underlined', 6: 'italic underlined'}
-	font_style_str = get_or_default(font_style_map, int(font_style), 'unknown')
+	font_style_str = key2txt(int(font_style), font_style_map)
 	add_iter(hd, 'Text style', font_style_str, off - 2, 2, fmtH)
 
 	(font_size, off) = rdata(data, off, fmtH)
 	font_size_map = {1: 'xx-small', 2: 'x-small', 3: 'small', 4: 'medium', 5: 'large', 6: 'x-large', 7: 'xx-large'}
-	font_size_str = get_or_default(font_size_map, int(font_size), 'unknown')
+	font_size_str = key2txt(int(font_size), font_size_map)
 	add_iter(hd, 'Font size', font_size_str, off - 2, 2, fmtH)
 
 	(text_align, off) = rdata(data, off, fmtH)
 	text_align_map = {0: 'none', 0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
-	text_align_str = get_or_default(text_align_map, int(text_align), 'unknown')
+	text_align_str = key2txt(int(text_align), text_align_map)
 	add_iter(hd, 'Text alignment', text_align_str, off - 2, 2, fmtH)
 
 	# TODO: parse colors
@@ -1351,7 +1346,7 @@ def add_imp_tabl(hd, size, data):
 
 	(align, off) = rdata(data, 0, fmtH)
 	align_map = {0xfffa: 'not specified', 0xfffe: 'left', 0xffff: 'right', 1: 'center', 0xfffd: 'justify'}
-	align_str = get_or_default(align_map, int(align), 'unknown')
+	align_str = key2txt(int(align), align_map)
 	add_iter(hd, 'Text alignment', align_str, off - 2, 2, fmtH)
 
 	(width, off) = rdata(data, off, fmtH)
@@ -1366,7 +1361,7 @@ def add_imp_tabl(hd, size, data):
 
 	(border, off) = rdata(data, off, fmtH)
 	border_map = {0: 'single', 0xffff: 'double'}
-	border_str = get_or_default(border_map, int(border), 'unknown')
+	border_str = key2txt(int(border), border_map)
 	add_iter(hd, 'Border', border_str, off - 2, 2, fmtH)
 
 	(cellspacing, off) = rdata(data, off, fmtH)
@@ -1386,7 +1381,7 @@ def add_imp_tabl(hd, size, data):
 
 	(caption, off) = rdata(data, off, fmtI)
 	caption_map = {1: 'yes', 0xffffffff: 'no'}
-	caption_str = get_or_default(caption_map, int(caption), 'unknown')
+	caption_str = key2txt(int(caption), caption_map)
 	add_iter(hd, 'Caption present?', caption_str, off - 4, 4, fmtI)
 
 	(caption_length, off) = rdata(data, off, fmtI)
@@ -1408,12 +1403,12 @@ def add_imp_tcel_v1(hd, size, data):
 	off = 6
 	(typ, off) = rdata(data, off, '>H')
 	typ_map = {0xfffa: 'table', 0xfffc: 'definition list'}
-	typ_str = get_or_default(typ_map, int(typ), 'unknown')
+	typ_str = key2txt(int(typ), typ_map)
 	add_iter(hd, 'Cell type', typ_str, off - 2, 2, '>H')
 
 	(align, off) = rdata(data, off, '>H')
 	align_map = {0xfffa: 'middle', 0xfffc: 'top', 0xfffb: 'bottom'}
-	align_str = get_or_default(align_map, int(align), 'unknown')
+	align_str = key2txt(int(align), align_map)
 	add_iter(hd, 'Vertical alignment', align_str, off - 2, 2, '>H')
 
 	(width, off) = rdata(data, off, '>H')
@@ -1494,11 +1489,11 @@ def add_imp_text(hd, size, data):
 				text = ''
 			control_str = control_char_map[o]
 			if o == 0x15:
-				pos = get_or_default(position_map, header, 'Start/End')
+				pos = key2txt(header, position_map, 'Start/End')
 				control_str = pos + control_str
 				header = not header
 			elif o == 0x16:
-				pos = get_or_default(position_map, footer, 'Start/End')
+				pos = key2txt(footer, position_map, 'Start/End')
 				control_str = pos + control_str
 				footer = not footer
 			add_iter(hd, control_str, '', off, 1, 'B')
@@ -1515,12 +1510,12 @@ def add_imp_text(hd, size, data):
 def add_imp_trow_v1(hd, size, data):
 	(typ, off) = rdata(data, 0, '>I')
 	typ_map = {0xfffafffa: 'table', 0xfffffffc: 'definition list'}
-	typ_str = get_or_default(typ_map, int(typ), 'unknown')
+	typ_str = key2txt(int(typ), typ_map)
 	add_iter(hd, 'Row type', typ_str, 0, 4, '>I')
 
 	(border, off) = rdata(data, off, '>H')
 	border_map = {0: 'single', 0xffff: 'double'}
-	border_str = get_or_default(border_map, int(border), 'unknown')
+	border_str = key2txt(int(border), border_map)
 	add_iter(hd, 'Border', border_str, off - 2, 2, '>H')
 
 	(celid, off) = rdata(data, off, '>H')
@@ -1535,7 +1530,7 @@ def add_imp_trow_v1(hd, size, data):
 def add_imp_trow_v2(hd, size, data):
 	(typ, off) = rdata(data, 0, '>H')
 	typ_map = {0xfffe: 'table', 0xff81: 'list'}
-	typ_str = get_or_default(typ_map, int(typ), 'unknown')
+	typ_str = key2txt(int(typ), typ_map)
 	add_iter(hd, 'Row type', typ_str, 0, 2, '>H')
 
 	# the rest seems to be pretty much random :-( I've even seen two
