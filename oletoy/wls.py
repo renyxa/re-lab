@@ -499,9 +499,9 @@ def add_cell_style(hd, size, data, off):
 	halign_map = {0: 'generic', 1: 'left', 2: 'center', 3: 'right', 4: 'repeat', 5: 'paragraph', 6: 'selection center'}
 	valign_map = {0: 'top', 1: 'center', 2: 'bottom', 3: 'paragraph'}
 	(align, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Vertical alignment', get_or_default(valign_map, (align >> 4), 'unknown'), off - 1, 1, '<B')
+	add_iter(hd, 'Vertical alignment', key2txt(align >> 4, valign_map), off - 1, 1, '<B')
 	add_iter(hd, 'Wrap text', bool(align & 0x8), off - 1, 1, '<B')
-	add_iter(hd, 'Horizontal alignment', get_or_default(halign_map, (align & 0x7), 'unknown'), off - 1, 1, '<B')
+	add_iter(hd, 'Horizontal alignment', key2txt(align & 0x7, valign_map), off - 1, 1, '<B')
 	orient_map = {0x10: 'horizontal', 0x12: 'vertical 90 degrees', 0x13: 'vertical 270 degrees'}
 	(orient, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Text orientation?', key2txt(orient, orient_map), off - 1, 1, '<B')
