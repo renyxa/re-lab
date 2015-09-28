@@ -72,6 +72,7 @@ def deobfuscate(data, orig_pos):
 WLS_RECORDS = {
 	# 00xx
 	0x70: ('Column width', 'column_width'),
+	0x7c: ('Freeze', 'freeze'),
 	0xac: ('Text attributes', 'text_attrs'),
 	0xb9: ('Formula cell', 'formula_cell'),
 	0xc5: ('End sheet', None),
@@ -599,6 +600,12 @@ def add_autofilter(hd, size, data, off):
 	(end_col, off) = rdata(data, off, '<H')
 	add_iter(hd, 'End column', format_column(end_col), off - 2, 2, '<H')
 
+def add_freeze(hd, size, data, off):
+	(col, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Before column', format_column(col), off - 2, 2, '<H')
+	(row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Before row', format_row(row), off - 2, 2, '<H')
+
 wls_ids = {
 	'record': record_wrapper(None),
 	'text_attrs': record_wrapper(add_text_attrs),
@@ -609,6 +616,7 @@ wls_ids = {
 	'column_width': record_wrapper(add_column_width),
 	'comment': record_wrapper(add_comment),
 	'formula_cell': record_wrapper(add_formula_cell),
+	'freeze': record_wrapper(add_freeze),
 	'named_range': record_wrapper(add_named_range),
 	'number_cell': record_wrapper(add_number_cell),
 	'page_breaks': record_wrapper(add_page_breaks),
