@@ -17,14 +17,9 @@
 import datetime
 import struct
 
-from utils import add_iter, add_pgiter, rdata
+from utils import add_iter, add_pgiter, key2txt, rdata
 
 EPOCH_BEGIN = 978307200
-
-def get_or_default(dictionary, key, default):
-	if dictionary.has_key(key):
-		return dictionary[key]
-	return default
 
 class format_error:
 	def __init__(self, desc, off):
@@ -85,7 +80,7 @@ class boolean(record):
 
 	def do_show(self, page, data, parent):
 		const_map = {8: 'False', 9: 'True'}
-		const = get_or_default(const_map, self.value, 'Unknown')
+		const = key2txt(self.value, const_map)
 		self.add_pgiter(page, 'Boolean: %s' % const, '', data, parent)
 
 class integer(record):
