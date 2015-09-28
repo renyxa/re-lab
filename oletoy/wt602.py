@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, key2txt, rdata
+from utils import add_iter, add_pgiter, bflag2txt, key2txt, rdata
 
 def values(d, default='unknown'):
 	def lookup(val):
@@ -266,46 +266,26 @@ def add_offsets(hd, size, data):
 		name = key2txt(i, wt602_section_names, 'Section %d' % i)
 		add_iter(hd, name, offset, off - 4, 4, '<I')
 
-def convert_flags(flags, names):
-	"""Convert a number representing a set of flags into names.
-
-	The names dict maps a bit to a name. Bits are counted from 0.
-	"""
-	ret = []
-	for b in xrange(0, sorted(names.keys())[-1] + 1):
-		if flags & 0x1:
-			if names.has_key(b):
-				ret.append(names[b])
-			else:
-				ret.append('unknown')
-		flags = flags >> 1
-	if flags: # more flags than we have names for
-		ret.append('unknowns')
-	return ret
-
-def print_flags(flags, names):
-	return ' + '.join(convert_flags(flags, names))
-
 def get_char_style(flags):
 	names = {
-		0: 'font size',
-		1: 'bold',
-		2: 'italic',
-		3: 'underline type',
-		4: 'position',
-		5: 'transform',
-		6: 'color',
-		7: 'font',
-		8: 'letter spacing',
-		9: 'shaded',
-		10: 'line-through type',
-		11: 'outline',
+		0x1: 'font size',
+		0x2: 'bold',
+		0x4: 'italic',
+		0x8: 'underline type',
+		0x10: 'position',
+		0x20: 'transform',
+		0x40: 'color',
+		0x80: 'font',
+		0x100: 'letter spacing',
+		0x200: 'shaded',
+		0x400: 'line-through type',
+		0x800: 'outline',
 	}
-	return print_flags(flags, names)
+	return bflag2txt(flags, names)
 
 def get_para_flags(flags):
-	names = {3: 'page break', 8: 'paragraph break'}
-	return print_flags(flags, names)
+	names = {0x8: 'page break', 0x100: 'paragraph break'}
+	return bflag2txt(flags, names)
 
 def add_text_info(hd, size, data):
 	(flags, off) = rdata(data, 0, '<H')
