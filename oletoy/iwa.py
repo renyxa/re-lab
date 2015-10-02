@@ -648,7 +648,7 @@ COMMON_OBJECTS = {
 
 KEYNOTE_OBJECTS = {
 	1: ('Document', {
-		2: ('Document info ref', 'Ref'),
+		2: ('Presentation ref', 'Ref'),
 		3: ('Document info', {
 			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
 			3: ('Language', string),
@@ -659,7 +659,7 @@ KEYNOTE_OBJECTS = {
 			9: ('Template', string)
 		})
 	}),
-	2: ('Document info', {
+	2: ('Presentation', {
 		2: ('Theme ref?', 'Ref'),
 		3: ('Slide list', {1: ('Slide list ref', 'Ref')}),
 		4: ('Size',),
