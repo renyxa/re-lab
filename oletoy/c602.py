@@ -18,6 +18,7 @@ from utils import add_iter, add_pgiter, rdata
 
 tc6_records = {
 	0x1: ('Start sheet?', None),
+	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End sheet?', None),
 }
 
@@ -53,6 +54,20 @@ class gc6_parser:
 	def parse(self):
 		pass
 
+def format_row(number):
+	return '%d' % (number + 1)
+
+def format_column(number):
+	assert number >= 0
+	assert number <= 0xff
+	low = number % 26
+	high = number / 26
+	if high > 0:
+		row = chr(0x40 + high)
+	else:
+		row = ''
+	return row + chr(0x40 + low + 1)
+
 def add_tc6_header(hd, size, data):
 	off = 0
 	(ident, off) = rdata(data, off, '35s')
@@ -66,9 +81,22 @@ def add_record(hd, size, data):
 	add_iter(hd, 'Record length', length, off - 2, 2, '<H')
 	return off
 
+def add_sheet_info(hd, size, data):
+	off = add_record(hd, size, data)
+	off += 2
+	(left, off) = rdata(data, off, '<B')
+	add_iter(hd, 'First column', format_column(left), off - 1, 1, '<B')
+	(top, off) = rdata(data, off, '<H')
+	add_iter(hd, 'First row', format_row(top), off - 2, 2, '<H')
+	(right, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Last column', format_column(right), off - 1, 1, '<B')
+	(bottom, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Last row', format_row(bottom), off - 2, 2, '<H')
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
+	'tc6_sheet_info': add_sheet_info,
 }
 
 def parse_spreadsheet(data, page, parent):
