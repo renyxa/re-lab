@@ -17,6 +17,11 @@
 from utils import add_iter, add_pgiter, rdata
 
 tc6_records = {
+	0x1: ('Integer cell', 'tc6_integer_cell'),
+	0x2: ('Float cell', 'tc6_float_cell'),
+	0x3: ('Text cell', 'tc6_text_cell'),
+	0x6: ('Date cell', 'tc6_date_cell'),
+	0xa: ('Formula cell', 'tc6_formula_cell'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End', None),
 }
@@ -80,6 +85,12 @@ def add_record(hd, size, data):
 	add_iter(hd, 'Record length', length, off - 2, 2, '<H')
 	return off
 
+def add_text(hd, size, data, off, name='Text'):
+	(length, off) = rdata(data, off, '<B')
+	add_iter(hd, '%s length' % name, length, off - 1, 1, '<B')
+	(text, off) = rdata(data, off, '%ds' % length)
+	add_iter(hd, name, unicode(text, 'cp852'), off - length, length, '%ds' % length)
+
 def add_sheet_info(hd, size, data):
 	off = add_record(hd, size, data)
 	off += 2
@@ -92,10 +103,45 @@ def add_sheet_info(hd, size, data):
 	(bottom, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Last row', format_row(bottom), off - 2, 2, '<H')
 
+def add_cell(hd, size, data):
+	off = add_record(hd, size, data)
+	(col, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
+	(row, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
+	return off
+
+def add_integer_cell(hd, size, data):
+	off = add_cell(hd, size, data)
+	(val, off) = rdata(data, off, '<h')
+	add_iter(hd, 'Value', val, off - 2, 2, '<h')
+
+def add_float_cell(hd, size, data):
+	off = add_cell(hd, size, data)
+	(val, off) = rdata(data, off, '<d')
+	add_iter(hd, 'Value', val, off - 8, 8, '<d')
+
+def add_text_cell(hd, size, data):
+	off = add_cell(hd, size, data)
+	add_text(hd, size, data, off)
+
+def add_date_cell(hd, size, data):
+	off = add_cell(hd, size, data)
+	add_iter(hd, 'Time', '', off, 4, '4s')
+	add_iter(hd, 'Date', '', off + 4, 4, '4s')
+
+def add_formula_cell(hd, size, data):
+	off = add_cell(hd, size, data)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
 	'tc6_sheet_info': add_sheet_info,
+	'tc6_integer_cell': add_integer_cell,
+	'tc6_float_cell': add_float_cell,
+	'tc6_text_cell': add_text_cell,
+	'tc6_date_cell': add_date_cell,
+	'tc6_formula_cell': add_formula_cell,
 }
 
 def parse_spreadsheet(data, page, parent):
