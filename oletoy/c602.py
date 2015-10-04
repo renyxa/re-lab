@@ -17,9 +17,8 @@
 from utils import add_iter, add_pgiter, rdata
 
 tc6_records = {
-	0x1: ('Start sheet?', None),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
-	0xff: ('End sheet?', None),
+	0xff: ('End', None),
 }
 
 class tc6_parser:
@@ -30,8 +29,8 @@ class tc6_parser:
 
 	def parse(self):
 		assert len(self.data) > 0x40
-		add_pgiter(self.page, 'Header', 'c602', 'tc6_header', self.data[0:0x40], self.parent)
-		off = 0x40
+		add_pgiter(self.page, 'Header', 'c602', 'tc6_header', self.data[0:0x46], self.parent)
+		off = 0x46
 		while off + 3 <= len(self.data):
 			(rec, off) = rdata(self.data, off, '<B')
 			(length, off) = rdata(self.data, off, '<H')
