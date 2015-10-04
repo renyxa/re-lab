@@ -44,6 +44,7 @@ As of now OLE Toy reads and parses:
        Numbers 3, with a big chunk of the internals shared among all
        three applications. Support for Numbers is BIPU.)
 - WLS (Software602 602Tab, aka MagicTab)
+- TC6, GC6 (Software602 C602, BIPU support)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:
