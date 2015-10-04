@@ -35,7 +35,8 @@ As of now OLE Toy reads and parses:
        PalmDoc, TealDoc, zTXT, iSilo ver. 1 to 3 and TomeRaider3. iSilo
        and TomeRaider3 only shows basic structure, because the format is
        not known.)
-- WT602 (Software602 602Text)
+- WPD (Software602 602Text; this format has nothing in common with
+       WordPerfect.)
 - IMP (SoftBook e-book)
 - ZMF (Zoner Callisto, also known as Zoner Draw)
 - ZBR (Zebra Metafile, BIPU support)
