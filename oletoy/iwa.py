@@ -377,7 +377,7 @@ MESSAGES = {
 	},
 	'Bezier': {1: ('Bezier element',)},
 	'Bezier element': {
-		1: ('Type', enum({1: 'M', 2: 'L', 5: 'C'})),
+		1: ('Type', enum({1: 'M', 2: 'L', 4: 'C', 5: 'Z'})),
 		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
 	},
 	'Character properties': {
