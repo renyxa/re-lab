@@ -447,7 +447,7 @@ MESSAGES = {
 	},
 	'Path': {
 		3: ('Point path', {
-			1: ('Type', enum({0: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
+			1: ('Type', enum({1: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
 			2: ('Point', 'Position'),
 			3: ('Size',)
 		}),
