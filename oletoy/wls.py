@@ -393,7 +393,9 @@ def add_formula_cell(hd, size, data, off):
 		return off
 
 	off = add_cell(hd, size, data, off)
-	off += 0xe
+	(result, off) = rdata(data, off, '<d')
+	add_iter(hd, 'Result', result, off - 8, 8, '<d')
+	off += 0x6
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 	opcode_map = {
