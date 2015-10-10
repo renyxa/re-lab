@@ -387,7 +387,7 @@ def add_formula_cell(hd, size, data, off):
 		(row, off) = rdata(data, off, '<H')
 		add_iter(hd, 'Row', format_row(row & 0x3fff), off - 2, 2, '<H')
 		rel = (row >> 14) & 0x3
-		add_iter(hd, 'Relative', key2txt(rel_map, rel), off - 1, 1, '<B')
+		add_iter(hd, 'Relative', key2txt(rel, rel_map), off - 1, 1, '<B')
 		(col, off) = rdata(data, off, '<B')
 		add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
 		return off
