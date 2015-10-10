@@ -477,6 +477,7 @@ MESSAGES = {
 					2: ('Control point 2', 'Position'),
 					3: ('Control point 3', 'Position'),
 				}),
+				2: ('Closed?', bool_),
 			}),
 			2: ('Size',),
 		}),
