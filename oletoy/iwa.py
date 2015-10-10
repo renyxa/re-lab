@@ -470,6 +470,16 @@ MESSAGES = {
 				3: ('Bezier',),
 			}),
 		}),
+		8: ('Editable path', {
+			1: ('Points', {
+				1: ('Point', {
+					1: ('Control point 1', 'Position'),
+					2: ('Control point 2', 'Position'),
+					3: ('Control point 3', 'Position'),
+				}),
+			}),
+			2: ('Size',),
+		}),
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
