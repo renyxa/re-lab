@@ -155,6 +155,25 @@ def add_formula(hd, size, data, off):
 	(col, dummy) = rdata(data, 3, '<B')
 	(row, dummy) = rdata(data, 4, '<H')
 
+	def add_address(off, flags, colname, rowname):
+		(acol, off) = rdata(data, off, '<b')
+		if flags & 0x1 == 0:
+			acol += col
+		add_iter(hd, colname, format_column(acol), off - 1, 1, '<b')
+		(arow, off) = rdata(data, off, '<h')
+		if flags & 0x2 == 0:
+			arow += row
+		add_iter(hd, rowname, format_row(arow), off - 2, 2, '<h')
+		return off
+
+	def format_abs(flags):
+		res = ''
+		if opcode & 0x1:
+			res += '$C'
+		if opcode & 0x2:
+			res += '$R'
+		return res
+
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Bytecode length', length, off - 2, 2, '<H')
 	opcode_map = {
@@ -168,26 +187,14 @@ def add_formula(hd, size, data, off):
 		if opcode < 0x20:
 			add_iter(hd, 'Opcode', key2txt(opcode, opcode_map), off - 1, 1, '<B')
 		elif opcode & 0xf0 == 0x20:
-			first = ''
-			if opcode & 0x1:
-				first += '$C'
-			if opcode & 0x2:
-				first += '$R'
-			last = ''
-			if opcode & 0x4:
-				last += '$C'
-			if opcode & 0x8:
-				last += '$R'
+			first = format_abs(opcode)
+			last = format_abs(opcode >> 2)
 			arange = ''
 			if len(first) != 0 or len(last) != 0:
 				arange = ' (%s:%s)' % (first, last)
 			add_iter(hd, 'Opcode', 'address range%s' % arange, off - 1, 1, '<B')
 		elif opcode & 0xf0 == 0x30:
-			addr = ''
-			if opcode & 0x1:
-				addr += '$C'
-			if opcode & 0x2:
-				addr += '$R'
+			addr = format_abs(opcode)
 			if len(addr) != 0:
 				addr = ' (%s)' % addr
 			add_iter(hd, 'Opcode', 'address%s' % addr, off - 1, 1, '<B')
@@ -208,32 +215,11 @@ def add_formula(hd, size, data, off):
 			add_iter(hd, 'Value', val, off - 2, 2, '<h')
 		elif opcode & 0xf0 == 0x20:
 			off += 2
-			(acol1, off) = rdata(data, off, '<b')
-			if opcode & 0x1 == 0:
-				acol1 += col
-			add_iter(hd, 'First column', format_column(acol1), off - 1, 1, '<b')
-			(arow1, off) = rdata(data, off, '<h')
-			if opcode & 0x2 == 0:
-				arow1 += row
-			add_iter(hd, 'First row', format_row(arow1), off - 2, 2, '<h')
-			(acol2, off) = rdata(data, off, '<b')
-			if opcode & 0x4 == 0:
-				acol2 += col
-			add_iter(hd, 'Last column', format_column(acol2), off - 1, 1, '<b')
-			(arow2, off) = rdata(data, off, '<h')
-			if opcode & 0x8 == 0:
-				arow2 += row
-			add_iter(hd, 'Last row', format_row(arow2), off - 2, 2, '<h')
+			off = add_address(off, opcode, 'First column', 'First row')
+			off = add_address(off, opcode >> 2, 'Last column', 'Last row')
 		elif opcode & 0xf0 == 0x30:
 			off += 2
-			(acol, off) = rdata(data, off, '<b')
-			if opcode & 0x1 == 0:
-				acol += col
-			add_iter(hd, 'Column', format_column(acol), off - 1, 1, '<b')
-			(arow, off) = rdata(data, off, '<h')
-			if opcode & 0x2 == 0:
-				arow += row
-			add_iter(hd, 'Row', format_row(arow), off - 2, 2, '<h')
+			off = add_address(off, opcode & 0xf, 'Column', 'Row')
 
 def add_number_formula_cell(hd, size, data):
 	off = add_cell(hd, size, data)
