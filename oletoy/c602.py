@@ -109,8 +109,9 @@ class gc6_parser:
 		off += 87
 		add_pgiter(self.page, 'Values', 'c602', 'gc6_values', self.data[off:off + 88], parent)
 		off += 88
-		# TODO: where does the legend end?
-		add_pgiter(self.page, 'Legend', 'c602', 'gc6_legend', self.data[off:], parent)
+		add_pgiter(self.page, 'Legend', 'c602', 'gc6_legend', self.data[off:off + 87], parent)
+		off += 87
+		add_pgiter(self.page, 'Trailer', 'c602', '', self.data[off:], parent)
 
 def format_row(number):
 	return '%d' % (number + 1)
@@ -437,19 +438,51 @@ def add_section(hd, size, data):
 	off = add_text(hd, size, data, 0, 'Label')
 	if off < 0x51:
 		add_iter(hd, 'Junk', '', off, 0x51 - off, '%ds' % (0x51 - off))
-	return 0x51
+	off = 0x51
+	font_map = {1: 'Triplex', 2: 'Small', 3: 'Sans Serif'}
+	(font, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Font', key2txt(font, font_map), off - 1, 1, '<B')
+	(border, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Border', bool(border), off - 1, 1, '<B')
+	return off
 
 def add_title(hd, size, data):
 	off = add_section(hd, size, data)
 
 def add_categories(hd, size, data):
 	off = add_section(hd, size, data)
+	(axis_dir, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Reversed axis direction', bool(axis_dir), off - 1, 1, '<B')
+	(axis_label, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Vertical axis label', bool(axis_label), off - 1, 1, '<B')
+	raster_flags = {1: 'fine', 2: 'coarse'}
+	(raster, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Raster', bflag2txt(raster, raster_flags), off - 1, 1, '<B')
 
 def add_values(hd, size, data):
 	off = add_section(hd, size, data)
+	(axis_dir, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Reversed axis direction', bool(axis_dir), off - 1, 1, '<B')
+	(axis_label, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Vertical axis label', bool(axis_label), off - 1, 1, '<B')
+	raster_flags = {1: 'fine', 2: 'coarse'}
+	(raster, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Raster', bflag2txt(raster, raster_flags), off - 1, 1, '<B')
+	off += 1
+	(zero, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Start at zero', bool(zero), off - 1, 1, '<B')
 
 def add_legend(hd, size, data):
 	off = add_section(hd, size, data)
+	(hide, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Hide', bool(hide), off - 1, 1, '<B')
+	location_map = {1: 'bottom', 2: 'left', 3: 'right'}
+	(location, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Location', key2txt(location, location_map), off - 1, 1, '<B')
+	(rank, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Reversed rank of categories', bool(rank), off - 1, 1, '<B')
+	(switch, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Switch series and categories', bool(switch), off - 1, 1, '<B')
 
 c602_ids = {
 	'tc6_header': add_tc6_header,
