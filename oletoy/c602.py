@@ -25,6 +25,7 @@ tc6_records = {
 	0xb: ('Text formula cell', 'tc6_text_formula_cell'),
 	0xc: ('Bool formula cell', 'tc6_bool_formula_cell'),
 	0xd: ('Error formula cell', 'tc6_error_formula_cell'),
+	0x12: ('Number format', 'tc6_number_format'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End', None),
 }
@@ -244,6 +245,11 @@ def add_error_formula_cell(hd, size, data):
 	add_iter(hd, 'Error', err, off - 2, 2, '<H')
 	add_formula(hd, size, data, off)
 
+def add_number_format(hd, size, data):
+	off = add_record(hd, size, data)
+	off += 2
+	add_text(hd, size, data, off, 'Format')
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -256,6 +262,7 @@ c602_ids = {
 	'tc6_text_formula_cell': add_text_formula_cell,
 	'tc6_bool_formula_cell': add_bool_formula_cell,
 	'tc6_error_formula_cell': add_error_formula_cell,
+	'tc6_number_format': add_number_format,
 }
 
 def parse_spreadsheet(data, page, parent):
