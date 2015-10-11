@@ -43,7 +43,7 @@ tc6_records = {
 	0x1d: ('Cell type', 'tc6_cell_type'),
 	0x1e: ('Macro', 'tc6_macro'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
-	0x23: ('Graph', None),
+	0x23: ('Chart', 'tc6_chart'),
 	0xff: ('End', None),
 }
 
@@ -99,9 +99,9 @@ class gc6_parser:
 
 	def parse(self):
 		add_pgiter(self.page, 'Header', 'c602', 'gc6_header', self.data[0:0x40], self.parent)
-		self.parse_graph(0x40, self.parent)
+		self.parse_chart(0x40, self.parent)
 
-	def parse_graph(self, off, parent):
+	def parse_chart(self, off, parent):
 		off += 9
 		add_pgiter(self.page, 'Title', 'c602', 'gc6_title', self.data[off:off + 83], parent)
 		off += 83
