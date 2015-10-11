@@ -20,6 +20,7 @@ tc6_records = {
 	0x1: ('Integer cell', 'tc6_integer_cell'),
 	0x2: ('Float cell', 'tc6_float_cell'),
 	0x3: ('Text cell', 'tc6_text_cell'),
+	0x4: ('Bool cell', 'tc6_bool_cell'),
 	0x6: ('Date cell', 'tc6_date_cell'),
 	0x8: ('External ref cell', 'tc6_external_ref_cell'),
 	0xa: ('Number formula cell', 'tc6_number_formula_cell'),
@@ -176,6 +177,11 @@ def add_float_cell(hd, size, data):
 def add_text_cell(hd, size, data):
 	off = add_cell(hd, size, data)
 	add_text(hd, size, data, off)
+
+def add_bool_cell(hd, size, data):
+	off = add_cell(hd, size, data)
+	(val, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Value', bool(val), off - 1, 1, '<B')
 
 def add_date_cell(hd, size, data):
 	off = add_cell(hd, size, data)
@@ -424,6 +430,7 @@ c602_ids = {
 	'tc6_integer_cell': add_integer_cell,
 	'tc6_float_cell': add_float_cell,
 	'tc6_text_cell': add_text_cell,
+	'tc6_bool_cell': add_bool_cell,
 	'tc6_date_cell': add_date_cell,
 	'tc6_external_ref_cell': add_external_ref_cell,
 	'tc6_number_formula_cell': add_number_formula_cell,
