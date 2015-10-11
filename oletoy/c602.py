@@ -118,6 +118,10 @@ class gc6_parser:
 		off += 87
 		add_pgiter(self.page, '3D', 'c602', 'gc6_3d', self.data[off:off + 3], parent)
 		off += 3
+		add_pgiter(self.page, 'Something', 'c602', '', self.data[off:off + 6], parent)
+		off += 6
+		add_pgiter(self.page, 'Print settings', 'c602', 'gc6_print_settings', self.data[off:off + 7], parent)
+		off += 7
 		add_pgiter(self.page, 'Series', 'c602', 'gc6_series', self.data[off:], parent)
 
 def format_row(number):
@@ -535,8 +539,21 @@ def add_3d(hd, size, data):
 	(depth, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Series depth', key2txt(depth, depth_map), off - 1, 1, '<B')
 
+def add_print_settings(hd, size, data):
+	off = 0
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', '%d cm' % height, off - 2, 2, '<H')
+	(width, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Width', '%d cm' % width, off - 2, 2, '<H')
+	(rotate, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Rotate', bool(rotate), off - 1, 1, '<B')
+	(quality, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Higher quality', bool(quality), off - 1, 1, '<B')
+	(file, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Print to file', bool(file), off - 1, 1, '<B')
+
 def add_series(hd, size, data):
-	off = 15
+	off = 2
 	add_range(hd, size, data, off)
 
 c602_ids = {
@@ -574,6 +591,7 @@ c602_ids = {
 	'gc6_values': add_values,
 	'gc6_legend': add_legend,
 	'gc6_3d': add_3d,
+	'gc6_print_settings': add_print_settings,
 	'gc6_series': add_series,
 }
 
