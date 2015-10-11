@@ -32,6 +32,7 @@ tc6_records = {
 	0x15: ('Font', 'tc6_font'),
 	0x16: ('Vertical line', 'tc6_vertical_line'),
 	0x17: ('Horizontal line', 'tc6_horizontal_line'),
+	0x18: ('Table', 'tc6_table', True),
 	0x1a: ('Number format', 'tc6_number_format'),
 	0x1c: ('Cell lock', 'tc6_cell_lock'),
 	0x1d: ('Cell type', 'tc6_cell_type'),
@@ -137,6 +138,15 @@ def add_range(hd, size, data, off):
 	add_iter(hd, 'Last row', format_row(bottom), off - 2, 2, '<H')
 	return off
 
+def add_table_ref(hd, size, data, off):
+	(table, off) = rdata(data, off, '<H')
+	if table == 0xffff:
+		table_str = 'this'
+	else:
+		table_str = str(table)
+	add_iter(hd, 'Table', table_str, off - 2, 2, '<H')
+	return off
+
 def add_sheet_info(hd, size, data):
 	off = add_record(hd, size, data)
 	off += 2
@@ -233,11 +243,11 @@ def add_formula(hd, size, data, off):
 			(val, off) = rdata(data, off, '<h')
 			add_iter(hd, 'Value', val, off - 2, 2, '<h')
 		elif opcode & 0xf0 == 0x20:
-			off += 2
+			off = add_table_ref(hd, size, data, off)
 			off = add_address(off, opcode, 'First column', 'First row')
 			off = add_address(off, opcode >> 2, 'Last column', 'Last row')
 		elif opcode & 0xf0 == 0x30:
-			off += 2
+			off = add_table_ref(hd, size, data, off)
 			off = add_address(off, opcode & 0xf, 'Column', 'Row')
 
 def add_number_formula_cell(hd, size, data):
@@ -360,9 +370,16 @@ def add_named_range(hd, size, data):
 	flags_map = {1: 'first column $', 2: 'first row $', 4: 'last column $', 8: 'last row $'}
 	(flags, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
-	off += 2
+	off = add_table_ref(hd, size, data, off)
 	off = add_address(off, flags, 'First column', 'First row')
 	off = add_address(off, flags >> 2, 'Last column', 'Last row')
+
+def add_table(hd, size, data):
+	off = add_record(hd, size, data)
+	(id, off) = rdata(data, off, '<H')
+	add_iter(hd, 'ID', id, off - 2, 2, '<H')
+	off = add_text(hd, size, data, off, 'Name')
+	off = add_text(hd, size, data, off, 'Path')
 
 c602_ids = {
 	'tc6_header': add_tc6_header,
@@ -386,6 +403,7 @@ c602_ids = {
 	'tc6_cell_lock': add_cell_lock,
 	'tc6_number_format': add_number_format,
 	'tc6_named_range': add_named_range,
+	'tc6_table': add_table,
 }
 
 def parse_spreadsheet(data, page, parent):
