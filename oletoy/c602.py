@@ -98,7 +98,19 @@ class gc6_parser:
 		self.parent = parent
 
 	def parse(self):
-		pass
+		add_pgiter(self.page, 'Header', 'c602', 'gc6_header', self.data[0:0x40], self.parent)
+		self.parse_graph(0x40, self.parent)
+
+	def parse_graph(self, off, parent):
+		off += 9
+		add_pgiter(self.page, 'Title', 'c602', 'gc6_title', self.data[off:off + 83], parent)
+		off += 83
+		add_pgiter(self.page, 'Categories', 'c602', 'gc6_categories', self.data[off:off + 87], parent)
+		off += 87
+		add_pgiter(self.page, 'Values', 'c602', 'gc6_values', self.data[off:off + 88], parent)
+		off += 88
+		# TODO: where does the legend end?
+		add_pgiter(self.page, 'Legend', 'c602', 'gc6_legend', self.data[off:], parent)
 
 def format_row(number):
 	return '%d' % (number + 1)
@@ -417,6 +429,28 @@ def add_macro(hd, size, data):
 	off = add_text(hd, size, data, off, 'Name')
 	off = add_text(hd, size, data, off, 'Path')
 
+def add_gc6_header(hd, size, data):
+	pass
+
+def add_section(hd, size, data):
+	off = 0
+	off = add_text(hd, size, data, 0, 'Label')
+	if off < 0x51:
+		add_iter(hd, 'Junk', '', off, 0x51 - off, '%ds' % (0x51 - off))
+	return 0x51
+
+def add_title(hd, size, data):
+	off = add_section(hd, size, data)
+
+def add_categories(hd, size, data):
+	off = add_section(hd, size, data)
+
+def add_values(hd, size, data):
+	off = add_section(hd, size, data)
+
+def add_legend(hd, size, data):
+	off = add_section(hd, size, data)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -444,6 +478,11 @@ c602_ids = {
 	'tc6_named_range': add_named_range,
 	'tc6_table': add_table,
 	'tc6_macro': add_macro,
+	'gc6_header': add_gc6_header,
+	'gc6_title': add_title,
+	'gc6_categories': add_categories,
+	'gc6_values': add_values,
+	'gc6_legend': add_legend,
 }
 
 def parse_spreadsheet(data, page, parent):
