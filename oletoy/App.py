@@ -302,7 +302,7 @@ class Page:
 			iwa.open(buf, self, parent, self.subtype)
 			return 0
 			
-		if buf[0:0x19] == 'Software602\r\nCalc602 v.1.' and (buf[0x1c:0x24] == 'Tabulka\x1a' or buf[0x1c:0x21] == 'Graf\x1a'):
+		if buf[0:0x17] == 'Software602\r\nCalc602 v.' and (buf[0x1c:0x24] == 'Tabulka\x1a' or buf[0x1c:0x21] == 'Graf\x1a'):
 			self.type = 'C602'
 			print('Probably C602 file')
 			if buf[0x1c] == 'T':

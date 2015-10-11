@@ -38,6 +38,7 @@ tc6_records = {
 	0x1c: ('Cell lock', 'tc6_cell_lock'),
 	0x1d: ('Cell type', 'tc6_cell_type'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
+	0x23: ('Graph', None),
 	0xff: ('End', None),
 }
 
