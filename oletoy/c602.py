@@ -431,7 +431,9 @@ def add_macro(hd, size, data):
 	off = add_text(hd, size, data, off, 'Path')
 
 def add_gc6_header(hd, size, data):
-	pass
+	off = 0
+	(ident, off) = rdata(data, off, '32s')
+	add_iter(hd, 'Identifier', ident, off - 32, 32, '32s')
 
 def add_section(hd, size, data):
 	off = 0
