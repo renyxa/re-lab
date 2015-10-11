@@ -31,6 +31,7 @@ tc6_records = {
 	0x15: ('Font', 'tc6_font'),
 	0x16: ('Vertical line', 'tc6_vertical_line'),
 	0x17: ('Horizontal line', 'tc6_horizontal_line'),
+	0x1d: ('Cell type', 'tc6_cell_type'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End', None),
 }
@@ -297,6 +298,14 @@ def add_horizontal_line(hd, size, data):
 	off += 2
 	add_range(hd, size, data, off)
 
+def add_cell_type(hd, size, data):
+	off = add_record(hd, size, data)
+	type_map = {0: 'default', 1: 'text'}
+	(typ, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, '<B')
+	off += 2
+	add_range(hd, size, data, off)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -315,6 +324,7 @@ c602_ids = {
 	'tc6_font': add_font,
 	'tc6_vertical_line': add_vertical_line,
 	'tc6_horizontal_line': add_horizontal_line,
+	'tc6_cell_type': add_cell_type,
 }
 
 def parse_spreadsheet(data, page, parent):
