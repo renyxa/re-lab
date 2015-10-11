@@ -28,6 +28,7 @@ tc6_records = {
 	0x10: ('Column widths', 'tc6_column_widths'),
 	0x12: ('Number format', 'tc6_number_format'),
 	0x13: ('Alignment', 'tc6_alignment'),
+	0x15: ('Font', 'tc6_font'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End', None),
 }
@@ -272,6 +273,14 @@ def add_alignment(hd, size, data):
 	off += 2
 	add_range(hd, size, data, off)
 
+def add_font(hd, size, data):
+	off = add_record(hd, size, data)
+	font_map = {0: 'normal', 1: 'italic', 2: 'bold', 3: 'high', 4: 'gray'}
+	(font, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Font', key2txt(font, font_map), off - 1, 1, '<B')
+	off += 2
+	add_range(hd, size, data, off)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -287,6 +296,7 @@ c602_ids = {
 	'tc6_number_format': add_number_format,
 	'tc6_column_widths': add_column_widths,
 	'tc6_alignment': add_alignment,
+	'tc6_font': add_font,
 }
 
 def parse_spreadsheet(data, page, parent):
