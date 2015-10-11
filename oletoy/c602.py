@@ -14,6 +14,8 @@
 # USA
 #
 
+import datetime
+
 from utils import add_iter, add_pgiter, bflag2txt, key2txt, rdata
 
 tc6_records = {
@@ -27,6 +29,7 @@ tc6_records = {
 	0xb: ('Text formula cell', 'tc6_text_formula_cell'),
 	0xc: ('Bool formula cell', 'tc6_bool_formula_cell'),
 	0xd: ('Error formula cell', 'tc6_error_formula_cell'),
+	0xe: ('Date formula cell', 'tc6_date_formula_cell'),
 	0x10: ('Column widths', 'tc6_column_widths'),
 	0x11: ('Named range', 'tc6_named_range', True),
 	0x12: ('Number format def', 'tc6_number_format_def', True),
@@ -111,6 +114,19 @@ def format_column(number):
 		row = ''
 	return row + chr(0x40 + low + 1)
 
+def format_datetime(dt):
+	d = int(dt)
+	t = (dt - d) * 86400
+	time_str = ''
+	if t > 0:
+		hm = int(t / 60)
+		second = t - 60 * hm
+		hour = int(hm / 60)
+		minute = int(hm - 60 * hour)
+		time_str = " %d:%d:%f" % (hour, minute, second)
+	date = datetime.date.fromordinal(d + 1)
+	return "%d-%d-%d%s" % (date.year - 1, date.month, date.day, time_str)
+
 def add_tc6_header(hd, size, data):
 	off = 0
 	(ident, off) = rdata(data, off, '35s')
@@ -185,8 +201,8 @@ def add_bool_cell(hd, size, data):
 
 def add_date_cell(hd, size, data):
 	(off, col, row) = add_cell(hd, size, data)
-	add_iter(hd, 'Time', '', off, 4, '4s')
-	add_iter(hd, 'Date', '', off + 4, 4, '4s')
+	(datetime, off) = rdata(data, off, '<d')
+	add_iter(hd, 'Date/time', format_datetime(datetime), off - 8, 8, '<d')
 
 def add_formula(hd, size, data, off, col=None, row=None):
 	def add_address(off, flags, colname, rowname):
@@ -229,11 +245,11 @@ def add_formula(hd, size, data, off, col=None, row=None):
 		# address range
 		0x20: 'range',
 		# address
-		0x30: 'address'
+		0x30: 'address', 0x34: 'date/time'
 	}
 	while off < size:
 		(opcode, off) = rdata(data, off, '<B')
-		if opcode < 0x20:
+		if opcode < 0x20 or opcode >= 0x34:
 			add_iter(hd, 'Opcode', key2txt(opcode, opcode_map), off - 1, 1, '<B')
 		elif opcode & 0xf0 == 0x20:
 			first = format_abs(opcode)
@@ -266,6 +282,9 @@ def add_formula(hd, size, data, off, col=None, row=None):
 			off += 2
 			(name, off) = rdata(data, off, '<H')
 			add_iter(hd, 'Name ID', name, off - 2, 2, '<H')
+		elif opcode == 0x34:
+			(datetime, off) = rdata(data, off, '<d')
+			add_iter(hd, 'Date/time', format_datetime(datetime), off - 8, 8, '<d')
 		elif opcode & 0xf0 == 0x20:
 			off = add_table_ref(hd, size, data, off)
 			off = add_address(off, opcode, 'First column', 'First row')
@@ -299,6 +318,12 @@ def add_error_formula_cell(hd, size, data):
 	(off, col, row) = add_cell(hd, size, data)
 	(err, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Error', err, off - 2, 2, '<H')
+	add_formula(hd, size, data, off, col, row)
+
+def add_date_formula_cell(hd, size, data):
+	(off, col, row) = add_cell(hd, size, data)
+	(datetime, off) = rdata(data, off, '<d')
+	add_iter(hd, 'Date/time', format_datetime(datetime), off - 8, 8, '<d')
 	add_formula(hd, size, data, off, col, row)
 
 def add_number_format_def(hd, size, data):
@@ -406,6 +431,7 @@ c602_ids = {
 	'tc6_text_formula_cell': add_text_formula_cell,
 	'tc6_bool_formula_cell': add_bool_formula_cell,
 	'tc6_error_formula_cell': add_error_formula_cell,
+	'tc6_date_formula_cell': add_date_formula_cell,
 	'tc6_number_format_def': add_number_format_def,
 	'tc6_column_widths': add_column_widths,
 	'tc6_alignment': add_alignment,
