@@ -26,6 +26,7 @@ tc6_records = {
 	0xc: ('Bool formula cell', 'tc6_bool_formula_cell'),
 	0xd: ('Error formula cell', 'tc6_error_formula_cell'),
 	0x10: ('Column widths', 'tc6_column_widths'),
+	0x11: ('Named range', 'tc6_named_range', True),
 	0x12: ('Number format def', 'tc6_number_format_def', True),
 	0x13: ('Alignment', 'tc6_alignment'),
 	0x15: ('Font', 'tc6_font'),
@@ -329,6 +330,40 @@ def add_number_format(hd, size, data):
 	off += 2
 	add_range(hd, size, data, off)
 
+def add_named_range(hd, size, data):
+	def add_address(off, flags, colname, rowname):
+		# NOTE: a relative address is relative to the current cell
+		(acol, off) = rdata(data, off, '<b')
+		if flags & 0x1 == 0:
+			acol_str = '%+d' % acol
+		else:
+			acol_str = format_column(acol)
+		add_iter(hd, colname, acol_str, off - 1, 1, '<b')
+		(arow, off) = rdata(data, off, '<h')
+		if flags & 0x2 == 0:
+			arow_str = '%+d' % arow
+		else:
+			arow_str = format_row(arow)
+		add_iter(hd, rowname, arow_str, off - 2, 2, '<h')
+		return off
+
+	off = add_record(hd, size, data)
+	(id, off) = rdata(data, off, '<H')
+	add_iter(hd, 'ID', id, off - 2, 2, '<H')
+	off = add_text(hd, size, data, off, 'Name')
+	(ordinal, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Ordinal number', ordinal, off - 2, 2, '<H')
+	off += 2
+	# NOTE: this is very probably a formula bytecode
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length', length, off - 2, 2, '<H')
+	flags_map = {1: 'first column $', 2: 'first row $', 4: 'last column $', 8: 'last row $'}
+	(flags, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
+	off += 2
+	off = add_address(off, flags, 'First column', 'First row')
+	off = add_address(off, flags >> 2, 'Last column', 'Last row')
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -350,6 +385,7 @@ c602_ids = {
 	'tc6_cell_type': add_cell_type,
 	'tc6_cell_lock': add_cell_lock,
 	'tc6_number_format': add_number_format,
+	'tc6_named_range': add_named_range,
 }
 
 def parse_spreadsheet(data, page, parent):
