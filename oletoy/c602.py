@@ -21,6 +21,7 @@ tc6_records = {
 	0x2: ('Float cell', 'tc6_float_cell'),
 	0x3: ('Text cell', 'tc6_text_cell'),
 	0x6: ('Date cell', 'tc6_date_cell'),
+	0x8: ('External ref cell', 'tc6_external_ref_cell'),
 	0xa: ('Number formula cell', 'tc6_number_formula_cell'),
 	0xb: ('Text formula cell', 'tc6_text_formula_cell'),
 	0xc: ('Bool formula cell', 'tc6_bool_formula_cell'),
@@ -178,6 +179,32 @@ def add_date_cell(hd, size, data):
 	off = add_cell(hd, size, data)
 	add_iter(hd, 'Time', '', off, 4, '4s')
 	add_iter(hd, 'Date', '', off + 4, 4, '4s')
+
+def add_external_ref_cell(hd, size, data):
+	# need this to show relative addresses
+	(col, dummy) = rdata(data, 3, '<B')
+	(row, dummy) = rdata(data, 4, '<H')
+
+	def add_address(off, flags, colname, rowname):
+		(acol, off) = rdata(data, off, '<b')
+		if flags & 0x1 == 0:
+			acol += col
+		add_iter(hd, colname, format_column(acol), off - 1, 1, '<b')
+		(arow, off) = rdata(data, off, '<h')
+		if flags & 0x2 == 0:
+			arow += row
+		add_iter(hd, rowname, format_row(arow), off - 2, 2, '<h')
+		return off
+
+	off = add_cell(hd, size, data)
+	# NOTE: this is very probably a formula bytecode
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length', length, off - 2, 2, '<H')
+	flags_map = {1: 'column $', 2: 'row $'}
+	(flags, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
+	off = add_table_ref(hd, size, data, off)
+	off = add_address(off, flags, 'Column', 'Row')
 
 def add_formula(hd, size, data, off):
 	# need this to show relative addresses
@@ -389,6 +416,7 @@ c602_ids = {
 	'tc6_float_cell': add_float_cell,
 	'tc6_text_cell': add_text_cell,
 	'tc6_date_cell': add_date_cell,
+	'tc6_external_ref_cell': add_external_ref_cell,
 	'tc6_number_formula_cell': add_number_formula_cell,
 	'tc6_text_formula_cell': add_text_formula_cell,
 	'tc6_bool_formula_cell': add_bool_formula_cell,
