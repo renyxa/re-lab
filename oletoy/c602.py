@@ -162,72 +162,52 @@ def add_cell(hd, size, data):
 	add_iter(hd, 'Column', format_column(col), off - 1, 1, '<B')
 	(row, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Row', format_row(row), off - 2, 2, '<H')
-	return off
+	return (off, col, row)
 
 def add_integer_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	(val, off) = rdata(data, off, '<h')
 	add_iter(hd, 'Value', val, off - 2, 2, '<h')
 
 def add_float_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	(val, off) = rdata(data, off, '<d')
 	add_iter(hd, 'Value', val, off - 8, 8, '<d')
 
 def add_text_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	add_text(hd, size, data, off)
 
 def add_bool_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	(val, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Value', bool(val), off - 1, 1, '<B')
 
 def add_date_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	add_iter(hd, 'Time', '', off, 4, '4s')
 	add_iter(hd, 'Date', '', off + 4, 4, '4s')
 
-def add_external_ref_cell(hd, size, data):
-	# need this to show relative addresses
-	(col, dummy) = rdata(data, 3, '<B')
-	(row, dummy) = rdata(data, 4, '<H')
-
+def add_formula(hd, size, data, off, col=None, row=None):
 	def add_address(off, flags, colname, rowname):
 		(acol, off) = rdata(data, off, '<b')
 		if flags & 0x1 == 0:
-			acol += col
-		add_iter(hd, colname, format_column(acol), off - 1, 1, '<b')
+			if col == None:
+				acol_str = '%+d' % acol
+			else:
+				acol_str = format_column(acol + col)
+		else:
+			acol_str = format_column(acol)
+		add_iter(hd, colname, acol_str, off - 1, 1, '<b')
 		(arow, off) = rdata(data, off, '<h')
 		if flags & 0x2 == 0:
-			arow += row
-		add_iter(hd, rowname, format_row(arow), off - 2, 2, '<h')
-		return off
-
-	off = add_cell(hd, size, data)
-	# NOTE: this is very probably a formula bytecode
-	(length, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Length', length, off - 2, 2, '<H')
-	flags_map = {1: 'column $', 2: 'row $'}
-	(flags, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
-	off = add_table_ref(hd, size, data, off)
-	off = add_address(off, flags, 'Column', 'Row')
-
-def add_formula(hd, size, data, off):
-	# need this to show relative addresses
-	(col, dummy) = rdata(data, 3, '<B')
-	(row, dummy) = rdata(data, 4, '<H')
-
-	def add_address(off, flags, colname, rowname):
-		(acol, off) = rdata(data, off, '<b')
-		if flags & 0x1 == 0:
-			acol += col
-		add_iter(hd, colname, format_column(acol), off - 1, 1, '<b')
-		(arow, off) = rdata(data, off, '<h')
-		if flags & 0x2 == 0:
-			arow += row
-		add_iter(hd, rowname, format_row(arow), off - 2, 2, '<h')
+			if row == None:
+				arow_str = '%+d' % arow
+			else:
+				arow_str = format_row(arow + row)
+		else:
+			arow_str = format_row(arow)
+		add_iter(hd, rowname, arow_str, off - 2, 2, '<h')
 		return off
 
 	def format_abs(flags):
@@ -285,28 +265,32 @@ def add_formula(hd, size, data, off):
 			off = add_table_ref(hd, size, data, off)
 			off = add_address(off, opcode & 0xf, 'Column', 'Row')
 
+def add_external_ref_cell(hd, size, data):
+	(off, col, row) = add_cell(hd, size, data)
+	add_formula(hd, size, data, off, col, row)
+
 def add_number_formula_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	(result, off) = rdata(data, off, '<d')
 	add_iter(hd, 'Result', result, off - 8, 8, '<d')
-	add_formula(hd, size, data, off)
+	add_formula(hd, size, data, off, col, row)
 
 def add_text_formula_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	off = add_text(hd, size, data, off, 'Result')
-	add_formula(hd, size, data, off)
+	add_formula(hd, size, data, off, col, row)
 
 def add_bool_formula_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	(result, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Result', bool(result), off - 1, 1, '<B')
-	add_formula(hd, size, data, off)
+	add_formula(hd, size, data, off, col, row)
 
 def add_error_formula_cell(hd, size, data):
-	off = add_cell(hd, size, data)
+	(off, col, row) = add_cell(hd, size, data)
 	(err, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Error', err, off - 2, 2, '<H')
-	add_formula(hd, size, data, off)
+	add_formula(hd, size, data, off, col, row)
 
 def add_number_format_def(hd, size, data):
 	off = add_record(hd, size, data)
@@ -376,22 +360,6 @@ def add_number_format(hd, size, data):
 	add_range(hd, size, data, off)
 
 def add_named_range(hd, size, data):
-	def add_address(off, flags, colname, rowname):
-		# NOTE: a relative address is relative to the current cell
-		(acol, off) = rdata(data, off, '<b')
-		if flags & 0x1 == 0:
-			acol_str = '%+d' % acol
-		else:
-			acol_str = format_column(acol)
-		add_iter(hd, colname, acol_str, off - 1, 1, '<b')
-		(arow, off) = rdata(data, off, '<h')
-		if flags & 0x2 == 0:
-			arow_str = '%+d' % arow
-		else:
-			arow_str = format_row(arow)
-		add_iter(hd, rowname, arow_str, off - 2, 2, '<h')
-		return off
-
 	off = add_record(hd, size, data)
 	(id, off) = rdata(data, off, '<H')
 	add_iter(hd, 'ID', id, off - 2, 2, '<H')
@@ -399,15 +367,7 @@ def add_named_range(hd, size, data):
 	(ordinal, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Ordinal number', ordinal, off - 2, 2, '<H')
 	off += 2
-	# NOTE: this is very probably a formula bytecode
-	(length, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Length', length, off - 2, 2, '<H')
-	flags_map = {1: 'first column $', 2: 'first row $', 4: 'last column $', 8: 'last row $'}
-	(flags, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
-	off = add_table_ref(hd, size, data, off)
-	off = add_address(off, flags, 'First column', 'First row')
-	off = add_address(off, flags >> 2, 'Last column', 'Last row')
+	add_formula(hd, size, data, off)
 
 def add_table(hd, size, data):
 	off = add_record(hd, size, data)
