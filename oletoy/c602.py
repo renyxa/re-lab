@@ -259,7 +259,8 @@ def add_error_formula_cell(hd, size, data):
 
 def add_number_format_def(hd, size, data):
 	off = add_record(hd, size, data)
-	off += 2
+	(id, off) = rdata(data, off, '<H')
+	add_iter(hd, 'ID', id, off - 2, 2, '<H')
 	add_text(hd, size, data, off, 'Format')
 
 def add_column_widths(hd, size, data):
