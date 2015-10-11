@@ -26,11 +26,12 @@ tc6_records = {
 	0xc: ('Bool formula cell', 'tc6_bool_formula_cell'),
 	0xd: ('Error formula cell', 'tc6_error_formula_cell'),
 	0x10: ('Column widths', 'tc6_column_widths'),
-	0x12: ('Number format', 'tc6_number_format'),
+	0x12: ('Number format def', 'tc6_number_format_def'),
 	0x13: ('Alignment', 'tc6_alignment'),
 	0x15: ('Font', 'tc6_font'),
 	0x16: ('Vertical line', 'tc6_vertical_line'),
 	0x17: ('Horizontal line', 'tc6_horizontal_line'),
+	0x1a: ('Number format', 'tc6_number_format'),
 	0x1c: ('Cell lock', 'tc6_cell_lock'),
 	0x1d: ('Cell type', 'tc6_cell_type'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
@@ -256,7 +257,7 @@ def add_error_formula_cell(hd, size, data):
 	add_iter(hd, 'Error', err, off - 2, 2, '<H')
 	add_formula(hd, size, data, off)
 
-def add_number_format(hd, size, data):
+def add_number_format_def(hd, size, data):
 	off = add_record(hd, size, data)
 	off += 2
 	add_text(hd, size, data, off, 'Format')
@@ -315,6 +316,13 @@ def add_cell_lock(hd, size, data):
 	off += 2
 	add_range(hd, size, data, off)
 
+def add_number_format(hd, size, data):
+	off = add_record(hd, size, data)
+	(format, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Format', format, off - 1, 1, '<B')
+	off += 2
+	add_range(hd, size, data, off)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -327,7 +335,7 @@ c602_ids = {
 	'tc6_text_formula_cell': add_text_formula_cell,
 	'tc6_bool_formula_cell': add_bool_formula_cell,
 	'tc6_error_formula_cell': add_error_formula_cell,
-	'tc6_number_format': add_number_format,
+	'tc6_number_format_def': add_number_format_def,
 	'tc6_column_widths': add_column_widths,
 	'tc6_alignment': add_alignment,
 	'tc6_font': add_font,
@@ -335,6 +343,7 @@ c602_ids = {
 	'tc6_horizontal_line': add_horizontal_line,
 	'tc6_cell_type': add_cell_type,
 	'tc6_cell_lock': add_cell_lock,
+	'tc6_number_format': add_number_format,
 }
 
 def parse_spreadsheet(data, page, parent):
