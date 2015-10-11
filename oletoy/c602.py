@@ -221,10 +221,15 @@ def add_formula(hd, size, data, off, col=None, row=None):
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Bytecode length', length, off - 2, 2, '<H')
 	opcode_map = {
-		0x0: '=', 0x6: '>', 0xb: '+', 0xc: '-', 0xd: '*', 0xe: '/',
-		0x11: '-', 0x13: 'argument list', 0x14: 'string', 0x15: 'double', 0x18: 'function', 0x1c: 'integer',
+		0x0: '=',
+		# binary operators
+		0x4: '=', 0x5: '<', 0x6: '>', 0x7: '<=', 0x8: '>=', 0x9: '<>', 0xb: '+', 0xc: '-', 0xd: '*', 0xe: '/', 0xf: '^',
+		# unary operators
+		0x11: '-', 0x13: 'argument list', 0x14: 'string', 0x15: 'double', 0x18: 'function', 0x19: '+', 0x1c: 'integer', 0x1f: 'name',
+		# address range
 		0x20: 'range',
-		0x30: 'address', 0x31: 'address ($C)', 0x32: 'address ($R)', 0x33: 'address ($C$R)'
+		# address
+		0x30: 'address'
 	}
 	while off < size:
 		(opcode, off) = rdata(data, off, '<B')
@@ -257,6 +262,10 @@ def add_formula(hd, size, data, off, col=None, row=None):
 		elif opcode == 0x1c:
 			(val, off) = rdata(data, off, '<h')
 			add_iter(hd, 'Value', val, off - 2, 2, '<h')
+		elif opcode == 0x1f:
+			off += 2
+			(name, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Name ID', name, off - 2, 2, '<H')
 		elif opcode & 0xf0 == 0x20:
 			off = add_table_ref(hd, size, data, off)
 			off = add_address(off, opcode, 'First column', 'First row')
