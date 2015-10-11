@@ -26,7 +26,7 @@ tc6_records = {
 	0xc: ('Bool formula cell', 'tc6_bool_formula_cell'),
 	0xd: ('Error formula cell', 'tc6_error_formula_cell'),
 	0x10: ('Column widths', 'tc6_column_widths'),
-	0x12: ('Number format def', 'tc6_number_format_def'),
+	0x12: ('Number format def', 'tc6_number_format_def', True),
 	0x13: ('Alignment', 'tc6_alignment'),
 	0x15: ('Font', 'tc6_font'),
 	0x16: ('Vertical line', 'tc6_vertical_line'),
@@ -68,7 +68,12 @@ class tc6_parser:
 			(rec, off) = rdata(self.data, off, '<B')
 			(length, off) = rdata(self.data, off, '<H')
 			if tc6_records.has_key(rec):
-				(name, handler) = tc6_records[rec]
+				assert len(tc6_records[rec]) >= 2
+				name = tc6_records[rec][0]
+				handler = tc6_records[rec][1]
+				if len(tc6_records[rec]) > 2:
+					(id, dummy) = rdata(self.data, off, '<H')
+					name += ' [%d]' % id
 			else:
 				name = 'Record %x' % rec
 				handler = None
