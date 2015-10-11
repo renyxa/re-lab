@@ -27,6 +27,7 @@ tc6_records = {
 	0xd: ('Error formula cell', 'tc6_error_formula_cell'),
 	0x10: ('Column widths', 'tc6_column_widths'),
 	0x12: ('Number format', 'tc6_number_format'),
+	0x13: ('Alignment', 'tc6_alignment'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End', None),
 }
@@ -113,9 +114,7 @@ def add_text(hd, size, data, off, name='Text'):
 	add_iter(hd, name, unicode(text, 'cp852'), off - length, length, '%ds' % length)
 	return off
 
-def add_sheet_info(hd, size, data):
-	off = add_record(hd, size, data)
-	off += 2
+def add_range(hd, size, data, off):
 	(left, off) = rdata(data, off, '<B')
 	add_iter(hd, 'First column', format_column(left), off - 1, 1, '<B')
 	(top, off) = rdata(data, off, '<H')
@@ -124,6 +123,12 @@ def add_sheet_info(hd, size, data):
 	add_iter(hd, 'Last column', format_column(right), off - 1, 1, '<B')
 	(bottom, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Last row', format_row(bottom), off - 2, 2, '<H')
+	return off
+
+def add_sheet_info(hd, size, data):
+	off = add_record(hd, size, data)
+	off += 2
+	add_range(hd, size, data, off)
 
 def add_cell(hd, size, data):
 	off = add_record(hd, size, data)
@@ -259,6 +264,14 @@ def add_column_widths(hd, size, data):
 		add_iter(hd, 'Column %s' % format_column(col), width, off - 1, 1, '<B')
 		col += 1
 
+def add_alignment(hd, size, data):
+	off = add_record(hd, size, data)
+	align_map = {0: 'default', 1: 'left', 2: 'center', 3: 'right', 4: 'fill'}
+	(align, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Alignment', key2txt(align, align_map), off - 1, 1, '<B')
+	off += 2
+	add_range(hd, size, data, off)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -273,6 +286,7 @@ c602_ids = {
 	'tc6_error_formula_cell': add_error_formula_cell,
 	'tc6_number_format': add_number_format,
 	'tc6_column_widths': add_column_widths,
+	'tc6_alignment': add_alignment,
 }
 
 def parse_spreadsheet(data, page, parent):
