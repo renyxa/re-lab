@@ -37,6 +37,7 @@ tc6_records = {
 	0x1a: ('Number format', 'tc6_number_format'),
 	0x1c: ('Cell lock', 'tc6_cell_lock'),
 	0x1d: ('Cell type', 'tc6_cell_type'),
+	0x1e: ('Macro', 'tc6_macro'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0x23: ('Graph', None),
 	0xff: ('End', None),
@@ -409,6 +410,13 @@ def add_table(hd, size, data):
 	off = add_text(hd, size, data, off, 'Name')
 	off = add_text(hd, size, data, off, 'Path')
 
+def add_macro(hd, size, data):
+	off = add_record(hd, size, data)
+	(id, off) = rdata(data, off, '<H')
+	add_iter(hd, 'ID', id, off - 2, 2, '<H')
+	off = add_text(hd, size, data, off, 'Name')
+	off = add_text(hd, size, data, off, 'Path')
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -433,6 +441,7 @@ c602_ids = {
 	'tc6_number_format': add_number_format,
 	'tc6_named_range': add_named_range,
 	'tc6_table': add_table,
+	'tc6_macro': add_macro,
 }
 
 def parse_spreadsheet(data, page, parent):
