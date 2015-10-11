@@ -116,6 +116,8 @@ class gc6_parser:
 		off += 88
 		add_pgiter(self.page, 'Legend', 'c602', 'gc6_legend', self.data[off:off + 87], parent)
 		off += 87
+		add_pgiter(self.page, '3D', 'c602', 'gc6_3d', self.data[off:off + 3], parent)
+		off += 3
 		add_pgiter(self.page, 'Series', 'c602', 'gc6_series', self.data[off:], parent)
 
 def format_row(number):
@@ -523,8 +525,18 @@ def add_legend(hd, size, data):
 	(switch, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Switch series and categories', bool(switch), off - 1, 1, '<B')
 
+def add_3d(hd, size, data):
+	off = 0
+	(desc, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Double description of values', bool(desc), off - 1, 1, '<B')
+	(raster, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Series raster', bool(raster), off - 1, 1, '<B')
+	depth_map = {0: 'small', 1: 'medium', 2: 'large'}
+	(depth, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Series depth', key2txt(depth, depth_map), off - 1, 1, '<B')
+
 def add_series(hd, size, data):
-	off = 0x12
+	off = 15
 	add_range(hd, size, data, off)
 
 c602_ids = {
@@ -561,6 +573,7 @@ c602_ids = {
 	'gc6_categories': add_categories,
 	'gc6_values': add_values,
 	'gc6_legend': add_legend,
+	'gc6_3d': add_3d,
 	'gc6_series': add_series,
 }
 
