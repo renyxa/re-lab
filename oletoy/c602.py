@@ -29,6 +29,8 @@ tc6_records = {
 	0x12: ('Number format', 'tc6_number_format'),
 	0x13: ('Alignment', 'tc6_alignment'),
 	0x15: ('Font', 'tc6_font'),
+	0x16: ('Vertical line', 'tc6_vertical_line'),
+	0x17: ('Horizontal line', 'tc6_horizontal_line'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
 	0xff: ('End', None),
 }
@@ -281,6 +283,20 @@ def add_font(hd, size, data):
 	off += 2
 	add_range(hd, size, data, off)
 
+def add_vertical_line(hd, size, data):
+	off = add_record(hd, size, data)
+	(on, off) = rdata(data, off, '<B')
+	add_iter(hd, 'On', bool(on), off - 1, 1, '<B')
+	off += 2
+	add_range(hd, size, data, off)
+
+def add_horizontal_line(hd, size, data):
+	off = add_record(hd, size, data)
+	(on, off) = rdata(data, off, '<B')
+	add_iter(hd, 'On', bool(on), off - 1, 1, '<B')
+	off += 2
+	add_range(hd, size, data, off)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -297,6 +313,8 @@ c602_ids = {
 	'tc6_column_widths': add_column_widths,
 	'tc6_alignment': add_alignment,
 	'tc6_font': add_font,
+	'tc6_vertical_line': add_vertical_line,
+	'tc6_horizontal_line': add_horizontal_line,
 }
 
 def parse_spreadsheet(data, page, parent):
