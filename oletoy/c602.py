@@ -43,7 +43,7 @@ tc6_records = {
 	0x1d: ('Cell type', 'tc6_cell_type'),
 	0x1e: ('Macro', 'tc6_macro'),
 	0x20: ('Sheet info', 'tc6_sheet_info'),
-	0x23: ('Chart', None),
+	0x23: ('Chart', 'tc6_chart'),
 	0xff: ('End', None),
 }
 
@@ -103,7 +103,7 @@ class gc6_parser:
 	def parse(self):
 		add_pgiter(self.page, 'Header', 'c602', 'gc6_header', self.data[0:0x40], self.parent)
 		off = 0x40
-		add_pgiter(self.page, 'Something', 'c602', '', self.data[off:off + 9], self.parent)
+		add_pgiter(self.page, 'Preamble', 'c602', 'gc6_preamble', self.data[off:off + 9], self.parent)
 		off += 9
 		self.parse_chart(off, self.parent)
 
@@ -184,6 +184,31 @@ def add_table_ref(hd, size, data, off):
 		table_str = str(table)
 	add_iter(hd, 'Table', table_str, off - 2, 2, '<H')
 	return off
+
+def add_chart_type(hd, size, data, off):
+	(typ, off) = rdata(data, off, '<B')
+	type_map = {
+		# 2D
+		0x0: 'column', 0x1: 'column - stacked', 0x2: 'column with overlap', 0x3: 'column - percent stacked', 0x4: 'column with values',
+		0x5: 'bar', 0x6: 'bar - stacked', 0x7: 'bar with overlap', 0x8: 'bar - percent stacked', 0x9: 'bar with values',
+		0xa: 'area - stacked', 0xb: 'area - percent stacked',
+		0xc: 'pie', 0xd: 'pie with values', 0xe: 'pie - percent',
+		0xf: 'XY - points only', 0x10: 'XY - points and lines',
+		0x11: 'line - lines only', 0x12: 'line - points and lines',
+		0x13: 'points', 0x14: 'joined points',
+		0x15: 'joined',
+		# 3D
+		0x16: '3D column', 0x17: '3D column - deep', 0x18: '3D column cylinder - deep', 0x19: '3D column pyramid - deep',
+		0x1a: '3D bar', 0x1b: '3D bar - deep', 0x1c: '3D bar cylinder - deep', 0x1d: '3D bar pyramid - deep',
+		0x1e: '3D lines',
+		0x1f: '3D area',
+		0x20: '3D pie', 0x21: '3D pie with values', 0x22: '3D pie - percent',
+	}
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, '<B')
+	(two_d, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Selected 2D', key2txt(two_d, type_map), off - 1, 1, '<B')
+	(three_d, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Selected 3D', key2txt(three_d, type_map), off - 1, 1, '<B')
 
 def add_sheet_info(hd, size, data):
 	off = add_record(hd, size, data)
@@ -435,10 +460,17 @@ def add_macro(hd, size, data):
 	off = add_text(hd, size, data, off, 'Name')
 	off = add_text(hd, size, data, off, 'Path')
 
+def add_chart(hd, size, data):
+	off = add_record(hd, size, data)
+	add_chart_type(hd, size, data, off)
+
 def add_gc6_header(hd, size, data):
 	off = 0
 	(ident, off) = rdata(data, off, '32s')
 	add_iter(hd, 'Identifier', ident, off - 32, 32, '32s')
+
+def add_preamble(hd, size, data):
+	add_chart_type(hd, size, data, 6)
 
 def add_section(hd, size, data):
 	off = 0
@@ -522,7 +554,9 @@ c602_ids = {
 	'tc6_named_range': add_named_range,
 	'tc6_table': add_table,
 	'tc6_macro': add_macro,
+	'tc6_chart': add_chart,
 	'gc6_header': add_gc6_header,
+	'gc6_preamble': add_preamble,
 	'gc6_title': add_title,
 	'gc6_categories': add_categories,
 	'gc6_values': add_values,
