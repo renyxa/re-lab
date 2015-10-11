@@ -116,7 +116,7 @@ class gc6_parser:
 		off += 88
 		add_pgiter(self.page, 'Legend', 'c602', 'gc6_legend', self.data[off:off + 87], parent)
 		off += 87
-		add_pgiter(self.page, 'Trailer', 'c602', '', self.data[off:], parent)
+		add_pgiter(self.page, 'Series', 'c602', 'gc6_series', self.data[off:], parent)
 
 def format_row(number):
 	return '%d' % (number + 1)
@@ -491,6 +491,10 @@ def add_legend(hd, size, data):
 	(switch, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Switch series and categories', bool(switch), off - 1, 1, '<B')
 
+def add_series(hd, size, data):
+	off = 0x12
+	add_range(hd, size, data, off)
+
 c602_ids = {
 	'tc6_header': add_tc6_header,
 	'tc6_record': add_record,
@@ -523,6 +527,7 @@ c602_ids = {
 	'gc6_categories': add_categories,
 	'gc6_values': add_values,
 	'gc6_legend': add_legend,
+	'gc6_series': add_series,
 }
 
 def parse_spreadsheet(data, page, parent):
