@@ -523,6 +523,7 @@ COMMON_OBJECTS = {
 		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
 		7: (None, {1: (None, {2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
+		11: ('Links', {1: ('Link', 'Text address')}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 	}),
 	2011: ('Drawable shape',),
@@ -579,6 +580,9 @@ COMMON_OBJECTS = {
 			6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
 			10: ('Paragraph style ref', 'Ref'),
 		}),
+	}),
+	2032: ('Link', {
+		2: ('Href', string),
 	}),
 	3005: ('Image', {
 		1: ('Shape placement',),
