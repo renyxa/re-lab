@@ -609,7 +609,14 @@ COMMON_OBJECTS = {
 	}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
-	3016: ('Image style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
+	3016: ('Image style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Properties',{
+			1: ('Stroke',),
+			2: ('Opacity?', float_),
+		}),
+	}),
 	3056: (None, {3: ('Author ref', 'Ref')}),
 	4000: ('Calculation Engine', {
 		3: ('A ref', 'Ref'),
