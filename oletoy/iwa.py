@@ -423,14 +423,7 @@ MESSAGES = {
 		20: ('Space after', float_),
 		21: ('Space before', float_),
 		25: ('Tabs', {1: ('Tab stop', {1: ('Pos', float_)})}),
-		32: ('Paragraph stroke', {
-			1: ('Color',),
-			2: ('Width', float_),
-			6: ('Stroke', {
-				3: ('Number of elements', int64),
-				4: ('Pattern element', float_),
-			}),
-		}),
+		32: ('Paragraph stroke', 'Stroke'),
 		40: ('List style ref', 'Ref'),
 	},
 	'Paragraph style': {
@@ -489,6 +482,17 @@ MESSAGES = {
 		7: ('Aspect ratio locked?', bool_),
 	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
+	'Stroke': {
+		1: ('Color',),
+		2: ('Width', float_),
+		3: ('Cap?', int64),
+		4: ('Join?', int64),
+		5: ('Miter limit', float_),
+		6: ('Stroke', {
+			3: ('Number of elements', int64),
+			4: ('Pattern element', float_),
+		}),
+	},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
 	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
@@ -535,7 +539,10 @@ COMMON_OBJECTS = {
 		1: ('Style', {
 			1: ('Style info',),
 			10: ('Number of properties', int64),
-			11: ('Properties', {}),
+			11: ('Properties', {
+				2: ('Stroke',),
+				3: ('Opacity', float_),
+			}),
 		}),
 		10: ('Number of properties', int64),
 		11: ('Text properties', {
