@@ -404,12 +404,6 @@ MESSAGES = {
 		3: ('Transformation?', enum({3: 'Normal', 7: 'Horizontal flip'})),
 		4: ('Angle', float_),
 	},
-	'Graphic properties': {
-		2: ('Vertical alignment', enum({0: 'Top', 1: 'Center', 2: 'Bottom'})),
-		4: ('Layout properties?', {1: ('Columns?', {1: ('Number of columns?', int64)})}),
-		6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
-		10: ('Paragraph style ref', 'Ref'),
-	},
 	'IWA file': {
 		1: ('First Object ID', int64),
 		2: ('Name', string),
@@ -538,9 +532,18 @@ COMMON_OBJECTS = {
 		14: ('List label geometry', {1: ('Scale', float_), 2: ('Offset', float_), 3: ('Align?', int64)}),
 	}),
 	2025: ('Graphic style', {
-		1: ('Paragraph style',),
+		1: ('Style', {
+			1: ('Style info',),
+			10: ('Number of properties', int64),
+			11: ('Properties', {}),
+		}),
 		10: ('Number of properties', int64),
-		11: ('Properties', 'Graphic properties'),
+		11: ('Text properties', {
+			2: ('Vertical alignment', enum({0: 'Top', 1: 'Center', 2: 'Bottom'})),
+			4: ('Layout properties?', {1: ('Columns?', {1: ('Number of columns?', int64)})}),
+			6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
+			10: ('Paragraph style ref', 'Ref'),
+		}),
 	}),
 	3005: ('Image', {
 		1: ('Shape placement',),
