@@ -413,6 +413,7 @@ MESSAGES = {
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
 	},
 	'Other file': {1: ('ID', int64), 3: ('Path', string), 5: ('Template', string)},
+	'Padding': {1: ('Left', float_), 2: ('Top', float_), 3: ('Right', float_), 4: ('Bottom', float_),},
 	'Paragraph properties': {
 		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify'})),
 		4: ('Default tab stops', float_),
@@ -541,6 +542,26 @@ COMMON_OBJECTS = {
 		11: ('List label type?', enum({2: 'Bullet', 3: 'A'})),
 		13: ('List label indent', float_),
 		14: ('List label geometry', {1: ('Scale', float_), 2: ('Offset', float_), 3: ('Align?', int64)}),
+	}),
+	2024: ('Layout style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Properties', {
+			7: ('Columns', {
+				1: ('Equal columns', {
+					1: ('Number of columns', int64),
+					2: ('Spacing', float_),
+				}),
+				2: ('Columns', {
+					1: ('First column width', float_),
+					2: ('Column', {
+						1: ('Spacing', float_),
+						2: ('Width', float_),
+					}),
+				}),
+			}),
+			9: ('Layout margins', 'Padding'),
+		}),
 	}),
 	2025: ('Graphic style', {
 		1: ('Style', {
