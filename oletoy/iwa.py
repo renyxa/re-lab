@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, key2txt, rdata
+from utils import add_iter, add_pgiter, bflag2txt, key2txt, rdata
 
 ### General utils
 
@@ -213,6 +213,17 @@ def enum(values={}):
 
 	return primitive(varlen(_enum(parse_int64)), 'enum')
 
+def flags(bits={}):
+	class _flags:
+		def __init__(self, parser):
+			self.parser = parser
+
+		def __call__(self, data, off):
+			i = self.parser(data, off)
+			return bflag2txt(i, bits)
+
+	return primitive(varlen(_flags(parse_int64)), 'flags')
+
 bool_ = primitive(varlen(parse_bool), 'bool')
 int64 = primitive(varlen(parse_int64), 'int64')
 sint64 = primitive(varlen(parse_sint64), 'sint64')
@@ -403,7 +414,7 @@ MESSAGES = {
 	'Geometry': {
 		1: ('Position',),
 		2: ('Size',),
-		3: ('Transformation?', enum({3: 'Normal', 7: 'Horizontal flip'})),
+		3: ('Flags', flags({1: 'disable h. autosize', 2: 'disable v. autosize', 4: 'flip h.'})),
 		4: ('Angle', float_),
 	},
 	'IWA file': {
@@ -487,7 +498,8 @@ MESSAGES = {
 	'Shape placement': {
 		1: ('Geometry',),
 		2: ('Parent ref', 'Ref'),
-		7: ('Aspect ratio locked?', bool_),
+		5: ('Locked', bool_),
+		7: ('Aspect ratio locked', bool_),
 	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Stroke': {
@@ -983,6 +995,11 @@ def add_enum(hd, size, data):
 	i = parse_int64(data, off)
 	add_iter(hd, 'Enum value', i, off, size - off, '%ds' % (size - off))
 
+def add_flags(hd, size, data):
+	off = add_field(hd, size, data)
+	i = parse_int64(data, off)
+	add_iter(hd, 'Flags', '0x%x' % i, off, size - off, '%ds' % (size - off))
+
 def add_int64(hd, size, data):
 	off = add_field(hd, size, data)
 	i = parse_int64(data, off)
@@ -1082,6 +1099,7 @@ iwa_ids = {
 	'iwa_field': add_field,
 	'iwa_fixed32': add_fixed32,
 	'iwa_fixed64': add_fixed64,
+	'iwa_flags': add_flags,
 	'iwa_float': add_float,
 	'iwa_int64': add_int64,
 	'iwa_object': add_iwa_object,
