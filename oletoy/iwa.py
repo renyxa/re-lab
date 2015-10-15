@@ -499,6 +499,7 @@ MESSAGES = {
 		1: ('Geometry',),
 		2: ('Parent ref', 'Ref'),
 		5: ('Locked', bool_),
+		6: ('Comment ref', 'Ref'),
 		7: ('Aspect ratio locked', bool_),
 	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
@@ -541,7 +542,7 @@ COMMON_OBJECTS = {
 	2011: ('Drawable shape',),
 	2014: ('Sticky note', {
 		1: ('Drawable shape',),
-		2: (None, 'Ref'),
+		2: ('Comment ref', 'Ref'),
 	}),
 	2021: ('Character style', {
 		1: ('Style info',),
@@ -629,7 +630,11 @@ COMMON_OBJECTS = {
 			2: ('Opacity?', float_),
 		}),
 	}),
-	3056: (None, {3: ('Author ref', 'Ref')}),
+	3056: ('Comment', {
+		1: ('Text', string),
+		2: ('Modification time?', {1: ('Timestamp', double_)}),
+		3: ('Author ref', 'Ref')
+	}),
 	4000: ('Calculation Engine', {
 		3: ('A ref', 'Ref'),
 		5: ('Language', string),
