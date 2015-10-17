@@ -183,6 +183,7 @@ class primitive:
 		self.name = name # A hack to get showing of packed arrays working
 		self.primitive = True
 		self.structured = False
+		self.custom = False
 		self.size = parser.size
 		self.visualizer = 'iwa_%s' % name
 
@@ -238,6 +239,7 @@ class bytes_:
 	def __init__(self, visualizer='iwa_field'):
 		self.primitive = False
 		self.structured = False
+		self.custom = False
 		self.visualizer = visualizer
 
 	def __call__(self, data, off, start, end):
@@ -245,11 +247,18 @@ class bytes_:
 
 string = bytes_('iwa_string')
 
+def custom(handler, wrapped=bytes_()):
+	if isinstance(wrapped, dict):
+		wrapped = message(wrapped)
+	wrapped.custom = handler
+	return wrapped
+
 class packed:
 	def __init__(self, item):
 		self.item = item
 		self.primitive = False
 		self.structured = False
+		self.custom = False
 		if item.name:
 			self.visualizer = 'iwa_packed_%s' % item.name
 		else:
@@ -283,6 +292,7 @@ class message:
 			self.desc = {}
 		self.primitive = False
 		self.structured = True
+		self.custom = False
 		self.visualizer = None
 
 	def __call__(self, data, off, start, end):
@@ -330,6 +340,7 @@ class message:
 			def __init__(self):
 				self.primitive = False
 				self.structured = False
+				self.custom = False
 				self.visualizer = None
 
 			def __call__(self, data, off, start, end):
@@ -973,6 +984,8 @@ class IWAParser(object):
 						if obj.desc.desc[k][0]:
 							n = '%s: %s' % (n, obj.desc.desc[k][0])
 					self._add_pgiter(n, e, e.start, e.end, it, True)
+		if obj.desc.custom:
+			obj.desc.custom(self, self.page, self.data[start:end], it)
 
 	def _desc(self, obj_type):
 		desc = None
