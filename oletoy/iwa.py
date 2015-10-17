@@ -658,7 +658,7 @@ COMMON_OBJECTS = {
 		1: ('UUID', string),
 		3: ('Table style ref', 'Ref'),
 		4: ('Grid', {
-			1: (None, {2: ('Row headers ref', 'Ref')}),
+			1: ('Row headers?', {2: ('Row headers ref', 'Ref')}),
 			2: ('Column headers ref', 'Ref'),
 			4: ('Data list ref', 'Ref'),
 			5: ('A data list ref', 'Ref'),
@@ -673,6 +673,10 @@ COMMON_OBJECTS = {
 		6: ('Number of rows', int64),
 		7: ('Number of columns', int64),
 		8: ('Name', string),
+		9: ('Number of header rows?', int64),
+		10: ('Number of header columns?', int64),
+		12: ('Header rows frozen?', bool_),
+		13: ('Header columns frozen?', bool_),
 		17: ('Default column width?', double_),
 		18: ('A cell style ref', 'Ref'),
 		19: ('A cell style ref', 'Ref'),
@@ -685,13 +689,44 @@ COMMON_OBJECTS = {
 		30: ('A paragraph style ref', 'Ref'),
 		36: ('A graphic style ref', 'Ref'),
 	}),
-	6003: ('Table style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
-	6004: ('Cell style', {1: ('Style info',), 10: ('Number of properties', int64), 11: ('Properties',)}),
+	6003: ('Table style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Properties', {
+			46: ('A stroke', 'Stroke'),
+			47: ('A stroke', 'Stroke'),
+			48: ('A stroke', 'Stroke'),
+			49: ('A stroke', 'Stroke'),
+			50: ('A stroke', 'Stroke'),
+			51: ('A stroke', 'Stroke'),
+			52: ('A stroke', 'Stroke'),
+			53: ('A stroke', 'Stroke'),
+			54: ('A stroke', 'Stroke'),
+			55: ('A stroke', 'Stroke'),
+			56: ('A stroke', 'Stroke'),
+			57: ('A stroke', 'Stroke'),
+			58: ('A stroke', 'Stroke'),
+			59: ('A stroke', 'Stroke'),
+			60: ('A stroke', 'Stroke'),
+			61: ('A stroke', 'Stroke'),
+		})
+	}),
+	6004: ('Cell style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Properties', {
+			10: ('A stroke', 'Stroke'),
+			11: ('A stroke', 'Stroke'),
+			12: ('A stroke', 'Stroke'),
+			13: ('A stroke', 'Stroke'),
+		}),
+	}),
 	6005: ('Data list', {
+		1: ('Type?', enum({1: 'data', 2: 'format'})),
 		2: ('Next cell index?', int64),
 		3: ('Cell', {
 			1: ('Index', int64),
-			2: ('Type?', int64),
+			2: ('Type?', enum({1: 'data', 2: 'format'})),
 			3: ('Value', string),
 			5: ('Formula', {
 				1: ('Token array', { # formula is saved in RPN
@@ -713,7 +748,11 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6006: ('Headers', {
-		2: ('Header', {2: ('Size', float_)}),
+		2: ('Header', {
+			1: ('Row/Column?', int64),
+			2: ('Size', float_),
+			4: ('Number of columns/rows?', int64),
+		}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
 	11006: ('Object index', {
