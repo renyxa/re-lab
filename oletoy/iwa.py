@@ -379,6 +379,31 @@ class message:
 
 ### File parser
 
+def handle_tile_row_defs(parser, page, data, parent):
+	off = find_var(data, 0)
+	off = find_var(data, off)
+	parser.tile_row_data = data[off:]
+	parser.tile_row_iter = parent
+
+def handle_tile_row_offsets(parser, page, data, parent):
+	parser.tile_row_offsets = {}
+	off = find_var(data, 0)
+	off = find_var(data, off)
+	n = 0
+	while off + 2 <= len(data):
+		(offset, off) = rdata(data, off, '<H')
+		if offset != 0xffff:
+			parser.tile_row_offsets[offset] = n
+		n += 1
+
+def handle_tile_row(parser, page, data, parent):
+	data = parser.tile_row_data
+	offsets = sorted(parser.tile_row_offsets.keys())
+	for (start, end) in zip(offsets, offsets[1:] + [len(data)]):
+		add_pgiter(page, 'Column %d' % parser.tile_row_offsets[start], 'iwa', 'iwa_tile_row', data[start:end], parser.tile_row_iter)
+	parser.tile_row_data = ''
+	parser.tile_row_offsets = {}
+
 FUNCTIONS = {
 	20: 'CLEAN',
 	22: 'COLUMN',
@@ -701,6 +726,13 @@ COMMON_OBJECTS = {
 		30: ('A paragraph style ref', 'Ref'),
 		36: ('A graphic style ref', 'Ref'),
 	}),
+	6002: ('Tile', {
+		5: ('Row', custom(handle_tile_row, {
+			1: ('Row', int64),
+			3: ('Definitions', custom(handle_tile_row_defs)),
+			4: ('Definition offsets', custom(handle_tile_row_offsets, bytes_('iwa_tile_offsets'))),
+		})),
+	}),
 	6003: ('Table style', {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
@@ -907,6 +939,9 @@ class IWAParser(object):
 		self.page = page
 		self.parent = parent
 		self.objects = objects
+		self.tile_row_data = None
+		self.tile_row_iter = None
+		self.tile_row_offsets = {}
 
 	def parse(self):
 		off = 0
@@ -1156,6 +1191,36 @@ def add_varint(hd, size, data):
 	add_iter(hd, 'Signed int', s, off, size - off, '%ds' % (size - off))
 	add_iter(hd, 'Bool', b, off, size - off, '%ds' % (size - off))
 
+def add_tile_offsets(hd, size, data):
+	off = add_field(hd, size, data)
+	n = 0
+	while off + 2 <= size:
+		(offset, off) = rdata(data, off, '<H')
+		offset_str = offset
+		if offset == 0xffff:
+			offset_str = 'none'
+		add_iter(hd, 'Column %d' % n, offset_str, off - 2, 2, '<H')
+		n += 1
+
+def add_tile_row(hd, size, data):
+	off = 2
+	type_map = {0: 'empty', 2: 'number', 3: 'text', 5: 'date', 7: 'duration'}
+	(typ, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Cell type', key2txt(typ, type_map), off - 1, 1, '<B')
+	off += 13
+	if typ != 0:
+		(cell, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Cell', cell, off - 4, 4, '<I')
+	if typ == 2:
+		(value, off) = rdata(data, off, '<d')
+		add_iter(hd, 'Value', value, off - 8, 8, '<d')
+	elif typ == 5:
+		(value, off) = rdata(data, off, '<d')
+		add_iter(hd, 'Date', value, off - 8, 8, '<d') # TODO: interpret
+	elif typ == 7:
+		(value, off) = rdata(data, off, '<d')
+		add_iter(hd, 'Duration', value, off - 8, 8, '<d') # TODO: interpret
+
 iwa_ids = {
 	'iwa_32bit': add_32bit,
 	'iwa_64bit': add_64bit,
@@ -1184,6 +1249,9 @@ iwa_ids = {
 	'iwa_sint64': add_sint64,
 	'iwa_string': add_string,
 	'iwa_varint': add_varint,
+
+	'iwa_tile_offsets': add_tile_offsets,
+	'iwa_tile_row': add_tile_row,
 }
 
 ### Entry point
