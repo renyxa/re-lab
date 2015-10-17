@@ -660,15 +660,16 @@ COMMON_OBJECTS = {
 		4: ('Grid', {
 			1: ('Row headers?', {2: ('Row headers ref', 'Ref')}),
 			2: ('Column headers ref', 'Ref'),
-			4: ('Data list ref', 'Ref'),
-			5: ('A data list ref', 'Ref'),
-			6: ('A data list ref', 'Ref'),
-			11: ('A data list ref', 'Ref'),
-			12: ('A data list ref', 'Ref'),
-			16: ('A data list ref', 'Ref'),
-			17: ('A data list ref', 'Ref'),
-			18: ('A data list ref', 'Ref'),
-			19: ('A data list ref', 'Ref'),
+			4: ('Text data source ref', 'Ref'),
+			5: ('A data source ref', 'Ref'),
+			6: ('A data source ref', 'Ref'),
+			11: ('Format data source ref', 'Ref'),
+			12: ('A data source ref', 'Ref'),
+			16: ('Menu data source ref', 'Ref'),
+			17: ('A data source ref', 'Ref'),
+			18: ('A data source ref', 'Ref'),
+			19: ('A data source ref', 'Ref'),
+			20: ('A data source ref', 'Ref'),
 		}),
 		6: ('Number of rows', int64),
 		7: ('Number of columns', int64),
@@ -721,13 +722,14 @@ COMMON_OBJECTS = {
 			13: ('A stroke', 'Stroke'),
 		}),
 	}),
-	6005: ('Data list', {
-		1: ('Type?', enum({1: 'data', 2: 'format'})),
+	6005: ('Data source', {
+		1: ('Type', enum({1: 'text', 2: 'format', 4: 'cell style', 7: 'menu'})),
 		2: ('Next cell index?', int64),
 		3: ('Cell', {
 			1: ('Index', int64),
-			2: ('Type?', enum({1: 'data', 2: 'format'})),
-			3: ('Value', string),
+			2: ('Type?', int64),
+			3: ('Text', string),
+			4: ('Style ref', 'Ref'),
 			5: ('Formula', {
 				1: ('Token array', { # formula is saved in RPN
 					1: ('Token', {
@@ -755,6 +757,14 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
+	6206: ('Menu choices', {
+		2: ('Cell', {
+			1: ('Type?', int64),
+			5: ('Text cell?', {
+				1: ('Text', string),
+			}),
+		}),
+	}),
 	11006: ('Object index', {
 		1: ('Active object ref?', int64),
 		3: ('IWA file',),
