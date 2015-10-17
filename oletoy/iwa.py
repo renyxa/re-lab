@@ -234,16 +234,16 @@ sfixed64 = primitive(fixed(8, '<q'), 'sfixed64')
 float_ = primitive(fixed(4, '<f'), 'float')
 double_ = primitive(fixed(8, '<d'), 'double')
 
-class string_:
-	def __init__(self):
+class bytes_:
+	def __init__(self, visualizer='iwa_field'):
 		self.primitive = False
 		self.structured = False
-		self.visualizer = 'iwa_string'
+		self.visualizer = visualizer
 
 	def __call__(self, data, off, start, end):
 		return result(data[off:end], self, start, end)
 
-string = string_()
+string = bytes_('iwa_string')
 
 class packed:
 	def __init__(self, item):
