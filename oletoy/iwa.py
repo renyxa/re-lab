@@ -696,9 +696,10 @@ COMMON_OBJECTS = {
 		4: ('Grid', {
 			1: ('Row headers?', {2: ('Row headers ref', 'Ref')}),
 			2: ('Column headers ref', 'Ref'),
+			3: ('Cells', {1: ('Tile', {2: ('Tile ref', 'Ref')})}),
 			4: ('Text data source ref', 'Ref'),
-			5: ('A data source ref', 'Ref'),
-			6: ('A data source ref', 'Ref'),
+			5: ('Cell style data source ref', 'Ref'),
+			6: ('Formula data source ref', 'Ref'),
 			11: ('Format data source ref', 'Ref'),
 			12: ('A data source ref', 'Ref'),
 			16: ('Menu data source ref', 'Ref'),
@@ -727,8 +728,13 @@ COMMON_OBJECTS = {
 		36: ('A graphic style ref', 'Ref'),
 	}),
 	6002: ('Tile', {
+		1: ('Last column', int64),
+		2: ('Last row', int64),
+		3: ('Number of cells', int64),
+		4: ('Number of rows', int64),
 		5: ('Row', custom(handle_tile_row, {
 			1: ('Row', int64),
+			2: ('Number of cells', int64),
 			3: ('Definitions', custom(handle_tile_row_defs)),
 			4: ('Definition offsets', custom(handle_tile_row_offsets, bytes_('iwa_tile_offsets'))),
 		})),
@@ -766,10 +772,10 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6005: ('Data source', {
-		1: ('Type', enum({1: 'text', 2: 'format', 4: 'cell style', 7: 'menu'})),
-		2: ('Next cell index?', int64),
-		3: ('Cell', {
-			1: ('Index', int64),
+		1: ('Type', enum({1: 'text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu'})),
+		2: ('Next ID', int64),
+		3: ('Entry', {
+			1: ('ID', int64),
 			2: ('Type?', int64),
 			3: ('Text', string),
 			4: ('Style ref', 'Ref'),
@@ -786,9 +792,22 @@ COMMON_OBJECTS = {
 					}),
 				}),
 			}),
-			6: (None, {
+			6: ('Format', {
 				1: ('Implicit format type', int64),
+				2: ('Format decimal places', int64),
+				3: ('Format currency code', string),
 				14: ('Date format', string),
+				21: ('Min. value', double_),
+				22: ('Max. value', double_),
+				23: ('Increment', double_),
+				25: ('Slider orientation?', int64),
+				26: ('Slider position?', int64),
+			}),
+			8: ('Custom format', {
+				1: ('Format name', string),
+				3: ('Format', { # TODO: I think this is the same type as 6: Format
+					18: ('Format string', string),
+				}),
 			}),
 		}),
 	}),
@@ -801,9 +820,9 @@ COMMON_OBJECTS = {
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
 	6206: ('Menu choices', {
-		2: ('Cell', {
-			1: ('Type?', int64),
-			5: ('Text cell?', {
+		2: ('Choice', {
+			1: ('Type', enum({1: 'empty', 5: 'text'})),
+			5: ('Text value', {
 				1: ('Text', string),
 			}),
 		}),
@@ -824,7 +843,7 @@ KEYNOTE_OBJECTS = {
 			4: ('Calculation Engine Ref', 'Ref'),
 			5: ('View State Ref', 'Ref'),
 			6: (None, 'Ref'),
-			7: ('Data List Ref', 'Ref'),
+			7: ('Custom format data source ref?', 'Ref'),
 			9: ('Template', string)
 		})
 	}),
@@ -1204,19 +1223,35 @@ def add_tile_offsets(hd, size, data):
 
 def add_tile_row(hd, size, data):
 	off = 2
-	type_map = {0: 'empty', 2: 'number', 3: 'text', 5: 'date', 7: 'duration'}
+	type_map = {0: 'empty', 2: 'number', 3: 'text', 5: 'date', 6: 'formula', 7: 'duration'}
 	(typ, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Cell type', key2txt(typ, type_map), off - 1, 1, '<B')
-	off += 13
-	if typ != 0:
-		(cell, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Cell', cell, off - 4, 4, '<I')
+	off += 4
+	# TODO: This is highly speculative. Check with other presentations
+	# created with the current version of Keynote.
+	(flags, off) = rdata(data, off, '<B')
+	off += 4
+	(style, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
+	if typ in (2, 5, 7) and flags != 0:
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format ID', fmt, off - 4, 4, '<I')
 	if typ == 2:
 		(value, off) = rdata(data, off, '<d')
 		add_iter(hd, 'Value', value, off - 8, 8, '<d')
+	elif typ == 3:
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format ID', fmt, off - 4, 4, '<I')
+		(text, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Text ID', text, off - 4, 4, '<I')
 	elif typ == 5:
 		(value, off) = rdata(data, off, '<d')
 		add_iter(hd, 'Date', value, off - 8, 8, '<d') # TODO: interpret
+	elif typ == 6:
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Formula ID', fmt, off - 4, 4, '<I')
+		(text, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format ID?', text, off - 4, 4, '<I')
 	elif typ == 7:
 		(value, off) = rdata(data, off, '<d')
 		add_iter(hd, 'Duration', value, off - 8, 8, '<d') # TODO: interpret
