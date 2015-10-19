@@ -447,12 +447,28 @@ MESSAGES = {
 	},
 	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
 	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
+	'Fill': {
+		1: ('Color',),
+		2: ('Gradient',),
+		3: ('Image', {
+			2: ('Type', enum({0: 'original size', 1: 'stretch', 2: 'tile', 3: 'scale to fill', 4: 'scale to fit'})),
+			3: ('Color'),
+			4: ('Size',),
+			6: ('File ref', 'Ref'),
+		}),
+	},
 	'Geometry': {
 		1: ('Position',),
 		2: ('Size',),
 		3: ('Flags', flags({1: 'disable h. autosize', 2: 'disable v. autosize', 4: 'flip h.'})),
 		4: ('Angle', float_),
 	},
+    'Gradient': {
+        1: ('Type', enum({0: 'linear', 1: 'radial'})),
+        2: ('Gradient stop', {1: ('Color',), 2: ('Fraction', float_), 3: ('Inflection', float_)}),
+        3: ('Opacity', float_),
+        5: ('Angle', {2: ('Angle', float_)}),
+    },
 	'IWA file': {
 		1: ('First Object ID', int64),
 		2: ('Name', string),
@@ -774,10 +790,11 @@ COMMON_OBJECTS = {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties', {
-			10: ('A stroke', 'Stroke'),
-			11: ('A stroke', 'Stroke'),
-			12: ('A stroke', 'Stroke'),
-			13: ('A stroke', 'Stroke'),
+            1: ('Fill',),
+			10: ('Top border', 'Stroke'),
+			11: ('Right border', 'Stroke'),
+			12: ('Bottom border', 'Stroke'),
+			13: ('Left border', 'Stroke'),
 		}),
 	}),
 	6005: ('Data source', {
