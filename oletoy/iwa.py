@@ -441,6 +441,7 @@ MESSAGES = {
 		16: ('Ligatures', enum({0: 'All', 1: 'Default', 2: 'None'})),
 		18: ('Outline color', 'Color'),
 		19: ('Outline', float_),
+		21: ('Text shadow', 'Shadow'),
 		23: ('Strikethru color', 'Color'),
 		26: ('Text background', 'Color'),
 		27: ('Tracking', float_),
@@ -542,6 +543,13 @@ MESSAGES = {
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
+	'Shadow': {
+		1: ('Color',),
+		2: ('Angle', float_),
+		3: ('Offset', float_),
+		4: ('Blur', int64),
+		5: ('Opacity', float_),
+	},
 	'Shape': {
 		1: ('Shape placement',),
 		2: ('Graphic style ref', 'Ref'),
