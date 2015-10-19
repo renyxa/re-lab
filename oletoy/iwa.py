@@ -711,8 +711,9 @@ COMMON_OBJECTS = {
 		6: ('Number of rows', int64),
 		7: ('Number of columns', int64),
 		8: ('Name', string),
-		9: ('Number of header rows?', int64),
-		10: ('Number of header columns?', int64),
+		9: ('Number of header rows', int64),
+		10: ('Number of header columns', int64),
+		11: ('Number of footer rows', int64),
 		12: ('Header rows frozen?', bool_),
 		13: ('Header columns frozen?', bool_),
 		17: ('Default column width?', double_),
@@ -724,7 +725,7 @@ COMMON_OBJECTS = {
 		25: ('A paragraph style ref', 'Ref'),
 		26: ('A paragraph style ref', 'Ref'),
 		27: ('A paragraph style ref', 'Ref'),
-		30: ('A paragraph style ref', 'Ref'),
+		30: ('Table Name paragraph style ref', 'Ref'),
 		36: ('A graphic style ref', 'Ref'),
 	}),
 	6002: ('Tile', {
@@ -743,20 +744,28 @@ COMMON_OBJECTS = {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties', {
+            2: ('Alternating rows', {1: ('Color',)}),
+            22: ('Fit row height', bool_),
+            33: ('Gridlines in body rows', bool_),
+            34: ('Gridlines in body columns', bool_),
+            38: ('Table outline', bool_),
+            42: ('Gridlines in header rows', bool_),
+            43: ('Gridlines in header columns', bool_),
+            44: ('Gridlines in footer rows', bool_),
 			46: ('A stroke', 'Stroke'),
-			47: ('A stroke', 'Stroke'),
+			47: ('A stroke', 'Stroke'), # related to table outline
 			48: ('A stroke', 'Stroke'),
 			49: ('A stroke', 'Stroke'),
-			50: ('A stroke', 'Stroke'),
+			50: ('A stroke', 'Stroke'), # related to table outline
 			51: ('A stroke', 'Stroke'),
 			52: ('A stroke', 'Stroke'),
 			53: ('A stroke', 'Stroke'),
 			54: ('A stroke', 'Stroke'),
-			55: ('A stroke', 'Stroke'),
+			55: ('A stroke', 'Stroke'), # related to table outline
 			56: ('A stroke', 'Stroke'),
 			57: ('A stroke', 'Stroke'),
-			58: ('A stroke', 'Stroke'),
-			59: ('A stroke', 'Stroke'),
+			58: ('A stroke', 'Stroke'), # related to table outline
+			59: ('A stroke', 'Stroke'), # related to table outline
 			60: ('A stroke', 'Stroke'),
 			61: ('A stroke', 'Stroke'),
 		})
