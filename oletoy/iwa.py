@@ -447,6 +447,19 @@ MESSAGES = {
 		27: ('Tracking', float_),
 	},
 	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
+	'Columns': {
+		1: ('Equal columns', {
+			1: ('Number of columns', int64),
+			2: ('Spacing', float_),
+		}),
+		2: ('Columns', {
+			1: ('First column width', float_),
+			2: ('Column', {
+				1: ('Spacing', float_),
+				2: ('Width', float_),
+			}),
+		}),
+	},
 	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
 	'Fill': {
 		1: ('Color',),
@@ -553,6 +566,9 @@ MESSAGES = {
 		3: ('Offset', float_),
 		4: ('Blur', int64),
 		5: ('Opacity', float_),
+		7: ('Type', enum({0: 'drop', 1: 'contact', 2: 'curved'})),
+		9: ('Contact shadow', {2: ('Perspective', float_)}),
+		10: ('Curved shadow', {1: ('Balance', float_)}),
 	},
 	'Shape': {
 		1: ('Shape placement',),
@@ -577,6 +593,8 @@ MESSAGES = {
 			3: ('Number of elements', int64),
 			4: ('Pattern element', float_),
 		}),
+		7: ('Texture', {2: ('Name', string)}),
+		8: ('Picture frame', {2: ('Name', string), 3: ('Scale', float_)}),
 	},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
@@ -625,19 +643,7 @@ COMMON_OBJECTS = {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties', {
-			7: ('Columns', {
-				1: ('Equal columns', {
-					1: ('Number of columns', int64),
-					2: ('Spacing', float_),
-				}),
-				2: ('Columns', {
-					1: ('First column width', float_),
-					2: ('Column', {
-						1: ('Spacing', float_),
-						2: ('Width', float_),
-					}),
-				}),
-			}),
+			7: ('Columns',),
 			9: ('Layout margins', 'Padding'),
 		}),
 	}),
@@ -646,14 +652,18 @@ COMMON_OBJECTS = {
 			1: ('Style info',),
 			10: ('Number of properties', int64),
 			11: ('Properties', {
-				2: ('Stroke',),
+				1: ('Fill',),
+				2: ('Border', 'Stroke'),
 				3: ('Opacity', float_),
+				4: ('Shadow',),
+				5: ('Reflection', {1: ('Transparency', float_)}),
 			}),
 		}),
 		10: ('Number of properties', int64),
-		11: ('Text properties', {
+		11: ('Layout properties', {
+			1: ('Shrink text to fit', bool_),
 			2: ('Vertical alignment', enum({0: 'Top', 1: 'Center', 2: 'Bottom'})),
-			4: ('Layout properties?', {1: ('Columns?', {1: ('Number of columns?', int64)})}),
+			4: ('Columns',),
 			6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
 			10: ('Paragraph style ref', 'Ref'),
 		}),
