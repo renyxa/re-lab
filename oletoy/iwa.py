@@ -483,10 +483,14 @@ MESSAGES = {
 		4: ('Default tab stops', float_),
 		6: ('Text background', 'Color'),
 		7: ('First line indent', float_),
-		9: ('Keep lines together?', bool_),
-		10: ('Keep with next?', bool_),
+		8: ('Hyphenate', bool_),
+		9: ('Keep lines together', bool_),
+		10: ('Keep with next', bool_),
 		11: ('Left indent', float_),
-		13: ('Line spacing', {2: ('Amount', float_)}),
+		13: ('Line spacing', {
+			1: ('Type', enum({0: 'lines', 1: 'at least', 2: 'exactly', 4: 'between'})),
+			2: ('Amount', float_)
+		}),
 		14: ('Page break before', bool_),
 		15: ('Border type', enum({1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
 		17: ('Paragraph rule offset', 'Position'),
