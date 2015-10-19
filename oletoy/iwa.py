@@ -438,7 +438,7 @@ MESSAGES = {
 		12: ('Strikethru', bool_),
 		13: ('Capitalization', enum({0: 'None', 1: 'All caps', 2: 'Small caps', 3: 'Title'})),
 		14: ('Baseline shift', float_),
-		16: ('Ligatures', enum({0: 'All', 1: 'Default', 2: 'None'})),
+		16: ('Ligatures', enum({0: 'None', 1: 'Default', 2: 'All'})),
 		18: ('Outline color', 'Color'),
 		19: ('Outline', float_),
 		21: ('Text shadow', 'Shadow'),
