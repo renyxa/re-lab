@@ -635,9 +635,15 @@ COMMON_OBJECTS = {
 	2023: ('List style', {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
-		11: ('List label type?', enum({2: 'Bullet', 3: 'A'})),
+		11: ('List label type', enum({0: 'none', 1: 'image',  2: 'bullet', 3: 'number'})),
+		12: ('Text indent', float_),
 		13: ('List label indent', float_),
-		14: ('List label geometry', {1: ('Scale', float_), 2: ('Offset', float_), 3: ('Align?', int64)}),
+		14: ('List label geometry', {1: ('Scale', float_), 2: ('Align', float_)}),
+		15: ('Number format', enum({0: '1.', 1: '`(1)', 2: '1)', 3: 'I.', 4: '`(I)', 5: 'I)', 6: 'i.', 7: '`(i)', 8: 'i)', 9: 'A.', 10: '`(A)', 11: 'A)', 12: 'a.', 13: '`(a)', 14: 'a)'})),
+		16: ('Bullet', string),
+		17: ('Image', {3: ('Image Ref', 'Ref')}),
+		21: ('Bullet color', 'Color'),
+		25: ('Tiered', bool_),
 	}),
 	2024: ('Layout style', {
 		1: ('Style info',),
