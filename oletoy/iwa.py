@@ -743,7 +743,7 @@ COMMON_OBJECTS = {
 	}),
 	3005: ('Image', {
 		1: ('Shape placement',),
-		3: ('Image style ref', 'Ref'),
+		3: ('Media style ref', 'Ref'),
 		4: ('Size',),
 		5: ('Mask ref', 'Ref'),
 		9: ('Natural size', 'Size'),
@@ -766,7 +766,7 @@ COMMON_OBJECTS = {
 	}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
-	3016: ('Image style', {
+	3016: ('Media style', {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties',{
