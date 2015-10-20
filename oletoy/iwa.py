@@ -644,6 +644,7 @@ MESSAGES = {
 		5: ('Locked', bool_),
 		6: ('Comment ref', 'Ref'),
 		7: ('Aspect ratio locked', bool_),
+		8: ('Description', string),
 	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Stroke': {
