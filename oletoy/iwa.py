@@ -622,6 +622,7 @@ MESSAGES = {
 	},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
+	'Reflection': {1: ('Transparency', float_)},
 	'Shadow': {
 		1: ('Color',),
 		2: ('Angle', float_),
@@ -724,7 +725,7 @@ COMMON_OBJECTS = {
 				2: ('Border', 'Stroke'),
 				3: ('Opacity', float_),
 				4: ('Shadow',),
-				5: ('Reflection', {1: ('Transparency', float_)}),
+				5: ('Reflection',),
 			}),
 		}),
 		10: ('Number of properties', int64),
@@ -768,8 +769,10 @@ COMMON_OBJECTS = {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties',{
-			1: ('Stroke',),
+			1: ('Border', 'Stroke'),
 			2: ('Opacity?', float_),
+			3: ('Shadow',),
+			4: ('Reflection',),
 		}),
 	}),
 	3056: ('Comment', {
