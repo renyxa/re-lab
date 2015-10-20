@@ -809,7 +809,7 @@ COMMON_OBJECTS = {
 			11: ('Format data source ref', 'Ref'),
 			12: ('A data source ref', 'Ref'),
 			16: ('Menu data source ref', 'Ref'),
-			17: ('A data source ref', 'Ref'),
+			17: ('Paragraph text data source ref', 'Ref'),
 			18: ('A data source ref', 'Ref'),
 			19: ('A data source ref', 'Ref'),
 			20: ('A data source ref', 'Ref'),
@@ -888,7 +888,7 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6005: ('Data source', {
-		1: ('Type', enum({1: 'text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu'})),
+		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu', 8: 'paragraph text'})),
 		2: ('Next ID', int64),
 		3: ('Entry', {
 			1: ('ID', int64),
@@ -898,6 +898,7 @@ COMMON_OBJECTS = {
 			5: ('Formula',),
 			6: ('Format',),
 			8: ('Custom format',),
+			9: ('Text entry ref', 'Ref'),
 		}),
 	}),
 	6006: ('Headers', {
@@ -916,6 +917,7 @@ COMMON_OBJECTS = {
 			}),
 		}),
 	}),
+	6218: ('Text entry', {1: ('Text ref', 'Ref')}),
 	11006: ('Object index', {
 		1: ('Active object ref?', int64),
 		3: ('IWA file',),
