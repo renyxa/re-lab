@@ -494,7 +494,9 @@ MESSAGES = {
 		    267: 'star rating',
 		    268: 'duration',
 		    269: 'numeral system',
-		    270: 'custom'
+		    270: 'custom number',
+		    271: 'custom text',
+		    272: 'custom date & time',
 		})),
 		2: ('Decimal places', int64),
 		3: ('Currency code', string),
@@ -509,6 +511,7 @@ MESSAGES = {
 		14: ('Date format', string),
 		15: ('High duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
 		16: ('Low duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
+		17: ('Custom format ID', int64),
 		21: ('Min. value', double_),
 		22: ('Max. value', double_),
 		23: ('Increment', double_),
