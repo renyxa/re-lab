@@ -927,6 +927,9 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6218: ('Text entry', {1: ('Text ref', 'Ref')}),
+	6220: ('Filter', {
+		3: ('Rule', {1: ('Filter formula', {1: ('Formula',)})}),
+	}),
 	11006: ('Object index', {
 		1: ('Active object ref?', int64),
 		3: ('IWA file',),
