@@ -1313,39 +1313,45 @@ def add_tile_offsets(hd, size, data):
 		n += 1
 
 def add_tile_row(hd, size, data):
+	# The IDs point to appropriate data lists (c.f. table model)
 	off = 2
-	type_map = {0: 'empty', 2: 'number', 3: 'text', 5: 'date', 6: 'formula', 7: 'duration'}
+	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6: 'formula', 7: 'duration', 9: 'paragraph text'}
 	(typ, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Cell type', key2txt(typ, type_map), off - 1, 1, '<B')
-	off += 4
-	# TODO: This is highly speculative. Check with other presentations
-	# created with the current version of Keynote.
-	(flags, off) = rdata(data, off, '<B')
-	off += 4
-	(style, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
-	if typ in (2, 5, 7) and flags != 0:
-		(fmt, off) = rdata(data, off, '<I')
+	off += 1
+	flags_set = {
+		0x2: 'style', 0x4: 'format', 0x8: 'formula',
+		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
+		0x200: 'paragraph text',
+	}
+	(flags, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_set), off - 2, 2, '<H')
+	off += 6
+
+	if flags & 0x2:
+		(style, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
+	if flags & 0x4:
+		(fmt, off ) = rdata(data, off, '<I')
 		add_iter(hd, 'Format ID', fmt, off - 4, 4, '<I')
-	if typ == 2:
-		(value, off) = rdata(data, off, '<d')
-		add_iter(hd, 'Value', value, off - 8, 8, '<d')
-	elif typ == 3:
-		(fmt, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Format ID', fmt, off - 4, 4, '<I')
+	if flags & 0x8:
+		(formula, off ) = rdata(data, off, '<I')
+		add_iter(hd, 'Formula ID', formula, off - 4, 4, '<I')
+	if flags & 0x10:
 		(text, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Text ID', text, off - 4, 4, '<I')
-	elif typ == 5:
+		add_iter(hd, 'Simple text ID', text, off - 4, 4, '<I')
+	if flags & 0x20:
 		(value, off) = rdata(data, off, '<d')
-		add_iter(hd, 'Date', value, off - 8, 8, '<d') # TODO: interpret
-	elif typ == 6:
-		(fmt, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Formula ID', fmt, off - 4, 4, '<I')
+		value_str = value
+		if typ == 7:
+			value_str = '%.1f s' % value
+		add_iter(hd, 'Value', value_str, off - 8, 8, '<d')
+	if flags & 0x40:
+		(date, off) = rdata(data, off, '<d')
+		add_iter(hd, 'Date', date, off - 8, 8, '<d')
+	if flags & 0x200:
 		(text, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Format ID?', text, off - 4, 4, '<I')
-	elif typ == 7:
-		(value, off) = rdata(data, off, '<d')
-		add_iter(hd, 'Duration', value, off - 8, 8, '<d') # TODO: interpret
+		add_iter(hd, 'Paragraph text ID', text, off - 4, 4, '<I')
 
 iwa_ids = {
 	'iwa_32bit': add_32bit,
