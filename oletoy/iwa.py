@@ -1331,6 +1331,7 @@ def add_tile_row(hd, size, data):
 		0x2: 'style', 0x4: 'format', 0x8: 'formula',
 		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
 		0x200: 'paragraph text',
+		0xc00: 'conditional format',
 	}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', bflag2txt(flags, flags_set), off - 2, 2, '<H')
@@ -1339,6 +1340,10 @@ def add_tile_row(hd, size, data):
 	if flags & 0x2:
 		(style, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
+	if flags & 0xc00:
+		(fmt, off ) = rdata(data, off, '<I')
+		add_iter(hd, 'Conditional format ID', fmt, off - 4, 4, '<I')
+		off += 4
 	if flags & 0x4:
 		(fmt, off ) = rdata(data, off, '<I')
 		add_iter(hd, 'Format ID', fmt, off - 4, 4, '<I')
