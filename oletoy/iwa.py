@@ -554,7 +554,7 @@ MESSAGES = {
 	'Other file': {1: ('ID', int64), 3: ('Path', string), 5: ('Template', string)},
 	'Padding': {1: ('Left', float_), 2: ('Top', float_), 3: ('Right', float_), 4: ('Bottom', float_),},
 	'Paragraph properties': {
-		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify'})),
+		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify', 4: 'Cell'})),
 		4: ('Default tab stops', float_),
 		6: ('Text background', 'Color'),
 		7: ('First line indent', float_),
