@@ -781,6 +781,9 @@ COMMON_OBJECTS = {
 		3: ('A ref', 'Ref'),
 		5: ('Language', string),
 	}),
+	4004: ('Sort', {
+		3: ('Criterion', 'Formula'),
+	}),
 	5021: ('Chart info', {
 		1: ('Shape placement',),
 		10000: ('Chart model', {
