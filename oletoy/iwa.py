@@ -811,7 +811,7 @@ COMMON_OBJECTS = {
 			16: ('Menu list ref', 'Ref'),
 			17: ('Paragraph text list ref', 'Ref'),
 			18: ('Conditional format list ref', 'Ref'),
-			19: ('A data list ref', 'Ref'),
+			19: ('Comment list ref', 'Ref'),
 			20: ('A data list ref', 'Ref'),
 		}),
 		6: ('Number of rows', int64),
@@ -888,7 +888,7 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6005: ('Data list', {
-		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu', 8: 'paragraph text', 9: 'conditional format',})),
+		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu', 8: 'paragraph text', 9: 'conditional format', 10: 'comment',})),
 		2: ('Next ID', int64),
 		3: ('Entry', {
 			1: ('ID', int64),
@@ -899,6 +899,7 @@ COMMON_OBJECTS = {
 			6: ('Format',),
 			8: ('Custom format',),
 			9: ('Text entry ref', 'Ref'),
+			10: ('Comment ref', 'Ref'),
 		}),
 	}),
 	6006: ('Headers', {
@@ -1332,11 +1333,14 @@ def add_tile_row(hd, size, data):
 		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
 		0x200: 'paragraph text',
 		0xc00: 'conditional format',
+		0x1000: 'comment',
 	}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', bflag2txt(flags, flags_set), off - 2, 2, '<H')
 	off += 6
 
+	# NOTE: the order is rather experimental; I originally thought the items are sorted by numeric value of the flag,
+	# but apparently that's not the case. Sigh...
 	if flags & 0x2:
 		(style, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
@@ -1353,6 +1357,9 @@ def add_tile_row(hd, size, data):
 	if flags & 0x10:
 		(text, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Simple text ID', text, off - 4, 4, '<I')
+	if flags & 0x1000:
+		(comment, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Comment ID', comment, off - 4, 4, '<I')
 	if flags & 0x20:
 		(value, off) = rdata(data, off, '<d')
 		value_str = value
