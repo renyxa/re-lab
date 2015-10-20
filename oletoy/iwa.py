@@ -995,7 +995,13 @@ KEYNOTE_OBJECTS = {
 			18: ('Animation',),
 		}),
 	}),
-	9: ('Slide style', {1: ('Style info',), 11: ('Properties',)}),
+	9: ('Slide style', {
+		1: ('Style info',),
+		10: ('Number of properties', int64),
+		11: ('Properties', {
+			1: ('Background', 'Fill'),
+		}),
+	}),
 	10: ('Theme?', {
 		1: ('Theme info', {
 			1: ('Theme stylesheet ref', 'Ref'),
