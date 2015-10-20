@@ -810,7 +810,7 @@ COMMON_OBJECTS = {
 			12: ('A data list ref', 'Ref'),
 			16: ('Menu list ref', 'Ref'),
 			17: ('Paragraph text list ref', 'Ref'),
-			18: ('A data list ref', 'Ref'),
+			18: ('Conditional format list ref', 'Ref'),
 			19: ('A data list ref', 'Ref'),
 			20: ('A data list ref', 'Ref'),
 		}),
@@ -888,7 +888,7 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6005: ('Data list', {
-		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu', 8: 'paragraph text'})),
+		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu', 8: 'paragraph text', 9: 'conditional format',})),
 		2: ('Next ID', int64),
 		3: ('Entry', {
 			1: ('ID', int64),
@@ -909,6 +909,14 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
+	6010: ('Conditional format', {
+		1: ('Number of rules', int64),
+		2: ('Rule', {
+			1: ('Rule formula', {1: ('Formula',)}),
+			2: ('Cell style ref', 'Ref'),
+			3: ('Paragraph style ref', 'Ref'),
+		}),
+	}),
 	6206: ('Menu choices', {
 		2: ('Choice', {
 			1: ('Type', enum({1: 'empty', 5: 'text'})),
