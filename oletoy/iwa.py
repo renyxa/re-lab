@@ -523,13 +523,25 @@ MESSAGES = {
 	'Formula': {
 		1: ('Token array', { # formula is saved in RPN
 			1: ('Token', {
-				1: ('Type', enum({16: 'Function', 17: 'Double', 19: 'String', 36: 'Address'})),
+				1: ('Type', enum({
+					1: '+', 2: '-', 3: '*', 4: '/', 5: '^', 7: '>', 8: '>=', 9: '<', 10: '<=', 11: '=', 12: '<>', # infix ops
+					13: '-', 14: '+', # prefix ops
+					15: '%', # postfix op
+					16: 'function',
+					17: 'double', 19: 'string', # literals
+					23: 'missing argument',
+					25: '()',
+					29: 'range',
+					34: 'argument?', 35: 'argument pair?',
+					36: 'address'
+				})),
 				2: ('Function', enum(FUNCTIONS)),
 				3: ('Number of arguments', int64),
 				4: ('Double', double_),
 				6: ('String', string),
-				26: ('Row?', {2: ('Row', int64)}),
-				27: ('Column?', {2: ('Column', int64)}),
+				10: ('Optional', bool_),
+				26: ('Column', {1: ('Column', sint64), 2: ('Absolute', bool_),}),
+				27: ('Row', {1: ('Row', sint64), 2: ('Absolute', bool_),}),
 			}),
 		}),
 	},
