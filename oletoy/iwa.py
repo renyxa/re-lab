@@ -709,6 +709,7 @@ COMMON_OBJECTS = {
 		8: ('Spans', {1: ('Span', 'Text address')}),
 		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
 		11: ('Links', {1: ('Link', 'Text address')}),
+		17: ('Headers & footers', {1: ('Headers & footers', {2: ('Headers & footers ref', 'Ref')})}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 	}),
 	2011: ('Drawable shape',),
@@ -1079,6 +1080,18 @@ PAGES_OBJECTS = {
 		34: ('A page margin?', float_),
 		35: ('A page margin?', float_),
 		44: ('Paper size?', string),
+	}),
+
+	10011: ('Headers & footers', {
+		17: ('Match previous section', bool_),
+		23: ('Left page h&f ref?', 'Ref'),
+		24: ('Right page h&f ref?', 'Ref'),
+		25: ('Both pages h&f ref', 'Ref'),
+		28: ('Hide on first page', bool_),
+	}),
+	10143: ('Header & footer', {
+		1: ('Header text ref', 'Ref'),
+		2: ('Footer text ref', 'Ref'),
 	}),
 }
 
