@@ -709,10 +709,13 @@ COMMON_OBJECTS = {
 		8: ('Spans', {1: ('Span', 'Text address')}),
 		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
 		11: ('Links', {1: ('Link', 'Text address')}),
+		16: ('Footnotes', {1: ('Footnote', {1: ('Index', int64), 2: ('Ref',)})}),
 		17: ('Headers & footers', {1: ('Headers & footers', {2: ('Headers & footers ref', 'Ref')})}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 		23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
 	}),
+	2004: ('Footnote mark', {}),
+	2008: ('Footnote', {2: ('Text ref', 'Ref')}),
 	2011: ('Drawable shape',),
 	2013: ('Text comment', {1: ('Comment ref', 'Ref')}),
 	2014: ('Sticky note', {
