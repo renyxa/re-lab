@@ -766,6 +766,7 @@ COMMON_OBJECTS = {
 	2032: ('Link', {
 		2: ('Href', string),
 	}),
+	2043: ('Slide number', {}),
 	3005: ('Image', {
 		1: ('Shape placement',),
 		3: ('Media style ref', 'Ref'),
