@@ -706,6 +706,7 @@ COMMON_OBJECTS = {
 		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
 		7: (None, {1: (None, {2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
+		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
 		11: ('Links', {1: ('Link', 'Text address')}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 	}),
@@ -843,7 +844,7 @@ COMMON_OBJECTS = {
 			5: ('Cell style list ref', 'Ref'),
 			6: ('Formula list ref', 'Ref'),
 			11: ('Format list ref', 'Ref'),
-			12: ('A data list ref', 'Ref'),
+			12: ('Invalid formula list ref', 'Ref'),
 			16: ('Menu list ref', 'Ref'),
 			17: ('Paragraph text list ref', 'Ref'),
 			18: ('Conditional format list ref', 'Ref'),
@@ -924,7 +925,7 @@ COMMON_OBJECTS = {
 		}),
 	}),
 	6005: ('Data list', {
-		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 6: 'custom format', 7: 'menu', 8: 'paragraph text', 9: 'conditional format', 10: 'comment',})),
+		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 5: 'invalid formula', 6: 'custom format', 7: 'menu', 8: 'paragraph text', 9: 'conditional format', 10: 'comment',})),
 		2: ('Next ID', int64),
 		3: ('Entry', {
 			1: ('ID', int64),
