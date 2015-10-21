@@ -872,6 +872,13 @@ COMMON_OBJECTS = {
 		27: ('A paragraph style ref', 'Ref'),
 		30: ('Table Name paragraph style ref', 'Ref'),
 		36: ('A graphic style ref', 'Ref'),
+		47: ('Merged cells', {
+			2: ('Ranges', {
+				3: ('Range', {
+					2: ('Formula',),
+				}),
+			}),
+		}),
 	}),
 	6002: ('Tile', {
 		1: ('Last column', int64),
