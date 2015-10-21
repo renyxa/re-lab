@@ -405,12 +405,24 @@ def handle_tile_row(parser, page, data, parent):
 	parser.tile_row_offsets = {}
 
 FUNCTIONS = {
+	6: 'ADDRESS',
+	7: 'AND',
+	8: 'AREAS',
 	20: 'CLEAN',
 	22: 'COLUMN',
+	52: 'FALSE',
+	62: 'IF',
 	65: 'INT',
+	69: 'ISBLANK',
+	70: 'ISERROR',
+	71: 'ISEVEN',
+	72: 'ISODD',
 	96: 'NOT',
 	97: 'NOW',
+	102: 'OR',
 	156: 'TRUE',
+	168: 'SUM',
+	235: 'IFERROR',
 	264: 'DEC2HEX',
 }
 
