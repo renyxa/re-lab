@@ -910,9 +910,18 @@ COMMON_OBJECTS = {
 		11: ('Properties', {
 		2: ('Alternating rows', {1: ('Color',)}),
 		22: ('Fit row height', bool_),
+		32: (None, {
+			1: ('Count', int64),
+			3: (None, {
+				1: ('A stroke', 'Stroke'),
+				2: ('A stroke', 'Stroke'),
+				3: ('A stroke', 'Stroke'),
+			}),
+		}),
 		33: ('Gridlines in body rows', bool_),
 		34: ('Gridlines in body columns', bool_),
 		38: ('Table outline', bool_),
+		41: ('Default cell font', string),
 		42: ('Gridlines in header rows', bool_),
 		43: ('Gridlines in header columns', bool_),
 		44: ('Gridlines in footer rows', bool_),
