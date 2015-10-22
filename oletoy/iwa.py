@@ -580,6 +580,7 @@ MESSAGES = {
 	'Padding': {1: ('Left', float_), 2: ('Top', float_), 3: ('Right', float_), 4: ('Bottom', float_),},
 	'Paragraph properties': {
 		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify', 4: 'Cell'})),
+		3: ('Decimal character', string),
 		4: ('Default tab stops', float_),
 		6: ('Text background', 'Color'),
 		7: ('First line indent', float_),
@@ -592,15 +593,22 @@ MESSAGES = {
 			2: ('Amount', float_)
 		}),
 		14: ('Page break before', bool_),
-		15: ('Border type', enum({1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
+		15: ('Border type', enum({0: 'None', 1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
 		17: ('Paragraph rule offset', 'Position'),
 		19: ('Right indent', float_),
 		20: ('Space after', float_),
 		21: ('Space before', float_),
-		25: ('Tabs', {1: ('Tab stop', {1: ('Pos', float_)})}),
+		25: ('Tabs', {
+			1: ('Tab stop', {
+				1: ('Pos', float_),
+				2: ('Alignment', enum({0: 'Left', 1: 'Center', 2: 'Right', 3: 'Decimal'})),
+				3: ('Leader', string),
+			})
+		}),
 		26: ('Widow control', bool_),
 		32: ('Paragraph stroke', 'Stroke'),
 		40: ('List style ref', 'Ref'),
+		42: ('Following paragraph style ref', 'Ref'),
 	},
 	'Paragraph style': {
 		1: ('Style info',),
@@ -770,10 +778,22 @@ COMMON_OBJECTS = {
 			10: ('Paragraph style ref', 'Ref'),
 		}),
 	}),
+	2026: ('ToC style', {
+		1: ('Paragraph style',),
+	}),
 	2032: ('Link', {
 		2: ('Href', string),
 	}),
 	2043: ('Slide number', {}),
+	2052: ('ToC entry', {
+		4: ('Text', string),
+		5: ('Paragraph style ref', 'Ref'),
+	}),
+	2240: ('Table of contents', {
+		1: ('Drawable shape',),
+		3: ('Entry ref', 'Ref')
+	}),
+	2241: ('ToC field', {1: ('Info', {1: ('ToC ref', 'Ref')})}),
 	3005: ('Image', {
 		1: ('Shape placement',),
 		3: ('Media style ref', 'Ref'),
