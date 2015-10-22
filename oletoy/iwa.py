@@ -880,7 +880,9 @@ COMMON_OBJECTS = {
 		36: ('A graphic style ref', 'Ref'),
 		47: ('Merged cells', {
 			2: ('Ranges', {
+				2: ('Next ID?', int64),
 				3: ('Range', {
+					1: ('ID?', int64),
 					2: ('Formula',),
 				}),
 			}),
