@@ -965,7 +965,7 @@ COMMON_OBJECTS = {
 			1: ('Row/Column', int64),
 			2: ('Size', float_),
 			3: ('Hidden', bool_),
-			4: ('Number of columns/rows?', int64),
+			4: ('Number of cells', int64),
 		}),
 	}),
 	6008: (None, {3: ('A ref', 'Ref')}),
