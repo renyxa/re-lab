@@ -713,12 +713,14 @@ COMMON_OBJECTS = {
 		3: ('Text', string),
 		5: ('Paragraphs', {1: ('Paragraph', 'Text address')}),
 		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
-		7: (None, {1: (None, {2: ('List style ref', 'Ref')})}),
+		7: ('List styles', {1: ('List style', {2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
 		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
 		11: ('Links', {1: ('Link', 'Text address')}),
+		12: ('Layouts', {1: ('Layout', 'Text address')}),
+		14: ('List numbers', { 1: ('List number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
 		16: ('Footnotes', {1: ('Footnote', {1: ('Index', int64), 2: ('Ref',)})}),
-		17: ('Headers & footers', {1: ('Headers & footers', {2: ('Headers & footers ref', 'Ref')})}),
+		17: ('Sections', {1: ('Section', {1: ('Start', int64), 2: ('Section ref', 'Ref')})}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 		23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
 	}),
@@ -1114,6 +1116,7 @@ NUMBERS_OBJECTS = {
 
 PAGES_OBJECTS = {
 	10000: ('Document', {
+		4: ('Text body ref', 'Ref'),
 		30: ('Page width?', float_),
 		31: ('Page height?', float_),
 		32: ('A page margin?', float_),
@@ -1123,12 +1126,12 @@ PAGES_OBJECTS = {
 		44: ('Paper size?', string),
 	}),
 
-	10011: ('Headers & footers', {
+	10011: ('Section', {
 		17: ('Match previous section', bool_),
 		23: ('Left page h&f ref?', 'Ref'),
 		24: ('Right page h&f ref?', 'Ref'),
 		25: ('Both pages h&f ref', 'Ref'),
-		28: ('Hide on first page', bool_),
+		28: ('Hide h&f on first page', bool_),
 	}),
 	10143: ('Header & footer', {
 		1: ('Header text ref', 'Ref'),
