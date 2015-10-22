@@ -722,6 +722,8 @@ COMMON_OBJECTS = {
 		16: ('Footnotes', {1: ('Footnote', {1: ('Index', int64), 2: ('Ref',)})}),
 		17: ('Sections', {1: ('Section', {1: ('Start', int64), 2: ('Section ref', 'Ref')})}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
+		20: ('Change IDs?', {1: ('Change ID', {1: ('Start', int64), 2: ('UUID', string)})}),
+		21: ('Changes', {1: ('Change', {1: ('Start', int64), 2: ('Change ref', 'Ref')})}),
 		23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
 	}),
 	2004: ('Footnote mark', {}),
@@ -790,6 +792,13 @@ COMMON_OBJECTS = {
 	2052: ('ToC entry', {
 		4: ('Text', string),
 		5: ('Paragraph style ref', 'Ref'),
+	}),
+	2060: ('Change', {
+		3: ('Time?', {1: ('Time?', double_)}),
+		4: ('UUID', string),
+	}),
+	2062: ('Change author?', {
+		2: ('Author ref', 'Ref'),
 	}),
 	2240: ('Table of contents', {
 		1: ('Drawable shape',),
