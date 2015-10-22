@@ -878,6 +878,7 @@ COMMON_OBJECTS = {
 		27: ('A paragraph style ref', 'Ref'),
 		30: ('Table Name paragraph style ref', 'Ref'),
 		36: ('A graphic style ref', 'Ref'),
+		45: ('Sort', {1: ('Sort ref', 'Ref')}),
 		47: ('Merged cells', {
 			2: ('Ranges', {
 				2: ('Next ID?', int64),
