@@ -879,6 +879,8 @@ COMMON_OBJECTS = {
 		30: ('Table Name paragraph style ref', 'Ref'),
 		36: ('A graphic style ref', 'Ref'),
 		38: ('Filter ref', 'Ref'),
+		41: ('Hidden rows', int64),
+		42: ('Hidden columns', int64),
 		45: ('Sort', {1: ('Sort ref', 'Ref')}),
 		47: ('Merged cells', {
 			2: ('Ranges', {
@@ -960,8 +962,9 @@ COMMON_OBJECTS = {
 	}),
 	6006: ('Headers', {
 		2: ('Header', {
-			1: ('Row/Column?', int64),
+			1: ('Row/Column', int64),
 			2: ('Size', float_),
+			3: ('Hidden', bool_),
 			4: ('Number of columns/rows?', int64),
 		}),
 	}),
