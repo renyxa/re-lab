@@ -1126,13 +1126,18 @@ NUMBERS_OBJECTS = {
 PAGES_OBJECTS = {
 	10000: ('Document', {
 		4: ('Text body ref', 'Ref'),
-		30: ('Page width?', float_),
-		31: ('Page height?', float_),
-		32: ('A page margin?', float_),
-		33: ('A page margin?', float_),
-		34: ('A page margin?', float_),
-		35: ('A page margin?', float_),
-		44: ('Paper size?', string),
+		7: ('Document settings ref', 'Ref'),
+		30: ('Page width', float_),
+		31: ('Page height', float_),
+		32: ('Left page margin', float_),
+		33: ('Right page margin', float_),
+		34: ('Top page margin', float_),
+		35: ('Bottom page margin', float_),
+		36: ('Header top margin', float_),
+		37: ('Footer bottom margin', float_),
+		38: ('Scale', float_),
+		42: ('Page orientation', enum({0: 'Portrait', 1: 'Landscape'})),
+		44: ('Paper size', string),
 	}),
 
 	10011: ('Section', {
@@ -1141,6 +1146,17 @@ PAGES_OBJECTS = {
 		24: ('Right page h&f ref?', 'Ref'),
 		25: ('Both pages h&f ref', 'Ref'),
 		28: ('Hide h&f on first page', bool_),
+	}),
+	10012: ('Document settings', {
+		1: ('Type', enum({0: 'Page layout', 1: 'Word processing'})),
+		2: ('Include headers', bool_),
+		3: ('Include footers', bool_),
+		9: ('Hyphenation', bool_),
+		10: ('Ligatures', bool_),
+		30: ('Note type', enum({0: 'Footnotes', 1: 'Document endnotes', 2: 'Section endnotes'})),
+		31: ('Note format', enum({0: '1', 1: 'i', 2: '*'})),
+		32: ('Note numbering', enum({0: 'Document', 1: 'Page', 2: 'Section'})),
+		33: ('Space between notes', int64),
 	}),
 	10143: ('Header & footer', {
 		1: ('Header text ref', 'Ref'),
