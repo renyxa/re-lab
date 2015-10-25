@@ -28,7 +28,7 @@ wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
 	16: 'Frames', # this includes tables and headers+footers
-	19: 'Strings',
+	18: 'Strings',
 	21: 'Color table',
 	22: 'Character styles',
 	23: 'Paragraph styles',
@@ -184,7 +184,7 @@ wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
 	11: (handle_tabs, 'tabs'),
 	16: (handle_frames, 'frames'),
-	19: (handle_strings, 'strings'),
+	18: (handle_strings, 'strings'),
 	21: (handle_colormap, 'colormap'),
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
