@@ -27,15 +27,20 @@ WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
+	12: 'ToC?',
 	16: 'Frames', # this includes tables and headers+footers
 	18: 'Strings',
+	19: 'Index',
 	20: 'Color table',
+	21: 'Fields',
 	22: 'Character styles',
 	23: 'Paragraph styles',
 	24: 'Footnotes',
 	25: 'List styles',
 	26: 'Text info',
 	27: 'Text',
+	32: 'Changes',
+	35: 'Sections?',
 }
 
 def handle_fonts(page, data, parent, parser = None):
