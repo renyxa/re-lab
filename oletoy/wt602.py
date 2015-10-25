@@ -28,7 +28,7 @@ wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
 	16: 'Frames', # this includes tables and headers+footers
-	19: 'Named styles',
+	19: 'Strings',
 	21: 'Color table',
 	22: 'Character styles',
 	23: 'Paragraph styles',
@@ -68,15 +68,18 @@ def handle_text_infos(page, data, parent, parser):
 		off += 28
 	add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
 
-def handle_styles(page, data, parent, parser = None):
+def handle_strings(page, data, parent, parser = None):
 	(hdrsize, off) = rdata(data, 0, '<I')
-	count = hdrsize / 0x20
 	off = 0x10
-	hdriter = add_pgiter(page, 'Names', 'wt602', 0, data[:hdrsize + 0x10], parent)
-	for i in range(0, count):
-		add_pgiter(page, 'Style %d' % i, 'wt602', 'style_header', data[off:off + 0x20], hdriter)
-		off += 0x20
-	add_pgiter(page, 'Definitions', 'wt602', 0, data[hdrsize + 0x10:], parent)
+	hdriter = add_pgiter(page, 'Definitions', 'wt602', 0, data[:hdrsize + 0x10], parent)
+	i = 0
+	while off < hdrsize + 0x10:
+		start = off
+		(length, off) = rdata(data, off + 4, '<H')
+		off = start + length
+		add_pgiter(page, 'String %d' % i, 'wt602', 'string_header', data[start:off], hdriter)
+		i += 1
+	add_pgiter(page, '???', 'wt602', 0, data[hdrsize + 0x10:], parent)
 
 def handle_colormap(page, data, parent, parser = None):
 	(count, off) = rdata(data, 0, '<I')
@@ -178,7 +181,7 @@ wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
 	11: (handle_tabs, 'tabs'),
 	16: (handle_frames, 'frames'),
-	19: (handle_styles, 'styles'),
+	19: (handle_strings, 'strings'),
 	21: (handle_colormap, 'colormap'),
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
@@ -304,6 +307,17 @@ line_map = {
 def get_para_flags(flags):
 	names = {0x8: 'page break', 0x100: 'paragraph break'}
 	return bflag2txt(flags, names)
+
+def add_string(hd, size, data, off, name, fmt):
+	fmtlen = struct.calcsize(fmt)
+	(length, off) = rdata(data, off, fmt)
+	add_iter(hd, '%s length' % name, length, off - fmtlen, fmtlen, fmt)
+	(text, off) = rdata(data, off, '%ds' % length)
+	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
+	return off
+
+def add_long_string(hd, size, data, off, name):
+	return add_string(hd, size, data, off, name, '<H')
 
 def add_text_info(hd, size, data):
 	(flags, off) = rdata(data, 0, '<H')
@@ -431,11 +445,9 @@ def add_span_text(hd, size, data):
 	text = read(data, 0, fmt)
 	add_iter(hd, 'Text', text, 0, len(data), fmt)
 
-def add_style_header(hd, size, data):
-	(length, off) = rdata(data, 0x12, '<H')
-	fmt = '<%ds' % length
-	name = read(data, off, fmt)
-	add_iter(hd, 'Name', name, off, length, fmt)
+def add_string_header(hd, size, data):
+	off = add_long_string(hd, size, data, 0x12, 'String')
+	add_iter(hd, 'Padding', '', off, size, '%ds' % (size - off))
 
 def add_styles(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
@@ -601,7 +613,7 @@ wt602_ids = {
 	'tabs_def': add_tabs_def,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
-	'style_header': add_style_header,
+	'string_header': add_string_header,
 	'styles': add_styles,
 	'text': add_text,
 }
