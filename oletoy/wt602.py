@@ -164,9 +164,18 @@ def handle_footnotes(page, data, parent, parser=None):
 	if off < len(data):
 		add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
 
+def handle_frames(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	entry_size = 204 # FIXME: a guess
+	for i in range(0, count):
+		add_pgiter(page, 'Frame %d' % i, 'wt602', 'frame', data[off:off + entry_size], parent)
+		off += entry_size
+	add_pgiter(page, 'Trailer', 'wt602', 'frame_trailer', data[off:], parent)
+
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
 	11: (handle_tabs, 'tabs'),
+	16: (handle_frames, 'frames'),
 	19: (handle_styles, 'styles'),
 	21: (handle_colormap, 'colormap'),
 	22: (handle_char_styles, 'char_styles'),
@@ -283,6 +292,13 @@ def get_char_style(flags):
 	}
 	return bflag2txt(flags, names)
 
+line_map = {
+	0: '1pt',
+	1: 'hairline',
+	2: '0.5pt', 3: '1pt', 4: '2pt', 5: '4pt', 6: '6pt', 7: '8pt', 8: '12pt',
+	9: 'double', 10: 'double, inner thicker', 11: 'double, outer thicker'
+}
+
 def get_para_flags(flags):
 	names = {0x8: 'page break', 0x100: 'paragraph break'}
 	return bflag2txt(flags, names)
@@ -369,13 +385,7 @@ def add_attrset_para(hd, size, data):
 	})
 	add_iter(hd, 'Shading type', shading_map(shading), off - 2, 2, '<H')
 	(border_line, off) = rdata(data, off, '<H')
-	line_map = values({
-		0: '1pt',
-		1: 'hairline',
-		2: '0.5pt', 3: '1pt', 4: '2pt', 5: '4pt', 6: '6pt', 7: '8pt', 8: '12pt',
-		9: 'double', 10: 'double, inner thicker', 11: 'double, outer thicker'
-	})
-	add_iter(hd, 'Border line', line_map(border_line), off - 2, 2, '<H')
+	add_iter(hd, 'Border line', key2txt(border_line, line_map), off - 2, 2, '<H')
 	(border, off) = rdata(data, off, '<H')
 	# TODO: complete
 	border_map = values({
@@ -485,6 +495,76 @@ def add_footnotes(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
+def add_frames(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', count, off - 4, 4, '<I')
+
+def add_frame(hd, size, data):
+	off = 0x20
+	anchor_map = {
+		0x0: 'fixed', 0x1: 'fixed on page',
+		0x2: 'floating with paragraph', 0x3: 'floating with column',
+		# 0xy: 'floating with character',
+		0x4: 'repeated in document', 0x8: 'repeated in chapter',
+	}
+	anchor_flags = {0x10: 'resize with text', 0x40: 'lock size and position',}
+	(anchor, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Anchor type', key2txt(anchor & 0xf, anchor_map), off - 1, 1, '<B')
+	add_iter(hd, 'Flags', bflag2txt(anchor & 0xf0, anchor_flags), off - 1, 1, '<B')
+	off += 3
+	# extents
+	(left, off) = rdata(data, off, '<I') # TODO: maybe it's <H?
+	add_iter(hd, 'Left', '%.2f cm' % to_cm(left), off - 4, 4, '<I')
+	(top, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top', '%.2f cm' % to_cm(top), off - 4, 4, '<I')
+	(right, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right', '%.2f cm' % to_cm(right), off - 4, 4, '<I')
+	(bottom, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom', '%.2f cm' % to_cm(bottom), off - 4, 4, '<I')
+	# extents with padding
+	(left_padding, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Left with padding', '%.2f cm' % to_cm(left_padding), off - 4, 4, '<I')
+	(top_padding, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top with padding', '%.2f cm' % to_cm(top_padding), off - 4, 4, '<I')
+	(right_padding, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right with padding', '%.2f cm' % to_cm(right_padding), off - 4, 4, '<I')
+	(bottom_padding, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom with padding', '%.2f cm' % to_cm(bottom_padding), off - 4, 4, '<I')
+	# borders
+	(left_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Left border width', '%.2f cm' % to_cm(left_border), off - 4, 4, '<I')
+	(top_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top border width', '%.2f cm' % to_cm(top_border), off - 4, 4, '<I')
+	(right_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right border width', '%.2f cm' % to_cm(right_border), off - 4, 4, '<I')
+	(bottom_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom border width', '%.2f cm' % to_cm(bottom_border), off - 4, 4, '<I')
+	off += 24
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Content height?', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Content width?', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
+	off += 0x30
+	wrap_map = {0: 'run-through', 1: 'none', 2: 'parallel'}
+	(wrap, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Wrap', key2txt(wrap, wrap_map), off - 1, 1, '<B')
+	off += 3
+	(border_line, off) = rdata(data, off, '<B') # TODO: border line is probably only 1B; change elsewhere
+	add_iter(hd, 'Border line', key2txt(border_line, line_map), off - 1, 1, '<B')
+	off += 0x17
+	(border_color, off) = rdata(data, off, '<B') # TODO: apparently color palette index is only 1B; change elsewhere
+	add_iter(hd, 'Border color', border_color, off - 1, 1, '<B')
+	(shading_color, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Shading color', shading_color, off - 1, 1, '<B')
+	off += 2
+	page_map = {0: 'first', 1: 'odd', 2: 'even', 3: 'all'}
+	(page, off) = rdata(data, off, '<B')
+	add_iter(hd, 'On page', key2txt(page & 0x3, page_map), off - 1, 1, '<B')
+	add_iter(hd, 'Not on first', bool(page & 0x4), off - 1, 1, '<B')
+
+def add_frame_trailer(hd, size, data):
+	pass
+
 def add_object_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
@@ -500,6 +580,9 @@ wt602_ids = {
 	'font' : add_font,
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
+	'frame': add_frame,
+	'frame_trailer': add_frame_trailer,
+	'frames': add_frame,
 	'style': add_style,
 	'style_para': add_style_para,
 	'styles': add_styles,
