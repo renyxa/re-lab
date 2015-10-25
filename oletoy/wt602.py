@@ -599,7 +599,7 @@ wt602_ids = {
 	'footnotes' : add_footnotes,
 	'frame': add_frame,
 	'frame_trailer': add_frame_trailer,
-	'frames': add_frame,
+	'frames': add_frames,
 	'style': add_style,
 	'style_para': add_style_para,
 	'styles': add_styles,
