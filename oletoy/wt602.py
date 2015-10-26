@@ -439,7 +439,7 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Section increment', '%.2fcm' % to_cm(section_inc), off - 2, 2, '<H')
 	off += 4
 	(column_line, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Inter-column line', line_map(column_line), off - 2, 2, '<H')
+	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
 
 def add_style(hd, size, data):
 	off = 0
