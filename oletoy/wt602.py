@@ -174,15 +174,12 @@ def handle_footnotes(page, data, parent, parser=None):
 		add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
 
 def handle_frames(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
 	entry_size = 204 # FIXME: a guess
-	off = 0
-	if len(data) >= entry_size + 4:
-		(count, off) = rdata(data, off, '<I')
-		for i in range(0, count):
-			add_pgiter(page, 'Frame %d' % i, 'wt602', 'frame', data[off:off + entry_size], parent)
-			off += entry_size
-	if len(data) - off > 0:
-		add_pgiter(page, 'Trailer', 'wt602', 'frame_trailer', data[off:], parent)
+	for i in range(0, count):
+		add_pgiter(page, 'Frame %d' % i, 'wt602', 'frame', data[off:off + entry_size], parent)
+		off += entry_size
+	add_pgiter(page, 'Trailer', 'wt602', 'frame_trailer', data[off:], parent)
 
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
@@ -525,9 +522,8 @@ def add_footnotes(hd, size, data):
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
 def add_frames(hd, size, data):
-	if size >= 204 + 4:
-		(count, off) = rdata(data, 0, '<I')
-		add_iter(hd, 'Count', count, off - 4, 4, '<I')
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
 def add_frame(hd, size, data):
 	off = 0x20
