@@ -36,11 +36,10 @@ wt602_section_names = {
 	22: 'Character styles',
 	23: 'Paragraph styles',
 	24: 'Footnotes',
-	25: 'List styles',
-	26: 'Text info',
+	25: 'Text info',
+	26: 'List styles',
 	27: 'Text',
-	32: 'Changes',
-	35: 'Sections?',
+	33: 'Changes',
 }
 
 def handle_fonts(page, data, parent, parser = None):
@@ -194,7 +193,7 @@ wt602_section_handlers = {
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
 	24: (handle_footnotes, 'footnotes'),
-	26: (handle_text_infos, 'text_infos'),
+	25: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
 }
 
@@ -208,6 +207,7 @@ class wt602_parser(object):
 		self.page = page
 		self.parent = parent
 
+		self.header_len = 0x72
 		self.sections = []
 
 	def parse(self):
@@ -217,21 +217,25 @@ class wt602_parser(object):
 			self.parse_section(i)
 
 	def parse_header(self):
-		add_pgiter(self.page, 'Header', 'wt602', 'header', self.data[0:0x72], self.parent)
+		add_pgiter(self.page, 'Header', 'wt602', 'header', self.data[0:self.header_len], self.parent)
 
 	def parse_offset_table(self):
+		start = self.header_len
 		offiter = add_pgiter(self.page, 'Offset table', 'wt602', 'offsets',
-				self.data[0x72:0x72 + 4 * WT602_SECTION_COUNT], self.parent)
-		offsets = [0x72]
-		off = 0x72
+				self.data[start:start + 4 * WT602_SECTION_COUNT], self.parent)
+		offsets = []
+		off = start
 		for i in range(0, WT602_SECTION_COUNT):
 			(cur, off) = rdata(self.data, off, '<I')
-			if cur == 0:
-				offsets.append(offsets[-1])
+			if cur < start:
+				offsets.append(0)
 			else:
-				offsets.append(cur + 0x72)
+				offsets.append(cur + start)
 		offsets.append(len(self.data))
-		self.sections = zip(offsets[1:len(offsets) - 1], offsets[2:])
+		for i in reversed(range(0, len(offsets))):
+			if offsets[i] == 0:
+				offsets[i] = offsets[i + 1]
+		self.sections = zip(offsets[0:len(offsets) - 1], offsets[1:])
 
 	def parse_section(self, n):
 		(begin, end) = self.sections[n]
