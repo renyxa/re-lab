@@ -175,11 +175,19 @@ def handle_footnotes(page, data, parent, parser=None):
 
 def handle_frames(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
-	entry_size = 204 # FIXME: a guess
+	entry_size = 204
+	defiter = add_pgiter(page, 'Definitions', 'wt602', '', data[off:off + count * entry_size], parent)
+	datalens = []
 	for i in range(0, count):
-		add_pgiter(page, 'Frame %d' % i, 'wt602', 'frame', data[off:off + entry_size], parent)
-		off += entry_size
-	add_pgiter(page, 'Trailer', 'wt602', 'frame_trailer', data[off:], parent)
+		add_pgiter(page, 'Frame %d' % i, 'wt602', 'frame', data[off:off + entry_size], defiter)
+		(datalen, off) = rdata(data, off, '<I') # TODO: maybe only <H?
+		datalens.append(datalen)
+		off += entry_size - 4
+	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
+	for i in range(0, count):
+		end = off + datalens[i] + 4
+		add_pgiter(page, 'Data %d' % i, 'wt602', 'frame_data', data[off:end], dataiter)
+		off = end
 
 wt602_section_handlers = {
 	10: (handle_fonts, 'fonts'),
@@ -602,8 +610,27 @@ def add_frame(hd, size, data):
 	add_iter(hd, 'On page', key2txt(page & 0x3, page_map), off - 1, 1, '<B')
 	add_iter(hd, 'Not on first', bool(page & 0x4), off - 1, 1, '<B')
 
-def add_frame_trailer(hd, size, data):
-	pass
+def add_frame_data(hd, size, data):
+	off = 4
+	type_map = {
+		0x1: 'rectangle',
+		0x14: 'line',
+		0xba: 'compound brackets',
+	}
+	(typ, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Shape type', key2txt(typ, type_map), off - 2, 2, '<H')
+	off += 6
+	(tagslen, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Length of tag list', tagslen, off - 2, 2, '<H')
+	end = off + tagslen
+	assert end <= size
+	tag_map = {
+	}
+	while off < end:
+		off += 2
+		(tag, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Tag', key2txt(tag, tag_map), off - 1, 1, '<B')
+		off += 3
 
 def add_object_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
@@ -621,7 +648,7 @@ wt602_ids = {
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
 	'frame': add_frame,
-	'frame_trailer': add_frame_trailer,
+	'frame_data': add_frame_data,
 	'frames': add_frames,
 	'style': add_style,
 	'style_para': add_style_para,
