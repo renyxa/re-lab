@@ -526,7 +526,18 @@ def add_frames(hd, size, data):
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
 def add_frame(hd, size, data):
-	off = 0x20
+	off = 0xc
+	(sid, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Shape ID', sid, off - 2, 2, '<H')
+	kind_map = {0x8: 'text', 0xb: 'image', 0xd: 'table', 0xe: 'group', 0xf: 'form control', 0x11: 'shape'}
+	(kind, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Kind', key2txt(kind, kind_map), off - 1, 1, '<B')
+	off += 5
+	(above, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Is above', key2txt(above, {0xffff: 'none'}, above), off - 2, 2, '<H')
+	(below, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Is below', key2txt(below, {0xffff: 'none'}, below), off - 2, 2, '<H')
+	off += 8
 	anchor_map = {
 		0x0: 'fixed', 0x1: 'fixed on page',
 		0x2: 'floating with paragraph', 0x3: 'floating with column',
@@ -577,7 +588,10 @@ def add_frame(hd, size, data):
 	off += 3
 	(border_line, off) = rdata(data, off, '<B') # TODO: border line is probably only 1B; change elsewhere
 	add_iter(hd, 'Border line', key2txt(border_line, line_map), off - 1, 1, '<B')
-	off += 0x17
+	off += 0x13
+	(group, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Group', key2txt(group & 1, {0: 'none'}, group & 0xfe), off - 2, 2, '<H')
+	off += 2
 	(border_color, off) = rdata(data, off, '<B') # TODO: apparently color palette index is only 1B; change elsewhere
 	add_iter(hd, 'Border color', border_color, off - 1, 1, '<B')
 	(shading_color, off) = rdata(data, off, '<B')
