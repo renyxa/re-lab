@@ -46,6 +46,7 @@ As of now OLE Toy reads and parses:
 - WLS (Software602 602Tab, aka MagicTab)
 - TC6, GC6 (Software602 C602)
 - PLIST (Apple property list)
+- 602 (Software602 T602)
 
 
 The scripts depend on libgsf. You can find libgsf source code here:

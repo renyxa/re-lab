@@ -33,6 +33,7 @@ import lrf
 import wls
 import wt602
 import c602
+import t602
 import pdb
 import sbimp
 import zmf
@@ -1535,6 +1536,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "c602":
 					if c602.c602_ids.has_key(ntype[1]):
 						c602.c602_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "t602":
+					if t602.ids.has_key(ntype[1]):
+						t602.ids[ntype[1]](hd, size, data)
 				elif ntype[0] == 'imp':
 					if sbimp.imp_ids.has_key(ntype[1]):
 						sbimp.imp_ids[ntype[1]](hd, size, data)

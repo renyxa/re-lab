@@ -15,6 +15,7 @@
 #
 
 import sys,struct,os
+import re
 import tree, gtk
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
@@ -30,6 +31,7 @@ import zbr
 import lit
 import plist
 import c602
+import t602
 from utils import *
 
 class Page:
@@ -309,6 +311,12 @@ class Page:
 				c602.parse_spreadsheet(buf, self, parent)
 			else:
 				c602.parse_chart(buf, self, parent)
+			return 0
+
+		if re.match('@[A-Z]+ \d+\\r\\n', buf) and buf[-1] == '\x1a':
+			self.type = 'T602'
+			print('Probably T602 file')
+			t602.parse(buf, self, parent)
 			return 0
 
 		if parent == None:
