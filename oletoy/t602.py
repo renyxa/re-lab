@@ -17,6 +17,12 @@
 from utils import add_iter, add_pgiter, key2txt, rdata
 
 controls = {
+	'HE': 'Header',
+	'FO': 'Footer',
+	'LH': 'Line height',
+	'MT': 'Top margin',
+	'MB': 'Bottom margin',
+	'PL': 'Page length',
 }
 
 class parser:
@@ -39,12 +45,27 @@ class parser:
 			if header and data[0] != '@':
 				header = False
 			if header:
-				add_pgiter(self.page, 'Control', 't602', 'control', data, self.parent)
+				add_pgiter(self.page, key2txt(data[1:3], controls, 'Control'), 't602', 'control', data, self.parent)
 			else:
 				add_pgiter(self.page, 'Paragraph', 't602', 'paragraph', data, self.parent)
 
 def add_control(hd, size, data):
-	pass
+	off = 1
+	(name, off) = rdata(data, off, '2s')
+	add_iter(hd, 'Name', key2txt(name, controls), off - 2, 2, '2s')
+	if data[-1] == '\x1a':
+		end = len(data) - 1
+	else:
+		end = len(data) - 2
+	off += 1
+	if off < end:
+		value = data[off:end]
+		line_height_map = {'6': '1', '4': '1.5', '3': '2'}
+		if name == 'LH':
+			value = key2txt(value.strip(), line_height_map)
+		add_iter(hd, 'Value', value, off, end - off, '%ds' % (end - off))
+	off = end
+	add_iter(hd, 'End of control', data[off:], off, len(data) - off, '%ds' % (len(data) - off))
 
 def add_paragraph(hd, size, data):
 	pass
