@@ -46,6 +46,8 @@ class parser:
 				header = False
 			if header:
 				add_pgiter(self.page, key2txt(data[1:3], controls, 'Control'), 't602', 'control', data, self.parent)
+			elif data[0] == '.':
+				add_pgiter(self.page, 'Command', 't602', 'command', data, self.parent)
 			else:
 				add_pgiter(self.page, 'Paragraph', 't602', 'paragraph', data, self.parent)
 
@@ -92,7 +94,17 @@ def add_paragraph(hd, size, data):
 			else:
 				add_iter(hd, key2txt(c, fmt), '', off - 1, 1, '<B')
 
+def add_command(hd, size, data):
+	command_map = {'pa': 'Page break'}
+	start = 1
+	end = data.find('\r\n', start)
+	length = end - start
+	(name, off) = rdata(data, start, '%ds' % length)
+	add_iter(hd, 'Name', key2txt(name, command_map), start, length, '%ds' % length)
+	add_iter(hd, 'End of command', data[off:], off, len(data) - off, '%ds' % (len(data) - off))
+
 ids = {
+	'command': add_command,
 	'control': add_control,
 	'paragraph': add_paragraph,
 }
