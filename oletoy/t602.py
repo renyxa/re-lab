@@ -68,7 +68,29 @@ def add_control(hd, size, data):
 	add_iter(hd, 'End of control', data[off:], off, len(data) - off, '%ds' % (len(data) - off))
 
 def add_paragraph(hd, size, data):
-	pass
+	fmt = {
+		0x2: 'Switch bold',
+		0x4: 'Switch italics',
+		0xa: 'Line break',
+		0x13: 'Switch underline',
+		0x14: 'Switch subscript',
+		0x16: 'Switch superscript',
+		0x1a: 'End of file',
+	}
+	off = 0
+	mark = 0
+	while off < len(data):
+		(c, off) = rdata(data, off, '<B')
+		if c < 0x20:
+			if off - mark > 1:
+				length = off - mark - 1
+				add_iter(hd, 'Text', data[mark:off - 1], mark, length, '%ds' % length)
+			mark = off
+			if c == 0xd and off == len(data) - 1:
+				add_iter(hd, 'End of paragraph', data[-2:], off - 1, 2, '2s')
+				off += 1
+			else:
+				add_iter(hd, key2txt(c, fmt), '', off - 1, 1, '<B')
 
 ids = {
 	'control': add_control,
