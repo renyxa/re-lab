@@ -17,12 +17,16 @@
 from utils import add_iter, add_pgiter, key2txt, rdata
 
 controls = {
+	'CT': 'Encoding',
 	'HE': 'Header',
 	'FO': 'Footer',
 	'LH': 'Line height',
+	'LM': 'Left margin',
 	'MT': 'Top margin',
 	'MB': 'Bottom margin',
 	'PL': 'Page length',
+	'RM': 'Right margin',
+	'TB': 'Tabs',
 }
 
 class parser:
@@ -62,8 +66,11 @@ def add_control(hd, size, data):
 	off += 1
 	if off < end:
 		value = data[off:end]
+		encoding_map = {'0': 'KEYBCS2', '1': 'LATIN2', '2': 'KOI8CS'}
 		line_height_map = {'6': '1', '4': '1.5', '3': '2'}
-		if name == 'LH':
+		if name == 'CT':
+			value = key2txt(value.strip(), encoding_map)
+		elif name == 'LH':
 			value = key2txt(value.strip(), line_height_map)
 		add_iter(hd, 'Value', value, off, end - off, '%ds' % (end - off))
 	off = end
@@ -74,10 +81,13 @@ def add_paragraph(hd, size, data):
 		0x2: 'Switch bold',
 		0x4: 'Switch italics',
 		0xa: 'Line break',
+		0xf: 'Switch wide',
+		0x10: 'Switch high',
 		0x13: 'Switch underline',
 		0x14: 'Switch subscript',
 		0x16: 'Switch superscript',
 		0x1a: 'End of file',
+		0x1d: 'Switch big',
 	}
 	off = 0
 	mark = 0
