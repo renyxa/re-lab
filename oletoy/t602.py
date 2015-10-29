@@ -30,6 +30,18 @@ controls = {
 	'TB': 'Tabs',
 }
 
+commands = {
+	'PA': 'New page',
+}
+
+def read_command(data):
+	end = data.find(' ', 1)
+	if end == -1:
+		end = data.find('\r\n', 1)
+	if end == -1:
+		end = data.find('(', 1) # it seems that dot commands can take arguments
+	return rdata(data, 1, '%ds' % (end - 1))
+
 class parser:
 	def __init__(self, page, data, parent):
 		self.data = data
@@ -49,7 +61,8 @@ class parser:
 			if data[0] == '@':
 				add_pgiter(self.page, key2txt(data[1:3], controls, 'Control'), 't602', 'control', data, self.parent)
 			elif data[0] == '.':
-				add_pgiter(self.page, 'Command', 't602', 'command', data, self.parent)
+				(cmd, dummy) = read_command(data)
+				add_pgiter(self.page, key2txt(cmd.upper(), commands, 'Command'), 't602', 'command', data, self.parent)
 			else:
 				add_pgiter(self.page, 'Paragraph', 't602', 'paragraph', data, self.parent)
 
@@ -103,12 +116,13 @@ def add_paragraph(hd, size, data):
 				add_iter(hd, key2txt(c, fmt), '', off - 1, 1, '<B')
 
 def add_command(hd, size, data):
-	command_map = {'pa': 'Page break'}
-	start = 1
-	end = data.find('\r\n', start)
-	length = end - start
-	(name, off) = rdata(data, start, '%ds' % length)
-	add_iter(hd, 'Name', key2txt(name, command_map), start, length, '%ds' % length)
+	(name, off) = read_command(data)
+	add_iter(hd, 'Name', key2txt(name.upper(), commands), 1, off - 1, '%ds' % (off - 1))
+	if data[off] == ' ':
+		off += 1
+		length = size - 2 - off
+		(arg, off) = rdata(data, off, '%ds' % length)
+		add_iter(hd, 'Argument', arg, off - length, length, '%ds' % length)
 	add_iter(hd, 'End of command', data[off:], off, len(data) - off, '%ds' % (len(data) - off))
 
 ids = {
