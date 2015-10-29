@@ -38,7 +38,6 @@ class parser:
 
 	def parse(self):
 		off = 0
-		header = True
 		while off < len(self.data):
 			eol = self.data.find("\r\n", off)
 			if eol > 0:
@@ -47,9 +46,7 @@ class parser:
 				end = len(self.data)
 			data = self.data[off:end]
 			off = end
-			if header and data[0] != '@':
-				header = False
-			if header:
+			if data[0] == '@':
 				add_pgiter(self.page, key2txt(data[1:3], controls, 'Control'), 't602', 'control', data, self.parent)
 			elif data[0] == '.':
 				add_pgiter(self.page, 'Command', 't602', 'command', data, self.parent)
