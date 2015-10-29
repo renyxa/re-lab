@@ -313,7 +313,7 @@ class Page:
 				c602.parse_chart(buf, self, parent)
 			return 0
 
-		if re.match('@[A-Z]+ \d+\\r\\n', buf) and buf[-1] == '\x1a':
+		if re.match('@[A-Z]{2} .*?\\r\\n', buf) and buf[-1] == '\x1a':
 			self.type = 'T602'
 			print('Probably T602 file')
 			t602.parse(buf, self, parent)

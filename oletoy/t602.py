@@ -18,6 +18,7 @@ from utils import add_iter, add_pgiter, key2txt, rdata
 
 controls = {
 	'CT': 'Encoding',
+	'DF': 'Data file',
 	'HE': 'Header',
 	'FO': 'Footer',
 	'LH': 'Line height',
