@@ -577,18 +577,18 @@ def add_frame(hd, size, data):
 	add_iter(hd, 'Bottom with padding', '%.2f cm' % to_cm(bottom_padding), off - 4, 4, '<I')
 	# borders
 	(left_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Left border width', '%.2f cm' % to_cm(left_border), off - 4, 4, '<I')
+	add_iter(hd, 'Left text frame margin', '%.2f cm' % to_cm(left_border), off - 4, 4, '<I')
 	(top_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top border width', '%.2f cm' % to_cm(top_border), off - 4, 4, '<I')
+	add_iter(hd, 'Top text frame margin', '%.2f cm' % to_cm(top_border), off - 4, 4, '<I')
 	(right_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Right border width', '%.2f cm' % to_cm(right_border), off - 4, 4, '<I')
+	add_iter(hd, 'Right text frame margin', '%.2f cm' % to_cm(right_border), off - 4, 4, '<I')
 	(bottom_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom border width', '%.2f cm' % to_cm(bottom_border), off - 4, 4, '<I')
+	add_iter(hd, 'Bottom text frame margin', '%.2f cm' % to_cm(bottom_border), off - 4, 4, '<I')
 	off += 24
 	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Content height?', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
+	add_iter(hd, 'Text frame height', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
 	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Content width?', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
+	add_iter(hd, 'Text frame width', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
 	off += 0x30
 	wrap_map = {0: 'run-through', 1: 'none', 2: 'parallel'}
 	(wrap, off) = rdata(data, off, '<B')
