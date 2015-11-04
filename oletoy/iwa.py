@@ -457,7 +457,6 @@ MESSAGES = {
 		23: ('Strikethru color', 'Color'),
 		26: ('Text background', 'Color'),
 		27: ('Tracking', float_),
-		35: ('Direction', enum({0: 'ltr', 1: 'rtl'})),
 	},
 	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
 	'Columns': {
