@@ -1481,14 +1481,14 @@ def add_tile_row(hd, size, data):
 		(style, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
 	if flags & 0xc00:
-		(fmt, off ) = rdata(data, off, '<I')
+		(fmt, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Conditional format ID', fmt, off - 4, 4, '<I')
 		off += 4
 	if flags & 0x4:
-		(fmt, off ) = rdata(data, off, '<I')
+		(fmt, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Format ID', fmt, off - 4, 4, '<I')
 	if flags & 0x8:
-		(formula, off ) = rdata(data, off, '<I')
+		(formula, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Formula ID', formula, off - 4, 4, '<I')
 	if flags & 0x10:
 		(text, off) = rdata(data, off, '<I')
