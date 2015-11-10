@@ -977,7 +977,7 @@ COMMON_OBJECTS = {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties', {
-		1: ('Fill',),
+			1: ('Fill',),
 			10: ('Top border', 'Stroke'),
 			11: ('Right border', 'Stroke'),
 			12: ('Bottom border', 'Stroke'),
