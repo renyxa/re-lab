@@ -956,19 +956,19 @@ COMMON_OBJECTS = {
 			43: ('Gridlines in header columns', bool_),
 			44: ('Gridlines in footer rows', bool_),
 			46: ('A stroke', 'Stroke'),
-			47: ('A stroke', 'Stroke'), # related to table outline
+			47: ('A table border', 'Stroke'),
 			48: ('A stroke', 'Stroke'),
 			49: ('A stroke', 'Stroke'),
-			50: ('A stroke', 'Stroke'), # related to table outline
+			50: ('A table border', 'Stroke'),
 			51: ('A stroke', 'Stroke'),
 			52: ('A stroke', 'Stroke'),
 			53: ('A stroke', 'Stroke'),
 			54: ('A stroke', 'Stroke'),
-			55: ('A stroke', 'Stroke'), # related to table outline
+			55: ('A table border', 'Stroke'),
 			56: ('A stroke', 'Stroke'),
 			57: ('A stroke', 'Stroke'),
-			58: ('A stroke', 'Stroke'), # related to table outline
-			59: ('A stroke', 'Stroke'), # related to table outline
+			58: ('A table border', 'Stroke'),
+			59: ('A table border', 'Stroke'),
 			60: ('A stroke', 'Stroke'),
 			61: ('A stroke', 'Stroke'),
 		})
