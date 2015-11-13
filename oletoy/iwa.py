@@ -938,7 +938,8 @@ COMMON_OBJECTS = {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
 		11: ('Properties', {
-			2: ('Alternating rows', {1: ('Color',)}),
+			1: ('Alternating rows', bool_),
+			2: ('Alternating row color', {1: ('Color',)}),
 			22: ('Fit row height', bool_),
 			32: (None, {
 				1: ('Count', int64),
@@ -969,8 +970,8 @@ COMMON_OBJECTS = {
 			57: ('A stroke', 'Stroke'),
 			58: ('A table border', 'Stroke'),
 			59: ('A table border', 'Stroke'),
-			60: ('A stroke', 'Stroke'),
-			61: ('A stroke', 'Stroke'),
+			60: ('Body row gridline?', 'Stroke'),
+			61: ('Body column gridline?', 'Stroke'),
 		})
 	}),
 	6004: ('Cell style', {
