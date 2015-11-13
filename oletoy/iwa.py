@@ -939,7 +939,7 @@ COMMON_OBJECTS = {
 		10: ('Number of properties', int64),
 		11: ('Properties', {
 			1: ('Alternating rows', bool_),
-			2: ('Alternating row color', {1: ('Color',)}),
+			2: ('Alternating row fill', {1: ('Color',)}),
 			22: ('Fit row height', bool_),
 			32: (None, {
 				1: ('Count', int64),
@@ -956,6 +956,7 @@ COMMON_OBJECTS = {
 			42: ('Gridlines in header rows', bool_),
 			43: ('Gridlines in header columns', bool_),
 			44: ('Gridlines in footer rows', bool_),
+			45: ('Direction', enum({0: 'ltr', 1: 'rtl'})),
 			46: ('A stroke', 'Stroke'),
 			47: ('A table border', 'Stroke'),
 			48: ('A stroke', 'Stroke'),
@@ -979,6 +980,7 @@ COMMON_OBJECTS = {
 		10: ('Number of properties', int64),
 		11: ('Properties', {
 			1: ('Fill',),
+			9: ('Text inset', 'Padding'),
 			10: ('Top border', 'Stroke'),
 			11: ('Right border', 'Stroke'),
 			12: ('Bottom border', 'Stroke'),
