@@ -23,7 +23,6 @@ def values(d, default='unknown'):
 		return key2txt(val, d, default)
 	return lookup
 
-WT602_SECTION_COUNT = 37
 wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
@@ -225,12 +224,13 @@ class wt602_parser(object):
 		add_pgiter(self.page, 'Header', 'wt602', 'header', self.data[0:self.header_len], self.parent)
 
 	def parse_offset_table(self):
-		start = self.header_len
+		off = self.header_len - 4
+		(table_size, off) = rdata(self.data, off, '<I')
+		start = off
 		offiter = add_pgiter(self.page, 'Offset table', 'wt602', 'offsets',
-				self.data[start:start + 4 * WT602_SECTION_COUNT], self.parent)
+				self.data[start:start + table_size], self.parent)
 		offsets = []
-		off = start
-		for i in range(0, WT602_SECTION_COUNT):
+		for i in range(0, table_size / 4):
 			(cur, off) = rdata(self.data, off, '<I')
 			if cur < start:
 				offsets.append(0)
@@ -288,14 +288,19 @@ def add_fonts(hd, size, data):
 
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Size', c, 0, 4, '<I')
+	add_iter(hd, 'Header size', c, 0, 4, '<I')
+	off += 0x6a
+	(size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset table size', size, off - 4, 4, '<I')
 
 def add_offsets(hd, size, data):
 	off = 0
-	for i in range(0, WT602_SECTION_COUNT):
+	i = 0
+	while off + 4 <= size:
 		(offset, off) = rdata(data, off, '<I')
 		name = key2txt(i, wt602_section_names, 'Section %d' % i)
 		add_iter(hd, name, offset, off - 4, 4, '<I')
+		i += 1
 
 def get_char_style(flags):
 	names = {
