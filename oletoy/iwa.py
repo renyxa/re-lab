@@ -1053,7 +1053,10 @@ KEYNOTE_OBJECTS = {
 	}),
 	2: ('Presentation', {
 		2: ('Theme ref?', 'Ref'),
-		3: ('Slide list', {1: ('Slide list ref', 'Ref')}),
+		3: ('Slide list', {
+			1: ('Slide list ref', 'Ref'),
+			2: ('A slide list ref', 'Ref'), # TODO: what does this mean?
+		}),
 		4: ('Size',),
 		5: ('Stylesheet ref', 'Ref')
 	}),
