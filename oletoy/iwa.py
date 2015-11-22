@@ -575,7 +575,12 @@ MESSAGES = {
 		3: ('Path', string),
 		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
 	},
-	'Other file': {1: ('ID', int64), 3: ('Path', string), 5: ('Template', string)},
+	'Other file': {
+		1: ('ID', int64),
+		3: ('Path', string),
+		4: ('Internal path', string),
+		5: ('Template', string)
+	},
 	'Padding': {1: ('Left', float_), 2: ('Top', float_), 3: ('Right', float_), 4: ('Bottom', float_),},
 	'Paragraph properties': {
 		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify', 4: 'Cell'})),
