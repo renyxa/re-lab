@@ -568,6 +568,7 @@ MESSAGES = {
 		2: ('Gradient stop', {1: ('Color',), 2: ('Fraction', float_), 3: ('Inflection', float_)}),
 		3: ('Opacity', float_),
 		5: ('Angle', {2: ('Angle', float_)}),
+		6: ('Vector?', {1: ('Start', 'Position'), 2: ('End', 'Position'), 3: ('Base size', 'Size')}),
 	},
 	'IWA file': {
 		1: ('First Object ID', int64),
