@@ -679,6 +679,12 @@ MESSAGES = {
 	'Shape placement': {
 		1: ('Geometry',),
 		2: ('Parent ref', 'Ref'),
+		3: ('External text wrap', {
+			1: ('Text wrap', enum({0: 'inline with text', 1: 'around', 2: 'above and below', 4: 'automatic', 5: 'none'})),
+			3: ('Wrap style', enum({0: 'tight', 1: 'regular'})),
+			4: ('Margin', float_),
+			5: ('Alpha threshold', float_),
+		}),
 		5: ('Locked', bool_),
 		6: ('Comment ref', 'Ref'),
 		7: ('Aspect ratio locked', bool_),
