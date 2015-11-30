@@ -689,7 +689,7 @@ MESSAGES = {
 		1: ('Color',),
 		2: ('Width', float_),
 		3: ('Cap', enum({0: 'butt', 1: 'round'})),
-		4: ('Join', enum({0: 'miter'})),
+		4: ('Join', enum({0: 'miter', 1: 'round'})),
 		5: ('Miter limit', float_),
 		6: ('Stroke', {
 			1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'auto'})),
