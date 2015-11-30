@@ -692,7 +692,7 @@ MESSAGES = {
 		4: ('Join', enum({0: 'miter'})),
 		5: ('Miter limit', float_),
 		6: ('Stroke', {
-			1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'none'})),
+			1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'auto'})),
 			3: ('Number of elements', int64),
 			4: ('Pattern element', float_),
 		}),
