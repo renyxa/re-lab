@@ -725,7 +725,7 @@ COMMON_OBJECTS = {
 		3: ('Text', string),
 		5: ('Paragraphs', {1: ('Paragraph', 'Text address')}),
 		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
-		7: ('List styles', {1: ('List style', {2: ('List style ref', 'Ref')})}),
+		7: ('List styles', {1: ('List style', {1: ('Start', int64), 2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
 		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
 		11: ('Links', {1: ('Link', 'Text address')}),
