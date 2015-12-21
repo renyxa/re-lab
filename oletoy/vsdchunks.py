@@ -429,11 +429,14 @@ def Para (hd, size, value, off = 19):
 	add_iter(hd,"SpAfter","%d pt"%round(struct.unpack("<d",value[off+50:off+50+8])[0]*72),off+50,8,"<d")
 	add_iter(hd,"HAlign","%d"%ord(value[off+58]),off+58,1,"B")
 	add_iter(hd,"Bullet","%d"%ord(value[off+59]),off+59,1,"B")
-	add_iter(hd,"BulletFont","%d"%struct.unpack("<H",value[off+64:off+64+2]),off+64,2,"<H")
-	add_iter(hd,"LocBulletFont","%d"%ord(value[off+66]),off+66,1,"B")
-	add_iter(hd,"BulletSize","%d%%"%(struct.unpack("<d",value[off+68:off+68+8])[0]*100),off+68,8,"<d")
-	add_iter(hd,"TxtPosAfterBullet","%.2f"%struct.unpack("<d",value[off+77:off+77+8]),off+77,8,"<d")
-	add_iter(hd,"Flags","%d"%struct.unpack("<I",value[off+85:off+85+4]),off+85,4,"<I")
+	if hd.version > 6:
+		add_iter(hd,"BulletFont","%d"%struct.unpack("<H",value[off+64:off+64+2]),off+64,2,"<H")
+		add_iter(hd,"LocBulletFont","%d"%ord(value[off+66]),off+66,1,"B")
+		add_iter(hd,"BulletSize","%d%%"%(struct.unpack("<d",value[off+68:off+68+8])[0]*100),off+68,8,"<d")
+		add_iter(hd,"TxtPosAfterBullet","%.2f"%struct.unpack("<d",value[off+77:off+77+8]),off+77,8,"<d")
+		add_iter(hd,"Flags","%d"%struct.unpack("<I",value[off+85:off+85+4]),off+85,4,"<I")
+	else:
+		add_iter(hd,"Flags","%d"%struct.unpack("<I",value[off+64:off+64+4]),off+64,4,"<I")
 	if hd.version == 6 and len(value)>off+73:
 		vsdblock.parse(hd, size, value, off+73)
 	elif len(value)>off+123 and hd.version == 11:
