@@ -67,6 +67,8 @@ def open (page, buf, parent=None):
 	if buf[:8] != "\x89PNG\x0d\x0a\x1a\x0a":
 		print 'No PNG signature'
 		return
+	if parent:
+		page.model.set_value(parent,1,("escher","odraw","Blip"))
 	add_pgiter(page,"Signature","png","sig",buf[:8],parent)
 	off = 8
 	while off < len(buf):

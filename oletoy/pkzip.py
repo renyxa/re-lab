@@ -27,9 +27,9 @@ def open(fname,page,parent=None):
 			print fn
 			pos = fn.rfind("/")
 			if pos == -1:
-				iter = add_pgiter(page,fn,"pkzip",0,data)
+				iter = add_pgiter(page,fn,"pkzip",0,data,parent)
 			else:
-				iter = add_pgiter(page,"[%s]%s"%(fn[:pos],fn[pos:]),"pkzip",0,data)
+				iter = add_pgiter(page,"[%s]%s"%(fn[:pos],fn[pos:]),"pkzip",0,data,parent)
 			if len(data) > 0:
 				page.fload(data,iter,z)
 			

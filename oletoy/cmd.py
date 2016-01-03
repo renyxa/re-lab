@@ -18,9 +18,10 @@ import sys,struct,os
 import tree,gtk,cairo,zlib
 import gobject
 import difflib
-import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6,vba
+import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6,vba,pkzip
 from utils import *
 from os.path import expanduser
+import StringIO
 
 try:
 	import gtksourceview2
@@ -1453,7 +1454,13 @@ def parse (cmd, entry, page):
 				if len(tail) > 0:
 					add_pgiter (page,"[Tail]","",0,tail,iter1)
 			except:
-				print "Failed to decompress"
+				print "Failed to decompress as zlib"
+				try:
+					f = StringIO.StringIO(buf[int(chaddr,16):])
+					pkzip.open(f, page, iter1)
+					f.close()
+				except:
+					print "Failed to decompress as pkzip"
 
 	elif cmd[0] == "?":
 		ctype = cmd[1]
