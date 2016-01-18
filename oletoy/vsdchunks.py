@@ -393,8 +393,8 @@ def Char (hd, size, value, off = 19):
 		ftxt += "superscript "
 	if flags3&2== 2:
 		ftxt += "subscript "
-	add_iter(hd,"Font Mods3",ftxt,off+12,1,"txt")
-	add_iter(hd,"Scale","%d%%"%(struct.unpack("<h",value[off+13:off+13+2])[0]/100.),off+13,2,"<h")
+	add_iter(hd,"Font Mods3",ftxt,off+13,1,"txt")
+	add_iter(hd,"Scale","%d%%"%(struct.unpack("<h",value[off+14:off+14+2])[0]/100.),off+14,2,"<h")
 	add_iter(hd,"FontSize","%.2f pt"%(72*struct.unpack("<d",value[off+18:off+18+8])[0]),off+18,8,"<d")
 
 	flags4 = ord(value[off+26])
