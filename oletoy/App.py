@@ -58,6 +58,7 @@ class Page:
 		self.debug = 0
 		self.appdoc = None
 		self.backpath = None
+		self.cdr18 = False
 
 	def fload(self,buf="",parent=None,package=None):
 		self.pname = os.path.split(self.fname)[1]
@@ -123,19 +124,7 @@ class Page:
 		if buf[:4] == "\x12\x90\xa8\x7f":
 			nki.open(self,buf,parent)
 			return 0
-
-#		This one should be before CDR to properly handle v17
-		if parent != None:
-			parname = self.model.get_value(parent,0)
-			if parname == "[content]/dataFileList.dat":
-				print "Found XMLish CDR version"
-				self.wtable = self.model.get_value(parent,3).split("\n")
-			elif "[content]/" in parname and ".dat" in parname:
-				if self.wdata == None:
-					self.wdata = {}
-				p = parname.rfind("/")
-				self.wdata[parname[p+1:]] = parent
-			
+		
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
 			print 'Probably CDR',

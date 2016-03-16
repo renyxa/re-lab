@@ -18,7 +18,7 @@ import sys,struct,gtk,zlib
 import gobject
 import icc,cmx
 from utils import *
-
+import traceback
 ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 
 
@@ -2559,7 +2559,8 @@ class record:
 					chunk.load(buf, page, parent, offset, blocksizes, fmttype)
 					offset += 8 + chunk.size
 		elif page.version >= 16:
-			try:
+			#try:
+			if 1:
 				strid = struct.unpack("<i",self.data[:4])[0]
 				off1 = struct.unpack("<I",self.data[8:12])[0]
 				off2 = off1 + struct.unpack("<I",self.data[4:8])[0]
@@ -2595,5 +2596,6 @@ class record:
 						else:
 							page.hd.width = struct.unpack("<I",data[4:8])[0]/10000
 							page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
-			except:
-				print 'Failed in v16 or v17 dat'
+			#except:
+			#	traceback.print_exc()
+			#	print 'Failed in v16 or v17 dat'
