@@ -723,6 +723,8 @@ def add_zmf4_obj_polygon(hd, size, data):
 	add_iter(hd, 'Width', width, off - 4, 4, '<I')
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Height', height, off - 4, 4, '<I')
+	if width == height:
+		add_iter(hd, 'Radius', width / 2, off - 4, 4, '<I')
 	i = 1
 	while i <= count:
 		(x, off) = rdata(data, off, '<I')
@@ -730,6 +732,19 @@ def add_zmf4_obj_polygon(hd, size, data):
 		(y, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
 		i += 1
+	(peaks, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of peaks', peaks, off - 4, 4, '<I')
+	(type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Polygon type?', type, off - 4, 4, '<I')
+	sharpness_offsets = {
+		3: (0x60, ),
+		4: (0x60, 0x68),
+		7: (0x58, 0x88),
+	}
+	if type in sharpness_offsets:
+		for sharpness_offset in sharpness_offsets[type]:
+			(sharpness, sharpness_offset) = rdata(data, sharpness_offset, '<f')
+			add_iter(hd, 'Sharpness?', sharpness, sharpness_offset - 4, 4, '<f')
 
 def add_zmf4_obj_polyline(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
