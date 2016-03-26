@@ -78,7 +78,7 @@ def add_control(hd, size, data):
 	if off < end:
 		value = data[off:end]
 		encoding_map = {'0': 'KEYBCS2', '1': 'LATIN2', '2': 'KOI8CS'}
-		line_height_map = {'6': '1', '4': '1.5', '3': '2'}
+		line_height_map = {'6': '100%', '4': '150%', '3': '200%'}
 		if name == 'CT':
 			value = key2txt(value.strip(), encoding_map)
 		elif name == 'LH':
