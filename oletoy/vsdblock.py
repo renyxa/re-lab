@@ -265,14 +265,21 @@ def sl_funcs7b(hd, data, shift, offset, blk_off):
 	return blk_off+8
 
 def sl_funcs7a(hd, data, shift, offset, blk_off):
-	fid = struct.unpack("<h",data[offset+blk_off:offset+blk_off+2])[0]
+	if hd.version > 5:
+		fid = struct.unpack("<h",data[offset+blk_off:offset+blk_off+2])[0]
+	else:
+		fid = ord(data[offset+blk_off])
 	if fnames7ab.has_key(fid):
 		nm_str = fnames7ab[fid]
 	else:
 		nm_str = "%02x"%fid
 	iter1 = hd.model.append(None, None)
-	hd.model.set (iter1, 0, "\tfunc7a", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
-	return blk_off+4
+	if hd.version > 5:
+		hd.model.set (iter1, 0, "\tfunc7a", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
+		return blk_off+4
+	else:
+		hd.model.set (iter1, 0, "\tfunc7a", 1, nm_str,2,shift+offset+blk_off,3,2,4,"<H")
+		return blk_off+2
 
 def sl_str(hd, data, shift, offset, blk_off):
 	slen = ord(data[offset+blk_off])
@@ -303,10 +310,24 @@ def sl_ops(hd, data, shift, offset, blk_off):
 def sl_names70 (hd, data, shift, offset, blk_off):
 	# FIXME, just skipping at the moment
 	iter1 = hd.model.append(None, None)
-	hd.model.set (iter1, 0, "\tnames70", 1, "",2,shift+offset+blk_off,3,7,4,"txt")
+	length = 11
+	v1,v2,v3,v4 = "","","",""
 	if hd.version < 6:
-		return blk_off+7
-	return blk_off+11
+		length = 7
+		v1 = struct.unpack("<H",data[offset+blk_off:offset+blk_off+2])[0]
+		v2 = struct.unpack("<H",data[offset+blk_off+2:offset+blk_off+4])[0]
+		try:
+			v3 = sl_objs72[ord(data[offset+blk_off+4])]
+		except:
+			v3 = "unkn_0x%d"%ord(data[offset+blk_off+4])
+		try:
+			v4 = sl_vars72[struct.unpack("<H",data[offset+blk_off+5:offset+blk_off+7])[0]]
+		except:
+			v4 = "unkn_0x%d"%(struct.unpack("<H",data[offset+blk_off+5:offset+blk_off+7])[0])
+	hd.model.set (iter1, 0, "\tnames70 [%d %d : %s: %s]"%(v1,v2,v3,v4), 1, "",2,shift+offset+blk_off,3,7,4,"txt")
+
+	return blk_off+length
+
 
 sl_vars72 = {0:"X",1:"Y"}
 sl_objs72 = {1:"Sheet",2:"Member",3:"Char",4:"Para",5:"Tabs",6:"Scratch",7:"Connections",8:"TextFields",9:"Controls",
