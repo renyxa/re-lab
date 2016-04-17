@@ -56,6 +56,8 @@ def XForm1D (hd, size, value):
 	vn = {0:"BeginX",1:"BeginY",2:"EndX",3:"EndY"}
 	for i in range(4):
 		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+	if len(value) > 0x26:
+		vsdblock.parse5(hd, size, value, 0x26)
 
 def XForm (hd, size, value):
 	vn = {0:"PinX",1:"PinY",2:"Width",3:"Height",4:"LocPinX",5:"LocPinY",6:"Angle",7:"FlipX",8:"FlipY",9:"ResizeMode"}
@@ -76,11 +78,15 @@ def MoveTo (hd, size, value):
 		off += 1
 	for i in range(2):
 		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1+off:i*9+9+off]),i*9+1+off,8,"<d")
+	if len(value) > 20:
+		vsdblock.parse5(hd, size, value, 20)
 
 def LineTo (hd, size, value):
 	vn = {0:"X",1:"Y"}
 	for i in range(2):
 		add_iter (hd, vn[i], "%.2f"%struct.unpack("<d",value[i*9+1:i*9+9]),i*9+1,8,"<d")
+	if len(value) > 20:
+		vsdblock.parse5(hd, size, value, 20)
 
 def EllArcTo (hd, size, value):
 	vn = {0:"X",1:"Y",2:"A",3:"B",4:"C",5:"D"}
@@ -115,6 +121,11 @@ def Shape (hd, size, value):
 	add_iter (hd, "LineStyle", "%2x"%struct.unpack("<H",value[0x18:0x1a])[0],0x18,2,"<H")
 	add_iter (hd, "FillStyle", "%2x"%struct.unpack("<H",value[0x1a:0x1c])[0],0x1a,2,"<H")
 	add_iter (hd, "TextStyle", "%2x"%struct.unpack("<H",value[0x1c:0x1e])[0],0x1c,2,"<H")
+
+def Misc (hd, size, value):
+	if len(value) > 17:
+		vsdblock.parse5(hd, size, value, 17)
+
 
 def NameIDX (hd, size, value):
 	numofrec = struct.unpack("<H",value[12:12+2])[0]
@@ -162,6 +173,7 @@ chnk_func = {
 #	0x98:FrgnType,
 	0x9b:XForm,0x9c:TxtXForm, 0x9d:XForm1D,
 	0xa1:TextField,
+	0xa4:Misc,
 #	0xa5:SplineStart,0xa6:SplineKnot,0xa8:LayerIX,0xaa:Control,
 #	0xc0:PageLayout,0xc1:Polyline,0xc3:NURBS, 
 	0xc9:NameIDX,
