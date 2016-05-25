@@ -17,7 +17,7 @@
 import struct
 import zlib
 
-from utils import add_iter, add_pgiter, rdata
+from utils import add_iter, add_pgiter, rdata, key2txt
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -772,7 +772,7 @@ def add_zmf4_obj_rectangle(hd, size, data):
 		4: 'Cut'
 	}
 	(corner_type, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Corner type', rectangle_corner_types[corner_type], off - 4, 4, '<I')
+	add_iter(hd, 'Corner type', key2txt(corner_type, rectangle_corner_types), off - 4, 4, '<I')
 	(rounding_value, off) = rdata(data, off, '<f')
 	add_iter(hd, 'Rounding value (in.)', rounding_value, off - 4, 4, '<f')
 
