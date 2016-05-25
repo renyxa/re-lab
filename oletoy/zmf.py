@@ -765,8 +765,16 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
-	(closed, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
+	rectangle_corner_types = {
+		1: 'Normal',
+		2: 'Round',
+		3: 'Round In',
+		4: 'Cut'
+	}
+	(corner_type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Corner type', rectangle_corner_types[corner_type], off - 4, 4, '<I')
+	(rounding_value, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Rounding value (in.)', rounding_value, off - 4, 4, '<f')
 
 def add_zmf4_obj_table(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
