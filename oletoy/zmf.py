@@ -760,6 +760,12 @@ def add_zmf4_obj_polyline(hd, size, data):
 		(y, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
 		i += 1
+	types = {
+		1: 'Line',
+		2: 'Bezier curve'
+	}
+	(type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Polyline type', key2txt(type, types), off - 4, 4, '<I')
 
 def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
