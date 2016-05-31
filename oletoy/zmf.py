@@ -810,6 +810,9 @@ def add_zmf4_obj_text(hd, size, data):
 	off = 0x28
 	(line_count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of lines', line_count, off - 4, 4, '<I')
+	off += 4
+	(font_count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of fonts?', font_count, off - 4, 4, '<I')
 	off = 0x3c
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length (if 1 line and 1 locale)', count, off - 4, 4, '<I')
