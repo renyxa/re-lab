@@ -710,8 +710,12 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
-	(closed, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Closed?', bool(closed), off - 4, 4, '<I')
+	(begin, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Beginning (rad)', begin, off - 4, 4, '<f')
+	(end, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Ending (rad)', end, off - 4, 4, '<f')
+	(arc, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Arc (== not closed)', bool(arc), off - 4, 4, '<I')
 
 def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
