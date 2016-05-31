@@ -305,7 +305,7 @@ zmf4_objects = {
 	# gap
 	0xe: "Bitmap?",
 	# gap
-	0x10: "Object 0x10",
+	0x10: "Text font?",
 	0x11: "Object 0x11",
 	0x12: "Text",
 	# gap
@@ -807,13 +807,16 @@ def add_zmf4_obj_table(hd, size, data):
 
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
+	off = 0x28
+	(line_count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of lines', line_count, off - 4, 4, '<I')
 	off = 0x3c
 	(count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length', count, off - 4, 4, '<I')
+	add_iter(hd, 'Length (if 1 line and 1 locale)', count, off - 4, 4, '<I')
 	off += 8
 	length = 2 * int(count)
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
+	add_iter(hd, 'Text (if 1 line and 1 locale)', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
