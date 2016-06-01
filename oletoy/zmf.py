@@ -304,7 +304,7 @@ zmf4_objects = {
 	0xc: "Pen style",
 	# gap
 	0xe: "Bitmap?",
-        0xf: "Arrow style",
+	0xf: "Arrow style",
 	0x10: "Text font?",
 	0x11: "Object 0x11",
 	0x12: "Text",
