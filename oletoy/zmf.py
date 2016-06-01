@@ -17,7 +17,7 @@
 import struct
 import zlib
 
-from utils import add_iter, add_pgiter, rdata, key2txt
+from utils import add_iter, add_pgiter, rdata, key2txt, d2hex
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -299,9 +299,9 @@ zmf2_handlers = {
 
 zmf4_objects = {
 	# gap
-	0xa: "Object 0xa",
+	0xa: "Fill style?",
 	# gap
-	0xc: "Object 0xc",
+	0xc: "Stroke style?",
 	# gap
 	0xe: "Bitmap?",
 	# gap
@@ -407,6 +407,8 @@ class ZMF4Parser(object):
 			off += length
 
 zmf4_handlers = {
+	0xA: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
+	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_stroke'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
@@ -706,6 +708,16 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	(bottom, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Offset of bottom side of page', bottom, off - 4, 4, '<I')
 
+def add_zmf4_obj_fill(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x30
+	add_iter(hd, 'Fill color (RGB)', d2hex(data[off:off+3]), off, 3, '<I')
+
+def add_zmf4_obj_stroke(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x3c
+	add_iter(hd, 'Stroke color (RGB)', d2hex(data[off:off+3]), off, 3, '<I')
+
 def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
@@ -844,6 +856,8 @@ zmf_ids = {
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
+	'zmf4_obj_fill': add_zmf4_obj_fill,
+	'zmf4_obj_stroke': add_zmf4_obj_stroke,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
 	'zmf4_obj_polyline': add_zmf4_obj_polyline,
