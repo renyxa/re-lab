@@ -17,7 +17,7 @@
 import struct
 import zlib
 
-from utils import add_iter, add_pgiter, rdata, key2txt, d2hex
+from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -299,12 +299,12 @@ zmf2_handlers = {
 
 zmf4_objects = {
 	# gap
-	0xa: "Fill style?",
+	0xa: "Fill style",
 	# gap
-	0xc: "Stroke style?",
+	0xc: "Pen style",
 	# gap
 	0xe: "Bitmap?",
-	# gap
+        0xf: "Arrow style",
 	0x10: "Text font?",
 	0x11: "Object 0x11",
 	0x12: "Text",
@@ -639,6 +639,20 @@ def add_zmf4_header(hd, size, data):
 	(size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'File size', size, off - 4, 4, '<I')
 
+def _zmf4_ref_objects(size, data, ref_obj_count):
+	ref_objects = []
+	i = 1
+	off_start = size - 8 * ref_obj_count
+	off_id = off_start
+	off_tag = off_start + 4 * ref_obj_count
+	while i <= ref_obj_count:
+		(id, off_id) = rdata(data, off_id, '<I')
+		(tag, off_tag) = rdata(data, off_tag, '<I')
+		if int(id) != 0xffffffff:
+			ref_objects.append((id, tag, off_id - 4, off_tag - 4))
+		i += 1
+	return ref_objects
+
 def _zmf4_obj_common(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
@@ -648,6 +662,13 @@ def _zmf4_obj_common(hd, size, data):
 	else:
 		obj = 'Unknown object 0x%x' % typ
 	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
+	ref_objects = []
+	if size >= 0xf:
+		off = 0xc
+		(ref_obj_count, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Count of referenced objects?', ref_obj_count, off - 4, 4, '<I')
+		if ref_obj_count > 0:
+			ref_objects = _zmf4_ref_objects(size, data[:size], ref_obj_count)
 	if size >= 0x1c:
 		off = 0x18
 		(oid, off) = rdata(data, off, '<I')
@@ -656,7 +677,19 @@ def _zmf4_obj_common(hd, size, data):
 		else:
 			oid_str = '0x%x' % oid
 		add_iter(hd, 'ID', oid_str, off - 4, 4, '<I')
-	return off
+	return (off, ref_objects)
+
+def _zmf4_obj_style_refs(hd, ref_objects):
+	style_types = {
+		1: 'Fill',
+		2: 'Pen'
+	}
+	i = 1
+	while i <= len(ref_objects):
+		(id, type, off_id, off_type) = ref_objects[i - 1]
+		add_iter(hd, 'Ref object %d ID' % i, '0x%x' % id, off_id, 4, '<I')
+		add_iter(hd, 'Ref object %d type' % i, key2txt(type, style_types), off_type, 4, '<I')
+		i += 1
 
 def _zmf4_obj_bbox(hd, size, data, off):
 	(width, off) = rdata(data, off, '<I')
@@ -714,12 +747,31 @@ def add_zmf4_obj_fill(hd, size, data):
 	add_iter(hd, 'Fill color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 
 def add_zmf4_obj_stroke(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	off = 0x34
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Pen width', width, off - 4, 4, '<I')
 	off = 0x3c
-	add_iter(hd, 'Stroke color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+	add_iter(hd, 'Pen color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+	if len(ref_objects) > 0:
+		arrow_types = {
+			0: 'Start',
+			1: 'End'
+		}
+		i = 1
+		while i <= len(ref_objects):
+			(arrow_id, arrow_type, off_id, off_type) = ref_objects[i- 1]
+			add_iter(hd, 'Arrow %d object ID' % i, '0x%x' % arrow_id, off_id, 4, '<I')
+			add_iter(hd, 'Arrow %d type' % i, key2txt(arrow_type, arrow_types), off_type, 4, '<I')
+			i += 1
+	off = 0x50
+	(dashes, off) = rdata(data, off, '6s')
+	add_iter(hd, 'Dash pattern (bits)', d2bin(dashes), off - 6, 6, '6s')
+	(dist, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Distance between dash patterns?', dist, off - 2, 2, '<H')
 
 def add_zmf4_obj_ellipse(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(begin, off) = rdata(data, off, '<f')
@@ -728,9 +780,10 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	add_iter(hd, 'Ending (rad)', end, off - 4, 4, '<f')
 	(arc, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Arc (== not closed)', bool(arc), off - 4, 4, '<I')
+	_zmf4_obj_style_refs(hd, ref_objects)
 
 def add_zmf4_obj_polygon(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0xc
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
@@ -761,9 +814,10 @@ def add_zmf4_obj_polygon(hd, size, data):
 		for sharpness_offset in sharpness_offsets[type]:
 			(sharpness, sharpness_offset) = rdata(data, sharpness_offset, '<f')
 			add_iter(hd, 'Sharpness?', sharpness, sharpness_offset - 4, 4, '<f')
+	_zmf4_obj_style_refs(hd, ref_objects)
 
 def add_zmf4_obj_polyline(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x5c
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
@@ -782,9 +836,10 @@ def add_zmf4_obj_polyline(hd, size, data):
 	}
 	(type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Polyline type', key2txt(type, types), off - 4, 4, '<I')
+	_zmf4_obj_style_refs(hd, ref_objects)
 
 def add_zmf4_obj_rectangle(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	rectangle_corner_types = {
@@ -797,6 +852,7 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	add_iter(hd, 'Corner type', key2txt(corner_type, rectangle_corner_types), off - 4, 4, '<I')
 	(rounding_value, off) = rdata(data, off, '<f')
 	add_iter(hd, 'Rounding value (in.)', rounding_value, off - 4, 4, '<f')
+	_zmf4_obj_style_refs(hd, ref_objects)
 
 def add_zmf4_obj_table(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
@@ -834,12 +890,13 @@ def add_zmf4_obj_text(hd, size, data):
 	add_iter(hd, 'Text (if 1 line and 1 locale)', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	_zmf4_obj_bbox(hd, size, data, off)
 	off = 0x88
 	(text, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Text reference', '0x%x' % text, off - 4, 4, '<I')
+	_zmf4_obj_style_refs(hd, ref_objects)
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
