@@ -711,12 +711,12 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 def add_zmf4_obj_fill(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x30
-	add_iter(hd, 'Fill color (RGB)', d2hex(data[off:off+3]), off, 3, '<I')
+	add_iter(hd, 'Fill color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 
 def add_zmf4_obj_stroke(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x3c
-	add_iter(hd, 'Stroke color (RGB)', d2hex(data[off:off+3]), off, 3, '<I')
+	add_iter(hd, 'Stroke color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 
 def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
