@@ -107,6 +107,9 @@ def d2hex(data,space="",ln=0):
 			s += "\n"
 	return s
 
+def d2bin(data):
+	return ' '.join(format(ord(x), 'b').zfill(8) for x in data)
+
 def key2txt(key,data,txt="Unknown"):
 	if key in data:
 		return data[key]
