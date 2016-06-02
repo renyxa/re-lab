@@ -743,8 +743,31 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 
 def add_zmf4_obj_fill(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
-	off = 0x30
-	add_iter(hd, 'Fill color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+	off = 0x24
+	fill_types = {
+		1: 'Solid',
+		2: 'Linear',
+		3: 'Radial',
+		4: 'Conical',
+		5: 'Cross-shaped',
+		6: 'Rectangular',
+		7: 'Flexible'
+	}
+	(type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Fill type', key2txt(type, fill_types), off - 4, 4, '<I')
+	if type == 1:
+		off = 0x30
+		add_iter(hd, 'Color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+	else:
+		off = 0x3c
+		(angle, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Angle (rad)', angle, off - 4, 4, '<f')
+		(steps, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Steps', steps, off - 4, 4, '<I')
+		off = 0x48
+		add_iter(hd, 'Color 1 (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+		off = 0x58
+		add_iter(hd, 'Color 2 (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 
 def add_zmf4_obj_stroke(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
