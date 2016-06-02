@@ -696,22 +696,14 @@ def _zmf4_obj_bbox(hd, size, data, off):
 	add_iter(hd, 'Width', width, off - 4, 4, '<I')
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Height', height, off - 4, 4, '<I')
-	(x1, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: top left corner X', x1, off - 4, 4, '<I')
-	(y1, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: top left corner Y', y1, off - 4, 4, '<I')
-	(x2, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: top right corner X', x2, off - 4, 4, '<I')
-	(y2, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: top right corner Y', y2, off - 4, 4, '<I')
-	(x3, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: bottom right corner X', x3, off - 4, 4, '<I')
-	(y3, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: bottom right corner Y', y3, off - 4, 4, '<I')
-	(x4, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: bottom left corner X', x4, off - 4, 4, '<I')
-	(y4, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bounding box: bottom left corner Y', y4, off - 4, 4, '<I')
+	i = 1
+	while i <= 4:
+		# points can be in different order depending on how the object was created (mouse cursor movement direction)
+		(x, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Bounding box corner %d X' % i, x, off - 4, 4, '<I')
+		(y, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Bounding box corner %d Y' % i, y, off - 4, 4, '<I')
+		i += 1
 	return off
 
 def add_zmf4_obj(hd, size, data):
