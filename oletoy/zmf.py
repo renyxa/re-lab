@@ -300,9 +300,9 @@ zmf2_handlers = {
 zmf4_objects = {
 	# gap
 	0xa: "Fill style",
-	# gap
+	0xb: "Transparency",
 	0xc: "Pen style",
-	# gap
+	0xd: "Shadow style",
 	0xe: "Bitmap?",
 	0xf: "Arrow style",
 	0x10: "Text font?",
@@ -408,7 +408,9 @@ class ZMF4Parser(object):
 
 zmf4_handlers = {
 	0xA: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
-	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_stroke'),
+	0xB: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
+	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
+	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
@@ -682,7 +684,9 @@ def _zmf4_obj_common(hd, size, data):
 def _zmf4_obj_style_refs(hd, ref_objects):
 	style_types = {
 		1: 'Fill',
-		2: 'Pen'
+		2: 'Pen',
+		3: 'Shadow',
+		4: 'Transparency'
 	}
 	i = 1
 	while i <= len(ref_objects):
@@ -761,7 +765,7 @@ def add_zmf4_obj_fill(hd, size, data):
 		off = 0x58
 		add_iter(hd, 'Color 2 (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 
-def add_zmf4_obj_stroke(hd, size, data):
+def add_zmf4_obj_pen(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x34
 	(width, off) = rdata(data, off, '<I')
@@ -784,6 +788,30 @@ def add_zmf4_obj_stroke(hd, size, data):
 	add_iter(hd, 'Dash pattern (bits)', d2bin(dashes), off - 6, 6, '6s')
 	(dist, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Distance between dash patterns?', dist, off - 2, 2, '<H')
+
+def add_zmf4_obj_shadow(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x24
+	shadow_types = {
+		1: 'Color',
+		2: 'Brightness',
+		3: 'Soft',
+		4: 'Transparent'
+	}
+	(type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Shadow type', key2txt(type, shadow_types), off - 4, 4, '<I')
+	(x, off) = rdata(data, off, '<I')
+	add_iter(hd, 'X offset', x, off - 4, 4, '<I')
+	(y, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Y offset', y, off - 4, 4, '<I')
+	(skew, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Skew angle (rad)', skew, off - 4, 4, '<f')
+	(transp, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Transparency', transp, off - 4, 4, '<f')
+	add_iter(hd, 'Color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+	off = 0x44
+	(blur, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Blur', blur, off - 4, 4, '<I')
 
 def add_zmf4_obj_ellipse(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
@@ -935,7 +963,8 @@ zmf_ids = {
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
-	'zmf4_obj_stroke': add_zmf4_obj_stroke,
+	'zmf4_obj_pen': add_zmf4_obj_pen,
+	'zmf4_obj_shadow': add_zmf4_obj_shadow,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
 	'zmf4_obj_polyline': add_zmf4_obj_polyline,
