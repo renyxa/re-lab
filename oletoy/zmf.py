@@ -409,7 +409,7 @@ class ZMF4Parser(object):
 zmf4_handlers = {
 	0xA: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
 	0xB: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
-	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_stroke'),
+	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
@@ -763,7 +763,7 @@ def add_zmf4_obj_fill(hd, size, data):
 		off = 0x58
 		add_iter(hd, 'Color 2 (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 
-def add_zmf4_obj_stroke(hd, size, data):
+def add_zmf4_obj_pen(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x34
 	(width, off) = rdata(data, off, '<I')
@@ -937,7 +937,7 @@ zmf_ids = {
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
-	'zmf4_obj_stroke': add_zmf4_obj_stroke,
+	'zmf4_obj_pen': add_zmf4_obj_pen,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
 	'zmf4_obj_polyline': add_zmf4_obj_polyline,
