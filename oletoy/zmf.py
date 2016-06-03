@@ -300,7 +300,7 @@ zmf2_handlers = {
 zmf4_objects = {
 	# gap
 	0xa: "Fill style",
-	# gap
+	0xb: "Transparency",
 	0xc: "Pen style",
 	# gap
 	0xe: "Bitmap?",
@@ -408,6 +408,7 @@ class ZMF4Parser(object):
 
 zmf4_handlers = {
 	0xA: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
+	0xB: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_stroke'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
@@ -682,7 +683,8 @@ def _zmf4_obj_common(hd, size, data):
 def _zmf4_obj_style_refs(hd, ref_objects):
 	style_types = {
 		1: 'Fill',
-		2: 'Pen'
+		2: 'Pen',
+		4: 'Transparency'
 	}
 	i = 1
 	while i <= len(ref_objects):
