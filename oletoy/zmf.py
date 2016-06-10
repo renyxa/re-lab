@@ -755,15 +755,24 @@ def add_zmf4_obj_fill(hd, size, data):
 		off = 0x30
 		add_iter(hd, 'Color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 	else:
+		off = 0x2c
+		(stop_count, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Stop count', stop_count, off - 4, 4, '<I')
 		off = 0x3c
 		(angle, off) = rdata(data, off, '<f')
 		add_iter(hd, 'Angle (rad)', angle, off - 4, 4, '<f')
 		(steps, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Steps', steps, off - 4, 4, '<I')
 		off = 0x48
-		add_iter(hd, 'Color 1 (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
-		off = 0x58
-		add_iter(hd, 'Color 2 (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+		i = 1
+		while i <= stop_count:
+			add_iter(hd, 'Stop %d color (RGB)' % i, d2hex(data[off:off+3]), off, 3, '3s')
+			off += 8
+			(pos, off) = rdata(data, off, '<f')
+			add_iter(hd, 'Stop %d position' % i, pos, off - 4, 4, '<f')
+			off += 4
+			i += 1
+
 
 def add_zmf4_obj_pen(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
