@@ -318,7 +318,7 @@ zmf4_objects = {
 	0x25: "End of layer",
 	0x26: "View",
 	0x27: "Document settings",
-	0x28: "Stylesheet?",
+	0x28: "Color palette",
 	# gap
 	0x32: "Rectangle",
 	0x33: "Ellipse",
@@ -413,6 +413,7 @@ zmf4_handlers = {
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
+	0x28: (ZMF4Parser.parse_object, 'zmf4_obj_color_palette'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
 	0x34: (ZMF4Parser.parse_object, 'zmf4_obj_polygon'),
@@ -737,6 +738,25 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	(bottom, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Offset of bottom side of page', bottom, off - 4, 4, '<I')
 
+def add_zmf4_obj_color_palette(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(data_size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
+	(name_offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name offset?', name_offset, off - 4, 4, '<I')
+	name_length = data_size - name_offset
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Color count', count, off - 4, 4, '<I')
+	i = 1
+	while i <= count:
+		off += 4
+		add_iter(hd, 'Color %d' % i, d2hex(data[off:off+4]), off, 4, '4s')
+		off += 8
+		i += 1
+	(name, off) = rdata(data, off, '%ds' % name_length)
+	add_iter(hd, 'Name', name, off - name_length, name_length, '%ds' % name_length)
+
 def add_zmf4_obj_fill(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x24
@@ -971,6 +991,7 @@ zmf_ids = {
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
+	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
 	'zmf4_obj_pen': add_zmf4_obj_pen,
 	'zmf4_obj_shadow': add_zmf4_obj_shadow,
