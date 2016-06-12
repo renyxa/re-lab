@@ -716,6 +716,8 @@ def add_zmf4_obj(hd, size, data):
 
 def add_zmf4_obj_doc_settings(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
+	off = 0x3c
+	add_iter(hd, 'Page color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 	off = 0x44
 	(width, off) = rdata(data, off, '<I')
 	# Note: maximum possible page size is 40305.08 x 28500 mm. Do not ask me why...
