@@ -780,9 +780,17 @@ def add_zmf4_obj_fill(hd, size, data):
 		off = 0x2c
 		(stop_count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Stop count', stop_count, off - 4, 4, '<I')
-		off = 0x3c
-		(angle, off) = rdata(data, off, '<f')
-		add_iter(hd, 'Angle (rad)', angle, off - 4, 4, '<f')
+		if type != 2:
+			off += 4
+			(cx, off) = rdata(data, off, '<f')
+			add_iter(hd, 'Center x (%)', cx, off - 4, 4, '<f')
+			(cy, off) = rdata(data, off, '<f')
+			add_iter(hd, 'Center y (%)', cy, off - 4, 4, '<f')
+		if type not in {3, 7}:
+			off = 0x3c
+			(angle, off) = rdata(data, off, '<f')
+			add_iter(hd, 'Angle (rad)', angle, off - 4, 4, '<f')
+		off = 0x40
 		(steps, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Steps', steps, off - 4, 4, '<I')
 		off = 0x48
