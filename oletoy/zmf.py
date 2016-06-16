@@ -846,9 +846,11 @@ def add_zmf4_obj_shadow(hd, size, data):
 	(skew, off) = rdata(data, off, '<f')
 	add_iter(hd, 'Skew angle (rad)', skew, off - 4, 4, '<f')
 	(transp, off) = rdata(data, off, '<f')
-	add_iter(hd, 'Transparency', transp, off - 4, 4, '<f')
+	add_iter(hd, 'Transparency/Brightness', transp, off - 4, 4, '<f')
 	add_iter(hd, 'Color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
-	off = 0x44
+	off = 0x40
+	(transp2, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Transparency (for Soft)', transp2, off - 4, 4, '<f')
 	(blur, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Blur', blur, off - 4, 4, '<I')
 
