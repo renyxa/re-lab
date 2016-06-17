@@ -672,8 +672,11 @@ def _zmf4_obj_common(hd, size, data):
 		add_iter(hd, 'Count of referenced objects?', ref_obj_count, off - 4, 4, '<I')
 		if ref_obj_count > 0:
 			ref_objects = _zmf4_ref_objects(size, data[:size], ref_obj_count)
+		(refs_start, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Start of refs list?', refs_start, off - 4, 4, '<I')
+		(ref_types_start, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Start of ref types list?', ref_types_start, off - 4, 4, '<I')
 	if size >= 0x1c:
-		off = 0x18
 		(oid, off) = rdata(data, off, '<I')
 		if int(oid) == 0xffffffff:
 			oid_str = 'none'
