@@ -17,7 +17,7 @@
 import struct
 import zlib
 
-from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin
+from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt
 
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
@@ -721,8 +721,10 @@ def add_zmf4_obj(hd, size, data):
 def add_zmf4_obj_start_layer(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
-	(flags, off) = rdata(data, off, '4s')
-	add_iter(hd, 'Lock/Visibile/Print (bitwise)', d2bin(flags), off - 4, 4, '4s')
+	flags_map = {0x1: 'visible', 0x2: 'lock', 0x4: 'print'}
+	(flags, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Visibile/Lock/Print (bitwise)', bflag2txt(flags, flags_map), off - 1, 1, '<B')
+	off += 3
 	(name_offset, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Name offset', name_offset, off - 4, 4, '<I')
 	(order, off) = rdata(data, off, '<I')
