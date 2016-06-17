@@ -913,16 +913,18 @@ def add_zmf4_obj_polyline(hd, size, data):
 	off += 8
 	(components, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of components?', components, off - 4, 4, '<I')
+	points = 0
 	i = 1
 	while i <= components:
 	    off += 8
 	    (count, off) = rdata(data, off, '<I')
+	    points += count
 	    add_iter(hd, 'Number of points of comp. %d' % i, count, off - 4, 4, '<I')
 	    (closed, off) = rdata(data, off, '<I')
 	    add_iter(hd, 'Comp. %d closed?' % i, bool(closed), off - 4, 4, '<I')
 	    i += 1
 	i = 1
-	while i <= count:
+	while i <= points:
 		(x, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<I')
 		(y, off) = rdata(data, off, '<I')
