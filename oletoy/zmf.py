@@ -329,8 +329,8 @@ zmf4_objects = {
 	0x3a: "Text frame",
 	0x3b: "Table",
 	# gap
-	0x41: "Start of bar code?",
-	0x42: "End of bar code?",
+	0x41: "Start of group",
+	0x42: "End of group",
 }
 
 # defined later
