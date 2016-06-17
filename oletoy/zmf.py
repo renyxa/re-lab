@@ -905,6 +905,11 @@ def add_zmf4_obj_polygon(hd, size, data):
 
 def add_zmf4_obj_polyline(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(garbage, off) = rdata(data, off, '40s')
+	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
+	(path_len, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of path?', path_len, off - 4, 4, '<I')
 	off = 0x5c
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
