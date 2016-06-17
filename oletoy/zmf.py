@@ -934,8 +934,12 @@ def add_zmf4_obj_polyline(hd, size, data):
 		1: 'Line',
 		2: 'Bezier curve'
 	}
-	(type, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Polyline type', key2txt(type, types), off - 4, 4, '<I')
+	i = 1
+	while i <= components:
+	    (type, off) = rdata(data, off, '<I')
+	    add_iter(hd, 'Comp. %d type' % i, key2txt(type, types), off - 4, 4, '<I')
+	    off += 4
+	    i += 1
 	_zmf4_obj_style_refs(hd, ref_objects)
 
 def add_zmf4_obj_rectangle(hd, size, data):
