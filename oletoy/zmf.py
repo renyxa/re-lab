@@ -412,6 +412,7 @@ zmf4_handlers = {
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
+	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x28: (ZMF4Parser.parse_object, 'zmf4_obj_color_palette'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
@@ -716,6 +717,19 @@ def _zmf4_obj_bbox(hd, size, data, off):
 
 def add_zmf4_obj(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
+
+def add_zmf4_obj_start_layer(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x1c
+	(flags, off) = rdata(data, off, '4s')
+	add_iter(hd, 'Lock/Visibile/Print (bitwise)', d2bin(flags), off - 4, 4, '4s')
+	(name_offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name offset', name_offset, off - 4, 4, '<I')
+	(order, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Layer order', order, off - 4, 4, '<I')
+	name_length = size - off
+	(name, off) = rdata(data, off, '%ds' % name_length)
+	add_iter(hd, 'Name', name, off - name_length, name_length, '%ds' % name_length)
 
 def add_zmf4_obj_doc_settings(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
@@ -1022,6 +1036,7 @@ zmf_ids = {
 	'zmf4_bitmap': add_zmf4_bitmap,
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
+	'zmf4_obj_start_layer': add_zmf4_obj_start_layer,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
