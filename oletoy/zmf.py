@@ -929,6 +929,9 @@ def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def _zmf4_polyline_data(hd, size, data, off):
+	(path_len, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
+	off += 8
 	(components, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of components?', components, off - 4, 4, '<I')
 	points = 0
@@ -966,9 +969,6 @@ def add_zmf4_obj_polyline(hd, size, data):
 	off = 0x1c
 	(garbage, off) = rdata(data, off, '40s')
 	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
-	(path_len, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length of path?', path_len, off - 4, 4, '<I')
-	off += 8
 	_zmf4_polyline_data(hd, size, data, off)
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
@@ -1101,7 +1101,7 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_bbox(hd, size, data, off)
 	ref_types = {6: 'Text'}
 	ref_types.update(shape_ref_types)
-	off = 0x54
+	off = 0x48
 	baseline_end = size - 8 * 3
 	baseline_length = baseline_end - off
 	add_iter(hd, 'Baseline', '', off, baseline_length, '%ds' % baseline_length)
