@@ -1007,6 +1007,8 @@ def add_zmf4_obj_table(hd, size, data):
 		off += 12
 		i += 1
 
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
+
 def add_zmf4_obj_font(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x20
