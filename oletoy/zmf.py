@@ -1114,8 +1114,11 @@ def add_zmf4_obj_text(hd, size, data):
 def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
-	_zmf4_obj_bbox(hd, size, data, off)
-	off = 0x48
+	off = _zmf4_obj_bbox(hd, size, data, off)
+	align_map = {0: 'top', 0x10: 'middle', 0x20: 'bottom'}
+	(align, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Alignment', key2txt(align, align_map), off - 1, 1, '<B')
+	off += 3
 	baseline_end = size - 8 * 3
 	baseline_length = baseline_end - off
 	add_iter(hd, 'Baseline', '', off, baseline_length, '%ds' % baseline_length)
