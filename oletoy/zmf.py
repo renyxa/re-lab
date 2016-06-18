@@ -1034,8 +1034,9 @@ def add_zmf4_obj_font(hd, size, data):
 		font += chr(c)
 		(c, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Font name', font, font_pos, off - font_pos, '%ds' % (off - font_pos))
-	ref_map = {}
-	_zmf4_obj_refs(hd, size, data, ref_map)
+	# only fill and pen
+	# fill ID 0x3 - default (black)?
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_paragraph(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
