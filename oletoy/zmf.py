@@ -309,7 +309,7 @@ zmf4_objects = {
 	0xb: "Transparency",
 	0xc: "Pen",
 	0xd: "Shadow",
-	0xe: "Bitmap?",
+	0xe: "Bitmap",
 	0xf: "Arrow",
 	0x10: "Font",
 	0x11: "Paragraph",
@@ -417,6 +417,7 @@ zmf4_handlers = {
 	0xB: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
+	0xe: (ZMF4Parser.parse_object, 'zmf4_obj_bitmap'),
 	0x10: (ZMF4Parser.parse_object, 'zmf4_obj_font'),
 	0x11: (ZMF4Parser.parse_object, 'zmf4_obj_paragraph'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
@@ -1131,6 +1132,9 @@ def add_zmf4_obj_start_group(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
+def add_zmf4_obj_bitmap(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
@@ -1153,6 +1157,7 @@ zmf_ids = {
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_start_layer': add_zmf4_obj_start_layer,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
+	'zmf4_obj_bitmap': add_zmf4_obj_bitmap,
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
 	'zmf4_obj_font': add_zmf4_obj_font,
