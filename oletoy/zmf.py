@@ -659,8 +659,6 @@ def _zmf4_obj_common(hd, size, data):
 		off = 0xc
 		(ref_obj_count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Count of referenced objects?', ref_obj_count, off - 4, 4, '<I')
-		if ref_obj_count > 0:
-			ref_objects = _zmf4_ref_objects(size, data[:size], ref_obj_count)
 		(refs_start, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Start of refs list?', refs_start, off - 4, 4, '<I')
 		(ref_types_start, off) = rdata(data, off, '<I')
@@ -672,7 +670,7 @@ def _zmf4_obj_common(hd, size, data):
 		else:
 			oid_str = '0x%x' % oid
 		add_iter(hd, 'ID', oid_str, off - 4, 4, '<I')
-	return (off, ref_objects)
+	return off
 
 def _zmf4_obj_refs(hd, size, data, type_map):
 	if size >= 0xf:
@@ -841,28 +839,22 @@ def add_zmf4_obj_fill(hd, size, data):
 
 
 def add_zmf4_obj_pen(hd, size, data):
-	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	_zmf4_obj_common(hd, size, data)
 	off = 0x34
 	(width, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Pen width', width, off - 4, 4, '<I')
 	off = 0x3c
 	add_iter(hd, 'Pen color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
-	if len(ref_objects) > 0:
-		arrow_types = {
-			0: 'Start',
-			1: 'End'
-		}
-		i = 1
-		while i <= len(ref_objects):
-			(arrow_id, arrow_type, off_id, off_type) = ref_objects[i- 1]
-			add_iter(hd, 'Arrow %d object ID' % i, '0x%x' % arrow_id, off_id, 4, '<I')
-			add_iter(hd, 'Arrow %d type' % i, key2txt(arrow_type, arrow_types), off_type, 4, '<I')
-			i += 1
 	off = 0x50
 	(dashes, off) = rdata(data, off, '6s')
 	add_iter(hd, 'Dash pattern (bits)', d2bin(dashes), off - 6, 6, '6s')
 	(dist, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Distance between dash patterns?', dist, off - 2, 2, '<H')
+	arrow_types = {
+		0: 'Arrow start',
+		1: 'Arrow end'
+	}
+	_zmf4_obj_refs(hd, size, data, arrow_types)
 
 def add_zmf4_obj_shadow(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
@@ -891,7 +883,7 @@ def add_zmf4_obj_shadow(hd, size, data):
 	add_iter(hd, 'Blur', blur, off - 4, 4, '<I')
 
 def add_zmf4_obj_ellipse(hd, size, data):
-	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(begin, off) = rdata(data, off, '<f')
@@ -903,7 +895,7 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polygon(hd, size, data):
-	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	_zmf4_obj_common(hd, size, data)
 	off = 0xc
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
@@ -937,7 +929,7 @@ def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polyline(hd, size, data):
-	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	(garbage, off) = rdata(data, off, '40s')
 	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
@@ -978,7 +970,7 @@ def add_zmf4_obj_polyline(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_rectangle(hd, size, data):
-	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	rectangle_corner_types = {
@@ -1075,7 +1067,7 @@ def add_zmf4_obj_text(hd, size, data):
 	add_iter(hd, 'Text (if 1 line and 1 locale)', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data):
-	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
+	_zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	_zmf4_obj_bbox(hd, size, data, off)
 	ref_types = {6: 'Text'}
