@@ -729,6 +729,43 @@ def _zmf4_obj_bbox(hd, size, data, off):
 		i += 1
 	return off
 
+def _zmf4_polyline_data(hd, size, data, off):
+	(path_len, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
+	off += 8
+	(components, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of components?', components, off - 4, 4, '<I')
+	points = 0
+	i = 1
+	while i <= components:
+		off += 8
+		(count, off) = rdata(data, off, '<I')
+		points += count
+		add_iter(hd, 'Number of points of comp. %d' % i, count, off - 4, 4, '<I')
+		(closed, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Comp. %d closed?' % i, bool(closed), off - 4, 4, '<I')
+		i += 1
+	i = 1
+	while i <= points:
+		(x, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<I')
+		(y, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
+		i += 1
+	types = {
+		1: 'Line to',
+		2: 'Bezier curve point 1',
+		3: 'Bezier curve point 2',
+		4: 'Bezier curve point 3'
+	}
+	i = 1
+	while i <= points:
+		(type, off) = rdata(data, off, '<I')
+		if type != 0x64:
+			add_iter(hd, 'Point %d type' % (i + 1), key2txt(type, types), off - 4, 4, '<I')
+		i += 1
+	return off
+
 def add_zmf4_obj(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 
@@ -943,42 +980,6 @@ def add_zmf4_obj_polygon(hd, size, data):
 			(sharpness, sharpness_offset) = rdata(data, sharpness_offset, '<f')
 			add_iter(hd, 'Sharpness?', sharpness, sharpness_offset - 4, 4, '<f')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
-
-def _zmf4_polyline_data(hd, size, data, off):
-	(path_len, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
-	off += 8
-	(components, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of components?', components, off - 4, 4, '<I')
-	points = 0
-	i = 1
-	while i <= components:
-		off += 8
-		(count, off) = rdata(data, off, '<I')
-		points += count
-		add_iter(hd, 'Number of points of comp. %d' % i, count, off - 4, 4, '<I')
-		(closed, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Comp. %d closed?' % i, bool(closed), off - 4, 4, '<I')
-		i += 1
-	i = 1
-	while i <= points:
-		(x, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<I')
-		(y, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
-		i += 1
-	types = {
-		1: 'Line to',
-		2: 'Bezier curve point 1',
-		3: 'Bezier curve point 2',
-		4: 'Bezier curve point 3'
-	}
-	i = 1
-	while i <= points:
-		(type, off) = rdata(data, off, '<I')
-		if type != 0x64:
-			add_iter(hd, 'Point %d type' % (i + 1), key2txt(type, types), off - 4, 4, '<I')
-		i += 1
 
 def add_zmf4_obj_polyline(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
