@@ -645,7 +645,7 @@ def add_zmf4_header(hd, size, data):
 	(size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'File size', size, off - 4, 4, '<I')
 
-def _zmf4_obj_common(hd, size, data):
+def _zmf4_obj_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 	(typ, off) = rdata(data, off, '<H')
@@ -730,10 +730,10 @@ def _zmf4_obj_bbox(hd, size, data, off):
 	return off
 
 def add_zmf4_obj(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 
 def add_zmf4_obj_start_layer(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	flags_map = {0x1: 'visible', 0x2: 'lock', 0x4: 'print'}
 	(flags, off) = rdata(data, off, '<B')
@@ -748,7 +748,7 @@ def add_zmf4_obj_start_layer(hd, size, data):
 	add_iter(hd, 'Name', name, off - name_length, name_length, '%ds' % name_length)
 
 def add_zmf4_obj_doc_settings(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x3c
 	add_iter(hd, 'Page color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 	off = 0x44
@@ -774,7 +774,7 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	add_iter(hd, 'Offset of bottom side of page', bottom, off - 4, 4, '<I')
 
 def add_zmf4_obj_color_palette(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
@@ -793,7 +793,7 @@ def add_zmf4_obj_color_palette(hd, size, data):
 	add_iter(hd, 'Name', name, off - name_length, name_length, '%ds' % name_length)
 
 def add_zmf4_obj_fill(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x24
 	fill_types = {
 		1: 'Solid',
@@ -838,7 +838,7 @@ def add_zmf4_obj_fill(hd, size, data):
 
 
 def add_zmf4_obj_pen(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x34
 	(width, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Pen width', width, off - 4, 4, '<I')
@@ -856,7 +856,7 @@ def add_zmf4_obj_pen(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, arrow_types)
 
 def add_zmf4_obj_shadow(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x24
 	shadow_types = {
 		1: 'Color',
@@ -882,7 +882,7 @@ def add_zmf4_obj_shadow(hd, size, data):
 	add_iter(hd, 'Blur', blur, off - 4, 4, '<I')
 
 def add_zmf4_obj_ellipse(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(begin, off) = rdata(data, off, '<f')
@@ -894,7 +894,7 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polygon(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0xc
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
@@ -928,7 +928,7 @@ def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polyline(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	(garbage, off) = rdata(data, off, '40s')
 	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
@@ -969,7 +969,7 @@ def add_zmf4_obj_polyline(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_rectangle(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	rectangle_corner_types = {
@@ -985,7 +985,7 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_table(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	off += 8
@@ -1004,7 +1004,7 @@ def add_zmf4_obj_table(hd, size, data):
 		i += 1
 
 def add_zmf4_obj_font(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x20
 	fmt_map = {0x1: 'bold', 0x2: 'italic'}
 	(fmt, off) = rdata(data, off, '<B')
@@ -1038,7 +1038,7 @@ def add_zmf4_obj_font(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, ref_map)
 
 def add_zmf4_obj_paragraph(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x20
 	align_map = {0: 'left', 1: 'right', 2: 'block', 3: 'center', 4: 'full'}
 	(align, off) = rdata(data, off, '<B')
@@ -1050,7 +1050,7 @@ def add_zmf4_obj_paragraph(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, ref_map)
 
 def add_zmf4_obj_text(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x28
 	(line_count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of lines', line_count, off - 4, 4, '<I')
@@ -1066,7 +1066,7 @@ def add_zmf4_obj_text(hd, size, data):
 	add_iter(hd, 'Text (if 1 line and 1 locale)', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data):
-	_zmf4_obj_common(hd, size, data)
+	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	_zmf4_obj_bbox(hd, size, data, off)
 	ref_types = {6: 'Text'}
