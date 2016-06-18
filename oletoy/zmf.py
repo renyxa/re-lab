@@ -1053,18 +1053,31 @@ def add_zmf4_obj_paragraph(hd, size, data):
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x28
-	(line_count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of lines', line_count, off - 4, 4, '<I')
+	(para_count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of paragraphs', para_count, off - 4, 4, '<I')
+	length = 0
+	span_count = 0
 	off += 4
-	(font_count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of fonts?', font_count, off - 4, 4, '<I')
-	off = 0x3c
-	(count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length (if 1 line and 1 locale)', count, off - 4, 4, '<I')
-	off += 8
-	length = 2 * int(count)
+	i = 1
+	while i <= para_count:
+		(count, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Spans in paragraph %d' % i, count, off - 4, 4, '<I')
+		span_count += count
+		(pid, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Style of paragraph %d' % i, '0x%x' % pid, off - 4, 4, '<I')
+		off += 4
+		i += 1
+	i = 1
+	while i <= span_count:
+		(count, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Length of span %d' % i, count, off - 4, 4, '<I')
+		length += 2 * count
+		off += 4
+		(sid, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Font of span %d' % i, '0x%x' % sid, off - 4, 4, '<I')
+		i += 1
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, 'Text (if 1 line and 1 locale)', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
+	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
