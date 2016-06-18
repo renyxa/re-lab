@@ -299,14 +299,14 @@ zmf2_handlers = {
 
 zmf4_objects = {
 	# gap
-	0xa: "Fill style",
+	0xa: "Fill",
 	0xb: "Transparency",
-	0xc: "Pen style",
-	0xd: "Shadow style",
+	0xc: "Pen",
+	0xd: "Shadow",
 	0xe: "Bitmap?",
-	0xf: "Arrow style",
-	0x10: "Text style",
-	0x11: "Paragraph style",
+	0xf: "Arrow",
+	0x10: "Font",
+	0x11: "Paragraph",
 	0x12: "Text",
 	# gap
 	0x1e: "Preview bitmap?",
