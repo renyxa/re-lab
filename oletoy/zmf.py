@@ -723,7 +723,7 @@ def add_zmf4_obj_start_layer(hd, size, data):
 	off = 0x1c
 	flags_map = {0x1: 'visible', 0x2: 'lock', 0x4: 'print'}
 	(flags, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Visibile/Lock/Print (bitwise)', bflag2txt(flags, flags_map), off - 1, 1, '<B')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
 	off += 3
 	(name_offset, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Name offset', name_offset, off - 4, 4, '<I')
