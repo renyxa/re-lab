@@ -22,6 +22,12 @@ from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
+def ref2txt(value):
+	if value == 0xffffffff:
+		return 'none'
+	else:
+		return '0x%x' % value
+
 zmf2_objects = {
 	0x3: 'Page',
 	0x4: 'Layer',
