@@ -671,11 +671,7 @@ def _zmf4_obj_header(hd, size, data):
 		add_iter(hd, 'Start of ref types list?', ref_types_start, off - 4, 4, '<I')
 	if size >= 0x1c:
 		(oid, off) = rdata(data, off, '<I')
-		if int(oid) == 0xffffffff:
-			oid_str = 'none'
-		else:
-			oid_str = '0x%x' % oid
-		add_iter(hd, 'ID', oid_str, off - 4, 4, '<I')
+		add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I')
 	return off
 
 def _zmf4_obj_refs(hd, size, data, type_map):
@@ -701,11 +697,7 @@ def _zmf4_obj_refs(hd, size, data, type_map):
 		off = off_start
 		while i <= ref_obj_count:
 			(ref, off) = rdata(data, off, '<I')
-			if ref == 0xffffffff:
-				ref_str = 'none'
-			else:
-				ref_str = '0x%x' % ref
-			add_iter(hd, '%s ref' % types[i - 1], ref_str, off - 4, 4, '<I')
+			add_iter(hd, '%s ref' % types[i - 1], ref2txt(ref), off - 4, 4, '<I')
 			i += 1
 		i = 1
 		assert off == off_tag
@@ -1104,11 +1096,7 @@ def add_zmf4_obj_text(hd, size, data):
 		add_iter(hd, 'Spans in paragraph %d' % i, count, off - 4, 4, '<I')
 		span_count += count
 		(pid, off) = rdata(data, off, '<I')
-		if pid == 0xffffffff:
-			pid_str = 'none'
-		else:
-			pid_str = '0x%x' % pid
-		add_iter(hd, 'Style of paragraph %d' % i, pid_str, off - 4, 4, '<I')
+		add_iter(hd, 'Style of paragraph %d' % i, ref2txt(pid), off - 4, 4, '<I')
 		off += 4
 		i += 1
 	i = 1
@@ -1118,11 +1106,7 @@ def add_zmf4_obj_text(hd, size, data):
 		length += 2 * count
 		off += 4
 		(sid, off) = rdata(data, off, '<I')
-		if sid == 0xffffffff:
-			sid_str = 'none'
-		else:
-			sid_str = '0x%x' % sid
-		add_iter(hd, 'Font of span %d' % i, sid_str, off - 4, 4, '<I')
+		add_iter(hd, 'Font of span %d' % i, ref2txt(sid), off - 4, 4, '<I')
 		i += 1
 	(text, off) = rdata(data, off, '%ds' % length)
 	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
