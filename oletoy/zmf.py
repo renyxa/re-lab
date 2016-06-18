@@ -839,11 +839,28 @@ def add_zmf4_obj_fill(hd, size, data):
 
 def add_zmf4_obj_pen(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
-	off = 0x34
+	off = 0x1c
+	off += 4
+	(data_size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
+	off += 4
+	corner_types = {0: 'Miter', 1: 'Round', 2: 'Bevel'}
+	(corner_type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Line corner type', key2txt(corner_type, corner_types), off - 4, 4, '<I')
+	caps_types = {0: 'Butt', 1: 'Flat', 2: 'Round', 3: 'Pointed'}
+	(caps_type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Line caps type', key2txt(caps_type, caps_types), off - 4, 4, '<I')
+	(miter, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Miter limit', miter, off - 4, 4, '<I')
 	(width, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Pen width', width, off - 4, 4, '<I')
 	off = 0x3c
 	add_iter(hd, 'Pen color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
+	off = 0x48
+	(angle, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Caligraphy angle (rad)', angle, off - 4, 4, '<f')
+	(stretch, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Caligraphy stretch', '%2d%%' % (stretch * 100), off - 4, 4, '<f')
 	off = 0x50
 	(dashes, off) = rdata(data, off, '6s')
 	add_iter(hd, 'Dash pattern (bits)', d2bin(dashes), off - 6, 6, '6s')
