@@ -1064,7 +1064,11 @@ def add_zmf4_obj_text(hd, size, data):
 		add_iter(hd, 'Spans in paragraph %d' % i, count, off - 4, 4, '<I')
 		span_count += count
 		(pid, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Style of paragraph %d' % i, '0x%x' % pid, off - 4, 4, '<I')
+		if pid == 0xffffffff:
+			pid_str = 'none'
+		else:
+			pid_str = '0x%x' % pid
+		add_iter(hd, 'Style of paragraph %d' % i, pid_str, off - 4, 4, '<I')
 		off += 4
 		i += 1
 	i = 1
@@ -1074,7 +1078,11 @@ def add_zmf4_obj_text(hd, size, data):
 		length += 2 * count
 		off += 4
 		(sid, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Font of span %d' % i, '0x%x' % sid, off - 4, 4, '<I')
+		if sid == 0xffffffff:
+			sid_str = 'none'
+		else:
+			sid_str = '0x%x' % sid
+		add_iter(hd, 'Font of span %d' % i, sid_str, off - 4, 4, '<I')
 		i += 1
 	(text, off) = rdata(data, off, '%ds' % length)
 	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
