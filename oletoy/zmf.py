@@ -305,7 +305,7 @@ zmf4_objects = {
 	0xd: "Shadow style",
 	0xe: "Bitmap?",
 	0xf: "Arrow style",
-	0x10: "Text font?",
+	0x10: "Text style",
 	0x11: "Object 0x11",
 	0x12: "Text",
 	# gap
@@ -411,6 +411,7 @@ zmf4_handlers = {
 	0xB: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
+	0x10: (ZMF4Parser.parse_object, 'zmf4_obj_font'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
@@ -1010,6 +1011,40 @@ def add_zmf4_obj_table(hd, size, data):
 		off += 12
 		i += 1
 
+def add_zmf4_obj_font(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x20
+	fmt_map = {0x1: 'bold', 0x2: 'italic'}
+	(fmt, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Format', bflag2txt(fmt, fmt_map), off - 1, 1, '<B')
+	off += 3
+	(font_size, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Font size', '%dpt' % font_size, off - 4, 4, '<f')
+	codepage_map = {
+		0: 'Western',
+		0x80: 'Japanese',
+		0xa1: 'Greek',
+		0xa2: 'Turkish',
+		0xa3: 'Vietnamese',
+		0xb1: 'Hebrew',
+		0xb2: 'Arabic',
+		0xba: 'Baltic',
+		0xcc: 'Cyrillic',
+		0xee: 'Central Europe',
+	}
+	(codepage, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Code page', key2txt(codepage, codepage_map), off - 4, 4, '<I')
+	font = ''
+	font_pos = off
+	# Note: it looks like the font name entry might be fixed size: 32 bytes
+	(c, off) = rdata(data, off, '<B')
+	while c != 0:
+		font += chr(c)
+		(c, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Font name', font, font_pos, off - font_pos, '%ds' % (off - font_pos))
+	ref_map = {}
+	_zmf4_obj_refs(hd, size, data, ref_map)
+
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x28
@@ -1059,6 +1094,7 @@ zmf_ids = {
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
+	'zmf4_obj_font': add_zmf4_obj_font,
 	'zmf4_obj_pen': add_zmf4_obj_pen,
 	'zmf4_obj_shadow': add_zmf4_obj_shadow,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
