@@ -1116,9 +1116,12 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	off = _zmf4_obj_bbox(hd, size, data, off)
-	align_map = {0: 'top', 0x10: 'middle', 0x20: 'bottom'}
+	# under && middle == above
+	# baseline placement available only for bottom alignment
+	align_flags = {0x10: 'align middle', 0x20: 'align bottom', 0x1: 'under baseline', 0x2: 'baseline in the middle'}
+	default_align = 'align top'
 	(align, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Alignment', key2txt(align, align_map), off - 1, 1, '<B')
+	add_iter(hd, 'Alignment', default_align if align == 0 else bflag2txt(align, align_flags), off - 1, 1, '<B')
 	(placement, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Placement type on non-level baseline', placement, off - 1, 1, '<B')
 	off += 2
