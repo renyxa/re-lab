@@ -306,7 +306,7 @@ zmf4_objects = {
 	0xe: "Bitmap?",
 	0xf: "Arrow style",
 	0x10: "Text style",
-	0x11: "Object 0x11",
+	0x11: "Paragraph style",
 	0x12: "Text",
 	# gap
 	0x1e: "Preview bitmap?",
@@ -412,6 +412,7 @@ zmf4_handlers = {
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
 	0x10: (ZMF4Parser.parse_object, 'zmf4_obj_font'),
+	0x11: (ZMF4Parser.parse_object, 'zmf4_obj_paragraph'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
@@ -1045,6 +1046,18 @@ def add_zmf4_obj_font(hd, size, data):
 	ref_map = {}
 	_zmf4_obj_refs(hd, size, data, ref_map)
 
+def add_zmf4_obj_paragraph(hd, size, data):
+	_zmf4_obj_common(hd, size, data)
+	off = 0x20
+	align_map = {0: 'left', 1: 'right', 2: 'block', 3: 'center', 4: 'full'}
+	(align, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Alignment', key2txt(align, align_map), off - 1, 1, '<B')
+	off += 3
+	(line, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Line spacing', '%2d%%' % (line * 100), off - 4, 4, '<f')
+	ref_map = {1: 'Font'}
+	_zmf4_obj_refs(hd, size, data, ref_map)
+
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
 	off = 0x28
@@ -1095,6 +1108,7 @@ zmf_ids = {
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
 	'zmf4_obj_font': add_zmf4_obj_font,
+	'zmf4_obj_paragraph': add_zmf4_obj_paragraph,
 	'zmf4_obj_pen': add_zmf4_obj_pen,
 	'zmf4_obj_shadow': add_zmf4_obj_shadow,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
