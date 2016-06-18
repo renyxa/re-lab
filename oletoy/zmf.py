@@ -643,20 +643,6 @@ def add_zmf4_header(hd, size, data):
 	(size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'File size', size, off - 4, 4, '<I')
 
-def _zmf4_ref_objects(size, data, ref_obj_count):
-	ref_objects = []
-	i = 1
-	off_start = size - 8 * ref_obj_count
-	off_id = off_start
-	off_tag = off_start + 4 * ref_obj_count
-	while i <= ref_obj_count:
-		(id, off_id) = rdata(data, off_id, '<I')
-		(tag, off_tag) = rdata(data, off_tag, '<I')
-		if int(id) != 0xffffffff:
-			ref_objects.append((id, tag, off_id - 4, off_tag - 4))
-		i += 1
-	return ref_objects
-
 def _zmf4_obj_common(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
@@ -686,19 +672,48 @@ def _zmf4_obj_common(hd, size, data):
 		add_iter(hd, 'ID', oid_str, off - 4, 4, '<I')
 	return (off, ref_objects)
 
-def _zmf4_obj_style_refs(hd, ref_objects):
-	style_types = {
-		1: 'Fill',
-		2: 'Pen',
-		3: 'Shadow',
-		4: 'Transparency'
-	}
-	i = 1
-	while i <= len(ref_objects):
-		(id, type, off_id, off_type) = ref_objects[i - 1]
-		add_iter(hd, 'Ref object %d ID' % i, '0x%x' % id, off_id, 4, '<I')
-		add_iter(hd, 'Ref object %d type' % i, key2txt(type, style_types), off_type, 4, '<I')
-		i += 1
+def _zmf4_obj_refs(hd, size, data, type_map):
+	if size >= 0xf:
+		off = 0xc
+		(ref_obj_count, off) = rdata(data, off, '<I')
+		off_start = size - 8 * ref_obj_count
+		off_tag = off_start + 4 * ref_obj_count
+		types = []
+		# Determine names
+		off = off_tag
+		i = 1
+		while i <= ref_obj_count:
+			(id, off) = rdata(data, off, '<I')
+			if id == 0xffffffff:
+				typ = 'Unused'
+			else:
+				typ = key2txt(id, type_map)
+			types.append(typ)
+			i += 1
+		# Show refs and names
+		i = 1
+		off = off_start
+		while i <= ref_obj_count:
+			(ref, off) = rdata(data, off, '<I')
+			if ref == 0xffffffff:
+				ref_str = 'none'
+			else:
+				ref_str = '0x%x' % ref
+			add_iter(hd, '%s ref' % types[i - 1], ref_str, off - 4, 4, '<I')
+			i += 1
+		i = 1
+		assert off == off_tag
+		while i <= ref_obj_count:
+			(id, off) = rdata(data, off, '<I')
+			add_iter(hd, 'Ref %d type' % i, types[i - 1], off - 4, 4, '<I')
+			i += 1
+
+shape_ref_types = {
+	1: 'Fill',
+	2: 'Pen',
+	3: 'Shadow',
+	4: 'Transparency',
+}
 
 def _zmf4_obj_bbox(hd, size, data, off):
 	(width, off) = rdata(data, off, '<I')
@@ -883,7 +898,7 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	add_iter(hd, 'Ending (rad)', end, off - 4, 4, '<f')
 	(arc, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Arc (== not closed)', bool(arc), off - 4, 4, '<I')
-	_zmf4_obj_style_refs(hd, ref_objects)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polygon(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
@@ -917,7 +932,7 @@ def add_zmf4_obj_polygon(hd, size, data):
 		for sharpness_offset in sharpness_offsets[type]:
 			(sharpness, sharpness_offset) = rdata(data, sharpness_offset, '<f')
 			add_iter(hd, 'Sharpness?', sharpness, sharpness_offset - 4, 4, '<f')
-	_zmf4_obj_style_refs(hd, ref_objects)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polyline(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
@@ -958,7 +973,7 @@ def add_zmf4_obj_polyline(hd, size, data):
 		if type != 0x64:
 			add_iter(hd, 'Point %d type' % (i + 1), key2txt(type, types), off - 4, 4, '<I')
 		i += 1
-	_zmf4_obj_style_refs(hd, ref_objects)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_rectangle(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
@@ -974,7 +989,7 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	add_iter(hd, 'Corner type', key2txt(corner_type, rectangle_corner_types), off - 4, 4, '<I')
 	(rounding_value, off) = rdata(data, off, '<f')
 	add_iter(hd, 'Rounding value (in.)', rounding_value, off - 4, 4, '<f')
-	_zmf4_obj_style_refs(hd, ref_objects)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_table(hd, size, data):
 	_zmf4_obj_common(hd, size, data)
@@ -1018,7 +1033,7 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	off = 0x88
 	(text, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Text reference', '0x%x' % text, off - 4, 4, '<I')
-	_zmf4_obj_style_refs(hd, ref_objects)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
