@@ -1115,13 +1115,13 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	_zmf4_obj_bbox(hd, size, data, off)
-	ref_types = {6: 'Text'}
-	ref_types.update(shape_ref_types)
 	off = 0x48
 	baseline_end = size - 8 * 3
 	baseline_length = baseline_end - off
 	add_iter(hd, 'Baseline', '', off, baseline_length, '%ds' % baseline_length)
 	_zmf4_polyline_data(hd, size, data, off)
+	ref_types = {6: 'Text'}
+	ref_types.update(shape_ref_types)
 	_zmf4_obj_refs(hd, size, data, ref_types)
 
 def add_zmf4_obj_start_group(hd, size, data):
