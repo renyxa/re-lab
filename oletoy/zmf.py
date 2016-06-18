@@ -1078,10 +1078,9 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	(_, ref_objects) = _zmf4_obj_common(hd, size, data)
 	off = 0x1c
 	_zmf4_obj_bbox(hd, size, data, off)
-	off = 0x88
-	(text, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Text reference', '0x%x' % text, off - 4, 4, '<I')
-	_zmf4_obj_refs(hd, size, data, shape_ref_types)
+	ref_types = {6: 'Text'}
+	ref_types.update(shape_ref_types)
+	_zmf4_obj_refs(hd, size, data, ref_types)
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
