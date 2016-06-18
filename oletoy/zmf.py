@@ -1052,6 +1052,10 @@ def add_zmf4_obj_paragraph(hd, size, data):
 
 def add_zmf4_obj_text(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
+	off = 0x1c
+	off += 4
+	(data_size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
 	off = 0x28
 	(para_count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of paragraphs', para_count, off - 4, 4, '<I')
