@@ -654,7 +654,6 @@ def _zmf4_obj_common(hd, size, data):
 	else:
 		obj = 'Unknown object 0x%x' % typ
 	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
-	ref_objects = []
 	if size >= 0xf:
 		off = 0xc
 		(ref_obj_count, off) = rdata(data, off, '<I')
