@@ -423,6 +423,7 @@ zmf4_handlers = {
 	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_polyline'),
 	0x3a: (ZMF4Parser.parse_object, 'zmf4_obj_text_frame'),
 	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
+	0x41: (ZMF4Parser.parse_object, 'zmf4_obj_start_group'),
 }
 
 def _add_zmf2_string(hd, size, data, offset, name):
@@ -1099,6 +1100,10 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	ref_types.update(shape_ref_types)
 	_zmf4_obj_refs(hd, size, data, ref_types)
 
+def add_zmf4_obj_start_group(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
@@ -1131,6 +1136,7 @@ zmf_ids = {
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
 	'zmf4_obj_polyline': add_zmf4_obj_polyline,
 	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
+	'zmf4_obj_start_group': add_zmf4_obj_start_group,
 	'zmf4_obj_table': add_zmf4_obj_table,
 	'zmf4_obj_text': add_zmf4_obj_text,
 	'zmf4_obj_text_frame': add_zmf4_obj_text_frame,
