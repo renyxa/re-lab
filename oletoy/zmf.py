@@ -932,13 +932,13 @@ def add_zmf4_obj_polyline(hd, size, data):
 	points = 0
 	i = 1
 	while i <= components:
-	    off += 8
-	    (count, off) = rdata(data, off, '<I')
-	    points += count
-	    add_iter(hd, 'Number of points of comp. %d' % i, count, off - 4, 4, '<I')
-	    (closed, off) = rdata(data, off, '<I')
-	    add_iter(hd, 'Comp. %d closed?' % i, bool(closed), off - 4, 4, '<I')
-	    i += 1
+		off += 8
+		(count, off) = rdata(data, off, '<I')
+		points += count
+		add_iter(hd, 'Number of points of comp. %d' % i, count, off - 4, 4, '<I')
+		(closed, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Comp. %d closed?' % i, bool(closed), off - 4, 4, '<I')
+		i += 1
 	i = 1
 	while i <= points:
 		(x, off) = rdata(data, off, '<I')
@@ -952,10 +952,10 @@ def add_zmf4_obj_polyline(hd, size, data):
 	}
 	i = 1
 	while i <= components:
-	    (type, off) = rdata(data, off, '<I')
-	    add_iter(hd, 'Comp. %d type' % i, key2txt(type, types), off - 4, 4, '<I')
-	    off += 4
-	    i += 1
+		(type, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Comp. %d type' % i, key2txt(type, types), off - 4, 4, '<I')
+		off += 4
+		i += 1
 	_zmf4_obj_style_refs(hd, ref_objects)
 
 def add_zmf4_obj_rectangle(hd, size, data):
