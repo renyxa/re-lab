@@ -928,14 +928,7 @@ def add_zmf4_obj_polygon(hd, size, data):
 			add_iter(hd, 'Sharpness?', sharpness, sharpness_offset - 4, 4, '<f')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
-def add_zmf4_obj_polyline(hd, size, data):
-	_zmf4_obj_header(hd, size, data)
-	off = 0x1c
-	(garbage, off) = rdata(data, off, '40s')
-	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
-	(path_len, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length of path?', path_len, off - 4, 4, '<I')
-	off += 8
+def _zmf4_polyline_data(hd, size, data, off):
 	(components, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of components?', components, off - 4, 4, '<I')
 	points = 0
@@ -967,6 +960,16 @@ def add_zmf4_obj_polyline(hd, size, data):
 		if type != 0x64:
 			add_iter(hd, 'Point %d type' % (i + 1), key2txt(type, types), off - 4, 4, '<I')
 		i += 1
+
+def add_zmf4_obj_polyline(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+	off = 0x1c
+	(garbage, off) = rdata(data, off, '40s')
+	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
+	(path_len, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of path?', path_len, off - 4, 4, '<I')
+	off += 8
+	_zmf4_polyline_data(hd, size, data, off)
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_rectangle(hd, size, data):
@@ -1098,6 +1101,11 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	_zmf4_obj_bbox(hd, size, data, off)
 	ref_types = {6: 'Text'}
 	ref_types.update(shape_ref_types)
+	off = 0x54
+	baseline_end = size - 8 * 3
+	baseline_length = baseline_end - off
+	add_iter(hd, 'Baseline', '', off, baseline_length, '%ds' % baseline_length)
+	_zmf4_polyline_data(hd, size, data, off)
 	_zmf4_obj_refs(hd, size, data, ref_types)
 
 def add_zmf4_obj_start_group(hd, size, data):
