@@ -418,6 +418,7 @@ zmf4_handlers = {
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
 	0xe: (ZMF4Parser.parse_object, 'zmf4_obj_bitmap'),
+	0xf: (ZMF4Parser.parse_object, 'zmf4_obj_arrow'),
 	0x10: (ZMF4Parser.parse_object, 'zmf4_obj_font'),
 	0x11: (ZMF4Parser.parse_object, 'zmf4_obj_paragraph'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
@@ -909,6 +910,11 @@ def add_zmf4_obj_pen(hd, size, data):
 	}
 	_zmf4_obj_refs(hd, size, data, arrow_types)
 
+def add_zmf4_obj_arrow(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+	off = 0x24
+	_zmf4_polyline_data(hd, size, data, off)
+
 def add_zmf4_obj_shadow(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x24
@@ -1190,6 +1196,7 @@ zmf_ids = {
 	'zmf4_obj_font': add_zmf4_obj_font,
 	'zmf4_obj_paragraph': add_zmf4_obj_paragraph,
 	'zmf4_obj_pen': add_zmf4_obj_pen,
+	'zmf4_obj_arrow': add_zmf4_obj_arrow,
 	'zmf4_obj_shadow': add_zmf4_obj_shadow,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
