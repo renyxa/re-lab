@@ -1003,16 +1003,40 @@ def add_zmf4_obj_table(hd, size, data):
 	add_iter(hd, 'Number of rows', rows, off - 4, 4, '<I')
 	(cols, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of columns', cols, off - 4, 4, '<I')
-	off += 12
-
+	off += 8
 	i = 1
 	while i <= rows * cols:
-		off += 4
+		row = (i - 1) / cols + 1
+		column = i - (row - 1) * cols
+		cell_iter = add_iter(hd, 'Cell %d (row %d, column %d)' % (i, row, column), '', off, 20, '20s')
+		off += 4 # related to vertical pos
+		(fill, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Fill ref', ref2txt(fill), off - 4, 4, '<I', parent=cell_iter)
 		(text, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Cell %d text reference' % i, '0x%x' % text, off - 4, 4, '<I')
-		off += 12
+		add_iter(hd, 'Text ref', ref2txt(text), off - 4, 4, '<I', parent=cell_iter)
+		(right_pen, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Right border pen ref', ref2txt(right_pen), off - 4, 4, '<I', parent=cell_iter)
+		(bottom_pen, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Bottom border pen ref', ref2txt(bottom_pen), off - 4, 4, '<I', parent=cell_iter)
 		i += 1
-
+	i = 1
+	while i <= rows:
+		row_iter = add_iter(hd, 'Row %d' % i, '', off, 12, '12s')
+		off += 4
+		(bottom_pen, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Bottom border pen ref', ref2txt(bottom_pen), off - 4, 4, '<I', parent=row_iter)
+		(rel_height, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Relative height', '%.2f%%' % (rel_height / rows), off - 4, 4, '<f', parent=row_iter)
+		i += 1
+	i = 1
+	while i <= cols:
+		col_iter = add_iter(hd, 'Column %d' % i, '', off, 12, '12s')
+		off += 4
+		(right_pen, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Right border pen ref', ref2txt(right_pen), off - 4, 4, '<I', parent=col_iter)
+		(rel_width, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Relative width', '%.2f%%' % (rel_width / cols), off - 4, 4, '<f', parent=col_iter)
+		i += 1
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_font(hd, size, data):
