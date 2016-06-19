@@ -982,17 +982,17 @@ def add_zmf4_obj_polygon(hd, size, data):
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(peaks, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of peaks', peaks, off - 4, 4, '<I')
-	(type, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Polygon type?', type, off - 4, 4, '<I')
-	sharpness_offsets = {
-		3: (0x60, ),
-		4: (0x60, 0x68),
-		7: (0x58, 0x88),
-	}
-	if type in sharpness_offsets:
-		for sharpness_offset in sharpness_offsets[type]:
-			(sharpness, sharpness_offset) = rdata(data, sharpness_offset, '<f')
-			add_iter(hd, 'Sharpness?', sharpness, sharpness_offset - 4, 4, '<f')
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of ?points describing one peak', count, off - 4, 4, '<I')
+	off += 8
+	i = 1
+	while i <= count:
+		(x, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Point/sharpness? %d X' % i, x, off - 4, 4, '<f')
+		(y, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Point/sharpness? %d Y' % i, y, off - 4, 4, '<f')
+		i += 1
+	_zmf4_polyline_type_list(hd, size, data, off, count, 'Point/sharpness?')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polyline(hd, size, data):
