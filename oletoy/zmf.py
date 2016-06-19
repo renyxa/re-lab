@@ -331,6 +331,7 @@ zmf4_objects = {
 	0x34: "Polygon / Star",
 	# gap
 	0x36: "Polyline",
+	0x37: "Image",
 	# gap
 	0x3a: "Text frame",
 	0x3b: "Table",
@@ -367,30 +368,40 @@ class ZMF4Parser(object):
 	def parse_content(self, begin):
 		data = self.data[begin:]
 		content_iter = add_pgiter(self.page, 'Content', 'zmf', 0, data, self.parent)
-		if self.preview_offset == 0:
-			self._parse_group(data, content_iter)
-		else:
-			self._parse_group(data[0:self.preview_offset], content_iter)
-			(typ, off) = rdata(data, self.preview_offset, '2s')
-			# TODO: possibly there are other types?
-			assert typ == 'BM'
+		off = 0
+		while off + 4 <= len(data):
+			off = self._parse_object(data, off, content_iter)
+
+	def parse_object(self, data, start, length, parent, typ, callback):
+		self._do_parse_object(data[start:start + length], parent, typ, callback)
+		return start + length
+
+	def parse_bitmap(self, data, start, length, parent, typ, callback):
+		data_start = start + length
+		size = 0
+		(bmp_type, off) = rdata(data, data_start, '2s')
+		if bmp_type == 'BM':
 			(size, off) = rdata(data, off, '<I')
-			assert int(size) < len(data)
-			add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_bitmap',
-					data[self.preview_offset:self.preview_offset + int(size)], content_iter)
-			self._parse_group(data[self.preview_offset + int(size):], content_iter)
+		elif bmp_type == 'Zo':
+			(bmp_type2, off) = rdata(data, off, '7s')
+			if bmp_type2 == 'nerBMIa':
+				off += 44
+				(size, off) = rdata(data, off, '<I')
+		assert data_start + size < len(data)
+		objiter = self._do_parse_object(data[start:data_start], parent, typ, callback)
+		add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_bitmap_data', data[data_start:data_start + size], objiter)
+		return data_start + size
 
-	def parse_object(self, data, parent, typ, callback):
-		self._do_parse_object(data, parent, typ, callback)
-
-	def _parse_object(self, data, parent):
-		off = 4
+	def _parse_object(self, data, start, parent):
+		(length, off) = rdata(data, start, '<I')
 		(typ, off) = rdata(data, off, '<H')
-		if zmf4_handlers.has_key(int(typ)):
-			(handler, callback) = zmf4_handlers[int(typ)]
-			handler(self, data, parent, typ, callback)
-		else:
-			self._do_parse_object(data, parent, typ, 'zmf4_obj')
+		if start + length <= len(data):
+			if zmf4_handlers.has_key(int(typ)):
+				(handler, callback) = zmf4_handlers[int(typ)]
+				return handler(self, data, start, length, parent, typ, callback)
+			else:
+				self._do_parse_object(data[start:start + length], parent, typ, 'zmf4_obj')
+				return start + length
 
 	def _do_parse_object(self, data, parent, typ, callback):
 		if zmf4_objects.has_key(typ):
@@ -404,24 +415,17 @@ class ZMF4Parser(object):
 				obj_str = '%s (0x%x)' % (obj, oid)
 		return add_pgiter(self.page, obj_str, 'zmf', callback, data, parent)
 
-	def _parse_group(self, data, parent):
-		off = 0
-		while off + 4 <= len(data):
-			length = int(read(data, off, '<I'))
-			if off + length <= len(data):
-				self._parse_object(data[off:off + length], parent)
-			off += length
-
 zmf4_handlers = {
 	0xA: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
 	0xB: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
 	0xC: (ZMF4Parser.parse_object, 'zmf4_obj_pen'),
 	0xD: (ZMF4Parser.parse_object, 'zmf4_obj_shadow'),
-	0xe: (ZMF4Parser.parse_object, 'zmf4_obj_bitmap'),
+	0xe: (ZMF4Parser.parse_bitmap, 'zmf4_obj_bitmap'),
 	0xf: (ZMF4Parser.parse_object, 'zmf4_obj_arrow'),
 	0x10: (ZMF4Parser.parse_object, 'zmf4_obj_font'),
 	0x11: (ZMF4Parser.parse_object, 'zmf4_obj_paragraph'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
+	0x1e: (ZMF4Parser.parse_bitmap, 'zmf4_obj'),
 	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x28: (ZMF4Parser.parse_object, 'zmf4_obj_color_palette'),
@@ -429,6 +433,7 @@ zmf4_handlers = {
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
 	0x34: (ZMF4Parser.parse_object, 'zmf4_obj_polygon'),
 	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_polyline'),
+	0x37: (ZMF4Parser.parse_object, 'zmf4_obj_image'),
 	0x3a: (ZMF4Parser.parse_object, 'zmf4_obj_text_frame'),
 	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
 	0x41: (ZMF4Parser.parse_object, 'zmf4_obj_start_group'),
@@ -631,9 +636,15 @@ def add_zmf2_table(hd, size, data):
 		off -= fix
 		off += 5
 
-def add_zmf4_bitmap(hd, size, data):
+def add_zmf4_bitmap_data(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
-	add_iter(hd, 'Signature', typ, off - 2, 2, '2s')
+	type_len = 2
+	if typ == 'Zo':
+		off -= 2
+		type_len = 9
+		(typ, off) = rdata(data, off, '9s')
+		off += 44
+	add_iter(hd, 'Type', typ, 0, type_len, '%ds' % type_len)
 	(size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 
@@ -1011,6 +1022,12 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	add_iter(hd, 'Rounding value (in.)', rounding_value, off - 4, 4, '<f')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
+def add_zmf4_obj_image(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+	ref_types = {5: 'Bitmap'}
+	ref_types.update(shape_ref_types)
+	_zmf4_obj_refs(hd, size, data, ref_types)
+
 def add_zmf4_obj_table(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
@@ -1185,7 +1202,7 @@ zmf_ids = {
 	'zmf2_star': add_zmf2_star,
 	'zmf2_table': add_zmf2_table,
 	'zmf2_obj_header': add_zmf2_obj_header,
-	'zmf4_bitmap': add_zmf4_bitmap,
+	'zmf4_bitmap_data': add_zmf4_bitmap_data,
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_start_layer': add_zmf4_obj_start_layer,
@@ -1194,6 +1211,7 @@ zmf_ids = {
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
 	'zmf4_obj_font': add_zmf4_obj_font,
+	'zmf4_obj_image': add_zmf4_obj_image,
 	'zmf4_obj_paragraph': add_zmf4_obj_paragraph,
 	'zmf4_obj_pen': add_zmf4_obj_pen,
 	'zmf4_obj_arrow': add_zmf4_obj_arrow,
