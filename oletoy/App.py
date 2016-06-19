@@ -32,6 +32,7 @@ import lit
 import plist
 import c602
 import t602
+import bmi
 from utils import *
 
 class Page:
@@ -282,6 +283,12 @@ class Page:
 			self.type = 'ZBR'
 			print 'Probably Zebra Metafile'
 			zbr.open(buf, self, parent)
+			return 0
+
+		if buf[0:9] == 'ZonerBMIa':
+			self.type = 'BMI'
+			print 'Probably Zoner Bitmap'
+			bmi.open(buf, self, parent)
 			return 0
 
 		size = (ord(buf[1]) | (ord(buf[2]) << 8)) + 4
