@@ -29,9 +29,12 @@ class bmi_parser:
 		self.parse_data(off)
 
 	def parse_header(self):
-		# Note: only 24-bit images exported by Zoner Draw 5 have been tested
-		add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[0:0x87], self.parent)
-		return 0x87
+		length = 0x87
+		(palette, off) = rdata(self.data, 0xd, '<H')
+		if palette == 1:
+			length += 2 * 256 * 4
+		add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[0:length], self.parent)
+		return length
 
 	def parse_data(self, offset):
 		uncompressed_data = bytearray()
@@ -66,10 +69,17 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Pixel width', width, off - 2, 2, '<H')
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Pixel height', height, off - 2, 2, '<H')
-	off += 2
+	(palette, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Palette mode?', bool(palette), off - 2, 2, '<H')
 	(depth, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
-	off += 0x24
+	off += 4
+	if palette == 1:
+		palette_iter = add_iter(hd, 'Color palette', '', off, 1024, '1024s')
+		for i in range(0, 256):
+			(color, off) = rdata(data, off, '<I')
+			add_iter(hd, 'Color %d?' % (i + 1), '%x' % color, off - 4, 4, '<I', parent=palette_iter)
+	off += 0x20
 	(fsize, off) = rdata(data, off, '<I')
 	add_iter(hd, 'File size', fsize, off - 4, 4, '<I')
 	off += 2
@@ -92,6 +102,11 @@ def add_header(hd, size, data):
 	off += 4
 	(dsize, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size of data', dsize, off - 4, 4, '<I')
+	if palette == 1:
+		palette_iter = add_iter(hd, 'Color palette (again)', '', off, 1024, '1024s')
+		for i in range(0, 256):
+			(color, off) = rdata(data, off, '<I')
+			add_iter(hd, 'Color %d?' % (i + 1), '%x' % color, off - 4, 4, '<I', parent=palette_iter)
 
 bmi_ids = {
 	'block': add_block,
