@@ -974,23 +974,8 @@ def add_zmf4_obj_ellipse(hd, size, data):
 
 def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
-	off = 0xc
-	(count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
-	off += 12
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
-	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Height', height, off - 4, 4, '<I')
-	if width == height:
-		add_iter(hd, 'Radius', width / 2, off - 4, 4, '<I')
-	i = 1
-	while i <= count:
-		(x, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<I')
-		(y, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
-		i += 1
+	off = 0x1c
+	off = _zmf4_obj_bbox(hd, size, data, off)
 	(peaks, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of peaks', peaks, off - 4, 4, '<I')
 	(type, off) = rdata(data, off, '<I')
