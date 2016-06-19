@@ -851,7 +851,8 @@ def add_zmf4_obj_fill(hd, size, data):
 		4: 'Conical',
 		5: 'Cross-shaped',
 		6: 'Rectangular',
-		7: 'Flexible'
+		7: 'Flexible',
+		8: 'Bitmap',
 	}
 	(type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Fill type', key2txt(type, fill_types), off - 4, 4, '<I')
@@ -862,7 +863,12 @@ def add_zmf4_obj_fill(hd, size, data):
 		off = 0x2c
 		(stop_count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Stop count', stop_count, off - 4, 4, '<I')
-		if type != 2:
+		if type == 8:
+			(width, off) = rdata(data, off, '<I')
+			add_iter(hd, 'Width?', width, off - 4, 4, '<I')
+			(height, off) = rdata(data, off, '<I')
+			add_iter(hd, 'Height?', height, off - 4, 4, '<I')
+		elif type != 2:
 			off += 4
 			(cx, off) = rdata(data, off, '<f')
 			add_iter(hd, 'Center x (%)', cx, off - 4, 4, '<f')
@@ -884,6 +890,8 @@ def add_zmf4_obj_fill(hd, size, data):
 			add_iter(hd, 'Stop %d position' % i, pos, off - 4, 4, '<f')
 			off += 4
 			i += 1
+	ref_types = {0: 'Fill bitmap'}
+	_zmf4_obj_refs(hd, size, data, ref_types)
 
 
 def add_zmf4_obj_pen(hd, size, data):
