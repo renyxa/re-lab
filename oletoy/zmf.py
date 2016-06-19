@@ -741,6 +741,21 @@ def _zmf4_obj_bbox(hd, size, data, off):
 		i += 1
 	return off
 
+def _zmf4_polyline_type_list(hd, size, data, off, points, name='Point'):
+	types = {
+		1: 'Line to',
+		2: 'Bezier curve point 1',
+		3: 'Bezier curve point 2',
+		4: 'Bezier curve point 3'
+	}
+	i = 1
+	while i <= points:
+		(type, off) = rdata(data, off, '<I')
+		if type != 0x64:
+			add_iter(hd, '%s %d type' % (name, i + 1), key2txt(type, types), off - 4, 4, '<I')
+		i += 1
+	return off
+
 def _zmf4_polyline_data(hd, size, data, off):
 	(path_len, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
@@ -764,18 +779,7 @@ def _zmf4_polyline_data(hd, size, data, off):
 		(y, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
 		i += 1
-	types = {
-		1: 'Line to',
-		2: 'Bezier curve point 1',
-		3: 'Bezier curve point 2',
-		4: 'Bezier curve point 3'
-	}
-	i = 1
-	while i <= points:
-		(type, off) = rdata(data, off, '<I')
-		if type != 0x64:
-			add_iter(hd, 'Point %d type' % (i + 1), key2txt(type, types), off - 4, 4, '<I')
-		i += 1
+	off = _zmf4_polyline_type_list(hd, size, data, off, points)
 	return off
 
 def add_zmf4_obj(hd, size, data):
