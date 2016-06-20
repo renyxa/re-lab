@@ -16,7 +16,7 @@
 
 import zlib
 
-from utils import add_iter, add_pgiter, rdata
+from utils import add_iter, add_pgiter, rdata, d2hex
 
 class bmi_parser:
 	def __init__(self, data, page=None, parent=None):
@@ -75,8 +75,9 @@ def add_header(hd, size, data):
 		length = 4 * items
 		palette_iter = add_iter(hd, name, '', off, length, '%ds' % length)
 		for i in range(0, items):
-			(color, off) = rdata(data, off, '<I')
-			add_iter(hd, 'Color %d?' % (i + 1), '%x' % color, off - 4, 4, '<I', parent=palette_iter)
+			(color, off) = rdata(data, off, '3s')
+			add_iter(hd, 'Color %d (RGB)' % (i + 1), d2hex(color), off - 3, 3, '3s', parent=palette_iter)
+			off += 1
 		return off
 
 	(sig, off) = rdata(data, 0, '9s')
