@@ -14,7 +14,6 @@
 # USA
 #
 
-import struct
 import zlib
 
 from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt
