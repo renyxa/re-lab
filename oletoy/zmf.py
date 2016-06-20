@@ -1089,7 +1089,9 @@ def add_zmf4_obj_image(hd, size, data):
 def add_zmf4_obj_table(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
-	off += 8
+	(length, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of table data?', length, off - 4, 4, '<I')
+	off += 4
 	(rows, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of rows', rows, off - 4, 4, '<I')
 	(cols, off) = rdata(data, off, '<I')
