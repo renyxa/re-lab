@@ -679,11 +679,11 @@ def _zmf4_obj_header(hd, size, data):
 	if size >= 0xf:
 		off = 0xc
 		(ref_obj_count, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Count of referenced objects?', ref_obj_count, off - 4, 4, '<I')
+		add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I')
 		(refs_start, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Start of refs list?', refs_start, off - 4, 4, '<I')
+		add_iter(hd, 'Start of refs list', refs_start, off - 4, 4, '<I')
 		(ref_types_start, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Start of ref types list?', ref_types_start, off - 4, 4, '<I')
+		add_iter(hd, 'Start of ref types list', ref_types_start, off - 4, 4, '<I')
 	if size >= 0x1c:
 		(oid, off) = rdata(data, off, '<I')
 		add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I')
@@ -763,7 +763,7 @@ def _zmf4_polyline_data(hd, size, data, off):
 	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
 	off += 8
 	(components, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of components?', components, off - 4, 4, '<I')
+	add_iter(hd, 'Number of components', components, off - 4, 4, '<I')
 	points = 0
 	i = 1
 	while i <= components:
