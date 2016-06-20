@@ -1077,7 +1077,7 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	(corner_type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Corner type', key2txt(corner_type, rectangle_corner_types), off - 4, 4, '<I')
 	(rounding_value, off) = rdata(data, off, '<f')
-	add_iter(hd, 'Rounding value (in.)', rounding_value, off - 4, 4, '<f')
+	add_iter(hd, 'Rounding', '%.0f%% of shorter side\'s length' % (rounding_value * 50), off - 4, 4, '<f')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_image(hd, size, data):
