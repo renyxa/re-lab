@@ -318,7 +318,7 @@ zmf4_objects = {
 	0x1e: "Preview bitmap?",
 	# gap
 	0x21: "Start of page",
-	0x22: "Master page?",
+	0x22: "Guidelines",
 	0x23: "End of page",
 	0x24: "Start of layer",
 	0x25: "End of layer",
@@ -434,6 +434,7 @@ zmf4_handlers = {
 	0x11: (ZMF4Parser.parse_object, 'zmf4_obj_paragraph'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
 	0x1e: (ZMF4Parser.parse_preview_bitmap, 'zmf4_obj'),
+	0x22: (ZMF4Parser.parse_object, 'zmf4_obj_guidelines'),
 	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x28: (ZMF4Parser.parse_object, 'zmf4_obj_color_palette'),
@@ -1256,6 +1257,21 @@ def add_zmf4_obj_bitmap(hd, size, data):
 			(c, off) = rdata(data, off, '<B')
 		add_iter(hd, 'Path', path, 0x28, len(path) + 1, '%ds' % len(path))
 
+def add_zmf4_obj_guidelines(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+	off = 0x1c
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Count', count, off - 4, 4, '<I')
+	off += 4
+	type_map = {0: 'vertical', 1: 'horizontal', 2: 'vertical page margin', 3: 'horizontal page margin'}
+	for i in range(1, count + 1):
+		lineiter = add_iter(hd, 'Guideline %d' % i, '', off, 16, '16s')
+		(typ, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I', parent=lineiter)
+		(pos, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Position', pos, off - 4, 4, '<I', parent=lineiter)
+		off += 8
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
@@ -1281,6 +1297,7 @@ zmf_ids = {
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
 	'zmf4_obj_font': add_zmf4_obj_font,
+	'zmf4_obj_guidelines': add_zmf4_obj_guidelines,
 	'zmf4_obj_image': add_zmf4_obj_image,
 	'zmf4_obj_paragraph': add_zmf4_obj_paragraph,
 	'zmf4_obj_pen': add_zmf4_obj_pen,
