@@ -330,7 +330,7 @@ zmf4_objects = {
 	0x33: "Ellipse",
 	0x34: "Polygon / Star",
 	# gap
-	0x36: "Polyline",
+	0x36: "Curve",
 	0x37: "Image",
 	# gap
 	0x3a: "Text frame",
@@ -440,7 +440,7 @@ zmf4_handlers = {
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
 	0x33: (ZMF4Parser.parse_object, 'zmf4_obj_ellipse'),
 	0x34: (ZMF4Parser.parse_object, 'zmf4_obj_polygon'),
-	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_polyline'),
+	0x36: (ZMF4Parser.parse_object, 'zmf4_obj_curve'),
 	0x37: (ZMF4Parser.parse_object, 'zmf4_obj_image'),
 	0x3a: (ZMF4Parser.parse_object, 'zmf4_obj_text_frame'),
 	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
@@ -743,7 +743,7 @@ def _zmf4_obj_bbox(hd, size, data, off):
 		i += 1
 	return off
 
-def _zmf4_polyline_type_list(hd, size, data, off, points, name='Point'):
+def _zmf4_curve_type_list(hd, size, data, off, points, name='Point'):
 	types = {
 		1: 'Line to',
 		2: 'Bezier curve point 1',
@@ -758,7 +758,7 @@ def _zmf4_polyline_type_list(hd, size, data, off, points, name='Point'):
 		i += 1
 	return off
 
-def _zmf4_polyline_data(hd, size, data, off):
+def _zmf4_curve_data(hd, size, data, off):
 	(path_len, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
 	off += 8
@@ -781,7 +781,7 @@ def _zmf4_polyline_data(hd, size, data, off):
 		(y, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
 		i += 1
-	off = _zmf4_polyline_type_list(hd, size, data, off, points)
+	off = _zmf4_curve_type_list(hd, size, data, off, points)
 	return off
 
 def add_zmf4_obj(hd, size, data):
@@ -938,7 +938,7 @@ def add_zmf4_obj_pen(hd, size, data):
 def add_zmf4_obj_arrow(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x24
-	_zmf4_polyline_data(hd, size, data, off)
+	_zmf4_curve_data(hd, size, data, off)
 
 def add_zmf4_obj_shadow(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
@@ -994,15 +994,15 @@ def add_zmf4_obj_polygon(hd, size, data):
 		(y, off) = rdata(data, off, '<f')
 		add_iter(hd, 'Point/sharpness? %d Y' % i, y, off - 4, 4, '<f')
 		i += 1
-	_zmf4_polyline_type_list(hd, size, data, off, count, 'Point/sharpness?')
+	_zmf4_curve_type_list(hd, size, data, off, count, 'Point/sharpness?')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
-def add_zmf4_obj_polyline(hd, size, data):
+def add_zmf4_obj_curve(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 	off = 0x1c
 	(garbage, off) = rdata(data, off, '40s')
 	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
-	_zmf4_polyline_data(hd, size, data, off)
+	_zmf4_curve_data(hd, size, data, off)
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_rectangle(hd, size, data):
@@ -1172,7 +1172,7 @@ def add_zmf4_obj_text_frame(hd, size, data):
 	baseline_end = size - 8 * 3
 	baseline_length = baseline_end - off
 	add_iter(hd, 'Baseline', '', off, baseline_length, '%ds' % baseline_length)
-	_zmf4_polyline_data(hd, size, data, off)
+	_zmf4_curve_data(hd, size, data, off)
 	ref_types = {6: 'Text'}
 	ref_types.update(shape_ref_types)
 	_zmf4_obj_refs(hd, size, data, ref_types)
@@ -1223,7 +1223,7 @@ zmf_ids = {
 	'zmf4_obj_shadow': add_zmf4_obj_shadow,
 	'zmf4_obj_ellipse': add_zmf4_obj_ellipse,
 	'zmf4_obj_polygon': add_zmf4_obj_polygon,
-	'zmf4_obj_polyline': add_zmf4_obj_polyline,
+	'zmf4_obj_curve': add_zmf4_obj_curve,
 	'zmf4_obj_rectangle': add_zmf4_obj_rectangle,
 	'zmf4_obj_start_group': add_zmf4_obj_start_group,
 	'zmf4_obj_table': add_zmf4_obj_table,
