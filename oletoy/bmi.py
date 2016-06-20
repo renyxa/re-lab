@@ -19,26 +19,31 @@ import zlib
 from utils import add_iter, add_pgiter, rdata
 
 class bmi_parser:
-	def __init__(self, page, data, parent):
+	def __init__(self, data, page=None, parent=None):
 		self.page = page
 		self.data = data
 		self.parent = parent
+		self.size = 0
+		self.data_start = 0
 
 	def parse(self):
-		off = self.parse_header()
-		self.parse_data(off)
+		assert self.page
+		self.parse_header()
+		add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[0:self.data_start], self.parent)
+		self.parse_data()
 
 	def parse_header(self):
-		length = 0x87
+		self.data_start = 0x87
+		size_off = 0x35
 		(palette, off) = rdata(self.data, 0xd, '<H')
 		if palette == 1:
-			length += 2 * 256 * 4
-		add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[0:length], self.parent)
-		return length
+			self.data_start += 2 * 256 * 4
+			size_off += 256 * 4
+		(self.size, off) = rdata(self.data, size_off, '<I')
 
-	def parse_data(self, offset):
+	def parse_data(self):
 		uncompressed_data = bytearray()
-		off = offset
+		off = self.data_start
 		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[off:], self.parent)
 		i = 1
 		while off < len(self.data):
@@ -113,8 +118,13 @@ bmi_ids = {
 	'header': add_header,
 }
 
+def get_size(data):
+	parser = bmi_parser(data)
+	parser.parse_header()
+	return parser.size
+
 def open(data, page, parent):
-	parser = bmi_parser(page, data, parent)
+	parser = bmi_parser(data, page, parent)
 	parser.parse()
 
 # vim: set ft=python ts=4 sw=4 noet:

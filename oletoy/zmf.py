@@ -394,8 +394,7 @@ class ZMF4Parser(object):
 		if has_data:
 			(bmp_type, off) = rdata(data, data_start, '9s')
 			assert bmp_type == 'ZonerBMIa'
-			off += 44
-			(size, off) = rdata(data, off, '<I')
+			size = bmi.get_size(data[data_start:])
 			assert data_start + size < len(data)
 			bmi.open(data[data_start:data_start + size], self.page, objiter)
 			length += size
