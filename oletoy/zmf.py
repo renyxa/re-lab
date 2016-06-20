@@ -16,6 +16,7 @@
 
 import zlib
 
+import bmi
 from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt
 
 def read(data, offset, fmt):
@@ -396,7 +397,7 @@ class ZMF4Parser(object):
 			off += 44
 			(size, off) = rdata(data, off, '<I')
 			assert data_start + size < len(data)
-			add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_bitmap_data', data[data_start:data_start + size], objiter)
+			bmi.open(data[data_start:data_start + size], self.page, objiter)
 			length += size
 		return start + length
 
@@ -643,13 +644,6 @@ def add_zmf2_table(hd, size, data):
 				fix = 0x29
 		off -= fix
 		off += 5
-
-def add_zmf4_bitmap_data(hd, size, data):
-	(typ, off) = rdata(data, 0, '9s')
-	add_iter(hd, 'Type', typ, off - 9, 9, '9s')
-	off += 44
-	(size, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 
 def add_zmf4_preview_bitmap_data(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
@@ -1215,7 +1209,6 @@ zmf_ids = {
 	'zmf2_star': add_zmf2_star,
 	'zmf2_table': add_zmf2_table,
 	'zmf2_obj_header': add_zmf2_obj_header,
-	'zmf4_bitmap_data': add_zmf4_bitmap_data,
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_start_layer': add_zmf4_obj_start_layer,
