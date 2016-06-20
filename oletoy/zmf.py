@@ -376,21 +376,30 @@ class ZMF4Parser(object):
 		self._do_parse_object(data[start:start + length], parent, typ, callback)
 		return start + length
 
-	def parse_bitmap(self, data, start, length, parent, typ, callback):
+	def parse_preview_bitmap(self, data, start, length, parent, typ, callback):
 		data_start = start + length
-		size = 0
 		(bmp_type, off) = rdata(data, data_start, '2s')
-		if bmp_type == 'BM':
-			(size, off) = rdata(data, off, '<I')
-		elif bmp_type == 'Zo':
-			(bmp_type2, off) = rdata(data, off, '7s')
-			if bmp_type2 == 'nerBMIa':
-				off += 44
-				(size, off) = rdata(data, off, '<I')
+		assert bmp_type == 'BM'
+		(size, off) = rdata(data, off, '<I')
 		assert data_start + size < len(data)
 		objiter = self._do_parse_object(data[start:data_start], parent, typ, callback)
-		add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_bitmap_data', data[data_start:data_start + size], objiter)
+		add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_preview_bitmap_data', data[data_start:data_start + size], objiter)
 		return data_start + size
+
+	def parse_bitmap(self, data, start, length, parent, typ, callback):
+		data_start = start + length
+		(something, off) = rdata(data, start + 0x20, '<I')
+		has_data = bool(something)
+		objiter = self._do_parse_object(data[start:data_start], parent, typ, callback)
+		if has_data:
+			(bmp_type, off) = rdata(data, data_start, '9s')
+			assert bmp_type == 'ZonerBMIa'
+			off += 44
+			(size, off) = rdata(data, off, '<I')
+			assert data_start + size < len(data)
+			add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_bitmap_data', data[data_start:data_start + size], objiter)
+			length += size
+		return start + length
 
 	def _parse_object(self, data, start, parent):
 		(length, off) = rdata(data, start, '<I')
@@ -425,7 +434,7 @@ zmf4_handlers = {
 	0x10: (ZMF4Parser.parse_object, 'zmf4_obj_font'),
 	0x11: (ZMF4Parser.parse_object, 'zmf4_obj_paragraph'),
 	0x12: (ZMF4Parser.parse_object, 'zmf4_obj_text'),
-	0x1e: (ZMF4Parser.parse_bitmap, 'zmf4_obj'),
+	0x1e: (ZMF4Parser.parse_preview_bitmap, 'zmf4_obj'),
 	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x28: (ZMF4Parser.parse_object, 'zmf4_obj_color_palette'),
@@ -637,14 +646,15 @@ def add_zmf2_table(hd, size, data):
 		off += 5
 
 def add_zmf4_bitmap_data(hd, size, data):
+	(typ, off) = rdata(data, 0, '9s')
+	add_iter(hd, 'Type', typ, off - 9, 9, '9s')
+	off += 44
+	(size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+
+def add_zmf4_preview_bitmap_data(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
-	type_len = 2
-	if typ == 'Zo':
-		off -= 2
-		type_len = 9
-		(typ, off) = rdata(data, off, '9s')
-		off += 44
-	add_iter(hd, 'Type', typ, 0, type_len, '%ds' % type_len)
+	add_iter(hd, 'Type', typ, off - 2, 2, '2s')
 	(size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 
@@ -1181,6 +1191,13 @@ def add_zmf4_obj_start_group(hd, size, data):
 
 def add_zmf4_obj_bitmap(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
+	if size > 0x28:
+		path = ''
+		(c, off) = rdata(data, 0x28, '<B')
+		while c != 0:
+			path += chr(c)
+			(c, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Path', path, 0x28, len(path) + 1, '%ds' % len(path))
 
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
@@ -1221,6 +1238,7 @@ zmf_ids = {
 	'zmf4_obj_table': add_zmf4_obj_table,
 	'zmf4_obj_text': add_zmf4_obj_text,
 	'zmf4_obj_text_frame': add_zmf4_obj_text_frame,
+	'zmf4_preview_bitmap_data': add_zmf4_preview_bitmap_data,
 }
 
 def zmf2_open(page, data, parent, fname):
