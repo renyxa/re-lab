@@ -337,7 +337,8 @@ zmf4_objects = {
 	0x3b: "Table",
 	# gap
 	0x41: "Start of group",
-	0x42: "End of group",
+	0x42: "End of group/blend",
+	0x43: "Start of blend",
 }
 
 # defined later
@@ -447,6 +448,7 @@ zmf4_handlers = {
 	0x3a: (ZMF4Parser.parse_object, 'zmf4_obj_text_frame'),
 	0x3b: (ZMF4Parser.parse_object, 'zmf4_obj_table'),
 	0x41: (ZMF4Parser.parse_object, 'zmf4_obj_start_group'),
+	0x43: (ZMF4Parser.parse_object, 'zmf4_obj_blend'),
 }
 
 def _add_zmf2_string(hd, size, data, offset, name):
@@ -1263,6 +1265,30 @@ def add_zmf4_obj_guidelines(hd, size, data):
 		add_iter(hd, 'Position', pos, off - 4, 4, '<I', parent=lineiter)
 		off += 8
 
+def add_zmf4_obj_blend(hd, size, data):
+	off = _zmf4_obj_header(hd, size, data)
+	start = off
+	(length, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
+	off += 4
+	(colors, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of colors', colors, off - 4, 4, '<I')
+	off += 4
+	(steps, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Steps', steps, off - 4, 4, '<I')
+	(angle, off) = rdata(data, off, '<f')
+	add_iter(hd, 'Angle', '%.2frad' % angle, off - 4, 4, '<f')
+	i = 1
+	while i <= colors:
+		off += 4
+		(color, off) = rdata(data, off, '3s')
+		add_iter(hd, 'Color %d' % i, d2hex(color), off, 3, '3s')
+		off += 5
+		(position, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Position %d' % i, '%.0f%%' % (100 * position), off - 4, 4, '<f')
+		i += 1
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
+
 def add_zmf4_view(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off += 4
@@ -1306,6 +1332,7 @@ zmf_ids = {
 	'zmf4_obj_start_layer': add_zmf4_obj_start_layer,
 	'zmf4_obj_doc_settings': add_zmf4_obj_doc_settings,
 	'zmf4_obj_bitmap': add_zmf4_obj_bitmap,
+	'zmf4_obj_blend': add_zmf4_obj_blend,
 	'zmf4_obj_color_palette': add_zmf4_obj_color_palette,
 	'zmf4_obj_fill': add_zmf4_obj_fill,
 	'zmf4_obj_font': add_zmf4_obj_font,
