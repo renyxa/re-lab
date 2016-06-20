@@ -36,9 +36,11 @@ class bmi_parser:
 		self.data_start = 0x87
 		size_off = 0x35
 		(palette, off) = rdata(self.data, 0xd, '<H')
+		(depth, off) = rdata(self.data, off, '<H')
 		if palette == 1:
-			self.data_start += 2 * 256 * 4
-			size_off += 256 * 4
+			palette_size = 4 * (1 << depth)
+			self.data_start += 2 * palette_size
+			size_off += palette_size
 		(self.size, off) = rdata(self.data, size_off, '<I')
 
 	def parse_data(self):
@@ -68,6 +70,15 @@ def add_block(hd, size, data):
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 
 def add_header(hd, size, data):
+	def parse_palette(off, color_depth, name='Color palette'):
+		items = 1 << color_depth
+		length = 4 * items
+		palette_iter = add_iter(hd, name, '', off, length, '%ds' % length)
+		for i in range(0, items):
+			(color, off) = rdata(data, off, '<I')
+			add_iter(hd, 'Color %d?' % (i + 1), '%x' % color, off - 4, 4, '<I', parent=palette_iter)
+		return off
+
 	(sig, off) = rdata(data, 0, '9s')
 	add_iter(hd, 'Signature', sig, off - 9, 9, '9s')
 	(width, off) = rdata(data, off, '<H')
@@ -80,10 +91,7 @@ def add_header(hd, size, data):
 	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
 	off += 4
 	if palette == 1:
-		palette_iter = add_iter(hd, 'Color palette', '', off, 1024, '1024s')
-		for i in range(0, 256):
-			(color, off) = rdata(data, off, '<I')
-			add_iter(hd, 'Color %d?' % (i + 1), '%x' % color, off - 4, 4, '<I', parent=palette_iter)
+		off = parse_palette(off, depth)
 	off += 0x20
 	(fsize, off) = rdata(data, off, '<I')
 	add_iter(hd, 'File size', fsize, off - 4, 4, '<I')
@@ -108,10 +116,7 @@ def add_header(hd, size, data):
 	(dsize, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size of data', dsize, off - 4, 4, '<I')
 	if palette == 1:
-		palette_iter = add_iter(hd, 'Color palette (again)', '', off, 1024, '1024s')
-		for i in range(0, 256):
-			(color, off) = rdata(data, off, '<I')
-			add_iter(hd, 'Color %d?' % (i + 1), '%x' % color, off - 4, 4, '<I', parent=palette_iter)
+		parse_palette(off, depth, 'Color palette (again)')
 
 bmi_ids = {
 	'block': add_block,
