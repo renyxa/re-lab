@@ -804,15 +804,76 @@ def add_zmf4_obj_start_layer(hd, size, data):
 
 def add_zmf4_obj_doc_settings(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
-	off = 0x3c
-	add_iter(hd, 'Page color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
-	off = 0x44
+	off = 0x1c
+	(length, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data length?', length, off - 4, 4, '<I')
+	flags_map = {
+		0x1: 'show margins',
+		0x2: 'print margins',
+		0x4: 'show prepress marks',
+		0x8: 'print prepress marks',
+		0x10: 'show guidelines',
+		0x20: 'lock guidelines',
+		0x40: 'snap to guidelines',
+		0x80: 'show master guidelines',
+		0x100: 'lock master guidelines',
+		0x200: 'snap to master guidelines',
+		0x400: 'show master page',
+		0x800: 'print master page',
+	}
+	(flags, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 4, 4, '<I')
+	marks_flags_map = {
+		0x1: 'show fit marks',
+		0x2: 'show cut marks',
+		0x4: 'show doc info',
+		0x8: 'show date&time',
+		0x10: 'show ref colors',
+		0x20: 'print fit marks',
+		0x40: 'print cut marks',
+		0x80: 'print doc info',
+		0x100: 'print date&time',
+		0x200: 'print ref colors',
+	}
+	(marks_flags, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Prepress marks flags', bflag2txt(marks_flags, marks_flags_map), off - 4, 4, '<I')
+	off += 0x14
+	(color, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Page color (RGB)', d2hex(color), off - 3, 3, '3s')
+	off += 5
 	(width, off) = rdata(data, off, '<I')
 	# Note: maximum possible page size is 40305.08 x 28500 mm. Do not ask me why...
 	add_iter(hd, 'Page width', width, off - 4, 4, '<I')
 	(height, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Page height', height, off - 4, 4, '<I')
-	off = 0x88
+	# Note: the margins are relative to respective border. That means
+	# that right/bottom margins are typically (always?) negative.
+	(left_margin, off) = rdata(data, off, '<i')
+	add_iter(hd, 'Left page margin', left_margin, off - 4, 4, '<i')
+	(top_margin, off) = rdata(data, off, '<i')
+	add_iter(hd, 'Top page margin', top_margin, off - 4, 4, '<i')
+	(right_margin, off) = rdata(data, off, '<i')
+	add_iter(hd, 'Right page margin', right_margin, off - 4, 4, '<i')
+	(bottom_margin, off) = rdata(data, off, '<i')
+	add_iter(hd, 'Bottom page margin', bottom_margin, off - 4, 4, '<i')
+	(origin_x, off) = rdata(data, off, '<i')
+	add_iter(hd, 'Origin X', origin_x, off - 4, 4, '<i')
+	(origin_y, off) = rdata(data, off, '<i')
+	add_iter(hd, 'Origin Y', origin_y, off - 4, 4, '<i')
+	off += 0x4
+	grid_flags_map = {0x1: 'dots', 0x2: 'lines', 0x4: 'snap', 0x8: 'show',}
+	(grid_flags, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Grid flags', bflag2txt(grid_flags, grid_flags_map), off - 1, 1, '<B')
+	off += 3
+	(h_density, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Grid h. density', h_density, off - 4, 4, '<I')
+	(v_density, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Grid v. density', v_density, off - 4, 4, '<I')
+	(dot_step, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Grid dot step', dot_step, off - 4, 4, '<I')
+	(line_step, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Grid line step', line_step, off - 4, 4, '<I')
+	off += 0xc
 	# The page is placed on a much bigger canvas
 	# NOTE: it seems that positions are in respect to canvas, not to page.
 	(cwidth, off) = rdata(data, off, '<I')
@@ -827,6 +888,10 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	add_iter(hd, 'Offset of right side of page', right, off - 4, 4, '<I')
 	(bottom, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Offset of bottom side of page', bottom, off - 4, 4, '<I')
+	(left_offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Real offset of left side of page?', left_offset, off - 4, 4, '<I')
+	(top_offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Real offset of top side of page?', top_offset, off - 4, 4, '<I')
 
 def add_zmf4_obj_color_palette(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
