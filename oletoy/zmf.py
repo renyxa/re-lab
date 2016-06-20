@@ -436,6 +436,7 @@ zmf4_handlers = {
 	0x1e: (ZMF4Parser.parse_preview_bitmap, 'zmf4_obj'),
 	0x22: (ZMF4Parser.parse_object, 'zmf4_obj_guidelines'),
 	0x24: (ZMF4Parser.parse_object, 'zmf4_obj_start_layer'),
+	0x26: (ZMF4Parser.parse_object, 'zmf4_view'),
 	0x27: (ZMF4Parser.parse_object, 'zmf4_obj_doc_settings'),
 	0x28: (ZMF4Parser.parse_object, 'zmf4_obj_color_palette'),
 	0x32: (ZMF4Parser.parse_object, 'zmf4_obj_rectangle'),
@@ -1272,6 +1273,27 @@ def add_zmf4_obj_guidelines(hd, size, data):
 		add_iter(hd, 'Position', pos, off - 4, 4, '<I', parent=lineiter)
 		off += 8
 
+def add_zmf4_view(hd, size, data):
+	_zmf4_obj_header(hd, size, data)
+	off = 0x20
+	(left, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Left', left, off - 4, 4, '<I')
+	(top, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top', top, off - 4, 4, '<I')
+	(right, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right', right, off - 4, 4, '<I')
+	(bottom, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom', bottom, off - 4, 4, '<I')
+	(page, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page', page, off - 4, 4, '<I')
+	start = off
+	name = ''
+	(c, off) = rdata(data, off, '<H')
+	while c != 0 and off < size:
+		name += unichr(c)
+		(c, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Name', name, start, off - start, '%ds' % (off - start))
+
 zmf_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
@@ -1312,6 +1334,7 @@ zmf_ids = {
 	'zmf4_obj_text': add_zmf4_obj_text,
 	'zmf4_obj_text_frame': add_zmf4_obj_text_frame,
 	'zmf4_preview_bitmap_data': add_zmf4_preview_bitmap_data,
+	'zmf4_view': add_zmf4_view,
 }
 
 def zmf2_open(page, data, parent, fname):
