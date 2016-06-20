@@ -1117,7 +1117,7 @@ def add_zmf4_obj_table(hd, size, data):
 		(bottom_pen, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Bottom border pen ref', ref2txt(bottom_pen), off - 4, 4, '<I', parent=row_iter)
 		(rel_height, off) = rdata(data, off, '<f')
-		add_iter(hd, 'Relative height', '%.2f%%' % (rel_height / rows), off - 4, 4, '<f', parent=row_iter)
+		add_iter(hd, 'Relative height', '%.0f%%' % (100 * rel_height / rows), off - 4, 4, '<f', parent=row_iter)
 		i += 1
 	i = 1
 	while i <= cols:
@@ -1126,7 +1126,7 @@ def add_zmf4_obj_table(hd, size, data):
 		(right_pen, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Right border pen ref', ref2txt(right_pen), off - 4, 4, '<I', parent=col_iter)
 		(rel_width, off) = rdata(data, off, '<f')
-		add_iter(hd, 'Relative width', '%.2f%%' % (rel_width / cols), off - 4, 4, '<f', parent=col_iter)
+		add_iter(hd, 'Relative width', '%.0f%%' % (100 * rel_width / cols), off - 4, 4, '<f', parent=col_iter)
 		i += 1
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
