@@ -680,50 +680,47 @@ def _zmf4_obj_header(hd, size, data):
 	else:
 		obj = 'Unknown object 0x%x' % typ
 	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
-	if size >= 0xf:
-		off = 0xc
-		(ref_obj_count, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I')
-		(refs_start, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Start of refs list', refs_start, off - 4, 4, '<I')
-		(ref_types_start, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Start of ref types list', ref_types_start, off - 4, 4, '<I')
-	if size >= 0x1c:
-		(oid, off) = rdata(data, off, '<I')
-		add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I')
+	off = 0xc
+	(ref_obj_count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I')
+	(refs_start, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Start of refs list', refs_start, off - 4, 4, '<I')
+	(ref_types_start, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Start of ref types list', ref_types_start, off - 4, 4, '<I')
+	(oid, off) = rdata(data, off, '<I')
+	add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I')
 	return off
 
 def _zmf4_obj_refs(hd, size, data, type_map):
-	if size >= 0xf:
-		off = 0xc
-		(ref_obj_count, off) = rdata(data, off, '<I')
-		off_start = size - 8 * ref_obj_count
-		off_tag = off_start + 4 * ref_obj_count
-		types = []
-		# Determine names
-		off = off_tag
-		i = 1
-		while i <= ref_obj_count:
-			(id, off) = rdata(data, off, '<I')
-			if id == 0xffffffff:
-				typ = 'Unused'
-			else:
-				typ = key2txt(id, type_map)
-			types.append(typ)
-			i += 1
-		# Show refs and names
-		i = 1
-		off = off_start
-		while i <= ref_obj_count:
-			(ref, off) = rdata(data, off, '<I')
-			add_iter(hd, '%s ref' % types[i - 1], ref2txt(ref), off - 4, 4, '<I')
-			i += 1
-		i = 1
-		assert off == off_tag
-		while i <= ref_obj_count:
-			(id, off) = rdata(data, off, '<I')
-			add_iter(hd, 'Ref %d type' % i, types[i - 1], off - 4, 4, '<I')
-			i += 1
+	off = 0xc
+	(ref_obj_count, off) = rdata(data, off, '<I')
+	off_start = size - 8 * ref_obj_count
+	off_tag = off_start + 4 * ref_obj_count
+	types = []
+	# Determine names
+	off = off_tag
+	i = 1
+	while i <= ref_obj_count:
+		(id, off) = rdata(data, off, '<I')
+		if id == 0xffffffff:
+			typ = 'Unused'
+		else:
+			typ = key2txt(id, type_map)
+		types.append(typ)
+		i += 1
+	# Show refs and names
+	i = 1
+	off = off_start
+	while i <= ref_obj_count:
+		(ref, off) = rdata(data, off, '<I')
+		add_iter(hd, '%s ref' % types[i - 1], ref2txt(ref), off - 4, 4, '<I')
+		i += 1
+	i = 1
+	assert off == off_tag
+	while i <= ref_obj_count:
+		(id, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Ref %d type' % i, types[i - 1], off - 4, 4, '<I')
+		i += 1
 
 shape_ref_types = {
 	1: 'Fill',
