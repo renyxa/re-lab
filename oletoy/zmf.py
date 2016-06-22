@@ -1003,7 +1003,7 @@ def add_zmf4_obj_arrow(hd, size, data):
 	_zmf4_curve_data(hd, size, data, off)
 
 def add_zmf4_obj_shadow(hd, size, data):
-	_zmf4_obj_header(hd, size, data)
+	off = _zmf4_obj_header(hd, size, data)
 	off += 8
 	shadow_types = {
 		1: 'Color',
