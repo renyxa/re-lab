@@ -931,7 +931,8 @@ def add_zmf4_obj_fill(hd, size, data):
 		off = 0x30
 		add_iter(hd, 'Color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
 	else:
-		off = 0x2c
+		(transform, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Transform with object', bool(transform), off - 4, 4, '<I')
 		(stop_count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Stop count', stop_count, off - 4, 4, '<I')
 		if type == 8:
@@ -970,7 +971,8 @@ def add_zmf4_obj_pen(hd, size, data):
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
-	off += 4
+	(transform, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Transform with object', bool(transform), off - 4, 4, '<I')
 	corner_types = {0: 'Miter', 1: 'Round', 2: 'Bevel'}
 	(corner_type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Line corner type', key2txt(corner_type, corner_types), off - 4, 4, '<I')
