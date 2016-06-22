@@ -912,7 +912,9 @@ def add_zmf4_obj_color_palette(hd, size, data):
 
 def add_zmf4_obj_fill(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
-	off += 8
+	off += 4
+	(data_size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
 	fill_types = {
 		1: 'Solid',
 		2: 'Linear',
