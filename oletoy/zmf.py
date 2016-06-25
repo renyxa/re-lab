@@ -28,6 +28,9 @@ def ref2txt(value):
 	else:
 		return '0x%x' % value
 
+def update_pgiter_type(page, ftype, stype, iter1):
+	page.model.set_value(iter1, 1, (ftype, stype))
+
 zmf2_objects = {
 	# gap
 	0x3: 'Page',
@@ -68,11 +71,10 @@ class ZMF2Parser(object):
 				self._parse_file(self.data[0:length], self.parent)
 
 	def parse_bitmap_db_doc(self, data, parent):
-		bitmaps_iter = add_pgiter(self.page, 'Bitmaps', 'zmf', 'zmf2_bitmap_db', data, parent)
 		off = 4
 		i = 1
 		while off < len(data):
-			off = self._parse_object(data, off, bitmaps_iter, 'Bitmap %d' % i)
+			off = self._parse_object(data, off, parent, 'Bitmap %d' % i)
 			i += 1
 
 	def parse_bitmap_def(self, data, parent):
@@ -202,24 +204,23 @@ class ZMF2Parser(object):
 		# TODO: this is probably set of flags
 		(typ, off) = rdata(data, 4, '<H')
 		if typ == 0x4:
-			objiter = add_pgiter(self.page, 'Compressed block', 'zmf', 'zmf2_compressed_block', data, parent)
+			update_pgiter_type(self.page, 'zmf', 'zmf2_compressed_file', parent)
 			off += 10
 			(size, off) = rdata(data, off, '<I')
 			assert off == 0x14
 			assert off + int(size) <= len(data)
 			end = off + int(size)
 			compressed = data[off:end]
-			compiter = add_pgiter(self.page, 'Compressed data', 'zmf', 0, compressed, objiter)
 			try:
 				content = zlib.decompress(compressed)
-				cntiter = add_pgiter(self.page, 'Data', 'zmf', 0, content, compiter)
-				self.parser(self, content, cntiter)
+				dataiter = add_pgiter(self.page, 'Data', 'zmf', 0, content, parent)
+				self.parser(self, content, dataiter)
 			except zlib.error:
 				print("decompression failed")
 			if end < len(data):
-				add_pgiter(self.page, 'Tail', 'zmf', 0, data[end:], objiter)
+				add_pgiter(self.page, 'Tail', 'zmf', 0, data[end:], parent)
 		else:
-			add_pgiter(self.page, 'Block', 'zmf', 'zmf2_block', data, parent)
+			update_pgiter_type(self.page, 'zmf', 'zmf2_file', parent)
 
 	def _parse_header(self, data, offset, parent):
 		base_length = 0x4c
@@ -509,14 +510,14 @@ def add_zmf2_header(hd, size, data):
 	(sig, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Signature', '0x%x' % sig, off - 4, 4, '<I')
 
-def add_zmf2_block(hd, size, data):
+def add_zmf2_file(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 	(typ, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Type', typ, off - 2, 2, '<H')
 
-def add_zmf2_compressed_block(hd, size, data):
-	add_zmf2_block(hd, size, data)
+def add_zmf2_compressed_file(hd, size, data):
+	add_zmf2_file(hd, size, data)
 	off = 0x10
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size of data', data_size, off - 4, 4, '<I')
@@ -1319,10 +1320,10 @@ zmf_ids = {
 	'zmf2_bbox': add_zmf2_bbox,
 	'zmf2_bitmap_db': add_zmf2_bitmap_db,
 	'zmf2_bitmap_id': add_zmf2_bitmap_id,
-	'zmf2_block': add_zmf2_block,
+	'zmf2_file': add_zmf2_file,
 	'zmf2_character': add_zmf2_character,
 	'zmf2_color': add_zmf2_color,
-	'zmf2_compressed_block': add_zmf2_compressed_block,
+	'zmf2_compressed_file': add_zmf2_compressed_file,
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
 	'zmf2_name': add_zmf2_name,
@@ -1366,7 +1367,7 @@ def zmf2_open(page, data, parent, fname):
 		'Callisto_pages.zmf': ZMF2Parser.parse_pages_doc,
 	}
 	if fname == 'Header':
-		add_pgiter(page, 'Header', 'zmf', 'zmf2_header', data, parent)
+		update_pgiter_type(page, 'zmf', 'zmf2_header', parent)
 	elif file_map.has_key(fname):
 		if data != None:
 			parser = ZMF2Parser(data, page, parent, file_map[fname])
