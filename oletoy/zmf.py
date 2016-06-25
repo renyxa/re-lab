@@ -215,6 +215,7 @@ class ZMF2Parser(object):
 			except zlib.error:
 				print("decompression failed")
 			if end < len(data):
+				# TODO: is this actually a list of compressed blocks?
 				add_pgiter(self.page, 'Tail', 'zmf', 0, data[end:], parent)
 		else:
 			update_pgiter_type(self.page, 'zmf', 'zmf2_file', parent)
