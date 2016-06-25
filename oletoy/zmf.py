@@ -65,7 +65,10 @@ class ZMF2Parser(object):
 		if len(self.data) >= 4:
 			(length, off) = rdata(self.data, 0, '<I')
 			if length <= len(self.data):
-				self._parse_file(self.data[0:length], self.parent)
+				try:
+					self._parse_file(self.data[0:length], self.parent)
+				except:
+					pass
 
 	def parse_bitmap_db_doc(self, data, parent):
 		off = 4
