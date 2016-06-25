@@ -495,7 +495,9 @@ def add_zmf2_character(hd, size, data):
 	add_iter(hd, 'Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
 
 def add_zmf2_header(hd, size, data):
-	off = 10
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length?', length, off - 4, 4, '<I')
+	off += 6
 	(version, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Version', version, off - 2, 2, '<H')
 	(sig, off) = rdata(data, off, '<I')
