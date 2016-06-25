@@ -466,7 +466,7 @@ def _add_zmf2_string(hd, size, data, offset, name):
 		add_iter(hd, name, unicode(text, 'cp1250'), off - text_len, text_len + 1, '%ds' % text_len)
 	else:
 		add_iter(hd, name, '', off, 1, '%ds' % text_len)
-	return off + int(length)
+	return off + 1
 
 def add_zmf2_bbox(hd, size, data):
 	(tl_x, off) = rdata(data, 0, '<I')
