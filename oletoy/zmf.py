@@ -453,7 +453,7 @@ zmf4_handlers = {
 
 def _add_zmf2_string(hd, size, data, offset, name):
 	(length, off) = rdata(data, offset, '<I')
-	add_iter(hd, 'String length', length, off - 4, 4, '<I')
+	add_iter(hd, '%s length' % name, length, off - 4, 4, '<I')
 	text_len = int(length) - 1
 	if text_len > 1:
 		(text, off) = rdata(data, off, '%ds' % text_len)
@@ -523,12 +523,7 @@ def add_zmf2_doc_header(hd, size, data):
 	(tb_margin, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Top & bottom page margin?', tb_margin, off - 4, 4, '<I')
 	off += 8
-	(strlen, off) = rdata(data, off, '<I')
-	add_iter(hd, 'String length', strlen, off - 4, 4, '<I')
-	layer_len = int(strlen) - 1
-	(layer, off) = rdata(data, off, '%ds' % layer_len)
-	add_iter(hd, 'Default layer name?', unicode(layer, 'cp1250'), off - layer_len, layer_len + 1, '%ds' % layer_len)
-	off += 1
+	off = _add_zmf2_string(hd, size, data, off, 'Default layer name?')
 	(tl_x, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Page top left X?', tl_x, off - 4, 4, '<I')
 	(tl_y, off) = rdata(data, off, '<I')
