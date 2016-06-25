@@ -19,9 +19,6 @@ import zlib
 import bmi
 from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt
 
-def read(data, offset, fmt):
-	return rdata(data, offset, fmt)[0]
-
 def ref2txt(value):
 	if value == 0xffffffff:
 		return 'none'
@@ -66,7 +63,7 @@ class ZMF2Parser(object):
 
 	def parse(self):
 		if len(self.data) >= 4:
-			length = int(read(self.data, 0, '<I'))
+			(length, off) = rdata(self.data, 0, '<I')
 			if length <= len(self.data):
 				self._parse_file(self.data[0:length], self.parent)
 
@@ -224,7 +221,7 @@ class ZMF2Parser(object):
 
 	def _parse_header(self, data, offset, parent):
 		base_length = 0x4c
-		layer_name_length = int(read(data, 0x38, '<I'))
+		(layer_name_length, off) = rdata(data, 0x38, '<I')
 		length = base_length + layer_name_length
 		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_doc_header', data[offset:length], parent)
 		return length
