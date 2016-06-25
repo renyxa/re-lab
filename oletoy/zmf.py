@@ -29,18 +29,24 @@ def ref2txt(value):
 		return '0x%x' % value
 
 zmf2_objects = {
+	# gap
 	0x3: 'Page',
 	0x4: 'Layer',
+	# gap
 	0x8: 'Rectangle',
 	0x9: 'Image',
 	0xa: 'Color',
+	# gap
 	0xe: 'Polyline',
+	# gap
 	0x10: 'Ellipse',
 	0x11: 'Star',
 	0x12: 'Polygon',
 	0x13: 'Text frame',
 	0x14: 'Table',
+	# gap
 	0x100: 'Color palette',
+	# gap
 	0x201: 'Bitmap definition',
 }
 
