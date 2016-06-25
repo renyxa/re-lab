@@ -262,10 +262,10 @@ class ZMF2Parser(object):
 		if not name_str:
 			name_str = 'Unknown object'
 
-		objiter = add_pgiter(self.page, name_str, 'zmf', 0, data[offset:offset + int(size)], parent)
-
+		showid = 0
 		if header_size != 0:
-			add_pgiter(self.page, 'Header', 'zmf', 'zmf2_obj_header', data[offset:offset + header_size], objiter)
+			showid = 'zmf2_obj_header'
+		objiter = add_pgiter(self.page, name_str, 'zmf', showid, data[offset:offset + int(size)], parent)
 
 		content_data = data[offset + header_size:offset + int(size)]
 		if handler:
