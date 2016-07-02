@@ -37,6 +37,8 @@ zmf2_objects = {
 	0x9: 'Image',
 	0xa: 'Color',
 	# gap
+	0xc: 'Fill',
+	# gap
 	0xe: 'Polyline',
 	# gap
 	0x10: 'Ellipse',
@@ -181,6 +183,15 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, 0x10, parent)
 		return off
 
+	def parse_fill(self, data, parent):
+		add_pgiter(self.page, 'Fill', 'zmf', 'zmf2_fill', data[0:0x14], parent)
+		off = self._parse_object(data, 0x14, parent)
+		while off + 0x2c < len(data):
+			off += 4
+			off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Fill trailer', 'zmf', 'zmf2_fill_trailer', data[len(data) - 0x28:len(data)], parent)
+		return len(data)
+
 	def parse_table(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
@@ -323,6 +334,7 @@ zmf2_handlers = {
 	0x8: ZMF2Parser.parse_rectangle,
 	0x9: ZMF2Parser.parse_image,
 	0xa: ZMF2Parser.parse_color,
+	0xc: ZMF2Parser.parse_fill,
 	0xe: ZMF2Parser.parse_polyline,
 	0x10: ZMF2Parser.parse_ellipse,
 	0x11: ZMF2Parser.parse_star,
@@ -674,6 +686,15 @@ def add_zmf2_pen(hd, size, data):
 	add_iter(hd, 'Start arrow', key2txt(start, arrow_map), off - 4, 4, '<I')
 	(end, off) = rdata(data, off, '<I')
 	add_iter(hd, 'End arrow', key2txt(end, arrow_map), off - 4, 4, '<I')
+
+def add_zmf2_fill(hd, size, data):
+	off = 0
+	type_map = {1: 'solid', 2: 'linear gradient'}
+	(typ, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Type?', key2txt(typ, type_map), off - 4, 4, '<I')
+
+def add_zmf2_fill_trailer(hd, size, data):
+	pass
 
 def add_zmf2_table(hd, size, data):
 	off = 4
@@ -1381,6 +1402,8 @@ zmf_ids = {
 	'zmf2_compressed_file': add_zmf2_compressed_file,
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
+	'zmf2_fill': add_zmf2_fill,
+	'zmf2_fill_trailer': add_zmf2_fill_trailer,
 	'zmf2_group': add_zmf2_group,
 	'zmf2_name': add_zmf2_name,
 	'zmf2_pen': add_zmf2_pen,
