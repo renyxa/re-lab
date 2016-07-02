@@ -45,6 +45,8 @@ zmf2_objects = {
 	0x13: 'Text frame',
 	0x14: 'Table',
 	# gap
+	0x16: 'Pen',
+	# gap
 	0x1e: 'Group',
 	# gap
 	0x100: 'Color palette',
@@ -173,6 +175,11 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, off, parent)
 		add_pgiter(self.page, 'Shapes', 'zmf', 'zmf2_group', data[off:], parent)
 		return len(data)
+
+	def parse_pen(self, data, parent):
+		add_pgiter(self.page, 'Pen', 'zmf', 'zmf2_pen', data[0:0x10], parent)
+		off = self._parse_object(data, 0x10, parent)
+		return off
 
 	def parse_table(self, data, parent):
 		off = self._parse_object(data, 0, parent)
@@ -322,6 +329,7 @@ zmf2_handlers = {
 	0x12: ZMF2Parser.parse_polygon,
 	0x13: ZMF2Parser.parse_text_frame,
 	0x14: ZMF2Parser.parse_table,
+	0x16: ZMF2Parser.parse_pen,
 	0x1e: ZMF2Parser.parse_group,
 	0x100: ZMF2Parser.parse_color_palette,
 	0x201: ZMF2Parser.parse_bitmap_def,
@@ -653,6 +661,19 @@ def add_zmf2_group(hd, size, data):
 		off += 4
 		(sidx, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
+
+def add_zmf2_pen(hd, size, data):
+	off = 0
+	type_map = {0: 'solid', 1: 'dash', 2: 'long dash', 3: 'dash dot', 4: 'dash dot dot'}
+	(typ, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I')
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	arrow_map = {0: 'none'}
+	(start, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Start arrow', key2txt(start, arrow_map), off - 4, 4, '<I')
+	(end, off) = rdata(data, off, '<I')
+	add_iter(hd, 'End arrow', key2txt(end, arrow_map), off - 4, 4, '<I')
 
 def add_zmf2_table(hd, size, data):
 	off = 4
@@ -1362,6 +1383,7 @@ zmf_ids = {
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
 	'zmf2_group': add_zmf2_group,
 	'zmf2_name': add_zmf2_name,
+	'zmf2_pen': add_zmf2_pen,
 	'zmf2_points': add_zmf2_points,
 	'zmf2_polygon': add_zmf2_polygon,
 	'zmf2_star': add_zmf2_star,
