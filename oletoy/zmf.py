@@ -272,6 +272,7 @@ class ZMF2Parser(object):
 			off += 8
 			(count, off) = rdata(data, off, '<I')
 		else:
+			print("object of unknown type (%d, %d) at %x" % (typ, subtyp, offset))
 			header_size = 0
 
 		if not name_str:
