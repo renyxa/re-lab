@@ -224,7 +224,12 @@ class ZMF2Parser(object):
 			update_pgiter_type(self.page, 'zmf', 'zmf2_file', parent)
 
 	def _parse_header(self, data, offset, parent):
-		base_length = 0x4c
+		(version_hint, off) = rdata(data, 4, '<I')
+		# All v.2 files I've seen have 5 there, while v.3 files have 8
+		if version_hint == 5:
+			base_length = 0x4c
+		elif version_hint == 8:
+			base_length = 0x70
 		(layer_name_length, off) = rdata(data, 0x38, '<I')
 		length = base_length + layer_name_length
 		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_doc_header', data[offset:length], parent)
@@ -553,10 +558,11 @@ def add_zmf2_doc_dimensions(hd, size, data):
 	add_iter(hd, 'Page top left X', tl_x, off - 4, 4, '<I')
 	(tl_y, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Page top left Y', tl_y, off - 4, 4, '<I')
-	(br_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Page bottom right X', br_x, off - 4, 4, '<I')
-	(br_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Page bottom right Y', br_y, off - 4, 4, '<I')
+	if off < size:
+		(br_x, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Page bottom right X', br_x, off - 4, 4, '<I')
+		(br_y, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Page bottom right Y', br_y, off - 4, 4, '<I')
 
 def add_zmf2_obj_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
