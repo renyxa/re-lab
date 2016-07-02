@@ -1122,6 +1122,8 @@ def add_zmf4_obj_table(hd, size, data):
 		(text, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Text ref', ref2txt(text), off - 4, 4, '<I', parent=cell_iter)
 		(right_pen, off) = rdata(data, off, '<I')
+		# pen with ID 0x1 is used in cells, rows and columns when they have no border
+		# (0xffffffff aka None probably not used because it would not override column/row pen)
 		add_iter(hd, 'Right border pen ref', ref2txt(right_pen), off - 4, 4, '<I', parent=cell_iter)
 		(bottom_pen, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Bottom border pen ref', ref2txt(bottom_pen), off - 4, 4, '<I', parent=cell_iter)
