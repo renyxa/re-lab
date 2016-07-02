@@ -49,6 +49,8 @@ zmf2_objects = {
 	# gap
 	0x16: 'Pen',
 	# gap
+	0x18: 'Shadow',
+	# gap
 	0x1e: 'Group',
 	# gap
 	0x100: 'Color palette',
@@ -191,6 +193,11 @@ class ZMF2Parser(object):
 			off = self._parse_object(data, off, parent)
 		add_pgiter(self.page, 'Fill trailer', 'zmf', 'zmf2_fill_trailer', data[len(data) - 0x28:len(data)], parent)
 		return len(data)
+
+	def parse_shadow(self, data, parent):
+		add_pgiter(self.page, 'Shadow', 'zmf', 'zmf2_shadow', data[0:0x14], parent)
+		off = self._parse_object(data, 0x14, parent)
+		return off
 
 	def parse_table(self, data, parent):
 		off = self._parse_object(data, 0, parent)
@@ -342,6 +349,7 @@ zmf2_handlers = {
 	0x13: ZMF2Parser.parse_text_frame,
 	0x14: ZMF2Parser.parse_table,
 	0x16: ZMF2Parser.parse_pen,
+	0x18: ZMF2Parser.parse_shadow,
 	0x1e: ZMF2Parser.parse_group,
 	0x100: ZMF2Parser.parse_color_palette,
 	0x201: ZMF2Parser.parse_bitmap_def,
@@ -695,6 +703,21 @@ def add_zmf2_fill(hd, size, data):
 
 def add_zmf2_fill_trailer(hd, size, data):
 	pass
+
+def add_zmf2_shadow(hd, size, data):
+	off = 0
+	unit_map = {0: 'mm', 1: '%'}
+	(unit, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset unit', key2txt(unit, unit_map), off - 4, 4, '<I')
+	type_map = {0: 'none', 1: 'color', 2: 'brightness'}
+	(typ, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I')
+	(horiz, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Horizontal offset', horiz, off - 4, 4, '<I')
+	(vert, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Vertical offset', vert, off - 4, 4, '<I')
+	(brightness, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Brightness', '%d%%' % brightness, off - 4, 4, '<I')
 
 def add_zmf2_table(hd, size, data):
 	off = 4
@@ -1409,6 +1432,7 @@ zmf_ids = {
 	'zmf2_pen': add_zmf2_pen,
 	'zmf2_points': add_zmf2_points,
 	'zmf2_polygon': add_zmf2_polygon,
+	'zmf2_shadow': add_zmf2_shadow,
 	'zmf2_star': add_zmf2_star,
 	'zmf2_table': add_zmf2_table,
 	'zmf2_obj_header': add_zmf2_obj_header,
