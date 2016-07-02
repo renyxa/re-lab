@@ -45,6 +45,8 @@ zmf2_objects = {
 	0x13: 'Text frame',
 	0x14: 'Table',
 	# gap
+	0x1e: 'Group',
+	# gap
 	0x100: 'Color palette',
 	# gap
 	0x201: 'Bitmap definition',
@@ -163,6 +165,13 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
 		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_star', data[off:], parent)
+		return len(data)
+
+	def parse_group(self, data, parent):
+		off = self._parse_object(data, 0, parent)
+		off = self._parse_object(data, off, parent)
+		off = self._parse_object(data, off, parent)
+		add_pgiter(self.page, 'Shapes', 'zmf', 'zmf2_group', data[off:], parent)
 		return len(data)
 
 	def parse_table(self, data, parent):
@@ -312,6 +321,7 @@ zmf2_handlers = {
 	0x12: ZMF2Parser.parse_polygon,
 	0x13: ZMF2Parser.parse_text_frame,
 	0x14: ZMF2Parser.parse_table,
+	0x1e: ZMF2Parser.parse_group,
 	0x100: ZMF2Parser.parse_color_palette,
 	0x201: ZMF2Parser.parse_bitmap_def,
 }
@@ -628,6 +638,20 @@ def add_zmf2_star(hd, size, data):
 	add_iter(hd, 'Number of points', points, off - 4, 4, '<I')
 	(angle, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Point angle?', angle, off - 4, 4, '<I')
+
+def add_zmf2_group(hd, size, data):
+	off = 12
+	(count, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of shapes?', count, off - 4, 4, '<I')
+	off += 8
+	(gidx, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Group shape index?', (gidx + 1), off - 4, 4, '<I')
+	(count2, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Number of shapes (again)?', count2, off - 4, 4, '<I')
+	for i in range(1, count + 1):
+		off += 4
+		(sidx, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
 
 def add_zmf2_table(hd, size, data):
 	off = 4
@@ -1335,6 +1359,7 @@ zmf_ids = {
 	'zmf2_compressed_file': add_zmf2_compressed_file,
 	'zmf2_doc_header': add_zmf2_doc_header,
 	'zmf2_doc_dimensions': add_zmf2_doc_dimensions,
+	'zmf2_group': add_zmf2_group,
 	'zmf2_name': add_zmf2_name,
 	'zmf2_points': add_zmf2_points,
 	'zmf2_polygon': add_zmf2_polygon,
