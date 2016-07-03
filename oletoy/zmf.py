@@ -97,7 +97,7 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, off, parent, 'Default color?')
 		off = self._parse_dimensions(data, off, parent)
 		off += 4 # something
-		off = self._parse_object(data, off, parent)
+		off = self._parse_data(data, off, parent)
 		off += 4 # something
 		off = self._parse_object(data, off, parent, 'Color palette')
 		off += 0x4c # something
@@ -334,6 +334,12 @@ class ZMF2Parser(object):
 			i += 1
 		return off
 
+	def _parse_data(self, data, offset, parent):
+		off = offset
+		(size, off) = rdata(data, offset, '<I')
+		add_pgiter(self.page, 'Unknown data', 'zmf', 'zmf2_data', data[offset:offset + int(size)], parent)
+		return offset + int(size)
+
 	def _parse_dimensions(self, data, offset, parent):
 		off = offset
 		(size, off) = rdata(data, offset, '<I')
@@ -518,6 +524,10 @@ def _add_zmf2_string(hd, size, data, offset, name):
 	else:
 		add_iter(hd, name, '', off, 1, '%ds' % text_len)
 	return off + 1
+
+def add_zmf2_data(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, off - 4, 4, '<I')
 
 def add_zmf2_bbox(hd, size, data):
 	(tl_x, off) = rdata(data, 0, '<I')
@@ -1424,6 +1434,7 @@ zmf_ids = {
 	'zmf2_bbox': add_zmf2_bbox,
 	'zmf2_bitmap_db': add_zmf2_bitmap_db,
 	'zmf2_bitmap_id': add_zmf2_bitmap_id,
+	'zmf2_data': add_zmf2_data,
 	'zmf2_file': add_zmf2_file,
 	'zmf2_character': add_zmf2_character,
 	'zmf2_color': add_zmf2_color,
