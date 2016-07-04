@@ -510,6 +510,9 @@ def parse_page(page,data,old_offset,f_iter):
 				p_iter = c_iter
 		# JumpAbsolute
 		if ctype == 0x6f:
+			# CMX version 1
+			# new_offset = struct.unpack("<I",data[offset+corr+4:offset+corr+8])[0]
+			# CMX version 2
 			new_offset = struct.unpack("<I",data[offset+corr+4:offset+corr+8])[0]
 			offset = new_offset - old_offset
 		else:
