@@ -513,7 +513,7 @@ def parse_page(page,data,old_offset,f_iter):
 			# CMX version 1
 			# new_offset = struct.unpack("<I",data[offset+corr+4:offset+corr+8])[0]
 			# CMX version 2
-			new_offset = struct.unpack("<I",data[offset+corr+4:offset+corr+8])[0]
+			new_offset = struct.unpack("<I",data[offset+corr+7:offset+corr+11])[0]
 			offset = new_offset - old_offset
 		else:
 			offset += csize
