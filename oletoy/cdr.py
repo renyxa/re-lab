@@ -2520,7 +2520,7 @@ class record:
 		if self.fourcc == 'pack':
 			self.pack(page,f_iter)
 		if self.fourcc == 'page' and fmttype == "cmx":
-			cmx.parse_page(page,self.data,f_iter)
+			cmx.parse_page(page,self.data,self.offset+8,f_iter)
 		if self.fourcc == 'vrsn' and len(self.data) == 2: # ver 16
 				page.version = struct.unpack("<H",self.data)[0]/100.
 				print page.version

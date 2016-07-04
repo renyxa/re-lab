@@ -487,16 +487,20 @@ grps = {
 	0x17:1,0xe:1,0xc:1,0xa:1,0x64:1,0x12:1,0x49:1,0x47:1,0x15:1
 	}
 
-def parse_page(page,data,f_iter):
+def parse_page(page,data,old_offset,f_iter):
 	offset = 0
+	corr = 0
 	p_iter = f_iter
 #	print "CMX parse page"
 	while offset < len(data) - 4:
-		csize = struct.unpack("<H",data[offset:offset+2])[0]
-		ctype = struct.unpack("<h",data[offset+2:offset+4])[0]
+		csize = struct.unpack("<h",data[offset:offset+2])[0]
+		if csize < 0:
+			csize = struct.unpack("<I",data[offset+2:offset+6])[0]
+			corr = 4;
+		ctype = struct.unpack("<h",data[offset+corr+2:offset+corr+4])[0]
 		if ctype < 0:
 			ctype = - ctype
-		c_iter = add_pgiter(page,"%s (%d)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+4:offset+csize],p_iter)
+		c_iter = add_pgiter(page,"%s (%d)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+corr+4:offset+csize],p_iter)
 		if grps.has_key(ctype):
 			if grps[ctype] == 1:
 				# Ends
@@ -504,8 +508,12 @@ def parse_page(page,data,f_iter):
 			else:
 				t_iter = p_iter
 				p_iter = c_iter
-				
-		offset += csize
+		# JumpAbsolute
+		if ctype == 0x6f:
+			new_offset = struct.unpack("<I",data[offset+corr+4:offset+corr+8])[0]
+			offset = new_offset - old_offset
+		else:
+			offset += csize
 
 cmx_ids = {
 	"cont":cont,
