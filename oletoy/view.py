@@ -1571,9 +1571,12 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
-				elif ntype[0] == "zmf":
-					if zmf.zmf_ids.has_key(ntype[1]):
-						zmf.zmf_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "zmf2":
+					if zmf.zmf2_ids.has_key(ntype[1]):
+						zmf.zmf2_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "zmf4":
+					if zmf.zmf4_ids.has_key(ntype[1]):
+						zmf.zmf4_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "zbr":
 					if zbr.zbr_ids.has_key(ntype[1]):
 						zbr.zbr_ids[ntype[1]](hd, size, data)

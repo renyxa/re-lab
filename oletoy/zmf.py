@@ -86,7 +86,7 @@ class ZMF2Parser(object):
 			i += 1
 
 	def parse_bitmap_def(self, data, parent):
-		add_pgiter(self.page, 'ID', 'zmf', 'zmf2_bitmap_id', data, parent)
+		add_pgiter(self.page, 'ID', 'zmf2', 'zmf2_bitmap_id', data, parent)
 		return len(data)
 
 	def parse_text_styles_doc(self, data, parent):
@@ -110,7 +110,7 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, 0, parent, 'Color')
 		if off < len(data):
 			(length, off) = rdata(data, off, '<I')
-			add_pgiter(self.page, 'Palette name?', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
+			add_pgiter(self.page, 'Palette name?', 'zmf2', 'zmf2_name', data[off - 4:off + int(length)], parent)
 		return off + int(length)
 
 	def parse_color(self, data, parent):
@@ -119,27 +119,27 @@ class ZMF2Parser(object):
 		if length > 1:
 			(name, off) = rdata(data, off, '%ds' % (int(length) - 1))
 			name_str += ' (%s)' % unicode(name, 'cp1250')
-		add_pgiter(self.page, name_str, 'zmf', 'zmf2_color', data, parent)
+		add_pgiter(self.page, name_str, 'zmf2', 'zmf2_color', data, parent)
 		return len(data)
 
 	def parse_ellipse(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf2', 'zmf2_bbox', data[off:off + 0x20], parent)
 		return off + 0x20
 
 	def parse_image(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf2', 'zmf2_bbox', data[off:off + 0x20], parent)
 		return off + 0x20
 
 	def parse_layer(self, data, parent):
 		off = self._parse_object(data, 0, parent, 'Shape')
 		(length, off) = rdata(data, off, '<I')
-		add_pgiter(self.page, 'Layer name', 'zmf', 'zmf2_name', data[off - 4:off + int(length)], parent)
+		add_pgiter(self.page, 'Layer name', 'zmf2', 'zmf2_name', data[off - 4:off + int(length)], parent)
 		return off + int(length)
 
 	def parse_page(self, data, parent):
@@ -147,60 +147,60 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, off, parent, 'Something')
 		off += 8
 		(length, off) = rdata(data, off, '<I')
-		add_pgiter(self.page, 'Trailer', 'zmf', 0, data[off - 12:off + length], parent)
+		add_pgiter(self.page, 'Trailer', 'zmf2', 0, data[off - 12:off + length], parent)
 		return off + length
 
 	def parse_polygon(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_polygon', data[off:], parent)
+		add_pgiter(self.page, 'Dimensions', 'zmf2', 'zmf2_polygon', data[off:], parent)
 		return len(data)
 
 	def parse_polyline(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Points', 'zmf', 'zmf2_points', data[off:], parent)
+		add_pgiter(self.page, 'Points', 'zmf2', 'zmf2_points', data[off:], parent)
 		return len(data)
 
 	def parse_rectangle(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf2', 'zmf2_bbox', data[off:off + 0x20], parent)
 		return off + 0x20
 
 	def parse_star(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_star', data[off:], parent)
+		add_pgiter(self.page, 'Dimensions', 'zmf2', 'zmf2_star', data[off:], parent)
 		return len(data)
 
 	def parse_group(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Shapes', 'zmf', 'zmf2_group', data[off:], parent)
+		add_pgiter(self.page, 'Shapes', 'zmf2', 'zmf2_group', data[off:], parent)
 		return len(data)
 
 	def parse_pen(self, data, parent):
-		add_pgiter(self.page, 'Pen', 'zmf', 'zmf2_pen', data[0:0x10], parent)
+		add_pgiter(self.page, 'Pen', 'zmf2', 'zmf2_pen', data[0:0x10], parent)
 		off = self._parse_object(data, 0x10, parent)
 		return off
 
 	def parse_fill(self, data, parent):
-		add_pgiter(self.page, 'Fill', 'zmf', 'zmf2_fill', data[0:0x14], parent)
+		add_pgiter(self.page, 'Fill', 'zmf2', 'zmf2_fill', data[0:0x14], parent)
 		off = self._parse_object(data, 0x14, parent)
 		while off + 0x2c < len(data):
 			off += 4
 			off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Fill trailer', 'zmf', 'zmf2_fill_trailer', data[len(data) - 0x28:len(data)], parent)
+		add_pgiter(self.page, 'Fill trailer', 'zmf2', 'zmf2_fill_trailer', data[len(data) - 0x28:len(data)], parent)
 		return len(data)
 
 	def parse_shadow(self, data, parent):
-		add_pgiter(self.page, 'Shadow', 'zmf', 'zmf2_shadow', data[0:0x14], parent)
+		add_pgiter(self.page, 'Shadow', 'zmf2', 'zmf2_shadow', data[0:0x14], parent)
 		off = self._parse_object(data, 0x14, parent)
 		return off
 
@@ -208,16 +208,16 @@ class ZMF2Parser(object):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf2', 'zmf2_bbox', data[off:off + 0x20], parent)
 		off += 0x20
-		add_pgiter(self.page, 'Def', 'zmf', 'zmf2_table', data[off:], parent)
+		add_pgiter(self.page, 'Def', 'zmf2', 'zmf2_table', data[off:], parent)
 		return off
 
 	def parse_text_frame(self, data, parent):
 		off = self._parse_object(data, 0, parent)
 		off = self._parse_object(data, off, parent)
 		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf', 'zmf2_bbox', data[off:off + 0x20], parent)
+		add_pgiter(self.page, 'Bounding box', 'zmf2', 'zmf2_bbox', data[off:off + 0x20], parent)
 		off += 0x20
 		(count, off) = rdata(data, off, '<I')
 
@@ -231,10 +231,10 @@ class ZMF2Parser(object):
 			chars_len += 4 + int(length)
 			off += int(length)
 
-		charsiter = add_pgiter(self.page, 'Characters', 'zmf', 0, data[off:off + chars_len], parent)
+		charsiter = add_pgiter(self.page, 'Characters', 'zmf2', 0, data[off:off + chars_len], parent)
 		i = 0
 		while i != len(chars):
-			add_pgiter(self.page, 'Character %d' % (i + 1), 'zmf', 'zmf2_character', chars[i], charsiter)
+			add_pgiter(self.page, 'Character %d' % (i + 1), 'zmf2', 'zmf2_character', chars[i], charsiter)
 			i += 1
 
 		return off
@@ -243,7 +243,7 @@ class ZMF2Parser(object):
 		# TODO: this is probably set of flags
 		(typ, off) = rdata(data, 4, '<H')
 		if typ == 0x4:
-			update_pgiter_type(self.page, 'zmf', 'zmf2_compressed_file', parent)
+			update_pgiter_type(self.page, 'zmf2', 'zmf2_compressed_file', parent)
 			off += 10
 			(size, off) = rdata(data, off, '<I')
 			assert off == 0x14
@@ -252,15 +252,15 @@ class ZMF2Parser(object):
 			compressed = data[off:end]
 			try:
 				content = zlib.decompress(compressed)
-				dataiter = add_pgiter(self.page, 'Data', 'zmf', 0, content, parent)
+				dataiter = add_pgiter(self.page, 'Data', 'zmf2', 0, content, parent)
 				self.parser(self, content, dataiter)
 			except zlib.error:
 				print("decompression failed")
 			if end < len(data):
 				# TODO: is this actually a list of compressed blocks?
-				add_pgiter(self.page, 'Tail', 'zmf', 0, data[end:], parent)
+				add_pgiter(self.page, 'Tail', 'zmf2', 0, data[end:], parent)
 		else:
-			update_pgiter_type(self.page, 'zmf', 'zmf2_file', parent)
+			update_pgiter_type(self.page, 'zmf2', 'zmf2_file', parent)
 
 	def _parse_header(self, data, offset, parent):
 		(version_hint, off) = rdata(data, 4, '<I')
@@ -271,7 +271,7 @@ class ZMF2Parser(object):
 			base_length = 0x70
 		(layer_name_length, off) = rdata(data, 0x38, '<I')
 		length = base_length + layer_name_length
-		add_pgiter(self.page, 'Header', 'zmf', 'zmf2_doc_header', data[offset:length], parent)
+		add_pgiter(self.page, 'Header', 'zmf2', 'zmf2_doc_header', data[offset:length], parent)
 		return length
 
 	def _parse_object(self, data, offset, parent, name=None, handler=None):
@@ -311,7 +311,7 @@ class ZMF2Parser(object):
 		showid = 0
 		if header_size != 0:
 			showid = 'zmf2_obj_header'
-		objiter = add_pgiter(self.page, name_str, 'zmf', showid, data[offset:offset + int(size)], parent)
+		objiter = add_pgiter(self.page, name_str, 'zmf2', showid, data[offset:offset + int(size)], parent)
 
 		content_data = data[offset + header_size:offset + int(size)]
 		if handler:
@@ -322,7 +322,7 @@ class ZMF2Parser(object):
 			content_offset = 0
 
 		if content_offset < len(content_data):
-			add_pgiter(self.page, 'Unknown content', 'zmf', 0, content_data[content_offset:], objiter)
+			add_pgiter(self.page, 'Unknown content', 'zmf2', 0, content_data[content_offset:], objiter)
 
 		return offset + int(size)
 
@@ -337,13 +337,13 @@ class ZMF2Parser(object):
 	def _parse_data(self, data, offset, parent):
 		off = offset
 		(size, off) = rdata(data, offset, '<I')
-		add_pgiter(self.page, 'Unknown data', 'zmf', 'zmf2_data', data[offset:offset + int(size)], parent)
+		add_pgiter(self.page, 'Unknown data', 'zmf2', 'zmf2_data', data[offset:offset + int(size)], parent)
 		return offset + int(size)
 
 	def _parse_dimensions(self, data, offset, parent):
 		off = offset
 		(size, off) = rdata(data, offset, '<I')
-		add_pgiter(self.page, 'Dimensions', 'zmf', 'zmf2_doc_dimensions', data[offset:offset + int(size)], parent)
+		add_pgiter(self.page, 'Dimensions', 'zmf2', 'zmf2_doc_dimensions', data[offset:offset + int(size)], parent)
 		return offset + int(size)
 
 zmf2_handlers = {
@@ -426,12 +426,12 @@ class ZMF4Parser(object):
 			self.preview_offset = int(preview) - int(offset)
 			assert self.preview_offset == 0x20 # this is what I see in all files
 		data = self.data[0:int(offset)]
-		add_pgiter(self.page, 'Header', 'zmf', 'zmf4_header', data, self.parent)
+		add_pgiter(self.page, 'Header', 'zmf4', 'zmf4_header', data, self.parent)
 		return offset
 
 	def parse_content(self, begin):
 		data = self.data[begin:]
-		content_iter = add_pgiter(self.page, 'Content', 'zmf', 0, data, self.parent)
+		content_iter = add_pgiter(self.page, 'Content', 'zmf4', 0, data, self.parent)
 		off = 0
 		while off + 4 <= len(data):
 			off = self._parse_object(data, off, content_iter)
@@ -447,7 +447,7 @@ class ZMF4Parser(object):
 		(size, off) = rdata(data, off, '<I')
 		assert data_start + size < len(data)
 		objiter = self._do_parse_object(data[start:data_start], parent, typ, callback)
-		add_pgiter(self.page, 'Bitmap data', 'zmf', 'zmf4_preview_bitmap_data', data[data_start:data_start + size], objiter)
+		add_pgiter(self.page, 'Bitmap data', 'zmf4', 'zmf4_preview_bitmap_data', data[data_start:data_start + size], objiter)
 		return data_start + size
 
 	def parse_bitmap(self, data, start, length, parent, typ, callback):
@@ -485,7 +485,7 @@ class ZMF4Parser(object):
 			(oid, off) = rdata(data, 0x18, '<I')
 			if int(oid) != 0xffffffff:
 				obj_str = '%s (0x%x)' % (obj, oid)
-		return add_pgiter(self.page, obj_str, 'zmf', callback, data, parent)
+		return add_pgiter(self.page, obj_str, 'zmf4', callback, data, parent)
 
 zmf4_handlers = {
 	0xA: (ZMF4Parser.parse_object, 'zmf4_obj_fill'),
@@ -1417,7 +1417,7 @@ def add_zmf4_view(hd, size, data):
 		(c, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Name', name, start, off - start, '%ds' % (off - start))
 
-zmf_ids = {
+zmf2_ids = {
 	'zmf2_header': add_zmf2_header,
 	'zmf2_bbox': add_zmf2_bbox,
 	'zmf2_bitmap_db': add_zmf2_bitmap_db,
@@ -1440,6 +1440,9 @@ zmf_ids = {
 	'zmf2_star': add_zmf2_star,
 	'zmf2_table': add_zmf2_table,
 	'zmf2_obj_header': add_zmf2_obj_header,
+}
+
+zmf4_ids = {
 	'zmf4_header': add_zmf4_header,
 	'zmf4_obj': add_zmf4_obj,
 	'zmf4_obj_start_layer': add_zmf4_obj_start_layer,
@@ -1475,7 +1478,7 @@ def zmf2_open(page, data, parent, fname):
 		'Callisto_pages.zmf': ZMF2Parser.parse_pages_doc,
 	}
 	if fname == 'Header':
-		update_pgiter_type(page, 'zmf', 'zmf2_header', parent)
+		update_pgiter_type(page, 'zmf2', 'zmf2_header', parent)
 	elif file_map.has_key(fname):
 		if data != None:
 			parser = ZMF2Parser(data, page, parent, file_map[fname])
