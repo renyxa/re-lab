@@ -263,11 +263,9 @@ class ZMF2Parser(object):
 			update_pgiter_type(self.page, 'zmf2', 'zmf2_file', parent)
 
 	def _parse_header(self, data, offset, parent):
-		(version_hint, off) = rdata(data, 4, '<I')
-		# All v.2 files I've seen have 5 there, while v.3 files have 8
-		if version_hint == 5:
+		if self.page.version == 2:
 			base_length = 0x4c
-		elif version_hint == 8:
+		elif self.page.version == 3:
 			base_length = 0x70
 		(layer_name_length, off) = rdata(data, 0x38, '<I')
 		length = base_length + layer_name_length
@@ -1479,6 +1477,7 @@ def zmf2_open(page, data, parent, fname):
 	}
 	if fname == 'Header':
 		update_pgiter_type(page, 'zmf2', 'zmf2_header', parent)
+		(page.version, off) = rdata(data, 0xa, '<H')
 	elif file_map.has_key(fname):
 		if data != None:
 			parser = ZMF2Parser(data, page, parent, file_map[fname])
