@@ -17,7 +17,7 @@
 import zlib
 
 import bmi
-from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt
+from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt, ms_charsets
 
 def ref2txt(value):
 	if value == 0xffffffff:
@@ -1262,20 +1262,8 @@ def add_zmf4_obj_font(hd, size, data):
 	off += 3
 	(font_size, off) = rdata(data, off, '<f')
 	add_iter(hd, 'Font size', '%dpt' % font_size, off - 4, 4, '<f')
-	codepage_map = {
-		0: 'Western',
-		0x80: 'Japanese',
-		0xa1: 'Greek',
-		0xa2: 'Turkish',
-		0xa3: 'Vietnamese',
-		0xb1: 'Hebrew',
-		0xb2: 'Arabic',
-		0xba: 'Baltic',
-		0xcc: 'Cyrillic',
-		0xee: 'Central Europe',
-	}
 	(codepage, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Code page', key2txt(codepage, codepage_map), off - 4, 4, '<I')
+	add_iter(hd, 'Code page', key2txt(codepage, ms_charsets), off - 4, 4, '<I')
 	font = ''
 	font_pos = off
 	# Note: it looks like the font name entry might be fixed size: 32 bytes
