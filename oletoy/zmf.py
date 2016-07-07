@@ -17,6 +17,7 @@
 import zlib
 
 import bmi
+import utils
 from utils import add_iter, add_pgiter, rdata, key2txt, d2hex, d2bin, bflag2txt, ms_charsets
 
 def ref2txt(value):
@@ -27,6 +28,64 @@ def ref2txt(value):
 
 def update_pgiter_type(page, ftype, stype, iter1):
 	page.model.set_value(iter1, 1, (ftype, stype))
+
+# Because the ZMF2 format is quite complex--it has a hierarchical
+# structure, but the hierarchical "objects" are freely mixed with other
+# data--the "standard" way  of showing the important blocks in the page
+# view and details in hexdump view doesn't work well--it requires too
+# much code duplication. To avoid that duplication, we use an
+# abstraction that allows us to treat the views interchangeably. But it
+# changes the customary way to add iterators a bit. Namely:
+# 1. To open a new block, call view.add_pgiter. Note that instead of a
+#    callback name resolved using zmf2_ids you have to pass a function that
+#    parses that block. That will be used immediately to create possible
+#    further structure in the page view and with a 'delayed effect' to
+#    show the structure in the hexdump view. Note that because of the
+#    nesting, a parser in the hexdump view doesn't necessarily process
+#    the whole data block, so it is necessary to honor the given offset
+#    and size.
+# 2. To mark a simple peace of data (an int, string, etc.), use
+#    view.add_iter. This will only be shown in the hexdump view.
+# 3. To change the label of a block inside its parser function (e.g., to
+#	 add an ID, name, etc.), use view.set_label.
+# To add a version-dependent code, check view.context.version.
+
+class HdView:
+	def __init__(self, hd, iter, context=None):
+		self.hd = hd
+		self.iter = iter
+		self.context = context
+
+	def add_iter(self, name, value, offset, length, vtype):
+		utils.add_iter(self.hd, name, value, offset, length, vtype, parent=self.iter)
+
+	def add_pgiter(self, name, parser, data, offset, length):
+		pgiter = add_iter(self.hd, name, '', offset, length, '%ds' % length, parent=self.iter)
+		view = HdView(self.hd, pgiter, self.context)
+		parser(view, data, offset, length)
+
+	def set_label(self, text):
+		if self.iter:
+			self.hd.model.set(self.iter, 0, text)
+
+class PageView:
+	def __init__(self, page, ftype, iter, context=None):
+		self.page = page
+		self.ftype = ftype
+		self.iter = iter
+		self.context = context
+
+	def add_iter(self, name, value, offset, length, vtype):
+		pass
+
+	def add_pgiter(self, name, parser, data, offset, length):
+		pgiter = utils.add_pgiter(self.page, name, self.ftype, (parser, self.context),
+				data[offset:offset + length], self.iter)
+		view = PageView(self.page, self.ftype, pgiter, self.context)
+		parser(view, data, offset, length)
+
+	def set_label(self, text):
+		self.page.model.set_value(self.iter, 0, text)
 
 zmf2_objects = {
 	# gap
@@ -61,307 +120,408 @@ zmf2_objects = {
 # defined later
 zmf2_handlers = {}
 
-class ZMF2Parser(object):
+def _add_zmf2_string(view, data, offset, size, name):
+	(length, off) = rdata(data, offset, '<I')
+	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
+	text_len = int(length) - 1
+	if text_len > 1:
+		(text, off) = rdata(data, off, '%ds' % text_len)
+		view.add_iter(name, unicode(text, 'cp1250'), off - text_len, text_len + 1, '%ds' % text_len)
+	else:
+		view.add_iter(name, '', off, 1, '%ds' % text_len)
+	return off + 1
 
-	def __init__(self, data, page, parent, parser):
-		self.data = data
-		self.page = page
-		self.parent = parent
-		self.parser = parser
+def _add_zmf2_bbox(view, data, offset, size):
+	(tl_x, off) = rdata(data, offset, '<I')
+	view.add_iter('Top left X', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	view.add_iter('Top left Y', tl_y, off - 4, 4, '<I')
+	(tr_x, off) = rdata(data, off, '<I')
+	view.add_iter('Top right X', tr_x, off - 4, 4, '<I')
+	(tr_y, off) = rdata(data, off, '<I')
+	view.add_iter('Top right Y', tr_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
+	view.add_iter('Bottom right X', br_x, off - 4, 4, '<I')
+	(br_y, off) = rdata(data, off, '<I')
+	view.add_iter('Bottom right Y', br_y, off - 4, 4, '<I')
+	(bl_x, off) = rdata(data, off, '<I')
+	view.add_iter('Bottom left X', bl_x, off - 4, 4, '<I')
+	(bl_y, off) = rdata(data, off, '<I')
+	view.add_iter('Bottom left Y', bl_y, off - 4, 4, '<I')
+	return off
 
-	def parse(self):
-		if len(self.data) >= 4:
-			(length, off) = rdata(self.data, 0, '<I')
-			if length <= len(self.data):
-				try:
-					self._parse_file(self.data[0:length], self.parent)
-				except:
-					pass
+def _add_zmf2_polygon(view, data, offset, size):
+	(tl_x, off) = rdata(data, offset, '<I')
+	view.add_iter('Top left X?', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	view.add_iter('Top left Y?', tl_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
+	view.add_iter('Bottom right X?', br_x, off - 4, 4, '<I')
+	(br_y, off) = rdata(data, off, '<I')
+	view.add_iter('Bottom right Y?', br_y, off - 4, 4, '<I')
+	(points, off) = rdata(data, off, '<I')
+	view.add_iter('Number of points', points, off - 4, 4, '<I')
+	return off
 
-	def parse_bitmap_db_doc(self, data, parent):
-		off = 4
-		i = 1
-		while off < len(data):
-			off = self._parse_object(data, off, parent, 'Bitmap %d' % i)
-			i += 1
-
-	def parse_bitmap_def(self, data, parent):
-		add_pgiter(self.page, 'ID', 'zmf2', 'bitmap_id', data, parent)
-		return len(data)
-
-	def parse_text_styles_doc(self, data, parent):
-		pass
-
-	def parse_doc(self, data, parent):
-		off = self._parse_header(data, 0, parent)
-		off = self._parse_object(data, off, parent, 'Default color?')
-		off = self._parse_dimensions(data, off, parent)
-		off += 4 # something
-		off = self._parse_data(data, off, parent)
-		off += 4 # something
-		off = self._parse_object(data, off, parent, 'Color palette')
-		off += 0x4c # something
-		off = self._parse_object(data, off, parent, 'Page')
-
-	def parse_pages_doc(self, data, parent):
-		pass
-
-	def parse_color_palette(self, data, parent):
-		off = self._parse_object(data, 0, parent, 'Color')
-		if off < len(data):
-			(length, off) = rdata(data, off, '<I')
-			add_pgiter(self.page, 'Palette name?', 'zmf2', 'name', data[off - 4:off + int(length)], parent)
-		return off + int(length)
-
-	def parse_color(self, data, parent):
-		(length, off) = rdata(data, 0xd, '<I')
-		name_str = 'Color'
-		if length > 1:
-			(name, off) = rdata(data, off, '%ds' % (int(length) - 1))
-			name_str += ' (%s)' % unicode(name, 'cp1250')
-		add_pgiter(self.page, name_str, 'zmf2', 'color', data, parent)
-		return len(data)
-
-	def parse_ellipse(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf2', 'bbox', data[off:off + 0x20], parent)
-		return off + 0x20
-
-	def parse_image(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf2', 'bbox', data[off:off + 0x20], parent)
-		return off + 0x20
-
-	def parse_layer(self, data, parent):
-		off = self._parse_object(data, 0, parent, 'Shape')
-		(length, off) = rdata(data, off, '<I')
-		add_pgiter(self.page, 'Layer name', 'zmf2', 'name', data[off - 4:off + int(length)], parent)
-		return off + int(length)
-
-	def parse_page(self, data, parent):
-		off = self._parse_object(data, 0, parent, 'Layer')
-		off = self._parse_object(data, off, parent, 'Something')
-		off += 8
-		(length, off) = rdata(data, off, '<I')
-		add_pgiter(self.page, 'Trailer', 'zmf2', 0, data[off - 12:off + length], parent)
-		return off + length
-
-	def parse_polygon(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Dimensions', 'zmf2', 'polygon', data[off:], parent)
-		return len(data)
-
-	def parse_polyline(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Points', 'zmf2', 'points', data[off:], parent)
-		return len(data)
-
-	def parse_rectangle(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf2', 'bbox', data[off:off + 0x20], parent)
-		return off + 0x20
-
-	def parse_star(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Dimensions', 'zmf2', 'star', data[off:], parent)
-		return len(data)
-
-	def parse_group(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Shapes', 'zmf2', 'group', data[off:], parent)
-		return len(data)
-
-	def parse_pen(self, data, parent):
-		add_pgiter(self.page, 'Pen', 'zmf2', 'pen', data[0:0x10], parent)
-		off = self._parse_object(data, 0x10, parent)
-		return off
-
-	def parse_fill(self, data, parent):
-		add_pgiter(self.page, 'Fill', 'zmf2', 'fill', data[0:0x14], parent)
-		off = self._parse_object(data, 0x14, parent)
-		while off + 0x2c < len(data):
-			off += 4
-			off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Fill trailer', 'zmf2', 'fill_trailer', data[len(data) - 0x28:len(data)], parent)
-		return len(data)
-
-	def parse_shadow(self, data, parent):
-		add_pgiter(self.page, 'Shadow', 'zmf2', 'shadow', data[0:0x14], parent)
-		off = self._parse_object(data, 0x14, parent)
-		return off
-
-	def parse_table(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf2', 'bbox', data[off:off + 0x20], parent)
-		off += 0x20
-		add_pgiter(self.page, 'Def', 'zmf2', 'table', data[off:], parent)
-		return off
-
-	def parse_text_frame(self, data, parent):
-		off = self._parse_object(data, 0, parent)
-		off = self._parse_object(data, off, parent)
-		off = self._parse_object(data, off, parent)
-		add_pgiter(self.page, 'Bounding box', 'zmf2', 'bbox', data[off:off + 0x20], parent)
-		off += 0x20
-		(count, off) = rdata(data, off, '<I')
-
-		chars = []
-		chars_len = 0
-		i = 0
-		while i < int(count):
-			(length, off) = rdata(data, off, '<I')
-			i += 1
-			chars.append(data[off - 4:off + int(length)])
-			chars_len += 4 + int(length)
-			off += int(length)
-
-		charsiter = add_pgiter(self.page, 'Characters', 'zmf2', 0, data[off:off + chars_len], parent)
-		i = 0
-		while i != len(chars):
-			add_pgiter(self.page, 'Character %d' % (i + 1), 'zmf2', 'character', chars[i], charsiter)
-			i += 1
-
-		return off
-
-	def _parse_file(self, data, parent):
-		# TODO: this is probably set of flags
-		(typ, off) = rdata(data, 4, '<H')
-		if typ == 0x4:
-			update_pgiter_type(self.page, 'zmf2', 'compressed_file', parent)
-			off += 10
-			(size, off) = rdata(data, off, '<I')
-			assert off == 0x14
-			assert off + int(size) <= len(data)
-			end = off + int(size)
-			compressed = data[off:end]
-			try:
-				content = zlib.decompress(compressed)
-				dataiter = add_pgiter(self.page, 'Data', 'zmf2', 0, content, parent)
-				self.parser(self, content, dataiter)
-			except zlib.error:
-				print("decompression failed")
-			if end < len(data):
-				# TODO: is this actually a list of compressed blocks?
-				add_pgiter(self.page, 'Tail', 'zmf2', 0, data[end:], parent)
-		else:
-			update_pgiter_type(self.page, 'zmf2', 'file', parent)
-
-	def _parse_header(self, data, offset, parent):
-		if self.page.version == 2:
-			base_length = 0x4c
-		elif self.page.version == 3:
-			base_length = 0x70
-		(layer_name_length, off) = rdata(data, 0x38, '<I')
-		length = base_length + layer_name_length
-		add_pgiter(self.page, 'Header', 'zmf2', 'doc_header', data[offset:length], parent)
-		return length
-
-	def _parse_object(self, data, offset, parent, name=None, handler=None):
-		off = offset
-		(size, off) = rdata(data, offset, '<I')
-
-		name_str = name
-
+def _add_zmf2_object(view, data, offset, objname=None, parser=None):
+	(length, off) = rdata(data, offset, '<I')
+	def add_obj(view, data, offset, size):
+		name = objname
+		handler = parser
+		off = offset + 4
+		view.add_iter('Length', length, off - 4, 4, '<I')
 		# TODO: this is highly speculative
 		(typ, off) = rdata(data, off, '<I')
+		view.add_iter('Type', typ, off - 4, 4, '<I')
 		(subtyp, off) = rdata(data, off, '<I')
+		view.add_iter('Subtype', subtyp, off - 4, 4, '<I')
 		count = 0
 		if typ == 4 and subtyp == 3:
 			header_size = 0x18
 			off += 4
 			(obj, off) = rdata(data, off, '<I')
+			view.add_iter('Object type', obj, off - 4, 4, '<I')
+			off += 4
 			if not handler and zmf2_handlers.has_key(int(obj)):
 				handler = zmf2_handlers[int(obj)]
 			if zmf2_objects.has_key(int(obj)):
-				name_str = '%s object' % zmf2_objects[int(obj)]
+				name = '%s object' % zmf2_objects[int(obj)]
 		elif typ == 4 and subtyp == 4:
 			header_size = 0x14
 			off += 4
 			(count, off) = rdata(data, off, '<I')
-			name_str = name + 's'
+			view.add_iter('Number of subobjects', count, off - 4, 4, '<I')
+			name = name + 's'
 		elif typ == 8 and subtyp == 5:
 			header_size = 0x1c
 			off += 8
 			(count, off) = rdata(data, off, '<I')
+			view.add_iter('Number of subobjects', count, off - 4, 4, '<I')
+			off += 4
 		else:
 			print("object of unknown type (%d, %d) at %x" % (typ, subtyp, offset))
 			header_size = 0
-
-		if not name_str:
-			name_str = 'Unknown object'
-
-		showid = 0
-		if header_size != 0:
-			showid = 'obj_header'
-		objiter = add_pgiter(self.page, name_str, 'zmf2', showid, data[offset:offset + int(size)], parent)
-
-		content_data = data[offset + header_size:offset + int(size)]
+		if not name:
+			name = 'Unknown object'
+		view.set_label(name)
 		if handler:
-			content_offset = handler(self, content_data, objiter)
+			off = handler(view, data, off, length)
 		elif int(count) > 0:
-			content_offset = self._parse_object_list(content_data, objiter, int(count), name)
-		else:
-			content_offset = 0
+			for i in range(0, count):
+				off = _add_zmf2_object(view, data, off, '%s %d' % (objname, (i + 1)))
+		return offset + size
+	view.add_pgiter(objname, add_obj, data, offset, length)
+	return offset + length
 
-		if content_offset < len(content_data):
-			add_pgiter(self.page, 'Unknown content', 'zmf2', 0, content_data[content_offset:], objiter)
+def add_zmf2_bitmap_id(view, data, offset, size):
+	(bid, off) = rdata(data, offset, '<I')
+	view.add_iter('ID', bid, off - 4, 4, '<I')
+	return offset + size
 
-		return offset + int(size)
+def add_zmf2_obj_color(view, data, offset, size):
+	off = offset + 0xd
+	return _add_zmf2_string(view, data, off, size, 'Name')
 
-	def _parse_object_list(self, data, parent, n, name='Object'):
-		off = 0
-		i = 0
-		while i < n:
-			off = self._parse_object(data, off, parent, '%s %d' % (name, (i + 1)))
-			i += 1
-		return off
+def add_zmf2_obj_bitmap_def(view, data, offset, size):
+	view.add_pgiter('ID', add_bitmap_id, data, offset)
+	return size
 
-	def _parse_data(self, data, offset, parent):
-		off = offset
-		(size, off) = rdata(data, offset, '<I')
-		add_pgiter(self.page, 'Unknown data', 'zmf2', 'data', data[offset:offset + int(size)], parent)
-		return offset + int(size)
+def add_zmf2_doc(view, data, offset, size):
+	off = offset + 8
+	(count, off) = rdata(data, off, '<I')
+	view.add_iter('Total number of objects', count, off - 4, 4, '<I')
+	off += 0x1c
+	(lr_margin, off) = rdata(data, off, '<I')
+	view.add_iter('Left & right page margin?', lr_margin, off - 4, 4, '<I')
+	(tb_margin, off) = rdata(data, off, '<I')
+	view.add_iter('Top & bottom page margin?', tb_margin, off - 4, 4, '<I')
+	off += 8
+	off = _add_zmf2_string(view, data, off, size, 'Default layer name?')
+	(tl_x, off) = rdata(data, off, '<I')
+	view.add_iter('Page top left X?', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	view.add_iter('Page top left Y?', tl_y, off - 4, 4, '<I')
+	(br_x, off) = rdata(data, off, '<I')
+	if view.context.version == 3:
+		off += 0x28
+	else:
+		off += 4
+	off = _add_zmf2_object(view, data, off, 'Default color?')
+	dstart = off
+	(dlen, off) = rdata(data, off, '<I')
+	view.add_iter('Length of dim. data', dlen, off - 4, 4, '<I')
+	off += 8
+	(cwidth, off) = rdata(data, off, '<I')
+	view.add_iter('Canvas width', cwidth, off - 4, 4, '<I')
+	(cheight, off) = rdata(data, off, '<I')
+	view.add_iter('Canvas height', cheight, off - 4, 4, '<I')
+	off += 4
+	(tl_x, off) = rdata(data, off, '<I')
+	view.add_iter('Page top left X', tl_x, off - 4, 4, '<I')
+	(tl_y, off) = rdata(data, off, '<I')
+	view.add_iter('Page top left Y', tl_y, off - 4, 4, '<I')
+	if view.context.version == 2:
+		(br_x, off) = rdata(data, off, '<I')
+		view.add_iter('Page bottom right X', br_x, off - 4, 4, '<I')
+		(br_y, off) = rdata(data, off, '<I')
+		view.add_iter('Page bottom right Y', br_y, off - 4, 4, '<I')
+	off += 4 # something
+	(length, off) = rdata(data, off, '<I')
+	view.add_iter('Length of something', length, off - 4, 4, '<I')
+	off += length
+	off += 4 # something
+	off += 0x10
+	off = _add_zmf2_object(view, data, off, 'Color palette')
+	off += 0x4c # something
+	off = _add_zmf2_object(view, data, off, 'Page')
+	return off
 
-	def _parse_dimensions(self, data, offset, parent):
-		off = offset
-		(size, off) = rdata(data, offset, '<I')
-		add_pgiter(self.page, 'Dimensions', 'zmf2', 'doc_dimensions', data[offset:offset + int(size)], parent)
-		return offset + int(size)
+def add_zmf2_obj_color_palette(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset, 'Color')
+	if off < offset + size:
+		off = _add_zmf2_string(view, data, off, size, 'Palette name?')
+	return off
+
+def add_zmf2_obj_ellipse(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_bbox(view, data, off, size)
+	return off
+
+def add_zmf2_obj_image(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_bbox(view, data, off, size)
+	return off
+
+def add_zmf2_obj_layer(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset, 'Shape')
+	off = _add_zmf2_string(view, data, off, size, 'Layer name')
+	return off
+
+def add_zmf2_obj_page(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset, 'Layer')
+	off = _add_zmf2_object(view, data, off, 'Something')
+	off += 8
+	(length, off) = rdata(data, offset, '<I')
+	view.add_iter('Length of something', length, off - 4, 4, '<I')
+	off += length
+	return off
+
+def add_zmf2_obj_polygon(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_polygon(view, data, off, size)
+	return off
+
+def add_zmf2_obj_polyline(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	(count, off) = rdata(data, off, '<I')
+	view.add_iter('Number of points', count, off - 4, 4, '<I')
+	i = 0
+	while i < int(count):
+		(x, off) = rdata(data, off, '<I')
+		view.add_iter('Point %d X' % (i + 1), x, off - 4, 4, '<I')
+		(y, off) = rdata(data, off, '<I')
+		view.add_iter('Point %d Y' % (i + 1), y, off - 4, 4, '<I')
+		off += 8
+		i += 1
+	return off
+
+def add_zmf2_obj_rectangle(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_bbox(view, data, off, size)
+	return off
+
+def add_zmf2_obj_star(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_polygon(view, data, off, size)
+	(angle, off) = rdata(data, off, '<I')
+	view.add_iter('Point angle?', angle, off - 4, 4, '<I')
+	return off
+	return off
+
+def add_zmf2_obj_group(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off += 12
+	(count, off) = rdata(data, off, '<I')
+	view.add_iter('Number of shapes?', count, off - 4, 4, '<I')
+	off += 8
+	(gidx, off) = rdata(data, off, '<I')
+	view.add_iter('Group shape index?', (gidx + 1), off - 4, 4, '<I')
+	(count2, off) = rdata(data, off, '<I')
+	view.add_iter('Number of shapes (again)?', count2, off - 4, 4, '<I')
+	for i in range(1, count + 1):
+		off += 4
+		(sidx, off) = rdata(data, off, '<I')
+		view.add_iter('Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
+	return off
+
+def add_zmf2_obj_pen(view, data, offset, size):
+	type_map = {0: 'solid', 1: 'dash', 2: 'long dash', 3: 'dash dot', 4: 'dash dot dot'}
+	(typ, off) = rdata(data, offset, '<I')
+	view.add_iter('Type', key2txt(typ, type_map), off - 4, 4, '<I')
+	(width, off) = rdata(data, off, '<I')
+	view.add_iter('Width', width, off - 4, 4, '<I')
+	arrow_map = {0: 'none'}
+	(start, off) = rdata(data, off, '<I')
+	view.add_iter('Start arrow', key2txt(start, arrow_map), off - 4, 4, '<I')
+	(end, off) = rdata(data, off, '<I')
+	view.add_iter('End arrow', key2txt(end, arrow_map), off - 4, 4, '<I')
+	off = _add_zmf2_object(view, data, off)
+	return off
+
+def add_zmf2_obj_fill(view, data, offset, size):
+	type_map = {1: 'solid', 2: 'linear gradient'}
+	(typ, off) = rdata(data, offset, '<I')
+	view.add_iter('Type?', key2txt(typ, type_map), off - 4, 4, '<I')
+	off += 0x10
+	off = _add_zmf2_object(view, data, off)
+	while off + 0x2c < offset + size:
+		off += 4
+		off = _add_zmf2_object(view, data, off)
+	off += 0x28
+	return off
+
+def add_zmf2_obj_shadow(view, data, offset, size):
+	unit_map = {0: 'mm', 1: '%'}
+	(unit, off) = rdata(data, offset, '<I')
+	view.add_iter('Offset unit', key2txt(unit, unit_map), off - 4, 4, '<I')
+	type_map = {0: 'none', 1: 'color', 2: 'brightness'}
+	(typ, off) = rdata(data, off, '<I')
+	view.add_iter('Type', key2txt(typ, type_map), off - 4, 4, '<I')
+	(horiz, off) = rdata(data, off, '<I')
+	view.add_iter('Horizontal offset', horiz, off - 4, 4, '<I')
+	(vert, off) = rdata(data, off, '<I')
+	view.add_iter('Vertical offset', vert, off - 4, 4, '<I')
+	(brightness, off) = rdata(data, off, '<I')
+	view.add_iter('Brightness', '%d%%' % brightness, off - 4, 4, '<I')
+	off = _add_zmf2_object(view, data, off)
+	return off
+
+def add_zmf2_obj_table(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_bbox(view, data, off, size)
+	off += 0x20
+	off += 4
+	(rows, off) = rdata(data, off, '<I')
+	view.add_iter('Number of rows', rows, off - 4, 4, '<I')
+	(cols, off) = rdata(data, off, '<I')
+	view.add_iter('Number of columns', cols, off - 4, 4, '<I')
+	off += 8
+	for i in range(int(cols)):
+		(width, off) = rdata(data, off, '<I')
+		view.add_iter('Width of column %d' % (i + 1), width, off - 4, 4, '<I')
+		off += 4
+	for i in range(int(rows)):
+		(height, off) = rdata(data, off, '<I')
+		view.add_iter('Height of row %d' % (i + 1), height, off - 4, 4, '<I')
+		off += 0x2c
+		for j in range(int(cols)):
+			(length, off) = rdata(data, off, '<I')
+			view.add_iter('String length', length, off - 4, 4, '<I')
+			fix = 0
+			if int(length) > 0:
+				(text, off) = rdata(data, off, '%ds' % int(length))
+				view.add_iter('Content', text, off - int(length), int(length), '%ds' % int(length))
+				off += 0x29
+				fix = 0x29
+		off -= fix
+		off += 5
+	return off
+
+def add_zmf2_character(view, data, offset, size):
+	(length, off) = rdata(data, offset, '<I')
+	view.add_iter('Length', length, off - 4, 4, '<I')
+	(c, off) = rdata(data, off, '1s')
+	view.add_iter('Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
+	return offset + length
+
+def add_zmf2_obj_text_frame(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_bbox(view, data, off, size)
+	off += 0x20
+	(count, off) = rdata(data, off, '<I')
+	for i in range(0, count):
+		(length, off) = rdata(data, off, '<I')
+		view.add_pgiter('Character %d' % (i + 1), add_zmf2_character, data, off - 4, length)
+		off += length - 4
+	return off
+
+def _parse_zmf2_file(page, data, parent, parser):
+	# TODO: this is probably set of flags
+	(typ, off) = rdata(data, 4, '<H')
+	if typ == 0x4:
+		update_pgiter_type(page, 'zmf2', 'compressed_file', parent)
+		off += 10
+		(size, off) = rdata(data, off, '<I')
+		assert off == 0x14
+		assert off + int(size) <= len(data)
+		end = off + int(size)
+		compressed = data[off:end]
+		try:
+			content = zlib.decompress(compressed)
+			dataiter = add_pgiter(page, 'Data', 'zmf2', 0, content, parent)
+			view = PageView(page, 'zmf2', dataiter, page)
+			parser(view, content, 0, len(content))
+		except zlib.error:
+			print("decompression failed")
+		if end < len(data):
+			# TODO: is this actually a list of compressed blocks?
+			add_pgiter(page, 'Tail', 'zmf2', 0, data[end:], parent)
+	else:
+		update_pgiter_type(page, 'zmf2', 'file', parent)
+
+def parse_zmf2_bitmap_db_doc(page, data, parent):
+	off = 4
+	view = PageView(page, 'zmf2', parent, page)
+	i = 1
+	while off < len(data):
+		off = _add_zmf2_object(view, data, off, 'Bitmap %d' % i)
+		i += 1
+
+def parse_zmf2_text_styles_doc(page, data, parent):
+	pass
+
+def parse_zmf2_doc(page, data, parent):
+	_parse_zmf2_file(page, data, parent, add_zmf2_doc)
+
+def parse_zmf2_pages_doc(page, data, parent):
+	pass
 
 zmf2_handlers = {
-	0x3: ZMF2Parser.parse_page,
-	0x4: ZMF2Parser.parse_layer,
-	0x8: ZMF2Parser.parse_rectangle,
-	0x9: ZMF2Parser.parse_image,
-	0xa: ZMF2Parser.parse_color,
-	0xc: ZMF2Parser.parse_fill,
-	0xe: ZMF2Parser.parse_polyline,
-	0x10: ZMF2Parser.parse_ellipse,
-	0x11: ZMF2Parser.parse_star,
-	0x12: ZMF2Parser.parse_polygon,
-	0x13: ZMF2Parser.parse_text_frame,
-	0x14: ZMF2Parser.parse_table,
-	0x16: ZMF2Parser.parse_pen,
-	0x18: ZMF2Parser.parse_shadow,
-	0x1e: ZMF2Parser.parse_group,
-	0x100: ZMF2Parser.parse_color_palette,
-	0x201: ZMF2Parser.parse_bitmap_def,
+	0x3: add_zmf2_obj_page,
+	0x4: add_zmf2_obj_layer,
+	0x8: add_zmf2_obj_rectangle,
+	0x9: add_zmf2_obj_image,
+	0xa: add_zmf2_obj_color,
+	0xc: add_zmf2_obj_fill,
+	0xe: add_zmf2_obj_polyline,
+	0x10: add_zmf2_obj_ellipse,
+	0x11: add_zmf2_obj_star,
+	0x12: add_zmf2_obj_polygon,
+	0x13: add_zmf2_obj_text_frame,
+	0x14: add_zmf2_obj_table,
+	0x16: add_zmf2_obj_pen,
+	0x18: add_zmf2_obj_shadow,
+	0x1e: add_zmf2_obj_group,
+	0x100: add_zmf2_obj_color_palette,
+	0x201: add_zmf2_obj_bitmap_def,
 }
 
 zmf4_objects = {
@@ -512,52 +672,9 @@ zmf4_handlers = {
 	0x43: (ZMF4Parser.parse_object, 'obj_blend'),
 }
 
-def _add_zmf2_string(hd, size, data, offset, name):
-	(length, off) = rdata(data, offset, '<I')
-	add_iter(hd, '%s length' % name, length, off - 4, 4, '<I')
-	text_len = int(length) - 1
-	if text_len > 1:
-		(text, off) = rdata(data, off, '%ds' % text_len)
-		add_iter(hd, name, unicode(text, 'cp1250'), off - text_len, text_len + 1, '%ds' % text_len)
-	else:
-		add_iter(hd, name, '', off, 1, '%ds' % text_len)
-	return off + 1
-
-def add_zmf2_data(hd, size, data):
-	(length, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Length', length, off - 4, 4, '<I')
-
-def add_zmf2_bbox(hd, size, data):
-	(tl_x, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Top left X', tl_x, off - 4, 4, '<I')
-	(tl_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top left Y', tl_y, off - 4, 4, '<I')
-	(tr_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top right X', tr_x, off - 4, 4, '<I')
-	(tr_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top right Y', tr_y, off - 4, 4, '<I')
-	(br_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom right X', br_x, off - 4, 4, '<I')
-	(br_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom right Y', br_y, off - 4, 4, '<I')
-	(bl_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom left X', bl_x, off - 4, 4, '<I')
-	(bl_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom left Y', bl_y, off - 4, 4, '<I')
-
 def add_zmf2_bitmap_db(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Number of bitmaps?', count, off - 4, 4, '<I')
-
-def add_zmf2_bitmap_id(hd, size, data):
-	(bid, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'ID', bid, off - 4, 4, '<I')
-
-def add_zmf2_character(hd, size, data):
-	(length, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Length', length, off - 4, 4, '<I')
-	(c, off) = rdata(data, off, '1s')
-	add_iter(hd, 'Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
 
 def add_zmf2_header(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -579,188 +696,6 @@ def add_zmf2_compressed_file(hd, size, data):
 	off = 0x10
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size of data', data_size, off - 4, 4, '<I')
-
-def add_zmf2_doc_header(hd, size, data):
-	off = 8
-	(count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Total number of objects', count, off - 4, 4, '<I')
-	off = 0x28
-	(lr_margin, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Left & right page margin?', lr_margin, off - 4, 4, '<I')
-	(tb_margin, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top & bottom page margin?', tb_margin, off - 4, 4, '<I')
-	off += 8
-	off = _add_zmf2_string(hd, size, data, off, 'Default layer name?')
-	(tl_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Page top left X?', tl_x, off - 4, 4, '<I')
-	(tl_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Page top left Y?', tl_y, off - 4, 4, '<I')
-	(br_x, off) = rdata(data, off, '<I')
-
-def add_zmf2_doc_dimensions(hd, size, data):
-	(size, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Size', size, off - 4, 4, '<I')
-	off += 8
-	(cwidth, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Canvas width', cwidth, off - 4, 4, '<I')
-	(cheight, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Canvas height', cheight, off - 4, 4, '<I')
-	off += 4
-	(tl_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Page top left X', tl_x, off - 4, 4, '<I')
-	(tl_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Page top left Y', tl_y, off - 4, 4, '<I')
-	if off < size:
-		(br_x, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Page bottom right X', br_x, off - 4, 4, '<I')
-		(br_y, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Page bottom right Y', br_y, off - 4, 4, '<I')
-
-def add_zmf2_obj_header(hd, size, data):
-	(size, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Size', size, off - 4, 4, '<I')
-	(typ, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Type', typ, off - 4, 4, '<I')
-	(subtyp, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Subtype', subtyp, off - 4, 4, '<I')
-	if typ == 4 and subtyp == 3:
-		off += 4
-		(obj_type, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Object type', obj_type, off - 4, 4, '<I')
-	elif typ == 4 and subtyp == 4:
-		off += 4
-		(count, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Number of subobjects', count, off - 4, 4, '<I')
-	elif typ == 8 and subtyp == 5:
-		off += 8
-		(count, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Number of subobjects', count, off - 4, 4, '<I')
-
-def add_zmf2_color(hd, size, data):
-	off = 0xd
-	_add_zmf2_string(hd, size, data, off, 'Name')
-
-def add_zmf2_name(hd, size, data):
-	_add_zmf2_string(hd, size, data, 0, 'Name')
-
-def add_zmf2_points(hd, size, data):
-	(count, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Number of points', count, off - 4, 4, '<I')
-	i = 0
-	while i < int(count):
-		(x, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d X' % (i + 1), x, off - 4, 4, '<I')
-		(y, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d Y' % (i + 1), y, off - 4, 4, '<I')
-		off += 8
-		i += 1
-
-def add_zmf2_polygon(hd, size, data):
-	(tl_x, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Top left X?', tl_x, off - 4, 4, '<I')
-	(tl_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top left Y?', tl_y, off - 4, 4, '<I')
-	(br_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom right X?', br_x, off - 4, 4, '<I')
-	(br_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom right Y?', br_y, off - 4, 4, '<I')
-	(points, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of edges', points, off - 4, 4, '<I')
-
-def add_zmf2_star(hd, size, data):
-	(tl_x, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Top left X?', tl_x, off - 4, 4, '<I')
-	(tl_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top left Y?', tl_y, off - 4, 4, '<I')
-	(br_x, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom right X?', br_x, off - 4, 4, '<I')
-	(br_y, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom right Y?', br_y, off - 4, 4, '<I')
-	(points, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of points', points, off - 4, 4, '<I')
-	(angle, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Point angle?', angle, off - 4, 4, '<I')
-
-def add_zmf2_group(hd, size, data):
-	off = 12
-	(count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of shapes?', count, off - 4, 4, '<I')
-	off += 8
-	(gidx, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Group shape index?', (gidx + 1), off - 4, 4, '<I')
-	(count2, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of shapes (again)?', count2, off - 4, 4, '<I')
-	for i in range(1, count + 1):
-		off += 4
-		(sidx, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
-
-def add_zmf2_pen(hd, size, data):
-	off = 0
-	type_map = {0: 'solid', 1: 'dash', 2: 'long dash', 3: 'dash dot', 4: 'dash dot dot'}
-	(typ, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I')
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
-	arrow_map = {0: 'none'}
-	(start, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Start arrow', key2txt(start, arrow_map), off - 4, 4, '<I')
-	(end, off) = rdata(data, off, '<I')
-	add_iter(hd, 'End arrow', key2txt(end, arrow_map), off - 4, 4, '<I')
-
-def add_zmf2_fill(hd, size, data):
-	off = 0
-	type_map = {1: 'solid', 2: 'linear gradient'}
-	(typ, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Type?', key2txt(typ, type_map), off - 4, 4, '<I')
-
-def add_zmf2_fill_trailer(hd, size, data):
-	pass
-
-def add_zmf2_shadow(hd, size, data):
-	off = 0
-	unit_map = {0: 'mm', 1: '%'}
-	(unit, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Offset unit', key2txt(unit, unit_map), off - 4, 4, '<I')
-	type_map = {0: 'none', 1: 'color', 2: 'brightness'}
-	(typ, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I')
-	(horiz, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Horizontal offset', horiz, off - 4, 4, '<I')
-	(vert, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Vertical offset', vert, off - 4, 4, '<I')
-	(brightness, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Brightness', '%d%%' % brightness, off - 4, 4, '<I')
-
-def add_zmf2_table(hd, size, data):
-	off = 4
-	(rows, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of rows', rows, off - 4, 4, '<I')
-	(cols, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of columns', cols, off - 4, 4, '<I')
-
-	off += 8
-
-	for i in range(int(cols)):
-		(width, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Width of column %d' % (i + 1), width, off - 4, 4, '<I')
-		off += 4
-
-	for i in range(int(rows)):
-		(height, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Height of row %d' % (i + 1), height, off - 4, 4, '<I')
-		off += 0x2c
-		for j in range(int(cols)):
-			(length, off) = rdata(data, off, '<I')
-			add_iter(hd, 'String length', length, off - 4, 4, '<I')
-			fix = 0
-			if int(length) > 0:
-				(text, off) = rdata(data, off, '%ds' % int(length))
-				add_iter(hd, 'Content', text, off - int(length), int(length), '%ds' % int(length))
-				off += 0x29
-				fix = 0x29
-		off -= fix
-		off += 5
 
 def add_zmf4_preview_bitmap_data(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
@@ -1419,27 +1354,9 @@ def add_zmf4_view(hd, size, data):
 
 zmf2_ids = {
 	'header': add_zmf2_header,
-	'bbox': add_zmf2_bbox,
 	'bitmap_db': add_zmf2_bitmap_db,
-	'bitmap_id': add_zmf2_bitmap_id,
-	'data': add_zmf2_data,
 	'file': add_zmf2_file,
-	'character': add_zmf2_character,
-	'color': add_zmf2_color,
 	'compressed_file': add_zmf2_compressed_file,
-	'doc_header': add_zmf2_doc_header,
-	'doc_dimensions': add_zmf2_doc_dimensions,
-	'fill': add_zmf2_fill,
-	'fill_trailer': add_zmf2_fill_trailer,
-	'group': add_zmf2_group,
-	'name': add_zmf2_name,
-	'pen': add_zmf2_pen,
-	'points': add_zmf2_points,
-	'polygon': add_zmf2_polygon,
-	'shadow': add_zmf2_shadow,
-	'star': add_zmf2_star,
-	'table': add_zmf2_table,
-	'obj_header': add_zmf2_obj_header,
 }
 
 zmf4_ids = {
@@ -1472,18 +1389,17 @@ zmf4_ids = {
 
 def zmf2_open(page, data, parent, fname):
 	file_map = {
-		'BitmapDB.zmf': ZMF2Parser.parse_bitmap_db_doc,
-		'TextStyles.zmf': ZMF2Parser.parse_text_styles_doc,
-		'Callisto_doc.zmf': ZMF2Parser.parse_doc,
-		'Callisto_pages.zmf': ZMF2Parser.parse_pages_doc,
+		'BitmapDB.zmf': parse_zmf2_bitmap_db_doc,
+		'TextStyles.zmf': parse_zmf2_text_styles_doc,
+		'Callisto_doc.zmf': parse_zmf2_doc,
+		'Callisto_pages.zmf': parse_zmf2_pages_doc,
 	}
 	if fname == 'Header':
 		update_pgiter_type(page, 'zmf2', 'header', parent)
 		(page.version, off) = rdata(data, 0xa, '<H')
 	elif file_map.has_key(fname):
 		if data != None:
-			parser = ZMF2Parser(data, page, parent, file_map[fname])
-			parser.parse()
+			file_map[fname](page, data, parent)
 
 def zmf4_open(data, page, parent):
 	parser = ZMF4Parser(data, page, parent)

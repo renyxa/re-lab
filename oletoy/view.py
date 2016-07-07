@@ -1437,7 +1437,10 @@ class ApplicationMainWindow(gtk.Window):
 			if ntype != 0:
 				ut = ""
 				for i in range(len(ntype)):
-					ut += "%s "%ntype[i]
+					if isinstance(ntype[i], tuple):
+						ut += "%s "%ntype[i][0].__name__
+					else:
+						ut += "%s "%ntype[i]
 				self.update_statusbar("[ %s]"%ut)
 				# YEP
 				if ntype[0] == "vprm" or ntype[0] == "yep":
@@ -1572,7 +1575,10 @@ class ApplicationMainWindow(gtk.Window):
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
 				elif ntype[0] == "zmf2":
-					if zmf.zmf2_ids.has_key(ntype[1]):
+					if isinstance(ntype[1], tuple):
+						view = zmf.HdView(hd, None, ntype[1][1])
+						ntype[1][0](view, data, 0, size)
+					elif zmf.zmf2_ids.has_key(ntype[1]):
 						zmf.zmf2_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "zmf4":
 					if zmf.zmf4_ids.has_key(ntype[1]):
