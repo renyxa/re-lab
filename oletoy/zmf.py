@@ -844,6 +844,8 @@ shape_ref_types = {
 }
 
 def _zmf4_obj_bbox(hd, size, data, off):
+	# width and height may not be correct in some cases
+	# for example looks like it's not updated when resizing objects
 	(width, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Width', width, off - 4, 4, '<I')
 	(height, off) = rdata(data, off, '<I')
