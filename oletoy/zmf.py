@@ -505,9 +505,8 @@ def _parse_zmf2_file(page, data, parent, parser):
 		compressed = data[off:end]
 		try:
 			content = zlib.decompress(compressed)
-			dataiter = add_pgiter(page, 'Data', 'zmf2', 0, content, parent)
-			view = PageView(page, 'zmf2', dataiter, page)
-			parser(view, content, 0, len(content))
+			view = PageView(page, 'zmf2', parent, page)
+			view.add_pgiter('Data', parser, content, 0, len(content))
 		except zlib.error:
 			print("decompression failed")
 		if end < len(data):
