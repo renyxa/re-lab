@@ -227,18 +227,22 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 	view.add_pgiter(objname, add_obj, data, offset, length)
 	return offset + length
 
-def add_zmf2_bitmap_id(view, data, offset, size):
-	(bid, off) = rdata(data, offset, '<I')
-	view.add_iter('ID', bid, off - 4, 4, '<I')
-	return offset + size
-
 def add_zmf2_obj_color(view, data, offset, size):
 	off = offset + 0xd
 	return _add_zmf2_string0(view, data, off, size, 'Name')
 
 def add_zmf2_obj_bitmap_def(view, data, offset, size):
-	view.add_pgiter('ID', add_bitmap_id, data, offset)
-	return size
+	(bid, off) = rdata(data, offset, '<I')
+	view.add_iter('ID', bid, off - 4, 4, '<I')
+	return off
+
+def add_zmf2_bitmap_db_doc(view, data, offset, size):
+	off = 4
+	i = 1
+	while off < len(data):
+		off = _add_zmf2_object(view, data, off, 'Bitmap %d' % i)
+		i += 1
+	return off
 
 def add_zmf2_doc(view, data, offset, size):
 	off = offset + 8
@@ -308,7 +312,9 @@ def add_zmf2_obj_image(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_bbox(view, data, off, size)
-	return off
+	(bid, off) = rdata(data, off, '<I')
+	view.add_iter('Bitmap ID?', bid, off - 4, 4, '<I')
+	return off + 4
 
 def add_zmf2_obj_layer(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset, 'Shape')
@@ -516,12 +522,7 @@ def _parse_zmf2_file(page, data, parent, parser):
 		update_pgiter_type(page, 'zmf2', 'file', parent)
 
 def parse_zmf2_bitmap_db_doc(page, data, parent):
-	off = 4
-	view = PageView(page, 'zmf2', parent, page)
-	i = 1
-	while off < len(data):
-		off = _add_zmf2_object(view, data, off, 'Bitmap %d' % i)
-		i += 1
+	_parse_zmf2_file(page, data, parent, add_zmf2_bitmap_db_doc)
 
 def parse_zmf2_text_styles_doc(page, data, parent):
 	pass
