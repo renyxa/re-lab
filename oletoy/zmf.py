@@ -128,10 +128,9 @@ zmf2_handlers = {}
 def _add_zmf2_string0(view, data, offset, size, name):
 	(length, off) = rdata(data, offset, '<I')
 	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
-	text_len = int(length) - 1
-	if text_len > 1:
-		(text, off) = rdata(data, off, '%ds' % text_len)
-		view.add_iter(name, unicode(text, 'cp1250'), off - text_len, text_len + 1, '%ds' % text_len)
+	if length > 1:
+		(text, off) = rdata(data, off, '%ds' % (length - 1))
+		view.add_iter(name, unicode(text, 'cp1250'), off - length + 1, length, '%ds' % length)
 	else:
 		view.add_iter(name, '', off, 1, '1s')
 	return off + 1
