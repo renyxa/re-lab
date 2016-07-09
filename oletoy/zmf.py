@@ -471,23 +471,22 @@ def add_zmf2_obj_table(view, data, offset, size):
 	return off
 
 def add_zmf2_character(view, data, offset, size):
-	(length, off) = rdata(data, offset, '<I')
-	view.add_iter('Length', length, off - 4, 4, '<I')
-	(c, off) = rdata(data, off, '1s')
+	(c, off) = rdata(data, offset, '1s')
 	view.add_iter('Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
-	return offset + length
+	return offset + size
 
 def add_zmf2_obj_text_frame(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_bbox(view, data, off, size)
-	off += 0x20
 	(count, off) = rdata(data, off, '<I')
+	view.add_iter('Number of chars', count, off - 4, 4, '<I')
 	for i in range(0, count):
 		(length, off) = rdata(data, off, '<I')
-		view.add_pgiter('Character %d' % (i + 1), add_zmf2_character, data, off - 4, length)
-		off += length - 4
+		view.add_iter('Length of char. data', length, off - 4, 4, '<I')
+		view.add_pgiter('Character %d' % (i + 1), add_zmf2_character, data, off, length)
+		off += length
 	return off
 
 def add_zmf2_obj_art_text(view, data, offset, size):
