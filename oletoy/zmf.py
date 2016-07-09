@@ -98,7 +98,7 @@ zmf2_objects = {
 	# gap
 	0xc: 'Fill',
 	# gap
-	0xe: 'Polyline',
+	0xe: 'Line',
 	# gap
 	0x10: 'Ellipse',
 	0x11: 'Star',
@@ -331,7 +331,7 @@ def add_zmf2_obj_polygon(view, data, offset, size):
 	off = _add_zmf2_polygon(view, data, off, size)
 	return off
 
-def add_zmf2_obj_polyline(view, data, offset, size):
+def add_zmf2_obj_line(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
@@ -540,7 +540,7 @@ zmf2_handlers = {
 	0x9: add_zmf2_obj_image,
 	0xa: add_zmf2_obj_color,
 	0xc: add_zmf2_obj_fill,
-	0xe: add_zmf2_obj_polyline,
+	0xe: add_zmf2_obj_line,
 	0x10: add_zmf2_obj_ellipse,
 	0x11: add_zmf2_obj_star,
 	0x12: add_zmf2_obj_polygon,
