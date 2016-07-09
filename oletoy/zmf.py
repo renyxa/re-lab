@@ -319,7 +319,7 @@ def add_zmf2_obj_page(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset, 'Layer')
 	off = _add_zmf2_object(view, data, off, 'Something')
 	off += 8
-	(length, off) = rdata(data, offset, '<I')
+	(length, off) = rdata(data, off, '<I')
 	view.add_iter('Length of something', length, off - 4, 4, '<I')
 	off += length
 	return off
