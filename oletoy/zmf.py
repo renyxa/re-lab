@@ -357,6 +357,8 @@ def add_zmf2_obj_rectangle(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
+	if view.context.version == 3:
+		off += 12
 	off = _add_zmf2_bbox(view, data, off, size)
 	return off
 
