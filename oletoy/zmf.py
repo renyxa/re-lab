@@ -415,7 +415,6 @@ def add_zmf2_obj_table(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_bbox(view, data, off, size)
-	off += 0x20
 	off += 4
 	(rows, off) = rdata(data, off, '<I')
 	view.add_iter('Number of rows', rows, off - 4, 4, '<I')
@@ -426,21 +425,24 @@ def add_zmf2_obj_table(view, data, offset, size):
 		(width, off) = rdata(data, off, '<I')
 		view.add_iter('Width of column %d' % (i + 1), width, off - 4, 4, '<I')
 		off += 4
-	for i in range(int(rows)):
-		(height, off) = rdata(data, off, '<I')
-		view.add_iter('Height of row %d' % (i + 1), height, off - 4, 4, '<I')
-		off += 0x2c
-		for j in range(int(cols)):
-			(length, off) = rdata(data, off, '<I')
-			view.add_iter('String length', length, off - 4, 4, '<I')
-			fix = 0
-			if int(length) > 0:
-				(text, off) = rdata(data, off, '%ds' % int(length))
-				view.add_iter('Content', text, off - int(length), int(length), '%ds' % int(length))
-				off += 0x29
-				fix = 0x29
-		off -= fix
-		off += 5
+	try:
+		for i in range(int(rows)):
+			(height, off) = rdata(data, off, '<I')
+			view.add_iter('Height of row %d' % (i + 1), height, off - 4, 4, '<I')
+			off += 0x2c
+			for j in range(int(cols)):
+				(length, off) = rdata(data, off, '<I')
+				view.add_iter('String length', length, off - 4, 4, '<I')
+				fix = 0
+				if int(length) > 0:
+					(text, off) = rdata(data, off, '%ds' % int(length))
+					view.add_iter('Content', text, off - int(length), int(length), '%ds' % int(length))
+					off += 0x29
+					fix = 0x29
+			off -= fix
+			off += 5
+	except:
+		pass
 	return off
 
 def add_zmf2_character(view, data, offset, size):
