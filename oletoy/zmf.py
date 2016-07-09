@@ -122,7 +122,8 @@ zmf2_objects = {
 # defined later
 zmf2_handlers = {}
 
-def _add_zmf2_string(view, data, offset, size, name):
+# Show a string where the trailing 0 is included in length
+def _add_zmf2_string0(view, data, offset, size, name):
 	(length, off) = rdata(data, offset, '<I')
 	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
 	text_len = int(length) - 1
@@ -130,7 +131,18 @@ def _add_zmf2_string(view, data, offset, size, name):
 		(text, off) = rdata(data, off, '%ds' % text_len)
 		view.add_iter(name, unicode(text, 'cp1250'), off - text_len, text_len + 1, '%ds' % text_len)
 	else:
-		view.add_iter(name, '', off, 1, '%ds' % text_len)
+		view.add_iter(name, '', off, 1, '1s')
+	return off + 1
+
+# Show a string where the trailing 0 is not included in length
+def _add_zmf2_string(view, data, offset, size, name):
+	(length, off) = rdata(data, offset, '<I')
+	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
+	if length > 0:
+		(text, off) = rdata(data, off, '%ds' % length)
+		view.add_iter(name, unicode(text, 'cp1250'), off - length, length + 1, '%ds' % (length + 1))
+	else:
+		view.add_iter(name, '', off, 1, '1s')
 	return off + 1
 
 def _add_zmf2_bbox(view, data, offset, size):
@@ -222,7 +234,7 @@ def add_zmf2_bitmap_id(view, data, offset, size):
 
 def add_zmf2_obj_color(view, data, offset, size):
 	off = offset + 0xd
-	return _add_zmf2_string(view, data, off, size, 'Name')
+	return _add_zmf2_string0(view, data, off, size, 'Name')
 
 def add_zmf2_obj_bitmap_def(view, data, offset, size):
 	view.add_pgiter('ID', add_bitmap_id, data, offset)
@@ -238,7 +250,7 @@ def add_zmf2_doc(view, data, offset, size):
 	(tb_margin, off) = rdata(data, off, '<I')
 	view.add_iter('Top & bottom page margin?', tb_margin, off - 4, 4, '<I')
 	off += 8
-	off = _add_zmf2_string(view, data, off, size, 'Default layer name?')
+	off = _add_zmf2_string0(view, data, off, size, 'Default layer name?')
 	(tl_x, off) = rdata(data, off, '<I')
 	view.add_iter('Page top left X?', tl_x, off - 4, 4, '<I')
 	(tl_y, off) = rdata(data, off, '<I')
@@ -281,7 +293,7 @@ def add_zmf2_doc(view, data, offset, size):
 def add_zmf2_obj_color_palette(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset, 'Color')
 	if off < offset + size:
-		off = _add_zmf2_string(view, data, off, size, 'Palette name?')
+		off = _add_zmf2_string0(view, data, off, size, 'Palette name?')
 	return off
 
 def add_zmf2_obj_ellipse(view, data, offset, size):
@@ -300,7 +312,7 @@ def add_zmf2_obj_image(view, data, offset, size):
 
 def add_zmf2_obj_layer(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset, 'Shape')
-	off = _add_zmf2_string(view, data, off, size, 'Layer name')
+	off = _add_zmf2_string0(view, data, off, size, 'Layer name')
 	return off
 
 def add_zmf2_obj_page(view, data, offset, size):
@@ -475,7 +487,6 @@ def add_zmf2_obj_art_text(view, data, offset, size):
 	if view.context.version == 3:
 		off += 0xc
 	off = _add_zmf2_string(view, data, off, size, 'Text')
-	off += 1
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
