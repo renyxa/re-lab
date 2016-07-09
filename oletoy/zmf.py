@@ -358,7 +358,11 @@ def add_zmf2_obj_rectangle(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
 	if view.context.version == 3:
-		off += 12
+		(fill, off) = rdata(data, off, '<I')
+		view.add_iter('Another fill is present?', bool(fill), off - 4, 4, '<I')
+		if bool(fill):
+			off = _add_zmf2_object(view, data, off)
+		off += 8
 	off = _add_zmf2_bbox(view, data, off, size)
 	return off
 
