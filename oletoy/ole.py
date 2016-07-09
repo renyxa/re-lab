@@ -23,6 +23,7 @@ import vsd, xls, ppt, vba, doc, qpw, ppp, vsd2, pm6, dsf
 import wls
 import wt602
 import zmf
+import bmi
 from utils import *
 
 ropen = ""
@@ -156,7 +157,10 @@ def my_open (buf,page,parent=None):
 				if fn[-4:] == '.zmf':
 					ftype = 'zmf'
 					zmf.zmf2_open(page, data, iter1, fn)
-				
+				if fn[-4:] == '.BMI' and fullname.split('/')[0] == 'Bitmaps':
+					ftype = 'bmi'
+					bmi.open(data, page, iter1)
+
 				if fn == "VBA":
 					page.type = "vba"
 					ftype = "vba"
