@@ -370,7 +370,6 @@ def add_zmf2_obj_star(view, data, offset, size):
 	(angle, off) = rdata(data, off, '<I')
 	view.add_iter('Point angle?', angle, off - 4, 4, '<I')
 	return off
-	return off
 
 def add_zmf2_obj_group(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset)
