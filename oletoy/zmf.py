@@ -612,20 +612,21 @@ def _parse_zmf2_file(page, data, parent, parser):
 	if typ == 0x4:
 		update_pgiter_type(page, 'zmf2', 'compressed_file', parent)
 		off += 10
-		(size, off) = rdata(data, off, '<I')
-		assert off == 0x14
-		assert off + int(size) <= len(data)
-		end = off + int(size)
-		compressed = data[off:end]
-		try:
-			content = zlib.decompress(compressed)
-			view = PageView(page, 'zmf2', parent, page)
-			view.add_pgiter('Data', parser, content, 0, len(content))
-		except zlib.error:
-			print("decompression failed")
-		if end < len(data):
-			# TODO: is this actually a list of compressed blocks?
-			add_pgiter(page, 'Tail', 'zmf2', 0, data[end:], parent)
+		content = bytearray()
+		while off + 0x14 < len(data):
+			(size, off) = rdata(data, off, '<I')
+			# assert off + int(size) <= len(data)
+			compressed = data[off:off + size]
+			off += size
+			try:
+				content.extend(zlib.decompress(compressed))
+			except zlib.error:
+				print("decompression failed")
+				break
+		view = PageView(page, 'zmf2', parent, page)
+		view.add_pgiter('Uncompressed', parser, str(content), 0, len(content))
+		if off < len(data):
+			add_pgiter(page, 'Trailer', 'zmf2', 0, data[off:], parent)
 	else:
 		update_pgiter_type(page, 'zmf2', 'file', parent)
 
@@ -836,8 +837,13 @@ def add_zmf2_file(hd, size, data):
 def add_zmf2_compressed_file(hd, size, data):
 	add_zmf2_file(hd, size, data)
 	off = 0x10
-	(data_size, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Size of data', data_size, off - 4, 4, '<I')
+	i = 0
+	while off + 0x14 < size:
+		(data_size, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Size of data block %d' % i, data_size, off - 4, 4, '<I')
+		add_iter(hd, 'Data block %d' % i, '', off, data_size, '%ds' % data_size)
+		off += data_size
+		i += 1
 
 def add_zmf4_preview_bitmap_data(hd, size, data):
 	(typ, off) = rdata(data, 0, '2s')
