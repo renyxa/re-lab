@@ -180,7 +180,7 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			header_size = 0x18
 			off += 4
 			(obj, off) = rdata(data, off, '<I')
-			view.add_iter('Object type', obj, off - 4, 4, '<I')
+			view.add_iter('Object type', key2txt(obj, zmf2_objects), off - 4, 4, '<I')
 			off += 4
 			if not handler and zmf2_handlers.has_key(int(obj)):
 				handler = zmf2_handlers[int(obj)]
