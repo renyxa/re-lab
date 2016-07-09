@@ -309,7 +309,18 @@ def add_zmf2_text_styles_doc(view, data, offset, size):
 def add_zmf2_obj_font(view, data, offset, size):
 	off = _add_zmf2_string0(view, data, offset, size, 'Style name')
 	off = _add_zmf2_string0(view, data, off, size, 'Font?')
-	off += 28
+	(height, off) = rdata(data, off, '<i')
+	view.add_iter('Font height', '%dpt' % abs(height), off - 4, 4, '<i')
+	off += 12
+	(weight, off) = rdata(data, off, '<I')
+	view.add_iter('Font weight', weight, off - 4, 4, '<I')
+	(italic, off) = rdata(data, off, '<B')
+	view.add_iter('Italic?', bool(italic), off - 1, 1, '<B')
+	(underline, off) = rdata(data, off, '<B')
+	view.add_iter('Underline?', bool(underline), off - 1, 1, '<B')
+	(strikethrough, off) = rdata(data, off, '<B')
+	view.add_iter('Strikethrough?', bool(strikethrough), off - 1, 1, '<B')
+	off += 5
 	off = _add_zmf2_string0(view, data, off, size, 'Font?')
 	off = _add_zmf2_object(view, data, off, 'Text color?')
 	return off
