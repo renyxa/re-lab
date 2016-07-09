@@ -199,7 +199,7 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			off += 4
 			if not handler and zmf2_handlers.has_key(int(obj)):
 				handler = zmf2_handlers[int(obj)]
-			if zmf2_objects.has_key(int(obj)):
+			if zmf2_objects.has_key(int(obj)) and not name:
 				name = '%s object' % zmf2_objects[int(obj)]
 		elif typ == 4 and subtyp == 4:
 			header_size = 0x14
@@ -223,7 +223,11 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			off = handler(view, data, off, length)
 		elif int(count) > 0:
 			for i in range(0, count):
-				off = _add_zmf2_object(view, data, off, '%s %d' % (objname, (i + 1)))
+				if typ == 4 and subtyp == 4:
+					contained_name = '%s %d' % (objname, (i + 1))
+				else:
+					contained_name = None
+				off = _add_zmf2_object(view, data, off, contained_name)
 		return offset + size
 	view.add_pgiter(objname, add_obj, data, offset, length)
 	return offset + length
