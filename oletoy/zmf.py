@@ -110,6 +110,7 @@ zmf2_objects = {
 	# gap
 	0x18: 'Shadow',
 	# gap
+	0x1a: 'Font',
 	0x1b: 'Artistic text',
 	# gap
 	0x1e: 'Group',
@@ -117,6 +118,7 @@ zmf2_objects = {
 	0x100: 'Color palette',
 	# gap
 	0x201: 'Bitmap definition',
+	0x202: 'Text style',
 }
 
 # defined later
@@ -292,6 +294,26 @@ def add_zmf2_doc(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off, 'Color palette')
 	off += 0x4c # something
 	off = _add_zmf2_object(view, data, off, 'Page')
+	return off
+
+def add_zmf2_text_styles_doc(view, data, offset, size):
+	(count, off) = rdata(data, offset, '<I')
+	view.add_iter('Number of styles?', count, off - 4, 4, '<I')
+	for i in range(1, count + 1):
+		off = _add_zmf2_object(view, data, off, 'Text style def %d' % i)
+	return off
+
+def add_zmf2_obj_font(view, data, offset, size):
+	off = _add_zmf2_string0(view, data, offset, size, 'Style name')
+	off = _add_zmf2_string0(view, data, off, size, 'Font?')
+	off += 28
+	off = _add_zmf2_string0(view, data, off, size, 'Font?')
+	off = _add_zmf2_object(view, data, off, 'Text color?')
+	return off
+
+def add_zmf2_obj_text_style(view, data, offset, size):
+	off = offset + 4
+	off = _add_zmf2_object(view, data, off)
 	return off
 
 def add_zmf2_obj_color_palette(view, data, offset, size):
@@ -473,7 +495,10 @@ def add_zmf2_obj_table(view, data, offset, size):
 def add_zmf2_character(view, data, offset, size):
 	(c, off) = rdata(data, offset, '1s')
 	view.add_iter('Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
-	return offset + size
+	off += 0x1b
+	(style, off) = rdata(data, off, '<I')
+	view.add_iter('Style index', style, off - 4, 4, '<I')
+	return off
 
 def add_zmf2_obj_text_frame(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset)
@@ -531,7 +556,7 @@ def parse_zmf2_bitmap_db_doc(page, data, parent):
 	_parse_zmf2_file(page, data, parent, add_zmf2_bitmap_db_doc)
 
 def parse_zmf2_text_styles_doc(page, data, parent):
-	pass
+	_parse_zmf2_file(page, data, parent, add_zmf2_text_styles_doc)
 
 def parse_zmf2_doc(page, data, parent):
 	_parse_zmf2_file(page, data, parent, add_zmf2_doc)
@@ -554,10 +579,12 @@ zmf2_handlers = {
 	0x14: add_zmf2_obj_table,
 	0x16: add_zmf2_obj_pen,
 	0x18: add_zmf2_obj_shadow,
+	0x1a: add_zmf2_obj_font,
 	0x1b: add_zmf2_obj_art_text,
 	0x1e: add_zmf2_obj_group,
 	0x100: add_zmf2_obj_color_palette,
 	0x201: add_zmf2_obj_bitmap_def,
+	0x202: add_zmf2_obj_text_style,
 }
 
 zmf4_objects = {
