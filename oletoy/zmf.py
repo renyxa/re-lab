@@ -479,6 +479,8 @@ def add_zmf2_obj_text_frame(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset)
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off)
+	if view.context.version == 3:
+		off += 12
 	off = _add_zmf2_bbox(view, data, off, size)
 	(count, off) = rdata(data, off, '<I')
 	view.add_iter('Number of chars', count, off - 4, 4, '<I')
