@@ -252,6 +252,26 @@ def add_zmf2_bitmap_db_doc(view, data, offset, size):
 		i += 1
 	return off
 
+def add_zmf2_view(view, data, offset, size):
+	off = offset + 0x18
+	s = ''
+	start = off
+	(c, off) = rdata(data, off, '<B')
+	while c != 0 and off < offset + size:
+		s += chr(c)
+		(c, off) = rdata(data, off, '<B')
+	view.add_iter('Name', unicode(s, 'cp1250'), start, 0x20, '32s')
+	return start + 0x20
+
+def add_zmf2_views(view, data, offset, size):
+	(count, off) = rdata(data, offset, '<I')
+	view.add_iter('Number of views', count, off - 4, 4, '<I')
+	for i in range(1, count + 1):
+		(length, off) = rdata(data, off, '<I')
+		view.add_iter('Length of view %d' % i, length, off - 4, 4, '<I')
+		view.add_pgiter('View %d' % i, add_zmf2_view, data, off, length)
+		off += length
+
 def add_zmf2_doc(view, data, offset, size):
 	off = offset + 8
 	(count, off) = rdata(data, off, '<I')
@@ -300,6 +320,9 @@ def add_zmf2_doc(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off, 'Color palette')
 	off += 0x4c # something
 	off = _add_zmf2_object(view, data, off, 'Page')
+	views_len = offset + size - off
+	view.add_pgiter('Views', add_zmf2_views, data, off, views_len)
+	off += views_len
 	return off
 
 def add_zmf2_text_styles_doc(view, data, offset, size):
