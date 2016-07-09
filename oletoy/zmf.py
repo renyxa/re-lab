@@ -110,7 +110,7 @@ zmf2_objects = {
 	# gap
 	0x18: 'Shadow',
 	# gap
-	0x1a: 'Font',
+	0x1a: 'Text style def',
 	0x1b: 'Artistic text',
 	# gap
 	0x1e: 'Group',
@@ -306,7 +306,7 @@ def add_zmf2_text_styles_doc(view, data, offset, size):
 		off = _add_zmf2_object(view, data, off, 'Text style def %d' % i)
 	return off
 
-def add_zmf2_obj_font(view, data, offset, size):
+def add_zmf2_obj_text_style_def(view, data, offset, size):
 	off = _add_zmf2_string0(view, data, offset, size, 'Style name')
 	off = _add_zmf2_string0(view, data, off, size, 'Font?')
 	(height, off) = rdata(data, off, '<i')
@@ -323,10 +323,30 @@ def add_zmf2_obj_font(view, data, offset, size):
 	off += 5
 	off = _add_zmf2_string0(view, data, off, size, 'Font?')
 	off = _add_zmf2_object(view, data, off, 'Text color?')
+	(key, off) = rdata(data, off, '<I')
+	view.add_iter('Shortcut key', 'F%d' % (key + 1), off - 4, 4, '<I')
+	off += 1
+	align_map = {0x10: 'left', 0x20: 'right', 0x40: 'justify', 0x80: 'center'}
+	(align, off) = rdata(data, off, '<B')
+	view.add_iter('Alignment', key2txt(align, align_map), off - 1, 1, '<B')
+	off += 2
+	(first, off) = rdata(data, off, '<I')
+	view.add_iter('First line margin', first, off - 4, 4, '<I')
+	(left, off) = rdata(data, off, '<I')
+	view.add_iter('Left margin', left, off - 4, 4, '<I')
+	(right, off) = rdata(data, off, '<I')
+	view.add_iter('Right margin', right, off - 4, 4, '<I')
+	(before, off) = rdata(data, off, '<I')
+	view.add_iter('Space before', before, off - 4, 4, '<I')
+	(after, off) = rdata(data, off, '<I')
+	view.add_iter('Space after', after, off - 4, 4, '<I')
+	(spacing, off) = rdata(data, off, '<f')
+	view.add_iter('Line spacing', '%.1f%%' % spacing, off - 4, 4, '<f')
 	return off
 
 def add_zmf2_obj_text_style(view, data, offset, size):
-	off = offset + 4
+	(parent, off) = rdata(data, offset, '<I')
+	view.add_iter('Parent style?', parent, off - 4, 4, '<I')
 	off = _add_zmf2_object(view, data, off)
 	return off
 
@@ -593,7 +613,7 @@ zmf2_handlers = {
 	0x14: add_zmf2_obj_table,
 	0x16: add_zmf2_obj_pen,
 	0x18: add_zmf2_obj_shadow,
-	0x1a: add_zmf2_obj_font,
+	0x1a: add_zmf2_obj_text_style_def,
 	0x1b: add_zmf2_obj_art_text,
 	0x1e: add_zmf2_obj_group,
 	0x100: add_zmf2_obj_color_palette,
