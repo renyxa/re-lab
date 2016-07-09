@@ -110,6 +110,8 @@ zmf2_objects = {
 	# gap
 	0x18: 'Shadow',
 	# gap
+	0x1b: 'Artistic text',
+	# gap
 	0x1e: 'Group',
 	# gap
 	0x100: 'Color palette',
@@ -465,6 +467,20 @@ def add_zmf2_obj_text_frame(view, data, offset, size):
 		off += length - 4
 	return off
 
+def add_zmf2_obj_art_text(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off += 0x38
+	if view.context.version == 3:
+		off += 0xc
+	off = _add_zmf2_string(view, data, off, size, 'Text')
+	off += 1
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	return off
+
 def _parse_zmf2_file(page, data, parent, parser):
 	# TODO: this is probably set of flags
 	(typ, off) = rdata(data, 4, '<H')
@@ -521,6 +537,7 @@ zmf2_handlers = {
 	0x14: add_zmf2_obj_table,
 	0x16: add_zmf2_obj_pen,
 	0x18: add_zmf2_obj_shadow,
+	0x1b: add_zmf2_obj_art_text,
 	0x1e: add_zmf2_obj_group,
 	0x100: add_zmf2_obj_color_palette,
 	0x201: add_zmf2_obj_bitmap_def,
