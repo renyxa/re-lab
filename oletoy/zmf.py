@@ -115,6 +115,9 @@ zmf2_objects = {
 	# gap
 	0x1e: 'Group',
 	# gap
+	0x20: 'Blend',
+	0x21: 'Blend def?',
+	# gap
 	0x100: 'Color palette',
 	# gap
 	0x201: 'Bitmap definition',
@@ -449,6 +452,23 @@ def add_zmf2_obj_group(view, data, offset, size):
 		view.add_iter('Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
 	return off
 
+def add_zmf2_obj_blend(view, data, offset, size):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	off += 0x38
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	return off
+
+def add_zmf2_obj_blend_def(view, data, offset, size):
+	off = offset + 4
+	off = _add_zmf2_object(view, data, off)
+	off += 4
+	off = _add_zmf2_object(view, data, off)
+	off += 4
+	return off
+
 def add_zmf2_obj_pen(view, data, offset, size):
 	type_map = {0: 'solid', 1: 'dash', 2: 'long dash', 3: 'dash dot', 4: 'dash dot dot'}
 	(typ, off) = rdata(data, offset, '<I')
@@ -616,6 +636,8 @@ zmf2_handlers = {
 	0x1a: add_zmf2_obj_text_style_def,
 	0x1b: add_zmf2_obj_art_text,
 	0x1e: add_zmf2_obj_group,
+	0x20: add_zmf2_obj_blend,
+	0x21: add_zmf2_obj_blend_def,
 	0x100: add_zmf2_obj_color_palette,
 	0x201: add_zmf2_obj_bitmap_def,
 	0x202: add_zmf2_obj_text_style,
