@@ -491,7 +491,7 @@ def add_zmf2_obj_blend(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off)
 	off += 0x38
 	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off, 'Path')
 	return off
 
 def add_zmf2_obj_blend_def(view, data, offset, size):
