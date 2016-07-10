@@ -198,6 +198,18 @@ def _add_zmf2_polygon(view, data, offset, size):
 	view.add_iter('Number of points', points, off - 4, 4, '<I')
 	return off
 
+def _add_zmf2_shape(view, data, offset):
+	off = _add_zmf2_object(view, data, offset)
+	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_object(view, data, off)
+	if view.context.version == 3:
+		(transparency, off) = rdata(data, off, '<I')
+		view.add_iter('Has transparency', bool(transparency), off - 4, 4, '<I')
+		if bool(transparency):
+			off = _add_zmf2_object(view, data, off, 'Transparency')
+		off += 8
+	return off
+
 def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 	(length, off) = rdata(data, offset, '<I')
 	def add_obj(view, data, offset, size):
@@ -414,16 +426,12 @@ def add_zmf2_obj_color_palette(view, data, offset, size):
 	return off
 
 def add_zmf2_obj_ellipse(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	off = _add_zmf2_bbox(view, data, off, size)
 	return off
 
 def add_zmf2_obj_image(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	off = _add_zmf2_bbox(view, data, off, size)
 	(bid, off) = rdata(data, off, '<I')
 	view.add_iter('Bitmap ID?', bid, off - 4, 4, '<I')
@@ -450,16 +458,12 @@ def add_zmf2_obj_page(view, data, offset, size):
 	return off
 
 def add_zmf2_obj_polygon(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	off = _add_zmf2_polygon(view, data, off, size)
 	return off
 
 def add_zmf2_obj_line(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	(count, off) = rdata(data, off, '<I')
 	view.add_iter('Number of points', count, off - 4, 4, '<I')
 	i = 0
@@ -473,31 +477,19 @@ def add_zmf2_obj_line(view, data, offset, size):
 	return off
 
 def add_zmf2_obj_rectangle(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
-	if view.context.version == 3:
-		(transparency, off) = rdata(data, off, '<I')
-		view.add_iter('Has transparency', bool(transparency), off - 4, 4, '<I')
-		if bool(transparency):
-			off = _add_zmf2_object(view, data, off, 'Transparency')
-		off += 8
+	off = _add_zmf2_shape(view, data, offset)
 	off = _add_zmf2_bbox(view, data, off, size)
 	return off
 
 def add_zmf2_obj_star(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	off = _add_zmf2_polygon(view, data, off, size)
 	(angle, off) = rdata(data, off, '<I')
 	view.add_iter('Point angle?', angle, off - 4, 4, '<I')
 	return off
 
 def add_zmf2_obj_group(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	off += 12
 	(count, off) = rdata(data, off, '<I')
 	view.add_iter('Number of shapes?', count, off - 4, 4, '<I')
@@ -513,9 +505,7 @@ def add_zmf2_obj_group(view, data, offset, size):
 	return off
 
 def add_zmf2_obj_blend(view, data, offset, size):
-	off = _add_zmf2_object(view, data, offset)
-	off = _add_zmf2_object(view, data, off)
-	off = _add_zmf2_object(view, data, off)
+	off = _add_zmf2_shape(view, data, offset)
 	off += 0x38
 	off = _add_zmf2_object(view, data, off)
 	off = _add_zmf2_object(view, data, off, 'Path')
