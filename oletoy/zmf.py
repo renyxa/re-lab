@@ -240,7 +240,17 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 	return offset + length
 
 def add_zmf2_obj_color(view, data, offset, size):
-	off = offset + 0xd
+	type_map = {0: 'RGB', 1: 'CMYK'}
+	(typ, off) = rdata(data, offset, '<B')
+	view.add_iter('Type?', key2txt(typ, type_map), off - 1, 1, '<B')
+	(color, off) = rdata(data, off, '3s')
+	view.add_iter('Color (RGB)', d2hex(color), off - 3, 3, '3s')
+	off += 1
+	(rgb, off) = rdata(data, off, '3s')
+	view.add_iter('RGB', d2hex(rgb), off - 3, 3, '3s')
+	(cmyk, off) = rdata(data, off, '4s')
+	view.add_iter('CMYK', d2hex(cmyk), off - 4, 4, '4s')
+	off += 1
 	return _add_zmf2_string0(view, data, off, size, 'Name')
 
 def add_zmf2_obj_bitmap_def(view, data, offset, size):
