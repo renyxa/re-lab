@@ -370,9 +370,10 @@ def add_zmf2_doc(view, data, offset, size):
 	off = _add_zmf2_object(view, data, off, 'Color palette')
 	off += 0x4c # something
 	off = _add_zmf2_object(view, data, off, 'Page')
-	views_len = offset + size - off
-	view.add_pgiter('Views', add_zmf2_views, data, off, views_len)
-	off += views_len
+	if view.context.version == 3:
+		views_len = offset + size - off
+		view.add_pgiter('Views', add_zmf2_views, data, off, views_len)
+		off += views_len
 	return off
 
 def add_zmf2_text_styles_doc(view, data, offset, size):
