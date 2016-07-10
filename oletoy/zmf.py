@@ -195,7 +195,6 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 		view.add_iter('Subtype', subtyp, off - 4, 4, '<I')
 		count = 0
 		if typ == 4 and subtyp == 3:
-			header_size = 0x18
 			off += 4
 			(obj, off) = rdata(data, off, '<I')
 			view.add_iter('Object type', key2txt(obj, zmf2_objects), off - 4, 4, '<I')
@@ -205,7 +204,6 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			if zmf2_objects.has_key(int(obj)) and not name:
 				name = '%s object' % zmf2_objects[int(obj)]
 		elif typ == 4 and subtyp == 4:
-			header_size = 0x14
 			off += 4
 			(count, off) = rdata(data, off, '<I')
 			view.add_iter('Number of subobjects', count, off - 4, 4, '<I')
@@ -214,7 +212,6 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			off += 4
 			(hlen, off) = rdata(data, off, '<I')
 			view.add_iter('Length of header', hlen, off - 4, 4, '<I')
-			header_size = 0x10 + hlen
 			(count, off) = rdata(data, off, '<I')
 			view.add_iter('Number of subobjects', count, off - 4, 4, '<I')
 			(nlen, off) = rdata(data, off, '<I')
@@ -226,7 +223,6 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 				view.add_iter('Name?', ntext, off - nlen, nlen, '%ds' % nlen)
 		else:
 			print("object of unknown type (%d, %d) at %x" % (typ, subtyp, offset))
-			header_size = 0
 		if not name:
 			name = 'Unknown object'
 		view.set_label(name)
