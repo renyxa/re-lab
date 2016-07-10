@@ -405,6 +405,12 @@ def add_zmf2_obj_image(view, data, offset, size):
 def add_zmf2_obj_layer(view, data, offset, size):
 	off = _add_zmf2_object(view, data, offset, 'Shape')
 	off = _add_zmf2_string0(view, data, off, size, 'Layer name')
+	(visible, off) = rdata(data, off, '<I')
+	view.add_iter('Visible', bool(visible), off - 4, 4, '<I')
+	(locked, off) = rdata(data, off, '<I')
+	view.add_iter('Locked', bool(locked), off - 4, 4, '<I')
+	(printable, off) = rdata(data, off, '<I')
+	view.add_iter('Printable', bool(printable), off - 4, 4, '<I')
 	return off
 
 def add_zmf2_obj_page(view, data, offset, size):
