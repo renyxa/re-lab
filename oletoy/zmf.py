@@ -104,6 +104,13 @@ fill_types = {
 	8: 'Bitmap',
 }
 
+rectangle_corner_types = {
+	1: 'Normal',
+	2: 'Round',
+	3: 'Round In',
+	4: 'Cut'
+}
+
 zmf2_objects = {
 	# gap
 	0x3: 'Page',
@@ -479,6 +486,10 @@ def add_zmf2_obj_line(view, data, offset, size):
 def add_zmf2_obj_rectangle(view, data, offset, size):
 	off = _add_zmf2_shape(view, data, offset)
 	off = _add_zmf2_bbox(view, data, off, size)
+	(corner, off) = rdata(data, off, '<I')
+	view.add_iter('Corner type', key2txt(corner, rectangle_corner_types), off - 4, 4, '<I')
+	(rounding, off) = rdata(data, off, '<I')
+	view.add_iter('Rounding', rounding, off - 4, 4, '<I')
 	return off
 
 def add_zmf2_obj_star(view, data, offset, size):
@@ -1314,12 +1325,6 @@ def add_zmf4_obj_curve(hd, size, data):
 def add_zmf4_obj_rectangle(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
-	rectangle_corner_types = {
-		1: 'Normal',
-		2: 'Round',
-		3: 'Round In',
-		4: 'Cut'
-	}
 	(corner_type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Corner type', key2txt(corner_type, rectangle_corner_types), off - 4, 4, '<I')
 	(rounding_value, off) = rdata(data, off, '<f')
