@@ -202,7 +202,7 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			if not handler and zmf2_handlers.has_key(int(obj)):
 				handler = zmf2_handlers[int(obj)]
 			if zmf2_objects.has_key(int(obj)) and not name:
-				name = '%s object' % zmf2_objects[int(obj)]
+				name = '%s' % zmf2_objects[int(obj)]
 		elif typ == 4 and subtyp == 4:
 			off += 4
 			(count, off) = rdata(data, off, '<I')
