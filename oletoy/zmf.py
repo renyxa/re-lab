@@ -26,6 +26,12 @@ def ref2txt(value):
 	else:
 		return '0x%x' % value
 
+def index2txt(value):
+	if value == 0:
+		return 'none'
+	else:
+		return value
+
 def update_pgiter_type(page, ftype, stype, iter1):
 	page.model.set_value(iter1, 1, (ftype, stype))
 
@@ -86,6 +92,17 @@ class PageView:
 
 	def set_label(self, text):
 		self.page.model.set_value(self.iter, 0, text)
+
+fill_types = {
+	1: 'Solid',
+	2: 'Linear',
+	3: 'Radial',
+	4: 'Conical',
+	5: 'Cross-shaped',
+	6: 'Rectangular',
+	7: 'Flexible',
+	8: 'Bitmap',
+}
 
 zmf2_objects = {
 	# gap
@@ -527,15 +544,42 @@ def add_zmf2_obj_pen(view, data, offset, size):
 	return off
 
 def add_zmf2_obj_fill(view, data, offset, size):
-	type_map = {1: 'solid', 2: 'linear gradient'}
 	(typ, off) = rdata(data, offset, '<I')
-	view.add_iter('Type?', key2txt(typ, type_map), off - 4, 4, '<I')
-	off += 0x10
-	off = _add_zmf2_object(view, data, off)
-	while off + 0x2c < offset + size:
-		off += 4
-		off = _add_zmf2_object(view, data, off)
-	off += 0x28
+	view.add_iter('Type', key2txt(typ, fill_types), off - 4, 4, '<I')
+	(hcenter, off) = rdata(data, off, '<I')
+	view.add_iter('Horizontal center', '%d%%' % hcenter, off - 4, 4, '<I')
+	(vcenter, off) = rdata(data, off, '<I')
+	view.add_iter('Vertical center', '%d%%' % vcenter, off - 4, 4, '<I')
+	(angle, off) = rdata(data, off, '<I')
+	view.add_iter('Angle', '%sdeg' % angle, off - 4, 4, '<I')
+	(steps, off) = rdata(data, off, '<I')
+	view.add_iter('Steps', steps, off - 4, 4, '<I')
+	off = _add_zmf2_object(view, data, off, 'Solid color')
+	if typ > 1 and typ < 8:
+		(colors, off) = rdata(data, off, '<I')
+		view.add_iter('Number of gradient colors', colors, off - 4, 4, '<I')
+		for i in range(1, colors + 1):
+			off = _add_zmf2_object(view, data, off, 'Gradient color %d' % i)
+			(pos, off) = rdata(data, off, '<I')
+			view.add_iter('Position %d' % i, '%d%%' % pos, off - 4, 4, '<I')
+	(bid, off) = rdata(data, off, '<I')
+	view.add_iter('Bitmap index', index2txt(bid), off - 4, 4, '<I')
+	(fractal, off) = rdata(data, off, '<I')
+	view.add_iter('Fractal fill', bool(fractal), off - 4, 4, '<I')
+	(tiling, off) = rdata(data, off, '<I')
+	view.add_iter('Tiling', bool(tiling), off - 4, 4, '<I')
+	res_map = {100: 'low', 200: 'middle', 300: 'high'}
+	(res_x, off) = rdata(data, off, '<I')
+	view.add_iter('Resolution X?', key2txt(res_x, res_map), off - 4, 4, '<I')
+	(res_y, off) = rdata(data, off, '<I')
+	view.add_iter('Resolution Y?', key2txt(res_y, res_map), off - 4, 4, '<I')
+	off += 8
+	(tile_x, off) = rdata(data, off, '<I')
+	view.add_iter('Tile size X', tile_x, off - 4, 4, '<I')
+	(tile_y, off) = rdata(data, off, '<I')
+	view.add_iter('Tile size Y', tile_y, off - 4, 4, '<I')
+	(prop, off) = rdata(data, off, '<I')
+	view.add_iter('Proportional', bool(prop), off - 4, 4, '<I')
 	return off
 
 def add_zmf2_obj_shadow(view, data, offset, size):
@@ -1134,16 +1178,6 @@ def add_zmf4_obj_fill(hd, size, data):
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
-	fill_types = {
-		1: 'Solid',
-		2: 'Linear',
-		3: 'Radial',
-		4: 'Conical',
-		5: 'Cross-shaped',
-		6: 'Rectangular',
-		7: 'Flexible',
-		8: 'Bitmap',
-	}
 	(type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Fill type', key2txt(type, fill_types), off - 4, 4, '<I')
 	if type == 1:
