@@ -211,11 +211,19 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			view.add_iter('Number of subobjects', count, off - 4, 4, '<I')
 			name = name + 's'
 		elif typ == 8 and subtyp == 5:
-			header_size = 0x1c
-			off += 8
+			off += 4
+			(hlen, off) = rdata(data, off, '<I')
+			view.add_iter('Length of header', hlen, off - 4, 4, '<I')
+			header_size = 0x10 + hlen
 			(count, off) = rdata(data, off, '<I')
 			view.add_iter('Number of subobjects', count, off - 4, 4, '<I')
-			off += 4
+			(nlen, off) = rdata(data, off, '<I')
+			view.add_iter('Name length?', nlen, off - 4, 4, '<I')
+			if nlen > 0:
+				(ntext, off) = rdata(data, off, '%ds' % (nlen - 1))
+				off += 1
+				name = '%s (%s)' % (name, ntext)
+				view.add_iter('Name?', ntext, off - nlen, nlen, '%ds' % nlen)
 		else:
 			print("object of unknown type (%d, %d) at %x" % (typ, subtyp, offset))
 			header_size = 0
