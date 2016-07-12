@@ -1262,7 +1262,7 @@ def add_zmf4_obj_pen(hd, size, data):
 	(dashes, off) = rdata(data, off, '6s')
 	add_iter(hd, 'Dash pattern (bits)', d2bin(dashes), off - 6, 6, '6s')
 	(dist, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Distance between dash patterns?', dist, off - 2, 2, '<H')
+	add_iter(hd, 'Dash pattern length', dist, off - 2, 2, '<H')
 	arrow_types = {
 		0: 'Arrow start',
 		1: 'Arrow end'
