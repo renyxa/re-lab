@@ -29,10 +29,8 @@ class Parser(object):
 		self.data = data
 		self.page = page
 		self.parent = parent
-		self.fileiter = None
 
 	def parse(self):
-		self.fileiter = add_pgiter(self.page, 'ZBR', 'zbr', 0, self.data, self.parent)
 		off = self.parse_header()
 		off = self.parse_preview(off)
 		off = self.parse_configuration(off)
@@ -40,11 +38,11 @@ class Parser(object):
 		self.parse_objects(off)
 
 	def parse_header(self):
-		add_pgiter(self.page, 'Header', 'zbr', 'header', self.data[0:104], self.fileiter)
+		add_pgiter(self.page, 'Header', 'zbr', 'header', self.data[0:104], self.parent)
 		return 104
 
 	def parse_preview(self, off):
-		previter = add_pgiter(self.page, 'Preview bitmap', 'zbr', 0, self.data[off:off + 5264], self.fileiter)
+		previter = add_pgiter(self.page, 'Preview bitmap', 'zbr', 0, self.data[off:off + 5264], self.parent)
 		add_pgiter(self.page, 'DIB palette', 'zbr', 'palette', self.data[off:off + 64], previter)
 		off += 64
 		dibiter = add_pgiter(self.page, 'DIB data', 'zbr', 0, self.data[off:off + 5200], previter)
@@ -54,7 +52,7 @@ class Parser(object):
 		(length, off) = rdata(self.data, off, '<I')
 		length = int(length)
 		data = self.data[off - 4:off + length]
-		confiter = add_pgiter(self.page, 'Configuration', 'zbr', 'configuration', data, self.fileiter)
+		confiter = add_pgiter(self.page, 'Configuration', 'zbr', 'configuration', data, self.parent)
 		add_pgiter(self.page, 'Local configuration', 'zbr', 'config_local', data[4:], confiter)
 		return off + length
 
@@ -62,12 +60,12 @@ class Parser(object):
 		(length, off) = rdata(self.data, off, '<I')
 		length = int(length)
 		data = self.data[off - 4:off + length]
-		palette_iter = add_pgiter(self.page, 'Color Palette', 'zbr', 'color_palette', data, self.fileiter)
+		palette_iter = add_pgiter(self.page, 'Color Palette', 'zbr', 'color_palette', data, self.parent)
 		add_pgiter(self.page, 'Palette', 'zbr', 'palette', data[4:], palette_iter)
 		return off + length
 
 	def parse_objects(self, off):
-		objsiter = add_pgiter(self.page, 'Objects', 'zbr', 0, self.data[off:], self.fileiter)
+		objsiter = add_pgiter(self.page, 'Objects', 'zbr', 0, self.data[off:], self.parent)
 		return len(self.data)
 
 def _add_length(hd, size, data):
