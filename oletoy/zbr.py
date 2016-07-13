@@ -23,50 +23,37 @@ from utils import add_iter, add_pgiter, rdata
 def read(data, offset, fmt):
 	return rdata(data, offset, fmt)[0]
 
-class Parser(object):
+def parse_header(page, data, offset, parent):
+	add_pgiter(page, 'Header', 'zbr', 'header', data[0:104], parent)
+	return 104
 
-	def __init__(self, data, page, parent):
-		self.data = data
-		self.page = page
-		self.parent = parent
+def parse_preview(page, data, offset, parent):
+	off = offset
+	previter = add_pgiter(page, 'Preview bitmap', 'zbr', 0, data[off:off + 5264], parent)
+	add_pgiter(page, 'DIB palette', 'zbr', 'palette', data[off:off + 64], previter)
+	off += 64
+	dibiter = add_pgiter(page, 'DIB data', 'zbr', 0, data[off:off + 5200], previter)
+	return off + 5200
 
-	def parse(self):
-		off = self.parse_header()
-		off = self.parse_preview(off)
-		off = self.parse_configuration(off)
-		off = self.parse_palette(off)
-		self.parse_objects(off)
+def parse_configuration(page, data, offset, parent):
+	(length, off) = rdata(data, offset, '<I')
+	length = int(length)
+	data = data[off - 4:off + length]
+	confiter = add_pgiter(page, 'Configuration', 'zbr', 'configuration', data, parent)
+	add_pgiter(page, 'Local configuration', 'zbr', 'config_local', data[4:], confiter)
+	return off + length
 
-	def parse_header(self):
-		add_pgiter(self.page, 'Header', 'zbr', 'header', self.data[0:104], self.parent)
-		return 104
+def parse_palette(page, data, offset, parent):
+	(length, off) = rdata(data, offset, '<I')
+	length = int(length)
+	data = data[off - 4:off + length]
+	palette_iter = add_pgiter(page, 'Color Palette', 'zbr', 'color_palette', data, parent)
+	add_pgiter(page, 'Palette', 'zbr', 'palette', data[4:], palette_iter)
+	return off + length
 
-	def parse_preview(self, off):
-		previter = add_pgiter(self.page, 'Preview bitmap', 'zbr', 0, self.data[off:off + 5264], self.parent)
-		add_pgiter(self.page, 'DIB palette', 'zbr', 'palette', self.data[off:off + 64], previter)
-		off += 64
-		dibiter = add_pgiter(self.page, 'DIB data', 'zbr', 0, self.data[off:off + 5200], previter)
-		return off + 5200
-
-	def parse_configuration(self, off):
-		(length, off) = rdata(self.data, off, '<I')
-		length = int(length)
-		data = self.data[off - 4:off + length]
-		confiter = add_pgiter(self.page, 'Configuration', 'zbr', 'configuration', data, self.parent)
-		add_pgiter(self.page, 'Local configuration', 'zbr', 'config_local', data[4:], confiter)
-		return off + length
-
-	def parse_palette(self, off):
-		(length, off) = rdata(self.data, off, '<I')
-		length = int(length)
-		data = self.data[off - 4:off + length]
-		palette_iter = add_pgiter(self.page, 'Color Palette', 'zbr', 'color_palette', data, self.parent)
-		add_pgiter(self.page, 'Palette', 'zbr', 'palette', data[4:], palette_iter)
-		return off + length
-
-	def parse_objects(self, off):
-		objsiter = add_pgiter(self.page, 'Objects', 'zbr', 0, self.data[off:], self.parent)
-		return len(self.data)
+def parse_objects(page, data, offset, parent):
+	objsiter = add_pgiter(page, 'Objects', 'zbr', 0, data[offset:], parent)
+	return len(data)
 
 def _add_length(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -107,7 +94,10 @@ zbr_ids = {
 }
 
 def open(data, page, parent):
-	parser = Parser(data, page, parent)
-	parser.parse()
+	off = parse_header(page, data, 0, parent)
+	off = parse_preview(page, data, off, parent)
+	off = parse_configuration(page, data, off, parent)
+	off = parse_palette(page, data, off, parent)
+	parse_objects(page, data, off, parent)
 
 # vim: set ft=python sts=4 sw=4 noet:
