@@ -20,9 +20,6 @@
 
 from utils import add_iter, add_pgiter, rdata
 
-def read(data, offset, fmt):
-	return rdata(data, offset, fmt)[0]
-
 def parse_header(page, data, offset, parent):
 	add_pgiter(page, 'Header', 'zbr', 'header', data[0:104], parent)
 	return 104
