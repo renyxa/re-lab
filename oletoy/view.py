@@ -19,6 +19,7 @@ import sys,struct,ctypes,os
 import gobject
 import gtk, pango, cairo
 import tree
+import uniview
 import hexdump
 import App, cmd
 import escher,quill
@@ -1576,7 +1577,7 @@ class ApplicationMainWindow(gtk.Window):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
 				elif ntype[0] == "zmf2":
 					if isinstance(ntype[1], tuple):
-						view = zmf.HdView(hd, None, ntype[1][1])
+						view = uniview.HdView(hd, None, ntype[1][1])
 						ntype[1][0](view, data, 0, size)
 					elif zmf.zmf2_ids.has_key(ntype[1]):
 						zmf.zmf2_ids[ntype[1]](hd, size, data)
