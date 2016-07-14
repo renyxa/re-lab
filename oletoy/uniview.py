@@ -48,29 +48,40 @@ class HdView:
 	def add_pgiter(self, name, parser, data, offset, length):
 		pgiter = add_iter(self.hd, name, '', offset, length, '%ds' % length, parent=self.iter)
 		view = HdView(self.hd, pgiter, self.context)
-		parser(view, data, offset, length)
+		return parser(view, data, offset, length)
 
 	def set_label(self, text):
 		if self.iter:
 			self.hd.model.set(self.iter, 0, text)
 
+	def set_length(self, length):
+		pass
+
 class PageView:
-	def __init__(self, page, ftype, iter, context=None):
+	def __init__(self, page, ftype, iter, context=None, data=None, offset=0):
 		self.page = page
 		self.ftype = ftype
 		self.iter = iter
 		self.context = context
+		self.data = data
+		self.offset = offset
 
 	def add_iter(self, name, value, offset, length, vtype):
 		pass
 
-	def add_pgiter(self, name, parser, data, offset, length):
+	def add_pgiter(self, name, parser, data, offset, length=None):
+		if not length:
+			length = len(data) - offset
 		pgiter = utils.add_pgiter(self.page, name, self.ftype, (parser, self.context),
 				data[offset:offset + length], self.iter)
-		view = PageView(self.page, self.ftype, pgiter, self.context)
-		parser(view, data, offset, length)
+		view = PageView(self.page, self.ftype, pgiter, self.context, data, offset)
+		return parser(view, data, offset, length)
 
 	def set_label(self, text):
 		self.page.model.set_value(self.iter, 0, text)
+
+	def set_length(self, length):
+		if self.data:
+			self.page.model.set_value(self.iter, 3, self.data[self.offset:self.offset + length])
 
 # vim: set ft=python sts=4 sw=4 noet:
