@@ -1585,7 +1585,10 @@ class ApplicationMainWindow(gtk.Window):
 					if zmf.zmf4_ids.has_key(ntype[1]):
 						zmf.zmf4_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "zbr":
-					if zbr.zbr_ids.has_key(ntype[1]):
+					if isinstance(ntype[1], tuple):
+						view = uniview.HdView(hd, None, ntype[1][1])
+						ntype[1][0](view, data, 0, size)
+					elif zbr.zbr_ids.has_key(ntype[1]):
 						zbr.zbr_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "iwa":
 					if iwa.iwa_ids.has_key(ntype[1]):

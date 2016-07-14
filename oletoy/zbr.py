@@ -18,7 +18,35 @@
 # http://www.fileformat.info/format/zbr/egff.htm . There are also sample
 # files available from the same page.
 
+import uniview
 from utils import add_iter, add_pgiter, rdata
+
+obj_names = {
+}
+
+# defined later
+obj_handlers = {}
+
+def _add_obj(view, data, offset, name=None):
+	(obj, off) = rdata(data, off, '<H')
+	if not name:
+		if obj_names.has_key(obj):
+			name = obj_names[obj]
+		else:
+			name = 'Unknown object'
+	if obj_handlers.has_key(obj):
+		off = view.add_pgiter(name, obj_handlers[obj], data, offset)
+	view.set_length(off - offset)
+	return off
+
+def _add_obj_list(view, data, offset, name=None):
+	off = offset
+	while off + 2 < len(data):
+		off = _add_obj(view, data, offset)
+	return off
+
+obj_handlers = {
+}
 
 def parse_header(page, data, offset, parent):
 	add_pgiter(page, 'Header', 'zbr', 'header', data[0:104], parent)
@@ -50,7 +78,10 @@ def parse_palette(page, data, offset, parent):
 
 def parse_objects(page, data, offset, parent):
 	objsiter = add_pgiter(page, 'Objects', 'zbr', 0, data[offset:], parent)
-	return len(data)
+	view = uniview.PageView(page, 'zbr', objsiter, page)
+	off = _add_obj(view, data, offset)
+	if off < len(data):
+		add_pgiter(page, 'Trailer', zbr, '', data[off:], parent)
 
 def _add_length(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
