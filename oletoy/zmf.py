@@ -952,9 +952,9 @@ def _zmf4_obj_bbox(hd, size, data, off):
 	# width and height may not be correct in some cases
 	# for example looks like it's not updated when resizing objects
 	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Width', width, off - 4, 4, '<I')
+	add_iter(hd, 'Width (original)', width, off - 4, 4, '<I')
 	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Height', height, off - 4, 4, '<I')
+	add_iter(hd, 'Height (original)', height, off - 4, 4, '<I')
 	i = 1
 	while i <= 4:
 		# points can be in different order depending on how the object was created (mouse cursor movement direction)
