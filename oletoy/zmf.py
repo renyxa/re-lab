@@ -982,7 +982,7 @@ def _zmf4_curve_type_list(hd, size, data, off, points, name='Point'):
 
 def _zmf4_curve_data(hd, size, data, off):
 	(path_len, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length of path data?', path_len, off - 4, 4, '<I')
+	add_iter(hd, 'Length of path data', path_len, off - 4, 4, '<I')
 	off += 8
 	(components, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of components', components, off - 4, 4, '<I')
@@ -994,7 +994,7 @@ def _zmf4_curve_data(hd, size, data, off):
 		points += count
 		add_iter(hd, 'Number of points of comp. %d' % i, count, off - 4, 4, '<I')
 		(closed, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Comp. %d closed?' % i, bool(closed), off - 4, 4, '<I')
+		add_iter(hd, 'Comp. %d closed' % i, bool(closed), off - 4, 4, '<I')
 		i += 1
 	i = 1
 	while i <= points:
@@ -1026,7 +1026,7 @@ def add_zmf4_obj_start_layer(hd, size, data):
 def add_zmf4_obj_doc_settings(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	(length, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data length?', length, off - 4, 4, '<I')
+	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
 	flags_map = {
 		0x1: 'show margins',
 		0x2: 'print margins',
@@ -1116,7 +1116,7 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 def add_zmf4_obj_color_palette(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	(data_size, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
+	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
 	(name_offset, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Name offset?', name_offset, off - 4, 4, '<I')
 	name_length = data_size - name_offset
@@ -1135,7 +1135,7 @@ def add_zmf4_obj_fill(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
+	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
 	(type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Fill type', key2txt(type, fill_types), off - 4, 4, '<I')
 	if type == 1:
@@ -1181,7 +1181,7 @@ def add_zmf4_obj_pen(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
+	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
 	(transform, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Transform with object', bool(transform), off - 4, 4, '<I')
 	corner_types = {0: 'Miter', 1: 'Round', 2: 'Bevel'}
@@ -1219,7 +1219,9 @@ def add_zmf4_obj_arrow(hd, size, data):
 
 def add_zmf4_obj_shadow(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
-	off += 8
+	off += 4
+	(data_size, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
 	shadow_types = {
 		1: 'Color',
 		2: 'Brightness',
@@ -1260,16 +1262,16 @@ def add_zmf4_obj_polygon(hd, size, data):
 	(peaks, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of peaks', peaks, off - 4, 4, '<I')
 	(count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Number of ?points describing one peak', count, off - 4, 4, '<I')
+	add_iter(hd, 'Number of points describing one peak', count, off - 4, 4, '<I')
 	off += 8
 	i = 1
 	while i <= count:
 		(x, off) = rdata(data, off, '<f')
-		add_iter(hd, 'Point/sharpness? %d X' % i, x, off - 4, 4, '<f')
+		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<f')
 		(y, off) = rdata(data, off, '<f')
-		add_iter(hd, 'Point/sharpness? %d Y' % i, y, off - 4, 4, '<f')
+		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<f')
 		i += 1
-	_zmf4_curve_type_list(hd, size, data, off, count, 'Point/sharpness?')
+	_zmf4_curve_type_list(hd, size, data, off, count, 'Point')
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_curve(hd, size, data):
@@ -1298,7 +1300,7 @@ def add_zmf4_obj_table(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(length, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Length of table data?', length, off - 4, 4, '<I')
+	add_iter(hd, 'Length of table data', length, off - 4, 4, '<I')
 	off += 4
 	(rows, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of rows', rows, off - 4, 4, '<I')
@@ -1381,7 +1383,7 @@ def add_zmf4_obj_text(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data size?', data_size, off - 4, 4, '<I')
+	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
 	off = 0x28
 	(para_count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of paragraphs', para_count, off - 4, 4, '<I')
