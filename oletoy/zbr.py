@@ -60,7 +60,7 @@ def add_obj(view, data, offset, length):
 	view.set_length(off - offset)
 	return off
 
-def _add_obj_list(view, data, offset):
+def _add_obj_list(view, data, offset, length=None):
 	off = offset
 	while off + 2 <= len(data):
 		(typ, _) = rdata(data, off, '<H')
@@ -68,6 +68,9 @@ def _add_obj_list(view, data, offset):
 		if typ == 0xd:
 			break
 	return off
+
+def _add_point_list(view, data, offset):
+	return view.add_pgiter('Points', _add_obj_list, data, offset)
 
 def add_style(view, data, offset, length):
 	off = offset + 18
@@ -144,13 +147,13 @@ def add_obj_point(view, data, offset):
 
 def add_obj_line(view, data, offset):
 	off = _add_obj_shape(view, data, offset)
-	off = _add_obj_list(view, data, off)
+	off = _add_point_list(view, data, off)
 	return off
 
 def add_obj_ellipse(view, data, offset):
 	off = _add_obj_shape(view, data, offset)
 	off += 32
-	off = _add_obj_list(view, data, off)
+	off = _add_point_list(view, data, off)
 	return off
 
 def add_obj_rectangle(view, data, offset):
@@ -174,7 +177,7 @@ def add_obj_rectangle(view, data, offset):
 	(bl_y, off) = rdata(data, off, '<i')
 	view.add_iter('Bottom left corner Y', bl_y, off - 4, 4, '<i')
 	off += 4
-	off = _add_obj_list(view, data, off)
+	off = _add_point_list(view, data, off)
 	return off
 
 def add_text_style(view, data, offset, length):
@@ -191,7 +194,7 @@ def add_obj_text(view, data, offset):
 	view.add_iter('Text style length', tslen, off - 4, 4, '<I')
 	off = view.add_pgiter('Text style', add_text_style, data, off, tslen)
 	off = _add_string(view, data, off, 'Text')
-	off = _add_obj_list(view, data, off)
+	off = _add_point_list(view, data, off)
 	return off
 
 obj_handlers = {
