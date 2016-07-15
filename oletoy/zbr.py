@@ -27,6 +27,8 @@ obj_names = {
 	0x3: 'Layer',
 	0x4: 'Line',
 	# gap
+	0x8: 'Rectangle',
+	# gap
 	0xc: 'Start array',
 	0xd: 'End array',
 }
@@ -143,11 +145,36 @@ def add_obj_line(view, data, offset):
 	off = _add_obj_list(view, data, off)
 	return off
 
+def add_obj_rectangle(view, data, offset):
+	off = _add_obj_shape(view, data, offset)
+	# TODO: It's not clear if the dims are relative to canvas or to the
+	# shape's origin. All rectangles I've seen've had offset (0, 0).
+	(tl_x, off) = rdata(data, off, '<i')
+	view.add_iter('Top left corner X', tl_x, off - 4, 4, '<i')
+	(tl_y, off) = rdata(data, off, '<i')
+	view.add_iter('Top left corner Y', tl_y, off - 4, 4, '<i')
+	(tr_x, off) = rdata(data, off, '<i')
+	view.add_iter('Top right corner X', tr_x, off - 4, 4, '<i')
+	(tr_y, off) = rdata(data, off, '<i')
+	view.add_iter('Top right corner Y', tr_y, off - 4, 4, '<i')
+	(br_x, off) = rdata(data, off, '<i')
+	view.add_iter('Bottom right corner X', br_x, off - 4, 4, '<i')
+	(br_y, off) = rdata(data, off, '<i')
+	view.add_iter('Bottom right corner Y', br_y, off - 4, 4, '<i')
+	(bl_x, off) = rdata(data, off, '<i')
+	view.add_iter('Bottom left corner X', bl_x, off - 4, 4, '<i')
+	(bl_y, off) = rdata(data, off, '<i')
+	view.add_iter('Bottom left corner Y', bl_y, off - 4, 4, '<i')
+	off += 4
+	off = _add_obj_list(view, data, off)
+	return off
+
 obj_handlers = {
 	0x1: add_obj_point,
 	0x2: add_obj_page,
 	0x3: add_obj_layer,
 	0x4: add_obj_line,
+	0x8: add_obj_rectangle,
 	0xc: add_obj_empty,
 	0xd: add_obj_empty,
 }
