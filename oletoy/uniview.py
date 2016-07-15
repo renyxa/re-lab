@@ -46,7 +46,7 @@ class HdView:
 		utils.add_iter(self.hd, name, value, offset, length, vtype, parent=self.iter)
 
 	def add_pgiter(self, name, parser, data, offset, length):
-		pgiter = add_iter(self.hd, name, '', offset, length, '%ds' % length, parent=self.iter)
+		pgiter = utils.add_iter(self.hd, name, '', offset, length, '%ds' % length, parent=self.iter)
 		view = HdView(self.hd, pgiter, self.context)
 		return parser(view, data, offset, length)
 
