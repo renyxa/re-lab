@@ -27,6 +27,7 @@ obj_names = {
 	0x3: 'Layer',
 	0x4: 'Line',
 	# gap
+	0x7: 'Ellipse',
 	0x8: 'Rectangle',
 	# gap
 	0xc: 'Start array',
@@ -145,6 +146,12 @@ def add_obj_line(view, data, offset):
 	off = _add_obj_list(view, data, off)
 	return off
 
+def add_obj_ellipse(view, data, offset):
+	off = _add_obj_shape(view, data, offset)
+	off += 32
+	off = _add_obj_list(view, data, off)
+	return off
+
 def add_obj_rectangle(view, data, offset):
 	off = _add_obj_shape(view, data, offset)
 	# TODO: It's not clear if the dims are relative to canvas or to the
@@ -174,6 +181,7 @@ obj_handlers = {
 	0x2: add_obj_page,
 	0x3: add_obj_layer,
 	0x4: add_obj_line,
+	0x7: add_obj_ellipse,
 	0x8: add_obj_rectangle,
 	0xc: add_obj_empty,
 	0xd: add_obj_empty,
