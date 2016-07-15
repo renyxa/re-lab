@@ -19,33 +19,54 @@
 # files available from the same page.
 
 import uniview
-from utils import add_iter, add_pgiter, rdata
+from utils import add_iter, add_pgiter, rdata, key2txt
 
 obj_names = {
+	0x2: 'Page',
+	0x3: 'Layer',
+	0xc: 'Start array',
+	0xd: 'End array',
 }
 
 # defined later
 obj_handlers = {}
 
-def _add_obj(view, data, offset, name=None):
-	(obj, off) = rdata(data, off, '<H')
-	if not name:
-		if obj_names.has_key(obj):
-			name = obj_names[obj]
-		else:
-			name = 'Unknown object'
+def add_obj(view, data, offset, length):
+	(obj, off) = rdata(data, offset, '<H')
+	view.add_iter('Type', key2txt(obj, obj_names), off - 2, 2, '<H')
+	if obj_names.has_key(obj):
+		view.set_label(obj_names[obj])
 	if obj_handlers.has_key(obj):
-		off = view.add_pgiter(name, obj_handlers[obj], data, offset)
+		off = obj_handlers[obj](view, data, off)
+	else:
+		off = offset + length
 	view.set_length(off - offset)
 	return off
 
-def _add_obj_list(view, data, offset, name=None):
+def _add_obj_list(view, data, offset):
 	off = offset
 	while off + 2 < len(data):
-		off = _add_obj(view, data, offset)
+		(typ, _) = rdata(data, off, '<I')
+		off = view.add_pgiter('Object', add_obj, data, off, len(data) - off)
+		if typ == 0xd:
+			break
 	return off
 
+def add_obj_empty(view, data, offset):
+	return offset
+
+def add_obj_page(view, data, offset):
+	off = offset + 65
+	return _add_obj_list(view, data, off)
+
+def add_obj_layer(view, data, offset):
+	return len(data) - offset
+
 obj_handlers = {
+	0x2: add_obj_page,
+	0x3: add_obj_layer,
+	0xc: add_obj_empty,
+	0xd: add_obj_empty,
 }
 
 def parse_header(page, data, offset, parent):
@@ -79,9 +100,9 @@ def parse_palette(page, data, offset, parent):
 def parse_objects(page, data, offset, parent):
 	objsiter = add_pgiter(page, 'Objects', 'zbr', 0, data[offset:], parent)
 	view = uniview.PageView(page, 'zbr', objsiter, page)
-	off = _add_obj(view, data, offset)
+	off = view.add_pgiter('Object', add_obj, data, offset)
 	if off < len(data):
-		add_pgiter(page, 'Trailer', zbr, '', data[off:], parent)
+		add_pgiter(page, 'Trailer', 'zbr', '', data[off:], parent)
 
 def _add_length(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
