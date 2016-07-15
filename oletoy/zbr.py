@@ -67,6 +67,7 @@ def _add_obj_list(view, data, offset, length=None):
 		off = view.add_pgiter('Object', add_obj, data, off, len(data) - off)
 		if typ == 0xd:
 			break
+	view.set_length(off - offset)
 	return off
 
 def _add_point_list(view, data, offset):
