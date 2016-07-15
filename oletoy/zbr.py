@@ -27,6 +27,7 @@ obj_names = {
 	0x3: 'Layer',
 	0x4: 'Line',
 	# gap
+	0x6: 'Text',
 	0x7: 'Ellipse',
 	0x8: 'Rectangle',
 	# gap
@@ -176,11 +177,29 @@ def add_obj_rectangle(view, data, offset):
 	off = _add_obj_list(view, data, off)
 	return off
 
+def add_text_style(view, data, offset, length):
+	off = offset + 0x12
+	# TODO: This is just a guess. But I don't see any length anywhere.
+	(font, off) = rdata(data, off, '32s')
+	view.add_iter('Font name', font[0:font.find('\0')], off - 32, 32, '32s')
+	return offset + length
+
+def add_obj_text(view, data, offset):
+	off = _add_obj_shape(view, data, offset)
+	off += 32
+	(tslen, off) = rdata(data, off, '<I')
+	view.add_iter('Text style length', tslen, off - 4, 4, '<I')
+	off = view.add_pgiter('Text style', add_text_style, data, off, tslen)
+	off = _add_string(view, data, off, 'Text')
+	off = _add_obj_list(view, data, off)
+	return off
+
 obj_handlers = {
 	0x1: add_obj_point,
 	0x2: add_obj_page,
 	0x3: add_obj_layer,
 	0x4: add_obj_line,
+	0x6: add_obj_text,
 	0x7: add_obj_ellipse,
 	0x8: add_obj_rectangle,
 	0xc: add_obj_empty,
