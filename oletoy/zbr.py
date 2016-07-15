@@ -54,6 +54,15 @@ def _add_obj_list(view, data, offset):
 			break
 	return off
 
+def _add_obj_shape(view, data, offset):
+	off = offset + 8
+	(size, off) = rdata(data, off, '<H')
+	view.add_iter('Style length', size, off - 2, 2, '<H')
+	off += size
+	off += 2
+	off += 20
+	return off
+
 def add_obj_empty(view, data, offset):
 	return offset
 
@@ -73,12 +82,7 @@ def add_obj_point(view, data, offset):
 	return offset + 9
 
 def add_obj_line(view, data, offset):
-	off = offset + 8
-	(size, off) = rdata(data, off, '<H')
-	view.add_iter('Style length', size, off - 2, 2, '<H')
-	off += size
-	off += 2
-	off += 20
+	off = _add_obj_shape(view, data, offset)
 	off = _add_obj_list(view, data, off)
 	return off
 
