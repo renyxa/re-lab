@@ -187,9 +187,15 @@ def add_obj_rectangle(view, data, offset):
 
 def add_text_style(view, data, offset, length):
 	off = offset + 0x12
-	# TODO: This is just a guess. But I don't see any length anywhere.
 	(font, off) = rdata(data, off, '32s')
 	view.add_iter('Font name', font[0:font.find('\0')], off - 32, 32, '32s')
+	(size, off) = rdata(data, off, '<f')
+	align_map = {0: 'left', 1: 'center', 2: 'right'}
+	view.add_iter('Font size', '%.1fpt' % size, off - 4, 4, '<f')
+	(align, off) = rdata(data, off, '<H')
+	view.add_iter('Alignment', key2txt(align, align_map), off - 2, 2, '<H')
+	(spacing, off) = rdata(data, off, '<H')
+	view.add_iter('Line spacing', '%d%%' % spacing, off - 2, 2, '<H')
 	return offset + length
 
 def add_obj_text(view, data, offset):
