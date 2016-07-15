@@ -65,13 +65,31 @@ def _add_obj_list(view, data, offset):
 			break
 	return off
 
+def add_style(view, data, offset, length):
+	off = offset + 18
+	(fill_color, off) = rdata(data, off, '<I')
+	view.add_iter('Fill color', '#%x' % fill_color, off - 4, 4, '<I')
+	return offset + length
+
 def _add_obj_shape(view, data, offset):
-	off = offset + 8
-	(size, off) = rdata(data, off, '<H')
-	view.add_iter('Style length', size, off - 2, 2, '<H')
-	off += size
+	(x, off) = rdata(data, offset, '<I')
+	# Points in the point list are relative to origin
+	view.add_iter('Origin X', x, off - 4, 4, '<I')
+	(y, off) = rdata(data, off, '<I')
+	view.add_iter('Origin Y', y, off - 4, 4, '<I')
+	(slen, off) = rdata(data, off, '<H')
+	view.add_iter('Style length', slen, off - 2, 2, '<H')
+	off = view.add_pgiter('Style', add_style, data, off, slen)
 	off += 2
-	off += 20
+	(x1, off) = rdata(data, off, '<I')
+	view.add_iter('Bounding box X1', x1, off - 4, 4, '<I')
+	(y1, off) = rdata(data, off, '<I')
+	view.add_iter('Bounding box Y1', y1, off - 4, 4, '<I')
+	(x2, off) = rdata(data, off, '<I')
+	view.add_iter('Bounding box X2', x2, off - 4, 4, '<I')
+	(y2, off) = rdata(data, off, '<I')
+	view.add_iter('Bounding box Y2', y2, off - 4, 4, '<I')
+	off += 4
 	return off
 
 def add_obj_empty(view, data, offset):
@@ -111,7 +129,14 @@ def add_obj_layer(view, data, offset):
 	return off
 
 def add_obj_point(view, data, offset):
-	return offset + 9
+	(x, off) = rdata(data, offset, '<i')
+	view.add_iter('X', x, off - 4, 4, '<i')
+	(y, off) = rdata(data, off, '<i')
+	view.add_iter('Y', y, off - 4, 4, '<i')
+	type_map = {1: 'Line point?', 2: 'Curve point?', 3: 'Curve control point?',}
+	(typ, off) = rdata(data, off, '<B')
+	view.add_iter('Type?', key2txt(typ, type_map), off - 1, 1, '<B')
+	return off
 
 def add_obj_line(view, data, offset):
 	off = _add_obj_shape(view, data, offset)
