@@ -84,10 +84,9 @@ def _add_obj_shape(view, data, offset):
 	view.add_iter('Origin X', x, off - 4, 4, '<I')
 	(y, off) = rdata(data, off, '<I')
 	view.add_iter('Origin Y', y, off - 4, 4, '<I')
-	(slen, off) = rdata(data, off, '<H')
-	view.add_iter('Style length', slen, off - 2, 2, '<H')
+	(slen, off) = rdata(data, off, '<I')
+	view.add_iter('Style length', slen, off - 4, 4, '<I')
 	off = view.add_pgiter('Style', add_style, data, off, slen)
-	off += 2
 	(x1, off) = rdata(data, off, '<I')
 	view.add_iter('Bounding box X1', x1, off - 4, 4, '<I')
 	(y1, off) = rdata(data, off, '<I')
