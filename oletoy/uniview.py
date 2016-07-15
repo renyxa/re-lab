@@ -45,7 +45,9 @@ class HdView:
 	def add_iter(self, name, value, offset, length, vtype):
 		utils.add_iter(self.hd, name, value, offset, length, vtype, parent=self.iter)
 
-	def add_pgiter(self, name, parser, data, offset, length):
+	def add_pgiter(self, name, parser, data, offset, length=None):
+		if not length:
+			length = len(data) - offset
 		pgiter = utils.add_iter(self.hd, name, '', offset, length, '%ds' % length, parent=self.iter)
 		view = HdView(self.hd, pgiter, self.context)
 		return parser(view, data, offset, length)
@@ -55,7 +57,9 @@ class HdView:
 			self.hd.model.set(self.iter, 0, text)
 
 	def set_length(self, length):
-		pass
+		if self.iter:
+			self.hd.model.set(self.iter, 3, length)
+			self.hd.model.set(self.iter, 4, '%ds' % length)
 
 class PageView:
 	def __init__(self, page, ftype, iter, context=None, data=None, offset=0):
