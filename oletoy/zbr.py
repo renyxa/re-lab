@@ -181,7 +181,11 @@ def add_obj_rectangle(view, data, offset):
 	view.add_iter('Bottom left corner X', bl_x, off - 4, 4, '<i')
 	(bl_y, off) = rdata(data, off, '<i')
 	view.add_iter('Bottom left corner Y', bl_y, off - 4, 4, '<i')
-	off += 4
+	corner_types = {1: 'normal', 2: 'round', 3: 'round in', 4: 'cut'}
+	(corner, off) = rdata(data, off, '<H')
+	view.add_iter('Corner type', key2txt(corner, corner_types), off - 2, 2, '<H')
+	(rounding, off) = rdata(data, off, '<H')
+	view.add_iter('Rounding', '%.3fin' % (rounding * 0.02028), off - 2, 2, '<H')
 	off = _add_point_list(view, data, off)
 	return off
 
