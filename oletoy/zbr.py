@@ -68,7 +68,30 @@ def add_obj_empty(view, data, offset):
 	return offset
 
 def add_obj_page(view, data, offset):
-	off = offset + 65
+	off = offset + 17
+	(dimX, off) = rdata(data, off, '<I')
+	view.add_iter('A dimension?', dimX, off - 4, 4, '<I')
+	(dimY, off) = rdata(data, off, '<I')
+	view.add_iter('A dimension?', dimY, off - 4, 4, '<I')
+	# As with ZMF, the page is placed on a canvas and all dimensions are
+	# relative to the canvas.
+	(left_margin, off) = rdata(data, off, '<i')
+	view.add_iter('Left page margin?', left_margin, off - 4, 4, '<i')
+	(top_margin, off) = rdata(data, off, '<i')
+	view.add_iter('Top page margin?', top_margin, off - 4, 4, '<i')
+	(right_margin, off) = rdata(data, off, '<i')
+	view.add_iter('Right page margin?', right_margin, off - 4, 4, '<i')
+	(bottom_margin, off) = rdata(data, off, '<i')
+	view.add_iter('Bottom page margin?', bottom_margin, off - 4, 4, '<i')
+	(width, off) = rdata(data, off, '<I')
+	view.add_iter('Page width', width, off - 4, 4, '<I')
+	(height, off) = rdata(data, off, '<I')
+	view.add_iter('Page height', height, off - 4, 4, '<I')
+	(cwidth, off) = rdata(data, off, '<I')
+	view.add_iter('Canvas width?', cwidth, off - 4, 4, '<I')
+	(cheight, off) = rdata(data, off, '<I')
+	view.add_iter('Canvas height?', cheight, off - 4, 4, '<I')
+	off += 8
 	return _add_obj_list(view, data, off)
 
 def add_obj_layer(view, data, offset):
