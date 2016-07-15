@@ -34,6 +34,16 @@ obj_names = {
 # defined later
 obj_handlers = {}
 
+def _add_string(view, data, offset, name):
+	(length, off) = rdata(data, offset, '<I')
+	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
+	if length > 1:
+		(text, off) = rdata(data, off, '%ds' % (length - 1))
+		view.add_iter(name, unicode(text, 'cp1250'), off - length + 1, length, '%ds' % length)
+	else:
+		view.add_iter(name, '', off, 1, '1s')
+	return off + 1
+
 def add_obj(view, data, offset, length):
 	(obj, off) = rdata(data, offset, '<H')
 	view.add_iter('Type', key2txt(obj, obj_names), off - 2, 2, '<H')
@@ -95,9 +105,7 @@ def add_obj_page(view, data, offset):
 	return _add_obj_list(view, data, off)
 
 def add_obj_layer(view, data, offset):
-	(nlen, off) = rdata(data, offset, '<I')
-	view.add_iter('Name length', nlen, off - 4, 4, '<I')
-	off += nlen
+	off = _add_string(view, data, offset, 'Name')
 	off += 6
 	off = _add_obj_list(view, data, off)
 	return off
