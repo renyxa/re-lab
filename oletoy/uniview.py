@@ -86,6 +86,7 @@ class PageView:
 
 	def set_length(self, length):
 		if self.data:
+			self.page.model.set_value(self.iter, 2, length)
 			self.page.model.set_value(self.iter, 3, self.data[self.offset:self.offset + length])
 
 # vim: set ft=python sts=4 sw=4 noet:
