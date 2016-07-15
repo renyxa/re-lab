@@ -73,7 +73,9 @@ def _add_point_list(view, data, offset):
 	return view.add_pgiter('Points', _add_obj_list, data, offset)
 
 def add_style(view, data, offset, length):
-	off = offset + 18
+	off = offset + 16
+	if view.context.version == 2:
+		off += 2
 	(fill_color, off) = rdata(data, off, '<I')
 	view.add_iter('Fill color', '#%x' % fill_color, off - 4, 4, '<I')
 	return offset + length
@@ -87,6 +89,8 @@ def _add_obj_shape(view, data, offset):
 	(slen, off) = rdata(data, off, '<I')
 	view.add_iter('Style length', slen, off - 4, 4, '<I')
 	off = view.add_pgiter('Style', add_style, data, off, slen)
+	if view.context.version == 4:
+		off += 37
 	(x1, off) = rdata(data, off, '<I')
 	view.add_iter('Bounding box X1', x1, off - 4, 4, '<I')
 	(y1, off) = rdata(data, off, '<I')
@@ -131,6 +135,8 @@ def add_obj_page(view, data, offset):
 def add_obj_layer(view, data, offset):
 	off = _add_string(view, data, offset, 'Name')
 	off += 6
+	if view.context.version == 4:
+		off += 2
 	off = _add_obj_list(view, data, off)
 	return off
 
@@ -210,6 +216,7 @@ obj_handlers = {
 
 def parse_header(page, data, offset, parent):
 	add_pgiter(page, 'Header', 'zbr', 'header', data[0:104], parent)
+	(page.version, off) = rdata(data, 2, '<H')
 	return 104
 
 def parse_preview(page, data, offset, parent):
