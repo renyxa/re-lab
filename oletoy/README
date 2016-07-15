@@ -39,8 +39,8 @@ As of now OLE Toy reads and parses:
        WordPerfect.)
 - IMP (SoftBook e-book)
 - ZMF (Zoner Callisto, also known as Zoner Draw)
-- ZBR (Zebra Metafile, BIPU support)
-- BMI (Zoner Bitmap, BIPU support)
+- ZBR (Zebra Metafile)
+- BMI (Zoner Bitmap)
 - IWA (Apple iWork '13. This format is used by Keynote 6, Pages 5 and
        Numbers 3, with a big chunk of the internals shared among all
        three applications. Support for Numbers is BIPU.)
