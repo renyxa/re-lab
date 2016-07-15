@@ -22,8 +22,10 @@ import uniview
 from utils import add_iter, add_pgiter, rdata, key2txt
 
 obj_names = {
+	0x1: 'Point',
 	0x2: 'Page',
 	0x3: 'Layer',
+	0x4: 'Line',
 	0xc: 'Start array',
 	0xd: 'End array',
 }
@@ -45,8 +47,8 @@ def add_obj(view, data, offset, length):
 
 def _add_obj_list(view, data, offset):
 	off = offset
-	while off + 2 < len(data):
-		(typ, _) = rdata(data, off, '<I')
+	while off + 2 <= len(data):
+		(typ, _) = rdata(data, off, '<H')
 		off = view.add_pgiter('Object', add_obj, data, off, len(data) - off)
 		if typ == 0xd:
 			break
@@ -60,11 +62,31 @@ def add_obj_page(view, data, offset):
 	return _add_obj_list(view, data, off)
 
 def add_obj_layer(view, data, offset):
-	return len(data) - offset
+	(nlen, off) = rdata(data, offset, '<I')
+	view.add_iter('Name length', nlen, off - 4, 4, '<I')
+	off += nlen
+	off += 6
+	off = _add_obj_list(view, data, off)
+	return off
+
+def add_obj_point(view, data, offset):
+	return offset + 9
+
+def add_obj_line(view, data, offset):
+	off = offset + 8
+	(size, off) = rdata(data, off, '<H')
+	view.add_iter('Style length', size, off - 2, 2, '<H')
+	off += size
+	off += 2
+	off += 20
+	off = _add_obj_list(view, data, off)
+	return off
 
 obj_handlers = {
+	0x1: add_obj_point,
 	0x2: add_obj_page,
 	0x3: add_obj_layer,
+	0x4: add_obj_line,
 	0xc: add_obj_empty,
 	0xd: add_obj_empty,
 }
