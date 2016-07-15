@@ -74,9 +74,19 @@ def _add_point_list(view, data, offset):
 	return view.add_pgiter('Points', _add_obj_list, data, offset)
 
 def add_style(view, data, offset, length):
-	off = offset + 16
-	if view.context.version == 2:
-		off += 2
+	off = offset + 2
+	type_map = {0: 'solid', 1: 'dash', 2: 'long dash', 3: 'dash dot', 4: 'dash dot dot'}
+	(typ, off) = rdata(data, off, '<B')
+	view.add_iter('Type', key2txt(typ, type_map), off - 1, 1, '<B')
+	# TODO: the list is likely the same as in ZMF2
+	arrow_map = {0: 'none', 1: 'circle', 2: 'line'}
+	(start, off) = rdata(data, off, '<B')
+	view.add_iter('Start arrow', key2txt(start, arrow_map), off - 1, 1, '<B')
+	(end, off) = rdata(data, off, '<B')
+	view.add_iter('End arrow', key2txt(end, arrow_map), off - 1, 1, '<B')
+	(pen_color, off) = rdata(data, off, '<I')
+	view.add_iter('Pen color', '#%x' % pen_color, off - 4, 4, '<I')
+	off += 7
 	(fill_color, off) = rdata(data, off, '<I')
 	view.add_iter('Fill color', '#%x' % fill_color, off - 4, 4, '<I')
 	return offset + length
