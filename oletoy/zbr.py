@@ -26,6 +26,7 @@ obj_names = {
 	0x2: 'Page',
 	0x3: 'Layer',
 	0x4: 'Line',
+	# gap
 	0xc: 'Start array',
 	0xd: 'End array',
 }
