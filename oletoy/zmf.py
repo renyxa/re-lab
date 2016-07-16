@@ -282,7 +282,9 @@ def add_zmf2_views(view, data, offset, size):
 def add_zmf2_doc(view, data, offset, size):
 	off = offset + 8
 	(count, off) = rdata(data, off, '<I')
-	view.add_iter('Total number of objects', count, off - 4, 4, '<I')
+	# TODO: This is not true: I've seen files where the number is bigger
+	# than the number of shapes; I've also seen files where it's negative.
+	view.add_iter('Total number of shapes?', count, off - 4, 4, '<I')
 	off += 0x1c
 	(lr_margin, off) = rdata(data, off, '<I')
 	view.add_iter('Left & right page margin?', lr_margin, off - 4, 4, '<I')
