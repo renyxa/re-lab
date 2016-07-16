@@ -445,15 +445,14 @@ def add_zmf2_obj_star(view, data, offset, size):
 
 def add_zmf2_obj_group(view, data, offset, size):
 	off = _add_zmf2_shape(view, data, offset)
-	off += 12
 	(count, off) = rdata(data, off, '<I')
-	view.add_iter('Number of shapes?', count, off - 4, 4, '<I')
+	view.add_iter('Number of non-group shapes', count, off - 4, 4, '<I')
 	off += 8
 	(gidx, off) = rdata(data, off, '<I')
-	view.add_iter('Group shape index?', (gidx + 1), off - 4, 4, '<I')
+	view.add_iter('Group shape index', (gidx + 1), off - 4, 4, '<I')
 	(count2, off) = rdata(data, off, '<I')
-	view.add_iter('Number of shapes (again)?', count2, off - 4, 4, '<I')
-	for i in range(1, count + 1):
+	view.add_iter('Number of shapes', count2, off - 4, 4, '<I')
+	for i in range(1, count2 + 1):
 		off += 4
 		(sidx, off) = rdata(data, off, '<I')
 		view.add_iter('Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
