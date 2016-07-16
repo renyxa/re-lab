@@ -1287,7 +1287,17 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_image(hd, size, data):
-	_zmf4_obj_header(hd, size, data)
+	off = _zmf4_obj_header(hd, size, data)
+	off = _zmf4_obj_bbox(hd, size, data, off)
+	placement_types = {
+		None: 'Stretch',
+		1: 'Fit',
+		2: 'Crop'
+	}
+	placement_type = None
+	if size == 96:
+		(placement_type, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Placement type', key2txt(placement_type, placement_types), 0 if placement_type == None else (off - 4), 4, '<I')
 	ref_types = {5: 'Bitmap'}
 	ref_types.update(shape_ref_types)
 	_zmf4_obj_refs(hd, size, data, ref_types)
