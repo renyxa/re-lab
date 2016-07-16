@@ -725,6 +725,8 @@ zmf4_objects = {
 	0x41: "Start of group",
 	0x42: "End of group/blend",
 	0x43: "Start of blend",
+	# gap
+	0x47: "Style", # only appears in style files (.zms)
 }
 
 # defined later
@@ -835,6 +837,7 @@ zmf4_handlers = {
 	0x3b: (ZMF4Parser.parse_object, 'obj_table'),
 	0x41: (ZMF4Parser.parse_object, 'obj_start_group'),
 	0x43: (ZMF4Parser.parse_object, 'obj_blend'),
+	0x47: (ZMF4Parser.parse_object, 'obj_style'),
 }
 
 def add_zmf2_bitmap_db(hd, size, data):
@@ -1487,6 +1490,10 @@ def add_zmf4_obj_blend(hd, size, data):
 		i += 1
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
+def add_zmf4_obj_style(hd, size, data):
+	off = _zmf4_obj_header(hd, size, data)
+	_zmf4_obj_refs(hd, size, data, shape_ref_types)
+
 def add_zmf4_view(hd, size, data):
 	off = _zmf4_obj_header(hd, size, data)
 	off += 4
@@ -1536,6 +1543,7 @@ zmf4_ids = {
 	'obj_curve': add_zmf4_obj_curve,
 	'obj_rectangle': add_zmf4_obj_rectangle,
 	'obj_start_group': add_zmf4_obj_start_group,
+	'obj_style': add_zmf4_obj_style,
 	'obj_table': add_zmf4_obj_table,
 	'obj_text': add_zmf4_obj_text,
 	'obj_text_frame': add_zmf4_obj_text_frame,
