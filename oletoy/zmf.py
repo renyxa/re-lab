@@ -81,7 +81,7 @@ zmf2_objects = {
 	0x1b: 'Artistic text',
 	# gap
 	0x1e: 'Group',
-	0x1f: 'Combination',
+	0x1f: 'Combined group',
 	0x20: 'Blend',
 	0x21: 'Blend def?',
 	# gap
@@ -158,6 +158,20 @@ def _add_zmf2_shape(view, data, offset):
 		if bool(transparency):
 			off = _add_zmf2_object(view, data, off, 'Transparency')
 		off += 8
+	return off
+
+def _add_zmf2_group_info(view, data, offset):
+	(count, off) = rdata(data, offset, '<I')
+	view.add_iter('Number of non-group shapes', count, off - 4, 4, '<I')
+	off += 8
+	(gidx, off) = rdata(data, off, '<I')
+	view.add_iter('Group shape index', (gidx + 1), off - 4, 4, '<I')
+	(count2, off) = rdata(data, off, '<I')
+	view.add_iter('Number of shapes', count2, off - 4, 4, '<I')
+	for i in range(1, count2 + 1):
+		off += 4
+		(sidx, off) = rdata(data, off, '<I')
+		view.add_iter('Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
 	return off
 
 def _add_zmf2_object(view, data, offset, objname=None, parser=None):
@@ -445,29 +459,7 @@ def add_zmf2_obj_star(view, data, offset, size):
 
 def add_zmf2_obj_group(view, data, offset, size):
 	off = _add_zmf2_shape(view, data, offset)
-	(count, off) = rdata(data, off, '<I')
-	view.add_iter('Number of non-group shapes', count, off - 4, 4, '<I')
-	off += 8
-	(gidx, off) = rdata(data, off, '<I')
-	view.add_iter('Group shape index', (gidx + 1), off - 4, 4, '<I')
-	(count2, off) = rdata(data, off, '<I')
-	view.add_iter('Number of shapes', count2, off - 4, 4, '<I')
-	for i in range(1, count2 + 1):
-		off += 4
-		(sidx, off) = rdata(data, off, '<I')
-		view.add_iter('Shape %d index' % i, (sidx + 1), off - 4, 4, '<I')
-	return off
-
-def add_zmf2_obj_combination(view, data, offset, size):
-	off = _add_zmf2_shape(view, data, offset)
-	(count, off) = rdata(data, off, '<I')
-	# TODO: this has likely the same structure as in group
-	view.add_iter('Number of shapes?', count, off - 4, 4, '<I')
-	off += 16
-	for i in range(1, count + 1):
-		off += 4
-		(sidx, off) = rdata(data, off, '<I')
-		view.add_iter('Shape %d index?' % i, (sidx + 1), off - 4, 4, '<I')
+	off = _add_zmf2_group_info(view, data, off)
 	return off
 
 def add_zmf2_obj_blend(view, data, offset, size):
@@ -680,7 +672,7 @@ zmf2_handlers = {
 	0x1a: add_zmf2_obj_text_style_def,
 	0x1b: add_zmf2_obj_art_text,
 	0x1e: add_zmf2_obj_group,
-	0x1f: add_zmf2_obj_combination,
+	0x1f: add_zmf2_obj_group,
 	0x20: add_zmf2_obj_blend,
 	0x21: add_zmf2_obj_blend_def,
 	0x100: add_zmf2_obj_color_palette,
