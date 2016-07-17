@@ -905,7 +905,7 @@ def _zmf4_obj_header(hd, size, data):
 	add_iter(hd, 'Start of ref types list', ref_types_start, off - 4, 4, '<I')
 	(oid, off) = rdata(data, off, '<I')
 	add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I')
-	return off
+	return (off, version)
 
 def _zmf4_obj_refs(hd, size, data, type_map):
 	off = 0xc
@@ -1007,7 +1007,7 @@ def add_zmf4_obj(hd, size, data):
 	_zmf4_obj_header(hd, size, data)
 
 def add_zmf4_obj_start_layer(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	flags_map = {0x1: 'visible', 0x2: 'lock', 0x4: 'print'}
 	(flags, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, '<B')
@@ -1021,7 +1021,7 @@ def add_zmf4_obj_start_layer(hd, size, data):
 	add_iter(hd, 'Name', name, off - name_length, name_length, '%ds' % name_length)
 
 def add_zmf4_obj_doc_settings(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	(length, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
 	flags_map = {
@@ -1111,7 +1111,7 @@ def add_zmf4_obj_doc_settings(hd, size, data):
 	add_iter(hd, 'Real offset of top side of page?', top_offset, off - 4, 4, '<I')
 
 def add_zmf4_obj_color_palette(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
 	(name_offset, off) = rdata(data, off, '<I')
@@ -1129,7 +1129,7 @@ def add_zmf4_obj_color_palette(hd, size, data):
 	add_iter(hd, 'Name', name, off - name_length, name_length, '%ds' % name_length)
 
 def add_zmf4_obj_fill(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
@@ -1175,7 +1175,7 @@ def add_zmf4_obj_fill(hd, size, data):
 
 
 def add_zmf4_obj_pen(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
@@ -1210,12 +1210,12 @@ def add_zmf4_obj_pen(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, arrow_types)
 
 def add_zmf4_obj_arrow(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 8
 	_zmf4_curve_data(hd, size, data, off)
 
 def add_zmf4_obj_shadow(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
@@ -1243,7 +1243,7 @@ def add_zmf4_obj_shadow(hd, size, data):
 	add_iter(hd, 'Blur', blur, off - 4, 4, '<I')
 
 def add_zmf4_obj_ellipse(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(begin, off) = rdata(data, off, '<f')
 	add_iter(hd, 'Beginning (rad)', begin, off - 4, 4, '<f')
@@ -1254,7 +1254,7 @@ def add_zmf4_obj_ellipse(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_polygon(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(peaks, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Number of peaks', peaks, off - 4, 4, '<I')
@@ -1272,14 +1272,14 @@ def add_zmf4_obj_polygon(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_curve(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	(garbage, off) = rdata(data, off, '40s')
 	add_iter(hd, 'Unused/garbage?', '', off - 40, 40, '40s')
 	_zmf4_curve_data(hd, size, data, off)
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_rectangle(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(corner_type, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Corner type', key2txt(corner_type, rectangle_corner_types), off - 4, 4, '<I')
@@ -1288,23 +1288,20 @@ def add_zmf4_obj_rectangle(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_image(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, version) = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
-	placement_types = {
-		None: 'Stretch',
-		1: 'Fit',
-		2: 'Crop'
-	}
-	placement_type = None
-	if size == 96:
+	placement_types = {0: 'Stretch', 1: 'Fit', 2: 'Crop'}
+	if version == 1:
 		(placement_type, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Placement type', key2txt(placement_type, placement_types), 0 if placement_type == None else (off - 4), 4, '<I')
+		add_iter(hd, 'Placement type', key2txt(placement_type, placement_types), off - 4, 4, '<I')
+	else:
+		add_iter(hd, 'Placement type', key2txt(0, placement_types), off, 0, '0s')
 	ref_types = {5: 'Bitmap'}
 	ref_types.update(shape_ref_types)
 	_zmf4_obj_refs(hd, size, data, ref_types)
 
 def add_zmf4_obj_table(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	(length, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of table data', length, off - 4, 4, '<I')
@@ -1352,7 +1349,7 @@ def add_zmf4_obj_table(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_font(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	fmt_map = {0x1: 'bold', 0x2: 'italic'}
 	(fmt, off) = rdata(data, off, '<B')
@@ -1375,7 +1372,7 @@ def add_zmf4_obj_font(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_paragraph(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	align_map = {0: 'left', 1: 'right', 2: 'block', 3: 'center', 4: 'full'}
 	(align, off) = rdata(data, off, '<B')
@@ -1387,7 +1384,7 @@ def add_zmf4_obj_paragraph(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, ref_map)
 
 def add_zmf4_obj_text(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(data_size, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', data_size, off - 4, 4, '<I')
@@ -1419,7 +1416,7 @@ def add_zmf4_obj_text(hd, size, data):
 	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off = _zmf4_obj_bbox(hd, size, data, off)
 	# under && middle baseline == over
 	# baseline placement available only for top and bottom alignment
@@ -1457,7 +1454,7 @@ def add_zmf4_obj_bitmap(hd, size, data):
 		add_iter(hd, 'Path', path, 0x28, len(path) + 1, '%ds' % len(path))
 
 def add_zmf4_obj_guidelines(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	(count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 	off += 4
@@ -1471,7 +1468,7 @@ def add_zmf4_obj_guidelines(hd, size, data):
 		off += 8
 
 def add_zmf4_obj_blend(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	start = off
 	(length, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
@@ -1495,11 +1492,11 @@ def add_zmf4_obj_blend(hd, size, data):
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_obj_style(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	_zmf4_obj_refs(hd, size, data, shape_ref_types)
 
 def add_zmf4_view(hd, size, data):
-	off = _zmf4_obj_header(hd, size, data)
+	(off, _) = _zmf4_obj_header(hd, size, data)
 	off += 4
 	(left, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Left', left, off - 4, 4, '<I')
