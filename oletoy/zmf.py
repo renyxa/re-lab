@@ -1423,7 +1423,6 @@ def add_zmf4_obj_text_frame(hd, size, data, off, version):
 	_zmf4_curve_data(hd, size, data, off)
 
 def add_zmf4_obj_bitmap(hd, size, data, off, version):
-	_zmf4_obj_header(hd, size, data)
 	if size > 0x28:
 		path = ''
 		(c, off) = rdata(data, 0x28, '<B')
