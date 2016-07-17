@@ -744,6 +744,7 @@ zmf4_object_refs = {
 	0x37: merge(shape_ref_types, {5: 'Bitmap'}),
 	0x3a: merge(shape_ref_types, {6: 'Text'}),
 	0x3b: shape_ref_types,
+	0x41: shape_ref_types,
 	0x43: shape_ref_types,
 }
 
