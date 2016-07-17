@@ -909,24 +909,25 @@ def add_zmf4_header(hd, size, data):
 	add_iter(hd, 'File size', size, off - 4, 4, '<I')
 
 def _zmf4_obj_header(hd, size, data):
+	header_iter = add_iter(hd, 'Header', '', 0, 28, '28s')
 	(size, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Size', size, off - 4, 4, '<I')
+	add_iter(hd, 'Size', size, off - 4, 4, '<I', parent=header_iter)
 	(typ, off) = rdata(data, off, '<I')
 	if zmf4_objects.has_key(typ):
 		obj = zmf4_objects[typ]
 	else:
 		obj = 'Unknown object 0x%x' % typ
-	add_iter(hd, 'Type', obj, off - 4, 4, '<I')
+	add_iter(hd, 'Type', obj, off - 4, 4, '<I', parent=header_iter)
 	(version, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Version?', version, off - 4, 4, '<I')
+	add_iter(hd, 'Version?', version, off - 4, 4, '<I', parent=header_iter)
 	(ref_obj_count, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I')
+	add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I', parent=header_iter)
 	(refs_start, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Start of refs list', refs_start, off - 4, 4, '<I')
+	add_iter(hd, 'Start of refs list', refs_start, off - 4, 4, '<I', parent=header_iter)
 	(ref_types_start, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Start of ref types list', ref_types_start, off - 4, 4, '<I')
+	add_iter(hd, 'Start of ref types list', ref_types_start, off - 4, 4, '<I', parent=header_iter)
 	(oid, off) = rdata(data, off, '<I')
-	add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I')
+	add_iter(hd, 'ID', ref2txt(oid), off - 4, 4, '<I', parent=header_iter)
 	return (off, typ, version, ref_obj_count, refs_start, ref_types_start)
 
 def _zmf4_obj_refs(hd, size, data, ref_obj_count, off_start, off_tag, type_map):
