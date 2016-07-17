@@ -821,10 +821,13 @@ class ZMF4Parser(object):
 		else:
 			obj = 'Unknown object 0x%x' % typ
 		obj_str = obj
+		(version, off) = rdata(data, 0x8, '<I')
+		if version > 0:
+			obj_str = '%s(%d)' % (obj_str, version)
 		if len(data) >= 0x1c:
 			(oid, off) = rdata(data, 0x18, '<I')
 			if int(oid) != 0xffffffff:
-				obj_str = '%s (0x%x)' % (obj, oid)
+				obj_str = '%s (0x%x)' % (obj_str, oid)
 		return add_pgiter(self.page, obj_str, 'zmf4', callback, data, parent)
 
 zmf4_handlers = {
