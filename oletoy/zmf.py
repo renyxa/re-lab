@@ -895,7 +895,8 @@ def _zmf4_obj_header(hd, size, data):
 	else:
 		obj = 'Unknown object 0x%x' % typ
 	add_iter(hd, 'Type', obj, off - 4, 4, '<I')
-	off = 0xc
+	(version, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Version?', version, off - 4, 4, '<I')
 	(ref_obj_count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I')
 	(refs_start, off) = rdata(data, off, '<I')
