@@ -784,7 +784,7 @@ class ZMF4Parser(object):
 
 	def _parse_object(self, data, start, parent):
 		(length, off) = rdata(data, start, '<I')
-		(typ, off) = rdata(data, off, '<H')
+		(typ, off) = rdata(data, off, '<I')
 		if start + length <= len(data):
 			if zmf4_handlers.has_key(int(typ)):
 				(handler, callback) = zmf4_handlers[int(typ)]
@@ -889,12 +889,12 @@ def add_zmf4_header(hd, size, data):
 def _zmf4_obj_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
-	(typ, off) = rdata(data, off, '<H')
+	(typ, off) = rdata(data, off, '<I')
 	if zmf4_objects.has_key(typ):
 		obj = zmf4_objects[typ]
 	else:
 		obj = 'Unknown object 0x%x' % typ
-	add_iter(hd, 'Type', obj, off - 2, 2, '<I')
+	add_iter(hd, 'Type', obj, off - 4, 4, '<I')
 	off = 0xc
 	(ref_obj_count, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Count of referenced objects', ref_obj_count, off - 4, 4, '<I')
