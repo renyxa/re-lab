@@ -1372,8 +1372,9 @@ def add_zmf4_obj_paragraph(hd, size, data, off, version):
 	(align, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Alignment', key2txt(align, align_map), off - 1, 1, '<B')
 	off += 3
-	(line, off) = rdata(data, off, '<f')
-	add_iter(hd, 'Line spacing', '%2d%%' % (line * 100), off - 4, 4, '<f')
+	if version >= 1:
+		(line, off) = rdata(data, off, '<f')
+		add_iter(hd, 'Line spacing', '%2d%%' % (line * 100), off - 4, 4, '<f')
 
 def add_zmf4_obj_text(hd, size, data, off, version):
 	off += 4
