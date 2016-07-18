@@ -1163,17 +1163,20 @@ def add_zmf4_obj_fill(hd, size, data, off, version):
 	if type == 1:
 		off = 0x30
 		add_iter(hd, 'Color (RGB)', d2hex(data[off:off+3]), off, 3, '3s')
-	else:
+	elif type == 8:
+		off += 4
+		(tile, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Tile', bool(tile), off - 4, 4, '<I')
+		(width, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Tile width', width, off - 4, 4, '<I')
+		(height, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Tile height', height, off - 4, 4, '<I')
+	else: # gradients
 		(transform, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Transform with object', bool(transform), off - 4, 4, '<I')
 		(stop_count, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Stop count', stop_count, off - 4, 4, '<I')
-		if type == 8:
-			(width, off) = rdata(data, off, '<I')
-			add_iter(hd, 'Width?', width, off - 4, 4, '<I')
-			(height, off) = rdata(data, off, '<I')
-			add_iter(hd, 'Height?', height, off - 4, 4, '<I')
-		elif type != 2:
+		if type != 2:
 			off += 4
 			(cx, off) = rdata(data, off, '<f')
 			add_iter(hd, 'Center x (%)', cx, off - 4, 4, '<f')
