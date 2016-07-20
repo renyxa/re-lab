@@ -994,7 +994,7 @@ def _zmf4_curve_type_list(hd, size, data, off, points, name='Point'):
 		i += 1
 	return off
 
-def _zmf4_curve_data(hd, size, data, off):
+def _zmf4_curve_data(hd, size, data, off, point_type='<I'):
 	(path_len, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length of path data', path_len, off - 4, 4, '<I')
 	off += 8
@@ -1012,10 +1012,10 @@ def _zmf4_curve_data(hd, size, data, off):
 		i += 1
 	i = 1
 	while i <= points:
-		(x, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, '<I')
-		(y, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, '<I')
+		(x, off) = rdata(data, off, point_type)
+		add_iter(hd, 'Point %d X' % i, x, off - 4, 4, point_type)
+		(y, off) = rdata(data, off, point_type)
+		add_iter(hd, 'Point %d Y' % i, y, off - 4, 4, point_type)
 		i += 1
 	off = _zmf4_curve_type_list(hd, size, data, off, points)
 	return off
@@ -1230,7 +1230,7 @@ def add_zmf4_obj_pen(hd, size, data, off, version):
 
 def add_zmf4_obj_arrow(hd, size, data, off, version):
 	off += 8
-	_zmf4_curve_data(hd, size, data, off)
+	_zmf4_curve_data(hd, size, data, off, '<f')
 
 def add_zmf4_obj_shadow(hd, size, data, off, version):
 	off += 4
