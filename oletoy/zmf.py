@@ -1229,7 +1229,9 @@ def add_zmf4_obj_pen(hd, size, data, off, version):
 	add_iter(hd, 'Dash pattern length', dist, off - 2, 2, '<H')
 
 def add_zmf4_obj_arrow(hd, size, data, off, version):
-	off += 8
+	off += 4
+	(line_end, off) = rdata(data, off, '<f')
+	add_iter(hd, 'End of line X', line_end, off - 4, 4, '<f')
 	_zmf4_curve_data(hd, size, data, off, '<f')
 
 def add_zmf4_obj_shadow(hd, size, data, off, version):
