@@ -746,6 +746,7 @@ zmf4_object_refs = {
 	0x3b: shape_ref_types,
 	0x41: shape_ref_types,
 	0x43: shape_ref_types,
+	0x47: shape_ref_types,
 }
 
 class ZMF4Parser(object):
