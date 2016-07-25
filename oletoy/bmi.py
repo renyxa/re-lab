@@ -111,7 +111,7 @@ def _add_palette(hd, size, data, off, color_depth):
 	palette_iter = add_iter(hd, 'Color palette', '', off, length, '%ds' % length)
 	for i in range(0, items):
 		(color, off) = rdata(data, off, '3s')
-		add_iter(hd, 'Color %d (RGB)' % (i + 1), d2hex(color), off - 3, 3, '3s', parent=palette_iter)
+		add_iter(hd, 'Color %d (BGR)' % (i + 1), d2hex(color), off - 3, 3, '3s', parent=palette_iter)
 		off += 1
 	return off
 
