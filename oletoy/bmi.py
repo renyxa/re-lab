@@ -79,7 +79,7 @@ class bmi_parser:
 		assert self.page
 		(off, palette, depth, toc_count) = self.parse_header(0)
 		if palette:
-			off = self.parse_palette(off, depth)
+			off = self.parse_palette(off, depth, self.parent)
 		off = self.parse_toc(off, toc_count)
 		self.parse_streams()
 
@@ -97,10 +97,10 @@ class bmi_parser:
 		(count, off) = rdata(self.data, off, '<H')
 		return (off, bool(palette), depth, count)
 
-	def parse_palette(self, offset, depth):
+	def parse_palette(self, offset, depth, parent):
 		length = 4 * (1 << depth)
 		if self.page:
-			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[offset:offset + length], self.parent)
+			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[offset:offset + length], parent)
 		return offset + length
 
 	def parse_toc(self, offset, count):
@@ -140,9 +140,7 @@ class bmi_parser:
 		(palette, off) = rdata(self.data, off, '<H')
 		off += 8
 		if depth <= 8 and bool(palette):
-			plen = 4 * (1 << depth)
-			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[off:off + plen], bmpiter)
-			off += plen
+			off = self.parse_palette(off, depth, bmpiter)
 		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[off:offset + length], bmpiter)
 		i = 1
 		while off < offset + length:
