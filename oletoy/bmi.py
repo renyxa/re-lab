@@ -79,20 +79,20 @@ class bmi_parser:
 
 	def parse_bitmap(self, name, offset, length):
 		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
-		self._parse_bitmap(offset, length, self.palette_len, self._has_transparency(), bmpiter)
+		self._parse_bitmap(offset, length, bmpiter)
 
 	def parse_transparency(self, name, offset, length):
 		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
 		if length > 4:
-			self._parse_bitmap(offset + 4, length - 4, 0, False, bmpiter)
+			self._parse_bitmap(offset + 4, length - 4, bmpiter)
 
-	def _parse_bitmap(self, offset, length, palette_length, transp, parent):
+	def _parse_bitmap(self, offset, length, parent):
 		uncompressed_data = bytearray()
-		data_start = offset + 16 + palette_length
-		if transp:
-			data_start += 8
-		parser = 'transp_bitmap_header' if transp else 'bitmap_header'
-		add_pgiter(self.page, 'Header', 'bmi', parser, self.data[offset:data_start], parent)
+		data_start = offset + 16
+		(depth, off) = rdata(self.data, offset + 4, '<H')
+		if depth <= 8:
+			data_start += 4 * (1 << depth)
+		add_pgiter(self.page, 'Header', 'bmi', 'bitmap_header', self.data[offset:data_start], parent)
 		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[data_start:offset + length], parent)
 		i = 1
 		off = data_start
@@ -115,9 +115,6 @@ class bmi_parser:
 
 	def parse_comment(self, name, offset, length):
 		add_pgiter(self.page, name, 'bmi', 'comment', self.data[offset:offset + length], self.parent)
-
-	def _has_transparency(self):
-		return False
 
 stream_parsers = {
 	0x1: bmi_parser.parse_bitmap,
