@@ -84,8 +84,9 @@ class bmi_parser:
 		self.parse_streams()
 
 	def parse_size(self):
-		(off, depth, toc_count) = self.parse_header(0)
-		off = self.parse_palette(off, depth)
+		(off, palette, depth, toc_count) = self.parse_header(0)
+		if palette:
+			off = self.parse_palette(off, depth)
 		self.parse_toc(off, toc_count)
 
 	def parse_header(self, offset):
