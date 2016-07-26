@@ -29,9 +29,15 @@ stream_parsers = {}
 
 def add_data(hd, size, data, width, height, depth):
 	assert depth in (1, 4, 8, 24)
-	lsize = (width * depth) / 8
-	padding = lsize % 4
-	lsize += padding
+	bits = (width * depth)
+	lsize = bits / 8
+	if bits % 8 != 0:
+		lsize += 1
+	tail = lsize % 4
+	padding = 0
+	if tail != 0:
+		padding = 4 - tail
+		lsize += padding
 	shift = (8 - min(depth, 8))
 	mask = (0xff >> shift) << shift
 	off = 0
