@@ -42,7 +42,7 @@ def add_data(hd, size, data, width, height, depth):
 	mask = (0xff >> shift) << shift
 	off = 0
 	for h in range(1, height + 1):
-		lineiter = add_iter(hd, 'Line %d' % h, '', off, off + lsize, '%ds' % lsize)
+		lineiter = add_iter(hd, 'Line %d' % h, '', off, lsize, '%ds' % lsize)
 		i = 1
 		while i < width + 1:
 			if depth == 24:
