@@ -49,6 +49,8 @@ def add_data(hd, size, data, width, height, depth):
 					add_iter(hd, 'Pixel %d (index)' % i, (index & mask) >> shift, off - 1, 1, '<B', parent=lineiter)
 					index = index << depth
 					i += 1
+					if i == width + 1:
+						break
 		if padding > 0:
 			add_iter(hd, 'Padding', '', off, padding, '%ds' % padding, parent=lineiter)
 			off += padding
