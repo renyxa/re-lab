@@ -21,7 +21,6 @@ from utils import add_iter, add_pgiter, rdata, d2hex, key2txt
 stream_tags = {
 	0x1: 'Bitmap',
 	0x3: 'Comment',
-	0x7: 'Transparency',
 	0xff: 'EOF',
 }
 
@@ -81,11 +80,6 @@ class bmi_parser:
 		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
 		self._parse_bitmap(offset, length, bmpiter)
 
-	def parse_transparency(self, name, offset, length):
-		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
-		if length > 4:
-			self._parse_bitmap(offset + 4, length - 4, bmpiter)
-
 	def _parse_bitmap(self, offset, length, parent):
 		uncompressed_data = bytearray()
 		data_start = offset + 16
@@ -119,7 +113,6 @@ class bmi_parser:
 stream_parsers = {
 	0x1: bmi_parser.parse_bitmap,
 	0x3: bmi_parser.parse_comment,
-	0x7: bmi_parser.parse_transparency,
 }
 
 def _add_palette(hd, size, data, off, color_depth):
