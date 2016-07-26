@@ -34,11 +34,12 @@ class bmi_parser:
 		self.data = data
 		self.parent = parent
 		self.palette_len = 0
-		self.streams = {}
+		self.streams = []
+		self.eof = None
 
 	def size(self):
-		if self.streams.has_key(0xff):
-			return self.streams[0xff][0]
+		if self.eof:
+			return self.eof
 		else:
 			return len(self.data)
 
@@ -46,11 +47,10 @@ class bmi_parser:
 		assert self.page
 		header_len = self.parse_header()
 		add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[0:header_len], self.parent)
-		streams = self.streams.items()
-		streams.sort(key = lambda v: v[1][0])
-		for (tag, offsets) in streams:
-			start = offsets[0]
-			end = offsets[1]
+		for stream in self.streams:
+			start = stream[0]
+			end = stream[1]
+			tag = stream[2]
 			if stream_parsers.has_key(tag):
 				stream_parsers[tag](self, stream_tags[tag], start, end - start)
 			elif tag != 0xff:
@@ -64,16 +64,17 @@ class bmi_parser:
 		if bool(palette):
 			self.palette_len = 4 * (1 << depth)
 			off += self.palette_len
-		streams = {}
+		offsets = []
 		for i in range(0, count):
 			(tag, off) = rdata(self.data, off, '<H')
-			(streams[tag], off) = rdata(self.data, off, '<I')
-		# process stream offsets
-		offsets = streams.items()
+			(offset, off) = rdata(self.data, off, '<I')
+			if tag == 0xff:
+				self.eof = offset
+			if (tag, offset) not in offsets:
+				offsets.append((tag, offset))
 		offsets.sort(key = lambda v: v[1])
-		offsets.append((-1, streams[0xff] if streams.has_key(0xff) else len(self.data)))
-		for i in range(0, len(streams)):
-			self.streams[offsets[i][0]] = (offsets[i][1], offsets[i + 1][1])
+		offsets.append((-1, self.size()))
+		self.streams = [(x[1], y[1], x[0]) for (x, y) in zip(offsets, offsets[1:])]
 		return off
 
 	def parse_bitmap(self, name, offset, length):
@@ -116,10 +117,7 @@ class bmi_parser:
 		add_pgiter(self.page, name, 'bmi', 'comment', self.data[offset:offset + length], self.parent)
 
 	def _has_transparency(self):
-		if self.streams.has_key(0x7):
-			return self.streams[0x7][1] - self.streams[0x7][0] > 4
-		else:
-			return false
+		return False
 
 stream_parsers = {
 	0x1: bmi_parser.parse_bitmap,
