@@ -83,7 +83,7 @@ class bmi_parser:
 	def parse_transparency(self, name, offset, length):
 		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
 		if length > 4:
-			self._parse_bitmap(offset + 4, length, 0, False, bmpiter)
+			self._parse_bitmap(offset + 4, length - 4, 0, False, bmpiter)
 
 	def _parse_bitmap(self, offset, length, palette_length, transp, parent):
 		uncompressed_data = bytearray()
@@ -92,7 +92,7 @@ class bmi_parser:
 			data_start += 8
 		parser = 'transp_bitmap_header' if transp else 'bitmap_header'
 		add_pgiter(self.page, 'Header', 'bmi', parser, self.data[offset:data_start], parent)
-		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[data_start:data_start + length], parent)
+		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[data_start:offset + length], parent)
 		i = 1
 		off = data_start
 		while off < offset + length:
@@ -100,7 +100,7 @@ class bmi_parser:
 			off += 1
 			blockiter = add_pgiter(self.page, 'Block %d' % i, 'bmi', 'block',
 				self.data[off - 3:off + blen], rawiter)
-			compressed = self.data[off:off + length]
+			compressed = self.data[off:off + blen]
 			add_pgiter(self.page, 'Compressed data', 'bmi', 0, compressed, blockiter)
 			try:
 				uncompressed = zlib.decompress(compressed)
