@@ -77,8 +77,9 @@ class bmi_parser:
 
 	def parse(self):
 		assert self.page
-		(off, depth, toc_count) = self.parse_header(0)
-		off = self.parse_palette(off, depth)
+		(off, palette, depth, toc_count) = self.parse_header(0)
+		if palette:
+			off = self.parse_palette(off, depth)
 		off = self.parse_toc(off, toc_count)
 		self.parse_streams()
 
@@ -90,18 +91,16 @@ class bmi_parser:
 	def parse_header(self, offset):
 		if self.page:
 			add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[offset:offset + 0x15], self.parent)
-		(depth, off) = rdata(self.data, offset + 0xf, '<H')
+		(palette, off) = rdata(self.data, offset + 0xd, '<H')
+		(depth, off) = rdata(self.data, off, '<H')
 		off += 2
 		(count, off) = rdata(self.data, off, '<H')
-		return (off, depth, count)
+		return (off, bool(palette), depth, count)
 
 	def parse_palette(self, offset, depth):
-		if depth <= 8:
-			length = 4 * (1 << depth)
-			if self.page:
-				add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[offset:offset + length], self.parent)
-		else:
-			length = 0
+		length = 4 * (1 << depth)
+		if self.page:
+			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[offset:offset + length], self.parent)
 		return offset + length
 
 	def parse_toc(self, offset, count):
@@ -141,8 +140,9 @@ class bmi_parser:
 		(width, off) = rdata(self.data, offset, '<H')
 		(height, off) = rdata(self.data, off, '<H')
 		(depth, off) = rdata(self.data, off, '<H')
-		off += 10
-		if depth <= 8:
+		(palette, off) = rdata(self.data, off, '<H')
+		off += 8
+		if depth <= 8 and bool(palette):
 			plen = 4 * (1 << depth)
 			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[off:off + plen], parent)
 			off += plen
@@ -196,7 +196,7 @@ def add_header(hd, size, data):
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Pixel height', height, off - 2, 2, '<H')
 	(palette, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Palette mode?', bool(palette), off - 2, 2, '<H')
+	add_iter(hd, 'Palette mode', bool(palette), off - 2, 2, '<H')
 	(depth, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
 	off += 2
@@ -229,7 +229,9 @@ def add_bitmap_header(hd, size, data):
 	add_iter(hd, 'Pixel height', height, off - 2, 2, '<H')
 	(depth, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
-	off += 4
+	(palette, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Has palette?', bool(palette), off - 2, 2, '<H')
+	off += 2
 	(dsize, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Size of uncompressed data', dsize, off - 4, 4, '<I')
 	(block_size, off) = rdata(data, off, '<H')
