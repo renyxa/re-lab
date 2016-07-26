@@ -146,19 +146,6 @@ def add_palette(hd, size, data):
 		off += 1
 		i += 1
 
-def _add_bitmap_header(hd, size, data, transp):
-	(width, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Pixel width', width, off - 2, 2, '<H')
-	(height, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Pixel height', height, off - 2, 2, '<H')
-	(depth, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
-	off += 4
-	(dsize, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Size of uncompressed data', dsize, off - 4, 4, '<I')
-	(block_size, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Max. size of uncompressed block', block_size, off - 2, 2, '<H')
-
 def add_block(hd, size, data):
 	(length, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
@@ -198,11 +185,17 @@ def add_comment(hd, size, data):
 	add_iter(hd, 'Comment', comment, off - comment_len, comment_len, '%ds' % comment_len)
 
 def add_bitmap_header(hd, size, data):
-	_add_bitmap_header(hd, size, data, False)
-
-def add_transp_bitmap_header(hd, size, data):
-	if size > 4:
-		_add_bitmap_header(hd, size, data, True)
+	(width, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Pixel width', width, off - 2, 2, '<H')
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Pixel height', height, off - 2, 2, '<H')
+	(depth, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
+	off += 4
+	(dsize, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Size of uncompressed data', dsize, off - 4, 4, '<I')
+	(block_size, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Max. size of uncompressed block', block_size, off - 2, 2, '<H')
 
 bmi_ids = {
 	'bitmap_header': add_bitmap_header,
@@ -211,7 +204,6 @@ bmi_ids = {
 	'header': add_header,
 	'palette': add_palette,
 	'toc': add_toc,
-	'transp_bitmap_header': add_transp_bitmap_header,
 }
 
 def get_size(data):
