@@ -32,7 +32,6 @@ class bmi_parser:
 		self.page = page
 		self.data = data
 		self.parent = parent
-		self.palette_len = 0
 		self.streams = []
 		self.eof = None
 
@@ -44,8 +43,51 @@ class bmi_parser:
 
 	def parse(self):
 		assert self.page
-		header_len = self.parse_header()
-		add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[0:header_len], self.parent)
+		(off, depth, toc_count) = self.parse_header(0)
+		off = self.parse_palette(off, depth)
+		off = self.parse_toc(off, toc_count)
+		self.parse_streams()
+
+	def parse_size(self):
+		(off, depth, toc_count) = self.parse_header(0)
+		off = self.parse_palette(off, depth)
+		self.parse_toc(off, toc_count)
+
+	def parse_header(self, offset):
+		if self.page:
+			add_pgiter(self.page, 'Header', 'bmi', 'header', self.data[offset:offset + 0x15], self.parent)
+		(depth, off) = rdata(self.data, offset + 0xf, '<H')
+		off += 2
+		(count, off) = rdata(self.data, off, '<H')
+		return (off, depth, count)
+
+	def parse_palette(self, offset, depth):
+		if depth <= 8:
+			length = 4 * (1 << depth)
+			if self.page:
+				add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[offset:offset + length], self.parent)
+		else:
+			length = 0
+		return offset + length
+
+	def parse_toc(self, offset, count):
+		if self.page:
+			add_pgiter(self.page, 'ToC', 'bmi', 'toc', self.data[offset:offset + 6 * count], self.parent)
+		offsets = []
+		off = offset
+		for i in range(0, count):
+			(tag, off) = rdata(self.data, off, '<H')
+			(start, off) = rdata(self.data, off, '<I')
+			if tag == 0xff:
+				self.eof = start
+			if (tag, start) not in offsets:
+				offsets.append((tag, start))
+		offsets.sort(key = lambda v: v[1])
+		offsets.append((-1, self.size()))
+		self.streams = [(x[1], y[1], x[0]) for (x, y) in zip(offsets, offsets[1:])]
+		return off
+
+	def parse_streams(self):
 		for stream in self.streams:
 			start = stream[0]
 			end = stream[1]
@@ -55,41 +97,21 @@ class bmi_parser:
 			elif tag != 0xff:
 				add_pgiter(self.page, 'Unknown', 'bmi', '', self.data[start:end], self.parent)
 
-	def parse_header(self):
-		(palette, off) = rdata(self.data, 0xd, '<H')
-		(depth, off) = rdata(self.data, off, '<H')
-		off += 2
-		(count, off) = rdata(self.data, off, '<H')
-		if bool(palette):
-			self.palette_len = 4 * (1 << depth)
-			off += self.palette_len
-		offsets = []
-		for i in range(0, count):
-			(tag, off) = rdata(self.data, off, '<H')
-			(offset, off) = rdata(self.data, off, '<I')
-			if tag == 0xff:
-				self.eof = offset
-			if (tag, offset) not in offsets:
-				offsets.append((tag, offset))
-		offsets.sort(key = lambda v: v[1])
-		offsets.append((-1, self.size()))
-		self.streams = [(x[1], y[1], x[0]) for (x, y) in zip(offsets, offsets[1:])]
-		return off
-
 	def parse_bitmap(self, name, offset, length):
 		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
 		self._parse_bitmap(offset, length, bmpiter)
 
 	def _parse_bitmap(self, offset, length, parent):
 		uncompressed_data = bytearray()
-		data_start = offset + 16
+		add_pgiter(self.page, 'Header', 'bmi', 'bitmap_header', self.data[offset:offset + 16], parent)
 		(depth, off) = rdata(self.data, offset + 4, '<H')
+		off += 10
 		if depth <= 8:
-			data_start += 4 * (1 << depth)
-		add_pgiter(self.page, 'Header', 'bmi', 'bitmap_header', self.data[offset:data_start], parent)
-		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[data_start:offset + length], parent)
+			plen = 4 * (1 << depth)
+			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[off:off + plen], parent)
+			off += plen
+		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[off:offset + length], parent)
 		i = 1
-		off = data_start
 		while off < offset + length:
 			(blen, off) = rdata(self.data, off, '<H')
 			off += 1
@@ -115,15 +137,14 @@ stream_parsers = {
 	0x3: bmi_parser.parse_comment,
 }
 
-def _add_palette(hd, size, data, off, color_depth):
-	items = 1 << color_depth
-	length = 4 * items
-	palette_iter = add_iter(hd, 'Color palette', '', off, length, '%ds' % length)
-	for i in range(0, items):
+def add_palette(hd, size, data):
+	off = 0
+	i = 0
+	while off + 4 <= size:
 		(color, off) = rdata(data, off, '3s')
-		add_iter(hd, 'Color %d (BGR)' % (i + 1), d2hex(color), off - 3, 3, '3s', parent=palette_iter)
+		add_iter(hd, 'Color %d (BGR)' % (i + 1), d2hex(color), off - 3, 3, '3s')
 		off += 1
-	return off
+		i += 1
 
 def _add_bitmap_header(hd, size, data, transp):
 	(width, off) = rdata(data, 0, '<H')
@@ -137,10 +158,6 @@ def _add_bitmap_header(hd, size, data, transp):
 	add_iter(hd, 'Size of uncompressed data', dsize, off - 4, 4, '<I')
 	(block_size, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Max. size of uncompressed block', block_size, off - 2, 2, '<H')
-	if transp:
-		pass
-	elif off < size:
-		_add_palette(hd, size, data, off, depth)
 
 def add_block(hd, size, data):
 	(length, off) = rdata(data, 0, '<H')
@@ -154,20 +171,22 @@ def add_header(hd, size, data):
 	(height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Pixel height', height, off - 2, 2, '<H')
 	(palette, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Palette mode', bool(palette), off - 2, 2, '<H')
+	add_iter(hd, 'Palette mode?', bool(palette), off - 2, 2, '<H')
 	(depth, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Color depth', depth, off - 2, 2, '<H')
 	off += 2
 	(count, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Number of offsets', count, off - 2, 2, '<H')
-	if palette == 1:
-		off = _add_palette(hd, size, data, off, depth)
-	for i in range(1, count + 1):
+
+def add_toc(hd, size, data):
+	off = 0
+	i = 1
+	while off + 6 <= size:
 		(tag, off) = rdata(data, off, '<H')
 		add_iter(hd, 'Stream tag %d' % i, key2txt(tag, stream_tags), off - 2, 2, '<H')
 		(offset, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Offset to %s' % key2txt(tag, stream_tags), offset, off - 4, 4, '<I')
-	return
+		i += 1
 
 def add_comment(hd, size, data):
 	off = 2
@@ -190,12 +209,14 @@ bmi_ids = {
 	'block': add_block,
 	'comment': add_comment,
 	'header': add_header,
+	'palette': add_palette,
+	'toc': add_toc,
 	'transp_bitmap_header': add_transp_bitmap_header,
 }
 
 def get_size(data):
 	parser = bmi_parser(data)
-	parser.parse_header()
+	parser.parse_size()
 	return parser.size()
 
 def open(data, page, parent):
