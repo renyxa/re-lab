@@ -132,11 +132,8 @@ class bmi_parser:
 
 	def parse_bitmap(self, name, offset, length):
 		bmpiter = add_pgiter(self.page, name, 'bmi', '', self.data[offset:offset + length], self.parent)
-		self._parse_bitmap(offset, length, bmpiter)
-
-	def _parse_bitmap(self, offset, length, parent):
 		uncompressed_data = bytearray()
-		add_pgiter(self.page, 'Header', 'bmi', 'bitmap_header', self.data[offset:offset + 16], parent)
+		add_pgiter(self.page, 'Header', 'bmi', 'bitmap_header', self.data[offset:offset + 16], bmpiter)
 		(width, off) = rdata(self.data, offset, '<H')
 		(height, off) = rdata(self.data, off, '<H')
 		(depth, off) = rdata(self.data, off, '<H')
@@ -144,9 +141,9 @@ class bmi_parser:
 		off += 8
 		if depth <= 8 and bool(palette):
 			plen = 4 * (1 << depth)
-			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[off:off + plen], parent)
+			add_pgiter(self.page, 'Color palette', 'bmi', 'palette', self.data[off:off + plen], bmpiter)
 			off += plen
-		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[off:offset + length], parent)
+		rawiter = add_pgiter(self.page, 'Raw data', 'bmi', 0, self.data[off:offset + length], bmpiter)
 		i = 1
 		while off < offset + length:
 			(blen, off) = rdata(self.data, off, '<H')
@@ -165,7 +162,7 @@ class bmi_parser:
 			off += blen
 		def parser(hd, size, data):
 			return add_data(hd, size, data, width, height, depth)
-		add_pgiter(self.page, 'Data', 'bmi', parser, str(uncompressed_data), parent)
+		add_pgiter(self.page, 'Data', 'bmi', parser, str(uncompressed_data), bmpiter)
 
 	def parse_comment(self, name, offset, length):
 		add_pgiter(self.page, name, 'bmi', 'comment', self.data[offset:offset + length], self.parent)
