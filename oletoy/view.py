@@ -1597,7 +1597,9 @@ class ApplicationMainWindow(gtk.Window):
 					if plist.plist_ids.has_key(ntype[1]):
 						plist.plist_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "bmi":
-					if bmi.bmi_ids.has_key(ntype[1]):
+					if callable(ntype[1]):
+						ntype[1](hd, size, data)
+					elif bmi.bmi_ids.has_key(ntype[1]):
 						bmi.bmi_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")

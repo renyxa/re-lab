@@ -27,6 +27,32 @@ stream_tags = {
 # defined later
 stream_parsers = {}
 
+def add_data(hd, size, data, width, height, depth):
+	assert depth in (1, 4, 8, 24)
+	lsize = (width * depth) / 8
+	padding = lsize % 4
+	lsize += padding
+	shift = (8 - min(depth, 8))
+	mask = (0xff >> shift) << shift
+	off = 0
+	for h in range(1, height + 1):
+		lineiter = add_iter(hd, 'Line %d' % h, '', off, off + lsize, '%ds' % lsize)
+		i = 1
+		while i < width + 1:
+			if depth == 24:
+				(color, off) = rdata(data, off, '3s')
+				add_iter(hd, 'Pixel %d (BGR)' % i, d2hex(color), off - 3, 3, '3s', parent=lineiter)
+				i += 1
+			else:
+				(index, off) = rdata(data, off, '<B')
+				for j in range(0, 8 / depth):
+					add_iter(hd, 'Pixel %d (index)' % i, (index & mask) >> shift, off - 1, 1, '<B', parent=lineiter)
+					index = index << depth
+					i += 1
+		if padding > 0:
+			add_iter(hd, 'Padding', '', off, padding, '%ds' % padding, parent=lineiter)
+			off += padding
+
 class bmi_parser:
 	def __init__(self, data, page=None, parent=None):
 		self.page = page
@@ -104,7 +130,9 @@ class bmi_parser:
 	def _parse_bitmap(self, offset, length, parent):
 		uncompressed_data = bytearray()
 		add_pgiter(self.page, 'Header', 'bmi', 'bitmap_header', self.data[offset:offset + 16], parent)
-		(depth, off) = rdata(self.data, offset + 4, '<H')
+		(width, off) = rdata(self.data, offset, '<H')
+		(height, off) = rdata(self.data, off, '<H')
+		(depth, off) = rdata(self.data, off, '<H')
 		off += 10
 		if depth <= 8:
 			plen = 4 * (1 << depth)
@@ -127,7 +155,9 @@ class bmi_parser:
 				print('decompression of block %d failed' % i)
 			i += 1
 			off += blen
-		add_pgiter(self.page, 'Data', 'bmi', 0, str(uncompressed_data), parent)
+		def parser(hd, size, data):
+			return add_data(hd, size, data, width, height, depth)
+		add_pgiter(self.page, 'Data', 'bmi', parser, str(uncompressed_data), parent)
 
 	def parse_comment(self, name, offset, length):
 		add_pgiter(self.page, name, 'bmi', 'comment', self.data[offset:offset + length], self.parent)
