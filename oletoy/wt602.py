@@ -23,6 +23,12 @@ def values(d, default='unknown'):
 		return key2txt(val, d, default)
 	return lookup
 
+def ref2txt(value):
+	if value == 0xffff:
+		return 'none'
+	else:
+		return '%d' % value
+
 wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
@@ -332,7 +338,7 @@ def add_text_info(hd, size, data):
 	add_iter(hd, 'Text flags', '%s' % get_para_flags(para_flags), off - 2, 2, '<H')
 	off += 4
 	(attrset, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Attribute set ID', attrset, off - 2, 2, '<H')
+	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Changed attributes', '%s' % get_char_style(attribs), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
