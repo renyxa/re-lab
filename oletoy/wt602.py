@@ -44,7 +44,6 @@ wt602_section_names = {
 def handle_text_infos(page, data, parent, parser):
 	(count, off) = rdata(data, 0, '<I')
 	off += 6
-	add_pgiter(page, 'Header', 'wt602', '', data[2:off], parent)
 	text_section = parser.sections[27]
 	text = parser.data[text_section[0] + 4:text_section[1]]
 	text_begin = 0
@@ -56,7 +55,6 @@ def handle_text_infos(page, data, parent, parser):
 			add_pgiter(page, 'Text', 'wt602', 'span_text', text[text_begin:text_begin + text_length], spaniter)
 			text_begin += text_length
 		off += 28
-	add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
 
 def handle_strings(page, data, parent, parser = None):
 	(hdrsize, off) = rdata(data, 0, '<I')
