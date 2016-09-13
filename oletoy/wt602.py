@@ -461,7 +461,13 @@ def add_span_text(hd, size, data):
 	add_iter(hd, 'Text', text, 0, len(data), fmt)
 
 def add_string_header(hd, size, data):
-	off = add_long_string(hd, size, data, 0x12, 'String')
+	off = 4
+	(length, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Entry length', length, off - 4, 4, '<I')
+	(plength, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Preceding entry length?', plength, off - 4, 4, '<I')
+	off += 6
+	off = add_long_string(hd, size, data, off, 'String')
 	add_iter(hd, 'Padding', '', off, size, '%ds' % (size - off))
 
 def add_styles(hd, size, data):
