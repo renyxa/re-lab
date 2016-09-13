@@ -41,19 +41,6 @@ wt602_section_names = {
 	33: 'Changes',
 }
 
-def handle_fonts(page, data, parent, parser = None):
-	(count, off) = rdata(data, 0, '<I')
-	for i in range(0, count):
-		start = off
-		off += 2
-		# read font name
-		while off < len(data) and data[off] != '\0':
-			off += 1
-		# read zeros to the next record
-		while off < len(data) and data[off] == '\0':
-			off += 1
-		add_pgiter(page, 'Font %d' % i, 'wt602', 'font', data[start:off], parent)
-
 def handle_text_infos(page, data, parent, parser):
 	(count, off) = rdata(data, 0, '<I')
 	off += 6
@@ -189,7 +176,7 @@ def handle_frames(page, data, parent, parser=None):
 		off = end
 
 wt602_section_handlers = {
-	10: (handle_fonts, 'fonts'),
+	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
 	16: (handle_frames, 'frames'),
 	18: (handle_strings, 'strings'),
@@ -274,17 +261,15 @@ def add_colormap(hd, size, data):
 	(size, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Entry size?', size, off - 2, 2, '<H')
 
-def add_font(hd, size, data):
-	i = 2
-	start = i
-	while i < len(data) and data[i] != '\0':
-		i += 1
-	length = i - start
-	add_iter(hd, 'Name', data[start:i], start, length, '<%ds' % length)
-
 def add_fonts(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', c, 0, 4, '<I')
+	i = 0
+	while i < c:
+		off += 2
+		(name, off) = rdata(data, off, '32s')
+		add_iter(hd, 'Name %d' % i, name[0:name.find('\0')], off - 32, 32, '32s')
+		i += 1
 
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
@@ -649,7 +634,6 @@ wt602_ids = {
 	'color': add_color,
 	'colormap': add_colormap,
 	'container': add_container,
-	'font' : add_font,
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
 	'frame': add_frame,
