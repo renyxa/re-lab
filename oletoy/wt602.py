@@ -67,17 +67,19 @@ def handle_text_infos(page, data, parent, parser):
 		off += 28
 
 def handle_strings(page, data, parent, parser = None):
-	(hdrsize, off) = rdata(data, 0, '<I')
+	# NOTE: This seems to be a serialized hash map.
+	add_pgiter(page, 'Header', 'wt602', 'string_header', data[:0x10], parent)
+	(datasize, off) = rdata(data, 0, '<I')
 	off = 0x10
-	hdriter = add_pgiter(page, 'Definitions', 'wt602', 0, data[:hdrsize + 0x10], parent)
+	dataiter = add_pgiter(page, 'Data', 'wt602', 0, data[off:datasize + 0x10], parent)
 	i = 0
-	while off < hdrsize + 0x10:
+	while off < datasize + 0x10:
 		start = off
 		(length, off) = rdata(data, off + 4, '<H')
 		off = start + length
-		add_pgiter(page, 'String %d' % i, 'wt602', 'string_header', data[start:off], hdriter)
+		add_pgiter(page, 'String %d' % i, 'wt602', 'string_entry', data[start:off], dataiter)
 		i += 1
-	add_pgiter(page, '???', 'wt602', 0, data[hdrsize + 0x10:], parent)
+	add_pgiter(page, 'Hash map', 'wt602', 'string_map', data[off:], parent)
 
 def handle_colormap(page, data, parent, parser = None):
 	(count, off) = rdata(data, 0, '<I')
@@ -461,14 +463,29 @@ def add_span_text(hd, size, data):
 	add_iter(hd, 'Text', text, 0, len(data), fmt)
 
 def add_string_header(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
+	(last, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Last entry length', last, off - 4, 4, '<I')
+
+def add_string_entry(hd, size, data):
 	off = 4
 	(length, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Entry length', length, off - 4, 4, '<I')
 	(plength, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Preceding entry length?', plength, off - 4, 4, '<I')
+	add_iter(hd, 'Preceding entry length', plength, off - 4, 4, '<I')
 	off += 6
 	off = add_long_string(hd, size, data, off, 'String')
 	add_iter(hd, 'Padding', '', off, size, '%ds' % (size - off))
+
+def add_string_map(hd, size, data):
+	off = 0
+	i = 0
+	while off + 4 <= size:
+		(offset, off) = rdata(data, off, '<I')
+		if offset != 0xffffffff:
+			add_iter(hd, 'Offset for hash %d' % i, offset, off - 4, 4, '<I')
+		i += 1
 
 def add_styles(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
@@ -666,7 +683,9 @@ wt602_ids = {
 	'tabs_def': add_tabs_def,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
+	'string_entry': add_string_entry,
 	'string_header': add_string_header,
+	'string_map': add_string_map,
 	'styles': add_styles,
 	'text': add_text,
 }
