@@ -23,11 +23,15 @@ def values(d, default='unknown'):
 		return key2txt(val, d, default)
 	return lookup
 
+def id2txt(value):
+	assert value < 0xffff
+	return '0x%x' % value
+
 def ref2txt(value):
 	if value == 0xffff:
 		return 'none'
 	else:
-		return '%d' % value
+		return '0x%x' % value
 
 wt602_section_names = {
 	10: 'Used fonts',
@@ -97,7 +101,7 @@ def handle_char_styles(page, data, parent, parser = None):
 	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
 	off += 2
 	for (n, id) in zip(range(0, count), ids):
-		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset', data[off:off + fmt_size], attrsiter)
+		add_pgiter(page, 'Attr. set %d (ID: %s)' % (n, id2txt(id)), 'wt602', 'attrset', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
 	assert(off == start_styles)
 	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
@@ -125,7 +129,7 @@ def handle_para_styles(page, data, parent, parser = None):
 	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
 	off += 2
 	for (n, id) in zip(range(0, count), ids):
-		add_pgiter(page, 'Attr. set %d (ID: %d)' % (n, id), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
+		add_pgiter(page, 'Attr. set %d (ID: %s)' % (n, id2txt(id)), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
 		off += fmt_size
 	assert(off == start_styles)
 	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
@@ -492,7 +496,7 @@ def add_attrset_ids(hd, size, data):
 	n = 0
 	while off < len(data):
 		(id, off) = rdata(data, off, '<H')
-		add_iter(hd, 'ID of attr. set %d' % n, id, off - 2, 2, '<H')
+		add_iter(hd, 'ID of attr. set %d' % n, id2txt(id), off - 2, 2, '<H')
 		n += 1
 
 def add_tabs(hd, size, data):
@@ -530,15 +534,15 @@ def add_frames(hd, size, data):
 def add_frame(hd, size, data):
 	off = 0xc
 	(sid, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Shape ID', sid, off - 2, 2, '<H')
+	add_iter(hd, 'Shape ID', id2txt(sid), off - 2, 2, '<H')
 	kind_map = {0x8: 'text', 0xb: 'image', 0xd: 'table', 0xe: 'group', 0xf: 'form control', 0x11: 'shape'}
 	(kind, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Kind', key2txt(kind, kind_map), off - 1, 1, '<B')
 	off += 5
 	(above, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Is above', key2txt(above, {0xffff: 'none'}, above), off - 2, 2, '<H')
+	add_iter(hd, 'Is above', ref2txt(above), off - 2, 2, '<H')
 	(below, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Is below', key2txt(below, {0xffff: 'none'}, below), off - 2, 2, '<H')
+	add_iter(hd, 'Is below', ref2txt(below), off - 2, 2, '<H')
 	off += 8
 	anchor_map = {
 		0x0: 'fixed', 0x1: 'fixed on page',
