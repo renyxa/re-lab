@@ -381,9 +381,8 @@ def add_long_string(hd, size, data, off, name):
 	return add_string(hd, size, data, off, name, '<H')
 
 def add_text_info(hd, size, data):
-	(flags, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Flags', '%x' % flags, off - 2, 2, '<H')
-	off += 2
+	(next, off) = rdata(data, 0, '<i')
+	add_iter(hd, 'Offset to next', next, off - 4, 4, '<i')
 	(para_flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Text flags', '%s' % get_para_flags(para_flags), off - 2, 2, '<H')
 	off += 4
@@ -393,13 +392,19 @@ def add_text_info(hd, size, data):
 	add_iter(hd, 'Changed attributes', '%s' % get_char_style(attribs), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
+	(seqno, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Seq. number?', seqno, off - 4, 4, '<I')
 
 def add_text_infos(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Entries', count, 0, 4, '<I')
-	off = size - 4
-	(spans, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Span count', spans, off - 4, 4, '<I')
+	(sz, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Entry size', sz, off - 4, 4, '<I')
+	off = size - 8
+	(first, off) = rdata(data, off, '<I')
+	add_iter(hd, 'First entry?', first, off - 4, 4, '<I')
+	(last, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Last entry', last, off - 4, 4, '<I')
 
 def add_attrset(hd, size, data):
 	off = 0
