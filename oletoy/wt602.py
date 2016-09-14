@@ -98,7 +98,10 @@ def handle_text_infos(page, data, parent, parser):
 	for i in range(0, count):
 		pos = ''
 		if positions[i]:
-			pos = ' (%d)' % positions[i]
+			mark_last = ''
+			if i == last:
+				mark_last = '*'
+			pos = ' (%d%s)' % (positions[i], mark_last)
 		text = ''
 		length = texts[i][1] - texts[i][0]
 		if length > 0:
