@@ -93,15 +93,21 @@ def handle_text_infos(page, data, parent, parser):
 
 	# add entries
 	text_section = parser.sections[27]
-	text = parser.data[text_section[0] + 4:text_section[1]]
+	text_data = parser.data[text_section[0] + 4:text_section[1]]
 	off = start
 	for i in range(0, count):
 		pos = ''
 		if positions[i]:
 			pos = ' (%d)' % positions[i]
-		infoiter = add_pgiter(page, 'Info %d%s' % (i, pos), 'wt602', 'text_info', data[off:off + size], parent)
-		if texts[i][1] > texts[i][0]:
-			add_pgiter(page, 'Text', 'wt602', 'span_text', text[texts[i][0]:texts[i][1]], infoiter)
+		text = ''
+		length = texts[i][1] - texts[i][0]
+		if length > 0:
+			maxlen = 10
+			end = texts[i][0] + min(length, maxlen)
+			text = ' "%s"' % text_data[texts[i][0]:end]
+			if length > maxlen:
+				text += '...'
+		add_pgiter(page, 'Info %d%s%s' % (i, pos, text), 'wt602', 'text_info', data[off:off + size], parent)
 		off += size
 
 def handle_strings(page, data, parent, parser = None):
@@ -495,11 +501,6 @@ def add_style_para(hd, size, data):
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
 
-def add_span_text(hd, size, data):
-	fmt = '%ds' % len(data)
-	text = read(data, 0, fmt)
-	add_iter(hd, 'Text', text, 0, len(data), fmt)
-
 def add_string_header(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
@@ -715,7 +716,6 @@ wt602_ids = {
 	'object_header': add_object_header,
 	'offsets': add_offsets,
 	'para_styles': add_para_styles,
-	'span_text': add_span_text,
 	'tab_stop': add_tab_stop,
 	'tabs': add_tabs,
 	'tabs_def': add_tabs_def,
