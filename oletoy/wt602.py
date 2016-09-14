@@ -37,6 +37,7 @@ wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
 	12: 'ToC?',
+	14: 'Index content',
 	16: 'Frames', # this includes tables and headers+footers
 	18: 'Strings',
 	19: 'Index',
@@ -232,11 +233,27 @@ def handle_frames(page, data, parent, parser=None):
 		add_pgiter(page, 'Data %d' % i, 'wt602', 'frame_data', data[off:end], dataiter)
 		off = end
 
+def handle_index(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, 'Index entry %d' % i, 'wt602', 'index_entry', data[off:off + size], parent)
+		off += size
+
+def handle_index_content(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, 'Entry %d' % i, 'wt602', 'index_content_entry', data[off:off + size], parent)
+		off += size
+
 wt602_section_handlers = {
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
+	14: (handle_index_content, 'index'),
 	16: (handle_frames, 'frames'),
 	18: (handle_strings, 'strings'),
+	19: (handle_index, 'index'),
 	20: (handle_colormap, 'colormap'),
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
@@ -368,10 +385,6 @@ line_map = {
 	9: 'double', 10: 'double, inner thicker', 11: 'double, outer thicker'
 }
 
-def get_para_flags(flags):
-	names = {0x8: 'page break', 0x100: 'paragraph break'}
-	return bflag2txt(flags, names)
-
 def add_string(hd, size, data, off, name, fmt):
 	fmtlen = struct.calcsize(fmt)
 	(length, off) = rdata(data, off, fmt)
@@ -386,9 +399,12 @@ def add_long_string(hd, size, data, off, name):
 def add_text_info(hd, size, data):
 	(next, off) = rdata(data, 0, '<i')
 	add_iter(hd, 'Offset to next', next, off - 4, 4, '<i')
-	(para_flags, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Text flags', '%s' % get_para_flags(para_flags), off - 2, 2, '<H')
-	off += 4
+	flag_map = {0x8: 'page break', 0x20: 'index mark start/stop?', 0x100: 'paragraph break'}
+	(flags, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 2, 2, '<H')
+	off += 2
+	(imark, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Index mark?', imark, off - 2, 2, '<H')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
@@ -704,6 +720,29 @@ def add_object_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I')
 
+def add_index(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Entries', count, 0, 4, '<I')
+	(sz, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry size', sz, off - 2, 2, '<H')
+
+def add_index_content_entry(hd, size, data):
+	off = 12
+	(offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Offset of name', offset, off - 4, 4, '<I') # in strings data
+	off += 12
+	(eid, off) = rdata(data, off, '<H')
+	add_iter(hd, 'ID', eid, off - 2, 2, '<H')
+
+def add_index_entry(hd, size, data):
+	(prev, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Preceded by', ref2txt(prev), off - 2, 2, '<H')
+	(next, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Followed by', ref2txt(next), off - 2, 2, '<H')
+	off += 4
+	(eid, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry ref', ref2txt(eid), off - 2, 2, '<H')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -717,6 +756,9 @@ wt602_ids = {
 	'frame': add_frame,
 	'frame_data': add_frame_data,
 	'frames': add_frames,
+	'index': add_index,
+	'index_content_entry': add_index_content_entry,
+	'index_entry': add_index_entry,
 	'style': add_style,
 	'style_para': add_style_para,
 	'styles': add_styles,
