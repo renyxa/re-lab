@@ -53,18 +53,56 @@ wt602_section_names = {
 
 def handle_text_infos(page, data, parent, parser):
 	(count, off) = rdata(data, 0, '<I')
-	off += 6
+	if count == 0:
+		return
+	(size, off) = rdata(data, off, '<I')
+	off += 2
+	start = off
+
+	# read the linked list
+	offsets = []
+	text_lengths = []
+	for i in range(0, count):
+		next = off + size
+		(link, off) = rdata(data, off, '<i')
+		offsets.append(link / size)
+		off += 10
+		(tl, off) = rdata(data, off, '<H')
+		text_lengths.append(tl)
+		off = next
+	off += 8
+	(last, off) = rdata(data, off, '<I')
+
+	# determine the actual position and text range of each entry
+	positions = [None for i in range(count)]
+	texts = [(0, 0) for i in range(count)]
+	pos = 0
+	text_pos = text_lengths[pos]
+	positions[pos] = 1
+	texts[pos] = (0, text_lengths[pos])
+	for i in range(1, count):
+		pos += offsets[pos]
+		if positions[pos]:
+			break
+		positions[pos] = i + 1
+		text_start = text_pos
+		text_pos += text_lengths[pos]
+		texts[pos] = (text_start, text_pos)
+		if pos == last:
+			break
+
+	# add entries
 	text_section = parser.sections[27]
 	text = parser.data[text_section[0] + 4:text_section[1]]
-	text_begin = 0
+	off = start
 	for i in range(0, count):
-		begin = off
-		spaniter = add_pgiter(page, 'Span %d ' %i, 'wt602', 'text_info', data[begin:begin + 28], parent)
-		text_length = read(data, begin + 0xe, '<H')
-		if text_length > 0:
-			add_pgiter(page, 'Text', 'wt602', 'span_text', text[text_begin:text_begin + text_length], spaniter)
-			text_begin += text_length
-		off += 28
+		pos = ''
+		if positions[i]:
+			pos = ' (%d)' % positions[i]
+		infoiter = add_pgiter(page, 'Info %d%s' % (i, pos), 'wt602', 'text_info', data[off:off + size], parent)
+		if texts[i][1] > texts[i][0]:
+			add_pgiter(page, 'Text', 'wt602', 'span_text', text[texts[i][0]:texts[i][1]], infoiter)
+		off += size
 
 def handle_strings(page, data, parent, parser = None):
 	# NOTE: This seems to be a serialized hash map.
