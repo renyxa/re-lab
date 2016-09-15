@@ -266,6 +266,16 @@ def handle_changes(page, data, parent, parser=None):
 		add_pgiter(page, 'Change %d' % i, 'wt602', 'change', data[off:off + size], parent)
 		off += size
 
+def handle_fields(page, data, parent, parser=None):
+	(length, off) = rdata(data, 0, '<I')
+	off += 12
+	size = 56
+	i = 0
+	while off + size <= len(data):
+		add_pgiter(page, 'Field %d' % i, 'wt602', 'field', data[off:off + size], parent)
+		off += size
+		i += 1
+
 wt602_section_handlers = {
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
@@ -274,6 +284,7 @@ wt602_section_handlers = {
 	18: (handle_strings, 'strings'),
 	19: (handle_index, 'index'),
 	20: (handle_colormap, 'colormap'),
+	21: (handle_fields, 'fields'),
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
 	24: (handle_footnotes, 'footnotes'),
@@ -776,6 +787,13 @@ def add_changes(hd, size, data):
 	(sz, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Record size', sz, off - 2, 2, '<H')
 
+def add_fields(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, off - 4, 4, '<I')
+
+def add_field(hd, size, data):
+	pass
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -786,6 +804,8 @@ wt602_ids = {
 	'color': add_color,
 	'colormap': add_colormap,
 	'container': add_container,
+	'field' : add_field,
+	'fields' : add_fields,
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
 	'frame': add_frame,
