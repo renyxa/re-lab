@@ -33,6 +33,18 @@ def ref2txt(value):
 	else:
 		return '0x%x' % value
 
+def index2txt(value):
+	if value == 0xffff:
+		return 'none'
+	else:
+		return '%d' % value
+
+def off2txt(value):
+	if value == 0xffffffff:
+		return 'none'
+	else:
+		return '%d' % value
+
 wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
@@ -247,6 +259,13 @@ def handle_index_content(page, data, parent, parser=None):
 		add_pgiter(page, 'Entry %d' % i, 'wt602', 'index_content_entry', data[off:off + size], parent)
 		off += size
 
+def handle_changes(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, 'Change %d' % i, 'wt602', 'change', data[off:off + size], parent)
+		off += size
+
 wt602_section_handlers = {
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
@@ -260,6 +279,7 @@ wt602_section_handlers = {
 	24: (handle_footnotes, 'footnotes'),
 	25: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
+	33: (handle_changes, 'changes'),
 }
 
 def read(data, offset, fmt):
@@ -402,9 +422,11 @@ def add_text_info(hd, size, data):
 	flag_map = {0x8: 'page break', 0x20: 'index mark start/stop?', 0x100: 'paragraph break'}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 2, 2, '<H')
-	off += 2
+	change_flag_map = {0x20: 'delete', 0x40: 'insert'}
+	(change_flags, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Change flags?', '%s' % bflag2txt(change_flags, change_flag_map), off - 2, 2, '<H')
 	(imark, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Index mark?', imark, off - 2, 2, '<H')
+	add_iter(hd, 'Index/change index?', index2txt(imark), off - 2, 2, '<H')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
@@ -743,11 +765,24 @@ def add_index_entry(hd, size, data):
 	(eid, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Entry ref', ref2txt(eid), off - 2, 2, '<H')
 
+def add_change(hd, size, data):
+	off = 0x14
+	(offset, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Comment string offset', off2txt(offset), off - 4, 4, '<I')
+
+def add_changes(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Changes', count, 0, 4, '<I')
+	(sz, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Record size', sz, off - 2, 2, '<H')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
 	'attrset_ids': add_attrset_ids,
 	'char_styles': add_char_styles,
+	'change': add_change,
+	'changes': add_changes,
 	'color': add_color,
 	'colormap': add_colormap,
 	'container': add_container,
