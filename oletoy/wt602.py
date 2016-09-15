@@ -267,13 +267,13 @@ def handle_changes(page, data, parent, parser=None):
 		off += size
 
 def handle_fields(page, data, parent, parser=None):
-	(length, off) = rdata(data, 0, '<I')
-	off += 12
-	size = 56
+	off = 0x10
 	i = 0
-	while off + size <= len(data):
-		add_pgiter(page, 'Field %d' % i, 'wt602', 'field', data[off:off + size], parent)
-		off += size
+	while off < len(data):
+		start = off
+		(size, off) = rdata(data, off + 4, '<I')
+		add_pgiter(page, 'Field %d' % i, 'wt602', 'field', data[start:start + size], parent)
+		off = start + size
 		i += 1
 
 wt602_section_handlers = {
@@ -790,9 +790,17 @@ def add_changes(hd, size, data):
 def add_fields(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Length', length, off - 4, 4, '<I')
+	(last, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Last field length?', last, off - 4, 4, '<I')
 
 def add_field(hd, size, data):
-	pass
+	type_map = {0x4: 'Page number', 0x23: 'Page number/count'}
+	(typ, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I')
+	(length, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Length', length, off - 4, 4, '<I')
+	(prev, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Prev. field length?', prev, off - 4, 4, '<I')
 
 wt602_ids = {
 	'attrset': add_attrset,
