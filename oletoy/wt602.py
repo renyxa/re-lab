@@ -148,11 +148,11 @@ def handle_strings(page, data, parent, parser = None):
 	while off < datasize + 0x10:
 		start = off
 		(length, off) = rdata(data, off + 4, '<H')
-		off += 12
-		(slen, off) = rdata(data, off, '<H')
-		(string, off) = rdata(data, off, '%ds' % slen)
 		off = start + length
-		add_pgiter(page, '[%d] Off %d: %s' % (i, start - 0x10, preview(unicode(string, 'cp1250'))), 'wt602', 'string_entry', data[start:off], dataiter)
+		offset = start - 0x10
+		assert parser.strings.has_key(offset)
+		string = preview(parser.strings[offset])
+		add_pgiter(page, '[%d] Off %d: %s' % (i, offset, string), 'wt602', 'string_entry', data[start:off], dataiter)
 		i += 1
 	add_pgiter(page, 'Hash map', 'wt602', 'string_map', data[off:], parent)
 
@@ -310,10 +310,12 @@ class wt602_parser(object):
 
 		self.header_len = 0x72
 		self.sections = []
+		self.strings = {}
 
 	def parse(self):
 		self.parse_header()
 		self.parse_offset_table()
+		self._collect_strings()
 		for i in range(0, len(self.sections)):
 			self.parse_section(i)
 
@@ -351,6 +353,22 @@ class wt602_parser(object):
 			sectiter = add_pgiter(self.page, name, 'wt602', adder, self.data[begin:end], self.parent)
 			if handler != None:
 				handler(self.page, self.data[begin:end], sectiter, self)
+
+	def _collect_strings(self):
+		(begin, end) = self.sections[18]
+		if end > begin:
+			(datasize, off) = rdata(self.data, begin, '<I')
+			off = begin + 0x10
+			while off < begin + datasize + 0x10:
+				start = off
+				off += 4
+				(length, off) = rdata(self.data, off, '<H')
+				off += 12
+				(slen, off) = rdata(self.data, off, '<H')
+				(string, off) = rdata(self.data, off, '%ds' % slen)
+				string = unicode(string, 'cp1250')
+				self.strings[start - begin - 0x10] = string
+				off = start + length
 
 def to_cm(val):
 	return val / 20.0 * 0.353 / 10
