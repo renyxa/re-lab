@@ -565,14 +565,20 @@ def add_string_header(hd, size, data):
 	add_iter(hd, 'Last entry length', last, off - 4, 4, '<I')
 
 def add_string_entry(hd, size, data):
-	off = 4
+	flags_map = {0x70: 'Used', 0xa0: 'Unused'}
+	(flags, off) = rdata(data, 0, '<B')
+	add_iter(hd, 'Flags?', key2txt(flags, flags_map), off - 1, 1, '<B')
+	off += 3
 	(length, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Entry length', length, off - 4, 4, '<I')
 	(plength, off) = rdata(data, off, '<I')
+	if flags == 0xa0:
+		plength -= 0x10000000
 	add_iter(hd, 'Preceding entry length', plength, off - 4, 4, '<I')
-	off += 6
-	off = add_long_string(hd, size, data, off, 'String')
-	add_iter(hd, 'Padding', '', off, size, '%ds' % (size - off))
+	if flags == 0x70:
+		off += 6
+		off = add_long_string(hd, size, data, off, 'String')
+		add_iter(hd, 'Padding', '', off, size, '%ds' % (size - off))
 
 def add_string_map(hd, size, data):
 	off = 0
