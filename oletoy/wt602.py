@@ -802,6 +802,7 @@ def add_fields(hd, size, data):
 def add_field(hd, size, data):
 	type_map = {
 		# gap
+		0x3: 'Footnote mark',
 		0x4: 'Page number',
 		0x5: 'Chapter number',
 		0x6: 'Time',
@@ -815,7 +816,7 @@ def add_field(hd, size, data):
 		0xe: 'Comment',
 		0xf: 'Template name',
 		0x10: 'Application name',
-		# gap
+		0x11: 'Footnote ref?',
 		0x12: 'File name',
 		0x13: 'Column sum',
 		0x14: 'Row sum',
@@ -842,7 +843,13 @@ def add_field(hd, size, data):
 	add_iter(hd, 'Prev. field length?', prev, off - 4, 4, '<I')
 
 	# parse type-specific content
-	if typ == 0x15:
+	if typ == 0x3:
+		off += 12
+		(mark, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Mark string offset', mark, off - 4, 4, '<I')
+		(number, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Mark number?', number, off - 4, 4, '<I')
+	elif typ == 0x15:
 		off += 4
 		(tag, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Tag string offset', tag, off - 4, 4, '<I')
