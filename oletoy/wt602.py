@@ -46,11 +46,15 @@ def off2txt(value):
 		return '%d' % value
 
 wt602_section_names = {
+	# gap
 	10: 'Used fonts',
 	11: 'Tabs',
 	12: 'ToC?',
+	# gap
 	14: 'Index content',
+	# gap
 	16: 'Frames', # this includes tables and headers+footers
+	# gap
 	18: 'Strings',
 	19: 'Index',
 	20: 'Color table',
@@ -61,8 +65,11 @@ wt602_section_names = {
 	25: 'Text info',
 	26: 'List styles',
 	27: 'Text',
+	# gap
 	31: 'Section styles',
+	# gap
 	33: 'Changes',
+	# gap
 }
 
 def handle_text_infos(page, data, parent, parser):
