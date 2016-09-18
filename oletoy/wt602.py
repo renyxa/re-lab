@@ -57,7 +57,7 @@ wt602_section_names = {
 	21: 'Fields',
 	22: 'Character styles',
 	23: 'Paragraph styles',
-	24: 'Footnotes',
+	24: 'Text flows',
 	25: 'Text info',
 	26: 'List styles',
 	27: 'Text',
@@ -219,12 +219,12 @@ def handle_tabs(page, data, parent, parser=None):
 		add_pgiter(page, 'Tab stops %d' % i, 'wt602', 'tab_stop', data[off:end], stops_iter)
 		off = end
 
-def handle_footnotes(page, data, parent, parser=None):
+def handle_text_flows(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
-	entry_size = 24 # FIXME: a guess
-	off += 8
+	(entry_size, off) = rdata(data, off, '<H')
+	off += 6
 	for i in range(0, count):
-		add_pgiter(page, 'Footnote %d' % i, 'wt602', '', data[off:off + entry_size], parent)
+		add_pgiter(page, 'Flow %d' % i, 'wt602', 'text_flow', data[off:off + entry_size], parent)
 		off += entry_size
 	if off < len(data):
 		add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
@@ -287,7 +287,7 @@ wt602_section_handlers = {
 	21: (handle_fields, 'fields'),
 	22: (handle_char_styles, 'char_styles'),
 	23: (handle_para_styles, 'para_styles'),
-	24: (handle_footnotes, 'footnotes'),
+	24: (handle_text_flows, 'text_flows'),
 	25: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
 	33: (handle_changes, 'changes'),
@@ -430,14 +430,21 @@ def add_long_string(hd, size, data, off, name):
 def add_text_info(hd, size, data):
 	(next, off) = rdata(data, 0, '<i')
 	add_iter(hd, 'Offset to next', next, off - 4, 4, '<i')
-	flag_map = {0x8: 'page break', 0x20: 'index mark start/stop?', 0x100: 'paragraph break'}
+	flag_map = {0x8: 'start flow', 0x20: 'index mark start/stop?', 0x100: 'paragraph break'}
+	flag_index = {0x8: 'Flow', 0x20: 'Index'}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 2, 2, '<H')
 	change_flag_map = {0x20: 'delete', 0x40: 'insert'}
 	(change_flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Change flags?', '%s' % bflag2txt(change_flags, change_flag_map), off - 2, 2, '<H')
-	(imark, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Index/change index?', index2txt(imark), off - 2, 2, '<H')
+	(index, off) = rdata(data, off, '<H')
+	index_names = [v for (k, v) in flag_index.iteritems() if k & flags != 0]
+	assert len(index_names) <= 1
+	if len(index_names) == 0:
+		index_str = 'Index'
+	else:
+		index_str = '%s index' % index_names[0]
+	add_iter(hd, index_str, index2txt(index), off - 2, 2, '<H')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
@@ -648,9 +655,16 @@ def add_tab_stop(hd, size, data):
 		add_iter(hd, 'Fill %d' % i, fill_map(fill), off - 1, 1, '<B')
 		i += 1
 
-def add_footnotes(hd, size, data):
+def add_text_flows(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry length', length, off - 2, 2, '<H')
+
+def add_text_flow(hd, size, data):
+	off = 2
+	(index, off) = rdata(data, off, '<I') # TODO: or <H?
+	add_iter(hd, 'Start index', index, off - 4, 4, '<I')
 
 def add_frames(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
@@ -896,7 +910,6 @@ wt602_ids = {
 	'field' : add_field,
 	'fields' : add_fields,
 	'fonts' : add_fonts,
-	'footnotes' : add_footnotes,
 	'frame': add_frame,
 	'frame_data': add_frame_data,
 	'frames': add_frames,
@@ -913,6 +926,8 @@ wt602_ids = {
 	'tab_stop': add_tab_stop,
 	'tabs': add_tabs,
 	'tabs_def': add_tabs_def,
+	'text_flow': add_text_flow,
+	'text_flows': add_text_flows,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
 	'string_entry': add_string_entry,
