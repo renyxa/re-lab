@@ -148,7 +148,7 @@ def handle_colormap(page, data, parent, parser = None):
 		add_pgiter(page, 'Color %d' % i, 'wt602', 'color', data[off:off + size], parent)
 		off += size
 
-def handle_char_styles(page, data, parent, parser = None):
+def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_id):
 	off = 8
 	(count, off) = rdata(data, off, '<H')
 	ids = []
@@ -158,51 +158,28 @@ def handle_char_styles(page, data, parent, parser = None):
 		(id, off) = rdata(data, off, '<H')
 		ids.append(id)
 	off = 8
-	fmt_size = 28
-	start_styles = off + 2 + fmt_size * count
+	start_styles = off + 2 + attrset_size * count
 	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
 	off += 2
 	for (n, id) in zip(range(0, count), ids):
-		add_pgiter(page, 'Attr. set %d (ID: %s)' % (n, id2txt(id)), 'wt602', 'attrset', data[off:off + fmt_size], attrsiter)
-		off += fmt_size
+		add_pgiter(page, 'Attr. set %d (ID: %s)' % (n, id2txt(id)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
+		off += attrset_size
 	assert(off == start_styles)
 	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
-		add_pgiter(page, 'Style %d' % n, 'wt602', 'style', data[off:off + 6], descsiter)
+		add_pgiter(page, 'Style %d' % n, 'wt602', style_id, data[off:off + 6], descsiter)
 		off += 6
 		n += 1
 	# assert(off == start_ids)
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
+def handle_char_styles(page, data, parent, parser = None):
+	_handle_styles(page, data, parent, parser, 'attrset', 28, 'style')
+
 def handle_para_styles(page, data, parent, parser = None):
-	off = 8
-	(count, off) = rdata(data, off, '<H')
-	ids = []
-	off = len(data) - 2 * count
-	start_ids = off - 2
-	while off < len(data):
-		(id, off) = rdata(data, off, '<H')
-		ids.append(id)
-	off = 8
-	fmt_size = 46
-	start_styles = off + 2 + fmt_size * count
-	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
-	off += 2
-	for (n, id) in zip(range(0, count), ids):
-		add_pgiter(page, 'Attr. set %d (ID: %s)' % (n, id2txt(id)), 'wt602', 'attrset_para', data[off:off + fmt_size], attrsiter)
-		off += fmt_size
-	assert(off == start_styles)
-	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
-	off += 2
-	n = 0
-	while off < start_ids:
-		add_pgiter(page, 'Style %d' % n, 'wt602', 'style_para', data[off:off + 6], descsiter)
-		off += 6
-		n += 1
-	# assert(off == start_ids)
-	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
+	_handle_styles(page, data, parent, parser, 'attrset_para', 46, 'style_para')
 
 def handle_tabs(page, data, parent, parser=None):
 	off = 0
@@ -285,8 +262,8 @@ wt602_section_handlers = {
 	19: (handle_index, 'index'),
 	20: (handle_colormap, 'colormap'),
 	21: (handle_fields, 'fields'),
-	22: (handle_char_styles, 'char_styles'),
-	23: (handle_para_styles, 'para_styles'),
+	22: (handle_char_styles, 'styles'),
+	23: (handle_para_styles, 'styles'),
 	24: (handle_text_flows, 'text_flows'),
 	25: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
@@ -597,15 +574,6 @@ def add_string_map(hd, size, data):
 		i += 1
 
 def add_styles(hd, size, data):
-	(c, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Count', c / 0x20, 0, 4, '<I')
-
-def add_char_styles(hd, size, data):
-	off = 6
-	(style, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
-
-def add_para_styles(hd, size, data):
 	off = 6
 	(style, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
@@ -901,7 +869,6 @@ wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
 	'attrset_ids': add_attrset_ids,
-	'char_styles': add_char_styles,
 	'change': add_change,
 	'changes': add_changes,
 	'color': add_color,
@@ -918,11 +885,9 @@ wt602_ids = {
 	'index_entry': add_index_entry,
 	'style': add_style,
 	'style_para': add_style_para,
-	'styles': add_styles,
 	'header': add_header,
 	'object_header': add_object_header,
 	'offsets': add_offsets,
-	'para_styles': add_para_styles,
 	'tab_stop': add_tab_stop,
 	'tabs': add_tabs,
 	'tabs_def': add_tabs_def,
