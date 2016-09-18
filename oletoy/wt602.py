@@ -61,6 +61,7 @@ wt602_section_names = {
 	25: 'Text info',
 	26: 'List styles',
 	27: 'Text',
+	31: 'Section styles',
 	33: 'Changes',
 }
 
@@ -181,6 +182,9 @@ def handle_char_styles(page, data, parent, parser = None):
 def handle_para_styles(page, data, parent, parser = None):
 	_handle_styles(page, data, parent, parser, 'attrset_para', 46, 'style_para')
 
+def handle_section_styles(page, data, parent, parser = None):
+	_handle_styles(page, data, parent, parser, 'attrset_section', 58, 'style_section')
+
 def handle_tabs(page, data, parent, parser=None):
 	off = 0
 	(count, off) = rdata(data, off, '<H')
@@ -267,6 +271,7 @@ wt602_section_handlers = {
 	24: (handle_text_flows, 'text_flows'),
 	25: (handle_text_infos, 'text_infos'),
 	27: (None, 'text'),
+	31: (handle_section_styles, 'styles'),
 	33: (handle_changes, 'changes'),
 }
 
@@ -526,6 +531,24 @@ def add_attrset_para(hd, size, data):
 	(column_line, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
 
+def add_attrset_section(hd, size, data):
+	off = 10
+	(column_gap, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Column gap', '%.2fcm' % to_cm(column_gap), off - 2, 2, '<H')
+	(columns, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of columns', columns, off - 2, 2, '<H')
+	off += 20
+	(height, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Height', '%.2fcm' % to_cm(height), off - 2, 2, '<H')
+	(inc, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Increment', '%.2fcm' % to_cm(inc), off - 2, 2, '<H')
+	off += 4
+	(column_line, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
+	off += 4
+	(color, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Color index', color, off - 2, 2, '<H')
+
 def add_style(hd, size, data):
 	off = 0
 	(attribs, off) = rdata(data, off, '<H')
@@ -538,6 +561,14 @@ def add_style_para(hd, size, data):
 	off = 0
 	(attribs, off) = rdata(data, off, '<H')
 	# add_iter(hd, 'Changed attributes', '%s' % get_para_style(attribs), off - 2, 2, '<H')
+	off += 2
+	(attrset, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
+
+def add_style_section(hd, size, data):
+	off = 0
+	(attribs, off) = rdata(data, off, '<H')
+	# add_iter(hd, 'Changed attributes', '%s' % get_section_style(attribs), off - 2, 2, '<H')
 	off += 2
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
@@ -869,6 +900,7 @@ wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
 	'attrset_ids': add_attrset_ids,
+	'attrset_section': add_attrset_section,
 	'change': add_change,
 	'changes': add_changes,
 	'color': add_color,
@@ -885,6 +917,7 @@ wt602_ids = {
 	'index_entry': add_index_entry,
 	'style': add_style,
 	'style_para': add_style_para,
+	'style_section': add_style_section,
 	'header': add_header,
 	'object_header': add_object_header,
 	'offsets': add_offsets,
