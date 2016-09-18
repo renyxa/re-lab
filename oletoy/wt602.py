@@ -47,6 +47,8 @@ def off2txt(value):
 
 wt602_section_names = {
 	# gap
+	8: 'Footnotes?',
+	# gap
 	10: 'Used fonts',
 	11: 'Tabs',
 	12: 'ToC?',
@@ -272,6 +274,7 @@ def handle_chapters(page, data, parent, parser=None):
 		off += size
 
 wt602_section_handlers = {
+	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
 	13: (handle_chapters, 'chapters'),
@@ -935,6 +938,12 @@ def add_chapters(hd, size, data):
 	(sz, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Entry size', sz, off - 2, 2, '<H')
 
+def add_footnotes(hd, size, data):
+	off = 6
+	numbering_map = {0: 'Page', 1: 'Chapter', 2: 'Document'}
+	(numbering, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Numbering restarts at', key2txt(numbering, numbering_map), off - 2, 2, '<H')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -950,6 +959,7 @@ wt602_ids = {
 	'field' : add_field,
 	'fields' : add_fields,
 	'fonts' : add_fonts,
+	'footnotes' : add_footnotes,
 	'frame': add_frame,
 	'frame_data': add_frame_data,
 	'frames': add_frames,
