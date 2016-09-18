@@ -50,7 +50,7 @@ wt602_section_names = {
 	10: 'Used fonts',
 	11: 'Tabs',
 	12: 'ToC?',
-	# gap
+	13: 'Chapters',
 	14: 'Index content',
 	# gap
 	16: 'Frames', # this includes tables and headers+footers
@@ -264,9 +264,17 @@ def handle_fields(page, data, parent, parser=None):
 		off = start + size
 		i += 1
 
+def handle_chapters(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, 'Chapter %d' % i, 'wt602', 'chapter', data[off:off + size], parent)
+		off += size
+
 wt602_section_handlers = {
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
+	13: (handle_chapters, 'chapters'),
 	14: (handle_index_content, 'index'),
 	16: (handle_frames, 'frames'),
 	18: (handle_strings, 'strings'),
@@ -903,6 +911,30 @@ def add_field(hd, size, data):
 		(content, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Content string offset', content, off - 4, 4, '<I')
 
+def add_chapter(hd, size, data):
+	off = 0
+	(pagenum, off) = rdata(data, off, '<H')
+	add_iter(hd, 'First page number', pagenum, off - 2, 2, '<H')
+	chapnum_map = {0x7ffe: 'Increment'}
+	(chapnum, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Chapter number', key2txt(chapnum, chapnum_map, '%d' % chapnum), off - 2, 2, '<H')
+	(current, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Current chapter number', current, off - 2, 2, '<H')
+	off += 18
+	(thickness, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Footnote line thickness', key2txt(thickness, line_map), off - 2, 2, '<H')
+	off += 2
+	(line, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Footnote line length', '%d%%' % line, off - 2, 2, '<H')
+	(color, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Footnote line color index', color, off - 2, 2, '<H')
+
+def add_chapters(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', count, 0, 4, '<I')
+	(sz, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry size', sz, off - 2, 2, '<H')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -910,6 +942,8 @@ wt602_ids = {
 	'attrset_section': add_attrset_section,
 	'change': add_change,
 	'changes': add_changes,
+	'chapter': add_chapter,
+	'chapters': add_chapters,
 	'color': add_color,
 	'colormap': add_colormap,
 	'container': add_container,
