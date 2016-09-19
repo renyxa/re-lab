@@ -152,7 +152,7 @@ def handle_strings(page, data, parent, parser = None):
 		(slen, off) = rdata(data, off, '<H')
 		(string, off) = rdata(data, off, '%ds' % slen)
 		off = start + length
-		add_pgiter(page, '[%d] %s' % (i, preview(unicode(string, 'cp1250'))), 'wt602', 'string_entry', data[start:off], dataiter)
+		add_pgiter(page, '[%d] Off %d: %s' % (i, start - 0x10, preview(unicode(string, 'cp1250'))), 'wt602', 'string_entry', data[start:off], dataiter)
 		i += 1
 	add_pgiter(page, 'Hash map', 'wt602', 'string_map', data[off:], parent)
 
