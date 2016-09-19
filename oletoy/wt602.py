@@ -445,9 +445,28 @@ char_style_flags = {
 }
 
 para_style_flags = {
-	0x1: 'justify',
+	0x1: 'alignment',
+	0x2: 'left indent',
+	0x4: 'right indent',
+	0x8: 'first indent',
+	0x10: 'tabs',
 	# gap
+	0x80: 'top margin',
+	0x100: 'bottom margin',
+	0x200: 'shading type',
+	0x400: 'border line',
+	0x800: 'border type',
 	0x1000: 'list level',
+	0x2000: 'multi-level?',
+	0x4000: 'line height',
+	# gap
+	0x10000: 'border padding',
+	# gap
+	0x80000: 'numbering?',
+	0x100000: 'skip number?',
+	# gap
+	0x400000: 'border color',
+	0x800000: 'shading color',
 	# gap
 	# 0x8000000: ''
 }
