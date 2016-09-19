@@ -441,11 +441,16 @@ char_style_flags = {
 	0x200: 'shaded',
 	0x400: 'line-through type',
 	0x800: 'outline',
+	# gap
+	# 0x1000: '',
 }
 
 para_style_flags = {
 	0x1: 'justify',
+	# gap
 	0x1000: 'list level',
+	# gap
+	# 0x8000000: ''
 }
 
 line_map = {
