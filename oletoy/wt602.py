@@ -621,9 +621,8 @@ def add_style(hd, size, data):
 
 def add_style_para(hd, size, data):
 	off = 0
-	(attribs, off) = rdata(data, off, '<H')
-	# add_iter(hd, 'Changed attributes', '%s' % get_para_style(attribs), off - 2, 2, '<H')
-	off += 2
+	(attribs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Attributes', bflag2txt(attribs, para_style_flags), off - 4, 4, '<I')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
 
