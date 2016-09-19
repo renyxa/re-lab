@@ -45,6 +45,13 @@ def off2txt(value):
 	else:
 		return '%d' % value
 
+def preview(text):
+	maxlen = 10
+	result = '"%s"' % text[0:min(len(text), maxlen)]
+	if len(text) > maxlen:
+		result += '...'
+	return result
+
 wt602_section_names = {
 	# gap
 	8: 'Footnotes?',
@@ -126,13 +133,8 @@ def handle_text_infos(page, data, parent, parser):
 				mark_last = '*'
 			pos = ' (%d%s)' % (positions[i], mark_last)
 		text = ''
-		length = texts[i][1] - texts[i][0]
-		if length > 0:
-			maxlen = 10
-			end = texts[i][0] + min(length, maxlen)
-			text = ' "%s"' % text_data[texts[i][0]:end]
-			if length > maxlen:
-				text += '...'
+		if texts[i][1] - texts[i][0] > 0:
+			text = ' ' + preview(text_data[texts[i][0]:texts[i][1]])
 		add_pgiter(page, 'Info %d%s%s' % (i, pos, text), 'wt602', 'text_info', data[off:off + size], parent)
 		off += size
 
@@ -146,8 +148,11 @@ def handle_strings(page, data, parent, parser = None):
 	while off < datasize + 0x10:
 		start = off
 		(length, off) = rdata(data, off + 4, '<H')
+		off += 12
+		(slen, off) = rdata(data, off, '<H')
+		(string, off) = rdata(data, off, '%ds' % slen)
 		off = start + length
-		add_pgiter(page, 'String %d' % i, 'wt602', 'string_entry', data[start:off], dataiter)
+		add_pgiter(page, '[%d] %s' % (i, preview(unicode(string, 'cp1250'))), 'wt602', 'string_entry', data[start:off], dataiter)
 		i += 1
 	add_pgiter(page, 'Hash map', 'wt602', 'string_map', data[off:], parent)
 
