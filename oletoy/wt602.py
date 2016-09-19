@@ -81,6 +81,13 @@ wt602_section_names = {
 	# gap
 }
 
+def _handle_linked_list(page, data, parent, parser, entry_id):
+	(count, off) = rdata(data, 0, '<I')
+	(entry_size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, '[%d]' % i, 'wt602', entry_id, data[off:off + entry_size], parent)
+		off += entry_size
+
 def handle_text_infos(page, data, parent, parser):
 	(count, off) = rdata(data, 0, '<I')
 	if count == 0:
@@ -215,11 +222,7 @@ def handle_tabs(page, data, parent, parser=None):
 		off = end
 
 def handle_text_flows(page, data, parent, parser=None):
-	(count, off) = rdata(data, 0, '<I')
-	(entry_size, off) = rdata(data, off, '<H')
-	for i in range(0, count):
-		add_pgiter(page, 'Flow %d' % i, 'wt602', 'text_flow', data[off:off + entry_size], parent)
-		off += entry_size
+	_handle_linked_list(page, data, parent, parser, 'text_flow')
 
 def handle_frames(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
@@ -288,20 +291,13 @@ def handle_named_styles(page, data, parent, parser=None):
 		off = end
 
 def handle_numberings(page, data, parent, parser=None):
-	(count, off) = rdata(data, 0, '<I')
-	(length, off) = rdata(data, off, '<H')
-	for i in range(0, count):
-		start = off
-		end = start + length
-		off += 8
-		add_pgiter(page, '[%d]' % i, 'wt602', 'numbering', data[start:end], parent)
-		off = end
+	_handle_linked_list(page, data, parent, parser, 'numbering')
 
 wt602_section_handlers = {
 	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
-	12: (handle_named_styles, 'named_styles'),
+	12: (handle_named_styles, 'linked_list'),
 	13: (handle_chapters, 'chapters'),
 	14: (handle_index_content, 'index'),
 	16: (handle_frames, 'frames'),
@@ -311,9 +307,9 @@ wt602_section_handlers = {
 	21: (handle_fields, 'fields'),
 	22: (handle_char_styles, 'styles'),
 	23: (handle_para_styles, 'styles'),
-	24: (handle_text_flows, 'text_flows'),
+	24: (handle_text_flows, 'linked_list'),
 	25: (handle_text_infos, 'text_infos'),
-	26: (handle_numberings, 'numberings'),
+	26: (handle_numberings, 'linked_list'),
 	27: (None, 'text'),
 	31: (handle_section_styles, 'styles'),
 	33: (handle_changes, 'changes'),
@@ -747,18 +743,6 @@ def add_tab_stop(hd, size, data):
 		add_iter(hd, 'Fill %d' % i, fill_map(fill), off - 1, 1, '<B')
 		i += 1
 
-def add_text_flows(hd, size, data):
-	(count, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Count', count, off - 4, 4, '<I')
-	(length, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Entry length', length, off - 2, 2, '<H')
-	off += count * length
-	off += 2
-	(first, off) = rdata(data, off, '<H')
-	add_iter(hd, 'First index?', index2txt(first), off - 2, 2, '<H')
-	(last, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Last index?', index2txt(last), off - 2, 2, '<H')
-
 def add_text_flow(hd, size, data):
 	(prev, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Previous index', index2txt(prev), off - 2, 2, '<H')
@@ -1029,18 +1013,6 @@ def add_footnotes(hd, size, data):
 	(numbering, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Numbering restarts at', key2txt(numbering, numbering_map), off - 2, 2, '<H')
 
-def add_named_styles(hd, size, data):
-	(count, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Count', count, off - 4, 4, '<I')
-	(length, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Entry length', length, off - 2, 2, '<H')
-	off += count * length
-	off += 2
-	(first, off) = rdata(data, off, '<H')
-	add_iter(hd, 'First index?', index2txt(first), off - 2, 2, '<H')
-	(last, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Last index?', index2txt(last), off - 2, 2, '<H')
-
 def add_named_style(hd, size, data):
 	(prev, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Previous index?', index2txt(prev), off - 2, 2, '<H')
@@ -1064,7 +1036,7 @@ def add_named_style(hd, size, data):
 	(parent, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Parent style', index2txt(parent), off - 2, 2, '<H')
 
-def add_numberings(hd, size, data):
+def add_linked_list(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 	(length, off) = rdata(data, off, '<H')
@@ -1125,12 +1097,12 @@ wt602_ids = {
 	'index': add_index,
 	'index_content_entry': add_index_content_entry,
 	'index_entry': add_index_entry,
+	'linked_list': add_linked_list,
 	'style': add_style,
 	'style_para': add_style_para,
 	'style_section': add_style_section,
 	'header': add_header,
 	'numbering': add_numbering,
-	'numberings': add_numberings,
 	'object_header': add_object_header,
 	'offsets': add_offsets,
 	'tab_stop': add_tab_stop,
