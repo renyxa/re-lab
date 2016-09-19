@@ -72,7 +72,7 @@ wt602_section_names = {
 	23: 'Paragraph styles',
 	24: 'Text flows',
 	25: 'Text info',
-	26: 'List styles',
+	26: 'Numberings',
 	27: 'Text',
 	# gap
 	31: 'Section styles',
@@ -287,6 +287,16 @@ def handle_named_styles(page, data, parent, parser=None):
 		add_pgiter(page, '[%d] %s' % (i, parser.strings[string]), 'wt602', 'named_style', data[start:end], parent)
 		off = end
 
+def handle_numberings(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(length, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		start = off
+		end = start + length
+		off += 8
+		add_pgiter(page, '[%d]' % i, 'wt602', 'numbering', data[start:end], parent)
+		off = end
+
 wt602_section_handlers = {
 	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
@@ -303,6 +313,7 @@ wt602_section_handlers = {
 	23: (handle_para_styles, 'styles'),
 	24: (handle_text_flows, 'text_flows'),
 	25: (handle_text_infos, 'text_infos'),
+	26: (handle_numberings, 'numberings'),
 	27: (None, 'text'),
 	31: (handle_section_styles, 'styles'),
 	33: (handle_changes, 'changes'),
@@ -1047,6 +1058,45 @@ def add_named_style(hd, size, data):
 	(parent, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Parent style', index2txt(parent), off - 2, 2, '<H')
 
+def add_numberings(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', count, off - 4, 4, '<I')
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry length', length, off - 2, 2, '<H')
+	off += count * length
+	off += 2
+	(first, off) = rdata(data, off, '<H')
+	add_iter(hd, 'First index', index2txt(first), off - 2, 2, '<H')
+	(last, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Last index', index2txt(last), off - 2, 2, '<H')
+
+def add_numbering(hd, size, data):
+	(prev, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Previous index', index2txt(prev), off - 2, 2, '<H')
+	(next, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Next index', index2txt(next), off - 2, 2, '<H')
+	type_map = {3: 'Ordered', 7: 'Unordered'} # TODO: flags?
+	(typ, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 2, 2, '<H')
+	(width, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Width', '%.2fcm' % to_cm(width), off - 2, 2, '<H')
+	if typ == 3:
+		num_type_map = {1: '1', 2: 'a', 3: 'A', 4: 'I', 5: 'i'}
+		(num_type, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Numbering type?', key2txt(num_type, num_type_map), off - 2, 2, '<H')
+		off += 2
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Number format string offset', fmt, off - 4, 4, '<I')
+		(start, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Start value', start, off - 4, 4, '<I')
+	elif typ == 7:
+		(font, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Font index', font, off - 2, 2, '<H')
+		(char, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Bullet char', char, off - 2, 2, '<H')
+		(color, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Bullet color index', color, off - 2, 2, '<H')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1073,6 +1123,8 @@ wt602_ids = {
 	'style_para': add_style_para,
 	'style_section': add_style_section,
 	'header': add_header,
+	'numbering': add_numbering,
+	'numberings': add_numberings,
 	'object_header': add_object_header,
 	'offsets': add_offsets,
 	'tab_stop': add_tab_stop,
