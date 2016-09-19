@@ -441,8 +441,7 @@ char_style_flags = {
 	0x200: 'shaded',
 	0x400: 'line-through type',
 	0x800: 'outline',
-	# gap
-	# 0x1000: '',
+	0x1000: 'language',
 }
 
 para_style_flags = {
