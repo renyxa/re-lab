@@ -464,8 +464,8 @@ para_style_flags = {
 	0x200: 'shading type',
 	0x400: 'border line',
 	0x800: 'border type',
-	0x1000: 'list level',
-	0x2000: 'multi-level?',
+	0x1000: 'numbering level',
+	0x2000: 'multi-level',
 	0x4000: 'line height',
 	# gap
 	0x10000: 'border padding',
@@ -607,7 +607,11 @@ def add_attrset_para(hd, size, data):
 		5: 'left', 6: 'right', 7: 'left + right', 8: 'top + left'
 	})
 	add_iter(hd, 'Border type', border_map(border), off - 2, 2, '<H')
-	off += 4
+	(level, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Numbering level', level, off - 2, 2, '<H')
+	multi_map = {0: 'None', 1: 'Legal (1.1)', 2: 'Outline (I,A,)'}
+	(multi, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Multi-level numbering type', key2txt(multi, multi_map), off - 2, 2, '<H')
 	(line_height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Line height', '%d%%' % line_height, off - 2, 2, '<H')
 	off += 4
@@ -615,7 +619,9 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Section height', '%.2fcm' % to_cm(section_height), off - 2, 2, '<H')
 	(section_inc, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Section increment', '%.2fcm' % to_cm(section_inc), off - 2, 2, '<H')
-	off += 4
+	(numbering, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Numbering index?', numbering, off - 2, 2, '<H')
+	off += 2
 	(column_line, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
 
