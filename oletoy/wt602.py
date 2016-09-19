@@ -217,12 +217,9 @@ def handle_tabs(page, data, parent, parser=None):
 def handle_text_flows(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	(entry_size, off) = rdata(data, off, '<H')
-	off += 6
 	for i in range(0, count):
 		add_pgiter(page, 'Flow %d' % i, 'wt602', 'text_flow', data[off:off + entry_size], parent)
 		off += entry_size
-	if off < len(data):
-		add_pgiter(page, 'Trailer', 'wt602', '', data[off:], parent)
 
 def handle_frames(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
@@ -738,11 +735,21 @@ def add_text_flows(hd, size, data):
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Entry length', length, off - 2, 2, '<H')
+	off += count * length
+	off += 2
+	(first, off) = rdata(data, off, '<H')
+	add_iter(hd, 'First index?', index2txt(first), off - 2, 2, '<H')
+	(last, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Last index?', index2txt(last), off - 2, 2, '<H')
 
 def add_text_flow(hd, size, data):
-	off = 2
-	(index, off) = rdata(data, off, '<I') # TODO: or <H?
-	add_iter(hd, 'Start index', index, off - 4, 4, '<I')
+	(prev, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Previous index', index2txt(prev), off - 2, 2, '<H')
+	(next, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Next index', index2txt(next), off - 2, 2, '<H')
+	off += 4
+	(index, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Start index', index, off - 2, 2, '<H')
 
 def add_frames(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
