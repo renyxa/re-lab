@@ -415,22 +415,20 @@ def add_offsets(hd, size, data):
 		add_iter(hd, name, offset, off - 4, 4, '<I')
 		i += 1
 
-def get_char_style(flags):
-	names = {
-		0x1: 'font size',
-		0x2: 'bold',
-		0x4: 'italic',
-		0x8: 'underline type',
-		0x10: 'position',
-		0x20: 'transform',
-		0x40: 'color',
-		0x80: 'font',
-		0x100: 'letter spacing',
-		0x200: 'shaded',
-		0x400: 'line-through type',
-		0x800: 'outline',
-	}
-	return bflag2txt(flags, names)
+char_style_flags = {
+	0x1: 'font size',
+	0x2: 'bold',
+	0x4: 'italic',
+	0x8: 'underline type',
+	0x10: 'position',
+	0x20: 'transform',
+	0x40: 'color',
+	0x80: 'font',
+	0x100: 'letter spacing',
+	0x200: 'shaded',
+	0x400: 'line-through type',
+	0x800: 'outline',
+}
 
 line_map = {
 	0: '1pt',
@@ -471,7 +469,7 @@ def add_text_info(hd, size, data):
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Changed attributes', '%s' % get_char_style(attribs), off - 2, 2, '<H')
+	add_iter(hd, 'Changed attributes', bflag2txt(attribs, char_style_flags), off - 2, 2, '<H')
 	(length, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 	(seqno, off) = rdata(data, off, '<I')
@@ -593,7 +591,7 @@ def add_attrset_section(hd, size, data):
 def add_style(hd, size, data):
 	off = 0
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Changed attributes', '%s' % get_char_style(attribs), off - 2, 2, '<H')
+	add_iter(hd, 'Changed attributes', bflag2txt(attribs, char_style_flags), off - 2, 2, '<H')
 	off += 2
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
