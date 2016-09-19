@@ -613,7 +613,7 @@ def add_attrset_section(hd, size, data):
 def add_style(hd, size, data):
 	off = 0
 	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Changed attributes', bflag2txt(attribs, char_style_flags), off - 2, 2, '<H')
+	add_iter(hd, 'Attributes', bflag2txt(attribs, char_style_flags), off - 2, 2, '<H')
 	off += 2
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
