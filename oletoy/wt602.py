@@ -58,7 +58,7 @@ wt602_section_names = {
 	# gap
 	10: 'Used fonts',
 	11: 'Tabs',
-	12: 'ToC?',
+	12: 'Named styles',
 	13: 'Chapters',
 	14: 'Index content',
 	# gap
@@ -278,10 +278,23 @@ def handle_chapters(page, data, parent, parser=None):
 		add_pgiter(page, 'Chapter %d' % i, 'wt602', 'chapter', data[off:off + size], parent)
 		off += size
 
+def handle_named_styles(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(length, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		start = off
+		end = start + length
+		off += 8
+		(string, off) = rdata(data, off, '<I')
+		assert parser.strings.has_key(string)
+		add_pgiter(page, '[%d] %s' % (i, parser.strings[string]), 'wt602', 'named_style', data[start:end], parent)
+		off = end
+
 wt602_section_handlers = {
 	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
 	11: (handle_tabs, 'tabs'),
+	12: (handle_named_styles, 'named_styles'),
 	13: (handle_chapters, 'chapters'),
 	14: (handle_index_content, 'index'),
 	16: (handle_frames, 'frames'),
@@ -428,6 +441,11 @@ char_style_flags = {
 	0x200: 'shaded',
 	0x400: 'line-through type',
 	0x800: 'outline',
+}
+
+para_style_flags = {
+	0x1: 'justify',
+	0x1000: 'list level',
 }
 
 line_map = {
@@ -965,6 +983,41 @@ def add_footnotes(hd, size, data):
 	(numbering, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Numbering restarts at', key2txt(numbering, numbering_map), off - 2, 2, '<H')
 
+def add_named_styles(hd, size, data):
+	(count, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Count', count, off - 4, 4, '<I')
+	(length, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Entry length', length, off - 2, 2, '<H')
+	off += count * length
+	off += 2
+	(first, off) = rdata(data, off, '<H')
+	add_iter(hd, 'First index?', index2txt(first), off - 2, 2, '<H')
+	(last, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Last index?', index2txt(last), off - 2, 2, '<H')
+
+def add_named_style(hd, size, data):
+	(prev, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Previous index?', index2txt(prev), off - 2, 2, '<H')
+	(next, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Next index?', index2txt(next), off - 2, 2, '<H')
+	off += 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', name, off - 4, 4, '<I')
+	(attrset, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Character attr. set ref', ref2txt(attrset), off - 2, 2, '<H')
+	(attrs, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Character attributes', bflag2txt(attrs, char_style_flags), off - 2, 2, '<H')
+	(para_attrset, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Paragraph attr. set ref', ref2txt(para_attrset), off - 2, 2, '<H')
+	off += 2
+	(para_attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Paragraph attributes', bflag2txt(para_attrs, para_style_flags), off - 4, 4, '<I')
+	following_map = {0xffff: 'the same'}
+	(following, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Style of following paragraph', key2txt(following, following_map, '%s' % following), off - 2, 2, '<H')
+	(parent, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Parent style', index2txt(parent), off - 2, 2, '<H')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1000,6 +1053,8 @@ wt602_ids = {
 	'text_flows': add_text_flows,
 	'text_info': add_text_info,
 	'text_infos': add_text_infos,
+	'named_styles': add_named_styles,
+	'named_style': add_named_style,
 	'string_entry': add_string_entry,
 	'string_header': add_string_header,
 	'string_map': add_string_map,
