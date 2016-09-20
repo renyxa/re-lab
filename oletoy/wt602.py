@@ -266,6 +266,13 @@ def handle_frames(page, data, parent, parser=None):
 	defiter = add_pgiter(page, 'Definitions', 'wt602', '', data[off:off + count * entry_size], parent)
 	data_offsets = []
 	kinds = []
+	# The structure of the frame data is mostly the same for all kinds,
+	# but there's a block that is specific to each kind. So we need to
+	# dispatch each kind using a separate id. And we then need the same
+	# thing for the extra data records, which are different for each
+	# kind (and sometimes they are different even for a single kind,
+	# e.g., form controls).
+	kind_ids = []
 	controls = {}
 	for i in range(0, count):
 		start = off
@@ -275,12 +282,15 @@ def handle_frames(page, data, parent, parser=None):
 		off += 6
 		(kind, off) = rdata(data, off, '<H')
 		kinds.append(kind)
+		assert frame_kind_map.has_key(kind)
+		kind_ids.append(('%s' % frame_kind_map[kind]).lower().replace(' ', '_'))
 		label = key2txt(kind, frame_kind_map)
 		if kind == 0xf:
 			off += 0x5c
 			(controls[i], off) = rdata(data, off, '<H')
 			label += ': ' + key2txt(controls[i], form_control_map)
-		add_pgiter(page, '[%d] %s' % (i, label), 'wt602', 'frame', data[start:start + entry_size], defiter)
+		kid = 'frame_' + kind_ids[i]
+		add_pgiter(page, '[%d] %s' % (i, label), 'wt602', kid, data[start:start + entry_size], defiter)
 		off = start + entry_size
 	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
 	assert off == data_offsets[0]
@@ -292,9 +302,7 @@ def handle_frames(page, data, parent, parser=None):
 		if kind == 0xf:
 			(offset, off) = rdata(data, start + 4, '<I')
 			name = ' ' + key2txt(offset, parser.strings, '')
-		kid = ''
-		if frame_kind_map.has_key(kind):
-			kid = 'frame_data_' + ('%s' % frame_kind_map[kind]).lower().replace(' ', '_')
+		kid = 'frame_data_' + kind_ids[i]
 		if controls.has_key(i):
 			kid += '_' + form_control_map[controls[i]].lower()
 		add_pgiter(page, '[%d]%s' % (i, name), 'wt602', kid, data[start:end], dataiter)
@@ -816,8 +824,8 @@ def add_frames(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
-def add_frame(hd, size, data):
-	off = 4
+def _add_frame_header(hd, size, data, offset):
+	off = offset + 4
 	(data_off, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Extra data offset', data_off, off - 4, 4, '<I')
 	off += 4
@@ -860,28 +868,11 @@ def add_frame(hd, size, data):
 	add_iter(hd, 'Right with padding', '%.2f cm' % to_cm(right_padding), off - 4, 4, '<I')
 	(bottom_padding, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Bottom with padding', '%.2f cm' % to_cm(bottom_padding), off - 4, 4, '<I')
-	# borders
-	(left_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Left text frame margin', '%.2f cm' % to_cm(left_border), off - 4, 4, '<I')
-	(top_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Top text frame margin', '%.2f cm' % to_cm(top_border), off - 4, 4, '<I')
-	(right_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Right text frame margin', '%.2f cm' % to_cm(right_border), off - 4, 4, '<I')
-	(bottom_border, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Bottom text frame margin', '%.2f cm' % to_cm(bottom_border), off - 4, 4, '<I')
-	off += 24
-	if kind == 0xf:
-		(typ, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Control type', key2txt(typ, form_control_map), off - 2, 2, '<H')
-		off += 6
-	else:
-		(height, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Text frame height', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
-		(width, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Text frame width', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
-	off += 0x30
+	return off
+
+def _add_frame_trailer(hd, size, data, offset):
 	wrap_map = {0: 'run-through', 1: 'none', 2: 'parallel'}
-	(wrap, off) = rdata(data, off, '<B')
+	(wrap, off) = rdata(data, offset, '<B')
 	add_iter(hd, 'Wrap', key2txt(wrap, wrap_map), off - 1, 1, '<B')
 	off += 3
 	(border_line, off) = rdata(data, off, '<B') # TODO: border line is probably only 1B; change elsewhere
@@ -899,6 +890,58 @@ def add_frame(hd, size, data):
 	(page, off) = rdata(data, off, '<B')
 	add_iter(hd, 'On page', key2txt(page & 0x3, page_map), off - 1, 1, '<B')
 	add_iter(hd, 'Not on first', bool(page & 0x4), off - 1, 1, '<B')
+	return off
+
+def _add_frame_text_margins(hd, size, data, offset):
+	(left_border, off) = rdata(data, offset, '<I')
+	add_iter(hd, 'Left text frame margin', '%.2f cm' % to_cm(left_border), off - 4, 4, '<I')
+	(top_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top text frame margin', '%.2f cm' % to_cm(top_border), off - 4, 4, '<I')
+	(right_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right text frame margin', '%.2f cm' % to_cm(right_border), off - 4, 4, '<I')
+	(bottom_border, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom text frame margin', '%.2f cm' % to_cm(bottom_border), off - 4, 4, '<I')
+	off += 24
+	(height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Text frame height', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
+	(width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Text frame width', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
+	return off
+
+def add_frame_text(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off = _add_frame_text_margins(hd, size, data, off)
+	off += 48
+	_add_frame_trailer(hd, size, data, off)
+
+def add_frame_image(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off += 0x60
+	_add_frame_trailer(hd, size, data, off)
+
+def add_frame_table(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off += 0x60
+	_add_frame_trailer(hd, size, data, off)
+
+def add_frame_group(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off += 0x60
+	_add_frame_trailer(hd, size, data, off)
+
+def add_frame_form_control(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off += 40
+	(typ, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Control type', key2txt(typ, form_control_map), off - 2, 2, '<H')
+	off += 54
+	_add_frame_trailer(hd, size, data, off)
+
+def add_frame_shape(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off = _add_frame_text_margins(hd, size, data, off)
+	off += 48
+	_add_frame_trailer(hd, size, data, off)
 
 def add_frame_data_text(hd, size, data):
 	pass
@@ -1197,7 +1240,12 @@ wt602_ids = {
 	'fields' : add_fields,
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
-	'frame': add_frame,
+	'frame_text': add_frame_text,
+	'frame_image': add_frame_image,
+	'frame_table': add_frame_table,
+	'frame_group': add_frame_group,
+	'frame_form_control': add_frame_form_control,
+	'frame_shape': add_frame_shape,
 	'frame_data_text': add_frame_data_text,
 	'frame_data_image': add_frame_data_image,
 	'frame_data_table': add_frame_data_table,
