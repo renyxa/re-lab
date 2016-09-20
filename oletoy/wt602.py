@@ -39,11 +39,14 @@ def index2txt(value):
 	else:
 		return '%d' % value
 
-def off2txt(value):
+def off2txt(value, hd):
 	if value == 0xffffffff:
 		return 'none'
 	else:
-		return '%d' % value
+		if hd:
+			return '%d (%s)' % (value, key2txt(value, hd.context.strings, ''))
+		else:
+			return '%d' % value
 
 def preview(text):
 	maxlen = 10
@@ -1104,27 +1107,27 @@ def add_frame_data_image(hd, size, data):
 	add_iter(hd, 'Use in form', typ == 6, off - 1, 1, '<B')
 	off += 3
 	(path, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Path string offset', off2txt(path), off - 4, 4, '<I')
+	add_iter(hd, 'Path string', off2txt(path, hd), off - 4, 4, '<I')
 	if typ == 5:
 		(alt, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Alt. text string offset', off2txt(alt), off - 4, 4, '<I')
+		add_iter(hd, 'Alt. text string', off2txt(alt, hd), off - 4, 4, '<I')
 		(url, off) = rdata(data, off, '<I')
-		add_iter(hd, 'URL link string offset', off2txt(url), off - 4, 4, '<I')
+		add_iter(hd, 'URL link string', off2txt(url, hd), off - 4, 4, '<I')
 		(uname, off) = rdata(data, off, '<I')
-		add_iter(hd, 'USEMAP name string offset', off2txt(uname), off - 4, 4, '<I')
+		add_iter(hd, 'USEMAP name string', off2txt(uname, hd), off - 4, 4, '<I')
 		(attrs, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+		add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 	else:
 		(name, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+		add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 		(action, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Action string offset', off2txt(action), off - 4, 4, '<I')
+		add_iter(hd, 'Action string', off2txt(action, hd), off - 4, 4, '<I')
 		(fmt, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Data format string offset', off2txt(fmt), off - 4, 4, '<I')
+		add_iter(hd, 'Data format string', off2txt(fmt, hd), off - 4, 4, '<I')
 		(attrs, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+		add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 		(method, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Method string offset', off2txt(method), off - 4, 4, '<I')
+		add_iter(hd, 'Method string', off2txt(method, hd), off - 4, 4, '<I')
 
 def add_frame_data_table(hd, size, data):
 	pass
@@ -1135,54 +1138,54 @@ def add_frame_data_group(hd, size, data):
 def _add_frame_data_form_text_field(hd, size, data):
 	off = 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	off += 4
 	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 	(value, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Value string offset', off2txt(value), off - 4, 4, '<I')
+	add_iter(hd, 'Value string', off2txt(value, hd), off - 4, 4, '<I')
 
 def add_frame_data_form_control_checkbox(hd, size, data):
 	off = 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	(value, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Value string offset', off2txt(value), off - 4, 4, '<I')
+	add_iter(hd, 'Value string', off2txt(value, hd), off - 4, 4, '<I')
 	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 
 def add_frame_data_form_control_radio(hd, size, data):
 	off = 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	(value, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Value string offset', off2txt(value), off - 4, 4, '<I')
+	add_iter(hd, 'Value string', off2txt(value, hd), off - 4, 4, '<I')
 	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 
 def add_frame_data_form_control_submit(hd, size, data):
 	off = 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	(label, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Label string offset', off2txt(label), off - 4, 4, '<I')
+	add_iter(hd, 'Label string', off2txt(label, hd), off - 4, 4, '<I')
 	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 	(action, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Action string offset', off2txt(action), off - 4, 4, '<I')
+	add_iter(hd, 'Action string', off2txt(action, hd), off - 4, 4, '<I')
 	(format, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data format string offset', off2txt(format), off - 4, 4, '<I')
+	add_iter(hd, 'Data format string', off2txt(format, hd), off - 4, 4, '<I')
 	(method, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Method string offset', off2txt(method), off - 4, 4, '<I')
+	add_iter(hd, 'Method string', off2txt(method, hd), off - 4, 4, '<I')
 
 def add_frame_data_form_control_reset(hd, size, data):
 	off = 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	(label, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Label string offset', off2txt(label), off - 4, 4, '<I')
+	add_iter(hd, 'Label string', off2txt(label, hd), off - 4, 4, '<I')
 	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 
 def add_frame_data_form_control_text(hd, size, data):
 	_add_frame_data_form_text_field(hd, size, data)
@@ -1193,17 +1196,17 @@ def add_frame_data_form_control_textarea(hd, size, data):
 def add_frame_data_form_control_select(hd, size, data):
 	off = 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	# NOTE: The values and displayed values strings are a concatenation
 	# of items, each ended by <Tab>. There can be an extra tab preceding
 	# an item in the displayed values string; that means the item is
 	# selected.
 	(values, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Values string offset', off2txt(values), off - 4, 4, '<I')
+	add_iter(hd, 'Values string', off2txt(values, hd), off - 4, 4, '<I')
 	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
 	(displayed, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Displayed values string offset', off2txt(displayed), off - 4, 4, '<I')
+	add_iter(hd, 'Displayed values string', off2txt(displayed, hd), off - 4, 4, '<I')
 
 def add_frame_data_form_control_password(hd, size, data):
 	_add_frame_data_form_text_field(hd, size, data)
@@ -1261,9 +1264,9 @@ def add_index_entry(hd, size, data):
 def add_change(hd, size, data):
 	off = 16
 	(author, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Author string offset', off2txt(author), off - 4, 4, '<I')
+	add_iter(hd, 'Author string', off2txt(author, hd), off - 4, 4, '<I')
 	(offset, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Comment string offset', off2txt(offset), off - 4, 4, '<I')
+	add_iter(hd, 'Comment string', off2txt(offset, hd), off - 4, 4, '<I')
 
 def add_changes(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
@@ -1324,30 +1327,30 @@ def add_field(hd, size, data):
 	if typ == 0x3:
 		off += 12
 		(mark, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Mark string offset', mark, off - 4, 4, '<I')
+		add_iter(hd, 'Mark string', off2txt(mark, hd), off - 4, 4, '<I')
 		(number, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Mark number?', number, off - 4, 4, '<I')
 	elif typ == 0x15:
 		off += 4
 		(tag, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Tag string offset', tag, off - 4, 4, '<I')
+		add_iter(hd, 'Tag string', off2txt(tag, hd), off - 4, 4, '<I')
 	elif typ == 0x16:
 		off += 4
 		(entity, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Entity string offset', entity, off - 4, 4, '<I')
+		add_iter(hd, 'Entity string', off2txt(entity, hd), off - 4, 4, '<I')
 	elif typ == 0x17:
 		off += 4
 		(title, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Title string offset', title, off - 4, 4, '<I')
+		add_iter(hd, 'Title string', off2txt(title, hd), off - 4, 4, '<I')
 		(url, off) = rdata(data, off, '<I')
-		add_iter(hd, 'URL string offset', url, off - 4, 4, '<I')
+		add_iter(hd, 'URL string', off2txt(url, hd), off - 4, 4, '<I')
 		(attrs, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Attributes string offset', attrs, off - 4, 4, '<I')
+		add_iter(hd, 'Attributes string', off2txt(attrs, hd), off - 4, 4, '<I')
 	elif typ == 0x18:
 		(text, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Text string offset', text, off - 4, 4, '<I')
+		add_iter(hd, 'Text string', off2txt(text, hd), off - 4, 4, '<I')
 		(comment, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Comment string offset', comment, off - 4, 4, '<I')
+		add_iter(hd, 'Comment string', off2txt(comment, hd), off - 4, 4, '<I')
 	elif typ == 0x19:
 		off += 8
 		(char, off) = rdata(data, off, '<H')
@@ -1357,9 +1360,9 @@ def add_field(hd, size, data):
 		add_iter(hd, 'Script', key2txt(script, script_map), off - 2, 2, '<H')
 	elif typ == 0x1a:
 		(name, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Name string offset', name, off - 4, 4, '<I')
+		add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 		(content, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Content string offset', content, off - 4, 4, '<I')
+		add_iter(hd, 'Content string', off2txt(content, hd), off - 4, 4, '<I')
 
 def add_chapter(hd, size, data):
 	off = 0
@@ -1395,7 +1398,7 @@ def add_named_style(hd, size, data):
 	off = _add_list_links(hd, data)
 	off += 4
 	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', name, off - 4, 4, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Character attr. set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attrs, off) = rdata(data, off, '<H')
@@ -1436,7 +1439,7 @@ def add_numbering(hd, size, data):
 		add_iter(hd, 'Numbering type?', key2txt(num_type, num_type_map), off - 2, 2, '<H')
 		off += 2
 		(fmt, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Number format string offset', fmt, off - 4, 4, '<I')
+		add_iter(hd, 'Number format string', off2txt(fmt, hd), off - 4, 4, '<I')
 		(start, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Start value', start, off - 4, 4, '<I')
 	elif typ == 7:
@@ -1513,6 +1516,7 @@ wt602_ids = {
 
 def parse(page, data, parent):
 	parser = wt602_parser(page, data, parent)
+	page.context = parser
 	parser.parse()
 
 def parse_object(page, data, parent):

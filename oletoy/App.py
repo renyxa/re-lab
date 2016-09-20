@@ -44,6 +44,7 @@ class Page:
 		self.pname = ''
 		self.items = ''
 		self.version = 0
+		self.context = None # an arbitrary object; can be used to pass file-specific data to callbacks
 		self.hd = None
 		self.hpaned = None
 		self.dict = None

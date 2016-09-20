@@ -1387,6 +1387,7 @@ class ApplicationMainWindow(gtk.Window):
 		model = self.das[pn].view.get_model()
 		hd = self.das[pn].hd
 		hd.version = self.das[pn].version
+		hd.context = self.das[pn].context
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
 		size = model.get_value(iter1,2)
