@@ -1259,7 +1259,9 @@ def add_index_entry(hd, size, data):
 	add_iter(hd, 'Entry ref', ref2txt(eid), off - 2, 2, '<H')
 
 def add_change(hd, size, data):
-	off = 0x14
+	off = 16
+	(author, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Author string offset', off2txt(author), off - 4, 4, '<I')
 	(offset, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Comment string offset', off2txt(offset), off - 4, 4, '<I')
 
