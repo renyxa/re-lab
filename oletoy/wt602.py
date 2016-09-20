@@ -94,6 +94,18 @@ frame_kind_map = {
 	0x11: 'Shape',
 }
 
+form_control_map = {
+	1: 'Checkbox',
+	2: 'Radio',
+	3: 'Submit',
+	4: 'Reset',
+	5: 'Text',
+	6: 'Textarea',
+	7: 'Select',
+	8: 'Password',
+	9: 'Hidden',
+}
+
 def _handle_linked_list(page, data, parent, parser, entry_id):
 	(count, off) = rdata(data, 0, '<I')
 	(entry_size, off) = rdata(data, off, '<H')
@@ -254,6 +266,7 @@ def handle_frames(page, data, parent, parser=None):
 	defiter = add_pgiter(page, 'Definitions', 'wt602', '', data[off:off + count * entry_size], parent)
 	data_offsets = []
 	kinds = []
+	controls = {}
 	for i in range(0, count):
 		start = off
 		off += 4
@@ -262,7 +275,12 @@ def handle_frames(page, data, parent, parser=None):
 		off += 6
 		(kind, off) = rdata(data, off, '<H')
 		kinds.append(kind)
-		add_pgiter(page, '[%d] %s' % (i, key2txt(kind, frame_kind_map)), 'wt602', 'frame', data[start:start + entry_size], defiter)
+		label = key2txt(kind, frame_kind_map)
+		if kind == 0xf:
+			off += 0x5c
+			(controls[i], off) = rdata(data, off, '<H')
+			label += ': ' + key2txt(controls[i], form_control_map)
+		add_pgiter(page, '[%d] %s' % (i, label), 'wt602', 'frame', data[start:start + entry_size], defiter)
 		off = start + entry_size
 	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
 	assert off == data_offsets[0]
@@ -270,10 +288,16 @@ def handle_frames(page, data, parent, parser=None):
 	data_offsets.append(len(data))
 	i = 0
 	for (start, end, kind) in zip(data_offsets[0:-1], data_offsets[1:], kinds):
+		name = ''
+		if kind == 0xf:
+			(offset, off) = rdata(data, start + 4, '<I')
+			name = ' ' + key2txt(offset, parser.strings, '')
 		kid = ''
 		if frame_kind_map.has_key(kind):
 			kid = 'frame_data_' + ('%s' % frame_kind_map[kind]).lower().replace(' ', '_')
-		add_pgiter(page, '[%d]' % i, 'wt602', kid, data[start:end], dataiter)
+		if controls.has_key(i):
+			kid += '_' + form_control_map[controls[i]].lower()
+		add_pgiter(page, '[%d]%s' % (i, name), 'wt602', kid, data[start:end], dataiter)
 		i += 1
 
 def handle_index(page, data, parent, parser=None):
@@ -846,10 +870,15 @@ def add_frame(hd, size, data):
 	(bottom_border, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Bottom text frame margin', '%.2f cm' % to_cm(bottom_border), off - 4, 4, '<I')
 	off += 24
-	(height, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Text frame height', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
-	(width, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Text frame width', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
+	if kind == 0xf:
+		(typ, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Control type', key2txt(typ, form_control_map), off - 2, 2, '<H')
+		off += 6
+	else:
+		(height, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Text frame height', '%.2f cm' % to_cm(height), off - 4, 4, '<I')
+		(width, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Text frame width', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
 	off += 0x30
 	wrap_map = {0: 'run-through', 1: 'none', 2: 'parallel'}
 	(wrap, off) = rdata(data, off, '<B')
@@ -883,7 +912,37 @@ def add_frame_data_table(hd, size, data):
 def add_frame_data_group(hd, size, data):
 	pass
 
-def add_frame_data_form_control(hd, size, data):
+def add_frame_data_form_control_checkbox(hd, size, data):
+	off = 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	(value, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Value string offset', off2txt(value), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+
+def add_frame_data_form_control_radio(hd, size, data):
+	pass
+
+def add_frame_data_form_control_submit(hd, size, data):
+	pass
+
+def add_frame_data_form_control_reset(hd, size, data):
+	pass
+
+def add_frame_data_form_control_text(hd, size, data):
+	pass
+
+def add_frame_data_form_control_textarea(hd, size, data):
+	pass
+
+def add_frame_data_form_control_select(hd, size, data):
+	pass
+
+def add_frame_data_form_control_password(hd, size, data):
+	pass
+
+def add_frame_data_form_control_hidden(hd, size, data):
 	pass
 
 def add_frame_data_shape(hd, size, data):
@@ -1143,7 +1202,15 @@ wt602_ids = {
 	'frame_data_image': add_frame_data_image,
 	'frame_data_table': add_frame_data_table,
 	'frame_data_group': add_frame_data_group,
-	'frame_data_form_control': add_frame_data_form_control,
+	'frame_data_form_control_checkbox': add_frame_data_form_control_checkbox,
+	'frame_data_form_control_radio': add_frame_data_form_control_radio,
+	'frame_data_form_control_submit': add_frame_data_form_control_submit,
+	'frame_data_form_control_reset': add_frame_data_form_control_reset,
+	'frame_data_form_control_text': add_frame_data_form_control_text,
+	'frame_data_form_control_textarea': add_frame_data_form_control_textarea,
+	'frame_data_form_control_select': add_frame_data_form_control_select,
+	'frame_data_form_control_password': add_frame_data_form_control_password,
+	'frame_data_form_control_hidden': add_frame_data_form_control_hidden,
 	'frame_data_shape': add_frame_data_shape,
 	'frames': add_frames,
 	'index': add_index,
