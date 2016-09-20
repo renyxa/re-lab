@@ -81,6 +81,19 @@ wt602_section_names = {
 	# gap
 }
 
+frame_kind_map = {
+	# gap
+	0x8: 'Text',
+	# gap
+	0xb: 'Image',
+	# gap
+	0xd: 'Table',
+	0xe: 'Group',
+	0xf: 'Form control',
+	# gap
+	0x11: 'Shape',
+}
+
 def _handle_linked_list(page, data, parent, parser, entry_id):
 	(count, off) = rdata(data, 0, '<I')
 	(entry_size, off) = rdata(data, off, '<H')
@@ -239,17 +252,29 @@ def handle_frames(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	entry_size = 204
 	defiter = add_pgiter(page, 'Definitions', 'wt602', '', data[off:off + count * entry_size], parent)
-	datalens = []
+	data_offsets = []
+	kinds = []
 	for i in range(0, count):
-		add_pgiter(page, 'Frame %d' % i, 'wt602', 'frame', data[off:off + entry_size], defiter)
-		(datalen, off) = rdata(data, off, '<I') # TODO: maybe only <H?
-		datalens.append(datalen)
-		off += entry_size - 4
+		start = off
+		off += 4
+		(data_off, off) = rdata(data, off, '<I')
+		data_offsets.append(data_off)
+		off += 6
+		(kind, off) = rdata(data, off, '<H')
+		kinds.append(kind)
+		add_pgiter(page, '[%d] %s' % (i, key2txt(kind, frame_kind_map)), 'wt602', 'frame', data[start:start + entry_size], defiter)
+		off = start + entry_size
 	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
-	for i in range(0, count):
-		end = off + datalens[i] + 4
-		add_pgiter(page, 'Data %d' % i, 'wt602', 'frame_data', data[off:end], dataiter)
-		off = end
+	assert off == data_offsets[0]
+	assert len(data_offsets) == count
+	data_offsets.append(len(data))
+	i = 0
+	for (start, end, kind) in zip(data_offsets[0:-1], data_offsets[1:], kinds):
+		kid = ''
+		if frame_kind_map.has_key(kind):
+			kid = 'frame_data_' + ('%s' % frame_kind_map[kind]).lower().replace(' ', '_')
+		add_pgiter(page, '[%d]' % i, 'wt602', kid, data[start:end], dataiter)
+		i += 1
 
 def handle_index(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
@@ -768,13 +793,15 @@ def add_frames(hd, size, data):
 	add_iter(hd, 'Count', count, off - 4, 4, '<I')
 
 def add_frame(hd, size, data):
-	off = 0xc
+	off = 4
+	(data_off, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra data offset', data_off, off - 4, 4, '<I')
+	off += 4
 	(sid, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Shape ID', id2txt(sid), off - 2, 2, '<H')
-	kind_map = {0x8: 'text', 0xb: 'image', 0xd: 'table', 0xe: 'group', 0xf: 'form control', 0x11: 'shape'}
-	(kind, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Kind', key2txt(kind, kind_map), off - 1, 1, '<B')
-	off += 5
+	(kind, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Kind', key2txt(kind, frame_kind_map), off - 2, 2, '<H')
+	off += 4
 	(above, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Is above', ref2txt(above), off - 2, 2, '<H')
 	(below, off) = rdata(data, off, '<H')
@@ -844,7 +871,22 @@ def add_frame(hd, size, data):
 	add_iter(hd, 'On page', key2txt(page & 0x3, page_map), off - 1, 1, '<B')
 	add_iter(hd, 'Not on first', bool(page & 0x4), off - 1, 1, '<B')
 
-def add_frame_data(hd, size, data):
+def add_frame_data_text(hd, size, data):
+	pass
+
+def add_frame_data_image(hd, size, data):
+	pass
+
+def add_frame_data_table(hd, size, data):
+	pass
+
+def add_frame_data_group(hd, size, data):
+	pass
+
+def add_frame_data_form_control(hd, size, data):
+	pass
+
+def add_frame_data_shape(hd, size, data):
 	off = 4
 	type_map = {
 		0x1: 'rectangle',
@@ -1097,7 +1139,12 @@ wt602_ids = {
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
 	'frame': add_frame,
-	'frame_data': add_frame_data,
+	'frame_data_text': add_frame_data_text,
+	'frame_data_image': add_frame_data_image,
+	'frame_data_table': add_frame_data_table,
+	'frame_data_group': add_frame_data_group,
+	'frame_data_form_control': add_frame_data_form_control,
+	'frame_data_shape': add_frame_data_shape,
 	'frames': add_frames,
 	'index': add_index,
 	'index_content_entry': add_index_content_entry,
