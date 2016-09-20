@@ -1127,9 +1127,90 @@ def add_frame_data_barcode(hd, size, data):
 def add_frame_data_shape(hd, size, data):
 	off = 4
 	type_map = {
-		0x1: 'rectangle',
-		0x14: 'line',
-		0xba: 'compound brackets',
+		0x1: 'Rectangle',
+		0x2: 'Rounded rectangle',
+		0x3: 'Ellipse',
+		0x4: 'Rhombus',
+		0x5: 'Triangle',
+		0x6: 'Right triangle',
+		0x7: 'Rhomboid',
+		0x8: 'Trapezoid',
+		0x9: 'Hexagon',
+		0xa: 'Octagon',
+		0xb: 'Cross',
+		0xc: 'Five-pointed star',
+		0xd: 'Right arrow',
+		# gap
+		0xf: 'Pentagonal arrow',
+		# gap
+		0x10: 'Cube',
+		# gap
+		0x13: 'Arc',
+		0x14: 'Line',
+		0x15: 'Plaque',
+		0x16: 'Can',
+		0x17: 'Ring',
+		# gap
+		0x35: 'Ribbon down',
+		0x36: 'Ribbon up',
+		0x37: 'Double arrow',
+		0x38: 'Pentagon',
+		0x39: 'Prohibition',
+		0x3a: 'Eight-pointed star',
+		0x3b: '16-pointed star',
+		0x3c: '32-pointed star',
+		# gap
+		0x40: 'Wave',
+		0x41: 'Folded corner',
+		0x42: 'Left arrow',
+		0x43: 'Down arrow',
+		0x44: 'Up arrow',
+		0x45: 'Bidir. horiz. arrow',
+		0x46: 'Bidir. vert. arrow',
+		0x47: 'Explosion 1',
+		0x48: 'Explosion 2',
+		0x49: 'Thunderbolt',
+		0x4a: 'Heart',
+		# gap
+		0x4c: 'Four-ended arrow',
+		0x4d: 'Rect. with left arrow',
+		0x4e: 'Rect. with right arrow',
+		0x4f: 'Rect. with up arrow',
+		0x50: 'Rect. with down arrow',
+		0x51: 'Rect. with horiz. arrows',
+		0x52: 'Rect. with vert. arrows',
+		0x53: 'Rect. with all-dir. arrows',
+		# gap
+		0x54: 'Slanted edges',
+		0x55: 'Left bracket',
+		0x56: 'Right bracket',
+		0x57: 'Left compound bracket',
+		0x58: 'Right compound bracket',
+		0x59: 'Left and up arrow',
+		0x5a: 'Up-bended arrow',
+		0x5b: 'Bended arrow',
+		0x5c: '24-pointed star',
+		0x5d: 'Striped arrow',
+		0x5e: 'Wedged arrow',
+		0x5f: 'Bended band',
+		# gap
+		0x60: 'Smile',
+		0x61: 'Vert. scroll',
+		0x62: 'Horiz. scroll',
+		0x63: 'Round arrow',
+		# gap
+		0x65: 'U-shaped arrow',
+		# gap
+		0x6b: 'Bended ribbon down',
+		0x6c: 'Bended ribbon up',
+		# gap
+		0xb6: 'Three-ended arrow',
+		0xb7: 'Sun',
+		0xb8: 'Moon',
+		0xb9: 'Brackets',
+		0xba: 'Compound brackets',
+		0xbb: 'Four-pointed star',
+		0xbc: 'Double wave',
 	}
 	(typ, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Shape type', key2txt(typ, type_map), off - 2, 2, '<H')
