@@ -390,6 +390,13 @@ class wt602_parser(object):
 def to_cm(val):
 	return val / 20.0 * 0.353 / 10
 
+def _add_list_links(hd, data):
+	(prev, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Previous index', index2txt(prev), off - 2, 2, '<H')
+	(next, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Next index', index2txt(next), off - 2, 2, '<H')
+	return off
+
 def add_color(hd, size, data):
 	(r, off) = rdata(data, 0, '<B')
 	add_iter(hd, 'Red', r, off - 1, 1, '<B')
@@ -744,10 +751,7 @@ def add_tab_stop(hd, size, data):
 		i += 1
 
 def add_text_flow(hd, size, data):
-	(prev, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Previous index', index2txt(prev), off - 2, 2, '<H')
-	(next, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Next index', index2txt(next), off - 2, 2, '<H')
+	off = _add_list_links(hd, data)
 	off += 4
 	(index, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Start index', index, off - 2, 2, '<H')
@@ -1014,10 +1018,7 @@ def add_footnotes(hd, size, data):
 	add_iter(hd, 'Numbering restarts at', key2txt(numbering, numbering_map), off - 2, 2, '<H')
 
 def add_named_style(hd, size, data):
-	(prev, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Previous index?', index2txt(prev), off - 2, 2, '<H')
-	(next, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Next index?', index2txt(next), off - 2, 2, '<H')
+	off = _add_list_links(hd, data)
 	off += 4
 	(name, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Name string offset', name, off - 4, 4, '<I')
@@ -1049,10 +1050,7 @@ def add_linked_list(hd, size, data):
 	add_iter(hd, 'Last index', index2txt(last), off - 2, 2, '<H')
 
 def add_numbering(hd, size, data):
-	(prev, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Previous index', index2txt(prev), off - 2, 2, '<H')
-	(next, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Next index', index2txt(next), off - 2, 2, '<H')
+	off = _add_list_links(hd, data)
 	type_map = {3: 'Ordered', 7: 'Unordered'} # TODO: flags?
 	(typ, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Type', key2txt(typ, type_map), off - 2, 2, '<H')
