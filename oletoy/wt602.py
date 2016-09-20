@@ -208,18 +208,29 @@ def handle_section_styles(page, data, parent, parser = None):
 
 def handle_tabs(page, data, parent, parser=None):
 	off = 0
-	(count, off) = rdata(data, off, '<H')
-	tab_size = 16
-	off += 8
+	(count, off) = rdata(data, off, '<I')
+	(tab_size, off) = rdata(data, off, '<H')
+	tabs_end = count * tab_size + 12
+	tabsiter = add_pgiter(page, 'Defs', 'wt602', 'linked_list', data[0:tabs_end], parent)
+	stop_counts = []
 	for i in range(0, count):
-		add_pgiter(page, 'Tabs %d' % i, 'wt602', 'tabs_def', data[off:off + tab_size], parent)
-		off += tab_size
-	stops_iter = add_pgiter(page, 'Tab stops', 'wt602', 'container', data[off:], parent)
-	(stops, off) = rdata(data, off, '<H')
-	for i in range(0, stops):
-		end = off + 4 * (i + 1)
-		add_pgiter(page, 'Tab stops %d' % i, 'wt602', 'tab_stop', data[off:end], stops_iter)
+		start = off
+		off += 8
+		(stops, off) = rdata(data, off, '<H')
+		stops_str = ''
+		if stops > 0:
+			stops_str = ' (Stops index: %d)' % len(stop_counts)
+			stop_counts.append(stops)
+		add_pgiter(page, '[%d]%s' % (i, stops_str), 'wt602', 'tabs_def', data[start:start + tab_size], tabsiter)
+		off = start + tab_size
+	stops_iter = add_pgiter(page, 'Stops', 'wt602', '', data[off:], parent)
+	off += 6
+	i = 0
+	for stops in stop_counts:
+		end = off + 4 * stops
+		add_pgiter(page, '[%d]' % i, 'wt602', 'tab_stop', data[off:end], stops_iter)
 		off = end
+		i += 1
 
 def handle_text_flows(page, data, parent, parser=None):
 	_handle_linked_list(page, data, parent, parser, 'text_flow')
@@ -296,7 +307,7 @@ def handle_numberings(page, data, parent, parser=None):
 wt602_section_handlers = {
 	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
-	11: (handle_tabs, 'tabs'),
+	11: (handle_tabs, ''),
 	12: (handle_named_styles, 'linked_list'),
 	13: (handle_chapters, 'chapters'),
 	14: (handle_index_content, 'index'),
@@ -726,15 +737,11 @@ def add_attrset_ids(hd, size, data):
 		add_iter(hd, 'ID of attr. set %d' % n, id2txt(id), off - 2, 2, '<H')
 		n += 1
 
-def add_tabs(hd, size, data):
-	off = 0
-	(count, off) = rdata(data, off, '<H') # or is it 4 bytes?
-	add_iter(hd, 'Number of tabs', count, off - 2, 2, '<H')
-
 def add_tabs_def(hd, size, data):
-	off = 4
+	off = _add_list_links(hd, data)
+	off += 4
 	(stops, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of stops?', stops, off - 2, 2, '<H')
+	add_iter(hd, 'Number of stops', stops, off - 2, 2, '<H')
 
 def add_tab_stop(hd, size, data):
 	i = 0
