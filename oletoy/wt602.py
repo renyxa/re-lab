@@ -90,7 +90,7 @@ frame_kind_map = {
 	0xd: 'Table',
 	0xe: 'Group',
 	0xf: 'Form control',
-	# gap
+	0x10: 'Barcode',
 	0x11: 'Shape',
 }
 
@@ -272,7 +272,7 @@ def handle_frames(page, data, parent, parser=None):
 	# thing for the extra data records, which are different for each
 	# kind (and sometimes they are different even for a single kind,
 	# e.g., form controls).
-	kind_ids = []
+	kind_ids = {}
 	controls = {}
 	for i in range(0, count):
 		start = off
@@ -282,14 +282,16 @@ def handle_frames(page, data, parent, parser=None):
 		off += 6
 		(kind, off) = rdata(data, off, '<H')
 		kinds.append(kind)
-		assert frame_kind_map.has_key(kind)
-		kind_ids.append(('%s' % frame_kind_map[kind]).lower().replace(' ', '_'))
+		if frame_kind_map.has_key(kind):
+			kind_ids[i] = (('%s' % frame_kind_map[kind]).lower().replace(' ', '_'))
 		label = key2txt(kind, frame_kind_map)
 		if kind == 0xf:
 			off += 0x5c
 			(controls[i], off) = rdata(data, off, '<H')
 			label += ': ' + key2txt(controls[i], form_control_map)
-		kid = 'frame_' + kind_ids[i]
+		kid = 'frame'
+		if kind_ids.has_key(i):
+			kid + '_' + kind_ids[i]
 		add_pgiter(page, '[%d] %s' % (i, label), 'wt602', kid, data[start:start + entry_size], defiter)
 		off = start + entry_size
 	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
@@ -302,7 +304,9 @@ def handle_frames(page, data, parent, parser=None):
 		if kind == 0xf:
 			(offset, off) = rdata(data, start + 4, '<I')
 			name = ' ' + key2txt(offset, parser.strings, '')
-		kid = 'frame_data_' + kind_ids[i]
+		kid = ''
+		if kind_ids.has_key(i):
+			kid = 'frame_data_' + kind_ids[i]
 		if controls.has_key(i):
 			kid += '_' + form_control_map[controls[i]].lower()
 		add_pgiter(page, '[%d]%s' % (i, name), 'wt602', kid, data[start:end], dataiter)
@@ -908,6 +912,11 @@ def _add_frame_text_margins(hd, size, data, offset):
 	add_iter(hd, 'Text frame width', '%.2f cm' % to_cm(width), off - 4, 4, '<I')
 	return off
 
+def add_frame(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off += 0x60
+	_add_frame_trailer(hd, size, data, off)
+
 def add_frame_text(hd, size, data):
 	off = _add_frame_header(hd, size, data, 0)
 	off = _add_frame_text_margins(hd, size, data, off)
@@ -974,6 +983,11 @@ def add_frame_form_control(hd, size, data):
 	else:
 		off += 52
 
+	_add_frame_trailer(hd, size, data, off)
+
+def add_frame_barcode(hd, size, data):
+	off = _add_frame_header(hd, size, data, 0)
+	off += 0x60
 	_add_frame_trailer(hd, size, data, off)
 
 def add_frame_shape(hd, size, data):
@@ -1106,6 +1120,9 @@ def add_frame_data_form_control_password(hd, size, data):
 
 def add_frame_data_form_control_hidden(hd, size, data):
 	_add_frame_data_form_text_field(hd, size, data)
+
+def add_frame_data_barcode(hd, size, data):
+	pass
 
 def add_frame_data_shape(hd, size, data):
 	off = 4
@@ -1359,11 +1376,13 @@ wt602_ids = {
 	'fields' : add_fields,
 	'fonts' : add_fonts,
 	'footnotes' : add_footnotes,
+	'frame': add_frame,
 	'frame_text': add_frame_text,
 	'frame_image': add_frame_image,
 	'frame_table': add_frame_table,
 	'frame_group': add_frame_group,
 	'frame_form_control': add_frame_form_control,
+	'frame_barcode': add_frame_barcode,
 	'frame_shape': add_frame_shape,
 	'frame_data_text': add_frame_data_text,
 	'frame_data_image': add_frame_data_image,
@@ -1378,6 +1397,7 @@ wt602_ids = {
 	'frame_data_form_control_select': add_frame_data_form_control_select,
 	'frame_data_form_control_password': add_frame_data_form_control_password,
 	'frame_data_form_control_hidden': add_frame_data_form_control_hidden,
+	'frame_data_barcode': add_frame_data_barcode,
 	'frame_data_shape': add_frame_data_shape,
 	'frames': add_frames,
 	'index': add_index,
