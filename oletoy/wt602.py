@@ -916,7 +916,15 @@ def add_frame_text(hd, size, data):
 
 def add_frame_image(hd, size, data):
 	off = _add_frame_header(hd, size, data, 0)
-	off += 0x60
+	(left_crop, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Left crop', '%.2f cm' % to_cm(left_crop), off - 4, 4, '<I')
+	(top_crop, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top crop', '%.2f cm' % to_cm(top_crop), off - 4, 4, '<I')
+	(right_crop, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right crop', '%.2f cm' % to_cm(right_crop), off - 4, 4, '<I')
+	(bottom_crop, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom crop', '%.2f cm' % to_cm(bottom_crop), off - 4, 4, '<I')
+	off += 80
 	_add_frame_trailer(hd, size, data, off)
 
 def add_frame_table(hd, size, data):
@@ -978,19 +986,41 @@ def add_frame_data_text(hd, size, data):
 	pass
 
 def add_frame_data_image(hd, size, data):
-	off = size - 40
+	off = size - 64
+	format_map = {0x4: 'GIF', 0xd: 'JPEG'}
+	(format, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Image format', key2txt(format, format_map), off - 2, 2, '<H')
+	off += 2
+	mapping_flags = {0x1: 'ISMAP', 0x2: 'USEMAP'}
+	(mapping, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Image mapping', bflag2txt(mapping & 0xf, mapping_flags), off - 2, 2, '<H')
+	off += 14
+	(typ, off) = rdata(data, off, '<B')
+	assert typ in (5, 6)
+	add_iter(hd, 'Use in form', typ == 6, off - 1, 1, '<B')
+	off += 3
 	(path, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Path string offset', off2txt(path), off - 4, 4, '<I')
-	(name, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
-	(action, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Action string offset', off2txt(action), off - 4, 4, '<I')
-	(format, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Data format string offset', off2txt(format), off - 4, 4, '<I')
-	(attrs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
-	(method, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Method string offset', off2txt(method), off - 4, 4, '<I')
+	if typ == 5:
+		(alt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Alt. text string offset', off2txt(alt), off - 4, 4, '<I')
+		(url, off) = rdata(data, off, '<I')
+		add_iter(hd, 'URL link string offset', off2txt(url), off - 4, 4, '<I')
+		(uname, off) = rdata(data, off, '<I')
+		add_iter(hd, 'USEMAP name string offset', off2txt(uname), off - 4, 4, '<I')
+		(attrs, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	else:
+		(name, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+		(action, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Action string offset', off2txt(action), off - 4, 4, '<I')
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Data format string offset', off2txt(fmt), off - 4, 4, '<I')
+		(attrs, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+		(method, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Method string offset', off2txt(method), off - 4, 4, '<I')
 
 def add_frame_data_table(hd, size, data):
 	pass
