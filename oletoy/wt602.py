@@ -934,7 +934,38 @@ def add_frame_form_control(hd, size, data):
 	off += 40
 	(typ, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Control type', key2txt(typ, form_control_map), off - 2, 2, '<H')
-	off += 54
+	off += 2
+	if typ in (1, 2):
+		(checked, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Checked', bool(checked), off - 2, 2, '<H')
+		off += 50
+	elif typ in (5, 8, 9):
+		off += 6
+		(length, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Max length', length, off - 2, 2, '<H')
+		(width, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Width', width, off - 2, 2, '<H')
+		off += 42
+	elif typ == 6:
+		formatting_map = {0: 'Off', 1: 'Virtual', 2: 'Physical'}
+		(formatting, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Text formatting', key2txt(formatting, formatting_map), off - 2, 2, '<H')
+		off += 6
+		(width, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Width', width, off - 2, 2, '<H')
+		(lines, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Lines', lines, off - 2, 2, '<H')
+		off += 40
+	elif typ == 7:
+		(sel, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Multiple selection', sel == 3, off - 2, 2, '<H')
+		off += 8
+		(lines, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Number of lines', lines, off - 2, 2, '<H')
+		off += 40
+	else:
+		off += 52
+
 	_add_frame_trailer(hd, size, data, off)
 
 def add_frame_shape(hd, size, data):
@@ -947,13 +978,35 @@ def add_frame_data_text(hd, size, data):
 	pass
 
 def add_frame_data_image(hd, size, data):
-	pass
+	off = size - 40
+	(path, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Path string offset', off2txt(path), off - 4, 4, '<I')
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	(action, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Action string offset', off2txt(action), off - 4, 4, '<I')
+	(format, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data format string offset', off2txt(format), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	(method, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Method string offset', off2txt(method), off - 4, 4, '<I')
 
 def add_frame_data_table(hd, size, data):
 	pass
 
 def add_frame_data_group(hd, size, data):
 	pass
+
+def _add_frame_data_form_text_field(hd, size, data):
+	off = 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	off += 4
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	(value, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Value string offset', off2txt(value), off - 4, 4, '<I')
 
 def add_frame_data_form_control_checkbox(hd, size, data):
 	off = 4
@@ -965,28 +1018,64 @@ def add_frame_data_form_control_checkbox(hd, size, data):
 	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
 
 def add_frame_data_form_control_radio(hd, size, data):
-	pass
+	off = 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	(value, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Value string offset', off2txt(value), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
 
 def add_frame_data_form_control_submit(hd, size, data):
-	pass
+	off = 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	(label, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Label string offset', off2txt(label), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	(action, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Action string offset', off2txt(action), off - 4, 4, '<I')
+	(format, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Data format string offset', off2txt(format), off - 4, 4, '<I')
+	(method, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Method string offset', off2txt(method), off - 4, 4, '<I')
 
 def add_frame_data_form_control_reset(hd, size, data):
-	pass
+	off = 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	(label, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Label string offset', off2txt(label), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
 
 def add_frame_data_form_control_text(hd, size, data):
-	pass
+	_add_frame_data_form_text_field(hd, size, data)
 
 def add_frame_data_form_control_textarea(hd, size, data):
-	pass
+	_add_frame_data_form_text_field(hd, size, data)
 
 def add_frame_data_form_control_select(hd, size, data):
-	pass
+	off = 4
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string offset', off2txt(name), off - 4, 4, '<I')
+	# NOTE: The values and displayed values strings are a concatenation
+	# of items, each ended by <Tab>. There can be an extra tab preceding
+	# an item in the displayed values string; that means the item is
+	# selected.
+	(values, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Values string offset', off2txt(values), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string offset', off2txt(attrs), off - 4, 4, '<I')
+	(displayed, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Displayed values string offset', off2txt(displayed), off - 4, 4, '<I')
 
 def add_frame_data_form_control_password(hd, size, data):
-	pass
+	_add_frame_data_form_text_field(hd, size, data)
 
 def add_frame_data_form_control_hidden(hd, size, data):
-	pass
+	_add_frame_data_form_text_field(hd, size, data)
 
 def add_frame_data_shape(hd, size, data):
 	off = 4
