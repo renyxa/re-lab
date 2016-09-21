@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, bflag2txt, key2txt, rdata
+from utils import add_iter, add_pgiter, bflag2txt, d2hex, key2txt, rdata
 
 def values(d, default='unknown'):
 	def lookup(val):
@@ -77,6 +77,7 @@ wt602_section_names = {
 	25: 'Text info',
 	26: 'Numberings',
 	27: 'Text',
+	28: 'HTML properties',
 	# gap
 	31: 'Section styles',
 	# gap
@@ -476,6 +477,7 @@ wt602_section_handlers = {
 	25: (handle_text_infos, 'text_infos'),
 	26: (handle_numberings, 'linked_list'),
 	27: (None, 'text'),
+	28: (None, 'html'),
 	31: (handle_section_styles, 'styles'),
 	33: (handle_changes, 'changes'),
 }
@@ -1452,6 +1454,47 @@ def add_numbering(hd, size, data):
 		(color, off) = rdata(data, off, '<H')
 		add_iter(hd, 'Bullet color index', color, off - 2, 2, '<H')
 
+def add_html(hd, size, data):
+	(base, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Base URL string', off2txt(base, hd), off - 4, 4, '<I')
+	(image, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Background image string', off2txt(image, hd), off - 4, 4, '<I')
+	(attrs, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Extra HTML attrs string', off2txt(attrs, hd), off - 4, 4, '<I')
+	(css_file, off) = rdata(data, off, '<I')
+	add_iter(hd, 'CSS file', off2txt(css_file, hd), off - 4, 4, '<I')
+	off += 36
+	css_flags = {0x2: 'export CSS', 0x4: 'use external file'}
+	(css, off) = rdata(data, off, '<I')
+	add_iter(hd, 'CSS flags', bflag2txt(css, css_flags), off - 4, 4, '<I')
+	off += 4
+	(bgcolor_set, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Set background color', bool(bgcolor_set), off - 1, 1, '<B')
+	(text_color_set, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Set text color', bool(text_color_set), off - 1, 1, '<B')
+	(alink_color_set, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Set active link color', bool(alink_color_set), off - 1, 1, '<B')
+	(vlink_color_set, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Set visited link color', bool(vlink_color_set), off - 1, 1, '<B')
+	(link_color_set, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Set link color', bool(link_color_set), off - 1, 1, '<B')
+	off += 3
+	(bgcolor, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Background color', d2hex(bgcolor), off - 3, 3, '3s')
+	off += 1
+	(text_color, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Text color', d2hex(text_color), off - 3, 3, '3s')
+	off += 1
+	(alink_color, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Active link color', d2hex(alink_color), off - 3, 3, '3s')
+	off += 1
+	(vlink_color, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Visited link color', d2hex(vlink_color), off - 3, 3, '3s')
+	off += 1
+	(link_color, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Link color', d2hex(link_color), off - 3, 3, '3s')
+	off += 1
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1492,6 +1535,7 @@ wt602_ids = {
 	'frame_data_barcode': add_frame_data_barcode,
 	'frame_data_shape': add_frame_data_shape,
 	'frames': add_frames,
+	'html': add_html,
 	'index': add_index,
 	'index_content_entry': add_index_content_entry,
 	'index_entry': add_index_entry,
