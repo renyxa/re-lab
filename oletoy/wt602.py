@@ -82,7 +82,7 @@ wt602_section_names = {
 	28: 'HTML properties',
 	# gap
 	31: 'Section styles',
-	# gap
+	32: 'Data source',
 	33: 'Changes',
 	# gap
 }
@@ -482,6 +482,7 @@ wt602_section_handlers = {
 	27: (None, 'text'),
 	28: (None, 'html'),
 	31: (handle_section_styles, 'styles'),
+	32: (None, 'datasource'),
 	33: (handle_changes, 'changes'),
 }
 
@@ -1304,6 +1305,7 @@ def add_fields(hd, size, data):
 def add_field(hd, size, data):
 	type_map = {
 		# gap
+		0x2: 'DB merge',
 		0x3: 'Footnote mark',
 		0x4: 'Page number',
 		0x5: 'Chapter number',
@@ -1345,7 +1347,11 @@ def add_field(hd, size, data):
 	add_iter(hd, 'Prev. field length?', prev, off - 4, 4, '<I')
 
 	# parse type-specific content
-	if typ == 0x3:
+	if typ == 0x2:
+		off += 8
+		(col, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Column', off2txt(col, hd), off - 4, 4, '<I')
+	elif typ == 0x3:
 		off += 12
 		(mark, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Mark string', off2txt(mark, hd), off - 4, 4, '<I')
@@ -1519,6 +1525,21 @@ def add_view_settings(hd, size, data):
 	(view, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'View', key2txt(view, view_map), off - 4, 4, '<I')
 
+def add_datasource(hd, size, data):
+	off = 8
+	src_map = {1: 'CSV', 6: 'WLS/XLS'}
+	(src, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Source type?', key2txt(src, src_map), off - 4, 4, '<I')
+	off = add_long_string(hd, size, data, off, 'Path')
+	off += 4
+	if src == 6:
+		off = add_long_string(hd, size, data, off, 'Sheet')
+		off += 4
+	(columns, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of columns', columns, off - 2, 2, '<H')
+	for i in range(1, columns + 1):
+		off = add_long_string(hd, size, data, off, 'Column %d name' % i)
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1532,6 +1553,7 @@ wt602_ids = {
 	'color': add_color,
 	'colormap': add_colormap,
 	'container': add_container,
+	'datasource': add_datasource,
 	'field' : add_field,
 	'fields' : add_fields,
 	'fonts' : add_fonts,
