@@ -1251,8 +1251,8 @@ def add_index(hd, size, data):
 
 def add_index_content_entry(hd, size, data):
 	off = 12
-	(offset, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Offset of name', offset, off - 4, 4, '<I') # in strings data
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
 	off += 12
 	(eid, off) = rdata(data, off, '<H')
 	add_iter(hd, 'ID', eid, off - 2, 2, '<H')
