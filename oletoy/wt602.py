@@ -57,6 +57,8 @@ def preview(text):
 
 wt602_section_names = {
 	# gap
+	6: 'View settings?',
+	# gap
 	8: 'Footnotes?',
 	# gap
 	10: 'Used fonts',
@@ -460,6 +462,7 @@ def handle_numberings(page, data, parent, parser=None):
 	_handle_linked_list(page, data, parent, parser, 'numbering')
 
 wt602_section_handlers = {
+	6: (None, 'view_settings'),
 	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
 	11: (handle_tabs, ''),
@@ -1495,6 +1498,11 @@ def add_html(hd, size, data):
 	add_iter(hd, 'Link color', d2hex(link_color), off - 3, 3, '3s')
 	off += 1
 
+def add_view_settings(hd, size, data):
+	view_map = {0: 'Continuous', 1: 'Pages', 2: 'Outline', 3: 'HTML'}
+	(view, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'View', key2txt(view, view_map), off - 4, 4, '<I')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1558,6 +1566,7 @@ wt602_ids = {
 	'string_map': add_string_map,
 	'styles': add_styles,
 	'text': add_text,
+	'view_settings': add_view_settings,
 }
 
 def parse(page, data, parent):
