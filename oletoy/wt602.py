@@ -641,7 +641,7 @@ para_style_flags = {
 	0x1000: 'numbering level',
 	0x2000: 'multi-level',
 	0x4000: 'line height',
-	# gap
+	0x8000: 'hyphenation',
 	0x10000: 'border padding',
 	# gap
 	0x80000: 'numbering?',
@@ -787,8 +787,11 @@ def add_attrset_para(hd, size, data):
 	(multi, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Multi-level numbering type', key2txt(multi, multi_map), off - 2, 2, '<H')
 	(line_height, off) = rdata(data, off, '<H')
+	hyphen_map = {0: 'None', 1: 'All lines', 2: 'Skip 1 line', 3: 'Skip 2 lines'}
 	add_iter(hd, 'Line height', '%d%%' % line_height, off - 2, 2, '<H')
-	off += 4
+	(hyphen, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Hyphenation', key2txt(hyphen, hyphen_map), off - 2, 2, '<H')
+	off += 2
 	(section_height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Section height', '%.2fcm' % to_cm(section_height), off - 2, 2, '<H')
 	(section_inc, off) = rdata(data, off, '<H')
