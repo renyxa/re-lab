@@ -386,7 +386,7 @@ def handle_frames(page, data, parent, parser=None):
 			label += ': ' + key2txt(controls[i], form_control_map)
 		kid = 'frame'
 		if kind_ids.has_key(i):
-			kid + '_' + kind_ids[i]
+			kid += '_' + kind_ids[i]
 		add_pgiter(page, '[%d] %s' % (i, label), 'wt602', kid, data[start:start + entry_size], defiter)
 		off = start + entry_size
 	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
