@@ -539,7 +539,7 @@ class wt602_parser(object):
 
 	def parse_section(self, n):
 		(begin, end) = self.sections[n]
-		name = key2txt(n, wt602_section_names, 'Section %d' % n)
+		name = key2txt(n, wt602_section_names, '[%d]' % n)
 		func = key2txt(n, wt602_section_handlers, None)
 		adder = 0
 		if end > begin:
