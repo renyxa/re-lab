@@ -65,12 +65,12 @@ wt602_section_names = {
 	11: 'Tabs',
 	12: 'Named styles',
 	13: 'Chapters',
-	14: 'Index content',
+	14: 'Index',
 	# gap
 	16: 'Frames', # this includes tables and headers+footers
 	# gap
 	18: 'Strings',
-	19: 'Index',
+	19: 'Blocks',
 	20: 'Color table',
 	21: 'Fields',
 	22: 'Character styles',
@@ -408,18 +408,18 @@ def handle_frames(page, data, parent, parser=None):
 		add_pgiter(page, '[%d]%s' % (i, name), 'wt602', kid, data[start:end], dataiter)
 		i += 1
 
+def handle_blocks(page, data, parent, parser=None):
+	(count, off) = rdata(data, 0, '<I')
+	(size, off) = rdata(data, off, '<H')
+	for i in range(0, count):
+		add_pgiter(page, '[%d]' % i, 'wt602', 'block', data[off:off + size], parent)
+		off += size
+
 def handle_index(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	(size, off) = rdata(data, off, '<H')
 	for i in range(0, count):
 		add_pgiter(page, '[%d]' % i, 'wt602', 'index_entry', data[off:off + size], parent)
-		off += size
-
-def handle_index_content(page, data, parent, parser=None):
-	(count, off) = rdata(data, 0, '<I')
-	(size, off) = rdata(data, off, '<H')
-	for i in range(0, count):
-		add_pgiter(page, '[%d]' % i, 'wt602', 'index_content_entry', data[off:off + size], parent)
 		off += size
 
 def handle_changes(page, data, parent, parser=None):
@@ -468,10 +468,10 @@ wt602_section_handlers = {
 	11: (handle_tabs, ''),
 	12: (handle_named_styles, 'linked_list'),
 	13: (handle_chapters, 'chapters'),
-	14: (handle_index_content, 'index'),
+	14: (handle_index, 'index'),
 	16: (handle_frames, 'frames'),
 	18: (handle_strings, 'strings'),
-	19: (handle_index, 'index'),
+	19: (handle_blocks, 'linked_list'),
 	20: (handle_colormap, 'colormap'),
 	21: (handle_fields, 'fields'),
 	22: (handle_char_styles, 'styles'),
@@ -673,7 +673,7 @@ def add_long_string(hd, size, data, off, name):
 def add_text_info(hd, size, data):
 	(next, off) = rdata(data, 0, '<i')
 	add_iter(hd, 'Offset to next', next, off - 4, 4, '<i')
-	flag_map = {0x8: 'start flow', 0x20: 'index mark start/stop?', 0x100: 'paragraph break'}
+	flag_map = {0x8: 'start flow', 0x20: 'block change', 0x100: 'paragraph break'}
 	flag_index = {0x8: 'Flow', 0x20: 'Index'}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 2, 2, '<H')
@@ -1249,7 +1249,7 @@ def add_index(hd, size, data):
 	(sz, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Entry size', sz, off - 2, 2, '<H')
 
-def add_index_content_entry(hd, size, data):
+def add_index_entry(hd, size, data):
 	off = 12
 	(name, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
@@ -1257,12 +1257,12 @@ def add_index_content_entry(hd, size, data):
 	(eid, off) = rdata(data, off, '<H')
 	add_iter(hd, 'ID', eid, off - 2, 2, '<H')
 
-def add_index_entry(hd, size, data):
+def add_block(hd, size, data):
 	(prev, off) = rdata(data, 0, '<H')
 	add_iter(hd, 'Preceded by', ref2txt(prev), off - 2, 2, '<H')
 	(next, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Followed by', ref2txt(next), off - 2, 2, '<H')
-	type_map = {0x1f: 'Index entry', 0x4b: 'Index body'}
+	type_map = {0x1f: 'Index entry', 0x4b: 'Named block'}
 	(typ, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Entry type?', key2txt(typ, type_map), off - 4, 4, '<I')
 	if typ == 0x1f:
@@ -1271,7 +1271,7 @@ def add_index_entry(hd, size, data):
 		off += 2
 	elif typ == 0x4b:
 		(title, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Index title string', off2txt(title, hd), off - 4, 4, '<I')
+		add_iter(hd, 'Block name string', off2txt(title, hd), off - 4, 4, '<I')
 	else:
 		pass
 	(start, off) = rdata(data, off, '<I')
@@ -1521,6 +1521,7 @@ wt602_ids = {
 	'attrset_para': add_attrset_para,
 	'attrset_ids': add_attrset_ids,
 	'attrset_section': add_attrset_section,
+	'block': add_block,
 	'change': add_change,
 	'changes': add_changes,
 	'chapter': add_chapter,
@@ -1558,7 +1559,6 @@ wt602_ids = {
 	'frames': add_frames,
 	'html': add_html,
 	'index': add_index,
-	'index_content_entry': add_index_content_entry,
 	'index_entry': add_index_entry,
 	'linked_list': add_linked_list,
 	'style': add_style,
