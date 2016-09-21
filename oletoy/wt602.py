@@ -82,6 +82,7 @@ wt602_section_names = {
 	26: 'Numberings',
 	27: 'Text',
 	28: 'HTML properties',
+	29: 'Settings',
 	# gap
 	31: 'Section styles',
 	32: 'Data source',
@@ -486,6 +487,7 @@ wt602_section_handlers = {
 	26: (handle_numberings, 'linked_list'),
 	27: (None, 'text'),
 	28: (None, 'html'),
+	29: (None, 'settings'),
 	31: (handle_section_styles, 'styles'),
 	32: (None, 'datasource'),
 	33: (handle_changes, 'changes'),
@@ -1611,6 +1613,12 @@ def add_labels(hd, size, data):
 	(rounded, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Rounded corners', bool(rounded), off - 4, 4, '<I')
 
+def add_settings(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, off - 4, 4, '<I')
+	(last, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Last edit position', last, off - 4, 4, '<I')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1658,6 +1666,7 @@ wt602_ids = {
 	'index_entry': add_index_entry,
 	'labels': add_labels,
 	'linked_list': add_linked_list,
+	'settings': add_settings,
 	'style': add_style,
 	'style_para': add_style_para,
 	'style_section': add_style_section,
