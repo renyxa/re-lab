@@ -86,6 +86,7 @@ wt602_section_names = {
 	31: 'Section styles',
 	32: 'Data source',
 	33: 'Changes',
+	34: 'Labels',
 	# gap
 }
 
@@ -488,6 +489,7 @@ wt602_section_handlers = {
 	31: (handle_section_styles, 'styles'),
 	32: (None, 'datasource'),
 	33: (handle_changes, 'changes'),
+	34: (None, 'labels'),
 }
 
 def read(data, offset, fmt):
@@ -1581,6 +1583,34 @@ def add_page_margins(hd, size, data):
 	(bottom, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Bottom', '%.2f cm' % to_cm(bottom), off - 4, 4, '<I')
 
+def add_labels(hd, size, data):
+	(length, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Length', length, off - 4, 4, '<I')
+	(name, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Name string', off2txt(name, hd), off - 4, 4, '<I')
+	(columns, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Columns', columns, off - 4, 4, '<I')
+	(rows, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Rows', rows, off - 4, 4, '<I')
+	(full_width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Label width with margin', '%.2f cm' % to_cm(full_width), off - 4, 4, '<I')
+	(full_height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Label height with margin', '%.2f cm' % to_cm(full_height), off - 4, 4, '<I')
+	(page_height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page height', '%.2f cm' % to_cm(page_height), off - 4, 4, '<I')
+	(page_width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Page width', '%.2f cm' % to_cm(page_width), off - 4, 4, '<I')
+	(label_width, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Label width', '%.2f cm' % to_cm(label_width), off - 4, 4, '<I')
+	(label_height, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Label height', '%.2f cm' % to_cm(label_height), off - 4, 4, '<I')
+	(top_margin, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top margin', '%.2f cm' % to_cm(top_margin), off - 4, 4, '<I')
+	(lr_margin, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Left & right margins', '%.2f cm' % to_cm(lr_margin), off - 4, 4, '<I')
+	(rounded, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Rounded corners', bool(rounded), off - 4, 4, '<I')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1626,6 +1656,7 @@ wt602_ids = {
 	'html': add_html,
 	'index': add_index,
 	'index_entry': add_index_entry,
+	'labels': add_labels,
 	'linked_list': add_linked_list,
 	'style': add_style,
 	'style_para': add_style_para,
