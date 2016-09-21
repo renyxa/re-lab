@@ -1373,7 +1373,9 @@ def add_chapter(hd, size, data):
 	add_iter(hd, 'Chapter number', key2txt(chapnum, chapnum_map, '%d' % chapnum), off - 2, 2, '<H')
 	(current, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Current chapter number', current, off - 2, 2, '<H')
-	off += 18
+	(flow, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Flow index?', flow, off - 2, 2, '<H')
+	off += 16
 	(thickness, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Footnote line thickness', key2txt(thickness, line_map), off - 2, 2, '<H')
 	off += 2
