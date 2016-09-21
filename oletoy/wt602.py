@@ -1262,9 +1262,22 @@ def add_index_entry(hd, size, data):
 	add_iter(hd, 'Preceded by', ref2txt(prev), off - 2, 2, '<H')
 	(next, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Followed by', ref2txt(next), off - 2, 2, '<H')
-	off += 4
-	(eid, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Entry ref', ref2txt(eid), off - 2, 2, '<H')
+	type_map = {0x1f: 'Index entry', 0x4b: 'Index body'}
+	(typ, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Entry type?', key2txt(typ, type_map), off - 4, 4, '<I')
+	if typ == 0x1f:
+		(eid, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Entry ref', ref2txt(eid), off - 2, 2, '<H')
+		off += 2
+	elif typ == 0x4b:
+		(title, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Index title string', off2txt(title, hd), off - 4, 4, '<I')
+	else:
+		pass
+	(start, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Start index?', start, off - 4, 4, '<I')
+	(end, off) = rdata(data, off, '<I')
+	add_iter(hd, 'End index?', end, off - 4, 4, '<I')
 
 def add_change(hd, size, data):
 	off = 16
