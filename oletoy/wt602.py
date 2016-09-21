@@ -1093,7 +1093,12 @@ def add_frame_form_control(hd, size, data):
 
 def add_frame_barcode(hd, size, data):
 	off = _add_frame_header(hd, size, data, 0)
-	off += 0x60
+	off += 40
+	(code, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Code string', off2txt(code, hd), off - 4, 4, '<I')
+	(comment, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Comment string', off2txt(comment, hd), off - 4, 4, '<I')
+	off += 48
 	_add_frame_trailer(hd, size, data, off)
 
 def add_frame_shape(hd, size, data):
