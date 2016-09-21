@@ -1262,7 +1262,7 @@ def add_block(hd, size, data):
 	add_iter(hd, 'Preceded by', ref2txt(prev), off - 2, 2, '<H')
 	(next, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Followed by', ref2txt(next), off - 2, 2, '<H')
-	type_map = {0x1f: 'Index entry', 0x4b: 'Named block'}
+	type_map = {0x1f: 'Index entry', 0x4b: 'Named block', 0xe8: 'Selection', 0xeb: 'Selection',}
 	(typ, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Entry type?', key2txt(typ, type_map), off - 4, 4, '<I')
 	if typ == 0x1f:
@@ -1272,6 +1272,9 @@ def add_block(hd, size, data):
 	elif typ == 0x4b:
 		(title, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Block name string', off2txt(title, hd), off - 4, 4, '<I')
+	elif typ in (0xe8, 0xeb):
+		(title, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Selection name string', off2txt(title, hd), off - 4, 4, '<I')
 	else:
 		pass
 	(start, off) = rdata(data, off, '<I')
