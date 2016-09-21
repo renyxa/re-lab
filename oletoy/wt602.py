@@ -253,7 +253,7 @@ def handle_text_infos(page, data, parent, parser):
 			mark_last = ''
 			if i == last:
 				mark_last = '*'
-			pos = ' (%d%s)' % (positions[i], mark_last)
+			pos = ' %d%s' % (positions[i], mark_last)
 		text = ''
 		if texts[i][1] - texts[i][0] > 0:
 			text = ' ' + preview(text_data[texts[i][0]:texts[i][1]])
