@@ -933,6 +933,9 @@ def add_text_flow(hd, size, data):
 	off += 4
 	(index, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Start index', index, off - 2, 2, '<H')
+	off += 8
+	(style, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Style', style, off - 2, 2, '<H')
 
 def add_frames(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
