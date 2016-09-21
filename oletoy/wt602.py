@@ -56,6 +56,8 @@ def preview(text):
 	return result
 
 wt602_section_names = {
+	0: 'Page margins',
+	1: 'Page format',
 	# gap
 	6: 'View settings?',
 	# gap
@@ -462,6 +464,8 @@ def handle_numberings(page, data, parent, parser=None):
 	_handle_linked_list(page, data, parent, parser, 'numbering')
 
 wt602_section_handlers = {
+	0: (None, 'page_margins'),
+	1: (None, 'page_format'),
 	6: (None, 'view_settings'),
 	8: (None, 'footnotes'),
 	10: (None, 'fonts'),
@@ -1543,6 +1547,35 @@ def add_datasource(hd, size, data):
 	for i in range(1, columns + 1):
 		off = add_long_string(hd, size, data, off, 'Column %d name' % i)
 
+def add_page_format(hd, size, data):
+	(height, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Height', '%.2f cm' % to_cm(height), off - 2, 2, '<H')
+	(width, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Width', '%.2f cm' % to_cm(width), off - 2, 2, '<H')
+	orient_map = {0: 'Portrait', 1: 'Landscape'}
+	(orient, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Orientation', key2txt(orient, orient_map), off - 4, 4, '<I')
+	off += 4
+	page_map = {
+		0x1: 'Letter', 0x5: 'Legal', 0x7: 'Executive',
+		0x8: 'A3', 0x9: 'A4', 0xb: 'A5',
+		0xd: 'B5 (JIS)',
+		0x14: 'Envelope #10', 0x1b: 'Envelope DL', 0x1c: 'Envelope C5', 0x22: 'Envelope B5', 0x25: 'Envelope Monarch',
+		0x100: 'Custom',
+	}
+	(page, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Format', key2txt(page, page_map), off - 4, 4, '<I')
+
+def add_page_margins(hd, size, data):
+	(left, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Left', '%.2f cm' % to_cm(left), off - 4, 4, '<I')
+	(top, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Top', '%.2f cm' % to_cm(top), off - 4, 4, '<I')
+	(right, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Right', '%.2f cm' % to_cm(right), off - 4, 4, '<I')
+	(bottom, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Bottom', '%.2f cm' % to_cm(bottom), off - 4, 4, '<I')
+
 wt602_ids = {
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
@@ -1596,6 +1629,8 @@ wt602_ids = {
 	'numbering': add_numbering,
 	'object_header': add_object_header,
 	'offsets': add_offsets,
+	'page_format': add_page_format,
+	'page_margins': add_page_margins,
 	'tab_stop': add_tab_stop,
 	'tabs_def': add_tabs_def,
 	'text_flow': add_text_flow,
