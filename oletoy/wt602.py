@@ -257,7 +257,7 @@ def handle_text_infos(page, data, parent, parser):
 		text = ''
 		if texts[i][1] - texts[i][0] > 0:
 			text = ' ' + preview(text_data[texts[i][0]:texts[i][1]])
-		add_pgiter(page, 'Info %d%s%s' % (i, pos, text), 'wt602', 'text_info', data[off:off + size], parent)
+		add_pgiter(page, '[%d]%s%s' % (i, pos, text), 'wt602', 'text_info', data[off:off + size], parent)
 		off += size
 
 def handle_strings(page, data, parent, parser = None):
@@ -282,7 +282,7 @@ def handle_colormap(page, data, parent, parser = None):
 	(count, off) = rdata(data, 0, '<I')
 	(size, off) = rdata(data, off, '<H')
 	for i in range(0, count):
-		add_pgiter(page, 'Color %d' % i, 'wt602', 'color', data[off:off + size], parent)
+		add_pgiter(page, '[%d]' % i, 'wt602', 'color', data[off:off + size], parent)
 		off += size
 
 def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_id):
@@ -299,14 +299,14 @@ def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_i
 	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
 	off += 2
 	for (n, id) in zip(range(0, count), ids):
-		add_pgiter(page, 'Attr. set %d (ID: %s)' % (n, id2txt(id)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
+		add_pgiter(page, '[%d] (ID: %s)' % (n, id2txt(id)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
 		off += attrset_size
 	assert(off == start_styles)
 	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
 	off += 2
 	n = 0
 	while off < start_ids:
-		add_pgiter(page, 'Style %d' % n, 'wt602', style_id, data[off:off + 6], descsiter)
+		add_pgiter(page, '[%d]' % n, 'wt602', style_id, data[off:off + 6], descsiter)
 		off += 6
 		n += 1
 	# assert(off == start_ids)
@@ -409,21 +409,21 @@ def handle_index(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	(size, off) = rdata(data, off, '<H')
 	for i in range(0, count):
-		add_pgiter(page, 'Index entry %d' % i, 'wt602', 'index_entry', data[off:off + size], parent)
+		add_pgiter(page, '[%d]' % i, 'wt602', 'index_entry', data[off:off + size], parent)
 		off += size
 
 def handle_index_content(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	(size, off) = rdata(data, off, '<H')
 	for i in range(0, count):
-		add_pgiter(page, 'Entry %d' % i, 'wt602', 'index_content_entry', data[off:off + size], parent)
+		add_pgiter(page, '[%d]' % i, 'wt602', 'index_content_entry', data[off:off + size], parent)
 		off += size
 
 def handle_changes(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	(size, off) = rdata(data, off, '<H')
 	for i in range(0, count):
-		add_pgiter(page, 'Change %d' % i, 'wt602', 'change', data[off:off + size], parent)
+		add_pgiter(page, '[%d]' % i, 'wt602', 'change', data[off:off + size], parent)
 		off += size
 
 def handle_fields(page, data, parent, parser=None):
@@ -432,7 +432,7 @@ def handle_fields(page, data, parent, parser=None):
 	while off < len(data):
 		start = off
 		(size, off) = rdata(data, off + 4, '<I')
-		add_pgiter(page, 'Field %d' % i, 'wt602', 'field', data[start:start + size], parent)
+		add_pgiter(page, '[%d]' % i, 'wt602', 'field', data[start:start + size], parent)
 		off = start + size
 		i += 1
 
@@ -440,7 +440,7 @@ def handle_chapters(page, data, parent, parser=None):
 	(count, off) = rdata(data, 0, '<I')
 	(size, off) = rdata(data, off, '<H')
 	for i in range(0, count):
-		add_pgiter(page, 'Chapter %d' % i, 'wt602', 'chapter', data[off:off + size], parent)
+		add_pgiter(page, '[%d]' % i, 'wt602', 'chapter', data[off:off + size], parent)
 		off += size
 
 def handle_named_styles(page, data, parent, parser=None):
