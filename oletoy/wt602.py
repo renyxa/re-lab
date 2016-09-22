@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, bflag2txt, d2hex, key2txt, rdata
+from utils import add_iter, add_pgiter, bflag2txt, d2hex, key2txt, ms_charsets, rdata
 
 def values(d, default='unknown'):
 	def lookup(val):
@@ -595,11 +595,14 @@ def add_colormap(hd, size, data):
 def add_fonts(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', c, 0, 4, '<I')
+	off += 2
 	i = 0
 	while i < c:
-		off += 2
 		(name, off) = rdata(data, off, '32s')
 		add_iter(hd, 'Name %d' % i, name[0:name.find('\0')], off - 32, 32, '32s')
+		off += 1
+		(charset, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Charset %d' % i, key2txt(charset, ms_charsets), off - 1, 1, '<B')
 		i += 1
 
 def add_header(hd, size, data):
