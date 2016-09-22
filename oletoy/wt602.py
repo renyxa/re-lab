@@ -596,14 +596,12 @@ def add_fonts(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Count', c, 0, 4, '<I')
 	off += 2
-	i = 0
-	while i < c:
+	for i in range(0, c):
 		(name, off) = rdata(data, off, '32s')
 		add_iter(hd, 'Name %d' % i, name[0:name.find('\0')], off - 32, 32, '32s')
 		off += 1
 		(charset, off) = rdata(data, off, '<B')
 		add_iter(hd, 'Charset %d' % i, key2txt(charset, ms_charsets), off - 1, 1, '<B')
-		i += 1
 
 def add_header(hd, size, data):
 	(c, off) = rdata(data, 0, '<I')
