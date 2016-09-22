@@ -63,7 +63,7 @@ wt602_section_names = {
 	# gap
 	8: 'Footnotes?',
 	# gap
-	10: 'Used fonts',
+	10: 'Fonts',
 	11: 'Tabs',
 	12: 'Named styles',
 	13: 'Chapters',
