@@ -933,7 +933,9 @@ def add_text_flow(hd, size, data):
 	off += 4
 	(index, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Start index', index, off - 2, 2, '<H')
-	off += 8
+	off += 6
+	(attrs, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Paragraph attrs ref', ref2txt(attrs), off - 2, 2, '<H')
 	(style, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Style', style, off - 2, 2, '<H')
 
