@@ -292,7 +292,7 @@ def handle_colormap(page, data, parent, parser = None):
 		add_pgiter(page, '[%d]' % i, 'wt602', 'color', data[off:off + size], parent)
 		off += size
 
-def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_id):
+def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, changes_id):
 	off = 4
 	(end, off) = rdata(data, off, '<H')
 	ids = []
@@ -314,25 +314,16 @@ def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_i
 		total += count
 		i += count
 		block += 1
-	start_ids = len(data) - 2 * total - 2
-	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
-	off += 2
-	n = 0
-	while off < start_ids:
-		add_pgiter(page, '[%d]' % n, 'wt602', style_id, data[off:off + 6], descsiter)
-		off += 6
-		n += 1
-	# assert(off == start_ids)
-	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
+	descsiter = add_pgiter(page, 'Changes', 'wt602', changes_id, data[off:], parent)
 
 def handle_char_styles(page, data, parent, parser = None):
-	_handle_styles(page, data, parent, parser, 'attrset', 28, 'style_char')
+	_handle_styles(page, data, parent, parser, 'attrset', 28, 'attr_changes_char')
 
 def handle_para_styles(page, data, parent, parser = None):
-	_handle_styles(page, data, parent, parser, 'attrset_para', 46, 'style_para')
+	_handle_styles(page, data, parent, parser, 'attrset_para', 46, 'attr_changes_para')
 
 def handle_section_styles(page, data, parent, parser = None):
-	_handle_styles(page, data, parent, parser, 'attrset_section', 58, 'style_section')
+	_handle_styles(page, data, parent, parser, 'attrset_section', 58, 'attr_changes_section')
 
 def handle_tabs(page, data, parent, parser=None):
 	off = 0
@@ -840,21 +831,6 @@ def add_attrset_section(hd, size, data):
 	(color, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Color index', color, off - 2, 2, '<H')
 
-def _add_style(hd, size, data, flags):
-	(attribs, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Attributes', bflag2txt(attribs, flags), off - 4, 4, '<I')
-	(attrset, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
-
-def add_style_char(hd, size, data):
-	_add_style(hd, size, data, char_style_flags)
-
-def add_style_para(hd, size, data):
-	_add_style(hd, size, data, para_style_flags)
-
-def add_style_section(hd, size, data):
-	_add_style(hd, size, data, section_style_flags)
-
 def add_string_header(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Length of data', length, off - 4, 4, '<I')
@@ -904,19 +880,38 @@ def add_text(hd, size, data):
 	text = read(data[off:], 0, fmt)
 	add_iter(hd, 'Text', text, off, length, fmt)
 
-def add_container(hd, size, data):
+def _add_attr_changes(hd, size, data, flags):
 	(count, off) = rdata(data, 0, '<H')
-	add_iter(hd, 'Count', count, off - 2, 2, '<H')
-
-def add_attrset_ids(hd, size, data):
-	off = 0
-	(count, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of attr. sets', count, off - 2, 2, '<H')
-	n = 0
-	while off < len(data):
+	# read ID map
+	start = off
+	off += 6 * count
+	(set_count, off) = rdata(data, off, '<H')
+	ids = []
+	for n in range(0, set_count):
 		(id, off) = rdata(data, off, '<H')
-		add_iter(hd, 'ID of attr. set %d' % n, id2txt(id), off - 2, 2, '<H')
-		n += 1
+		ids.append(id)
+	off = start
+	# show changes
+	add_iter(hd, 'Number of changes', count, off - 2, 2, '<H')
+	for i in range(0, count):
+		(attribs, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Change %d' % i, bflag2txt(attribs, flags), off - 4, 4, '<I')
+		(attrset, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Attribute set ref %d' % i, ref2txt(ids[attrset]), off - 2, 2, '<H')
+	# show ID map
+	add_iter(hd, 'Number of refs', set_count, off - 2, 2, '<H')
+	mapiter = add_iter(hd, 'Ref map', '', off, size - off, '%ds' % (size - off))
+	for n in range(0, set_count):
+		add_iter(hd, '[%d]' % n, id2txt(ids[n]), off - 2, 2, '<H', parent=mapiter)
+
+def add_attr_changes_char(hd, size, data):
+	_add_attr_changes(hd, size, data, char_style_flags)
+
+def add_attr_changes_para(hd, size, data):
+	_add_attr_changes(hd, size, data, para_style_flags)
+
+def add_attr_changes_section(hd, size, data):
+	_add_attr_changes(hd, size, data, section_style_flags)
 
 def add_tabs_def(hd, size, data):
 	off = _add_list_links(hd, data)
@@ -1635,9 +1630,11 @@ def add_settings(hd, size, data):
 	add_iter(hd, 'Last edit position', last, off - 4, 4, '<I')
 
 wt602_ids = {
+	'attr_changes_char': add_attr_changes_char,
+	'attr_changes_para': add_attr_changes_para,
+	'attr_changes_section': add_attr_changes_section,
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
-	'attrset_ids': add_attrset_ids,
 	'attrset_section': add_attrset_section,
 	'attrsets': add_attrsets,
 	'block': add_block,
@@ -1683,9 +1680,6 @@ wt602_ids = {
 	'labels': add_labels,
 	'linked_list': add_linked_list,
 	'settings': add_settings,
-	'style_char': add_style_char,
-	'style_para': add_style_para,
-	'style_section': add_style_section,
 	'header': add_header,
 	'numbering': add_numbering,
 	'object_header': add_object_header,
