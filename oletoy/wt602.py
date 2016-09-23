@@ -293,22 +293,32 @@ def handle_colormap(page, data, parent, parser = None):
 		off += size
 
 def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_id):
-	off = 8
-	(count, off) = rdata(data, off, '<H')
+	off = 4
+	(end, off) = rdata(data, off, '<H')
 	ids = []
-	off = len(data) - 2 * count
-	start_ids = off - 2
-	while off < len(data):
-		(id, off) = rdata(data, off, '<H')
-		ids.append(id)
-	off = 8
-	start_styles = off + 2 + attrset_size * count
-	attrsiter = add_pgiter(page, 'Attr. sets', 'wt602', 'container', data[off:start_styles], parent)
-	off += 2
-	for (n, id) in zip(range(0, count), ids):
-		add_pgiter(page, '[%d] (ID: %s)' % (n, id2txt(id)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
-		off += attrset_size
-	assert(off == start_styles)
+	block = 0
+	cur = 0
+	i = 0
+	total = 0
+	while cur < end:
+		start = off
+		(gap, off) = rdata(data, off, '<H')
+		(count, off) = rdata(data, off, '<H')
+		block_end = off + count * attrset_size
+	# while off < len(data):
+		# (id, off) = rdata(data, off, '<H')
+		# ids.append(id)
+		attrsiter = add_pgiter(page, 'Attr. set block %d' % block, 'wt602', 'attrsets', data[start:block_end], parent)
+		# for (n, id) in zip(range(0, count), ids):
+		for n in range(i, i + count):
+			# add_pgiter(page, '[%d] (ID: %s)' % (n, id2txt(id)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
+			add_pgiter(page, '[%d]' % n, 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
+			off += attrset_size
+		cur += gap + count
+		total += count
+		i += count
+		block += 1
+	start_ids = len(data) - 2 * total - 2
 	descsiter = add_pgiter(page, 'Styles', 'wt602', 'container', data[off:start_ids], parent)
 	off += 2
 	n = 0
@@ -884,9 +894,15 @@ def add_string_map(hd, size, data):
 		i += 1
 
 def add_styles(hd, size, data):
-	off = 6
-	(style, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Active style?', style, off - 2, 2, '<H')
+	off = 4
+	(end, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Max. ID', end, off - 2, 2, '<H')
+
+def add_attrsets(hd, size, data):
+	(gap, off) = rdata(data, 0, '<H')
+	add_iter(hd, 'Gap', gap, off - 2, 2, '<H')
+	(count, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Count', count, off - 2, 2, '<H')
 
 def add_text(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -1630,6 +1646,7 @@ wt602_ids = {
 	'attrset_para': add_attrset_para,
 	'attrset_ids': add_attrset_ids,
 	'attrset_section': add_attrset_section,
+	'attrsets': add_attrsets,
 	'block': add_block,
 	'change': add_change,
 	'changes': add_changes,
