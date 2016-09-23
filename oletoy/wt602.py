@@ -330,7 +330,7 @@ def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_i
 	add_pgiter(page, 'ID map', 'wt602', 'attrset_ids', data[start_ids:], parent)
 
 def handle_char_styles(page, data, parent, parser = None):
-	_handle_styles(page, data, parent, parser, 'attrset', 28, 'style')
+	_handle_styles(page, data, parent, parser, 'attrset', 28, 'style_char')
 
 def handle_para_styles(page, data, parent, parser = None):
 	_handle_styles(page, data, parent, parser, 'attrset_para', 46, 'style_para')
@@ -672,6 +672,11 @@ para_style_flags = {
 	# 0x8000000: ''
 }
 
+section_style_flags = {
+	# gap
+	# 0x8000000: ''
+}
+
 line_map = {
 	0: '1pt',
 	1: 'hairline',
@@ -839,28 +844,20 @@ def add_attrset_section(hd, size, data):
 	(color, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Color index', color, off - 2, 2, '<H')
 
-def add_style(hd, size, data):
-	off = 0
-	(attribs, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Attributes', bflag2txt(attribs, char_style_flags), off - 2, 2, '<H')
-	off += 2
+def _add_style(hd, size, data, flags):
+	(attribs, off) = rdata(data, 0, '<I')
+	add_iter(hd, 'Attributes', bflag2txt(attribs, flags), off - 4, 4, '<I')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
+
+def add_style_char(hd, size, data):
+	_add_style(hd, size, data, char_style_flags)
 
 def add_style_para(hd, size, data):
-	off = 0
-	(attribs, off) = rdata(data, off, '<I')
-	add_iter(hd, 'Attributes', bflag2txt(attribs, para_style_flags), off - 4, 4, '<I')
-	(attrset, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
+	_add_style(hd, size, data, para_style_flags)
 
 def add_style_section(hd, size, data):
-	off = 0
-	(attribs, off) = rdata(data, off, '<H')
-	# add_iter(hd, 'Changed attributes', '%s' % get_section_style(attribs), off - 2, 2, '<H')
-	off += 2
-	(attrset, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Attribute set', attrset, off - 2, 2, '<H')
+	_add_style(hd, size, data, section_style_flags)
 
 def add_string_header(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -1690,7 +1687,7 @@ wt602_ids = {
 	'labels': add_labels,
 	'linked_list': add_linked_list,
 	'settings': add_settings,
-	'style': add_style,
+	'style_char': add_style_char,
 	'style_para': add_style_para,
 	'style_section': add_style_section,
 	'header': add_header,
