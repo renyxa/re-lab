@@ -305,16 +305,12 @@ def _handle_styles(page, data, parent, parser, attrset_id, attrset_size, style_i
 		(gap, off) = rdata(data, off, '<H')
 		(count, off) = rdata(data, off, '<H')
 		block_end = off + count * attrset_size
-	# while off < len(data):
-		# (id, off) = rdata(data, off, '<H')
-		# ids.append(id)
 		attrsiter = add_pgiter(page, 'Attr. set block %d' % block, 'wt602', 'attrsets', data[start:block_end], parent)
-		# for (n, id) in zip(range(0, count), ids):
+		cur += gap
 		for n in range(i, i + count):
-			# add_pgiter(page, '[%d] (ID: %s)' % (n, id2txt(id)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
-			add_pgiter(page, '[%d]' % n, 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
+			add_pgiter(page, '[%d] (ID: %s)' % (n, id2txt(cur)), 'wt602', attrset_id, data[off:off + attrset_size], attrsiter)
 			off += attrset_size
-		cur += gap + count
+			cur += 1
 		total += count
 		i += count
 		block += 1
