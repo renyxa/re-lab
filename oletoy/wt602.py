@@ -669,6 +669,11 @@ line_map = {
 	9: 'double', 10: 'double, inner thicker', 11: 'double, outer thicker'
 }
 
+shading_map = {
+	0: 'none', 5: 'vertical lines', 6: 'raster',
+	12: '100%', 16: '50%', 17: '37.5%', 18: '25%', 19: '0%'
+}
+
 def add_string(hd, size, data, off, name, fmt):
 	fmtlen = struct.calcsize(fmt)
 	(length, off) = rdata(data, off, fmt)
@@ -775,11 +780,7 @@ def _add_attrset_para(hd, size, data, offset):
 	(bottom, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Bottom margin', '%.2fpt' % (bottom / 20.0), off - 2, 2, '<H')
 	(shading, off) = rdata(data, off, '<H')
-	shading_map = values({
-		0: 'none', 5: 'vertical lines', 6: 'raster',
-		12: '100%', 16: '50%', 18: '25%', 19: '0%'
-	})
-	add_iter(hd, 'Shading type', shading_map(shading), off - 2, 2, '<H')
+	add_iter(hd, 'Shading type', key2txt(shading, shading_map), off - 2, 2, '<H')
 	(border_line, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Border line', key2txt(border_line, line_map), off - 2, 2, '<H')
 	(border, off) = rdata(data, off, '<H')
@@ -1153,7 +1154,51 @@ def add_frame_data_image(hd, size, data):
 		add_iter(hd, 'Method string', off2txt(method, hd), off - 4, 4, '<I')
 
 def add_frame_data_table(hd, size, data):
-	pass
+	def add_borders(title, offset):
+		(borders, off) = rdata(data, offset, '<H')
+		sides = []
+		for (side, shift) in (('Top', 4), ('Bottom', 12), ('Left', 0), ('Right', 8)):
+			sides.append('%s: %s' % (side, key2txt((borders >> shift) & 0xf, line_map)))
+		add_iter(hd, title, ' '.join(sides), off - 2, 2, '<H')
+		return off
+	off = 4
+	(rows, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of rows', rows, off - 2, 2, '<H')
+	off += 2
+	(hrows, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Number of heading rows', hrows, off - 1, 1, '<B')
+	off += 2
+	(width, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Table width', '%.2f cm' % to_cm(width), off - 2, 2, '<H')
+	off += 2
+	(rows2, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of rows (again)?', rows2, off - 2, 2, '<H')
+	(cols, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of columns', cols, off - 2, 2, '<H')
+	for c in range(1, cols + 1):
+		(col_width, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Width of column %d' % c, '%.2f cm' % to_cm(col_width), off - 2, 2, '<H')
+	off += 4
+	height_map = {0: 'automatic'}
+	valign_map = {0x0: 'top', 0x1: 'center', 0x20: 'bottom'}
+	for r in range(1, rows + 1):
+		off += 2
+		(row_height, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Height of row %d' % r, key2txt(row_height, height_map, '%.2f cm' % to_cm(row_height)), off - 2, 2, '<H')
+		for c in range(1, cols + 1):
+			rc = '[R%d, C%d]' % (r, c)
+			(valign, off) = rdata(data, off, '<B')
+			add_iter(hd, '%s Vert. alignment' % rc, key2txt(valign, valign_map), off - 1, 1, '<B')
+			(shading, off) = rdata(data, off, '<B')
+			add_iter(hd, '%s Shading' % rc, key2txt(shading, shading_map), off - 1, 1, '<B')
+			off = add_borders('%s Borders' % rc, off)
+			(text, off) = rdata(data, off, '<I')
+			add_iter(hd, '%s Text info index' % rc, text, off - 4, 4, '<I')
+			off += 4
+			(cell_height, off) = rdata(data, off, '<H')
+			add_iter(hd, '%s Height' % rc, '%.2f cm' % to_cm(cell_height), off - 2, 2, '<H')
+			off += 2
+		off += 4
 
 def add_frame_data_group(hd, size, data):
 	pass
