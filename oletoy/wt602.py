@@ -638,7 +638,8 @@ para_style_flags = {
 	0x4: 'right indent',
 	0x8: 'first indent',
 	0x10: 'tabs',
-	# gap
+	0x20: 'column gap',
+	0x40: 'number of columns',
 	0x80: 'top margin',
 	0x100: 'bottom margin',
 	0x200: 'shading type',
@@ -649,14 +650,13 @@ para_style_flags = {
 	0x4000: 'line height',
 	0x8000: 'hyphenation',
 	0x10000: 'border padding',
-	# gap
-	0x80000: 'numbering?',
-	0x100000: 'skip number?',
-	# gap
+	0x20000: 'section height',
+	0x40000: 'section increment',
+	0x80000: 'numbering',
+	0x100000: 'skip number',
+	0x200000: 'inter-column line',
 	0x400000: 'border color',
 	0x800000: 'shading color',
-	# gap
-	# 0x8000000: ''
 }
 
 section_style_flags = {
@@ -802,14 +802,16 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Line height', '%d%%' % line_height, off - 2, 2, '<H')
 	(hyphen, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Hyphenation', key2txt(hyphen, hyphen_map), off - 2, 2, '<H')
-	off += 2
+	(padding, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Border padding', '%.2fcm' % to_cm(padding), off - 2, 2, '<H')
 	(section_height, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Section height', '%.2fcm' % to_cm(section_height), off - 2, 2, '<H')
 	(section_inc, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Section increment', '%.2fcm' % to_cm(section_inc), off - 2, 2, '<H')
 	(numbering, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Numbering index?', numbering, off - 2, 2, '<H')
-	off += 2
+	add_iter(hd, 'Numbering index', numbering, off - 2, 2, '<H')
+	(skip, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Skip number', bool(skip), off - 2, 2, '<H')
 	(column_line, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
 
