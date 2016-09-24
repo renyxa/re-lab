@@ -84,7 +84,7 @@ wt602_section_names = {
 	28: 'HTML properties',
 	29: 'Settings',
 	# gap
-	31: 'Section styles',
+	31: 'Ext. paragraph styles',
 	32: 'Data source',
 	33: 'Changes',
 	34: 'Labels',
@@ -322,8 +322,8 @@ def handle_char_styles(page, data, parent, parser = None):
 def handle_para_styles(page, data, parent, parser = None):
 	_handle_styles(page, data, parent, parser, 'attrset_para', 46, 'attr_changes_para')
 
-def handle_section_styles(page, data, parent, parser = None):
-	_handle_styles(page, data, parent, parser, 'attrset_section', 58, 'attr_changes_section')
+def handle_ext_para_styles(page, data, parent, parser = None):
+	_handle_styles(page, data, parent, parser, 'attrset_para_ext', 58, 'attr_changes_para')
 
 def handle_tabs(page, data, parent, parser=None):
 	off = 0
@@ -485,7 +485,7 @@ wt602_section_handlers = {
 	27: (None, 'text'),
 	28: (None, 'html'),
 	29: (None, 'settings'),
-	31: (handle_section_styles, 'styles'),
+	31: (handle_ext_para_styles, 'styles'),
 	32: (None, 'datasource'),
 	33: (handle_changes, 'changes'),
 	34: (None, 'labels'),
@@ -657,11 +657,9 @@ para_style_flags = {
 	0x200000: 'inter-column line',
 	0x400000: 'border color',
 	0x800000: 'shading color',
-}
-
-section_style_flags = {
+	0x1000000: 'line color',
 	# gap
-	# 0x8000000: ''
+	# 0x8000000: '',
 }
 
 line_map = {
@@ -756,9 +754,8 @@ def add_attrset(hd, size, data):
 	lang_map = values({0x0: 'default', 0x0405: 'cs-CZ', 0x0409: 'en-US', 0x0415: 'pl-PL', 0x0809: 'en-GB'})
 	add_iter(hd, 'Language code', lang_map(lang), off - 2, 2, '<H')
 
-def add_attrset_para(hd, size, data):
-	off = 0
-	(alignment, off) = rdata(data, off, '<H')
+def _add_attrset_para(hd, size, data, offset):
+	(alignment, off) = rdata(data, offset, '<H')
 	alignment_map = values({0: 'left', 1: 'center', 2: 'right', 3: 'justify'})
 	add_iter(hd, 'Alignment', alignment_map(alignment), off - 2, 2, '<H')
 	(left, off) = rdata(data, off, '<H')
@@ -814,24 +811,19 @@ def add_attrset_para(hd, size, data):
 	add_iter(hd, 'Skip number', bool(skip), off - 2, 2, '<H')
 	(column_line, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
+	return off
 
-def add_attrset_section(hd, size, data):
-	off = 10
-	(column_gap, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Column gap', '%.2fcm' % to_cm(column_gap), off - 2, 2, '<H')
-	(columns, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of columns', columns, off - 2, 2, '<H')
-	off += 20
-	(height, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Height', '%.2fcm' % to_cm(height), off - 2, 2, '<H')
-	(inc, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Increment', '%.2fcm' % to_cm(inc), off - 2, 2, '<H')
-	off += 4
-	(column_line, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Inter-column line', key2txt(column_line, line_map), off - 2, 2, '<H')
-	off += 4
-	(color, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Color index', color, off - 2, 2, '<H')
+def add_attrset_para(hd, size, data):
+	_add_attrset_para(hd, size, data, 0)
+
+def add_attrset_para_ext(hd, size, data):
+	off = _add_attrset_para(hd, size, data, 0)
+	(border_color, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Border color', border_color, off - 2, 2, '<H')
+	(shading_color, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Shading color', shading_color, off - 2, 2, '<H')
+	(line_color, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Line color', line_color, off - 2, 2, '<H')
 
 def add_string_header(hd, size, data):
 	(length, off) = rdata(data, 0, '<I')
@@ -911,9 +903,6 @@ def add_attr_changes_char(hd, size, data):
 
 def add_attr_changes_para(hd, size, data):
 	_add_attr_changes(hd, size, data, para_style_flags)
-
-def add_attr_changes_section(hd, size, data):
-	_add_attr_changes(hd, size, data, section_style_flags)
 
 def add_tabs_def(hd, size, data):
 	off = _add_list_links(hd, data)
@@ -1634,10 +1623,9 @@ def add_settings(hd, size, data):
 wt602_ids = {
 	'attr_changes_char': add_attr_changes_char,
 	'attr_changes_para': add_attr_changes_para,
-	'attr_changes_section': add_attr_changes_section,
 	'attrset': add_attrset,
 	'attrset_para': add_attrset_para,
-	'attrset_section': add_attrset_section,
+	'attrset_para_ext': add_attrset_para_ext,
 	'attrsets': add_attrsets,
 	'block': add_block,
 	'change': add_change,
