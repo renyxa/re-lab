@@ -1644,7 +1644,6 @@ wt602_ids = {
 	'chapters': add_chapters,
 	'color': add_color,
 	'colormap': add_colormap,
-	'container': add_container,
 	'datasource': add_datasource,
 	'field' : add_field,
 	'fields' : add_fields,
