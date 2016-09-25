@@ -1224,6 +1224,9 @@ def add_frame_data_table(hd, size, data):
 			add_iter(hd, 'Row span', key2txt(rowspan, rowspan_map), off - 1, 1, '<B', parent=celliter)
 			set_length(hd, celliter, off - start_cell)
 		set_length(hd, rowiter, off - start_row)
+	off += 24
+	(caption, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Caption', off2txt(caption, hd), off - 4, 4, '<I')
 
 def add_frame_data_group(hd, size, data):
 	pass
