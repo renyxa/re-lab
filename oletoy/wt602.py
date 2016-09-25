@@ -1168,25 +1168,34 @@ def add_frame_data_table(hd, size, data):
 	off += 2
 	(hrows, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Number of heading rows', hrows, off - 1, 1, '<B')
-	off += 2
+	(colsets, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Number of column sets', colsets, off - 2, 2, '<H')
 	(width, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Table width', '%.2f cm' % to_cm(width), off - 2, 2, '<H')
 	off += 2
-	(rows2, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of rows (again)?', rows2, off - 2, 2, '<H')
-	(cols, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Number of columns', cols, off - 2, 2, '<H')
-	for c in range(1, cols + 1):
-		(col_width, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Width of column %d' % c, '%.2f cm' % to_cm(col_width), off - 2, 2, '<H')
-	off += 4
+	for i in range(0, colsets):
+		(rows2, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Number of rows with set %d ' % i, rows2, off - 2, 2, '<H')
+		if rows2 == 0:
+			continue
+		(cols, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Number of columns in set %d' % i, cols, off - 2, 2, '<H')
+		for c in range(1, cols + 1):
+			(col_width, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Width of column %d in set %d' % (c, i), '%.2f cm' % to_cm(col_width), off - 2, 2, '<H')
 	height_map = {0: 'automatic'}
 	valign_map = {0x0: 'top', 0x1: 'center', 0x20: 'bottom'}
+	rowspan_map = {0: 'None', 1: 'Start', 2: 'Inside', 3: 'End'}
 	for r in range(1, rows + 1):
+		off += 1
+		(rcols, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Number of columns in row %d' % r, rcols, off - 1, 1, '<B')
+		(colset, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Column set of row %d' % r, colset, off - 2, 2, '<H')
 		off += 2
 		(row_height, off) = rdata(data, off, '<H')
 		add_iter(hd, 'Height of row %d' % r, key2txt(row_height, height_map, '%.2f cm' % to_cm(row_height)), off - 2, 2, '<H')
-		for c in range(1, cols + 1):
+		for c in range(1, rcols + 1):
 			rc = '[R%d, C%d]' % (r, c)
 			(valign, off) = rdata(data, off, '<B')
 			add_iter(hd, '%s Vert. alignment' % rc, key2txt(valign, valign_map), off - 1, 1, '<B')
@@ -1200,8 +1209,8 @@ def add_frame_data_table(hd, size, data):
 			add_iter(hd, '%s Height' % rc, '%.2f cm' % to_cm(cell_height), off - 2, 2, '<H')
 			(color, off) = rdata(data, off, '<B')
 			add_iter(hd, '%s Shading color' % rc, color, off - 1, 1, '<B')
-			off += 1
-		off += 4
+			(rowspan, off) = rdata(data, off, '<B')
+			add_iter(hd, '%s Row span' % rc, key2txt(rowspan, rowspan_map), off - 1, 1, '<B')
 
 def add_frame_data_group(hd, size, data):
 	pass
