@@ -1198,7 +1198,9 @@ def add_frame_data_table(hd, size, data):
 			off += 4
 			(cell_height, off) = rdata(data, off, '<H')
 			add_iter(hd, '%s Height' % rc, '%.2f cm' % to_cm(cell_height), off - 2, 2, '<H')
-			off += 2
+			(color, off) = rdata(data, off, '<B')
+			add_iter(hd, '%s Shading color' % rc, color, off - 1, 1, '<B')
+			off += 1
 		off += 4
 
 def add_frame_data_group(hd, size, data):
