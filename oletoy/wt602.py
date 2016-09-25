@@ -460,6 +460,7 @@ def handle_named_styles(page, data, parent, parser=None):
 		end = start + length
 		off += 8
 		(string, off) = rdata(data, off, '<I')
+		parser.styles.append(parser.strings[string])
 		assert parser.strings.has_key(string)
 		add_pgiter(page, '[%d] %s' % (i, parser.strings[string]), 'wt602', 'named_style', data[start:end], parent)
 		off = end
@@ -509,6 +510,7 @@ class wt602_parser(object):
 		self.header_len = 0x72
 		self.sections = []
 		self.strings = {}
+		self.styles = []
 
 	def parse(self):
 		self.parse_header()
@@ -942,7 +944,7 @@ def add_text_flow(hd, size, data):
 	(attrs, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Paragraph attrs ref', ref2txt(attrs), off - 2, 2, '<H')
 	(style, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Style', style, off - 2, 2, '<H')
+	add_iter(hd, 'Style', '%d (%s)' % (style, hd.context.styles[style]), off - 2, 2, '<H')
 
 def add_frames(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
