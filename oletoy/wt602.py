@@ -717,6 +717,8 @@ def add_text_info(hd, size, data):
 	add_iter(hd, 'Length', length, off - 2, 2, '<H')
 	(seqno, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Seq. number?', seqno, off - 4, 4, '<I')
+	(fid, off) = rdata(data, off, '<H')
+	add_iter(hd, 'Frame ref', ref2txt(fid), off - 2, 2, '<H')
 
 def add_text_infos(hd, size, data):
 	(count, off) = rdata(data, 0, '<I')
