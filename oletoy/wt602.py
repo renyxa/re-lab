@@ -18,6 +18,10 @@ import struct
 
 from utils import add_iter, add_pgiter, bflag2txt, d2hex, key2txt, ms_charsets, rdata
 
+def set_length(hd, iter, length):
+	hd.model.set(iter, 3, length)
+	hd.model.set(iter, 4, '%ds' % length)
+
 def values(d, default='unknown'):
 	def lookup(val):
 		return key2txt(val, d, default)
@@ -1155,12 +1159,12 @@ def add_frame_data_image(hd, size, data):
 		add_iter(hd, 'Method string', off2txt(method, hd), off - 4, 4, '<I')
 
 def add_frame_data_table(hd, size, data):
-	def add_borders(title, offset):
+	def add_borders(title, offset, parent):
 		(borders, off) = rdata(data, offset, '<H')
 		sides = []
 		for (side, shift) in (('Top', 4), ('Bottom', 12), ('Left', 0), ('Right', 8)):
 			sides.append('%s: %s' % (side, key2txt((borders >> shift) & 0xf, line_map)))
-		add_iter(hd, title, ' '.join(sides), off - 2, 2, '<H')
+		add_iter(hd, title, ' '.join(sides), off - 2, 2, '<H', parent=parent)
 		return off
 	off = 4
 	(rows, off) = rdata(data, off, '<H')
@@ -1174,43 +1178,51 @@ def add_frame_data_table(hd, size, data):
 	add_iter(hd, 'Table width', '%.2f cm' % to_cm(width), off - 2, 2, '<H')
 	off += 2
 	for i in range(0, colsets):
+		start = off
+		setiter = add_iter(hd, 'Column set %d' % i, '', off, 0, '%ds' % 0)
 		(rows2, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Number of rows with set %d ' % i, rows2, off - 2, 2, '<H')
-		if rows2 == 0:
-			continue
-		(cols, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Number of columns in set %d' % i, cols, off - 2, 2, '<H')
-		for c in range(1, cols + 1):
-			(col_width, off) = rdata(data, off, '<H')
-			add_iter(hd, 'Width of column %d in set %d' % (c, i), '%.2f cm' % to_cm(col_width), off - 2, 2, '<H')
+		add_iter(hd, 'Number of rows using this set', rows2, off - 2, 2, '<H', parent=setiter)
+		if rows2 != 0:
+			(cols, off) = rdata(data, off, '<H')
+			add_iter(hd, 'Number of columns', cols, off - 2, 2, '<H', parent=setiter)
+			for c in range(1, cols + 1):
+				(col_width, off) = rdata(data, off, '<H')
+				add_iter(hd, 'Width of column %d' % c, '%.2f cm' % to_cm(col_width), off - 2, 2, '<H', parent=setiter)
+		set_length(hd, setiter, off - start)
 	height_map = {0: 'automatic'}
 	valign_map = {0x0: 'top', 0x1: 'center', 0x20: 'bottom'}
 	rowspan_map = {0: 'None', 1: 'Start', 2: 'Inside', 3: 'End'}
 	for r in range(1, rows + 1):
+		start_row = off
+		rowiter = add_iter(hd, 'Row %d' % r, '', off, 0, '%ds' % 0)
 		off += 1
-		(rcols, off) = rdata(data, off, '<B')
-		add_iter(hd, 'Number of columns in row %d' % r, rcols, off - 1, 1, '<B')
+		(cells, off) = rdata(data, off, '<B')
+		add_iter(hd, 'Number of cells', cells, off - 1, 1, '<B', parent=rowiter)
 		(colset, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Column set of row %d' % r, colset, off - 2, 2, '<H')
+		add_iter(hd, 'Column set', colset, off - 2, 2, '<H', parent=rowiter)
 		off += 2
 		(row_height, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Height of row %d' % r, key2txt(row_height, height_map, '%.2f cm' % to_cm(row_height)), off - 2, 2, '<H')
-		for c in range(1, rcols + 1):
+		add_iter(hd, 'Height', key2txt(row_height, height_map, '%.2f cm' % to_cm(row_height)), off - 2, 2, '<H', parent=rowiter)
+		for c in range(1, cells + 1):
+			start_cell = off
+			celliter = add_iter(hd, 'Cell %d' % c, '', off, 0, '%ds' % 0, parent=rowiter)
 			rc = '[R%d, C%d]' % (r, c)
 			(valign, off) = rdata(data, off, '<B')
-			add_iter(hd, '%s Vert. alignment' % rc, key2txt(valign, valign_map), off - 1, 1, '<B')
+			add_iter(hd, 'Vert. alignment', key2txt(valign, valign_map), off - 1, 1, '<B', parent=celliter)
 			(shading, off) = rdata(data, off, '<B')
-			add_iter(hd, '%s Shading' % rc, key2txt(shading, shading_map), off - 1, 1, '<B')
-			off = add_borders('%s Borders' % rc, off)
+			add_iter(hd, 'Shading', key2txt(shading, shading_map), off - 1, 1, '<B', parent=celliter)
+			off = add_borders('Borders', off, parent=celliter)
 			(text, off) = rdata(data, off, '<I')
-			add_iter(hd, '%s Text info index' % rc, text, off - 4, 4, '<I')
+			add_iter(hd, 'Text info index', text, off - 4, 4, '<I', parent=celliter)
 			off += 4
 			(cell_height, off) = rdata(data, off, '<H')
-			add_iter(hd, '%s Height' % rc, '%.2f cm' % to_cm(cell_height), off - 2, 2, '<H')
+			add_iter(hd, 'Height', '%.2f cm' % to_cm(cell_height), off - 2, 2, '<H', parent=celliter)
 			(color, off) = rdata(data, off, '<B')
-			add_iter(hd, '%s Shading color' % rc, color, off - 1, 1, '<B')
+			add_iter(hd, 'Shading color', color, off - 1, 1, '<B', parent=celliter)
 			(rowspan, off) = rdata(data, off, '<B')
-			add_iter(hd, '%s Row span' % rc, key2txt(rowspan, rowspan_map), off - 1, 1, '<B')
+			add_iter(hd, 'Row span', key2txt(rowspan, rowspan_map), off - 1, 1, '<B', parent=celliter)
+			set_length(hd, celliter, off - start_cell)
+		set_length(hd, rowiter, off - start_row)
 
 def add_frame_data_group(hd, size, data):
 	pass
