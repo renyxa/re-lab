@@ -377,7 +377,8 @@ def handle_frames(page, data, parent, parser=None):
 		off += 4
 		(data_off, off) = rdata(data, off, '<I')
 		data_offsets.append(data_off)
-		off += 6
+		off += 4
+		(fid, off) = rdata(data, off, '<H')
 		(kind, off) = rdata(data, off, '<H')
 		kinds.append(kind)
 		if frame_kind_map.has_key(kind):
@@ -390,7 +391,7 @@ def handle_frames(page, data, parent, parser=None):
 		kid = 'frame'
 		if kind_ids.has_key(i):
 			kid += '_' + kind_ids[i]
-		add_pgiter(page, '[%d] %s' % (i, label), 'wt602', kid, data[start:start + entry_size], defiter)
+		add_pgiter(page, '[%d] %s (ID: 0x%x)' % (i, label, fid), 'wt602', kid, data[start:start + entry_size], defiter)
 		off = start + entry_size
 	dataiter = add_pgiter(page, 'Data', 'wt602', '', data[off:], parent)
 	assert off == data_offsets[0]
