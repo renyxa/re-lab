@@ -670,8 +670,9 @@ line_map = {
 }
 
 shading_map = {
-	0: 'none', 5: 'vertical lines', 6: 'raster',
-	12: '100%', 16: '50%', 17: '37.5%', 18: '25%', 19: '0%'
+	0: 'none', 1: 'diag. /', 2: 'diag. \\', 3: 'diag. raster', 4: 'horiz.', 5: 'vert.', 6: 'raster',
+	7: 'dense diag. \\', 8: 'dense diag. /', 9: 'dense horiz.', 10: 'dense vert.', 11: 'dense raster',
+	12: '100%', 13: '87.5%', 14: '75%', 15: '62.5%', 16: '50%', 17: '37.5%', 18: '25%', 19: '0%',
 }
 
 def add_string(hd, size, data, off, name, fmt):
