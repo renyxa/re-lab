@@ -207,6 +207,43 @@ shape_map = {
 	0xbc: 'Double wave',
 }
 
+field_types = {
+	# gap
+	0x2: 'DB merge',
+	0x3: 'Footnote mark',
+	0x4: 'Page number',
+	0x5: 'Chapter number',
+	0x6: 'Time',
+	0x7: 'Date',
+	0x8: 'Print time',
+	0x9: 'Print date',
+	0xa: 'Title',
+	0xb: 'Topic',
+	0xc: 'Author',
+	0xd: 'Keywords',
+	0xe: 'Comment',
+	0xf: 'Template name',
+	0x10: 'Application name',
+	0x11: 'Footnote ref?',
+	0x12: 'File name',
+	0x13: 'Column sum',
+	0x14: 'Row sum',
+	0x15: 'HTML tag',
+	0x16: 'HTML entity',
+	0x17: 'Link',
+	0x18: 'Comment/note',
+	0x19: 'Symbol',
+	0x1a: 'AutoText',
+	# gap
+	0x1d: 'Name',
+	0x1e: 'Next record',
+	0x1f: 'Form text',
+	0x20: 'Form checkbox',
+	0x21: 'Form list',
+	0x22: 'Page count',
+	0x23: 'Page number/count',
+}
+
 def _handle_linked_list(page, data, parent, parser, entry_id):
 	(count, off) = rdata(data, 0, '<I')
 	(entry_size, off) = rdata(data, off, '<H')
@@ -440,8 +477,9 @@ def handle_fields(page, data, parent, parser=None):
 	i = 0
 	while off < len(data):
 		start = off
-		(size, off) = rdata(data, off + 4, '<I')
-		add_pgiter(page, '[%d]' % i, 'wt602', 'field', data[start:start + size], parent)
+		(typ, off) = rdata(data, off, '<I')
+		(size, off) = rdata(data, off, '<I')
+		add_pgiter(page, '[%d] %s' % (i, key2txt(typ, field_types)), 'wt602', 'field', data[start:start + size], parent)
 		off = start + size
 		i += 1
 
@@ -1397,44 +1435,8 @@ def add_fields(hd, size, data):
 	add_iter(hd, 'Last field length?', last, off - 4, 4, '<I')
 
 def add_field(hd, size, data):
-	type_map = {
-		# gap
-		0x2: 'DB merge',
-		0x3: 'Footnote mark',
-		0x4: 'Page number',
-		0x5: 'Chapter number',
-		0x6: 'Time',
-		0x7: 'Date',
-		0x8: 'Print time',
-		0x9: 'Print date',
-		0xa: 'Title',
-		0xb: 'Topic',
-		0xc: 'Author',
-		0xd: 'Keywords',
-		0xe: 'Comment',
-		0xf: 'Template name',
-		0x10: 'Application name',
-		0x11: 'Footnote ref?',
-		0x12: 'File name',
-		0x13: 'Column sum',
-		0x14: 'Row sum',
-		0x15: 'HTML tag',
-		0x16: 'HTML entity',
-		0x17: 'Link',
-		0x18: 'Comment/note',
-		0x19: 'Symbol',
-		0x1a: 'AutoText',
-		# gap
-		0x1d: 'Name',
-		0x1e: 'Next record',
-		0x1f: 'Form text',
-		0x20: 'Form checkbox',
-		0x21: 'Form list',
-		0x22: 'Page count',
-		0x23: 'Page number/count',
-	}
 	(typ, off) = rdata(data, 0, '<I')
-	add_iter(hd, 'Type', key2txt(typ, type_map), off - 4, 4, '<I')
+	add_iter(hd, 'Type', key2txt(typ, field_types), off - 4, 4, '<I')
 	(length, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Length', length, off - 4, 4, '<I')
 	(prev, off) = rdata(data, off, '<I')
