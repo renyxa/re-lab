@@ -479,7 +479,9 @@ def handle_fields(page, data, parent, parser=None):
 		start = off
 		(typ, off) = rdata(data, off, '<I')
 		(size, off) = rdata(data, off, '<I')
-		add_pgiter(page, '[%d] %s' % (i, key2txt(typ, field_types)), 'wt602', 'field', data[start:start + size], parent)
+		field = key2txt(typ, field_types)
+		parser.fields[start - 0x10] = field
+		add_pgiter(page, '[%d] %s' % (i, field), 'wt602', 'field', data[start:start + size], parent)
 		off = start + size
 		i += 1
 
@@ -549,6 +551,7 @@ class wt602_parser(object):
 		self.sections = []
 		self.strings = {}
 		self.styles = []
+		self.fields = {}
 
 	def parse(self):
 		self.parse_header()
@@ -734,21 +737,25 @@ def add_long_string(hd, size, data, off, name):
 def add_text_info(hd, size, data):
 	(next, off) = rdata(data, 0, '<i')
 	add_iter(hd, 'Offset to next', next, off - 4, 4, '<i')
-	flag_map = {0x8: 'start flow', 0x20: 'block change', 0x100: 'paragraph break'}
+	flag_map = {0x8: 'start flow', 0x10: 'field', 0x20: 'block change', 0x100: 'paragraph break'}
 	flag_index = {0x8: 'Flow', 0x20: 'Index'}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 2, 2, '<H')
 	change_flag_map = {0x20: 'delete', 0x40: 'insert'}
 	(change_flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Change flags?', '%s' % bflag2txt(change_flags, change_flag_map), off - 2, 2, '<H')
-	(index, off) = rdata(data, off, '<H')
-	index_names = [v for (k, v) in flag_index.iteritems() if k & flags != 0]
-	assert len(index_names) <= 1
-	if len(index_names) == 0:
-		index_str = 'Index'
+	if flags & 0x10 != 0:
+		(offset, off) = rdata(data, off, '<H')
+		add_iter(hd, 'Field offset / 4', '%d {%s}' % (offset, key2txt(offset * 4, hd.context.fields)), off - 2, 2, '<H')
 	else:
-		index_str = '%s index' % index_names[0]
-	add_iter(hd, index_str, index2txt(index), off - 2, 2, '<H')
+		(index, off) = rdata(data, off, '<H')
+		index_names = [v for (k, v) in flag_index.iteritems() if k & flags != 0]
+		assert len(index_names) <= 1
+		if len(index_names) == 0:
+			index_str = 'Index'
+		else:
+			index_str = '%s index' % index_names[0]
+		add_iter(hd, index_str, index2txt(index), off - 2, 2, '<H')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
