@@ -754,6 +754,8 @@ def add_text_info(hd, size, data):
 		0x8: 'Flow index',
 		0x10: 'Field offset / 4',
 		0x20: 'Index index',
+		0x200000: 'Change index',
+		0x400000: 'Change index',
 	}
 	active_names = [v for (k, v) in index_names.iteritems() if k & flags != 0]
 	assert len(active_names) <= 1
