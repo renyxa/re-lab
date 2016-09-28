@@ -737,25 +737,35 @@ def add_long_string(hd, size, data, off, name):
 def add_text_info(hd, size, data):
 	(next, off) = rdata(data, 0, '<i')
 	add_iter(hd, 'Offset to next', next, off - 4, 4, '<i')
-	flag_map = {0x8: 'start flow', 0x10: 'field', 0x20: 'block change', 0x100: 'paragraph break'}
-	flag_index = {0x8: 'Flow', 0x20: 'Index'}
-	(flags, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 2, 2, '<H')
-	change_flag_map = {0x20: 'delete', 0x40: 'insert'}
-	(change_flags, off) = rdata(data, off, '<H')
-	add_iter(hd, 'Change flags?', '%s' % bflag2txt(change_flags, change_flag_map), off - 2, 2, '<H')
-	if flags & 0x10 != 0:
-		(offset, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Field offset / 4', '%d {%s}' % (offset, key2txt(offset * 4, hd.context.fields)), off - 2, 2, '<H')
-	else:
-		(index, off) = rdata(data, off, '<H')
-		index_names = [v for (k, v) in flag_index.iteritems() if k & flags != 0]
-		assert len(index_names) <= 1
-		if len(index_names) == 0:
-			index_str = 'Index'
+	flag_map = {
+		# gap
+		0x8: 'start flow',
+		0x10: 'field',
+		0x20: 'block change',
+		# gap
+		0x100: 'para break',
+		# gap
+		0x200000: 'delete',
+		0x400000: 'insert',
+	}
+	(flags, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Flags', '%s' % bflag2txt(flags, flag_map), off - 4, 4, '<I')
+	index_names = {
+		0x8: 'Flow index',
+		0x10: 'Field offset / 4',
+		0x20: 'Index index',
+	}
+	active_names = [v for (k, v) in index_names.iteritems() if k & flags != 0]
+	assert len(active_names) <= 1
+	(index, off) = rdata(data, off, '<H')
+	if len(active_names) == 1:
+		if flags & 0x10 != 0:
+			val = '%d {%s}' % (index, key2txt(index * 4, hd.context.fields))
 		else:
-			index_str = '%s index' % index_names[0]
-		add_iter(hd, index_str, index2txt(index), off - 2, 2, '<H')
+			val = index2txt(index)
+		add_iter(hd, active_names[0], val, off - 2, 2, '<H')
+	else:
+		add_iter(hd, 'Unused', '0x%x' % index, off - 2, 2, '<H')
 	(attrset, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Attribute set ref', ref2txt(attrset), off - 2, 2, '<H')
 	(attribs, off) = rdata(data, off, '<H')
