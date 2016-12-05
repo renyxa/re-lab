@@ -664,10 +664,15 @@ def FrgnType (hd, size, value, off = 19):
 	add_iter(hd,"ImgOffsetY","%.2f"%struct.unpack("<d",value[off+10:off+10+8]),off+10,8,"<d")
 	add_iter(hd,"ImgWidth","%.2f"%struct.unpack("<d",value[off+19:off+19+8]),off+19,8,"<d")
 	add_iter(hd,"ImgHeight","%.2f"%struct.unpack("<d",value[off+28:off+28+8]),off+28,8,"<d")
+	ftype_map = {0: 'Metafile', 1: 'Bitmap', 2: 'OLE object', 4: 'Metafile'}
 	ftype = struct.unpack("<h",value[off+36:off+36+2])[0]
-	add_iter(hd,"Type ??","%d"%ftype,off+36,2,"<h")
+	add_iter(hd,"Type", key2txt(ftype, ftype_map),off+36,2,"<h")
 	add_iter(hd,"MapMode","%d"%struct.unpack("<h",value[off+38:off+38+2]),off+38,2,"<h")
-	if ftype == 4:
+	if ftype == 1:
+		fmt_map = {0: 'BMP', 1: 'JPEG', 2: 'GIF', 3: 'TIFF', 4: 'PNG'}
+		fmt = struct.unpack("<I",value[off+49:off+49+4])[0]
+		add_iter(hd,"Bitmap format", key2txt(fmt, fmt_map),off+49,4,"<I")
+	elif ftype == 4:
 		add_iter(hd,"ExtentX","%d"%struct.unpack("<h",value[off+40:off+40+2]),off+40,2,"<h")
 		add_iter(hd,"ExtentY","%d"%struct.unpack("<h",value[off+42:off+42+2]),off+42,2,"<h")
 	if len(value)>off+62:
