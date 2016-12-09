@@ -837,6 +837,8 @@ def parse(page, version, parent, pntr):
 			if version < 6 and chunklist.has_key(chnk.type):
 				v5parse(page,version,iter1,ptr)
 
+			if chnk.type == 0xc: # FrgnData
+				add_pgiter(page, "Data", "vsd", "", ptr.data[ch_hdr_len:], iter1)
 			if chnk.type == 0xd: #OLE_List
 				olelist = model.append(iter1, None)
 				olenum = chnk.list
