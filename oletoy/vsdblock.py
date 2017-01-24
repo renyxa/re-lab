@@ -368,8 +368,11 @@ def sl_names75(hd, data, shift, offset, blk_off):
 	if names75.has_key(value):
 		nm_str = names75[value]
 	iter1 = hd.model.append(None, None)
-	hd.model.set (iter1, 0, "\tname75", 1, nm_str,2,shift+offset+blk_off,3,4,4,"<I")
-	return blk_off+4
+	l,t = 4,"<I"
+	if hd.version < 6:
+		l,t = 2, "<H"
+	hd.model.set (iter1, 0, "\tname75", 1, nm_str,2,shift+offset+blk_off,3,l,4,t)
+	return blk_off+l
 
 def sl_names76 (hd, data, shift, offset, blk_off):
 	# FIXME, just skipping at the moment
