@@ -114,6 +114,9 @@ class ApplicationMainWindow(gtk.Window):
 		self.label = gtk.Label()
 		self.label.set_use_markup(True)
 		self.statusbar.pack_start(self.label, True,True,2)
+		self.label2 = gtk.Label()
+		self.label2.set_use_markup(True)
+		self.statusbar.pack_start(self.label2, True,True,2)
 		
 		table.attach(self.statusbar,
 			# X direction		   Y direction
@@ -701,9 +704,12 @@ class ApplicationMainWindow(gtk.Window):
 			self.notebook.show_tabs = True
 			self.notebook.show_all()
 
-	def update_statusbar(self, buffer):
+	def update_statusbar(self, buffer, label=1):
 		try:
-			self.label.set_markup("%s"%buffer)
+			if label == 1:
+				self.label.set_markup("%s"%buffer)
+			else:
+				self.label2.set_markup("%s"%buffer)
 		except:
 			pass
 
@@ -716,7 +722,6 @@ class ApplicationMainWindow(gtk.Window):
 	def calc_status(self,buf,dlen):
 		self.statbuffer = buf
 		txt = ""
-		txt2 = ""
 		if dlen == 1:
 			v1 = ord(buf)
 			txt += "%d\t"%v1

@@ -1204,7 +1204,7 @@ class HexView():
 				ctx.show_text("%08x"%(self.lines[self.curr][0]))
 		if self.mtt:
 			mttstr = "%s/%x (%s)"%(self.mtt[2],self.mtt[2],self.mtt[3])
-			self.parent.update_statusbar(mttstr)
+			self.parent.update_statusbar(mttstr, 2)
 			sh = len(mttstr)
 			ctx.rectangle((self.curc*3+10.5)*self.tdx,(self.curr-self.offnum+3)*self.tht-6,self.tdx*(2+sh),self.tht+4) #-6
 			ctx.set_source_rgba(0.9,0.95,0.95,0.85)
