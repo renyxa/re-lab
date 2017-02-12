@@ -52,22 +52,20 @@ def open_v5 (page,buf,parent,fmt,off=0,bs=1):
 		while off < len(buf):
 			if flag == 0:
 				nxt = struct.unpack(fmt('i'),buf[off+rlen-4:off+rlen])[0]
-				n = "%02x [%02x]"%(i,nxt)
 				if nxt < 0:
 					nxt = abs(nxt)
 					flag = struct.unpack(fmt('H'),buf[off+rlen:off+rlen+2])[0]
-					n = "%02x [%02x]"%(i,nxt)
+				n = "%02x [%02x]"%(i,nxt)
 				add_pgiter(page,n,"qxp","block%02x"%i,buf[off:off+rlen],parent)
 				off += rlen
 				i += 1
 			else:
 				nxt = struct.unpack(fmt('i'),buf[off+rlen*flag-4:off+rlen*flag])[0]
-				n = "%02x-%02x [%02x]"%(i,i+flag-1,nxt)
 				flag2 = 0
 				if nxt < 0:
 					nxt = abs(nxt)
 					flag2 = struct.unpack(fmt('H'),buf[off+rlen*flag:off+rlen*flag+2])[0]
-					n = "%02x-%02x [%02x]"%(i,i+flag-1,nxt)
+				n = "%02x-%02x [%02x]"%(i,i+flag-1,nxt)
 				add_pgiter(page,n,"qxp","block%02x"%i,buf[off:off+rlen*flag],parent)
 				off += rlen*flag
 				i += flag
