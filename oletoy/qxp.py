@@ -80,7 +80,7 @@ def open_v5 (page,buf,parent,off=0,bs=1):
 	return "QXP5"
 
 
-def open (page,buf,parent,off=0):
+def open (page,buf,parent):
 	# 0x3f - 3
 	# 0x41 - 4
 	# 0x42 - 5
@@ -88,9 +88,10 @@ def open (page,buf,parent,off=0):
 	# 0x44? -7
 	# 0x45 - 8
 	if ord(buf[8]) < 0x43:
-		open_v5 (page,buf,parent,off)
+		open_v5 (page,buf,parent,0)
 	else:
 		rlen = 0x400
+		off = 0
 		parent = add_pgiter(page,"File","qxp","file",buf,parent)
 	
 		add_pgiter(page,"01","qxp","block01",buf[off:off+rlen],parent)
