@@ -140,3 +140,4 @@ def open (page,buf,parent):
 			add_pgiter(page,name,"qxp","txtblock%02x"%i,data,parent)
 		return "QXP6"
 	
+# vim: set ft=python sts=4 sw=4 noet:
