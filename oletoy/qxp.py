@@ -82,7 +82,7 @@ def open_v5 (page,buf,parent,fmt,off=0,bs=1):
 					(flag, _) = rdata(buf, off, fmt('H'))
 				i = nxt
 	except:
-		print "failed in qxd loop"
+		print "failed in qxp loop at block %d (offset %d)" % (i, start)
 	return "QXP5"
 
 
