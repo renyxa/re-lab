@@ -49,9 +49,11 @@ As of now OLE Toy reads and parses:
 - PLIST (Apple property list)
 - 602 (Software602 T602)
 
-
-The scripts depend on libgsf. You can find libgsf source code here:
-http://ftp.gnome.org/pub/GNOME/sources/libgsf/
+Dependencies:
+- PyGTK (sudo apt-get install python-gtk2 for Ubuntu).
+- libgsf for OLE-based formats. You can find libgsf source code here:
+    http://ftp.gnome.org/pub/GNOME/sources/libgsf/
+    (or sudo apt-get install libgsf-bin libgsf-1-dev for Ubuntu).
 
 To start OLE Toy just run:
 
