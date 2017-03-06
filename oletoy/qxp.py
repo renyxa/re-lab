@@ -80,7 +80,7 @@ def open_v5(page, buf, parent, fmt):
 			story.append((block, start, end))
 
 	# parse blocks
-	blockiter = add_pgiter(page, "Blocks", "qxp", "", buf[0:len(buf)], parent)
+	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[0:len(buf)], parent)
 
 	last_data = 2
 	off = 0
@@ -93,7 +93,7 @@ def open_v5(page, buf, parent, fmt):
 			count = 1
 			if tblocks.has_key(i):
 				text = buf[start:start+rlen]
-				add_pgiter(page, "[%02x] Text" % i, "qxp", "", text, blockiter)
+				add_pgiter(page, "[%02x] Text" % i, "qxp5", (), text, blockiter)
 				tblocks[i] = text
 				off += rlen
 			else:
@@ -109,7 +109,7 @@ def open_v5(page, buf, parent, fmt):
 				else:
 					n = "%02x [%02x]"%(i,nxt)
 				block = buf[start:start+rlen*count]
-				add_pgiter(page, n, "qxp", "", block, blockiter)
+				add_pgiter(page, n, "qxp5", (), block, blockiter)
 				if nexts.has_key(i):
 					chain = nexts[i]
 				else: # a new chain starts here
@@ -125,8 +125,61 @@ def open_v5(page, buf, parent, fmt):
 	except:
 		print "failed in qxp loop at block %d (offset %d)" % (i, start)
 
+	# reconstruct data streams from chains of blocks
+	pos = 0
+	stream_name_map = {0: "Header", 1: "Unknown", 2: "Document"}
+	stream_map = {0: 'header', 1: '', 2: ''}
+	for chain in chains:
+		stream = ''.join(chain)
+		if stream_name_map.has_key(pos):
+			name = stream_name_map[pos]
+		else:
+			name = "Text %d" % (pos - last_data)
+		if stream_map.has_key(pos):
+			vis = (stream_map[pos], fmt)
+		else:
+			text = ""
+			for block in stories[pos]:
+				text += tblocks[block[0]][block[1]:block[2]]
+			vis = ('text', fmt, text)
+		ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
+		pos += 1
+
 	return "QXP5"
 
+def add_header(hd, size, data, fmt):
+	off = 2
+	proc_map = {'II': 'Intel', 'MM': 'Motorola'}
+	(proc, off) = rdata(data, off, '2s')
+	add_iter(hd, 'Processor', key2txt(proc, proc_map), off - 2, 2, '2s')
+	(sig, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Signature', sig, off - 3, 3, '3s')
+	lang_map = {0x33: 'English', 0x61: 'Korean'}
+	(lang, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Language', key2txt(lang, lang_map), off - 1, 1, fmt('B'))
+
+def add_text(hd, size, data, fmt, text):
+	off = 0
+	(length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Text length', length, off - 4, 4, fmt('I'))
+	(blocks_len, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length of blocks spec', blocks_len, off - 4, 4, fmt('I'))
+	blockiter = add_iter(hd, 'Blocks spec', '', off, blocks_len, '%ds' % blocks_len)
+	i = 0
+	begin = off
+	while off < begin + blocks_len:
+		(block, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Block %d' % i, block, off - 4, 4, fmt('I'), parent=blockiter)
+		(end, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Block %d end offset' % i, end, off - 2, 2, fmt('H'), parent=blockiter)
+		(start, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Block %d start offset' % i, start, off - 2, 2, fmt('H'), parent=blockiter)
+		i += 1
+
+qxp5_ids = {
+	'header': add_header,
+	'text': add_text,
+}
 
 def open (page,buf,parent):
 	if buf[2:4] == 'II':

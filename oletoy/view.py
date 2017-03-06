@@ -1440,7 +1440,10 @@ class ApplicationMainWindow(gtk.Window):
 				ut = ""
 				for i in range(len(ntype)):
 					if isinstance(ntype[i], tuple):
-						ut += "%s "%ntype[i][0].__name__
+						try:
+							ut += "%s "%ntype[i][0].__name__
+						except AttributeError:
+							ut += "%s "%ntype[i][0]
 					else:
 						ut += "%s "%ntype[i]
 				self.update_statusbar("[ %s]"%ut)
@@ -1602,6 +1605,12 @@ class ApplicationMainWindow(gtk.Window):
 						ntype[1](hd, size, data)
 					elif bmi.bmi_ids.has_key(ntype[1]):
 						bmi.bmi_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "qxp5":
+					if qxp.qxp5_ids.has_key(ntype[1][0]):
+						if len(ntype[1]) == 2:
+							qxp.qxp5_ids[ntype[1][0]](hd, size, data, ntype[1][1])
+						else:
+							qxp.qxp5_ids[ntype[1][0]](hd, size, data, ntype[1][1], ntype[1][2])
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 				elif ntype[0] == "ole" and ntype[1] == "propset":
