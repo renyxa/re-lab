@@ -44,45 +44,87 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def open_v5 (page,buf,parent,fmt,off=0,bs=1):
+def open_v5(page, buf, parent, fmt):
+	chains = []
+	tblocks = {}
+	stories = {}
 	rlen = 0x100
-	i = bs
-	flag = 0
+
+	def read_story_blocks(pos, length, offset):
+		start = (pos - 1) * rlen
+		if rlen - 4 - offset >= length:
+			cur = length
+			rem = 0
+		else:
+			cur = rlen - 4 - offset
+			rem = length - cur
+		data = buf[start + offset:start + offset + cur]
+		if rem > 0:
+			(nxt, off) = rdata(buf, start + rlen - 4, fmt('i'))
+			assert nxt > 0
+			return data + read_story_blocks(nxt, rem, 0)
+		return data
+
+	def parse_story(pos, story):
+		start = (pos - 1) * rlen
+		off = start + 4
+		(length, off) = rdata(buf, off, fmt('I'))
+		data = read_story_blocks(pos, length, off - start)
+		off = 0
+		while off < len(data):
+			(block, off) = rdata(data, off, fmt('I'))
+			(end, off) = rdata(data, off, fmt('H'))
+			# NOTE: this is a speculation
+			(start, off) = rdata(data, off, fmt('H'))
+			tblocks[block] = ""
+			story.append((block, start, end))
+
+	# parse blocks
+	blockiter = add_pgiter(page, "Blocks", "qxp", "", buf[0:len(buf)], parent)
+
+	last_data = 2
+	off = 0
+	i = 1
+	big = False
+	nexts = {}
 	try:
 		while off < len(buf):
-			if flag == 0:
-				start = off
-				off += rlen - 4
-				(nxt, off) = rdata(buf, off, fmt('i'))
-				if nxt < 0:
-					nxt = abs(nxt)
-					(flag, _) = rdata(buf, off, fmt('H'))
-				n = "%02x [%02x]"%(i,nxt)
-				add_pgiter(page,n,"qxp","block%02x"%i,buf[start:start+rlen],parent)
-				i += 1
+			start = off
+			count = 1
+			if tblocks.has_key(i):
+				text = buf[start:start+rlen]
+				add_pgiter(page, "[%02x] Text" % i, "qxp", "", text, blockiter)
+				tblocks[i] = text
+				off += rlen
 			else:
-				start = off
-				off += rlen * flag - 4
+				if big:
+					(count, off) = rdata(buf, off, fmt('H'))
+				off = start + rlen * count - 4
 				(nxt, off) = rdata(buf, off, fmt('i'))
-				flag2 = 0
+				nextbig = nxt < 0
 				if nxt < 0:
 					nxt = abs(nxt)
-					(flag2, _) = rdata(buf, off, fmt('H'))
-				n = "%02x-%02x [%02x]"%(i,i+flag-1,nxt)
-				add_pgiter(page,n,"qxp","block%02x"%i,buf[start:start+rlen*flag],parent)
-				i += flag
-				flag = flag2
-			if nxt > i:
-				# need to jump
-				piter = add_pgiter(page,"jump %02x-%02x"%(i,nxt-1),"qxp","block%02x"%i,buf[off:off+rlen*(nxt-i)],parent)
-				open_v5(page,buf[off:off+rlen*(nxt-i)],piter,fmt,0,i)
-				off += rlen*(nxt-i)
-				# overwrite flag
-				if flag:
-					(flag, _) = rdata(buf, off, fmt('H'))
-				i = nxt
+				if big:
+					n = "%02x-%02x [%02x]"%(i,i+count-1,nxt)
+				else:
+					n = "%02x [%02x]"%(i,nxt)
+				block = buf[start:start+rlen*count]
+				add_pgiter(page, n, "qxp", "", block, blockiter)
+				if nexts.has_key(i):
+					chain = nexts[i]
+				else: # a new chain starts here
+					chain = len(chains)
+					chains.append([])
+					if chain > last_data:
+						stories[chain] = []
+						parse_story(i, stories[chain])
+				chains[chain].append(block)
+				big = nextbig
+				nexts[nxt] = chain
+			i += count
 	except:
 		print "failed in qxp loop at block %d (offset %d)" % (i, start)
+
 	return "QXP5"
 
 
@@ -102,7 +144,7 @@ def open (page,buf,parent):
 	# 0x44? -7
 	# 0x45 - 8
 	if ord(buf[8]) < 0x43:
-		open_v5 (page,buf,parent,fmt,0)
+		open_v5 (page,buf,parent,fmt)
 	else:
 		rlen = 0x400
 		off = 0
