@@ -20,6 +20,8 @@ def little_endian(fmt):
 def big_endian(fmt):
 	return '>' + fmt
 
+VERSION_4 = 0x41
+
 def collect_group(data,name,buf,fmt,off,grp_id):
 	grplen = struct.unpack(fmt('H'),buf[off+0x400*(grp_id-1):off+0x400*(grp_id-1)+2])[0]
 	data += buf[off+0x400*(grp_id-1)+2:off+0x400*(grp_id+grplen-1)-4]
@@ -44,7 +46,7 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def open_v5(page, buf, parent, fmt):
+def open_v5(page, buf, parent, fmt, version):
 	chains = []
 	tblocks = {}
 	stories = {}
@@ -73,7 +75,11 @@ def open_v5(page, buf, parent, fmt):
 		off = 0
 		while off < len(data):
 			(block, off) = rdata(data, off, fmt('I'))
-			(tlen, off) = rdata(data, off, fmt('I'))
+			if version < VERSION_4:
+				(sz, fm) = (2, fmt('H'))
+			else:
+				(sz, fm) = (4, fmt('I'))
+			(tlen, off) = rdata(data, off, fm)
 			tblocks[block] = ""
 			story.append((block, tlen))
 
@@ -139,13 +145,13 @@ def open_v5(page, buf, parent, fmt):
 			text = ""
 			for block in stories[pos]:
 				text += tblocks[block[0]][0:block[1]]
-			vis = ('text', fmt, text)
+			vis = ('text', fmt, version, text)
 		ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
 		pos += 1
 
 	return "QXP5"
 
-def add_header(hd, size, data, fmt):
+def add_header(hd, size, data, fmt, version):
 	off = 2
 	proc_map = {'II': 'Intel', 'MM': 'Motorola'}
 	(proc, off) = rdata(data, off, '2s')
@@ -169,7 +175,7 @@ def add_header(hd, size, data, fmt):
 	(ver, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 
-def add_text(hd, size, data, fmt, text):
+def add_text(hd, size, data, fmt, version, text):
 	off = 0
 	(length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Text length', length, off - 4, 4, fmt('I'))
@@ -181,14 +187,28 @@ def add_text(hd, size, data, fmt, text):
 	while off < begin + blocks_len:
 		(block, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Block %d' % i, block, off - 4, 4, fmt('I'), parent=blockiter)
-		(tlen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Block %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=blockiter)
+		if version < VERSION_4:
+			(sz, fm) = (2, fmt('H'))
+		else:
+			(sz, fm) = (4, fmt('I'))
+		(tlen, off) = rdata(data, off, fm)
+		add_iter(hd, 'Block %d text length' % i, tlen, off - sz, sz, fm, parent=blockiter)
 		i += 1
 
 qxp5_ids = {
 	'header': add_header,
 	'text': add_text,
 }
+
+def call_v5(hd, size, data, args):
+	if qxp5_ids.has_key(args[0]):
+		f = qxp5_ids[args[0]]
+		if len(args) == 2:
+			f(hd, size, data, args[1], 0)
+		elif len(args) == 3:
+			f(hd, size, data, args[1], args[2])
+		else:
+			f(hd, size, data, args[1], args[2], args[3])
 
 def open (page,buf,parent):
 	if buf[2:4] == 'II':
@@ -200,8 +220,9 @@ def open (page,buf,parent):
 		fmt = big_endian
 
 	# see header version_map
-	if ord(buf[8]) < 0x43:
-		open_v5 (page,buf,parent,fmt)
+	(version, off) = rdata(buf, 8, fmt('H'))
+	if version < 0x43:
+		open_v5(page, buf, parent, fmt, version)
 	else:
 		rlen = 0x400
 		off = 0
