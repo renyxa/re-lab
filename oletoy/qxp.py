@@ -140,12 +140,11 @@ def open_v5(page, buf, parent, fmt, version):
 		print "failed in qxp loop at block %d (offset %d)" % (i, start)
 
 	# reconstruct data streams from chains of blocks
-	pos = 0
 	pid = 1
 	tid = 1
 	stream_name_map = {0: "Header", 1: "Unknown", 2: "Document"}
 	stream_map = {0: 'header', 1: '', 2: ''}
-	for chain in chains:
+	for (pos, chain) in enumerate(chains):
 		stream = ''.join(chain)
 		if stream_name_map.has_key(pos):
 			name = stream_name_map[pos]
@@ -162,7 +161,6 @@ def open_v5(page, buf, parent, fmt, version):
 			vis = ('text', fmt, version, text)
 			tid += 1
 		ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
-		pos += 1
 
 	return "QXP5"
 
