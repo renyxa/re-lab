@@ -157,6 +157,20 @@ def add_header(hd, size, data, fmt):
 	lang_map = {0x33: 'English', 0x61: 'Korean'}
 	(lang, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Language', key2txt(lang, lang_map), off - 1, 1, fmt('B'))
+	version_map = {
+		0x3e: '3.1',
+		0x3f: '3.3',
+		0x41: '4',
+		0x42: '5',
+		0x43: '6',
+		0x44: '7?',
+		0x45: '8',
+	}
+	(ver, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Version', key2txt(ver, version_map), off - 1, 1, fmt('B'))
+	off += 1
+	(ver, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Version', key2txt(ver, version_map), off - 1, 1, fmt('B'))
 
 def add_text(hd, size, data, fmt, text):
 	off = 0
@@ -190,12 +204,7 @@ def open (page,buf,parent):
 		print "unknown format '%s', assuming big endian" % buf[2:4]
 		fmt = big_endian
 
-	# 0x3f - 3
-	# 0x41 - 4
-	# 0x42 - 5
-	# 0x43 - 6
-	# 0x44? -7
-	# 0x45 - 8
+	# see header version_map
 	if ord(buf[8]) < 0x43:
 		open_v5 (page,buf,parent,fmt)
 	else:
