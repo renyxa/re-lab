@@ -47,7 +47,26 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
+def _read_name(data, offset=0):
+	(n, off) = rdata(data, offset, '64s')
+	return n[0:n.find('\0')]
+
+def handle_list(handler, size):
+	def hdl(page, data, parent, fmt, version):
+		off = 0
+		i = 0
+		while off + size <= len(data):
+			(entry, off) = rdata(data, off, '%ds' % size)
+			handler(page, entry, parent, fmt, version, i)
+			i += 1
+	return hdl
+
+def handle_para_style(page, data, parent, fmt, version, index):
+	name = _read_name(data)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('para_style', fmt, version), data, parent)
+
 v4_handlers = {
+	9: ('Paragraph styles', handle_list(handle_para_style, 244)),
 }
 
 handler_map = {
@@ -262,8 +281,17 @@ def add_picture(hd, size, data, fmt, version):
 def add_record(hd, size, data, fmt, version):
 	_add_length(hd, size, data, fmt, version, 0)
 
+def _add_name(hd, size, data, offset=0, name="Name"):
+	(n, off) = rdata(data, offset, '64s')
+	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
+	return off
+
+def add_para_style(hd, size, data, fmt, version):
+	off = _add_name(hd, size, data)
+
 qxp5_ids = {
 	'header': add_header,
+	'para_style': add_para_style,
 	'picture': add_picture,
 	'record': add_record,
 	'text': add_text,
