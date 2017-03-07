@@ -47,6 +47,37 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
+v4_handlers = {
+}
+
+handler_map = {
+	VERSION_4 : v4_handlers,
+}
+
+def handle_document(page, data, parent, fmt, version):
+	handlers = handler_map[version] if handler_map.has_key(version) else {}
+	off = 0
+	i = 1
+	while off < len(data):
+		if handlers.has_key(i):
+			name = handlers[i][0]
+			hdl = None
+			if len(handlers[i]) > 1:
+				hdl = handlers[i][1]
+			if len(handlers[i]) > 2:
+				hid = handlers[i][2]
+			if not hid:
+				hdl = 'record'
+		else:
+			name, hdl, hid = 'Record %d' % i, None, 'record'
+		(length, off) = rdata(data, off, fmt('I'))
+		record = data[off - 4:off + length]
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp5', (hid, fmt, version), record, parent)
+		if hdl:
+			hdl(page, record[4:], reciter, fmt, version)
+		off += length
+		i += 1
+
 def open_v5(page, buf, parent, fmt, version):
 	chains = []
 	tblocks = {}
@@ -163,9 +194,16 @@ def open_v5(page, buf, parent, fmt, version):
 				text += tblocks[block[0]][0:block[1]]
 			vis = ('text', fmt, version, text)
 			tid += 1
-		ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
+		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
+		if pos == 2:
+			handle_document(page, stream, streamiter, fmt, version)
 
 	return "QXP5"
+
+def _add_length(hd, size, data, fmt, version, offset, name="Length"):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, name, length, off - 4, 4, fmt('I'))
+	return off
 
 def add_header(hd, size, data, fmt, version):
 	off = 2
@@ -221,9 +259,13 @@ def add_picture(hd, size, data, fmt, version):
 	(sz, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
 
+def add_record(hd, size, data, fmt, version):
+	_add_length(hd, size, data, fmt, version, 0)
+
 qxp5_ids = {
 	'header': add_header,
 	'picture': add_picture,
+	'record': add_record,
 	'text': add_text,
 }
 
