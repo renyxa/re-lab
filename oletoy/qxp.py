@@ -73,11 +73,9 @@ def open_v5(page, buf, parent, fmt):
 		off = 0
 		while off < len(data):
 			(block, off) = rdata(data, off, fmt('I'))
-			(end, off) = rdata(data, off, fmt('H'))
-			# NOTE: this is a speculation
-			(start, off) = rdata(data, off, fmt('H'))
+			(tlen, off) = rdata(data, off, fmt('I'))
 			tblocks[block] = ""
-			story.append((block, start, end))
+			story.append((block, tlen))
 
 	# parse blocks
 	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[0:len(buf)], parent)
@@ -140,7 +138,7 @@ def open_v5(page, buf, parent, fmt):
 		else:
 			text = ""
 			for block in stories[pos]:
-				text += tblocks[block[0]][block[1]:block[2]]
+				text += tblocks[block[0]][0:block[1]]
 			vis = ('text', fmt, text)
 		ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
 		pos += 1
@@ -166,11 +164,10 @@ def add_header(hd, size, data, fmt):
 		0x44: '7?',
 		0x45: '8',
 	}
-	(ver, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Version', key2txt(ver, version_map), off - 1, 1, fmt('B'))
-	off += 1
-	(ver, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Version', key2txt(ver, version_map), off - 1, 1, fmt('B'))
+	(ver, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
+	(ver, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 
 def add_text(hd, size, data, fmt, text):
 	off = 0
@@ -184,10 +181,8 @@ def add_text(hd, size, data, fmt, text):
 	while off < begin + blocks_len:
 		(block, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Block %d' % i, block, off - 4, 4, fmt('I'), parent=blockiter)
-		(end, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Block %d end offset' % i, end, off - 2, 2, fmt('H'), parent=blockiter)
-		(start, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Block %d start offset' % i, start, off - 2, 2, fmt('H'), parent=blockiter)
+		(tlen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Block %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=blockiter)
 		i += 1
 
 qxp5_ids = {
