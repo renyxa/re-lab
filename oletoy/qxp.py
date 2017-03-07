@@ -202,7 +202,7 @@ qxp5_ids = {
 }
 
 def call_v5(hd, size, data, args):
-	if qxp5_ids.has_key(args[0]):
+	if len(args) > 1 and qxp5_ids.has_key(args[0]):
 		f = qxp5_ids[args[0]]
 		if len(args) == 2:
 			f(hd, size, data, args[1], 0)
