@@ -51,7 +51,13 @@ def open_v5(page, buf, parent, fmt, version):
 	chains = []
 	tblocks = {}
 	stories = {}
+	pictures = []
 	rlen = 0x100
+
+	def read_header():
+		off = 0xe0
+		(pictures, off) = rdata(buf, off, fmt('H'))
+		return pictures
 
 	def read_story_blocks(pos, length, offset):
 		start = (pos - 1) * rlen
@@ -93,6 +99,7 @@ def open_v5(page, buf, parent, fmt, version):
 	big = False
 	nexts = {}
 	try:
+		pict_count = read_header()
 		while off < len(buf):
 			start = off
 			count = 1
@@ -120,9 +127,11 @@ def open_v5(page, buf, parent, fmt, version):
 				else: # a new chain starts here
 					chain = len(chains)
 					chains.append([])
-					if chain > last_data:
+					if chain > last_data + pict_count:
 						stories[chain] = []
 						parse_story(i, stories[chain])
+					elif chain > last_data:
+						pictures.append(chain)
 				chains[chain].append(block)
 				big = nextbig
 				nexts[nxt] = chain
@@ -132,21 +141,26 @@ def open_v5(page, buf, parent, fmt, version):
 
 	# reconstruct data streams from chains of blocks
 	pos = 0
+	pid = 1
+	tid = 1
 	stream_name_map = {0: "Header", 1: "Unknown", 2: "Document"}
 	stream_map = {0: 'header', 1: '', 2: ''}
 	for chain in chains:
 		stream = ''.join(chain)
 		if stream_name_map.has_key(pos):
 			name = stream_name_map[pos]
-		else:
-			name = "Text %d" % (pos - last_data)
-		if stream_map.has_key(pos):
 			vis = (stream_map[pos], fmt)
+		elif pos in pictures:
+			name = "Picture %d" % pid
+			vis = ('picture', fmt, version)
+			pid += 1
 		else:
+			name = "Text %d" % tid
 			text = ""
 			for block in stories[pos]:
 				text += tblocks[block[0]][0:block[1]]
 			vis = ('text', fmt, version, text)
+			tid += 1
 		ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
 		pos += 1
 
@@ -175,6 +189,11 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	(ver, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
+	off += 210
+	(texts, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of text streams', texts - 1, off - 2, 2, fmt('H'))
+	(pictures, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of pictures', pictures, off - 2, 2, fmt('H'))
 
 def add_text(hd, size, data, fmt, version, text):
 	off = 0
@@ -196,8 +215,14 @@ def add_text(hd, size, data, fmt, version, text):
 		add_iter(hd, 'Block %d text length' % i, tlen, off - sz, sz, fm, parent=blockiter)
 		i += 1
 
+def add_picture(hd, size, data, fmt, version):
+	off = 0
+	(sz, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
+
 qxp5_ids = {
 	'header': add_header,
+	'picture': add_picture,
 	'text': add_text,
 }
 
