@@ -145,7 +145,10 @@ def open_v5(page, buf, parent, fmt, version):
 	stream_name_map = {0: "Header", 1: "Unknown", 2: "Document"}
 	stream_map = {0: 'header', 1: '', 2: ''}
 	for (pos, chain) in enumerate(chains):
-		stream = ''.join(chain)
+		stream = ""
+		for block in chain:
+			start = 2 if len(block) > rlen else 0
+			stream += block[start:len(block) - 4]
 		if stream_name_map.has_key(pos):
 			name = stream_name_map[pos]
 			vis = (stream_map[pos], fmt)
