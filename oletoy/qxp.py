@@ -65,8 +65,13 @@ def handle_para_style(page, data, parent, fmt, version, index):
 	name = _read_name(data)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('para_style', fmt, version), data, parent)
 
+def handle_hj(page, data, parent, fmt, version, index):
+	name = _read_name(data, 0x30)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('hj', fmt, version), data, parent)
+
 v4_handlers = {
 	9: ('Paragraph styles', handle_list(handle_para_style, 244)),
+	11: ('H&Js', handle_list(handle_hj, 112)),
 }
 
 handler_map = {
@@ -289,8 +294,12 @@ def _add_name(hd, size, data, offset=0, name="Name"):
 def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 
+def add_hj(hd, size, data, fmt, version):
+	off = _add_name(hd, size, data, 0x30)
+
 qxp5_ids = {
 	'header': add_header,
+	'hj': add_hj,
 	'para_style': add_para_style,
 	'picture': add_picture,
 	'record': add_record,
