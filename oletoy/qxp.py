@@ -21,6 +21,7 @@ def big_endian(fmt):
 	return '>' + fmt
 
 VERSION_4 = 0x41
+VERSION_6 = 0x43
 
 def collect_group(data,name,buf,fmt,off,grp_id):
 	grplen = struct.unpack(fmt('H'),buf[off+0x400*(grp_id-1):off+0x400*(grp_id-1)+2])[0]
@@ -221,7 +222,7 @@ def open (page,buf,parent):
 
 	# see header version_map
 	(version, off) = rdata(buf, 8, fmt('H'))
-	if version < 0x43:
+	if version < VERSION_6:
 		open_v5(page, buf, parent, fmt, version)
 	else:
 		rlen = 0x400
