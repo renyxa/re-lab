@@ -297,6 +297,21 @@ def add_text(hd, size, data, fmt, version, text):
 		(tlen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Format %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=formattingiter)
 		i += 1
+	(paragraphs_len, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length of paragraphs spec', paragraphs_len, off - 4, 4, fmt('I'))
+	paragraphiter = add_iter(hd, 'Paragraphs spec', '', off, paragraphs_len, '%ds' % paragraphs_len)
+	i = 0
+	begin = off
+	while off < begin + paragraphs_len:
+		if version < VERSION_4:
+			(sz, fm) = (2, fmt('H'))
+		else:
+			(sz, fm) = (4, fmt('I'))
+		(style_ind, off) = rdata(data, off, fm)
+		add_iter(hd, 'Paragraph %d style index' % i, style_ind, off - sz, sz, fm, parent=paragraphiter)
+		(tlen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Paragraph %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=paragraphiter)
+		i += 1
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
