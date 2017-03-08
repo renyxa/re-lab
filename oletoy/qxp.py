@@ -282,6 +282,21 @@ def add_text(hd, size, data, fmt, version, text):
 		(tlen, off) = rdata(data, off, fm)
 		add_iter(hd, 'Block %d text length' % i, tlen, off - sz, sz, fm, parent=blockiter)
 		i += 1
+	(formatting_len, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length of formatting spec', formatting_len, off - 4, 4, fmt('I'))
+	formattingiter = add_iter(hd, 'Formatting spec', '', off, formatting_len, '%ds' % formatting_len)
+	i = 0
+	begin = off
+	while off < begin + formatting_len:
+		(format_ind, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Format %d index' % i, format_ind, off - 4, 4, fmt('I'), parent=formattingiter)
+		if version < VERSION_4:
+			(sz, fm) = (2, fmt('H'))
+		else:
+			(sz, fm) = (4, fmt('I'))
+		(tlen, off) = rdata(data, off, fm)
+		add_iter(hd, 'Format %d text length' % i, tlen, off - sz, sz, fm, parent=formattingiter)
+		i += 1
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
