@@ -73,6 +73,10 @@ def handle_hj(page, data, parent, fmt, version, index):
 	name = _read_name(data, 0x30)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('hj', fmt, version), data, parent)
 
+def handle_dash_stripe(page, data, parent, fmt, version, index):
+	name = _read_name(data, 0xb0)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('dash_stripe', fmt, version), data, parent)
+
 def handle_char_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('char_format', fmt, version), data, parent)
 
@@ -83,6 +87,7 @@ v4_handlers = {
 	9: ('Paragraph styles', handle_list(handle_para_style, 244)),
 	10: ('Character styles', handle_list(handle_char_style, 140)),
 	11: ('H&Js', handle_list(handle_hj, 112)),
+	12: ('Dashes & Stripes', handle_list(handle_dash_stripe, 252)),
 	38: ('Character formats', handle_list(handle_char_format, 64)),
 	40: ('Paragraph formats', handle_list(handle_para_format, 100)),
 }
@@ -350,9 +355,13 @@ def add_char_format(hd, size, data, fmt, version):
 def add_para_format(hd, size, data, fmt, version):
 	pass
 
+def add_dash_stripe(hd, size, data, fmt, version):
+	off = _add_name(hd, size, data, 0xb0)
+
 qxp5_ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
+	'dash_stripe': add_dash_stripe,
 	'header': add_header,
 	'hj': add_hj,
 	'para_format': add_para_format,
