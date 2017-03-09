@@ -76,11 +76,15 @@ def handle_hj(page, data, parent, fmt, version, index):
 def handle_char_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('char_format', fmt, version), data, parent)
 
+def handle_para_format(page, data, parent, fmt, version, index):
+	add_pgiter(page, '[%d]' % index, 'qxp5', ('para_format', fmt, version), data, parent)
+
 v4_handlers = {
 	9: ('Paragraph styles', handle_list(handle_para_style, 244)),
 	10: ('Character styles', handle_list(handle_char_style, 140)),
 	11: ('H&Js', handle_list(handle_hj, 112)),
 	38: ('Character formats', handle_list(handle_char_format, 64)),
+	40: ('Paragraph formats', handle_list(handle_para_format, 100)),
 }
 
 handler_map = {
@@ -343,11 +347,15 @@ def add_char_format(hd, size, data, fmt, version):
 	pass
 	# NOTE: bold/italic/etc. flags are at 0xa
 
+def add_para_format(hd, size, data, fmt, version):
+	pass
+
 qxp5_ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'header': add_header,
 	'hj': add_hj,
+	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'picture': add_picture,
 	'record': add_record,
