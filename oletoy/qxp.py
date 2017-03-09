@@ -88,6 +88,7 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('para_format', fmt, version), data, parent)
 
 v4_handlers = {
+	8: ('Colors',),
 	9: ('Paragraph styles', _handle_list(handle_para_style, 244)),
 	10: ('Character styles', _handle_list(handle_char_style, 140)),
 	11: ('H&Js', _handle_list(handle_hj, 112)),
