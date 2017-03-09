@@ -51,7 +51,7 @@ def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
 
-def handle_list(handler, size):
+def _handle_list(handler, size):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
 		i = 0
@@ -77,6 +77,10 @@ def handle_dash_stripe(page, data, parent, fmt, version, index):
 	name = _read_name(data, 0xb0)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('dash_stripe', fmt, version), data, parent)
 
+def handle_list(page, data, parent, fmt, version, index):
+	name = _read_name(data, 0)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', ('list', fmt, version), data, parent)
+
 def handle_char_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('char_format', fmt, version), data, parent)
 
@@ -84,12 +88,13 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('para_format', fmt, version), data, parent)
 
 v4_handlers = {
-	9: ('Paragraph styles', handle_list(handle_para_style, 244)),
-	10: ('Character styles', handle_list(handle_char_style, 140)),
-	11: ('H&Js', handle_list(handle_hj, 112)),
-	12: ('Dashes & Stripes', handle_list(handle_dash_stripe, 252)),
-	38: ('Character formats', handle_list(handle_char_format, 64)),
-	40: ('Paragraph formats', handle_list(handle_para_format, 100)),
+	9: ('Paragraph styles', _handle_list(handle_para_style, 244)),
+	10: ('Character styles', _handle_list(handle_char_style, 140)),
+	11: ('H&Js', _handle_list(handle_hj, 112)),
+	12: ('Dashes & Stripes', _handle_list(handle_dash_stripe, 252)),
+	13: ('Lists', _handle_list(handle_list, 324)),
+	38: ('Character formats', _handle_list(handle_char_format, 64)),
+	40: ('Paragraph formats', _handle_list(handle_para_format, 100)),
 }
 
 handler_map = {
@@ -358,12 +363,16 @@ def add_para_format(hd, size, data, fmt, version):
 def add_dash_stripe(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0xb0)
 
+def add_list(hd, size, data, fmt, version):
+	off = _add_name(hd, size, data, 0)
+
 qxp5_ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'dash_stripe': add_dash_stripe,
 	'header': add_header,
 	'hj': add_hj,
+	'list': add_list,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'picture': add_picture,
