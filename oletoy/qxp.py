@@ -359,8 +359,14 @@ def add_hj(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0x30)
 
 def add_char_format(hd, size, data, fmt, version):
-	pass
-	# NOTE: bold/italic/etc. flags are at 0xa
+	off = 0x8
+	(font, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Font? index?', font, off - 2, 2, fmt('H'))
+	flags_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
+	(flags, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Format flags', bflag2txt(flags, flags_map), off - 4, 4, fmt('I'))
+	(fsz, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Font size, pt', fsz, off - 4, 4, fmt('I'))
 
 def add_para_format(hd, size, data, fmt, version):
 	pass
