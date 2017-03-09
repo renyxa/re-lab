@@ -88,6 +88,8 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('para_format', fmt, version), data, parent)
 
 v4_handlers = {
+	2: ('Print settings',),
+	3: ('Page setup',),
 	6: ('Fonts',),
 	7: ('Physical fonts',),
 	8: ('Colors',),
