@@ -1232,6 +1232,13 @@ class ApplicationMainWindow(gtk.Window):
 				v1 = struct.unpack(">h",buf[0:2])[0]
 				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
+			if ftype == "QXP5":
+				if self.options_le == 1:
+					dim = struct.unpack("<i",buf)[0]
+					txt += "\tLE: %.2fin\t" % (dim / 72.0)
+				if self.options_be == 1:
+					dim = struct.unpack(">i",buf)[0]
+					txt += "\tBE: %.2fin\t" % (dim / 72.0)
 			
 			if self.options_le == 1:
 				txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)

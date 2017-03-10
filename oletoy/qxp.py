@@ -250,8 +250,6 @@ def open_v5(page, buf, parent, fmt, version):
 		if pos == 2:
 			handle_document(page, stream, streamiter, fmt, version)
 
-	return "QXP5"
-
 def _add_length(hd, size, data, fmt, version, offset, name="Length"):
 	(length, off) = rdata(data, offset, fmt('I'))
 	add_iter(hd, name, length, off - 4, 4, fmt('I'))
@@ -414,6 +412,7 @@ def open (page,buf,parent):
 	(version, off) = rdata(buf, 8, fmt('H'))
 	if version < VERSION_6:
 		open_v5(page, buf, parent, fmt, version)
+		return "QXP5"
 	else:
 		rlen = 0x400
 		off = 0
