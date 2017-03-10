@@ -1286,6 +1286,19 @@ class ApplicationMainWindow(gtk.Window):
 				txt += "LE: %s\t"%((struct.unpack("<d",buf)[0])/self.options_div)
 			if self.options_be == 1:
 				txt += "BE: %s"%((struct.unpack(">d",buf)[0])/self.options_div)
+		if dlen == 16 and ftype == "QXP5":
+			if self.options_le == 1:
+				top = struct.unpack("<i",buf[0:4])[0] / 72.0
+				left = struct.unpack("<i",buf[4:8])[0] / 72.0
+				bottom = struct.unpack("<i",buf[8:12])[0] / 72.0
+				right = struct.unpack("<i",buf[12:])[0] / 72.0
+				txt += "\tLE: (%.2fin, %.2fin)-(%.2fin, %.2fin) [%.2fin, %.2fin]\t" % (left, top, right, bottom, right - left, bottom - top)
+			if self.options_be == 1:
+				top = struct.unpack(">i",buf[0:4])[0] / 72.0
+				left = struct.unpack(">i",buf[4:8])[0] / 72.0
+				bottom = struct.unpack(">i",buf[8:12])[0] / 72.0
+				right = struct.unpack(">i",buf[12:])[0] / 72.0
+				txt += "\tBE: (%.2fin, %.2fin)-(%.2fin, %.2fin) [%.2fin, %.2fin]\t" % (left, top, right, bottom, right - left, bottom - top)
 		if dlen == 3:
 			txt += '<span background="#%02x%02x%02x">RGB</span>  '%(ord(buf[0]),ord(buf[1]),ord(buf[2]))
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
