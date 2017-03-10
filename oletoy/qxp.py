@@ -278,11 +278,13 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	(ver, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-	off += 210
+	off += 208
+	(lines, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
 	(texts, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of text streams', texts - 1, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
 	(pictures, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of pictures', pictures, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Number of picture boxes', pictures, off - 2, 2, fmt('H'))
 
 def add_text(hd, size, data, fmt, version, text):
 	off = 0
