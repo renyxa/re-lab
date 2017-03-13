@@ -408,7 +408,10 @@ def add_hj(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0x30)
 
 def add_char_format(hd, size, data, fmt, version):
-	off = 0x8
+	off = 0
+	(uses, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
+	off += 4
 	(font, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
 	flags_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
@@ -421,7 +424,10 @@ def add_char_format(hd, size, data, fmt, version):
 	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
 def add_para_format(hd, size, data, fmt, version):
-	off = 0x8
+	off = 0
+	(uses, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
+	off += 4
 	# if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
 	flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
 	(flags, off) = rdata(data, off, fmt('B'))
