@@ -111,17 +111,13 @@ def handle_document(page, data, parent, fmt, version):
 	off = 0
 	i = 1
 	while off < len(data):
+		name, hdl, hid = 'Record %d' % i, None, 'record'
 		if handlers.has_key(i):
 			name = handlers[i][0]
-			hdl = None
 			if len(handlers[i]) > 1:
 				hdl = handlers[i][1]
 			if len(handlers[i]) > 2:
 				hid = handlers[i][2]
-			if not hid:
-				hdl = 'record'
-		else:
-			name, hdl, hid = 'Record %d' % i, None, 'record'
 		(length, off) = rdata(data, off, fmt('I'))
 		record = data[off - 4:off + length]
 		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp5', (hid, fmt, version), record, parent)
