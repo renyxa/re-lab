@@ -90,7 +90,7 @@ def handle_para_format(page, data, parent, fmt, version, index):
 v4_handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
-	6: ('Fonts',),
+	6: ('Fonts', None, 'fonts'),
 	7: ('Physical fonts',),
 	8: ('Colors',),
 	9: ('Paragraph styles', _handle_list(handle_para_style, 244)),
@@ -349,6 +349,22 @@ def _add_name(hd, size, data, offset=0, name="Name"):
 	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
 	return off
 
+def add_fonts(hd, size, data, fmt, version):
+	off = _add_length(hd, size, data, fmt, version, 0)
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of fonts', count, off - 2, 2, fmt('H'))
+	i = 0
+	while i < count:
+		(index, off) = rdata(data, off, fmt('I'))
+		(name, off) = rcstr(data, off)
+		(full_name, off) = rcstr(data, off)
+		font_len = 4 + len(name) + len(full_name) + 2
+		font_iter = add_iter(hd, 'Font %d' % i, '%d, %s' % (index, name), off - font_len, font_len, '%ds' % font_len)
+		add_iter(hd, 'Font %d index' % i, index, off - font_len, 4, fmt('I'), parent=font_iter)
+		add_iter(hd, 'Font %d name' % i, name, off - font_len + 4, len(name), '%ds' % len(name), parent=font_iter)
+		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 4 + len(name), len(full_name), '%ds' % len(full_name), parent=font_iter)
+		i += 1
+
 def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 
@@ -361,7 +377,7 @@ def add_hj(hd, size, data, fmt, version):
 def add_char_format(hd, size, data, fmt, version):
 	off = 0x8
 	(font, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Font? index?', font, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
 	flags_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 	(flags, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Format flags', bflag2txt(flags, flags_map), off - 4, 4, fmt('I'))
@@ -384,6 +400,7 @@ qxp5_ids = {
 	'header': add_header,
 	'hj': add_hj,
 	'list': add_list,
+	'fonts': add_fonts,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'picture': add_picture,

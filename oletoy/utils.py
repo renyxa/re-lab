@@ -73,6 +73,14 @@ def rdata (data,off,fmt):
 	fmtlen = struct.calcsize(fmt)
 	return struct.unpack(fmt,data[off:off+fmtlen])[0],off+fmtlen
 
+def rcstr(data, off):
+	s = ''
+	(c, off) = rdata(data, off, '<B')
+	while c != 0:
+		s += chr(c)
+		(c, off) = rdata(data, off, '<B')
+	return s, off
+
 def hex2d(data):
 	res = ''
 	data = data.replace(" ","")
