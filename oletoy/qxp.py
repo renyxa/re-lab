@@ -336,6 +336,15 @@ def add_picture(hd, size, data, fmt, version):
 	off = 0
 	(sz, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
+	(sz, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
+	off += 4
+	(w, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Picture width', w, off - 2, 2, fmt('H'))
+	(h, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Picture height', h, off - 2, 2, fmt('H'))
+	off = 50
+	add_iter(hd, 'Bitmap', '', off, sz, '%ds' % sz)
 
 def add_record(hd, size, data, fmt, version):
 	_add_length(hd, size, data, fmt, version, 0)
