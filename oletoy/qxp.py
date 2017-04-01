@@ -20,6 +20,9 @@ def little_endian(fmt):
 def big_endian(fmt):
 	return '>' + fmt
 
+def dim2in(dim):
+	return dim / 72.0
+
 VERSION_4 = 0x41
 VERSION_6 = 0x43
 
@@ -377,6 +380,31 @@ def add_char_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 
 def add_hj(hd, size, data, fmt, version):
+	off = 4
+	(sm, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Smallest word', sm, off - 1, 1, fmt('B'))
+	(min_before, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Minimum before', min_before, off - 1, 1, fmt('B'))
+	(min_after, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Minimum after', min_after, off - 1, 1, fmt('B'))
+	(hyprow, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Hyphens in a row', 'unlimited' if hyprow == 0 else hyprow, off - 1, 1, fmt('B'))
+	off += 2
+	(hyp_zone, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Hyphenation zone (in.)', dim2in(hyp_zone), off - 2, 2, fmt('H'))
+	justify_single_map = {0: 'Disabled', 0x80: 'Enabled'}
+	(justify_single, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Don't justify single word", key2txt(justify_single, justify_single_map), off - 1, 1, fmt('B'))
+	off += 1
+	autohyp_map = {0: 'Disabled', 1: 'Enabled'}
+	(autohyp, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Auto hyphenation', key2txt(autohyp, autohyp_map), off - 1, 1, fmt('B'))
+	breakcap_map = {0: 'Disabled', 1: 'Enabled'}
+	(breakcap, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Don't break capitalized words", key2txt(breakcap, breakcap_map), off - 1, 1, fmt('B'))
+	off = 0x2a
+	(flush_zone, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Flush zone (in.)', dim2in(flush_zone), off - 2, 2, fmt('H'))
 	off = _add_name(hd, size, data, 0x30)
 
 def add_char_format(hd, size, data, fmt, version):
