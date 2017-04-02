@@ -421,7 +421,35 @@ def add_char_format(hd, size, data, fmt, version):
 	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
 def add_para_format(hd, size, data, fmt, version):
-	pass
+	off = 0xb
+	align_map = {0: 'Left', 1: 'Center', 2: 'Right', 3: 'Justified', 4: 'Forced'}
+	(align, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, fmt('B'))
+	(caps_lines, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Drop caps line count", caps_lines, off - 1, 1, fmt('B'))
+	(caps_chars, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Drop caps char count", caps_chars, off - 1, 1, fmt('B'))
+	off += 2
+	(hj, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'H&J index', hj, off - 2, 2, fmt('H'))
+	off += 4
+	(left_indent, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Left indent (in.)', dim2in(left_indent), off - 2, 2, fmt('H'))
+	off += 2
+	(first_line, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'First line (in.)', dim2in(first_line), off - 2, 2, fmt('H'))
+	off += 2
+	(right_indent, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Right indent (in.)', dim2in(right_indent), off - 2, 2, fmt('H'))
+	off += 2
+	(lead, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Leading (pt)', 'auto' if lead == 0 else lead, off - 2, 2, fmt('H'))
+	off += 2
+	(space_before, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Space before (in.)', dim2in(space_before), off - 2, 2, fmt('H'))
+	off += 2
+	(space_after, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
 
 def add_dash_stripe(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0xb0)
