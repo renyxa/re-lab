@@ -416,6 +416,9 @@ def add_char_format(hd, size, data, fmt, version):
 	add_iter(hd, 'Format flags', bflag2txt(flags, flags_map), off - 4, 4, fmt('I'))
 	(fsz, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Font size, pt', fsz, off - 4, 4, fmt('I'))
+	off += 2
+	(color, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
 def add_para_format(hd, size, data, fmt, version):
 	pass
