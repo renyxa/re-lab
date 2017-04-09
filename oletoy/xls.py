@@ -401,6 +401,55 @@ def biff_cf (hd,data):
 	#rgce1
 	#rgce2
 
+def biff_dxfn12 (hd,data,off):
+        cbDxf = struct.unpack("<I",data[off:off+4])[0]
+        add_iter (hd,"cbDxf",cbDxf,off,4,"<I")
+        off += 4
+        if cbDxf is 0:
+            off += 2
+        else:
+            off += cbDxf
+        return off
+
+#0x87b
+def biff_cfex (hd,data):
+	off = 4
+	off += 12
+	fIsCF12 = struct.unpack("<I",data[off:off+4])[0]
+	add_iter (hd,"fIsCF12",fIsCF12,off,4,"<I")
+	off += 4
+	nID = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd,"nID",nID,off,2,"<h")
+	off += 2
+        if fIsCF12 is 0:
+            icf = struct.unpack("<H",data[off:off+2])[0]
+            add_iter(hd,"icf",icf,off,2,"<H")
+            off += 2
+            cp = ord(data[off])
+            add_iter(hd,"cp",cp,off,1,"B")
+            off += 1
+            icfTemplate = ord(data[off])
+            add_iter(hd,"icfTemplate",icfTemplate,off,1,"B")
+            off += 1
+            iPriority = struct.unpack("<H",data[off:off+2])[0]
+            add_iter(hd,"iPriority",iPriority,off,2,"<H")
+            off += 2
+            flags = ord(data[off])
+            fActive = flags&1
+            fStopIfTrue = flags&2
+            add_iter(hd,"fActive",fActive,off,1,"B")
+            add_iter(hd,"fStopIfTrue",fStopIfTrue,off,1,"B")
+            off += 1
+            fHasDxf = ord(data[off])
+            add_iter(hd,"fHasDxf",fHasDxf,off,1,"B")
+            off += 1
+            if fHasDxf is 1:
+                off = biff_dxfn12(hd,data,off)
+            cbTemplateParm = ord(data[off])
+            add_iter(hd,"cbTemplateParm",cbTemplateParm,off,1,"B")
+            off += 1
+            off += 16
+
 
 #0x7d
 def biff_colinfo (hd,data):
@@ -661,7 +710,7 @@ def biff_rk (hd,data):
 biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
 	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-        0x27e:biff_rk, 0x1b0:biff_condfmt}
+        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex}
 
 def parse (page, data, parent):
 	offset = 0
