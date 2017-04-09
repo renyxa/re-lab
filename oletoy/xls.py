@@ -361,6 +361,29 @@ def biff_defcolw (hd,data):
 	cw = struct.unpack("<H",data[0+off:2+off])[0]
 	add_iter (hd,"cchdefColWidth",cw,off,2,"<H")
 
+#0x1b0
+def biff_condfmt (hd,data):
+	off = 4
+	cce1 = struct.unpack("<H",data[off:off+2])[0]
+	add_iter (hd,"ccf",cce1,off,2,"<H")
+	off += 2
+	flags = struct.unpack("<H",data[off:off+2])[0]
+	print(flags)
+	fToughRecalc = flags&1
+	nID = (flags&0xfffe) >> 1
+	add_iter (hd,"fToughRecalc",fToughRecalc,off,1,"<B")
+	add_iter (hd,"nID",nID,off,2,"<h")
+	off += 2
+        rwFirst = struct.unpack("<H",data[off:off+2])[0]
+        rwLast = struct.unpack("<H",data[off+2:off+4])[0]
+        colFirst = struct.unpack("<H",data[off+4:off+6])[0]
+        colLast = struct.unpack("<H",data[off+6:off+8])[0]
+	add_iter (hd,"rwFirst",rwFirst,off,2,"<H")
+	add_iter (hd,"rwLast",rwLast,off+2,2,"<H")
+	add_iter (hd,"colFirst",colFirst,off+4,2,"<H")
+	add_iter (hd,"colLast",colLast,off+6,2,"<H")
+	off += 8
+
 #0x1b1
 def biff_cf (hd,data):
 	off = 4
@@ -638,7 +661,7 @@ def biff_rk (hd,data):
 biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
 	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-	0x27e:biff_rk}
+        0x27e:biff_rk, 0x1b0:biff_condfmt}
 
 def parse (page, data, parent):
 	offset = 0
