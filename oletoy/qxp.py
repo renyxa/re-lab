@@ -421,7 +421,12 @@ def add_char_format(hd, size, data, fmt, version):
 	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
 def add_para_format(hd, size, data, fmt, version):
-	off = 0xb
+	off = 0x8
+	# if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
+	flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, fmt('B'))
+	off += 2
 	align_map = {0: 'Left', 1: 'Center', 2: 'Right', 3: 'Justified', 4: 'Forced'}
 	(align, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, fmt('B'))
@@ -429,7 +434,10 @@ def add_para_format(hd, size, data, fmt, version):
 	add_iter(hd, "Drop caps line count", caps_lines, off - 1, 1, fmt('B'))
 	(caps_chars, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Drop caps char count", caps_chars, off - 1, 1, fmt('B'))
-	off += 2
+	(start, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Min. lines to remain", start, off - 1, 1, fmt('B'))
+	(end, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, "Min. lines to carry over", end, off - 1, 1, fmt('B'))
 	(hj, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'H&J index', hj, off - 2, 2, fmt('H'))
 	off += 4
