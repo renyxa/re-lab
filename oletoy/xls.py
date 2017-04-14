@@ -408,6 +408,27 @@ def biff_dxfn12 (hd,data,off):
         if cbDxf is 0:
             off += 2
         else:
+            flags1 = struct.unpack("<I",data[off:off+4])[0]
+            flags2 = struct.unpack("<H",data[off+4:off+6])[0]
+            ibitAtrNum = (flags1&0x2000000)!=0
+            ibitAtrFnt = (flags1&0x4000000)!=0
+            ibitAtrAlc = (flags1&0x8000000)!=0
+            ibitAtrBdr = (flags1&0x10000000)!=0
+            ibitAtrPat = (flags1&0x20000000)!=0
+            ibitAtrProt = (flags1&0x40000000)!=0
+            fIfmtUser = (flags2&0x1)!=0
+            fNewBorder = (flags2&0x2)!=0
+            fNewBorder = (flags2&0x4)!=0
+            fZeroInited = (flags2&0x8000)!=0
+            add_iter(hd,"ibitAtrNum",ibitAtrNum,off+3,1,"B")
+            add_iter(hd,"ibitAtrFnt",ibitAtrFnt,off+3,1,"B")
+            add_iter(hd,"ibitAtrAlc",ibitAtrAlc,off+3,1,"B")
+            add_iter(hd,"ibitAtrBdr",ibitAtrBdr,off+3,1,"B")
+            add_iter(hd,"ibitAtrPat",ibitAtrPat,off+3,1,"B")
+            add_iter(hd,"ibitAtrPat",ibitAtrPat,off+3,1,"B")
+            add_iter(hd,"fIfmtUser",fIfmtUser,off+4,1,"B")
+            add_iter(hd,"fNewBorder",fNewBorder,off+4,1,"B")
+            add_iter(hd,"fZeroInited",fZeroInited,off+5,1,"B")
             off += cbDxf
         return off
 
