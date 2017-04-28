@@ -124,6 +124,10 @@ def readid (data,off=0):
 		l = 2
 	return l,rid
 
+def getName (id, recs):
+	if id in recs:
+		return recs[id][1]
+	return "%02x"%id
 
 def hdVMpObj(hd,data,page):
 	offset = 0
@@ -140,10 +144,7 @@ def hdVMpObj(hd,data,page):
 			rname = vmp_rec[rec][0]
 			if vmp_rec[rec][1] == "recid":
 				a = readid(data,shift+4)[1]
-				if a in page.appdoc.recs:
-					at = page.appdoc.recs[a][1]
-				else:
-					at = "%02x"%a
+				at = getName(a,page.appdoc.recs)
 		else:
 			rname = '\t\t%04x'%rec
 		if rname == "?":
@@ -338,11 +339,7 @@ def hdFHTail(hd,data,page):
 	add_iter (hd,'PropLst ID',"%02x"%recid,offset,L,">H")
 	offset += L
 	L,recid = read_recid(data,offset)
-	if recid in page.appdoc.recs:
-		at = page.appdoc.recs[recid][1]
-	else:
-		at = "%02x"%recid
-	add_iter (hd,"Default Font ??",at,offset,L,">HH")
+	add_iter (hd,"Default Font ??",getName(recid,page.appdoc.recs),offset,L,">HH")
 	x1 = struct.unpack('>H', data[0x1a:0x1c])[0]
 	x1f = struct.unpack('>H', data[0x1c:0x1e])[0]
 	y1 = struct.unpack('>H', data[0x1e:0x20])[0]
@@ -372,11 +369,7 @@ def hdFWBlurFilter(hd,data,page):
 def hdFWGlowFilter(hd,data,page):
 	offset = 0
 	l,rid = read_recid(data,0)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Color',at,0,2,">H")
+	add_iter (hd,'Color',getName(rid,page.appdoc.recs),0,2,">H")
 	offset += l
 	offset += 3
 	add_iter (hd,'Inner',ord(data[offset]),offset,1,"B")
@@ -398,11 +391,7 @@ def hdFWGlowFilter(hd,data,page):
 def hdFWShadowFilter(hd,data,page):
 	offset = 0
 	l,rid = read_recid(data,0)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Color',at,0,2,">H")
+	add_iter (hd,'Color',getName(rid,page.appdoc.recs),0,2,">H")
 	offset += l
 	offset += 2
 	add_iter (hd,'Knock out',ord(data[offset]),offset,1,"B")
@@ -561,10 +550,7 @@ def hdAGDFont(hd,data,page):
 			rname = agd_rec[rec][0]
 			if agd_rec[rec][1] == "recid":
 				a = readid(data,shift+4)[1]
-				if a in page.appdoc.recs:
-					at = page.appdoc.recs[a][1]
-				else:
-					at = "%02x"%a
+				at = getName(a,page.appdoc.recs)
 		else:
 			rname = '\t\t%04x'%rec
 		if rname == "?":
@@ -633,11 +619,7 @@ def hdMultiColorList(hd,data,page):
 	offset += 4
 	for i in range(lstlen):
 		l,rid = read_recid(data,offset)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		piter = add_iter (hd,'Color %d'%(i+1),at,offset,2,">H")
+		piter = add_iter (hd,'Color %d'%(i+1),getName(rid,page.appdoc.recs),offset,2,">H")
 		offset += l
 		prcnt = int(cnvrt22(data[offset:offset+4])*100)
 		add_iter (hd,'%',prcnt,offset,4,">HH",parent=piter)
@@ -660,18 +642,10 @@ def hdNewRadialFill(hd,data,page):
 	# 40-42 -- repeat
 	if page.version > 10:
 		l,rid = read_recid(data,0)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		add_iter (hd,'Color 1',at,0,2,">H")
+		add_iter (hd,'Color 1',getName(rid,page.appdoc.recs),0,2,">H")
 		offset += l
 		l,rid = read_recid(data,offset)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		add_iter (hd,'Color 2',at,offset,2,">H")
+		add_iter (hd,'Color 2',getName(rid,page.appdoc.recs),offset,2,">H")
 		offset += l
 		x = cnvrt22(data[offset:offset+4])
 		add_iter (hd,'X (%)',int(x*100),offset,4,">HH")
@@ -681,11 +655,7 @@ def hdNewRadialFill(hd,data,page):
 		offset += 4
 		offset += 8
 		l,rid = read_recid(data,offset)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		add_iter (hd,'MultiColorList',at,offset,2,">H")
+		add_iter (hd,'MultiColorList',getName(rid,page.appdoc.recs),offset,2,">H")
 		offset += l
 		offset += 2
 		handleang = struct.unpack(">H",data[offset:offset+2])[0]
@@ -709,40 +679,20 @@ def hdNewRadialFill(hd,data,page):
 def hdNewBlend(hd,data,page):
 	offset = 0
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Graphic Style',at,0,2,">H")
+	add_iter (hd,'Graphic Style',getName(rid,page.appdoc.recs),0,2,">H")
 	offset += l
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Parent',at,offset,2,">H")
+	add_iter (hd,'Parent',getName(rid,page.appdoc.recs),offset,2,">H")
 	offset += l
 	offset += 8
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'List (Content)',at,offset,2,">H")
+	add_iter (hd,'List (Content)',getName(rid,page.appdoc.recs),offset,2,">H")
 	offset += l
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'List (Path 1)',at,offset,2,">H")
+	add_iter (hd,'List (Path 1)',getName(rid,page.appdoc.recs),offset,2,">H")
 	offset += l
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'List (Path 2)',at,offset,2,">H")
+	add_iter (hd,'List (Path 2)',getName(rid,page.appdoc.recs),offset,2,">H")
 	offset += l
 	offset += 2
 	steps = struct.unpack(">H",data[offset:offset+2])[0]
@@ -771,18 +721,10 @@ def hdNewContourFill(hd,data,page):
 	# 32-34 -- repeat
 	if page.version > 10:
 		l,rid = read_recid(data,0)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		add_iter (hd,'Color 1',at,0,2,">H")
+		add_iter (hd,'Color 1',getName(rid,page.appdoc.recs),0,2,">H")
 		offset += l
 		l,rid = read_recid(data,offset)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		add_iter (hd,'Color 2',at,offset,2,">H")
+		add_iter (hd,'Color 2',getName(rid,page.appdoc.recs),offset,2,">H")
 		offset += l
 		x = cnvrt22(data[offset:offset+4])
 		add_iter (hd,'X (%)',int(x*100),offset,4,">HH")
@@ -795,11 +737,7 @@ def hdNewContourFill(hd,data,page):
 		offset += 2
 		offset += 6
 		l,rid = read_recid(data,offset)
-		if rid in page.appdoc.recs:
-			at = page.appdoc.recs[rid][1]
-		else:
-			at = "%02x"%rid
-		add_iter (hd,'MultiColorList',at,offset,2,">H")
+		add_iter (hd,'MultiColorList',getName(rid,page.appdoc.recs),offset,2,">H")
 		offset += l
 		offset += 2
 		handleang = struct.unpack(">H",data[offset:offset+2])[0]
@@ -814,11 +752,7 @@ def hdNewContourFill(hd,data,page):
 def hdLensFill(hd,data,page):
 	offset = 0
 	l,rid = read_recid(data,0)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Color',at,0,2,">H")
+	add_iter (hd,'Color',getName(rid,page.appdoc.recs),0,2,">H")
 	mode = ord(data[l+0x25])
 	modes = {0:"Transparency",1:"Magnify",2:"Lighten",3:"Darken",4:"Invert",5:"Monochrome"}
 	add_iter (hd,'Mode',modes[mode],0x25+l,1,"B")
@@ -1020,28 +954,16 @@ def hdBlock (hd,data,page):
 def hdBrush (hd,data,page):
 	offset = 0
 	L,name = read_recid(data,offset)
-	if name in page.appdoc.recs:
-		at = page.appdoc.recs[name][1]
-	else:
-		at = "%02x"%name
-	add_iter (hd,'Name',at,offset,L,">H")
+	add_iter (hd,'Name',getName(name,page.appdoc.recs),offset,L,">H")
 	offset += L
 	L,name = read_recid(data,offset)
-	if name in page.appdoc.recs:
-		at = page.appdoc.recs[name][1]
-	else:
-		at = "%02x"%name
-	add_iter (hd,'List',at,offset,L,">H")
+	add_iter (hd,'List',getName(name,page.appdoc.recs),offset,L,">H")
 
 
 def hdBrushStroke (hd,data,page):
 	offset = 0
 	L,name = read_recid(data,offset)
-	if name in page.appdoc.recs:
-		at = page.appdoc.recs[name][1]
-	else:
-		at = "%02x"%name
-	add_iter (hd,'Brush ID',at,offset,L,">H")
+	add_iter (hd,'Brush ID',getName(name,page.appdoc.recs),offset,L,">H")
 	offset += L
 	w = cnvrt22(data[offset:offset+4])
 	add_iter (hd,'Width',w,offset,L,">HH")
@@ -1051,11 +973,7 @@ def hdBrushTip (hd,data,page):
 	btiptype = {0:"Fixed",1:"Random",2:"Variable",3:"Flare"}
 	offset = 0
 	L,name = read_recid(data,offset)
-	if name in page.appdoc.recs:
-		at = page.appdoc.recs[name][1]
-	else:
-		at = "%02x"%name
-	add_iter (hd,'SymbolClass',at,offset,L,">H")
+	add_iter (hd,'SymbolClass',getName(name,page.appdoc.recs),offset,L,">H")
 	offset += L
 	oop = bool(struct.unpack(">I",data[offset:offset+4])[0])
 	add_iter (hd,'Orient on Path',oop,offset,4,">I")
@@ -1115,11 +1033,7 @@ def hdPropLst(hd,data,page):
 		res += L1
 		L2,rid2 = read_recid(data,off+res)
 		res += L2
-		if rid1 in page.appdoc.recs:
-			at = page.appdoc.recs[rid1][1]
-		else:
-			at = "%02x"%rid1
-		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
+		add_iter (hd,getName(rid1,page.appdoc.recs),"%02x"%rid2,res-L1-L2,L1+L2,">HH")
 
 def hdStylePropLst(hd,data,page):
 	off = 0
@@ -1129,59 +1043,31 @@ def hdStylePropLst(hd,data,page):
 	add_iter (hd,'Parent',"%02x"%attr,off+res,L,">H")
 	res += L
 	L,name = read_recid(data,off+res)
-	if name in page.appdoc.recs:
-		at = page.appdoc.recs[name][1]
-	else:
-		at = "%02x"%name
-	add_iter (hd,'Name',at,off+res,L,">H")
+	add_iter (hd,'Name',getName(name,page.appdoc.recs),off+res,L,">H")
 	res += L
 	for i in range(size):
 		L1,rid1 = read_recid(data,off+res)
 		res += L1
 		L2,rid2 = read_recid(data,off+res)
 		res += L2
-		if rid1 in page.appdoc.recs:
-			at = page.appdoc.recs[rid1][1]
-		else:
-			at = "%02x"%rid1
-		add_iter (hd,at,"%02x"%rid2,res-L1-L2,L1+L2,">HH")
+		add_iter (hd,getName(rid1,page.appdoc.recs),"%02x"%rid2,res-L1-L2,L1+L2,">HH")
 
 def hdSymbolClass (hd,data,page):
 	offset = 0
 	L,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Name',at,offset,L,">H")
+	add_iter (hd,'Name',getName(rid,page.appdoc.recs),offset,L,">H")
 	offset += L
 	L,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'Group ID',at,offset,L,">H")
+	add_iter (hd,'Group ID',getName(rid,page.appdoc.recs),offset,L,">H")
 	offset += L
 	L,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'DateTime ID',at,offset,L,">H")
+	add_iter (hd,'DateTime ID',getName(rid,page.appdoc.recs),offset,L,">H")
 	offset += L
 	L,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'SymbolLibrary ID',at,offset,L,">H")
+	add_iter (hd,'SymbolLibrary ID',getName(rid,page.appdoc.recs),offset,L,">H")
 	offset += L
 	L,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
-	add_iter (hd,'List ID',at,offset,L,">H")
+	add_iter (hd,'List ID',getName(rid,page.appdoc.recs),offset,L,">H")
 	offset += L
 
 
@@ -1245,12 +1131,7 @@ def hdLayer(hd,data,page):
 	add_iter (hd,'List',"%02x"%attr,offset+6,L2,"txt")
 	offset += L2
 	L3,name = read_recid(data,offset+6)
-	if name in page.appdoc.recs:
-		at = page.appdoc.recs[name][1]
-	else:
-		at = "%02x"%name
-
-	add_iter (hd,'Layer name',at,offset+6,L3,"B")
+	add_iter (hd,'Layer name',getName(name,page.appdoc.recs),offset+6,L3,"B")
 	offset += L3
 	vis = ""
 	vval = ord(data[offset+7])
@@ -1452,15 +1333,7 @@ def hdGraphicStyle(hd,data,page):
 		off += 2
 		v = struct.unpack('>H', data[off:off+2])[0]
 		off += 2
-		if a in page.appdoc.recs:
-			at = page.appdoc.recs[a][1]
-		else:
-			at = "%02x"%a
-		if v in page.appdoc.recs:
-			vt = page.appdoc.recs[v][1]
-		else:
-			vt = "%02x"%v
-		add_iter (hd,at,vt,off-4,4,">HH")
+		add_iter (hd,getName(a,page.appdoc.recs),getName(v,page.appdoc.recs),off-4,4,">HH")
 
 
 def hdAttributeHolder(hd,data,page):
@@ -1553,7 +1426,7 @@ def hdDisplayText(hd,data,page):
 	offset += 2
 	for i in range(2):
 		l,rid = read_recid(data,offset)
-		add_iter (hd,'graphicStyle' if i==0 else 'id1',"%02x"%rid,offset,l,">H")
+		add_iter (hd,'graphicStyle' if i==0 else 'layer',"%02x"%rid,offset,l,">H")
 		offset += l
 	for i in range(2):
 		val=struct.unpack('>H', data[offset:offset+2])[0]
@@ -1630,7 +1503,7 @@ def hdString(hd,data,page):
 	add_iter (hd,'string[size]',size,off,2,">H")
 	off += 2
 	(n, endOff) = rdata(data, off, '%ds'%size)
-	add_iter (hd,'name',n,off,size,"txt")
+	add_iter (hd,'name',unicode(n,"mac-roman"),off,size,"txt")
 	off +=size
 
 def hdDictVal(hd,data,page):
@@ -1658,7 +1531,7 @@ def hdTextChar(hd,data,page):
 	offset+=2
 	if flags&1:
 		val = struct.unpack('>i', data[offset:offset+4])[0]
-		add_iter (hd,'coord0',val/65536.,offset,4,">i")
+		add_iter (hd,'xPos',val/65536.,offset,4,">i")
 		offset+=4
 	if flags&2:
 		val = struct.unpack('>i', data[offset:offset+4])[0]
@@ -1727,7 +1600,7 @@ def hdTextString(hd,data,page):
 	pos = n.find("\x00")
 	if pos!=-1:
 		n=n[:pos]
-	add_iter (hd,'text',n,0,len(data),"txt")
+	add_iter (hd,'text',unicode(n,"mac-roman"),0,len(data),"txt")
 
 def hdCompositePath(hd,data,page):
 	offset = 0
@@ -1746,11 +1619,7 @@ def hdCompositePath(hd,data,page):
 def hdProcessColor(hd,data,page):
 	offset = 0
 	ustr1 = struct.unpack('>H', data[offset:offset+2])[0]
-	if ustr1 in page.appdoc.recs:
-		at = page.appdoc.recs[ustr1][1]
-	else:
-		at = "%02x"%ustr1
-	add_iter (hd,'Name',at,0,2,">H")
+	add_iter (hd,'Name',getName(ustr1,page.appdoc.recs),0,2,">H")
 	offset = 14
 	cmpntnames = ["K","C","M","Y"]
 	for i in range(4):
@@ -1760,14 +1629,10 @@ def hdProcessColor(hd,data,page):
 def hdCalligraphicStroke (hd,data,page):
 	offset = 0
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
 	fmt = ">H"
 	if l == 4:
 		fmt = ">I"
-	add_iter (hd,'Color',at,offset,l,fmt)
+	add_iter (hd,'Color',getName(rid,page.appdoc.recs),offset,l,fmt)
 	offset += l
 	ang = cnvrt22(data[offset:offset+4])
 	add_iter (hd,'Angle',ang,offset,4,">HH")
@@ -1779,14 +1644,10 @@ def hdCalligraphicStroke (hd,data,page):
 	add_iter (hd,'H',h,offset,4,">HH")
 	offset += 4
 	l,rid = read_recid(data,offset)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
 	fmt = ">H"
 	if l == 4:
 		fmt = ">I"
-	add_iter (hd,'Path',at,offset,l,fmt)
+	add_iter (hd,'Path',getName(rid,page.appdoc.recs),offset,l,fmt)
 
 def hdColor6(hd,data,page):
 	offset = 0
@@ -1797,11 +1658,7 @@ def hdColor6(hd,data,page):
 		ustroff = 2
 	ustr1 = struct.unpack('>H', data[offset+ustroff:offset+ustroff+2])[0]
 	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
-	if ustr1 in page.appdoc.recs:
-		at = page.appdoc.recs[ustr1][1]
-	else:
-		at = "%02x"%ustr1
-	add_iter (hd,'Name',at,ustroff,2,">H")
+	add_iter (hd,'Name',getName(ustr1,page.appdoc.recs),ustroff,2,">H")
 	if pal == 4:  # CMYK
 		offset = 14
 		if page.version > 9:
@@ -1828,11 +1685,7 @@ def hdPantoneColor(hd,data,page):
 def hdSpotColor(hd,data,page):
 	offset = 0
 	ustr1 = struct.unpack('>H', data[offset:offset+2])[0]
-	if ustr1 in page.appdoc.recs:
-		at = page.appdoc.recs[ustr1][1]
-	else:
-		at = "%02x"%ustr1
-	add_iter (hd,'Name',at,2,2,">H")
+	add_iter (hd,'Name',getName(ustr1,page.appdoc.recs),2,2,">H")
 	cmpntnames = ["R","G","B"]
 	for i in range(3):
 		cmpnt = struct.unpack('>H', data[offset+4+i*2:offset+6+i*2])[0]/256
@@ -1843,14 +1696,10 @@ def hdTintColor6(hd,data,page):
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
 	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
 	l,rid = read_recid(data,2)
-	if rid in page.appdoc.recs:
-		at = page.appdoc.recs[rid][1]
-	else:
-		at = "%02x"%rid
 	fmt = ">H"
 	if l == 4:
 		fmt = ">I"
-	add_iter (hd,'Name',at,2,l,fmt)
+	add_iter (hd,'Name',getName(rid,page.appdoc.recs),2,l,fmt)
 	r = struct.unpack(">H",data[offset+2+l:offset+2+l+2])[0]/256
 	g = struct.unpack(">H",data[offset+2+l+2:offset+2+l+4])[0]/256
 	b = struct.unpack(">H",data[offset+2+l+4:offset+2+l+6])[0]/256
@@ -1871,11 +1720,7 @@ def hdSpotColor6(hd,data,page):
 	pal = struct.unpack('>H', data[offset:offset+2])[0]
 	ustr1 = struct.unpack('>H', data[offset+2:offset+4])[0]
 	add_iter (hd,"Palette",key2txt(pal,palette,"Unkn %02x"%pal),0,2,">h")
-	if ustr1 in page.appdoc.recs:
-		at = page.appdoc.recs[ustr1][1]
-	else:
-		at = "%02x"%ustr1
-	add_iter (hd,'Name',at,2,2,">H")
+	add_iter (hd,'Name',getName(rid,page.appdoc.recs),2,2,">H")
 
 def hdTransformFilter(hd,data,page):
 	offset = 0
@@ -3171,10 +3016,14 @@ class FHDoc():
 		return shift
 
 	def TextEffs(self,off,recid,mode=0):
+		subZone=[]
 		# ver 3 only?
 		num = struct.unpack('>h', self.data[off:off+2])[0] # or @0x12
+		if num==0:
+			return 0x16
 		shift = 0x18
 		for i in range(num):
+			begShift=shift
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
 			if rec == 7:
@@ -3184,7 +3033,8 @@ class FHDoc():
 					shift += 4
 			else:
 				shift += 16
-		return shift
+			subZone.append(("TextEffsData","TextEffsData",off+begShift,shift-begShift))
+		return shift,subZone
 
 
 	def TextBlok(self,off,recid,mode=0):
