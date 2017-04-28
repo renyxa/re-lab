@@ -36,7 +36,7 @@ import wls
 import wt602
 import c602
 import t602
-import pdb
+import palm
 import sbimp
 import zmf
 import zbr
@@ -1591,9 +1591,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "rx2":
 					if rx2.rx2_ids.has_key(ntype[1]):
 						rx2.rx2_ids[ntype[1]](hd,data)
-				elif ntype[0] == "pdb":
-					if pdb.pdb_ids.has_key(ntype[1]):
-						pdb.pdb_ids[ntype[1]](hd, size, data)
+				elif ntype[0] == "palm":
+					if palm.palm_ids.has_key(ntype[1]):
+						palm.palm_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "pm":
 					if pm6.hd_ids.has_key(ntype[1]):
 						pm6.hd_ids[ntype[1]](hd,data,self.das[pn])

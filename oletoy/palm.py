@@ -79,12 +79,12 @@ def lz77_decompress(data):
 
 	return buffer
 
-class pdb_parser(object):
+class palm_parser(object):
 
 	def __init__(self, data, page, parent):
 		self.data = data
 		self.page = page
-		self.parent = add_pgiter(page, 'PDB', 'pdb', 0, data, parent)
+		self.parent = add_pgiter(page, 'PALM', 'palm', 0, data, parent)
 		self.records = []
 
 	def get_record_end(self, n):
@@ -97,7 +97,7 @@ class pdb_parser(object):
 		self.parse_header()
 
 		begin = 76 + 4 * len(self.records)
-		reciter = add_pgiter(self.page, "Records", 'pdb', 0, self.data[begin:], self.parent)
+		reciter = add_pgiter(self.page, "Records", 'palm', 0, self.data[begin:], self.parent)
 
 		if len(self.records) > 0:
 			self.parse_index_record(self.data[self.records[0]:self.get_record_end(0)], reciter)
@@ -108,11 +108,11 @@ class pdb_parser(object):
 
 	def parse_header(self):
 		(count, off) = rdata(self.data, 76, '>H')
-		hdriter = add_pgiter(self.page, 'Header', 'pdb', 'pdb_header', self.data[0:76 + 4 * count], self.parent)
-		offiter = add_pgiter(self.page, 'Offset table', 'pdb', 0, self.data[76:76 + 4 * count], hdriter)
+		hdriter = add_pgiter(self.page, 'Header', 'palm', 'palm_header', self.data[0:76 + 4 * count], self.parent)
+		offiter = add_pgiter(self.page, 'Offset table', 'palm', 0, self.data[76:76 + 4 * count], hdriter)
 
 		for i in range(0, count):
-			add_pgiter(self.page, 'Offset %d' % i, 'pdb', 'pdb_offset', self.data[off:off + 8], offiter)
+			add_pgiter(self.page, 'Offset %d' % i, 'palm', 'palm_offset', self.data[off:off + 8], offiter)
 			(record, off) = rdata(self.data, off, '>I')
 			off += 4
 			self.records.append(record)
@@ -120,71 +120,71 @@ class pdb_parser(object):
 	def parsing_data_records(self, data, count):
 		pass
 
-class generic_parser(pdb_parser):
+class generic_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(generic_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'generic_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'generic_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 
 # specification: http://wiki.mobileread.com/wiki/EReader (2013)
-class ereader_parser(pdb_parser):
+class ereader_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(ereader_parser, self).__init__(data, page, parent)
 		self.compression = None
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'ereader_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'ereader_index', data, parent)
 		self.compression = read(data, 0, '>H')
 
 	def parse_data_record(self, n, data, parent):
-		reciter = add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		reciter = add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 		if self.compression == 4:
 			unscrambled = [(chr(ord(b) ^ 0xa5)) for b in data]
-			add_pgiter(self.page, "Uncompressed", 'pdb', 0, unscrambled, reciter)
+			add_pgiter(self.page, "Uncompressed", 'palm', 0, unscrambled, reciter)
 
-class isilo_parser(pdb_parser):
+class isilo_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(isilo_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'isilo_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'isilo_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 
-class isilo3_parser(pdb_parser):
+class isilo3_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(isilo3_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'isilo3_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'isilo3_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 
 # specification: http://wiki.mobileread.com/wiki/PalmDOC (2013)
-class palmdoc_parser(pdb_parser):
+class palmdoc_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(palmdoc_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'palmdoc_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'palmdoc_index', data, parent)
 		self.compression = read(data, 0, '>H')
 
 	def parse_data_record(self, n, data, parent):
-		reciter = add_pgiter(self.page, "Text %d" % n, 'pdb', 0, data, parent)
+		reciter = add_pgiter(self.page, "Text %d" % n, 'palm', 0, data, parent)
 		if self.compression == 2:
 			uncompressed = lz77_decompress(data)
-			add_pgiter(self.page, "Uncompressed", 'pdb', 0, uncompressed, reciter)
+			add_pgiter(self.page, "Uncompressed", 'palm', 0, uncompressed, reciter)
 
 # specification: http://www.fifi.org/doc/plucker/manual/DBFormat.html
 # (2013)
@@ -203,7 +203,7 @@ plucker_type = (
 	'Metadata',
 )
 
-class plucker_parser(pdb_parser):
+class plucker_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(plucker_parser, self).__init__(data, page, parent)
@@ -211,7 +211,7 @@ class plucker_parser(pdb_parser):
 		self.reserved_records = {}
 
 	def parse_index_record(self, data, parent):
-		reciter = add_pgiter(self.page, 'Index', 'pdb', 'plucker_index', data, parent)
+		reciter = add_pgiter(self.page, 'Index', 'palm', 'plucker_index', data, parent)
 		off = 2
 		(self.version, off) = rdata(data, off, '>H')
 		(records, off) = rdata(data, off, '>H')
@@ -220,7 +220,7 @@ class plucker_parser(pdb_parser):
 			(ident, off) = rdata(data, off, '>H')
 			self.reserved_records[ident] = name
 			record_data = data[off - 4:off]
-			add_pgiter(self.page, 'Reserved record %d' % i, 'pdb', 'plucker_record_index', record_data, reciter)
+			add_pgiter(self.page, 'Reserved record %d' % i, 'palm', 'plucker_record_index', record_data, reciter)
 
 	def parse_data_record(self, n, data, parent):
 		(para, off) = rdata(data, 2, '>H')
@@ -229,57 +229,57 @@ class plucker_parser(pdb_parser):
 		typ_str = None
 		if int(typ) < len(plucker_type):
 			typ_str = ' (%s)' % plucker_type[int(typ)]
-		reciter = add_pgiter(self.page, 'Record %d%s' % (n, typ_str), 'pdb', 'plucker_record', data, parent)
+		reciter = add_pgiter(self.page, 'Record %d%s' % (n, typ_str), 'palm', 'plucker_record', data, parent)
 
 		if typ == 0 or typ == 1:
 			# read para headers
 			off = 8
-			paraiter = add_pgiter(self.page, 'Paragraphs', 'pdb', 0, data[off:off + 4 * int(para)], reciter)
+			paraiter = add_pgiter(self.page, 'Paragraphs', 'palm', 0, data[off:off + 4 * int(para)], reciter)
 			for i in range(int(para)):
 				(size, off) = rdata(data, off, '>H')
 				(attrs, off) = rdata(data, off, '>H')
-				add_pgiter(self.page, 'Paragraph %d' % i, 'pdb', 'plucker_para', data[off - 4:off], paraiter)
+				add_pgiter(self.page, 'Paragraph %d' % i, 'palm', 'plucker_para', data[off - 4:off], paraiter)
 
 			text = data[off:len(data)]
 
 			if typ == 0:
-				add_pgiter(self.page, 'Text', 'pdb', 0, text, reciter)
+				add_pgiter(self.page, 'Text', 'palm', 0, text, reciter)
 			elif typ == 1:
 				if self.version == 1:
 					uncompressed = lz77_decompress(text)
-					add_pgiter(self.page, 'Text', 'pdb', 0, uncompressed, reciter)
+					add_pgiter(self.page, 'Text', 'palm', 0, uncompressed, reciter)
 				elif self.version == 2:
 					uncompressed = zlib.decompress(text)
-					add_pgiter(self.page, 'Text', 'pdb', 0, uncompressed, reciter)
+					add_pgiter(self.page, 'Text', 'palm', 0, uncompressed, reciter)
 
 # specification: http://wiki.mobileread.com/wiki/TealDoc (2013)
-class tealdoc_parser(pdb_parser):
+class tealdoc_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(tealdoc_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'tealdoc_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'tealdoc_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		reciter = add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		reciter = add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 		if self.compression == 2:
 			uncompressed = lz77_decompress(data)
-			add_pgiter(self.page, "Uncompressed", 'pdb', 0, uncompressed, reciter)
+			add_pgiter(self.page, "Uncompressed", 'palm', 0, uncompressed, reciter)
 
-class tomeraider3_parser(pdb_parser):
+class tomeraider3_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(tomeraider3_parser, self).__init__(data, page, parent)
 
 	def parse_index_record(self, data, parent):
-		add_pgiter(self.page, 'Index', 'pdb', 'tomeraider3_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'tomeraider3_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 
 # specification: http://gutenpalm.sourceforge.net/ztxt_format.php (2013)
-class ztxt_parser(pdb_parser):
+class ztxt_parser(palm_parser):
 
 	def __init__(self, data, page, parent):
 		super(ztxt_parser, self).__init__(data, page, parent)
@@ -297,10 +297,10 @@ class ztxt_parser(pdb_parser):
 		(self.record_size, off) = rdata(data, off, '>H')
 		off += 8
 		(self.compression, off) = rdata(data, off, 'B')
-		add_pgiter(self.page, 'Index', 'pdb', 'ztxt_index', data, parent)
+		add_pgiter(self.page, 'Index', 'palm', 'ztxt_index', data, parent)
 
 	def parse_data_record(self, n, data, parent):
-		add_pgiter(self.page, "Record %d" % n, 'pdb', 0, data, parent)
+		add_pgiter(self.page, "Record %d" % n, 'palm', 0, data, parent)
 
 def add_generic_index(hd, size, data):
 	pass
@@ -344,7 +344,7 @@ def add_palmdoc_index(hd, size, data):
 	(size, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Max. record size', size, off - 2, 2, '>H')
 
-def add_pdb_header(hd, size, data):
+def add_palm_header(hd, size, data):
 	(name, off) = rdata(data, 0, '32s')
 	add_iter(hd, 'Name', name, 0, 32, '32s')
 	off += 2
@@ -366,7 +366,7 @@ def add_pdb_header(hd, size, data):
 	(records, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Number of records', records, off - 2, 2, '>H')
 
-def add_pdb_offset(hd, size, data):
+def add_palm_offset(hd, size, data):
 	(offset, off) = rdata(data, 0, '>I')
 	add_iter(hd, 'Offset', offset, 0, 4, '>I')
 	(ident, off) = rdata(data, off, '>I')
@@ -464,14 +464,14 @@ def add_ztxt_index(hd, size, data):
 		mode = 'Unknown'
 	add_iter(hd, 'Compression mode', mode, off - 1, 1, 'B')
 
-pdb_ids = {
+palm_ids = {
 	'ereader_index': add_ereader_index,
 	'generic_index': add_generic_index,
 	'isilo_index': add_isilo_index,
 	'isilo3_index': add_isilo3_index,
 	'palmdoc_index': add_palmdoc_index,
-	'pdb_header': add_pdb_header,
-	'pdb_offset': add_pdb_offset,
+	'palm_header': add_palm_header,
+	'palm_offset': add_palm_offset,
 	'plucker_index': add_plucker_index,
 	'plucker_para': add_plucker_para,
 	'plucker_record_index': add_plucker_record_index,
@@ -481,7 +481,7 @@ pdb_ids = {
 	'ztxt_index': add_ztxt_index,
 }
 
-pdb_types = {
+palm_types = {
 	'biblPPBL': None, # bibleplus_parser,
 	'BOOKMOBI': None, # mobipocket_parser,
 	'BDOCWrdS': None, # wordsmith_parser,
@@ -499,9 +499,9 @@ pdb_types = {
 	'zTXTGPlm': ztxt_parser,
 }
 
-def open(buf, page, parent, pdbtype):
-	if pdb_types.has_key(pdbtype):
-		parser = pdb_types[pdbtype]
+def open(buf, page, parent, palmtype):
+	if palm_types.has_key(palmtype):
+		parser = palm_types[palmtype]
 		if parser == None:
 			parser = generic_parser
 		parser(buf, page, parent).parse()

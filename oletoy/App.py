@@ -24,7 +24,7 @@ import drw
 import qxp
 import iwa
 import lrf
-import pdb
+import palm
 import sbimp
 import zmf
 import zbr
@@ -214,11 +214,11 @@ class Page:
 			pkzip.open (self.fname,self, parent)
 			return 0
 
-		pdbtype = buf[0x3c:0x44]
-                if pdbtype in pdb.pdb_types.keys():
-			self.type = "PDB"
+		palmtype = buf[0x3c:0x44]
+                if palmtype in palm.palm_types.keys():
+			self.type = "PALM"
 			print "Probably Palm e-book"
-			pdb.open(buf, self, parent, pdbtype)
+			palm.open(buf, self, parent, palmtype)
 			return 0
 
 		if buf[2:10] == 'BOOKDOUG':
