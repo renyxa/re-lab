@@ -215,7 +215,7 @@ class Page:
 			return 0
 
 		palmtype = buf[0x3c:0x44]
-                if palmtype in palm.palm_types.keys():
+		if palmtype in palm.palm_types.keys():
 			self.type = "PALM"
 			print "Probably Palm e-book"
 			palm.open(buf, self, parent, palmtype)
@@ -261,18 +261,20 @@ class Page:
 					return 0
 				except:
 					print "Check for Freehand 9+ failed..."
-		else:
-			fh_off = buf.find('FHDocHeader')
-			if fh_off != -1:
-				if buf[0:2] == "FH":
-					self.type = "FH"
-					print "Probably Freehand <5"
-					fh.fh_open(buf, self, parent, 0)
-					return 0
 		if buf[0:4] == "FHD2" or buf[0:4] == "acf3":
 			self.type = "FH12"
 			fh12.fh_open(buf, self, parent, 0)
 			return 0
+		if buf[0:2] == "FH":
+			fh_off = buf.find('FHDocHeader')
+			if fh_off != -1:
+				try:
+					self.type = "FH"
+					print "Probably Freehand <5"
+					fh.fh_open(buf, self, parent, 0)
+					return 0
+				except:
+					print "Check for Freehand <5 failed..."
 		if buf[8:11] == 'xV4':
 			self.type = 'ZMF'
 			print 'Probably Zoner Draw 4+'

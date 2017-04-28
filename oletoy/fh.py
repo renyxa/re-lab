@@ -39,7 +39,7 @@ agd_rec = {
 vmp_rec = {
 	0x0321:("Name","recid"),
 	0x065b:("uid","?"),
-	0x15e3:("Txt Align","enum(txtalign)"), # 0 left, 1 right, 2 center, 3 justify, 
+	0x15e3:("Txt Align","enum(txtalign)"), # 0 left, 1 right, 2 center, 3 justify,
 	0x15ea:("?","?"),
 	0x15f2:("?","?"),
 	0x15f9:("?","?"),
@@ -71,7 +71,7 @@ vmp_rec = {
 	0x16c9:("?","?"),
 	0x16d4:("Hor Scale %","?"),
 	0x16dc:("Leading","?"),
-	0x16e3:("Leading Type","enum(leadtypes)"), # 0 +, 1 =, 2 % 
+	0x16e3:("Leading Type","enum(leadtypes)"), # 0 +, 1 =, 2 %
 	0x16ec:("Rng Kern %","?"),
 	0x16f1:("?","?"),
 	0x16fb:("?","?"),
@@ -167,9 +167,58 @@ def hdTString(hd,data,page):
 		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,">H")
 		offset += L
 
+def hdRadialFill(hd,data,page):
+	offset = 0
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color0", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color1", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	val = struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter (hd,'cX',val/65536.,offset,4,">i")
+	offset+=4
+	val = struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter (hd,'cY',val/65536.,offset,4,">i")
+	offset+=4
+	for i in range(2): # 0
+		val = struct.unpack('>h', data[offset:offset+2])[0]
+		add_iter (hd,"f%d"%i,val,offset,2,">h")
+		offset+=2
+
+def hdTaperedFill (hd,data,page):
+	offset=0
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color0", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color1", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	val=struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter(hd, "angle", val/65536., offset, 4, ">i")
+	offset+=4
+	val=struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter(hd, "f0", val, offset, 4, ">i")
+	offset+=4
 
 def hdTaperedFillX (hd,data,page):
-	pass
+	offset=0
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color0", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color1", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	val=struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter(hd, "angle", val/65536., offset, 4, ">i")
+	offset+=4
+	for i in range(0,2):
+		val=struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter(hd, "f%d"%i, val, offset, 4, ">i")
+		offset+=4
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "MultiColor", "%02x"%rid, offset, L, ">H")
+	offset+=L
 
 def hdTEffect(hd,data,page):
 	offset = 0
@@ -225,7 +274,7 @@ def hdTFOnPath(hd,data,page):
 		elemtype,typestr = get_typestr(page,rid1)
 		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,">H")
 		offset += L
-	offset -= 18 
+	offset -= 18
 	shift = 26
 	for i in range(num):
 		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
@@ -445,12 +494,21 @@ def hdPath(hd,data,page):
 
 
 def hdArrowPath(hd,data,page):
-	offset = 0
-	shift = offset + 30
-	numpts = struct.unpack('>h', data[offset+20:offset+22])[0]
+	offset = 0 if hd.version<=8 else 20
+	numpts = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd, "N", numpts, offset, 2, ">H");
+	offset += 2
+	if hd.version <=8:
+		offset += 20
+	if hd.version > 3:
+		offset += 4
+	shift = offset + 4
 	for i in range(numpts):
 		ptype = ord(data[shift+1+i*27])
-		add_iter (hd,'Type %d'%i,"%d (%s)"%(ptype,pts_types[ptype]),shift+i*27+1,1,"B")
+		ptext = "Unknown"
+		if ptype in pts_types:
+			ptext = pts_types[ptype]
+		add_iter (hd,'Type %d'%i,"%d (%s)"%(ptype,ptext),shift+i*27+1,1,"B")
 		x1 = struct.unpack('>h', data[shift+i*27+3:shift+i*27+5])[0]
 		x1f = struct.unpack('>H', data[shift+i*27+5:shift+i*27+7])[0]
 		y1 = struct.unpack('>h', data[shift+i*27+7:shift+i*27+9])[0]
@@ -473,6 +531,20 @@ def hdArrowPath(hd,data,page):
 		add_iter (hd,'\tYh2 %d'%i,"%.4f"%(y1+y1f/65536.),shift+i*27+7,4,"txt")
 		shift -=16
 	
+def hdPathText(hd,data,page):
+	off=0
+	for i in range(2):
+		l,rid = read_recid(data,off)
+		add_iter (hd,"elemProp" if i== 0 else "layer","%02x"%rid,off,l,">H")
+		off+=l
+	for i in range(4):
+		val = struct.unpack('>H', data[off:off+2])[0]
+		add_iter (hd,"txtSize" if i==1 else "f%d"%i,val,off,2,">H")
+		off += 2
+	for i in range(2):
+		l,rid = read_recid(data,off)
+		add_iter (hd,"text" if i== 0 else "form","%02x"%rid,off,l,">H")
+		off+=l
 
 def hdAGDFont(hd,data,page):
 	offset = 0
@@ -509,9 +581,9 @@ def hdAGDFont(hd,data,page):
 def hdLinearFill(hd,data,page):
 	offset = 0
 	res,rid = read_recid(data,offset)
-	add_iter (hd,"Color 1",rid,0,res,">H")
+	add_iter (hd,"Color 1","%02x"%rid,0,res,">H")
 	L,rid = read_recid(data,offset+res)
-	add_iter (hd,"Color 2",rid,res,L,">H")
+	add_iter (hd,"Color 2","%02x"%rid,res,L,">H")
 	res += L
 	hndl = struct.unpack(">H",data[res:res+2])[0]
 	add_iter (hd,"Handle 1 (ang)",hndl,res,2,">H")
@@ -521,7 +593,7 @@ def hdLinearFill(hd,data,page):
 	add_iter (hd,"Overprint",ovrp,res,2,">H")
 	res += 4
 	L,rid = read_recid(data,res)
-	add_iter (hd,"MultiClr Lst",rid,res,2,">H")
+	add_iter (hd,"MultiClr Lst","%02x"%rid,res,2,">H")
 	res += L
 	res += 1
 	X = struct.unpack(">I",data[res:res+4])[0]
@@ -539,6 +611,21 @@ def hdLinearFill(hd,data,page):
 	R = struct.unpack(">H",data[res:res+2])[0]
 	add_iter (hd,"Repeat",R,res,2,">H")
 
+def hdLinePat(hd,data,page):
+	if hd.version==8:
+		return
+	offset=0
+	N = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,"N",N,offset,2,">H")
+	offset+=2
+	for i in range(0,4): # f0=f2=f3=0, f1=N
+		val = struct.unpack(">H",data[offset:offset+2])[0]
+		add_iter (hd,"f%d"%i,val,offset,2,">H")
+		offset+=2
+	for i in range(0,N):
+		val = struct.unpack(">I",data[offset:offset+4])[0]
+		add_iter (hd,"pat%d"%i,val/65536.,offset,4,">I")
+		offset+=4
 
 def hdMultiColorList(hd,data,page):
 	offset = 0
@@ -1431,9 +1518,216 @@ def hdList(hd,data,page):
 		add_iter (hd,'List Elem',"%02x (%s)"%(rid,page.dict[page.reclist[rid-1]]),offset,l,">H")
 		offset += l
 
-def hdDisplayText(hd,data,page):
-	pass
+def hdData(hd,data,page):
+	off = 0
+	size = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'block[size]',size,off,2,">H")
+	off += 2
+	size = struct.unpack('>I', data[off:off+4])[0]
+	add_iter (hd,'size[data]',size,off,4,">I")
+	off += 4
+	add_iter (hd,'data',"",off,size,"txt")
+	off+=size
 
+def hdDataList(hd,data,page):
+	offset = 0
+	N = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,'N',N,offset,2,">H")
+	offset += 2
+	dSz = struct.unpack('>I', data[offset:offset+4])[0]
+	add_iter (hd,'dataSize',dSz,offset,4,">I")
+	offset += 4
+	for i in range(2):
+		val=struct.unpack('>H', data[offset:offset+2])[0]
+		add_iter(hd, "f%d"%i, val, offset, 2, ">H")
+		offset+=2
+	for i in range(N):
+		l,rid = read_recid(data,offset)
+		add_iter (hd,"id%d"%i,"%02x"%rid,offset,l,">H")
+		offset += l
+
+def hdDisplayText(hd,data,page):
+	offset = 0
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,'f0',val,offset,2,">H")
+	offset += 2
+	for i in range(2):
+		l,rid = read_recid(data,offset)
+		add_iter (hd,'graphicStyle' if i==0 else 'id1',"%02x"%rid,offset,l,">H")
+		offset += l
+	for i in range(2):
+		val=struct.unpack('>H', data[offset:offset+2])[0]
+		add_iter(hd, "f%d"%(i+1), val, offset, 2, ">H")
+		offset+=2
+	l,rid = read_recid(data,offset)
+	add_iter (hd,'formId',"%02x"%rid,offset,l,">H")
+	offset += l
+	add_iter (hd,'unknown1',"",offset,16,"txt")
+	offset += 16
+	for i in range(4):
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,"dim%d"%i,val/65536.,offset,4,">i")
+		offset+=4
+	add_iter (hd,'unknown2',"",offset,32,"txt")
+	offset += 32
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,'textLength',val,offset,2,">H")
+	offset += 2
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,'f3',val,offset,2,">H")
+	offset += 2
+
+def hdFileDescriptor(hd,data,page):
+	off = 0
+	for i in range(2):
+		l,rid = read_recid(data,off)
+		add_iter (hd,"id%d"%i,"%02x"%rid,off,l,">H")
+		off += l
+	for i in range(5): # f4=1
+		val=struct.unpack('>b', data[off:off+1])[0]
+		add_iter(hd, "f%d"%i, val, off, 1, ">b")
+		off+=1
+	dtSz = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'data[size]',dtSz,off,2,">H")
+	off += 2
+	if hd.version>3:
+		return
+	(n, endOff) = rdata(data, off, '%ds'%4)
+	add_iter (hd,'type',n,off,4,"txt")
+	off +=4
+	add_iter (hd,'unknown',"",off,dtSz-4,"txt")
+
+def hdGuides(hd,data,page):
+	off = 0
+	size = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'block[size]',size,off,2,">H")
+	off += 2
+	for i in range(2):
+		l,rid = read_recid(data,off)
+		add_iter (hd,"id%d"%i,"%02x"%rid,off,l,">H")
+		off += l
+	if hd.version > 3:
+		for i in range(2):
+			val=struct.unpack('>h', data[off:off+2])[0]
+			add_iter (hd,"f%d"%i,size,off,2,">h")
+			off += 2
+	add_iter (hd,'unknown',"",off,12+4*size,"txt")
+
+def hdHalftone(hd,data,page):
+	off = 0
+	l,rid = read_recid(data,off)
+	add_iter (hd,"id","%02x"%rid,off,l,">H")
+	off += l
+	add_iter (hd,'unknown',"",off,8,"txt")
+	off += 8
+
+def hdString(hd,data,page):
+	off = 0
+	size = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'block[size]',size,off,2,">H")
+	off += 2
+	size = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'string[size]',size,off,2,">H")
+	off += 2
+	(n, endOff) = rdata(data, off, '%ds'%size)
+	add_iter (hd,'name',n,off,size,"txt")
+	off +=size
+
+def hdDictVal(hd,data,page):
+	offset=0
+	key = struct.unpack('>h', data[offset:offset+2])[0]
+	add_iter (hd,'key',key,offset,2,">h")
+	offset+=2
+	if hd.version <= 8:
+		key = struct.unpack('>h', data[offset:offset+2])[0]
+		add_iter (hd,'key2',key,offset,2,">h")
+		offset+=2
+	(n, endOff) = rdata(data, offset, '%ds'%(len(data)-offset))
+	pos = n.find("\x00")
+	if pos!=-1:
+		n=n[:pos]
+	add_iter (hd,'name',n,offset,len(data)-offset,"txt")
+
+def hdTextChar(hd,data,page):
+	offset=0
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,'offset',val,offset,2,">H")
+	offset+=2
+	flags = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,"flags","%02x"%flags,offset,2,">H")
+	offset+=2
+	if flags&1:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'coord0',val/65536.,offset,4,">i")
+		offset+=4
+	if flags&2:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'kerning',val/65536.,offset,4,">i")
+		offset+=4
+	if flags&4:
+		L,rid = read_recid(data,offset)
+		add_iter (hd,'fontName',"%02x"%rid,offset,L,">H")
+		offset += L
+	if flags&8:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'fontSize',val/65536.,offset,4,">i")
+		offset+=4
+	if flags&0x10:
+		val=struct.unpack(">I",data[offset:offset+4])[0]
+		if val==0xFFFE0000:
+			add_iter(hd, "leading", "solid",offset,4,">I")
+		elif val==0xFFFF0000:
+			add_iter(hd, "leading", "auto",offset,4,">I")
+		else:
+			add_iter(hd, "leading", val/65536.,offset,4,">I")
+		offset+=4
+	if flags&0x20:
+		val = struct.unpack('>I', data[offset:offset+4])[0]
+		itext=""
+		if val&1:
+			itext+="bold,"
+		if val&2:
+			itext+="italic,"
+		add_iter (hd,'fontStyle',"0x%02x(%s)"%(val,itext),offset,4,">I")
+		offset+=4
+	if flags&0x40:
+		L,rid = read_recid(data,offset)
+		add_iter (hd,'color',"%02x"%rid,offset,L,">H")
+		offset += L
+	if flags&0x80:
+		L,rid = read_recid(data,offset)
+		add_iter (hd,'textEffects',"%02x"%rid,offset,L,">H")
+		offset += L
+	if flags&0x100:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'coord1',val/65536.,offset,4,">i")
+		offset+=4
+	if flags&0x200:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'coord2',val/65536.,offset,4,">i")
+		offset+=4
+	if flags&0x400:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'coord3',val/65536.,offset,4,">i")
+		offset+=4
+	if flags&0x800:
+		val = struct.unpack('>i', data[offset:offset+4])[0]
+		add_iter (hd,'baseline[shift]',val/65536.,offset,4,">i")
+		offset+=4
+
+def hdTextPara(hd,data,page):
+	offset=0
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,'offset',val,offset,2,">H")
+	offset+=2
+	# todo
+
+def hdTextString(hd,data,page):
+	(n, endOff) = rdata(data, 0, '%ds'%len(data))
+	pos = n.find("\x00")
+	if pos!=-1:
+		n=n[:pos]
+	add_iter (hd,'text',n,0,len(data),"txt")
 
 def hdCompositePath(hd,data,page):
 	offset = 0
@@ -1518,6 +1812,18 @@ def hdColor6(hd,data,page):
 			add_iter (hd,cmpntnames[i],"%d"%cmpnt,offset+i*4,4,">I")
 			
 
+def hdPantoneColor(hd,data,page):
+	offset = 0
+	L,rid = read_recid(data,offset)
+	add_iter(hd, "Color0", "%02x"%rid, offset, L, ">H")
+	offset+=L
+	r = struct.unpack(">H",data[offset:offset+2])[0]/256
+	g = struct.unpack(">H",data[offset+2:offset+4])[0]/256
+	b = struct.unpack(">H",data[offset+4:offset+6])[0]/256
+	add_iter (hd,'RGB',"%d %d %d"%(r,g,b),offset,6,">HHH")
+	offset+=6
+	add_iter (hd,'unknown', '', offset,28,"txt")
+	offset+=28
 
 def hdSpotColor(hd,data,page):
 	offset = 0
@@ -1554,7 +1860,7 @@ def hdTintColor6(hd,data,page):
 	fmt = ">H"
 	if l == 4:
 		fmt = ">I"
-	add_iter (hd,'Tint of',rid,offset,l,fmt)
+	add_iter (hd,'Tint of',"%02x"%rid,offset,l,fmt)
 	offset += l
 	tint = struct.unpack(">H",data[offset:offset+2])[0]*100./0xffff
 	add_iter (hd,'Tint',"%.0f%%"%tint,offset,2,">H")
@@ -1623,7 +1929,11 @@ hdp = {
 	"ClipGroup":hdGroup,
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
+	"Data":hdData,
+	"DataList":hdDataList,
+	"DisplayText":hdDisplayText,
 	"ElemPropLst":hdStylePropLst,
+	"FileDescriptor":hdFileDescriptor,
 	"FilterAttributeHolder":hdFilterAttributeHolder,
 	"FHTail":hdFHTail,
 	"FWBlurFilter":hdFWBlurFilter,
@@ -1631,39 +1941,52 @@ hdp = {
 	"FWShadowFilter":hdFWShadowFilter,
 	"GraphicStyle":hdGraphicStyle,
 	"Group":hdGroup,
+	"Guides":hdGuides,
+	"Halftone":hdHalftone,
 	"ImageImport":hdImageImport,
 	"Layer":hdLayer,
 	"LensFill":hdLensFill,
 	"LinearFill":hdLinearFill,
+	"LinePat":hdLinePat,
 	"List":hdList,
 	"MList":hdList,
+	"MName":hdString,
+	"MString":hdString,
 	"MultiColorList":hdMultiColorList,
 	"NewBlend":hdNewBlend,
 	"NewContourFill":hdNewContourFill,
 	"NewRadialFill":hdNewRadialFill,
 	"Oval":hdOval,
+	"PantoneColor":hdPantoneColor,
 	"Path":hdPath,
+	"PathText":hdPathText,
 	"Paragraph":hdParagraph,
 	"ProcessColor":hdProcessColor,
 	"PropLst":hdPropLst,
+	"RadialFill":hdRadialFill,
 	"Rectangle":hdRectangle,
 	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
 	"StylePropLst":hdStylePropLst,
 	"SymbolClass":hdSymbolClass,
+	"TaperedFill":hdTaperedFill,
 	"TaperedFillX":hdTaperedFillX,
 	"TileFill":hdTileFill,
 	"TintColor":hdSpotColor,
 	"TintColor6":hdTintColor6,
 	"TFOnPath":hdTFOnPath,
+	"TextChar":hdTextChar,
 	"TextColumn":hdTFOnPath,
 	"TextInPath":hdTFOnPath,
+	"TextPara":hdTextPara,
+	"TextString":hdTextString,
 	"TEffect":hdTEffect,
 	"TString":hdTString,
 	"TransformFilter":hdTransformFilter,
 	"VDict":hdTEffect,
 	"VMpObj":hdVMpObj,
 	"Xform":hdXform,
+	"dval":hdDictVal,
 	}
 
 
@@ -1783,6 +2106,7 @@ class FHDoc():
 		"PantoneColor":self.PantoneColor,
 		"Paragraph":self.Paragraph,
 		"Path":self.Path,
+		"PathText":self.PathText,
 		"PathTextLineInfo":self.PathTextLineInfo,
 		"PatternFill":self.PatternFill,
 		"PatternLine":self.PatternLine,
@@ -2068,7 +2392,7 @@ class FHDoc():
 		return res+size*10
 
 	def Data(self,off,recid,mode=0):
-		size = struct.unpack('>h', self.data[off:off+2])[0]
+		size = struct.unpack('>H', self.data[off:off+2])[0]
 		length= 6+size*4
 		return length
 
@@ -2098,8 +2422,8 @@ class FHDoc():
 			offset += 2
 		if flags & 8: # font size
 			offset += 4
-		if flags & 0x10: # never seen
-			print "NEW FLAG IN DISPLAY TEXT!"
+		if flags & 0x10:
+			offset += 4
 		if flags & 0x20: # font style bytes
 			offset += 4
 		if flags & 0x40: # font clr rec_id
@@ -2124,18 +2448,25 @@ class FHDoc():
 
 	def DisplayText(self,off,recid,mode=0):
 		# ver < 5
-		txtlen = struct.unpack('>h', self.data[off+0x4c:off+0x4e])[0]
-		style0 = struct.unpack('>h', self.data[off+0x50:off+0x52])[0]
-		offset = 0x7a
-		if style0 < txtlen:
-			# read small style updates
-			while struct.unpack(">h", self.data[off+offset:off+offset+2])[0] != txtlen:
-				offset = self.DT_fh3_styles(off,offset)
-			offset = self.DT_fh3_styles(off,offset)
-		while struct.unpack(">h", self.data[off+offset:off+offset+2])[0] != txtlen:
+		subZone=[]
+		txtlen = struct.unpack('>H', self.data[off+0x4c:off+0x4e])[0]
+		offset = 0x50
+		while True:
+			cOffset=struct.unpack(">h", self.data[off+offset:off+offset+2])[0]
+			newOffset = self.DT_fh3_styles(off,offset)
+			subZone.append(("TextChar","TextChar",off+offset,newOffset-offset))
+			offset=newOffset
+			if cOffset>=txtlen:
+				break
+		while True:
+			pOffset=struct.unpack(">h", self.data[off+offset:off+offset+2])[0]
+			subZone.append(("TextPara","TextPara",off+offset,30))
 			offset += 30
-		offset += 30
-		return offset+1+txtlen
+			if pOffset >= txtlen:
+				break
+		if txtlen>0:
+			subZone.append(("TextString","TextString",off+offset,txtlen))
+		return offset+1+txtlen,subZone
 
 	def DuetFilter(self,off,recid,mode=0):
 		return 14
@@ -2601,6 +2932,16 @@ class FHDoc():
 				res += trsize+1
 		return res
 
+	def PathText(self,off,recid,mode=0):
+		res=off
+		for i in range(2):
+			l,rid = self.read_recid(res+2)
+			res+=l
+		res+=8
+		for i in range(2):
+			l,rid = self.read_recid(res+2)
+			res+=l
+		return res-off
 	def PathTextLineInfo(self,off,recid,mode=0):
 		# FIXME!
 		# SHOULD BE VARIABLE, just have no idea about base and multiplier
@@ -2842,7 +3183,7 @@ class FHDoc():
 				if key == 0:
 					shift += 4
 			else:
-				shift += 16 
+				shift += 16
 		return shift
 
 
@@ -3019,7 +3360,7 @@ class FHDoc():
 		return res
 
 	def VMpObj (self,off,recid,mode=0):
-		num = struct.unpack('>h', self.data[off+4:off+6])[0]  
+		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 8
 		# FIXME!
 		# ver 9: 00 36 00 23 00 22 00 36  ++18 bytes before usual structures start
@@ -3092,7 +3433,12 @@ class FHDoc():
 				#try:
 				if 1:
 					res = self.chunks[self.dictitems[i]](offset,j)
-					if -1 < res <= len(self.data)-offset:
+					subList=[]
+					if type(res) is int:
+						rLen=res
+					else:
+						rLen,subList=res
+					if -1 < rLen <= len(self.data)-offset:
 						uid = ""
 						if self.dictitems[i] in ("ImageImport","polygonFigure","Extrusion","Layer","Rectangle","Oval","ClipGroup","Group","CompositePath"):
 							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+6:offset+8])[0])
@@ -3100,12 +3446,16 @@ class FHDoc():
 							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+8:offset+10])[0])
 						elif self.dictitems[i] == "TextColumn":
 							uid = "(%02x)"%(struct.unpack(">H",self.data[offset+14:offset+16])[0])
-						niter = add_pgiter(self.page,"[%02x] %s %s"%(j,self.dictitems[i],uid),"fh",self.dictitems[i],self.data[offset:offset+res],self.diter)
+						niter = add_pgiter(self.page,"[%02x] %s %s"%(j,self.dictitems[i],uid),"fh",self.dictitems[i],self.data[offset:offset+rLen],self.diter)
 						self.page.model.set_value(niter,4,(j-1,offset))
-						offset += res
+						offset += rLen
 						if uid != "":
 							print self.dictitems[i],uid
 						self.nodes[j] = (self.dictitems[i],niter)
+						for i in range(len(subList)):
+							subName,subType,subOff,subLen=subList[i]
+							subData=self.data[subOff:subOff+subLen]
+							add_pgiter(self.page,subName,"fh",subType,subData,niter)
 					else:
 						add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
 						for k in range(10):
@@ -3113,7 +3463,7 @@ class FHDoc():
 								add_pgiter(self.page,"!!! %s"%self.dictitems[self.reclist[i+k]],"fh","unknown","",self.diter)
 							except:
 								print "kk",k
-						print "Failed on record %d (%s)"%(j,self.dictitems[i]),res
+						print "Failed on record %d (%s)"%(j,self.dictitems[i]),rLen
 						print "Next is",self.dictitems[self.reclist[j+1]]
 						return
 				#except:
