@@ -27,6 +27,7 @@ import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6, qxp
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
+import fh12
 import cdr,cmx,wld,cpt,ppp,pict,chdraw,yep,midi
 import riff,dsf,drw
 import vfb
@@ -1599,6 +1600,9 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
 						fh.hdp[ntype[1]](hd,data,self.das[pn])
+				elif ntype[0] == "fh12":
+					if fh12.fh12_ids.has_key(ntype[1]):
+						fh12.fh12_ids[ntype[1]](hd,size,data,ntype[1])
 				elif ntype[0] == "zmf2":
 					if isinstance(ntype[1], tuple):
 						view = uniview.HdView(hd, None, ntype[1][1])

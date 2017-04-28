@@ -17,333 +17,978 @@
 import struct
 from utils import *
 
-def LinePat(buf,off,id0,id1):
-	return id1+2,"LinePat"
+class ZoneHeader:
+        def __init__(self,version):
+                self.version = version
+                self.dataSize = 0
+                self.type = -1
+        def parse(self, buf, off):
+                self.dataSize = struct.unpack(">I",buf[off:off+4])[0]
+                if self.dataSize == 0xFFFFFFFF:
+                        return
+                self.type = struct.unpack(">H",buf[off+4:off+6])[0]
 
-def List(buf,off,id0,id1):
-	hdr_len = struct.unpack(">H",buf[off+8:off+10])[0]
-	id_num = struct.unpack(">H",buf[off+10:off+12])[0]
-	return hdr_len+id_num*2,"List"
+# tool
+def HeaderStyleSize (buf,off,header):
+        if header.version==1:
+                dtSz = struct.unpack(">H",buf[off+8:off+10])[0]
+                return 10+dtSz+2
+        return 8
+def HeaderGroupSize (buf,off,header):
+        if header.version>1:
+                return 18
+        offset=off+8
+        dtSz = struct.unpack(">H",buf[offset:offset+2])[0]
+        offset += (2+dtSz)+8
+        dtSz = struct.unpack(">H",buf[offset:offset+2])[0]
+        offset += (2+dtSz)
+        return offset-off
 
-def String(buf,off,id0,id1):
-	return id1+2,"String"
+# generic
+def String(buf,off,header):
+        len = header.dataSize+2 if header.version==1 else header.dataSize-2
+        return len,"String"
 
-def r0019(buf,off,id0,id1):
-	return 30,"r0019"
+# list of zone
+def Root(buf,off,header): # the main group
+	return 24 if header.version==1 else 34,"Root"
 
-def r0029(buf,off,id0,id1):
-	return 34,"r0029"
+def Group (buf,off,header):
+        if header.version==1:
+                id_num = struct.unpack(">H",buf[off+18:off+20])[0]
+                return 20+id_num*2,"Group"
+        sSz=struct.unpack(">H",buf[off+10:off+12])[0]
+        id_num = struct.unpack(">H",buf[off+18+sSz:off+20+sSz])[0]
+        return 20+sSz+id_num*2,"Group"
+def ListStyle(buf,off,header):
+        if header.version==1:
+                hdr_len = struct.unpack(">H",buf[off+8:off+10])[0]
+                id_num = struct.unpack(">H",buf[off+10:off+12])[0]
+                return hdr_len+id_num*2,"ListStyle"
+        else:
+                id_num = struct.unpack(">H",buf[off+6:off+8])[0]
+                return 12+id_num*2,"ListStyle"
 
-def r0030(buf,off,id0,id1):
-	return 34,"r0030"
+# shape
+def JoinGroup(buf,off,header):
+	return HeaderGroupSize(buf,off,header)+8,"JoinGroup"
+def TransformGroup(buf,off,header):
+	return HeaderGroupSize(buf,off,header)+30,"TransformGroup"
+def Rectangle (buf,off,header):
+        subZone=[]
+        len=HeaderGroupSize(buf,off,header)
+        len+=4+(6 if header.version>1 else 0)+8
+        matrixSize=struct.unpack(">I",buf[off+len:off+len+4])[0]
+        if matrixSize:
+                subZone.append(("transform","Transform",off+len+4,matrixSize))
+        len+=matrixSize+4
+	return len+4,"Rectangle",subZone
+def Oval (buf,off,header):
+        subZone=[]
+        len=HeaderGroupSize(buf,off,header)
+        len+=4+(6 if header.version>1 else 0)+8
+        matrixSize=struct.unpack(">I",buf[off+len:off+len+4])[0]
+        if matrixSize:
+                subZone.append(("transform","Transform",off+len+4,matrixSize))
+        len+=matrixSize+4
+	return len,"Oval"
+def Line (buf,off,header):
+        len=HeaderGroupSize(buf,off,header)
+        len+=4+(6 if header.version>1 else 0)+8
+	return len,"Line"
+def Path (buf,off,header):
+        subZone=[]
+        len=HeaderGroupSize(buf,off,header)
+        len+=4+(6 if header.version>1 else 0)+2
+        N=struct.unpack(">H",buf[off+len:off+len+2])[0]
+        len+=2
+        for i in range(0,N):
+                subZone.append(("pt%d"%i,"PathPoint",off+len,16))
+                len+=16
+	return len,"Path",subZone
+def Text (buf,off,header):
+        subZone=[]
+        offset=off+HeaderGroupSize(buf,off,header)
+        if header.version==1:
+                N = struct.unpack(">I",buf[offset:offset+4])[0]
+                subZone.append(("flags","TextFlags",offset+4,3*(N//2)))
+                offset+=4+3*(N//2)
+                offset+=4
+                textSz = struct.unpack(">I",buf[offset:offset+4])[0]
+                subZone.append(("text","TextString",offset+4,textSz))
+                offset+=4+textSz
+                offset+=8+26 # dim + transform
+                offset+=8+8+2 # spacing + scaling
+                nPLC=struct.unpack(">H",buf[offset:offset+2])[0]
+                offset+=2;
+                for i in range(0,nPLC):
+                        subZone.append(("plc%d"%i,"TextPLC",offset,18))
+                        offset+=18
+        else: # or header.dataSize-18+notelen,"Text"
+                offset+=14+8+26 # unkn+dim+transform
+                offset+=14 # justify+unknown
+                dataSize=struct.unpack(">H",buf[offset:offset+2])[0]
+                offset+=2
+                textSz=struct.unpack(">H",buf[offset:offset+2])[0]
+                offset+=2+54
+                subZone.append(("unknown","TextUnknown",offset,dataSize-22-80-54));
+                offset+=dataSize-22-80-54
+                subZone.append(("text","TextString",offset,textSz))
+                offset+=textSz
+	return offset-off,"Text",subZone
 
-def r0036(buf,off,id0,id1):
-	return 30,"r0036"
+def BackgroundPicture (buf,off,header):
+        len=HeaderGroupSize(buf,off,header)
+        len+=28
+        len+=struct.unpack(">I",buf[off+len:off+len+4])[0]+4
+	return len,"BackgroundPicture"
+def Picture (buf,off,header):
+	return HeaderGroupSize(buf,off,header)+58,"Picture"
 
-def r0039(buf,off,id0,id1):
-	# Xform/Scale
-	return 30,"r0039"
+# style
+def ColorRGB(buf,off,header):
+	return HeaderStyleSize(buf,off,header)+12,"ColorRGB"
 
-def r003f(buf,off,id0,id1):
-	# XForm/Rotate-Skew
-	return 30,"r003f"
+def ColorGrey(buf,off,header):
+	return HeaderStyleSize(buf,off,header)+(4 if header.version==1 else 10),"ColorGrey"
 
-def r0fa1(buf,off,id0,id1):
-	return 24,"r0fa1"
+def ColorCMY(buf,off,header):
+	return HeaderStyleSize(buf,off,header)+(8 if header.version==1 else 14),"ColorCMY"
 
-def Group (buf,off,id0,id1):
-	id_num = struct.unpack(">H",buf[off+18:off+20])[0]
-	return 20+id_num*2,"Group"
+def ColorPantone(buf,off,header):
+	return HeaderStyleSize(buf,off,header)+22,"ColorPantone"
 
-def r1005(buf,off,id0,id1):
-	# related to group
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	return 50+notelen,"r1005"
+def LineStyle (buf,off,header):
+	return HeaderStyleSize(buf,off,header)+(12 if header.version==1 else 18),"LineStyle"
 
-def Text (buf,off,id0,id1):
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	off += notelen
-	num1 = struct.unpack(">I",buf[off+20:off+24])[0]
-	off2 = 24+num1
-	num2 = struct.unpack(">I",buf[off+off2:off+off2+4])[0]
-	off3 = off2+4+num2
-	num3 = struct.unpack(">I",buf[off+off3:off+off3+4])[0]
-	return off3+4+num3+90+notelen,"Text"
+def PatternLine (buf,off,header):
+	return HeaderStyleSize(buf,off,header)+22,"PatternLine"
 
-def r1008(buf,off,id0,id1):
-	return 28,"r1008"
+def FillStyle (buf,off,header):
+        return HeaderStyleSize(buf,off,header)+(3 if header.version==1 else 8),"FillStyle"
 
-def r106a(buf,off,id0,id1):
-	return 24,"Color RGB"
+def GradientLinear(buf,off,header):
+	return HeaderStyleSize(buf,off,header)+(8 if header.version==1 else 12),"GradientLinear"
 
-def r106b(buf,off,id0,id1):
-	return 16,"Color Grey"
+def GradientRadial(buf,off,header):
+	return HeaderStyleSize(buf,off,header)+(4 if header.version==1 else 14),"GradientRadial"
 
-def r106c(buf,off,id0,id1):
-	return 20,"Color CMY"
+def PatternFill (buf,off,header):
+	return HeaderStyleSize(buf,off,header)+14,"PatternFill"
 
-def BasicFill (buf,off,id0,id1):
-	# 0x0a >H FIll Name
-	# 0x0c >H Id of the color rec
-	return 15,"BasicFill"
+def TileStyle (buf,off,header):
+	return HeaderStyleSize(buf,off,header)+54,"TileStyle"
 
-def BasicLine (buf,off,id0,id1):
-	return 24,"BasicLine"
+def PSStyle(buf,off,header):
+        len=HeaderStyleSize(buf,off,header)
+        stringSz = ord(buf[off+len])
+        return len+1+stringSz,"PSStyle"
 
-def r10d0(buf,off,id0,id1):
-	return 20,"r10d0"
+def PSLine (buf,off,header):
+	return header.dataSize-4,"PSFill"
 
-def r10d1(buf,off,id0,id1):
-	# Radial fill?
-	return 16,"r10d1"
+def PSFill (buf,off,header):
+	return header.dataSize-4,"PSLine"
 
-def Rectangle (buf,off,id0,id1):
-	# 0x08 >H note length
-	# 0x0a >H layer ID
-	# 0x14 >H Fill ID
-	# 0x16 >H Stroke ID
-	# 0x18 >H Left pts*10
-	# 0x1a >H Top
-	# 0x1c >H Right
-	# 0x1e >H Bottom
-	# corner radius?
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	if buf[off+34+notelen:off+36+notelen] == "\x00\x00":
-		notelen +=8  # roundrect
-	return 32+notelen,"Rectangle"
+def Dash(buf,off,header):
+        return header.dataSize+2 if header.version==1 else header.dataSize-2, "Dash"
 
-def Oval (buf,off,id0,id1):
-	# same as rectangle
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-#	if buf[off+34+notelen:off+36+notelen] == "\x00\x00":
-#		notelen +=8
-	return 32+notelen,"Oval"
+# other
+def Data (buf,off,header):
+	# this can be a note, a picture, depend on the group type
+	rlen = struct.unpack(">I",buf[off+6:off+10])[0]
+	return rlen+10,"Data"
 
-def Path (buf,off,id0,id1): # path?
-	# Path flags 0x19, 0x1b, 0x09, 0x0b
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	off += notelen
-	num1 = struct.unpack(">H",buf[off+26:off+28])[0]
-	return 28+num1*16+notelen,"Path"
-
-def Line (buf,off,id0,id1):
-	# Fill ID, Line ID, L, T, B, R
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	return 32+notelen,"Line"
-
-
-def ZeroPad(buf,off,id0,id1):
-	# bad idea, roundrect has 8 zeros, then radii
-	# no indication in rect for it
-	return 4,"Padding"
+# v1
 
 rec_types1 = {
-	0x0000:ZeroPad,
-	0x0002:List,
+	0x0002:ListStyle,
 	0x0003:String,
-	0x0019:r0019,
-	0x0029:r0029,
-	0x0030:r0030,
-	0x0036:r0036,
-	0x0039:r0039,
-	0x003f:r003f,
-	0x0fa1:r0fa1,
+	0x0fa1:Root,
 	0x0fa2:Group,
-	0x1005:r1005,
+
+	0x1005:TransformGroup,
 	0x1006:Text,
-	0x1008:r1008,
-	0x106a:r106a,
-	0x106b:r106b,
-	0x106c:r106c,
-	0x10cd:BasicFill,
-	0x10ce:BasicLine,
-	0x10d0:r10d0,
-	0x10d1:r10d1,
+        0x1007:BackgroundPicture,
+	0x1008:JoinGroup,
+
+	0x106a:ColorRGB,
+	0x106b:ColorGrey,
+	0x106c:ColorCMY,
+
+	0x10cd:FillStyle,
+	0x10ce:LineStyle,
+        0x10cf:PSStyle,
+	0x10d0:GradientLinear,
+	0x10d1:GradientRadial,
+
 	0x1131:Rectangle,
 	0x1132:Oval,
 	0x1134:Path,
 	0x1135:Line,
-	0x1195:LinePat,
+
+	0x1195:Dash,
 }
 
-def r2_1389 (buf,off,id0,id1):
-	return 34,"r1389"
-
-def r2_138a (buf,off,id0,id1):
-	rlen = struct.unpack(">H",buf[off+34:off+36])[0]
-	return 36+rlen*2,"r138a"
-
-def r2_138b (buf,off,id0,id1):
-	# FIXME! 
-	rlen = struct.unpack(">H",buf[off+8:off+10])[0]
-	return 6+rlen,"r138b"
-
-def r2_13ed (buf,off,id0,id1):
-	return 48,"r13ed"
-
-def r2_13f0 (buf,off,id0,id1):
-	return 26,"r13f0"
-
-def r2_13f8 (buf,off,id0,id1):
-	return 76,"r13f8"
-
-def r2_1452 (buf,off,id0,id1):
-	return 20,"Color"
-
-def r2_1453(buf,off,id0,id1):
-	return 18,"Color Grey"
-
-def r2_1454(buf,off,id0,id1):
-	return 22,"Color CMY"
-
-def r2_1455(buf,off,id0,id1):
-	return 30,"Color PANTONE"
-
-def r2_14b5 (buf,off,id0,id1):
-	return 16,"BasicFill"
-
-def r2_14b6 (buf,off,id0,id1):
-	return 26,"BasicLine"
-
-def r2_14b7 (buf,off,id0,id1):
-	return 20,"r14b7"
-
-def r2_14b8 (buf,off,id0,id1):
-	return 18,"r14b8"  # or 22
-
-def r2_14c9 (buf,off,id0,id1):
-	return 12,"r14c9"
-
-def r2_14ca (buf,off,id0,id1):
-	return 12,"r14ca"
-
-def r2_14d3 (buf,off,id0,id1):
-	return 22,"r14d3"
-
-def r2_14d4 (buf,off,id0,id1):
-	return 30,"r14d4"
-
-def r2_14dd (buf,off,id0,id1):
-	return 54,"r14dd" # or 58 or 62
-
-def r2_1519 (buf,off,id0,id1):
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	if buf[off+38+notelen:off+40+notelen] == "\x00\x00":
-		notelen +=8  # roundrect
-	return 36+notelen,"Rectangle"
-
-def r2_151a (buf,off,id0,id1):
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-#	if buf[off+38+notelen:off+40+notelen] == "\x00\x00":
-#		notelen +=8  # xform
-	return 36+notelen,"Oval"
-
-def r2_151c(buf,off,id0,id1):
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	rlen = struct.unpack(">H",buf[off+30:off+32])[0]
-	return 32+rlen*16+notelen,"Path"
-
-def r2_151d (buf,off,id0,id1):
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	return 36+notelen,"Line"
-
-def r2_157d (buf,off,id0,id1):
-	num = struct.unpack(">H",buf[off+12:off+14])[0]
-	return 14+num*2,"LinePat"
-
-def r2_List(buf,off,id0,id1):
-	rlen = struct.unpack(">H",buf[off+6:off+8])[0]
-	return 12+rlen*2,"List"
-
-def r2_String(buf,off,id0,id1):
-	return 7+ord(buf[off+6]),"String"
-
-def r2_Text (buf,off,id0,id1):
-	notelen = struct.unpack(">H",buf[off+8:off+10])[0]
-	return id1-18+notelen,"Text"
-#	off += notelen
-#	num1 = struct.unpack(">H",buf[off+138:off+140])[0]
-#	num2 = struct.unpack(">H",buf[off+140:off+142])[0]
-#	if num2 != 0:
-#		if not num1-1 == num2:
-#			num1 += 22*num2-11
-#		else:
-#			num1 += 11
-#	return 160+notelen+num1+1,"Text"
-
-
 rec_types2 = {
-	0x0000:ZeroPad,
-	0x0005:r2_List,
-	0x0006:r2_String,
-	0x0019:r0019,
-	0x0029:r0029,
-	0x0030:r0030,
-	0x0036:r0036,
-	0x0039:r0039,
-	0x003f:r003f,
-	0x1389:r2_1389,
-	0x138a:r2_138a,
-	0x138b:r2_138b,
-	0x13ed:r2_13ed, # like r1005
-	0x13ee:r2_Text,
-	0x13f0:r2_13f0,
-	0x13f8:r2_13f8,
-	0x1452:r2_1452,
-	0x1453:r2_1453,
-	0x1454:r2_1454,
-	0x1455:r2_1455,
-	0x14b5:r2_14b5,
-	0x14b6:r2_14b6,
-	0x14b7:r2_14b7,
-	0x14b8:r2_14b8,
-	0x14c9:r2_14c9,
-	0x14ca:r2_14ca,
-	0x14d3:r2_14d3,
-	0x14d4:r2_14d4,
-	0x14dd:r2_14dd,
-	0x1519:r2_1519,
-	0x151a:r2_151a,
-	0x151c:r2_151c,
-	0x151d:r2_151d,
-	0x157d:r2_157d,
+	0x0005:ListStyle,
+	0x0006:String,
+	0x1389:Root,
+	0x138a:Group,
+	0x138b:Data, # can be a note, a picture, ...
+
+	0x13ed:TransformGroup,
+	0x13ee:Text,
+	0x13f0:JoinGroup,
+	0x13f8:Picture,
+
+	0x1452:ColorRGB,
+	0x1453:ColorGrey,
+	0x1454:ColorCMY,
+	0x1455:ColorPantone,
+
+	0x14b5:FillStyle,
+	0x14b6:LineStyle,
+	0x14b7:GradientLinear,
+	0x14b8:GradientRadial,
+
+	0x14c9:PSFill,
+	0x14ca:PSLine,
+
+	0x14d3:PatternFill,
+	0x14d4:PatternLine,
+	0x14dd:TileStyle,
+
+	0x1519:Rectangle,
+	0x151a:Oval,
+	0x151c:Path,
+	0x151d:Line,
+
+	0x157d:Dash,
 }
 
 def fh_open (buf,page,parent=None,mode=1):
-	piter = add_pgiter(page,"FH12 file","fh","file",buf,parent)
-	off = 0
 	if buf[0:4] == "FHD2":
 		page.version = 2
-		hdrlen = 0x178
+		hdrlen = 0x100
 		rec_types = rec_types2
-		ftype = "fh02"
 	elif buf[0:4] == "acf3":
 		page.version = 1
 		hdrlen = 0x80
 		rec_types = rec_types1
-		ftype = "fh01"
-	add_pgiter(page,"FH%d Header"%page.version,ftype,"header",buf[0:hdrlen],piter)
+	off = 0
+	piter = add_pgiter(page,"FH12 file","fh12","file",buf,parent)
+	add_pgiter(page,"FH%d Header"%page.version,"fh12","header",buf[0:hdrlen],piter)
 	off = hdrlen
+        if page.version == 2:
+                rlen=0x78
+                add_pgiter(page,"PrintInfo","fh12","printInfo",buf[off:off+rlen],piter)
+                off += rlen
 	lim = len(buf)
 	rid = 1
 	while off < lim:
-		id0 = struct.unpack(">H",buf[off:off+2])[0]
-		id1 = struct.unpack(">H",buf[off+2:off+4])[0]
-		if id0 == 0xFFFF and id1 == 0xFFFF:
+                header=ZoneHeader(page.version)
+                header.parse(buf,off)
+                if header.type==-1:
 			print 'Complete!'
 			break
-		id2 = struct.unpack(">H",buf[off+4:off+6])[0]
-		if id2 in rec_types:
-			rlen,rtype = rec_types[id2](buf,off,id0,id1)
-			if rlen > 4:
-				ridtxt = "[%02x]"%rid
-				if id2&0xff30 == 0x30:
-					ridtxt = ""
-				add_pgiter(page,"%s\t%s"%(ridtxt,rtype),ftype,rtype,buf[off:off+rlen],piter)
+		if header.type in rec_types:
+                        res=rec_types[header.type](buf,off,header)
+                        rlen=rtype=0
+                        subList=[]
+                        if len(res)==2:
+                                rlen,rtype=res
+                        elif len(res)==3:
+                                rlen,rtype,subList=res
+                        if rlen > 4:
+                                data=buf[off:off+rlen]
+				reciter = add_pgiter(page,"Z%d\t%s"%(rid,rtype),"fh12",rtype,data,piter)
+                                for i in range(0,len(subList)):
+                                        subName,subType,subOff,subLen=subList[i]
+                                        subData=buf[subOff:subOff+subLen]
+                                        add_pgiter(page,subName,"fh12",subType,subData,reciter)
 			off += rlen
+                        rid += 1
 		else:
-			print "Unknown","%02x%02x"%(id0,id1),"%02x"%id2
-			add_pgiter(page,"[%02x] Unknown %02x"%(rid,id2),ftype,"%02x"%id2,buf[off:off+1000],piter)
+			print "Unknown","%02x%02x"%(rid,header.dataSize),"%02x"%header.type
+			add_pgiter(page,"[%02x] Unknown %02x"%(rid,header.type),"fh12","%02x"%header.type,buf[off:off+1000],piter)
 			off += 1000
-		if rlen > 4 and not id2&0xFF30==0x30:
-			rid += 1
+
+# DATA
+
+# tool
+def HeaderStyleHdl(hd,size,data):
+        if hd.version==1:
+                add_iter(hd, "unkn", "", 6, 2, "txt")
+                dtSz = struct.unpack(">H",data[8:10])[0]
+                add_iter(hd, "data", "", 8, 2+dtSz, "txt")
+                id = struct.unpack(">H",data[10+dtSz:12+dtSz])[0]
+                add_iter(hd, "label", "Z%d"%id if id!=0 else "",10+dtSz,2,"txt")
+                return 10+dtSz+2
+        id = struct.unpack(">H",data[6:8])[0]
+        add_iter(hd, "label", "Z%d"%id if id!=0 else "", 6,2,"txt")
+        return 8
+def HeaderShapeHdl(hd,size,data):
+        off=6
+        if hd.version>1:
+                id = struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "note", "Z%d"%id if id!=0 else "",off,2,"txt")
+                off+=2
+                add_iter(hd, "unkn0", "", off, 2, "txt")
+                off+=2
+                id = struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "layer", id ,off,2,">H")
+                off+=2
+                add_iter(hd, "unkn1", "", off, 2, "txt")
+                off+=2
+                val = struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "x?", val/256., off, 2, ">h")
+                off+=2
+                val = struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "y?", val/256., off, 2, ">h")
+                off+=2
+                return off
+        add_iter(hd, "unkn0", "", off, 2, "txt")
+        off+=2
+        dtSz=struct.unpack(">H",data[off:off+2])[0]
+        if dtSz>0:
+                (n, endOff) = rdata(data, off+3, '%ds'%(dtSz-1))
+                add_iter(hd, "note", n, off, 2+dtSz, "txt")
+        else:
+                add_iter(hd, "note", "", off, 2, "txt")
+        off+=2+dtSz
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "layer", id,off,2,">H")
+        off+=2
+        add_iter(hd, "unkn1", "", off, 4, "txt")
+        off+=4
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "rect", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off+=2
+        dtSz = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "screenMode", "", off, 2+dtSz, "txt")
+        off+=2+dtSz
+        return off
+
+#
+def StringHdl(hd,size,data,what):
+        stringSz = ord(data[6]) if size > 6 else 0
+        if stringSz > 0:
+                (n, endOff) = rdata(data, 7, '%ds'%stringSz)
+                add_iter(hd, "val", n,7,stringSz,"txt")
+        elif stringSz < 0 and size>7:
+                print "Can not read a string"
+                add_iter(hd, "val", "###",7,size-7,"txt")
+def TextStringHdl(hd,size,data,what):
+        (n, endOff) = rdata(data, 0, '%ds'%size)
+        add_iter(hd, "val", n,0,size,"txt")
+fontType_ids={
+        0: "default",
+        1: "heavy",
+        2: "oblique",
+        3: "outline",
+        4: "shadow",
+        5: "fillAndStroke", #v2
+        0x78: "char", #v2
+        0x79: "zoom" #v2
+}
+def TextPLCHdl(hd,size,data,what):
+        off=0
+        id=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "font[id]", "Z%d" %id if id else "", off, 2, "txt")
+        off+=2
+        id=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "color[id]", "Z%d" %id if id else "", off, 2, "txt")
+        off+=2
+        val=struct.unpack(">i",data[off:off+4])[0]
+        add_iter(hd, "fontSize", val/65536.,off,4,">i")
+        off+=4
+        val=struct.unpack(">i",data[off:off+4])[0]
+        if val==-2:
+                add_iter(hd, "leading", "solid",off,4,">i")
+        elif val==-1:
+                add_iter(hd, "leading", "auto",off,4,">i")
+        elif val>=0:
+                add_iter(hd, "leading", val/65536.,off,4,">i")
+        else:
+                add_iter(hd, "leading", "##%x"%val,off,4,">i")
+        off+=4
+        cPos=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "cPos", cPos,off,2,">H")
+        off+=2
+        val=struct.unpack(">H",data[off:off+2])[0]
+        idtxt=""
+        if val&1:
+                idtxt+="bold,"
+        if val&2:
+                idtxt+="italic,"
+        add_iter (hd, "flag1", "0x%02x (%s)"%(val,idtxt),off,2,">H")
+        off+=2
+        val=struct.unpack(">H",data[off:off+2])[0]
+        idtxt = "Unknown"
+        if fontType_ids.has_key(val):
+                idtxt = fontType_ids[val]
+        add_iter (hd, "type", "0x%02x (%s)"%(val,idtxt),off,2,">H")
+        off+=2
+pathType_ids={
+        0: "default",
+        1: "connector",
+        2: "curve"
+}
+def PathPointHdl(hd,size,data,what):
+        off=0
+        val=struct.unpack(">H",data[off:off+2])[0]
+        idtxt = "Unknown"
+        if pathType_ids.has_key(val):
+                idtxt = pathType_ids[val]
+        add_iter (hd, "type", "0x%02x (%s)"%(val,idtxt),off,2,">H")
+        off+=2
+        val=struct.unpack(">H",data[off:off+2])[0]
+        idtxt = ""
+        if val&0x100:
+                idtxt+="no[autoCurv],";
+        add_iter (hd, "flag", "0x%02x (%s)"%(val,idtxt),off,2,">H")
+        off+=2
+        for pt in range(1,6+1):
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter (hd, "coord%d"%pt, val/10.,off,2,">h")
+                off+=2
+
+def TransformHdl(hd,size,data,what,off=0):
+        if size!=26:
+                return
+        val=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "flag", "%02x"%val, off, 2, "txt")
+        off +=2
+        for i in range(1,4+1):
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd, "rot%d"%i, val/65536., off, 4, ">i")
+                off+=4
+        for i in range(1,2+1):
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd, "translate%d"%i, val/65536./10., off, 4, ">i")
+                off+=4
+
+def RootHdl(hd,size,data,what):
+        if hd.version==1:
+                add_iter(hd, "header", "",6,10,"txt")
+                hdr_len=10
+                numTypes=7
+                typeArray = ('main', 'groupStyle', 'fillStyle', 'lineStyle', 'colStyle', 'dashStyle', 'colStyle2')
+        else:
+                hdr_len=6
+                numTypes=9
+                typeArray = ('main', 'colStyle', 'fillStyle', 'lineStyle', 'groupStyle2', 'fillStyle2', 'lineStyle2', 'dashStyle', 'colStyle2')
+        for i in range(1,numTypes+1):
+                val = struct.unpack(">H",data[hdr_len+2*i-2:hdr_len+2*i])[0]
+                if val!=0:
+                        add_iter(hd, typeArray[i-1], "Z%d" %val, 2*i-2, 2, "txt")
+                else:
+                        add_iter(hd, typeArray[i-1], "", 2*i-2, 2, "txt")
+        if hd.version==2:
+                add_iter(hd, "unkn", "", 24, 10, "txt")
+
+def GroupHdl(hd,size,data,what):
+        if hd.version==1:
+                add_iter(hd, "header", "",6,12,"txt")
+                off=20
+        else:
+                add_iter(hd, "header", "",6,4,"txt")
+                sSz=struct.unpack(">H",data[10:12])[0]
+                add_iter (hd, "unkData", "",10,2+sSz,"txt")
+                off=12+sSz
+                x=struct.unpack(">h",data[off:off+2])[0]/10.
+                y=struct.unpack(">h",data[off+2:off+4])[0]/10.
+                add_iter(hd, "dim", "%fx%f" % (x,y), off, 4, "txt")
+                add_iter(hd, "unkn1", "", off+4,2,"txt")
+                off+=8
+        id_num = struct.unpack(">H",data[off-2:off])[0]
+        add_iter(hd, "N=", id_num, off-2,2, ">H")
+
+        for i in range(1,id_num+1):
+                val=struct.unpack(">H",data[off+2*i-2:off+2*i])[0]
+                add_iter(hd, "%d"%i, "Z%d" %val, off+2*i-2, 2, "txt")
+
+def ListStyleHdl(hd,size,data,what):
+        if hd.version==1:
+                add_iter(hd, "unkn0", "", 6, 2, "txt")
+                off = struct.unpack(">H",data[8:10])[0]
+                id_num = struct.unpack(">H",data[10:12])[0]
+                if off>12:
+                        add_iter(hd, "unkn1", "", 12, off-12, "txt")
+        else:
+                id_num = struct.unpack(">H",data[6:8])[0]
+                add_iter(hd, "unkn0", "", 8, 4, "txt")
+                off=12
+        for i in range(1,id_num+1):
+                val = struct.unpack(">H",data[off+2*i-2:off+2*i])[0]
+                add_iter(hd, "%d"%i, "Z%d" %val, off+2*i-2, 2, "txt")
+
+def ColorRGBHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        val=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "r", "#%x"%val, off, 2, "txt")
+        val=struct.unpack(">H",data[off+2:off+4])[0]
+        add_iter(hd, "g", "#%x"%val, off+2, 2, "txt")
+        val=struct.unpack(">H",data[off+4:off+6])[0]
+        add_iter(hd, "b", "#%x"%val, off+4, 2, "txt")
+        val=struct.unpack(">H",data[off+6:off+8])[0]
+        add_iter(hd, "id", val, off+6, 2, ">H")
+        val=struct.unpack(">H",data[off+8:off+10])[0]
+        add_iter(hd, "unk0", val, off+8, 2, ">H")
+        val=struct.unpack(">H",data[off+10:off+12])[0]
+        add_iter(hd, "unk1", val, off+10, 2, ">H")
+
+def ColorGreyHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        if hd.version >1:
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "r", "#%x"%val, off, 2, "txt")
+                val=struct.unpack(">H",data[off+2:off+4])[0]
+                add_iter(hd, "g", "#%x"%val, off+2, 2, "txt")
+                val=struct.unpack(">H",data[off+4:off+6])[0]
+                add_iter(hd, "b", "#%x"%val, off+4, 2, "txt")
+                off+=6
+        val=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "parent[id]", "Z%d" %val if val else "", off+2, 2, "txt")
+        val=struct.unpack(">H",data[off+2:off+4])[0]
+        add_iter(hd, "tint", "%f"%(val/65536.), off+2, 2, "txt")
+
+def ColorCMYKHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        if hd.version >1:
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "r", "#%x"%val, off, 2, "txt")
+                val=struct.unpack(">H",data[off+2:off+4])[0]
+                add_iter(hd, "g", "#%x"%val, off+2, 2, "txt")
+                val=struct.unpack(">H",data[off+4:off+6])[0]
+                add_iter(hd, "b", "#%x"%val, off+4, 2, "txt")
+                off+=6
+        val=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "c", "#%x"%val, off, 2, "txt")
+        val=struct.unpack(">H",data[off+2:off+4])[0]
+        add_iter(hd, "m", "#%x"%val, off+2, 2, "txt")
+        val=struct.unpack(">H",data[off+4:off+6])[0]
+        add_iter(hd, "y", "#%x"%val, off+4, 2, "txt")
+        val=struct.unpack(">H",data[off+6:off+8])[0]
+        add_iter(hd, "k", "#%x"%val, off+6, 2, "txt")
+
+def ColorPantoneHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        val=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "r", "#%x"%val, off, 2, "txt")
+        val=struct.unpack(">H",data[off+2:off+4])[0]
+        add_iter(hd, "g", "#%x"%val, off+2, 2, "txt")
+        val=struct.unpack(">H",data[off+4:off+6])[0]
+        add_iter(hd, "b", "#%x"%val, off+4, 2, "txt")
+
+        add_iter(hd, "unkn", "", off+6, 16, "txt")
+
+join_ids={
+        0: "default",
+        1: "bevel",
+        2: "round"
+}
+cap_ids={
+        0: "default",
+        1: "round",
+        2: "square"
+}
+def LineStyleHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        if hd.version>1:
+                add_iter(hd, "unkn", "", off, 4, "txt")
+                off+=4
+        id=struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "color[id]", "Z%d" %id if id else "", off, 2, "txt")
+        off+=2
+        if what=="LineStyle":
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "dash[id]", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+        else:
+                add_iter(hd, "pattern", "", off, 8, "txt")
+                off+=8
+        val=struct.unpack(">i",data[off:off+4])[0]
+        add_iter(hd, "mitter", val/65536., off, 4, ">i")
+        off+=4
+        if hd.version==1:
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "width", val/10., off, 2, ">h")
+                off+=2
+        else:
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd, "width", val/65536./10., off, 4, ">i")
+                off+=4
+        if what=="LineStyle":
+                val=struct.unpack(">b",data[off:off+1])[0]
+                idtxt = "Unknown"
+                if join_ids.has_key(val):
+                        idtxt = join_ids[val]
+                add_iter (hd, "join", "0x%02x (%s)"%(val,idtxt),off,1,">b")
+                off+=1
+                val=struct.unpack(">b",data[off:off+1])[0]
+                idtxt = "Unknown"
+                if cap_ids.has_key(val):
+                        idtxt = cap_ids[val]
+                add_iter (hd, "cap", "0x%02x (%s)"%(val,idtxt),off,1,">b")
+                off+=1
+
+def DashHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        if hd.version>1:
+                add_iter(hd, "unkn", "", off, 4, "txt")
+                off+=4
+        id_num = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "N", id_num, off+2, 2, ">H")
+        off+=2
+        for i in range(1,id_num+1):
+                val = struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "%d"%i, val/10., off, 2, ">h")
+                off += 2
+
+gradType_ids={
+        1: "linear",
+        2: "logarithm"
+}
+def FillStyleHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        if hd.version>1:
+                add_iter(hd, "unkn", "", off, 4, "txt")
+                off+=4
+        if what=="TileStyle":
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "group[id]", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+                add_iter(hd, "unkn1", "", off, 8, "txt")
+                off+=8
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd, "scaleX", val/65536., off, 4, ">i")
+                off+=4
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd, "scaleY", val/65536., off, 4, ">i")
+                off+=4
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "decalX", val/10., off, 2, ">h")
+                off+=2
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "decalY", val/10., off, 2, ">h")
+                off+=2
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "angle", val/10., off, 2, ">h")
+                off+=2
+                for i in range(1,4+1):
+                        val=struct.unpack(">i",data[off:off+4])[0]
+                        add_iter(hd, "rot%d"%i, val/65536., off, 4, ">i")
+                        off+=4
+                for i in range(1,2+1):
+                        val=struct.unpack(">i",data[off:off+4])[0]
+                        add_iter(hd, "trans%d"%i, val/65536./10., off, 4, ">i")
+                        off+=4
+        else:
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "color[id]", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+        if what=="GradientLinear" or what=="GradientRadial":
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "color2[id]", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+        if what=="GradientLinear":
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "angle", val/10., off, 2, ">h")
+                off+=2
+                val=struct.unpack(">b",data[off:off+1])[0]
+                idtxt = "Unknown"
+                if gradType_ids.has_key(val):
+                        idtxt = gradType_ids[val]
+                add_iter (hd, "gradType", "0x%02x (%s)"%(val,idtxt),off,1,">b")
+                off+=1
+        elif what=="GradientRadial" and hd.version>1:
+                add_iter(hd, "unkn1", "", off, 6, "txt")
+                off+=6
+        elif what=="PatternFill":
+                add_iter(hd, "pattern", "", off, 8, "txt")
+                off+=8
+        if hd.version==1:
+                if what!="GradientRadial":
+                        val=struct.unpack(">b",data[off:off+1])[0]
+                        add_iter(hd, "overprint", "true" if val==1 else "false", off, 1, "txt")
+                        off+=1
+        elif what=="FillStyle":
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "overprint", "true" if val==1 else "false", off, 2, "txt")
+                off+=2
+
+def PSHdl(hd,size,data,what):
+        off = HeaderStyleHdl(hd,size,data)
+        if hd.version==1:
+                stringSz=ord(data[off]);
+                off+=1
+        else:
+                stringSz=size-12
+                add_iter(hd, "unkn", "", off, 4, "txt")
+                off+=4
+        if stringSz > 0:
+                (n, endOff) = rdata(data, off, '%ds'%stringSz)
+                add_iter(hd, "val", n,off,stringSz,"txt")
+        elif stringSz < 0:
+                print "Can not read a PS string"
+                add_iter(hd, "val", "###",off,size-off,"txt")
+
+def JoinGroupHdl(hd,size,data,what):
+        off = HeaderShapeHdl(hd,size,data)
+        val=struct.unpack(">i",data[off:off+4])[0]
+        add_iter(hd, "distance", val/65536., off, 4, ">i")
+        off += 4
+        for i in range(1,2+1):
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "child%d"%i, "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+def TransformGroupHdl(hd,size,data,what):
+        off = HeaderShapeHdl(hd,size,data)
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "child", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off +=2
+        add_iter(hd, "unkn", "", off, 2, "txt")
+        off +=2
+        TransformHdl(hd,26,data,what,off)
+        off += 26
+def BackgroundPictureHdl(hd,size,data,what):
+        off = HeaderShapeHdl(hd,size,data)
+        add_iter(hd, "unkn", "", off, 28, "txt")
+        off +=28
+        val = struct.unpack(">I",data[off:off+4])[0]
+        add_iter(hd, "pictSize", val, off, 4, ">I")
+        if val>0:
+                add_iter(hd, "picture", val, off+4, val, ">I")
+        off += 4+val
+def PictureHdl(hd,size,data,what):
+        off = HeaderShapeHdl(hd,size,data)
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "data", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off +=2
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "name", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off +=2
+        add_iter(hd, "unkn1", "", off, 2, "txt")
+        off +=2
+        for i in range(1,2+1):
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "size%d"%i, val, off, 2, ">h")
+                off+=2
+        add_iter(hd, "unkn2", "", off, 4, "txt")
+        off +=4
+        TransformHdl(hd,26,data,what,off)
+        off +=26
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "color", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off +=2
+        for i in range(1,4+1):
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "dim%d"%i, val, off, 2, ">h")
+                off+=2
+        for i in range(1,4+1):
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd, "dimA%d"%i, val, off, 2, ">h")
+                off+=2
+
+def ShapeHdl(hd,size,data,what):
+        off = HeaderShapeHdl(hd,size,data)
+        canHaveMatrix=True
+        hasDimension=True
+        if what=="Path":
+                canHaveMatrix=hasDimension=False
+        elif what=="Line":
+                canHaveMatrix=False
+        if hd.version>1:
+                id = struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "group", "Z%d"%id if id!=0 else "",off,2,"txt")
+                off +=2
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "fillStyle", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off +=2
+        id = struct.unpack(">H",data[off:off+2])[0]
+        add_iter(hd, "lineStyle", "Z%d"%id if id!=0 else "",off,2,"txt")
+        off +=2
+        if hd.version>1:
+                add_iter(hd, "unk", "", off, 4, "txt")
+                off+=4
+        if hasDimension:
+                for i in range(1,4+1):
+                        val=struct.unpack(">h",data[off:off+2])[0]
+                        add_iter(hd, "dim%d"%i, val/10., off, 2, ">h")
+                        off+=2
+        if canHaveMatrix:
+                off += 4+struct.unpack(">I",data[off:off+4])[0]
+        if what=="Rectangle":
+                for i in range(1,2+1):
+                        val=struct.unpack(">h",data[off:off+2])[0]
+                        add_iter(hd, "corner%d"%i, val/10., off, 2, ">h")
+                        off+=2
+        elif what=="Path":
+                val=struct.unpack(">H",data[off:off+2])[0]
+                idtxt=""
+                if val&1:
+                        idtxt+="closed,";
+                if val&2:
+                        idtxt+="even/odd,";
+                add_iter(hd, "type", "0x%02x (%s)"%(val,idtxt), off, 2, ">H")
+                off+=2
+                N=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "N", N, off, 2, ">H")
+                off+=2+16*N
+
+justifyType_ids={
+        0: "left",
+        1: "center",
+        2: "right",
+        3: "all"
+}
+def TextHdl(hd,size,data,what):
+        off = HeaderShapeHdl(hd,size,data)
+        if hd.version==1:
+                N=struct.unpack(">I",data[off:off+4])[0]
+                add_iter(hd,"N",N,off,4,">I")
+                off+=4+3*(N//2) # N + unknown flag
+                add_iter(hd,"unkn","",off,4,"txt")
+                off+=4
+                txtSize=struct.unpack(">I",data[off:off+4])[0]
+                add_iter(hd,"N[txt]",txtSize,off,4,">I")
+                off+=4+txtSize
+        else:
+                add_iter(hd,"unkn","",off,14,"txt")
+                off+=14
+        for i in range(0,4):
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter(hd,"coord%d"%i,val/10., off, 2, ">h")
+                off+=2
+        if hd.version>1:
+                val=struct.unpack(">h",data[off:off+2])[0]
+                add_iter (hd, "f0", val,off,2,">h")
+                off+=2
+        TransformHdl(hd,26,data,what,off)
+        off +=26
+        if hd.version==1:
+                for i in range(0,2):
+                        val=struct.unpack(">i",data[off:off+4])[0]
+                        add_iter(hd,"spacing%d"%i,val/10./65536., off, 4, ">i")
+                        off+=4
+                for i in range(0,2):
+                        val=struct.unpack(">i",data[off:off+4])[0]
+                        add_iter(hd,"scaling%d"%i,val/65536., off, 4, ">i")
+                        off+=4
+                val=struct.unpack(">b",data[off:off+1])[0]
+                add_iter (hd, "f0", val,off,1,">b")
+                off+=1
+        val=struct.unpack(">b",data[off:off+1])[0]
+        idtxt = "Unknown"
+        if justifyType_ids.has_key(val):
+                idtxt = justifyType_ids[val]
+        add_iter (hd, "justify", "0x%02x (%s)"%(val,idtxt),off,1,">b")
+        off+=1
+        if hd.version==1:
+                NPLC=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd,"N[plc]",txtSize,off,2,">H")
+                off+=2+18*NPLC
+        else:
+                add_iter(hd,"unkn1","",off,11,"txt")
+                off+=11
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd,"dSz?",val,off,2,">H")
+                off+=2
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd,"textSz",val,off,2,">H")
+                off+=2
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd,"textPos",val,off,2,">H")
+                off+=2
+                add_iter(hd,"unkn2","",off,6,"txt")
+                off+=6
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "font", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd, "fontSize", val/65536.,off,4,">i")
+                off+=4
+                val=struct.unpack(">I",data[off:off+4])[0]
+                if val==0xFFFE0000:
+                        add_iter(hd, "leading", "solid",off,4,">I")
+                elif val==0xFFFF0000:
+                        add_iter(hd, "leading", "auto",off,4,">I")
+                else:
+                        add_iter(hd, "leading", val/65536.,off,4,">I")
+                off+=4
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "f1", val,off,2,">H")
+                off+=2
+                val=struct.unpack(">H",data[off:off+2])[0]
+                idtxt=""
+                if val&1:
+                        idtxt+="bold,"
+                if val&2:
+                        idtxt+="italic,"
+                add_iter (hd, "flag1", "0x%02x (%s)"%(val,idtxt),off,2,">H")
+                off+=2
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "color", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+                val=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "f2", val,off,2,">H")
+                off+=2
+                val=struct.unpack(">H",data[off:off+2])[0]
+                idtxt = "Unknown"
+                if fontType_ids.has_key(val+1):
+                        idtxt = fontType_ids[val+1]
+                add_iter (hd, "type", "0x%02x (%s)"%(val,idtxt),off,2,">H")
+                off+=2
+                id=struct.unpack(">H",data[off:off+2])[0]
+                add_iter(hd, "color2", "Z%d" %id if id else "", off, 2, "txt")
+                off+=2
+                add_iter(hd,"unkn3","",off,8,"txt")
+                off+=8
+                for i in range(0,2):
+                        val=struct.unpack(">i",data[off:off+4])[0]
+                        add_iter(hd,"spacing%d"%i,val/10./65536., off, 4, ">i")
+                        off+=4
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd,"scaling",val/65536., off, 4, ">i")
+                off+=4
+                val=struct.unpack(">i",data[off:off+4])[0]
+                add_iter(hd,"baseline",val/65536., off, 4, ">i")
+                off+=4
+
+
+fh12_ids = {
+        "BackgroundPicture":BackgroundPictureHdl,
+        "ColorCMY":ColorCMYKHdl,
+        "ColorGrey":ColorGreyHdl,
+        "ColorPantone":ColorPantoneHdl,
+        "ColorRGB":ColorRGBHdl,
+        "Dash":DashHdl,
+        "FillStyle":FillStyleHdl,
+        "GradientLinear":FillStyleHdl,
+        "GradientRadial":FillStyleHdl,
+        "Group":GroupHdl,
+        "JoinGroup":JoinGroupHdl,
+        "Line":ShapeHdl,
+        "LineStyle":LineStyleHdl,
+        "ListStyle":ListStyleHdl,
+        "Oval":ShapeHdl,
+        "Path":ShapeHdl,
+        "PathPoint":PathPointHdl,
+        "PatternLine":LineStyleHdl,
+        "PatternFill":FillStyleHdl,
+        "Picture":PictureHdl,
+        "PSFill":PSHdl,
+        "PSLine":PSHdl,
+        "PSStyle":PSHdl,
+        "Rectangle":ShapeHdl,
+        "Root":RootHdl,
+        "String":StringHdl,
+        "Text":TextHdl,
+        "TextPLC":TextPLCHdl,
+        "TextString":TextStringHdl,
+        "TileStyle":FillStyleHdl,
+        "Transform":TransformHdl,
+        "TransformGroup":TransformGroupHdl
+}
