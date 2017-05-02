@@ -381,7 +381,7 @@ def StringHdl(hd,size,data,what):
                 add_iter(hd, "val", "###",7,size-7,"txt")
 def TextStringHdl(hd,size,data,what):
         (n, endOff) = rdata(data, 0, '%ds'%size)
-        add_iter(hd, "val", n,0,size,"txt")
+        add_iter(hd, "val", unicode(n,"mac-roman"),0,size,"txt")
 fontType_ids={
         0: "default",
         1: "heavy",
