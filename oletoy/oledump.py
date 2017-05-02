@@ -68,11 +68,13 @@ def dump_rec(doc,model,iter,level,file):
         dump_rec(doc,model,model.iter_nth_child(iter,i),level+1,file)
     
 def dump(doc,model,file):
-   iter = model.get_iter_first()
-   if iter == None:
-       print "can not find any iter"
-       return
-   dump_rec(doc,model,iter,1,file)
+    iter = model.get_iter_first()
+    if iter == None:
+        print "can not find any iter"
+        return
+    while iter != None:
+        dump_rec(doc,model,iter,1,file)
+        iter = model.iter_next(iter)
 
 def main():
     if len(sys.argv)!=3:
