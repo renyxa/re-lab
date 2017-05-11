@@ -43,13 +43,20 @@ def dump_rec_content(doc,model,iter,level,file):
     tmpIter = tmpModel.get_iter_first()
     if tmpIter == None:
         return
-    text=' '*level
-    text+="%s:"%ntype[1]
+    prefix=' '*level
+    prefix+="%s:"%ntype[1]
+    i=0
+    text=""
     while tmpIter != None:
         text+="%s=\"%s\","%(tmpModel.get_value(tmpIter,0),tmpModel.get_value(tmpIter,1))
         tmpIter = tmpModel.iter_next(tmpIter)
-    file.write(text+"\n")
-    
+        if len(text)>80:
+            file.write("%s%s%s\n"%(prefix,"" if i==0 else "[_%d]"%i,text))
+            i+=1
+            text=""
+    if len(text):
+        file.write("%s%s%s\n"%(prefix,"" if i==0 else "[_%d]"%i,text))
+
 def dump_rec(doc,model,iter,level,file):
     prefix=' '*level
     suffix=""
@@ -58,7 +65,9 @@ def dump_rec(doc,model,iter,level,file):
         suffix+="...[+%dbytes]"%(model.get_value(iter,2)-2000)
     else:
         suffix=binascii.hexlify(model.get_value(iter,3))
-    file.write("%s%s:%s\n"%(prefix,model.get_value(iter,1)[1],suffix))
+    type=model.get_value(iter,1)[1]
+    for i in range((len(suffix)+199)//200):
+        file.write("%s%s:%s%s\n"%(prefix,type,"" if i==0 else "[_%d]"%i,suffix[i*200:(i+1)*200]))
     if model.get_value(iter,2):
         try:
             dump_rec_content(doc,model,iter,level,file)
@@ -66,7 +75,7 @@ def dump_rec(doc,model,iter,level,file):
             pass
     for i in range(model.iter_n_children(iter)):
         dump_rec(doc,model,model.iter_nth_child(iter,i),level+1,file)
-    
+
 def dump(doc,model,file):
     iter = model.get_iter_first()
     if iter == None:
@@ -93,9 +102,9 @@ def main():
             if doc.type=="FH":
                 # fh.py use idle function, so we must called them by hand
                 try:
-                    doc.appdoc.parse_agd_iter().next()
+                    doc.appdoc.parse_agd_iter(10000).next()
                 except:
-                    pass
+                    print "incomplete parsing"
             model=doc.view.get_model()
             try:
                 output=open(sys.argv[2],"w")
@@ -109,6 +118,6 @@ def main():
     else:
         print "can not retrieve the file content"
     fs.close()
-    
+
 if __name__ == "__main__":
     main()
