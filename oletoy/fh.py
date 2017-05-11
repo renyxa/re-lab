@@ -14,6 +14,7 @@
 # USA
 #
 
+import binascii
 import sys,struct,tree,zlib,gtk,gobject
 from utils import *
 
@@ -31,87 +32,111 @@ palette = {
 }
 
 agd_rec = {
-	0x0e11:("FontName","recid"),
-	0x0e1b:("Style",">I"),
-	0x0e24:("Size",">I")
+	# 900...
+	0x0e11:"FontName",
+	0x0e1b:"Style", # &1: bold, &2: italic
+	0x0e24:"Size"
 }
 
 vmp_rec = {
-	0x0321:("Name","recid"),
-	0x065b:("uid","?"),
-	0x15e3:("Txt Align","enum(txtalign)"), # 0 left, 1 right, 2 center, 3 justify,
-	0x15ea:("?","?"),
-	0x15f2:("?","?"),
-	0x15f9:("?","?"),
-	0x1604:("?","?"),
-	0x160b:("?","?"),
-	0x1614:("?","?"),
-	0x161c:("Spc % Letter Max","?"),
-	0x1624:("Spc % Word Max","?"),
-	0x162b:("?","?"),
-	0x1634:("Spc % Letter Min","?"),
-	0x163c:("Spc % Word Min","?"),
-	0x1644:("?","?"),
-	0x164c:("Spc % Letter Opt","?"),
-	0x1654:("Spc % Word Opt","?"),
-	0x165c:("?","?"),
-	0x1664:("?","?"),
-	0x166b:("?","?"),
-	0x1674:("?","?"),
-	0x167c:("?","?"),
-	0x1684:("ParaSpc Below","?"),
-	0x168c:("ParaSpc Above","?"),
-	0x1691:("TabTable ID","?"),
-	0x169c:("BaseLn Shift" ,"?"),
-	0x16a2:("?","?"),
-	0x16aa:("?","?"),
-	0x16b1:("TEffect ID","?"),  # teffect ID
-	0x16b9:("Txt Color ID","?"),
-	0x16c1:("Font ID","?"),
-	0x16c9:("?","?"),
-	0x16d4:("Hor Scale %","?"),
-	0x16dc:("Leading","?"),
-	0x16e3:("Leading Type","enum(leadtypes)"), # 0 +, 1 =, 2 %
-	0x16ec:("Rng Kern %","?"),
-	0x16f1:("?","?"),
-	0x16fb:("?","?"),
-	0x1729:("?","?"),
-	0x1734:("Font Size","?"),
-	0x1739:("Font Name","?"), # id of ustring w font name
-	0x1743:("?","?"),
-	0x1749:("Next style?","?"),
-	0x1c7c:("Page Start X","?"),
-	0x1c84:("Page Start Y","?"),
-	0x1c24:("Page Start X","?"), # page start X?  same for 1c7c
-	0x1c2c:("Page Start Y","?"), # page start Y?  same for 1c84
-	0x1c34:("Page W","?"),
-	0x1c3c:("Page H","?"),
-	0x1c43:("?","?"),
-	0x1c4c:("?","?"),
-	0x1c51:("?","?"),
-	0x1c71:("?","?"), # guides ID?
-	0x1c7c:("?","?"),
-	0x1c84:("?","?"),
-	0x1c89:("?","?"), # Group ID?
+	# 200
+	0x0321:"Name",
+	# 406?
+	0x065b:"uid",
+	# 1400...
+	0x15e3:"Para Text[Align]", # enum 0 left, 1 right, 2 center, 3 justify,
+	0x15ea:"Hyphen[automatic]", # 1=true
+	0x15f2:"Hyphen[skipCapit]", # 1=true
+	0x15f9:"VMpObj ID", # -> hanging punctuation...
+	0x1604:"Para Text[indent]",
+	0x160b:"Para Line Together",
+	0x1614:"Para Lft[indent]",
+	0x161c:"Spc % Letter Max",
+	0x1624:"Spc % Word Max",
+	0x162b:"Hyphen[consecutive]",
+	0x1634:"Spc % Letter Min",
+	0x163c:"Spc % Word Min",
+	0x1644:"Flush % zone", # define a right padding ?
+	0x164c:"Spc % Letter Opt",
+	0x1654:"Spc % Word Opt",
+	0x165c:"Para % Ragged",
+	0x1664:"Para Rgt[indent]",
+	0x166b:"Para rules", # an enum? d=centered?
+	0x1674:"?",
+	0x167c:"?",
+	0x1684:"ParaSpc Below",
+	0x168c:"ParaSpc Above",
+	0x1691:"TabTable ID",
+	0x169c:"BaseLn Shift" ,
+	0x16a2:"Keep Same Line", # 0 or 1
+	0x16aa:"Hyphen[inhibit]", # 0 or 1
+	0x16b1:"TEffect ID",  # teffect ID
+	0x16b9:"Txt Color ID",
+	0x16c1:"Font ID",
+	0x16c9:"?",
+	0x16d4:"Hor Scale %",
+	0x16dc:"Leading",
+	0x16e3:"Leading Type", # enum: 0 +, 1 =, 2 %
+	0x16ec:"Rng Kern %", # letter spacing
+	0x16f1:"?",
+	0x16fb:"?",
+	0x1729:"?",
+	0x1734:"Font Size",
+	0x1739:"Font Name", # id of ustring w font name
+	0x1743:"?",
+	0x1749:"Next style?",
+	0x1b81:"TextBlock ID", # punctuation block
+	0x1c24:"Page Start X", # page start X?  same for 1c7c
+	0x1c2c:"Page Start Y", # page start Y?  same for 1c84
+	0x1c34:"Page W",
+	0x1c3c:"Page H",
+	0x1c43:"?",
+	0x1c4c:"?",
+	0x1c51:"?",
+	0x1c71:"Guides ID",
+	0x1c7c:"Page Start X2",
+	0x1c84:"Page Start Y2",
+	0x1c89:"?", # Group ID?
 	}
 
-teff_rec = {
-	0x1302:("Display Border",""),
-	0x130c:("Inset B",""),
-	0x131c:("Dimension H",""),
-	0x134c:("Dimension L",""),
-	0x1354:("Inset L",""),
-	0x13ac:("Inset R",""),
-	0x13dc:("Dimension T",""),
-	0x13e4:("Inset T",""),
-	0x140c:("Dimension W",""),
-	0x1369:("LineTable","recid"),
-	0x1a91:("Effect Name","?"),
-	0x1ab9:("Underline Clr ID",""),  # underline color ID
-	0x1ac1:("Underline Dash ID",""),  # underline dash ID
-	0x1acc:("Underline Position","?"), #"BG Width", #2.2
-	0x1ad4:("Stroke Width","?"), #2.2
-#	0x1adb:"Count",
+textcolum_rec = { # 1200...
+	0x12c4:"?",
+	0x12cc:"?",
+	0x12d4:"?",
+	0x12dc:"?",
+	0x1302:"Display Border",
+	0x130c:"Inset B",
+	0x131c:"Dimension H", # if fact, row H
+	0x1324:"Dim2 H",
+	0x132a:"RowBreakFirst",
+	0x1344:"Col Sep",
+	0x134c:"Dimension L",
+	0x1399:"Path Text Info",
+	0x1354:"Inset L",
+	0x1369:"LineTable",
+	0x1371:"Text Id[next]",
+	0x137b:"Num Col",
+	0x1383:"Num Row",
+	0x13a1:"Text Id[prev]",
+	0x13ac:"Inset R",
+	0x13bc:"Row Sep",
+	0x13d1:"Path",
+	0x13dc:"Dimension T",
+	0x13e4:"Inset T",
+	0x13fb:"Text Pos[end]",
+	0x1403:"Text Pos[begin]",
+	0x140c:"Dimension W", # in fact, col width
+	0x141c:"?",
+	}
+teff_rec = { # 1700:
+	0x1a91:"Effect Name",
+	# the following parameter depend on the effect
+	0x1ab9:"Effect ID0",  # underline color ID
+	0x1ac1:"Effect ID1",  # underline dash ID
+	0x1acc:"Effect Coord0", #"BG Width", #2.2
+	0x1ad4:"Effect Coord1", #2.2
+	0x1adb:"Effect Count",
+	0x1adc:"Effect Zoom % to"
 	}
 
 def readid (data,off=0):
@@ -124,7 +149,15 @@ def readid (data,off=0):
 		l = 2
 	return l,rid
 
+def readUTFString(data):
+	try:
+		return unicode(data,"utf-16be")
+	except:
+		return "###Bad string"
+
 def getName (id, page):
+	if id==0:
+		return "_"
 	if id in page.appdoc.recs:
 		return "%s"%page.appdoc.recs[id][1]
 	return "%02x[Name]"%id
@@ -133,54 +166,115 @@ def getZone (id, page):
 	if id==0:
 		return "_"
 	type,str=get_typestr(page,id)
+	# TODO: check if this is a list, if yes, find it type
 	return "%02x[%s]"%(id,type if str=="" else str)
+
+def getNameOrZone(id, page):
+	if id==0:
+		return "_"
+	if id in page.appdoc.recs:
+		return "%s"%page.appdoc.recs[id][1]
+	return getZone(id, page)
+
+def readMap(hd,data,page,map,num,offset):
+	for i in range(num):
+		key = struct.unpack('>h', data[offset:offset+2])[0]
+		rec = struct.unpack('>h', data[offset+2:offset+4])[0]
+		dataSize = 4
+		if key == 2:
+			L,rid,fmt = read_recid(data,offset+4)
+			at = getNameOrZone(rid,page)
+			dataSize = L
+		elif (rec&3)==0:
+			at = struct.unpack('>i', data[offset+4:offset+8])[0]/65536.
+		elif (rec&3)!=1: # 2: int, 3: enum
+			at = struct.unpack('>i', data[offset+4:offset+8])[0]
+		else:
+			at = d2hex(data[offset+4:offset+8])
+		if rec in map:
+			rname = map[rec]
+		else:
+			rname = "?"
+		if rname == "?":
+			rname = '%04x'%rec
+		add_iter (hd,rname,at,offset,4+dataSize,"txt")
+		offset+=4+dataSize
 
 def hdVMpObj(hd,data,page):
 	offset = 0
-	[num] = struct.unpack('>h', data[offset+4:offset+6])
-	shift = 8
-	for i in range(num):
-		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
-		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
-		if key == 2:
-			at = d2hex(data[shift+4:shift+6])
-		else:
-			at = d2hex(data[shift+4:shift+8])
-		if rec in vmp_rec:
-			rname = vmp_rec[rec][0]
-			if vmp_rec[rec][1] == "recid":
-				a = readid(data,shift+4)[1]
-				at = getName(a,page)
-		else:
-			rname = '\t\t%04x'%rec
-		if rname == "?":
-			rname = '\t\t%04x'%rec
-		if key == 2:
-			add_iter (hd,rname,at,shift,6,"txt")
-			shift+=4
-			L,rid,fmt = read_recid(data,offset+shift)
-			shift += L
-		else:
-			add_iter (hd,rname,at,shift,8,"txt")
-			shift+=8
+	num = struct.unpack('>H', data[offset+4:offset+6])[0]
+	add_iter(hd,"N",num,offset,4,">H");
+	readMap(hd,data,page,vmp_rec,num,8)
 
 def hdTString(hd,data,page):
 	offset = 0
-	num = struct.unpack('>h', data[offset+2:offset+4])[0]
-	offset = 0x14
+	nMax = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter(hd,"N[max]",nMax,offset,2,'>H')
+	offset+=2
+	num = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter(hd,"N",num,offset,2,'>H')
+	offset+=2
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter(hd,"N2",val,offset,2,'>H')
+	offset+=2
+	add_iter (hd, 'Unknown', binascii.hexlify(data[offset:offset+14]), offset, 14, "txt") # 000000000000ffffffffffffffff
+	offset+=14
 	for i in range(num):
 		L,rid1,fmt = read_recid(data,offset)
 		elemtype,typestr = get_typestr(page,rid1)
 		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset,L,fmt)
 		offset += L
 
+def hdUString(hd,data,page):
+	off=0
+	size = struct.unpack('>H', data[off:off+2])[0]
+	add_iter(hd,"Size",size,off,2,'>H');
+	off +=2
+	length = struct.unpack('>H', data[off:off+2])[0]
+	add_iter(hd,"length",length,off,2,'>H');
+	off+=2
+	add_iter(hd,"val",unicode(data[off:off+length*2],"utf-16be"),off,2*length,'txt');
+	off+=2*length
+
+def hdTextBlok(hd,data,page):
+	off=0
+	size = struct.unpack('>H', data[off:off+2])[0]
+	add_iter(hd,"Size",size,off,2,'>H');
+	off +=2
+	length = struct.unpack('>H', data[off:off+2])[0]
+	add_iter(hd,"length",length,off,2,'>H');
+	off+=2
+	add_iter(hd,"val",unicode(data[off:off+length*2],"utf-16be"),off,2*length,'txt');
+	off+=2*length
+
+def hdPSFill(hd,data,page):
+	offset = 0
+	L,rid,fmt = read_recid(data,offset)
+	add_iter(hd, "Color", getZone(rid,page), offset, L, fmt)
+	offset+=L
+	L,rid,fmt = read_recid(data,offset)
+	add_iter(hd, "Command", getName(rid,page), offset, L, fmt)
+	offset+=L
+
+def hdPSLine(hd,data,page):
+	offset = 0
+	L,rid,fmt = read_recid(data,offset)
+	add_iter(hd, "Color", getZone(rid,page), offset, L, fmt)
+	offset+=L
+	L,rid,fmt = read_recid(data,offset)
+	add_iter(hd, "Command", getName(rid,page), offset, L, fmt)
+	offset+=L
+	w = struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter (hd,'Width',w/65536.,offset,4,">i")
+	offset += 4
+
 def hdRadialFill(hd,data,page):
 	offset = 0
 	L,rid,fmt = read_recid(data,offset)
-	add_iter(hd, "Color0", "%02x"%rid, offset, L, fmt)
+	add_iter(hd, "Color0", getZone(rid,page), offset, L, fmt)
 	offset+=L
 	L,rid,fmt = read_recid(data,offset)
-	add_iter(hd, "Color1", "%02x"%rid, offset, L, fmt)
+	add_iter(hd, "Color1", getZone(rid,page), offset, L, fmt)
 	offset+=L
 	val = struct.unpack('>i', data[offset:offset+4])[0]
 	add_iter (hd,'cX',val/65536.,offset,4,">i")
@@ -193,13 +287,41 @@ def hdRadialFill(hd,data,page):
 		add_iter (hd,"f%d"%i,val,offset,2,">h")
 		offset+=2
 
+def hdTabTable (hd,data,page):
+	offset=0
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,"N[max]",val,offset,2,">H")
+	offset+=2
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	add_iter (hd,"N",val,offset,2,">H")
+	offset+=2
+
+tabJustifyType_ids={
+	0: "left",
+	1: "right",
+	2: "center",
+	3: "decimal",
+	4: "left2"
+}
+def hdTabTableData (hd,data,page):
+	offset=0
+	val = struct.unpack('>H', data[offset:offset+2])[0]
+	idtxt = 'Unknown'
+	if tabJustifyType_ids.has_key(val):
+		idtxt = tabJustifyType_ids[val]
+	add_iter (hd, "justify", "0x%02x (%s)"%(val,idtxt),offset,2,">H")
+	offset+=2
+	val = struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter (hd,'pos',val/65536.,offset,4,">i")
+	offset+=4
+
 def hdTaperedFill (hd,data,page):
 	offset=0
 	L,rid,fmt = read_recid(data,offset)
-	add_iter(hd, "Color0", "%02x"%rid, offset, L, fmt)
+	add_iter(hd, "Color0", getZone(rid,page), offset, L, fmt)
 	offset+=L
 	L,rid,fmt = read_recid(data,offset)
-	add_iter(hd, "Color1", "%02x"%rid, offset, L, fmt)
+	add_iter(hd, "Color1", getZone(rid,page), offset, L, fmt)
 	offset+=L
 	val=struct.unpack('>i', data[offset:offset+4])[0]
 	add_iter(hd, "angle", val/65536., offset, 4, ">i")
@@ -230,24 +352,7 @@ def hdTaperedFillX (hd,data,page):
 def hdTEffect(hd,data,page):
 	offset = 0
 	[num] = struct.unpack('>h', data[offset+4:offset+6])
-	shift = 8
-	for i in range(num):
-		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
-		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
-		if teff_rec.has_key(rec):
-			rname = teff_rec[rec][0]
-		else:
-			rname = '\t\t%04x'%rec
-		if rname == "?":
-			rname = '\t\t%04x'%rec
-		if key == 2:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
-			shift+=4
-			L,rid,fmt = read_recid(data,offset+shift)
-			shift += L
-		else:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
-			shift+=8
+	readMap(hd,data,page,teff_rec,num,8)
 
 def get_typestr(page, id):
 	elemtype = page.dict[page.reclist[id-1]]
@@ -267,39 +372,24 @@ def get_typestr(page, id):
 
 def hdTFOnPath(hd,data,page):
 	offset = 0
-	[num] = struct.unpack('>h', data[offset+4:offset+6])
-	L,rid1,fmt = read_recid(data,offset+8)
-	elemtype,typestr = get_typestr(page,rid1)
-	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,fmt)
-	offset += L
-	L,rid1,fmt = read_recid(data,offset+8)
-	elemtype,typestr = get_typestr(page,rid1)
-	iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,fmt)
-	offset += L+8
-	for i in range(3):
-		L,rid1,fmt = read_recid(data,offset+8)
-		elemtype,typestr = get_typestr(page,rid1)
-		iter = add_iter (hd,'Rfr',"%02x (%s)%s"%(rid1,elemtype,typestr),offset+8,L,fmt)
+	offset +=4
+	num = struct.unpack('>h', data[offset:offset+2])[0]
+	add_iter (hd,"num",num,offset,2,">h")
+	offset+=2
+	offset+=2
+	for i in range(2): # 0:_, 1:parent?
+		L,rid1,fmt = read_recid(data,offset)
+		add_iter (hd,"Rfr%d"%i,getZone(rid1,page),offset,L,fmt)
 		offset += L
-	offset -= 18
-	shift = 26
-	for i in range(num):
-		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
-		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
-		if teff_rec.has_key(rec):
-			rname = teff_rec[rec][0]
-		else:
-			rname = '\t\t%04x'%rec
-		if rname == "?":
-			rname = '\t\t%04x'%rec
-		if key == 2:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+6]),shift,6,"txt")
-			shift+=4
-			L,rid,fmt = read_recid(data,offset+shift,fmt)
-			shift += L
-		else:
-			add_iter (hd,rname,d2hex(data[shift+4:shift+8]),shift,8,"txt")
-			shift+=8
+	for i in range(4): # f1,f3 small number, f3<f1
+		val = struct.unpack('>h', data[offset:offset+2])[0]
+		add_iter (hd,"f%d"%i,val,offset,2,">h")
+		offset += 2
+	for i in range(3): # 2:xFrom, 3:TString, 4:VmpObj
+		L,rid1,fmt = read_recid(data,offset)
+		iter = add_iter (hd,"Rfr%d"%(i+2),getZone(rid1,page),offset,L,fmt)
+		offset += L
+	readMap(hd,data,page,textcolum_rec,num,offset)
 
 def hdTileFill(hd,data,page):
 	offset = 0
@@ -330,34 +420,31 @@ def hdFilterAttributeHolder(hd,data,page):
 	offset = 0
 	offset += 2
 	L,recid,fmt = read_recid(data,offset)
-	add_iter (hd,'Filter ID',"%02x"%recid,offset,L,fmt)
+	add_iter (hd,'Filter ID',getZone(recid,page),offset,L,fmt)
 	offset += L
 	L,recid,fmt = read_recid(data,offset)
-	add_iter (hd,'GraphicStyle ID',"%02x"%recid,offset,L,fmt)
+	add_iter (hd,'GraphicStyle ID',getZone(recid,page),offset,L,fmt)
 
 
 def hdFHTail(hd,data,page):
 	offset = 0
 	L,recid,fmt = read_recid(data,0)
-	add_iter (hd,'Block ID',"%02x"%recid,offset,L,fmt)
+	add_iter (hd,'Block ID',getZone(recid,page),offset,L,fmt)
 	offset += L
 	L,recid,fmt = read_recid(data,offset)
-	add_iter (hd,'PropLst ID',"%02x"%recid,offset,L,fmt)
+	add_iter (hd,'PropLst ID',getZone(recid,page),offset,L,fmt)
 	offset += L
 	L,recid,fmt = read_recid(data,offset)
-	add_iter (hd,"Default Font ??",getName(recid,page),offset,L,fmt)
-	x1 = struct.unpack('>H', data[0x1a:0x1c])[0]
-	x1f = struct.unpack('>H', data[0x1c:0x1e])[0]
-	y1 = struct.unpack('>H', data[0x1e:0x20])[0]
-	y1f = struct.unpack('>H', data[0x20:0x22])[0]
-	x2 = struct.unpack('>H', data[0x32:0x34])[0]
-	x2f = struct.unpack('>H', data[0x34:0x36])[0]
-	y2 = struct.unpack('>H', data[0x36:0x38])[0]
-	y2f = struct.unpack('>H', data[0x38:0x3a])[0]
-	add_iter (hd,'Page Max X',"%.4f"%((x1+x1f/65536.)/72.),0x1a,4,"txt")
-	add_iter (hd,'Page Max Y',"%.4f"%((y1+y1f/65536.)/72.),0x1e,4,"txt")
-	add_iter (hd,'Page W',"%.4f"%((x2+x2f/65536.)/72.),0x32,4,"txt")
-	add_iter (hd,'Page H',"%.4f"%((y2+y2f/65536.)/72.),0x36,4,"txt")
+	add_iter (hd,"Default Font",getName(recid,page),offset,L,fmt)
+	x1 = struct.unpack('>i', data[0x1a:0x1e])[0]
+	y1 = struct.unpack('>i', data[0x1e:0x22])[0]
+	add_iter (hd, 'Unknown', binascii.hexlify(data[0x22:0x31]), 0x22, 0x10, "txt") # 00..00
+	x2 = struct.unpack('>i', data[0x32:0x36])[0]
+	y2 = struct.unpack('>i', data[0x36:0x3a])[0]
+	add_iter (hd,'Page Max X',"%.4f"%(x1/65536./72.),0x1a,4,">i")
+	add_iter (hd,'Page Max Y',"%.4f"%(y1/65536./72.),0x1e,4,">i")
+	add_iter (hd,'Page W',"%.4f"%(x2/65536./72.),0x32,4,">i")
+	add_iter (hd,'Page H',"%.4f"%(y2/65536./72.),0x36,4,">i")
 
 
 def hdFWBlurFilter(hd,data,page):
@@ -439,30 +526,73 @@ def hdParagraph(hd,data,page):
 		iter = add_iter (hd,'Rfr',"Start char: %d, Style: %02x (%s)%s"%(numchar,rid1,elemtype,typestr),offset,L,fmt,offset2=offset+2,length2=2)
 		offset += L + 22
 
-def hdHaftone(hd,data,page):
-	offset = 0
-	# 0-2 -- link to MName with "Screen" string
-	# 2-4.4-6 -- angle
-	# 6-8 -- Frequency
+def hdPatternFill(hd,data,page):
+	off = 0
+	L,recid,fmt = read_recid(data,off)
+	add_iter (hd,'Color',getZone(recid,page),off,L,fmt)
+	off += L
+	add_iter (hd, 'Pattern', binascii.hexlify(data[off:off+8]), off, 8, "txt")
+	off += 8
+
+def hdPatternLine(hd,data,page):
+	off = 0
+	L,recid,fmt = read_recid(data,off)
+	add_iter (hd,'Color',getZone(recid,page),off,L,fmt)
+	off += L
+	add_iter (hd, 'Pattern', binascii.hexlify(data[off:off+8]), off, 8, "txt")
+	off += 8
+	mit = struct.unpack('>i', data[off:off+4])[0]
+	add_iter (hd,'Miter',mit/65536.,off,4,">i")
+	off += 4
+	w = struct.unpack('>i', data[off:off+4])[0]
+	add_iter (hd,'Width',w/65536.,off,4,">i")
+	off += 4
+	for i in range(2):
+		val=struct.unpack('>h', data[off:off+2])[0]
+		add_iter (hd,"f%d"%i,val,off,2,">h")
+		off += 2
 
 pts_types = {0:"corner",1:"connector",2:"curve"}
 def hdPath(hd,data,page):
-	offset = 0
 	# 15 -- flatness
 	# 19 -- 0 no Even/Odd no Closed, 1 closed, 2 Even/Odd, 3 Even/Odd + Closed
 	# ptype+1 -- 0x1b -- automatic, 0x9 -- no authomatic
 
 	#0x1ff00 - recid
-	L,recid,fmt = read_recid(data,2)
-	if L == 4:
-		recid = 0x1ff00 - recid
-	add_iter (hd,'Graphic Style ID',"%02x"%recid,2,2,">H")
-	shift = offset + 18
-	if page.version > 3:
-		offset += 4
-		shift += 4
-	numpts = struct.unpack('>H', data[offset+16:offset+18])[0]
-	add_iter (hd, "N", numpts, offset+16, 2, ">H");
+	off = 0
+	numpts = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd, "N", numpts, off, 2, ">H");
+	off += 2
+	for i in range(2):
+		L,recid,fmt = read_recid(data,off)
+		add_iter (hd,'StyleList' if i==0 else "Parent",getZone(recid,page),off,L,fmt)
+		off += L
+	val = struct.unpack('>h', data[off:off+2])[0] # 0
+	add_iter (hd, "f0", val, off, 2, ">h");
+	off += 2
+	val = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd, "id", "%2x"%val, off, 2, ">H");
+	off += 2
+	if page.version>3:
+		val = struct.unpack('>h', data[off:off+2])[0] # 0|1
+		add_iter (hd, "f1", val, off, 2, ">h");
+		off += 2
+		val = struct.unpack('>H', data[off:off+2])[0]
+		add_iter (hd, "id[path]", "%2x"%val, off, 2, ">H");
+		off += 2
+	add_iter (hd, 'Unknown', binascii.hexlify(data[off:off+5]), off, 5, "txt") # 0 or 0003000000
+	off += 5
+	val = struct.unpack('>B', data[off:off+1])[0]
+	txt = ""
+	if val&0x1:
+		txt+="close,"
+	if val&0x2:
+		txt+="even/odd,"
+	add_iter (hd,'mode',"%02x(%s)"%(val,txt),off,1,">B")
+	off += 1
+	numpts = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd, "N1", numpts, off, 2, ">H");
+	off += 2
 
 def hdArrowPath(hd,data,page):
 	offset = 0 if hd.version<=8 else 20
@@ -499,38 +629,13 @@ def hdPathText(hd,data,page):
 		off += 2
 	for i in range(2):
 		l,rid,fmt = read_recid(data,off)
-		type,str=get_typestr(page,rid)
-		add_iter (hd,"text" if i== 0 else "form",getZone(rid,page),off,l,fmt)
+		add_iter (hd,"text" if i== 0 else "shape",getZone(rid,page),off,l,fmt)
 		off+=l
 
 def hdAGDFont(hd,data,page):
 	offset = 0
 	num = struct.unpack('>h', data[offset+4:offset+6])[0]
-	shift = 8
-	for i in range(num):
-		key = struct.unpack('>h', data[offset+shift:offset+shift+2])[0]
-		rec = struct.unpack('>h', data[offset+shift+2:offset+shift+4])[0]
-		if key == 2:
-			at = d2hex(data[shift+4:shift+6])
-		else:
-			at = d2hex(data[shift+4:shift+8])
-		if rec in agd_rec:
-			rname = agd_rec[rec][0]
-			if agd_rec[rec][1] == "recid":
-				a = readid(data,shift+4)[1]
-				at = getName(a,page)
-		else:
-			rname = '\t\t%04x'%rec
-		if rname == "?":
-			rname = '\t\t%04x'%rec
-		if key == 2:
-			add_iter (hd,rname,at,shift,6,"txt")
-			shift+=4
-			L,rid,fmt = read_recid(data,offset+shift)
-			shift += L
-		else:
-			add_iter (hd,rname,at,shift,8,"txt")
-			shift+=8
+	readMap(hd,data,page,agd_rec,num,8)
 
 def hdLinearFill(hd,data,page):
 	offset = 0
@@ -578,6 +683,35 @@ def hdLinePat(hd,data,page):
 		val = struct.unpack(">I",data[offset:offset+4])[0]
 		add_iter (hd,"pat%d"%i,val/65536.,offset,4,">I")
 		offset+=4
+
+def hdLineTable(hd,data,page):
+	offset=0
+	N = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,"N[max]",N,offset,2,">H")
+	offset+=2
+	N = struct.unpack(">H",data[offset:offset+2])[0]
+	add_iter (hd,"N",N,offset,2,">H")
+	offset+=2
+def hdLineTableData(hd,data,page):
+	offset=0
+	for i in range(3): # coord0=xPos, coord1=yPos?, coord2=width?
+		val = struct.unpack(">i",data[offset:offset+4])[0]
+		add_iter (hd,"coord%d"%i,(val/65536.),offset,4,">i")
+		offset+=4
+	for i in range(2):
+		val = struct.unpack(">H",data[offset:offset+2])[0]
+		add_iter (hd,"text[begin]" if i==0 else "text[length]",val,offset,2,">H")
+		offset+=2
+	for i in range(4): # a box
+		val = struct.unpack(">i",data[offset:offset+4])[0]
+		add_iter (hd,"bdbox%d"%i,(val/65536.),offset,4,">i")
+		offset+=4
+	# probably height, some leading, char size here
+	add_iter (hd, 'Unknown', binascii.hexlify(data[offset:offset+16]), offset, 16, "txt")
+	offset+=16
+	l,rid,fmt = read_recid(data,offset)
+	piter = add_iter (hd,"zone",getZone(rid,page),offset,l,fmt) # checkme
+	offset += l
 
 def hdMultiColorList(hd,data,page):
 	offset = 0
@@ -750,6 +884,30 @@ def hdBendFilter(hd,data,page):
 	offset += 4
 	y = cnvrt22(data[offset:offset+4])
 	add_iter (hd,'Y',y,offset,4,">HH")
+
+def hdBlendObject(hd,data,page):
+	off=0
+	for i in range(2):
+		l,rid,fmt = read_recid(data,off)
+		add_iter (hd,"elemProp" if i== 0 else "layer",getZone(rid,page),off,l,fmt)
+		off+=l
+	val = struct.unpack('>I', data[off:off+4])[0]
+	add_iter (hd,"txtPos",val,off,4,">I")
+	off += 4
+	val = struct.unpack('>I', data[off:off+4])[0]
+	add_iter (hd,"txtSize","_" if val==0xFFFF else val,off,4,">I")
+	off += 4
+	l,rid,fmt = read_recid(data,off)
+	add_iter (hd,"list[path]",getZone(rid,page),off,l,fmt)
+	off += l
+	for i in range(4): # f0=0-1e, f1=f2=0-5,f3=0-1
+		val = struct.unpack('>H', data[off:off+2])[0]
+		add_iter (hd,"f%d"%i,val,off,2,">H")
+		off += 2
+	for i in range(2):
+		val = struct.unpack('>i', data[off:off+4])[0]
+		add_iter (hd,"coord%d"%i,val/65536.,off,4,">i")
+		off += 4
 
 def hdBlock (hd,data,page):
 		off = 0
@@ -992,14 +1150,17 @@ def hdBrushTip (hd,data,page):
 
 def hdPropLst(hd,data,page):
 	off = 0
-	size = struct.unpack('>h', data[off+2:off+4])[0]
-	res = 8
-	for i in range(size):
+	val = struct.unpack('>H', data[off:off+2])[0]
+	add_iter (hd,'N[max]',val,off,2,'>H');
+	N = struct.unpack('>H', data[off+2:off+4])[0]
+	add_iter (hd,'N',N,off+2,2,'>H');
+	res = 8 # then again N[max] and 0
+	for i in range(N):
 		L1,rid1,fmt = read_recid(data,off+res)
 		res += L1
 		L2,rid2,fmt1 = read_recid(data,off+res)
 		res += L2
-		add_iter (hd,getName(rid1,page),"%02x"%rid2,res-L1-L2,L1+L2,">HH")
+		add_iter (hd,getName(rid1,page),getNameOrZone(rid2,page),res-L1-L2,L1+L2,">HH")
 
 def hdElemPropLst(hd,data,page):
 	off = 0
@@ -1182,14 +1343,14 @@ def hdXform(hd,data,page):
 			add_iter (hd,'m22',"%.2f"%m22,offset,0,">HH")
 		if x[4]:
 			m13 = cnvrt22(data[offset:offset+4])
-			add_iter (hd,'m13',"%.2f"%m13,offset,4,">HH")
+			add_iter (hd,'m13',"%.2f"%(m13/72.),offset,4,">HH")
 			offset += 4
 		else:
 			m13 = 0
 			add_iter (hd,'m13',"%.2f"%m13,offset,0,">HH")
 		if x[5]:
 			m23 = cnvrt22(data[offset:offset+4])
-			add_iter (hd,'m23',"%.2f"%m23,offset,4,">HH")
+			add_iter (hd,'m23',"%.2f"%(m23/72.),offset,4,">HH")
 		else:
 			m23 = 0
 			add_iter (hd,'m23',"%.2f"%m23,offset,0,">HH")
@@ -1288,35 +1449,35 @@ def hdOval(hd,data,page):
 def hdGroup(hd,data,page):
 	offset = 0
 	res,gr_style,fmt = read_recid(data,offset)
-	add_iter (hd,'Graphic Style',"%02x"%gr_style,offset,res,fmt)
+	add_iter (hd,'Graphic Style',getZone(gr_style,page),offset,res,fmt)
 	offset += res;
 	res,layer,fmt = read_recid(data,offset)
-	add_iter (hd,'Parent',"%02x"%layer,offset,res,fmt)
+	add_iter (hd,'Parent',getZone(layer,page),offset,res,fmt)
 	offset += res + 4;
 	if page.version > 3:
 		offset += 4
 	res,mlist,fmt = read_recid(data,offset)
-	add_iter (hd,'MList',"%02x"%mlist,offset,res,fmt)
+	add_iter (hd,'MList',getZone(mlist,page),offset,res,fmt)
 	offset += res
 	res,xform,fmt = read_recid(data,offset)
-	add_iter (hd,'XForm',"%02x"%xform,offset,res,fmt)
+	add_iter (hd,'XForm',getZone(xform,page),offset,res,fmt)
 
 def hdGraphicStyle(hd,data,page):
 	off = 2
 	size = struct.unpack('>H', data[off:off+2])[0]
 	off = 6
 	parent = struct.unpack('>H', data[off:off+2])[0]
-	add_iter (hd,'Parent',"%02x"%parent,off,2,">H")
+	add_iter (hd,'Parent',getZone(parent,page),off,2,">H")
 	off += 2
 	attrid = struct.unpack('>H', data[off:off+2])[0]
-	add_iter (hd,'Attr ID',"%02x"%attrid,off,2,">H")
+	add_iter (hd,'Attr ID',getZone(attrid,page),off,2,">H")
 	off += 2
 	for i in range(size):
 		a = struct.unpack('>H', data[off:off+2])[0]
 		off += 2
 		v = struct.unpack('>H', data[off:off+2])[0]
 		off += 2
-		add_iter (hd,getName(a,page),getName(v,page),off-4,4,">HH")
+		add_iter (hd,getName(a,page),getNameOrZone(v,page),off-4,4,">HH")
 
 
 def hdAttributeHolder(hd,data,page):
@@ -1331,7 +1492,7 @@ def hdAttributeHolder(hd,data,page):
 def hdBasicFill(hd,data,page):
 	offset = 0
 	L,clr,fmt = read_recid(data,offset)
-	add_iter (hd,'Color',"%02x"%clr,offset,L,fmt)
+	add_iter (hd,'Color',getZone(clr,page),offset,L,fmt)
 	offset += L
 	overprint = ord(data[offset+2])
 
@@ -1350,15 +1511,20 @@ def hdBasicLine(hd,data,page):
 	L,rarr,fmt = read_recid(data,offset)
 	add_iter (hd,'End Arrow',getZone(rarr,page),offset,L,fmt)
 	offset += L
-	mit = struct.unpack('>H', data[offset:offset+2])[0]
-	mitf = struct.unpack('>H', data[offset+2:offset+4])[0]
-	w = struct.unpack('>H', data[offset+4:offset+6])[0]
-	overprint = ord(data[offset+7])
-	join = ord(data[offset+8]) # 0 - angle, 1 - round, 2 - square
-	cap = ord(data[offset+9]) # 0 - none, 1 - round, 2 - square
-	# FIXME! add iters for overprint/join/cap
-	add_iter (hd,'Miter',"%.4f"%(mit+mitf/65536.),offset,4,"txt")
-	add_iter (hd,'Width',w,offset+4,2,">H")
+	mit = struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter (hd,'Miter',mit/65536.,offset,4,">i")
+	offset += 4
+	w = struct.unpack('>i', data[offset:offset+4])[0]
+	add_iter (hd,'Width',w/65536.,offset,4,">i")
+	offset += 4
+	val = ord(data[offset])
+	add_iter (hd,'f0',val,offset+1,1,">b")
+	overprint = ord(data[offset+1])
+	add_iter (hd,'Overprint',overprint,offset+1,1,">b")
+	join = ord(data[offset+2]) # 0 - angle, 1 - round, 2 - square
+	add_iter (hd,'Join',join,offset+2,1,">b")
+	cap = ord(data[offset+3]) # 0 - none, 1 - round, 2 - square
+	add_iter (hd,'Cap',cap,offset+3,1,">b")
 
 def hdList(hd,data,page):
 	offset = 0
@@ -1371,7 +1537,7 @@ def hdList(hd,data,page):
 	offset = 12
 	for i in range(size):
 		l,rid,fmt = read_recid(data,offset)
-		add_iter (hd,'List Elem',"%02x (%s)"%(rid,page.dict[page.reclist[rid-1]]),offset,l,fmt)
+		add_iter (hd,'List Elem',getZone(rid,page),offset,l,fmt)
 		offset += l
 
 def hdCustomProc(hd,data,page):
@@ -1385,6 +1551,35 @@ def hdCustomProc(hd,data,page):
 	for i in range(2):
 		val = struct.unpack('>H', data[off:off+2])[0]
 		add_iter (hd,"f%d"%i,val,off,2,">H")
+		off += 2
+
+customDataType_ids={
+	0: "id",
+	2: "width",
+	3: "param",
+	4: "angle"
+}
+def hdCustomProcData(hd,data,page):
+	off = 0
+	type = struct.unpack('>B', data[off:off+1])[0]
+	add_iter (hd,'type',customDataType_ids[type] if type in customDataType_ids else type,off,1,">B")
+	off += 1
+	val = struct.unpack('>B', data[off:off+1])[0] # 0
+	add_iter (hd,'f0',val,off,1,">B")
+	off += 1
+	val = struct.unpack('>H', data[off:off+2])[0] # maybe type 1, unsure
+	add_iter (hd,'f1',val,off,2,">H")
+	off += 2
+	val = struct.unpack('>i', data[off:off+4])[0] # type 2,3,4
+	add_iter (hd,'float',val/65536.,off,4,">i")
+	off += 4
+	if type==0:
+		l,rid,fmt = read_recid(data,off)
+		add_iter (hd,"color",getZone(rid,page),off,l,fmt)
+		off += l
+	else:
+		val = struct.unpack('>H', data[off:off+2])[0] # 0
+		add_iter (hd,'f2',val,off,2,">H")
 		off += 2
 
 def hdData(hd,data,page):
@@ -1721,7 +1916,7 @@ def hdColor6(hd,data,page):
 def hdPantoneColor(hd,data,page):
 	offset = 0
 	L,rid,fmt = read_recid(data,offset)
-	add_iter(hd, "Color0", "%02x"%rid, offset, L, fmt)
+	add_iter(hd, "Color0", getName(rid,page), offset, L, fmt)
 	offset+=L
 	r = struct.unpack(">H",data[offset:offset+2])[0]/256
 	g = struct.unpack(">H",data[offset+2:offset+4])[0]/256
@@ -1809,6 +2004,7 @@ hdp = {
 	"BasicFill":hdBasicFill,
 	"BasicLine":hdBasicLine,
 	"BendFilter":hdBendFilter,
+	"BlendObject":hdBlendObject,
 	"Block":hdBlock,
 	"Brush":hdBrush,
 	"BrushList":hdList,
@@ -1819,6 +2015,7 @@ hdp = {
 	"Color6":hdColor6,
 	"CompositePath":hdCompositePath,
 	"CustomProc":hdCustomProc,
+	"CustomProcData":hdCustomProcData,
 	"Data":hdData,
 	"DataList":hdDataList,
 	"DisplayText":hdDisplayText,
@@ -1838,6 +2035,8 @@ hdp = {
 	"LensFill":hdLensFill,
 	"LinearFill":hdLinearFill,
 	"LinePat":hdLinePat,
+	"LineTable":hdLineTable,
+	"LineTableData":hdLineTableData,
 	"List":hdList,
 	"MList":hdList,
 	"MName":hdString,
@@ -1848,18 +2047,24 @@ hdp = {
 	"NewRadialFill":hdNewRadialFill,
 	"Oval":hdOval,
 	"PantoneColor":hdPantoneColor,
+	"Paragraph":hdParagraph,
+	"PatternFill":hdPatternFill,
+	"PatternLine":hdPatternLine,
 	"Path":hdPath,
 	"PathPoint":hdPathPoint,
 	"PathText":hdPathText,
-	"Paragraph":hdParagraph,
 	"ProcessColor":hdProcessColor,
 	"PropLst":hdPropLst,
+	"PSFill":hdPSFill,
+	"PSLine":hdPSLine,
 	"RadialFill":hdRadialFill,
 	"Rectangle":hdRectangle,
 	"SpotColor":hdSpotColor,
 	"SpotColor6":hdSpotColor6,
 	"StylePropLst":hdStylePropLst,
 	"SymbolClass":hdSymbolClass,
+	"TabTable":hdTabTable,
+	"TabTableData":hdTabTableData,
 	"TaperedFill":hdTaperedFill,
 	"TaperedFillX":hdTaperedFillX,
 	"TileFill":hdTileFill,
@@ -1871,11 +2076,13 @@ hdp = {
 	"TextEffs":hdTextEffs,
 	"TextEffsData":hdTextEffsData,
 	"TextInPath":hdTFOnPath,
+	"TextBlok":hdTextBlok,
 	"TextPara":hdTextPara,
 	"TextString":hdTextString,
 	"TEffect":hdTEffect,
 	"TString":hdTString,
 	"TransformFilter":hdTransformFilter,
+	"UString":hdUString,
 	"VDict":hdTEffect,
 	"VMpObj":hdVMpObj,
 	"Xform":hdXform,
@@ -1924,6 +2131,7 @@ class FHDoc():
 		"BasicFill":self.BasicFill,
 		"BasicLine":self.BasicLine,
 		"BendFilter":self.BendFilter,
+			"BlendObject":self.BlendObject,
 		"Block":self.Block,
 		"BrushList":self.BrushList,
 		"Brush":self.Brush,
@@ -2089,6 +2297,16 @@ class FHDoc():
 	def BendFilter(self,off,recid,mode=0):
 		return 10
 
+	def BlendObject(self,off,recid,mode=0):
+		res=off
+		for i in range(2):
+			l,rid = self.read_recid(res+2)
+			res+=l
+		res+=8
+		l,rid = self.read_recid(res+2)
+		res+=l
+		res+=16
+		return res-off
 	def Block(self,off,recid,mode=0):
 		if self.version == 10:
 			flags =  struct.unpack('>h', self.data[off:off+2])[0]
@@ -2606,22 +2824,22 @@ class FHDoc():
 		numstrokes = struct.unpack('>h', self.data[off:off+2])[0]
 		res = 10+numstrokes*4
 		if numstrokes == 0 and self.version == 8:
-			res = 28 # for Ver8, to skip 1st 14 bytes of 0s
+			res = 28 # for Ver8, to skip 1st 14 bytes of 0s ???
 		return res
 
 	def LineTable(self,off,recid,mode=0):
-		# dw ??
-		# "size" (dw)
-		# records of 48 bytes + rec_id
-		size= struct.unpack('>h', self.data[off+2:off+4])[0]
-		if self.version < 10:
-			size= struct.unpack('>h', self.data[off:off+2])[0]
-		res = 0
-		for i in range(size):
-			L,rid = self.read_recid(off+52+i*48+res)
+		subZone=[]
+		NMax=struct.unpack('>H', self.data[off:off+2])[0]
+		N= struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 4
+		for i in range(N):
+			L,rid = self.read_recid(off+res+48)
 			self.edges.append((recid,rid))
-			res += L
-		return res+4+size*48
+			subZone.append(("line%d"%i,"LineTableData",off+res,48+L))
+			res += 48+L
+		if self.version<10:
+			res += (NMax-N)*50
+		return res, subZone
 
 	def List(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off+2:off+4])[0]
@@ -2799,35 +3017,15 @@ class FHDoc():
 		return 38
 
 	def Paragraph(self,off,recid,mode=0):
-		if self.version > 7:
-			size= struct.unpack('>h', self.data[off+2:off+4])[0]
-			res = 6
-			for i in range(2):
-				L,rid = self.read_recid(off+res)
-				self.edges.append((recid,rid))
-				res += L
-			for i in range(size):
-				L,rid = self.read_recid(off+res+2)
-				res += L + 22
-		else:
-			trsize = struct.unpack('>h', self.data[off:off+2])[0]
-			size2 = struct.unpack('>h', self.data[off+2:off+4])[0]
-			recs = struct.unpack('>h', self.data[off+4:off+6])[0]
-			res = 6
-			for i in range(4):
-				L,rid = self.read_recid(off+res)
-				self.edges.append((recid,rid))
-				res += L
-			res += 20
-			res += recs*24
-			if size2 > 1:
-				for i in range(size2):
-					L,rid = self.read_recid(off+res)
-					self.edges.append((recid,rid))
-					res += L
-				res += 20
-			elif recs > 0:
-				res += trsize+1
+		size= struct.unpack('>h', self.data[off+2:off+4])[0]
+		res = 6
+		for i in range(2):
+			L,rid = self.read_recid(off+res)
+			self.edges.append((recid,rid))
+			res += L
+		for i in range(size):
+			L,rid = self.read_recid(off+res+2)
+			res += L + 22
 		return res
 
 	def PathText(self,off,recid,mode=0):
@@ -2914,17 +3112,15 @@ class FHDoc():
 		return 22
 
 	def PropLst(self,off,recid,mode=0):
-		size = struct.unpack('>h', self.data[off+2:off+4])[0]
+		size = struct.unpack('>h', self.data[off:off+2])[0]
+		N = struct.unpack('>h', self.data[off+2:off+4])[0]
 		res = 8
-		for i in range(2*size):
+		for i in range(2*N):
 			L,rid = self.read_recid(off+res)
 			self.edges.append((recid,rid))
 			res += L
-		if self.version < 9: # verify for others
-			size2 = struct.unpack('>h', self.data[off:off+2])[0]
-			for i in range(2*(size2-size)):
-				L,rid = self.read_recid(off+res)
-				res += L
+		if self.version < 9:
+			res += 4*(size-N)
 		return res
 
 	def RadialFill(self,off,recid,mode=0):
@@ -3032,11 +3228,14 @@ class FHDoc():
 		return res
 
 	def TabTable(self,off,recid,mode=0):
+		subZone=[]
 		size = struct.unpack('>h', self.data[off:off+2])[0]
-		res = 4+size*6
-		if self.version < 10:
-			res = 4+size*2
-		return res
+		N = struct.unpack('>h', self.data[off+2:off+4])[0]
+		off+=4
+		for i in range(N):
+			subZone.append(("TabTableData","TabTableData",off,6))
+			off+=6
+		return 4+size*6,subZone
 
 	def TaperedFill(self,off,recid,mode=0):
 		res,rid = self.read_recid(off)
@@ -3101,7 +3300,7 @@ class FHDoc():
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
 		#FIXME! have more data after string
-		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length*2],"utf-16be"))
+		self.recs[recid] = ("str",readUTFString(self.data[off+4:off+4+length*2]))
 		return 4+size*4
 
 	def TextColumn(self,off,recid,mode=0):
@@ -3231,14 +3430,14 @@ class FHDoc():
 		return 39
 
 	def TString(self,off,recid,mode=0):
+		size2 = struct.unpack('>h', self.data[off:off+2])[0]
 		size= struct.unpack('>h', self.data[off+2:off+4])[0]
 		res=20
 		for i in range(size):
 			L,rid = self.read_recid(off+res)
 			self.edges.append((recid,rid))
 			res += L
-		if self.version < 9: # verify for others
-			size2 = struct.unpack('>h', self.data[off:off+2])[0]
+		if self.version<9:
 			res += (size2-size)*2
 
 		return res
@@ -3270,6 +3469,7 @@ class FHDoc():
 		return res
 
 	def VMpObj (self,off,recid,mode=0):
+		num2 = struct.unpack('>h', self.data[off+2:off+4])[0]
 		num = struct.unpack('>h', self.data[off+4:off+6])[0]
 		shift = 8
 		# FIXME!
@@ -3405,6 +3605,7 @@ class FHDoc():
 
 	def parse_list(self,data,offset):
 		size = struct.unpack('>L', data[offset:offset+4])[0]
+		add_pgiter(self.page,"FH List","fh","list",data[offset:offset+4+2*size],self.iter)
 		print '# of items:\t%u'%size
 		offset+= 4
 		for i in range(size):
