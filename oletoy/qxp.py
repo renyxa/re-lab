@@ -55,6 +55,10 @@ def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
 
+def _read_name33(data, offset=0):
+	end = data.find('\0', offset)
+	return (data[offset:offset + end], end + 1)
+
 def _handle_list(handler, size):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
@@ -62,6 +66,19 @@ def _handle_list(handler, size):
 		while off + size <= len(data):
 			(entry, off) = rdata(data, off, '%ds' % size)
 			handler(page, entry, parent, fmt, version, i)
+			i += 1
+	return hdl
+
+def _handle_list_named33(handler, name_offset):
+	def hdl(page, data, parent, fmt, version):
+		off = 0
+		i = 0
+		while off + name_offset < len(data):
+			(name, end) = _read_name33(data, off + name_offset)
+			if (end - off) % 2 == 1:
+				end += 1
+			(entry, off) = rdata(data, off, '%ds' % (end - off))
+			handler(page, entry, parent, fmt, version, i, name)
 			i += 1
 	return hdl
 
@@ -91,14 +108,20 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('para_format', fmt, version), data, parent)
 
+def handle_para_style33(page, data, parent, fmt, version, index, name):
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', '', data, parent)
+
+def handle_hj33(page, data, parent, fmt, version, index, name):
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', '', data, parent)
+
 v3_3_handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
 	5: ('Fonts', None, 'fonts'),
 	6: ('Physical fonts',),
 	7: ('Colors',),
-	9: ('Paragraph styles',),
-	10: ('H&Js',),
+	9: ('Paragraph styles', _handle_list_named33(handle_para_style33, 306)),
+	10: ('H&Js', _handle_list_named33(handle_hj33, 48)),
 	12: ('Character formats', _handle_list(handle_char_format, 46)),
 	13: ('Paragraph formats', _handle_list(handle_para_format, 256)),
 }
