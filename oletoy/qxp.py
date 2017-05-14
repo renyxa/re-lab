@@ -114,6 +114,10 @@ def handle_para_style33(page, data, parent, fmt, version, index, name):
 def handle_hj33(page, data, parent, fmt, version, index, name):
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp5', '', data, parent)
 
+# TODO: It might work better to split the handling of different versions
+# into separate classes (at least at points where the following version
+# changed significantly, e.g., 3.3 vs 4.0). And also split the hexview
+# callbacks.
 v3_3_handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
