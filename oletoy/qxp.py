@@ -23,6 +23,7 @@ def big_endian(fmt):
 def dim2in(dim):
 	return dim / 72.0
 
+VERSION_3_3 = 0x3f
 VERSION_4 = 0x41
 VERSION_6 = 0x43
 
@@ -90,6 +91,18 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp5', ('para_format', fmt, version), data, parent)
 
+v3_3_handlers = {
+	2: ('Print settings',),
+	3: ('Page setup',),
+	5: ('Fonts', None, 'fonts'),
+	6: ('Physical fonts',),
+	7: ('Colors',),
+	9: ('Paragraph styles',),
+	10: ('H&Js',),
+	12: ('Character formats', _handle_list(handle_char_format, 46)),
+	13: ('Paragraph formats', _handle_list(handle_para_format, 256)),
+}
+
 v4_handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
@@ -106,6 +119,7 @@ v4_handlers = {
 }
 
 handler_map = {
+	VERSION_3_3 : v3_3_handlers,
 	VERSION_4 : v4_handlers,
 }
 
@@ -409,11 +423,16 @@ def add_hj(hd, size, data, fmt, version):
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
-	(uses, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
-	off += 4
-	(font, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
+	if version < VERSION_4:
+		(uses, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
+		off += 2
+	else:
+		(uses, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
+		off += 4
+		(font, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
 	flags_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 	(flags, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Format flags', bflag2txt(flags, flags_map), off - 4, 4, fmt('I'))
@@ -425,17 +444,24 @@ def add_char_format(hd, size, data, fmt, version):
 
 def add_para_format(hd, size, data, fmt, version):
 	off = 0
-	(uses, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
-	off += 4
-	# if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
-	flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
-	(flags, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, fmt('B'))
-	off += 2
+	if version < VERSION_4:
+		(uses, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
+		off += 3
+	else:
+		(uses, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
+		off += 4
+		# if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
+		flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
+		(flags, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, fmt('B'))
+		off += 2
 	align_map = {0: 'Left', 1: 'Center', 2: 'Right', 3: 'Justified', 4: 'Forced'}
 	(align, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, fmt('B'))
+	if version < VERSION_4:
+		return # Not checked yet
 	(caps_lines, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Drop caps line count", caps_lines, off - 1, 1, fmt('B'))
 	(caps_chars, off) = rdata(data, off, fmt('B'))
