@@ -47,10 +47,6 @@ def add_length(hd, size, data, fmt, version, offset, name="Length"):
 def add_record(hd, size, data, fmt, version):
 	add_length(hd, size, data, fmt, version, 0)
 
-ids = {
-	'record': add_record,
-}
-
 char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}

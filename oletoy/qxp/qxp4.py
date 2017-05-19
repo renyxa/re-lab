@@ -47,10 +47,10 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
-v4_handlers = {
+handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
-	6: ('Fonts', None, ('qxp4', 'fonts')),
+	6: ('Fonts', None, 'fonts'),
 	7: ('Physical fonts',),
 	8: ('Colors',),
 	9: ('Paragraph styles', handle_collection(handle_para_style, 244)),
@@ -61,6 +61,25 @@ v4_handlers = {
 	38: ('Character formats', handle_collection(handle_char_format, 64)),
 	40: ('Paragraph formats', handle_collection(handle_para_format, 100)),
 }
+
+def handle_document(page, data, parent, fmt, version):
+	off = 0
+	i = 1
+	while off < len(data):
+		name, hdl, hid = 'Record %d' % i, None, 'record'
+		if handlers.has_key(i):
+			name = handlers[i][0]
+			if len(handlers[i]) > 1:
+				hdl = handlers[i][1]
+			if len(handlers[i]) > 2:
+				hid = handlers[i][2]
+		(length, off) = rdata(data, off, fmt('I'))
+		record = data[off - 4:off + length]
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, fmt, version), record, parent)
+		if hdl:
+			hdl(page, record[4:], reciter, fmt, version)
+		off += length
+		i += 1
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
@@ -206,6 +225,7 @@ ids = {
 	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'picture': add_picture,
+	'record': add_record,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:

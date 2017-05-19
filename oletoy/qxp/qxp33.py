@@ -46,10 +46,10 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
-v3_3_handlers = {
+handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
-	5: ('Fonts', None, ('qxp33', 'fonts')),
+	5: ('Fonts', None, 'fonts'),
 	6: ('Physical fonts',),
 	7: ('Colors',),
 	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306)),
@@ -57,6 +57,25 @@ v3_3_handlers = {
 	12: ('Character formats', handle_collection(handle_char_format, 46)),
 	13: ('Paragraph formats', handle_collection(handle_para_format, 256)),
 }
+
+def handle_document(page, data, parent, fmt, version):
+	off = 0
+	i = 1
+	while off < len(data):
+		name, hdl, hid = 'Record %d' % i, None, 'record'
+		if handlers.has_key(i):
+			name = handlers[i][0]
+			if len(handlers[i]) > 1:
+				hdl = handlers[i][1]
+			if len(handlers[i]) > 2:
+				hid = handlers[i][2]
+		(length, off) = rdata(data, off, fmt('I'))
+		record = data[off - 4:off + length]
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp33', (hid, fmt, version), record, parent)
+		if hdl:
+			hdl(page, record[4:], reciter, fmt, version)
+		off += length
+		i += 1
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
@@ -99,6 +118,7 @@ ids = {
 	'char_format': add_char_format,
 	'fonts': add_fonts,
 	'para_format': add_para_format,
+	'record': add_record,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:

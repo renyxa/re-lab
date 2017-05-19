@@ -41,31 +41,10 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-handler_map = {
-	qxp.VERSION_3_3 : qxp33.v3_3_handlers,
-	qxp.VERSION_4 : qxp4.v4_handlers,
-}
-
 def handle_document(page, data, parent, fmt, version):
-	handlers = handler_map[version] if handler_map.has_key(version) else {}
-	off = 0
-	i = 1
-	while off < len(data):
-		name, hdl, hid = 'Record %d' % i, None, 'record'
-		cid = 'qxp'
-		if handlers.has_key(i):
-			name = handlers[i][0]
-			if len(handlers[i]) > 1:
-				hdl = handlers[i][1]
-			if len(handlers[i]) > 2:
-				cid, hid = handlers[i][2]
-		(length, off) = rdata(data, off, fmt('I'))
-		record = data[off - 4:off + length]
-		reciter = add_pgiter(page, "[%d] %s" % (i, name), cid, (hid, fmt, version), record, parent)
-		if hdl:
-			hdl(page, record[4:], reciter, fmt, version)
-		off += length
-		i += 1
+	hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
+	if hdl_map.has_key(version):
+		hdl_map[version](page, data, parent, fmt, version)
 
 def open_v5(page, buf, parent, fmt, version):
 	chains = []
@@ -274,7 +253,7 @@ qxp5_ids = {
 }
 
 def call(hd, size, data, cid, args):
-	ids_map = {'qxp': qxp.ids, 'qxp33': qxp33.ids, 'qxp4': qxp4.ids}
+	ids_map = {'qxp33': qxp33.ids, 'qxp4': qxp4.ids}
 	if ids_map.has_key(cid):
 		ids = ids_map[cid]
 		if len(args) > 1 and ids.has_key(args[0]):
