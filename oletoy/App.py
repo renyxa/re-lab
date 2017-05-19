@@ -33,6 +33,7 @@ import plist
 import c602
 import t602
 import bmi
+import quattro_wq
 from utils import *
 
 class Page:
@@ -317,7 +318,12 @@ class Page:
 			print('Probably T602 file')
 			t602.parse(buf, self, parent)
 			return 0
-
+		if buf[0:4] == "\0\0\x02\0":
+			if (buf[4]=='\x20' or buf[4]=='\x21') and buf[5]=='\x51':
+				self.type = 'QUWQ'
+				print('Probably Quattro Wq file')
+				quattro_wq.wq_open(self, buf, parent)
+				return 0
 		if parent == None:
 			parent = add_pgiter(self, "File", "file","unknown",buf) 
 

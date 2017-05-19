@@ -33,7 +33,16 @@ def dump_rec_content(doc,model,iter,level,file):
         return
     tmpDoc=App.Page()
     tmpDoc.version=doc.version
-    if ntype[0] == "fh":
+    done=False
+    if doc.appdoc != None:
+        try:
+            doc.appdoc.update_view2(tmpDoc,model,iter)
+            done=True
+        except:
+            pass
+    if done:
+        pass
+    elif ntype[0] == "fh":
         if fh.hdp.has_key(ntype[1]):
             fh.hdp[ntype[1]](tmpDoc,data,doc)
     elif ntype[0] == "fh12":

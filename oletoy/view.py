@@ -1406,14 +1406,15 @@ class ApplicationMainWindow(gtk.Window):
 	def on_row_activated(self, view, path, column):
 		pn = self.notebook.get_current_page()
 		model = self.das[pn].view.get_model()
-		hd = self.das[pn].hd
-		hd.version = self.das[pn].version
-		hd.context = self.das[pn].context
+		page = self.das[pn]
+		hd = page.hd
+		hd.version = page.version
+		hd.context = page.context
 		iter1 = model.get_iter(path)
 		ntype = model.get_value(iter1,1)
 		size = model.get_value(iter1,2)
 		data = model.get_value(iter1,3)
-		if self.das[pn].type == "YEP":
+		if page.type == "YEP":
 			gloff = model.get_value(iter1,7)
 		else:
 			gloff = None
@@ -1468,6 +1469,12 @@ class ApplicationMainWindow(gtk.Window):
 					else:
 						ut += "%s "%ntype[i]
 				self.update_statusbar("[ %s]"%ut)
+				if page.appdoc != None:
+					try:
+						page.appdoc.update_view2(hd,model,iter1)
+						return
+					except:
+						pass
 				# YEP
 				if ntype[0] == "vprm" or ntype[0] == "yep":
 					if ntype[1] in yep.vprmfunc:
@@ -1498,7 +1505,7 @@ class ApplicationMainWindow(gtk.Window):
 						hd.hv.expose(None,None)
 				if ntype[0] == "drw":
 					if drw.recfuncs.has_key(ntype[1]):
-						drw.recfuncs[ntype[1]](hd, data, self.das[pn])
+						drw.recfuncs[ntype[1]](hd, data, page)
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
 						if escher.odraw_ids.has_key(ntype[2]):
@@ -1530,7 +1537,7 @@ class ApplicationMainWindow(gtk.Window):
 					vba.vba_src(hd,data)
 				elif ntype[0] == "ppp":
 					if ppp.ppp_ids.has_key(ntype[1]):
-						ppp.ppp_ids[ntype[1]](hd,size,data,self.das[pn])
+						ppp.ppp_ids[ntype[1]](hd,size,data,page)
 				elif ntype[0] == "emf":
 					if emfparse.emr_ids.has_key(ntype[1]):
 						emfparse.emr_ids[ntype[1]](hd,size,data)
@@ -1546,7 +1553,7 @@ class ApplicationMainWindow(gtk.Window):
 				elif ntype[0] == "cdr":
 					if cdr.cdr_ids.has_key(ntype[1]):
 						if ntype[1] == 'DISP':
-							cdr.cdr_ids[ntype[1]](hd,size,data,self.das[pn])
+							cdr.cdr_ids[ntype[1]](hd,size,data,page)
 						else:
 							cdr.cdr_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "wld":
@@ -1596,10 +1603,10 @@ class ApplicationMainWindow(gtk.Window):
 						palm.palm_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "pm":
 					if pm6.hd_ids.has_key(ntype[1]):
-						pm6.hd_ids[ntype[1]](hd,data,self.das[pn])
+						pm6.hd_ids[ntype[1]](hd,data,page)
 				elif ntype[0] == "fh":
 					if fh.hdp.has_key(ntype[1]):
-						fh.hdp[ntype[1]](hd,data,self.das[pn])
+						fh.hdp[ntype[1]](hd,data,page)
 				elif ntype[0] == "fh12":
 					if fh12.fh12_ids.has_key(ntype[1]):
 						fh12.fh12_ids[ntype[1]](hd,size,data,ntype[1])
