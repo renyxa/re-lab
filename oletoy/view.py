@@ -1636,8 +1636,8 @@ class ApplicationMainWindow(gtk.Window):
 						ntype[1](hd, size, data)
 					elif bmi.bmi_ids.has_key(ntype[1]):
 						bmi.bmi_ids[ntype[1]](hd, size, data)
-				elif ntype[0] == "qxp5":
-					qxp.call_v5(hd, size, data, ntype[1])
+				elif ntype[0][0:3] == "qxp":
+					qxp.call(hd, size, data, ntype[0], ntype[1])
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 				elif ntype[0] == "ole" and ntype[1] == "propset":
