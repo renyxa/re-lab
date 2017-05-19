@@ -21,7 +21,7 @@ import gtk, pango, cairo
 import tree
 import uniview
 import hexdump
-import App, cmd
+import App, viewCmd
 import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
 import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6, qxp
@@ -432,7 +432,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_diff(self, action,data1=None,data2=None):
 		if self.sw == None:
-			self.sw = cmd.SelectWindow(self)
+			self.sw = viewCmd.SelectWindow(self)
 			self.sw.connect("destroy", self.on_win_destroy)
 			self.dw = None
 			self.sw.show_all()
@@ -504,7 +504,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.run_win.show_all()
 			self.run_win.present()
 		else:
-			cmd.CliWindow(self)
+			viewCmd.CliWindow(self)
 
 
 	def on_off_entry_activate(self,entry):
@@ -926,9 +926,9 @@ class ApplicationMainWindow(gtk.Window):
 					self.update_statusbar("<span foreground='#ff0000'>Wrong address</span>")
 
 			elif goto[0] == "$" or goto[0] == "?":
-				cmd.parse (goto,self.entry,self.das[pn])
+				viewCmd.parse (goto,self.entry,self.das[pn])
 			elif goto[0] == "=":
-					cmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
+					viewCmd.compare (goto,self.entry,self.das[pn],self.das[pn+1])
 			elif 'reload' in goto.lower():
 				#try:
 				if 1:
@@ -1656,7 +1656,7 @@ class ApplicationMainWindow(gtk.Window):
 		doc.hpaned = gtk.HPaned()
 		doc.hpaned.add1(scrolled)
 		doc.hpaned.add2(vpaned)
-		label = cmd.TabLabel("Unnamed")
+		label = viewCmd.TabLabel("Unnamed")
 		label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
 		self.notebook.append_page(doc.hpaned, label)
 		self.notebook.show_tabs = True
@@ -1752,7 +1752,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hpaned = gtk.HPaned()
 				doc.hpaned.add1(scrolled)
 				doc.hpaned.add2(vpaned)
-				label = cmd.TabLabel(doc.pname)
+				label = viewCmd.TabLabel(doc.pname)
 				label.connect("close-clicked", self.on_tab_close_clicked, self.notebook, doc.hpaned)
 				self.notebook.append_page(doc.hpaned, label)
 				self.notebook.set_tab_reorderable(doc.hpaned, True)
