@@ -1463,7 +1463,8 @@ class ApplicationMainWindow(gtk.Window):
 				for i in range(len(ntype)):
 					if isinstance(ntype[i], tuple):
 						try:
-							ut += "%s "%ntype[i][0].__name__
+							if len(ntype[i]) > 0:
+								ut += "%s "%ntype[i][0].__name__
 						except AttributeError:
 							ut += "%s "%ntype[i][0]
 					else:
