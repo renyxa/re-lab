@@ -47,7 +47,10 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
-handlers = {
+def handle_doc(page, data, parent, fmt, version):
+	pass
+
+handlers1 = {
 	2: ('Print settings',),
 	3: ('Page setup',),
 	6: ('Fonts', None, 'fonts'),
@@ -58,14 +61,19 @@ handlers = {
 	11: ('H&Js', handle_collection(handle_hj, 112)),
 	12: ('Dashes & Stripes', handle_collection(handle_dash_stripe, 252)),
 	13: ('Lists', handle_collection(handle_list, 324)),
-	38: ('Character formats', handle_collection(handle_char_format, 64)),
-	40: ('Paragraph formats', handle_collection(handle_para_format, 100)),
+	14: ('Index?', None, 'index'),
+}
+
+handlers2 = {
+	0: ('Character formats', handle_collection(handle_char_format, 64)),
+	2: ('Paragraph formats', handle_collection(handle_para_format, 100)),
 }
 
 def handle_document(page, data, parent, fmt, version):
 	off = 0
 	i = 1
-	while off < len(data):
+	handlers = handlers1
+	while off < len(data) and i < 15:
 		name, hdl, hid = 'Record %d' % i, None, 'record'
 		if handlers.has_key(i):
 			name = handlers[i][0]
@@ -78,8 +86,32 @@ def handle_document(page, data, parent, fmt, version):
 		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, fmt, version), record, parent)
 		if hdl:
 			hdl(page, record[4:], reciter, fmt, version)
+		if i == 14:
+			(count2, _) = rdata(data, off, fmt('I'))
 		off += length
 		i += 1
+	base = i
+	doc_idx = i + count2 + 4
+	handlers = handlers2
+	while off < len(data) and i < doc_idx:
+		name, hdl, hid = 'Record %d' % i, None, 'record'
+		idx = i - base - count2
+		if handlers.has_key(idx):
+			name = handlers[idx][0]
+			if len(handlers[idx]) > 1:
+				hdl = handlers[idx][1]
+			if len(handlers[idx]) > 2:
+				hid = handlers[idx][2]
+		(length, off) = rdata(data, off, fmt('I'))
+		record = data[off - 4:off + length]
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, fmt, version), record, parent)
+		if hdl:
+			hdl(page, record[4:], reciter, fmt, version)
+		off += length
+		i += 1
+	doc = data[off:]
+	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp4', (), doc, parent)
+	handle_doc(page, doc, dociter, fmt, version)
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
@@ -215,11 +247,20 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 4 + len(name), len(full_name), '%ds' % len(full_name), parent=font_iter)
 		i += 1
 
+def add_index(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	(count, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of entries', count, off - 4, 4, fmt('I'))
+	for i in range(0, count):
+		(entry, off) = rdata(data, off, '8s')
+		add_iter(hd, 'Entry %d' % i, '', off - 8, 8, '8s')
+
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'dash_stripe': add_dash_stripe,
 	'hj': add_hj,
+	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
 	'para_format': add_para_format,

@@ -46,6 +46,9 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
+def handle_doc(page, data, parent, fmt, version):
+	pass
+
 handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
@@ -61,7 +64,7 @@ handlers = {
 def handle_document(page, data, parent, fmt, version):
 	off = 0
 	i = 1
-	while off < len(data):
+	while off < len(data) and i < 15:
 		name, hdl, hid = 'Record %d' % i, None, 'record'
 		if handlers.has_key(i):
 			name = handlers[i][0]
@@ -76,6 +79,9 @@ def handle_document(page, data, parent, fmt, version):
 			hdl(page, record[4:], reciter, fmt, version)
 		off += length
 		i += 1
+	doc = data[off:]
+	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
+	handle_doc(page, doc, dociter, fmt, version)
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
