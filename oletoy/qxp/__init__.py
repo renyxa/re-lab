@@ -253,7 +253,7 @@ qxp5_ids = {
 }
 
 def call(hd, size, data, cid, args):
-	ids_map = {'qxp33': qxp33.ids, 'qxp4': qxp4.ids}
+	ids_map = {'qxp33': qxp33.ids, 'qxp4': qxp4.ids, 'qxp5': qxp5_ids}
 	if ids_map.has_key(cid):
 		ids = ids_map[cid]
 		if len(args) > 1 and ids.has_key(args[0]):
