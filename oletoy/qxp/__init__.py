@@ -246,6 +246,7 @@ def add_text(hd, size, data, fmt, version, text):
 		(tlen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Paragraph %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=paragraphiter)
 		i += 1
+	add_iter(hd, 'Gargbage?', '', off, size - off, '%ds' % (size - off))
 
 qxp5_ids = {
 	'header': add_header,
@@ -315,5 +316,5 @@ def open (page,buf,parent):
 			name = "TXT %02x"%i
 			add_pgiter(page,name,"qxp","txtblock%02x"%i,data,parent)
 		return "QXP6"
-	
+
 # vim: set ft=python sts=4 sw=4 noet:
