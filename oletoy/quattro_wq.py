@@ -39,7 +39,7 @@ class QWQDoc():
 			"GraphFieldPos":self.GraphFieldPos,
 			"GraphField":self.GraphField,
 			"Typeb7":self.Typeb7,
-			"Typecb": self.Typecb,
+			"SerieAnalyze": self.SerieAnalyze,
 			"Typed4": self.Typed4,
 			"CellStyle": self.CellStyle,
 			"ListString0": self.ListString0,
@@ -91,7 +91,7 @@ class QWQDoc():
 			0x98: "DbVar",
 			# 99, 9a
 			0x9b: "FontUser",
-			0x9c: "ColListCellSub", # a subset of the list of cell
+			0x9c: "ColListCellSelect", # a subset of the list of cell
 			0x9d: "CellProp",
 			# 9e
 			0x9f: "RgUnknB0",
@@ -104,10 +104,13 @@ class QWQDoc():
 			0xb5: "RgUnknC0",
 			0xb6: "RgUnknC1",
 			0xb7: "Typeb7",
-			# b7-b9, bb-bf
+			0xb8: "Chart3D",
+			# b9, bb-bf
+			0xc1: "ShadowColor",
 			# c0-c1,c4-c5,cb-ce
 			0xc9: "StyleUser",
-			0xcb: "Typecb",
+			0xca: "ChartBubble",
+			0xcb: "SerieAnalyze",
 			# d0, d4, d6-d7
 			0xd1: "ListString0",
 			0xd4: "Typed4",
@@ -155,9 +158,14 @@ class QWQDoc():
 			"PrintSetup":self.hdByte, # unsure
 			"PrintMargin":self.hdPrintMargin,
 			"LabelFormat":self.hdByte, # 27
-			"PrintBorders":self.hdRange4,
+			"PrintBorders":self.hdRange4, # top: 0,1 and lelf heading: 2,3
 			"GraphSetup":self.hdGraphSetup,
 			"GraphName":self.hdGraphName,
+			"GraphDef0":self.hdGraphDef0,
+			"GraphDef1":self.hdGraphDef1,
+			"GraphDef2":self.hdGraphDef2,
+			"GraphDef3":self.hdGraphDef3,
+			"GraphDef4":self.hdGraphDef4,
 			"GraphString":self.hdCString,
 			"ItCount":self.hdByte, # 1
 			"PrintFormat":self.hdByte, # 0|1|ff
@@ -174,7 +182,7 @@ class QWQDoc():
 			"Type99":self.hdByte,
 			"Type9a":self.hd2Int, # 0|28,0|2|4
 			"FontUserDef":self.hdFontUserDef,
-			"ColListCellSub":self.hdColListCell,
+			"ColListCellSelect":self.hdColListCell,
 			"CellProp":self.hdCellProp,
 			# 9e unsure size 16 or 17, often 0*,9c,75,00,88,3c,...
 			"RgUnknB0":self.hdRange2,
@@ -191,7 +199,7 @@ class QWQDoc():
 			"RgUnknC0":self.hdRange20,
 			"RgUnknC1":self.hdRange2,
 			# b7Data unsure, often 00000000000000007b14ae47e17a403f0500
-			"Typeb8":self.hdByte, # a-d
+			"Chart3D":self.hdByte, # 10:bar, 11:ribbon, 12: step, 13: area
 			"Typeb9":self.hdCString, # many followed by a byte 0
 			"Typebb":self.hdInt, # 64
 			"Typebc":self.hdByte,
@@ -199,15 +207,16 @@ class QWQDoc():
 			"Typebe":self.hdByte,
 			"Typebf":self.hdByte,
 			"Typec0":self.hdByte,
-			"Typec1":self.hd16Int,
+			"ShadowColor":self.hd16Int,
 			"Typec4":self.hdByte,
 			"Typec5":self.hdInt, # 0
 			"StyleUser":self.hdStyleUser,
-			"Typecb":self.hdCString,
-			"TypecbData":self.hdTypecbData,
+			"ChartBubble":self.hdByte, #e
+			"SerieAnalyze":self.hdCString,
+			"SerieAnalyzeData":self.hdSerieAnalyzeData,
 			"Typecc":self.hdUInt, # [08][0348][01][04]
 			"Typecd":self.hdInt, # 2a
-			"Typece":self.hdInt, # c
+			"Typece":self.hdInt, # c : related to CellStyle?
 			#TODO  d0
 			"ListString0":self.hdListString0,
 			"ListString0Def":self.hdListString0Def,
@@ -279,7 +288,7 @@ class QWQDoc():
 			off+=6*26
 		subZone.append(("data","GraphDef0",offset+off,49)) # list of some bytes
 		off+=49
-		for i in range(10):
+		for i in range(10): # line1, line2, xtitle, ytitle, serie1-serie6
 			len=40 if i<4 else 20
 			subZone.append(("string%d"%i,"GraphString",offset+off,len))
 			off+=len
@@ -288,8 +297,15 @@ class QWQDoc():
 		for i in range(6):
 			subZone.append(("font%d"%i,"FontUserDef",offset+off,8))
 			off+=8
+		subZone.append(("data2","GraphDef2",offset+off,33))
+		off+=33
+		subZone.append(("string10","GraphString",offset+off,40))
+		off+=40
+		# byte 0: position 0: right, 1: bottom
+		subZone.append(("data3","GraphDef3",offset+off,49))
+		off+=49
 		if length>off:
-			subZone.append(("data3","GraphDef2",offset+off,length-off))
+			subZone.append(("data4","GraphDef4",offset+off,length-off))
 		return subZone
 	def FontUser(self,length,offset):
 		subZone=[]
@@ -347,12 +363,12 @@ class QWQDoc():
 			off+=coordLen
 		subZone.append(("data","Typeb7Data",offset+off,length-off)) # unsure about this one
 		return subZone
-	def Typecb(self,length,offset):
+	def SerieAnalyze(self,length,offset):
 		subZone=[]
 		off=0
 		off+=16
 		for i in range(7):
-			subZone.append(("data%d"%i,"TypecbData",offset+off,8))
+			subZone.append(("data%d"%i,"SerieAnalyzeData",offset+off,8))
 			off+=8
 		return subZone
 	def Typed4(self,length,offset):
@@ -551,7 +567,15 @@ class QWQDoc():
 		off+=l
 
 	def hdWindowRec(self,hd,data):
-		self.hdInt(hd,data,19)
+		off=0
+		what,l=self.readCoord(data, off, 2)
+		add_iter (hd,"select",what,off,l,'txt')
+		off += l
+		for i in range(17):
+			col=struct.unpack('<H', data[off:off+2])[0]
+			add_iter (hd,"f%d"%i,col,off,2,'<H')
+			off+=2
+		self.checkFinish(hd,data,off,"hdWindowRec")
 
 	def hdColWidth(self,hd,data):
 		off=0
@@ -814,6 +838,7 @@ class QWQDoc():
 	def hdFormula(self,hd,data):
 		off=0
 		numCell=0
+		numDCell=0
 		while off<len(data):
 			wh=struct.unpack('<B', data[off:off+1])[0]
 			off+=1
@@ -825,8 +850,12 @@ class QWQDoc():
 				add_iter (hd,"cell",numCell,off-1,1,'txt')
 				numCell+=1
 			elif wh==2:
-				add_iter (hd,"cell[list]",numCell,off-1,1,'txt')
-				numCell+=2
+				if self.version==1:
+					add_iter (hd,"cell[list]",numDCell,off-1,1,'txt')
+					numDCell+=2
+				else:
+					add_iter (hd,"cell[list]",numCell,off-1,1,'txt')
+					numCell+=1
 			elif wh==5:
 				val=struct.unpack('<h', data[off:off+2])[0]
 				add_iter (hd,"int",val,off-1,1+2,'txt')
@@ -972,8 +1001,8 @@ class QWQDoc():
 		add_iter (hd,"color",val,off,2,'<H')
 		off+=2
 		if self.version==1:
-			val=struct.unpack('<h', data[off:off+2])[0] #-1
-			add_iter (hd,"f0",val,off,2,'<h')
+			val=struct.unpack('<H', data[off:off+2])[0] #-1
+			add_iter (hd,"fl","_" if val==0xFFFF else "%02x"%val,off,2,'<H')
 			off+=2
 			sSz=struct.unpack('<B', data[off:off+1])[0]
 			add_iter (hd,"sSz",sSz,off,1,'<B')
@@ -1137,7 +1166,7 @@ class QWQDoc():
 		add_iter (hd,"color",val,off,2,'<H')
 		off+=2
 		val=struct.unpack('<H', data[off:off+2])[0]
-		add_iter (hd,"f0",val,off,2,'<H')
+		add_iter (hd,"fl1","%02x"%val,off,2,'<H')
 		off+=2
 
 	def hdPrintMargin(self,hd,data):
@@ -1147,12 +1176,27 @@ class QWQDoc():
 			add_iter (hd,"f%d"%i,val/256.,off,2,'<h')
 			off+=2
 
-	def hdGraphSetup(self,hd,data):
-		off=0
-		for i in range(26):
-			what,l=self.readCoord(data, off, 2 if self.version==1 else 3)
-			add_iter (hd,"r%d"%i,what,off,l,'txt')
-			off+=l
+	def hdGraphSetup(self,hd,data,off=0):
+		pos,l=self.readCoord(data, off, 2 if self.version==1 else 3)
+		pos1,l1=self.readCoord(data, off+l, 2 if self.version==1 else 3)
+		add_iter (hd,"XSerie","%s->%s"%(pos,pos1),off,l+l1,'txt')
+		off+=l+l1
+		actOff=off
+		wh=""
+		for i in range(6):
+			pos,l=self.readCoord(data, off, 2 if self.version==1 else 3)
+			pos1,l1=self.readCoord(data, off+l, 2 if self.version==1 else 3)
+			wh+="%s->%s,"%(pos,pos1)
+			off+=l+l1
+		add_iter (hd,"data[series]",wh,actOff,off-actOff,'txt')
+		actOff=off
+		wh=""
+		for i in range(6):
+			pos,l=self.readCoord(data, off, 2 if self.version==1 else 3)
+			pos1,l1=self.readCoord(data, off+l, 2 if self.version==1 else 3)
+			wh+="%s->%s,"%(pos,pos1)
+			off+=l+l1
+		add_iter (hd,"label[series]",wh,actOff,off-actOff,'txt')
 	def hdGraphName(self,hd,data):
 		off=0
 		sSz=struct.unpack('<B', data[off:off+1])[0]
@@ -1162,10 +1206,172 @@ class QWQDoc():
 			sSz=15
 		add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
 		off=16
-		for i in range(26):
-			what,l=self.readCoord(data, off, 2 if self.version==1 else 3)
-			add_iter (hd,"r%d"%i,what,off,l,'txt')
+		hdGraphSetup(self,hd,data,off)
+	def hdGraphDef0(self,hd,data):
+		off=0
+		val=struct.unpack('<B', data[off:off+1])[0]
+		# 2D: 0:xy, 1:bar, 2:pie, 3:area, 4:line, 5:stack bar, 6:column, 7:High-Low, 8:rotated bar, 9:txt
+		# bubble: 0:normal
+		# 3D: 1:normal
+		add_iter (hd,"type",val,off,1,'<B')
+		off+=1
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"grid",val,off,1,'<B') # 0: none, 1:horizontal, 2: vertical, 3:both
+		off+=1
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"use[color]",val,off,1,'<B') # 0: no, ff:yes
+		off+=1
+		add_iter (hd,"unknown",binascii.hexlify(data[off:off+6]), off, 6, "txt")
+		off+=6
+		wh=""
+		for i in range(6):
+			val=struct.unpack('<B', data[off:off+1])[0] # 0:center,1:left,2:above,3:right,4:below,5:none
+			wh+="%d,"%val
+			off+=1
+		add_iter (hd,"align[series]",wh,off-6,6,'txt')
+		for i in range(2):
+			wh="X" if i==0 else "Y"
+			val=struct.unpack('<b', data[off:off+1])[0] # 0 or ff
+			add_iter (hd,"scale%s"%wh,"automatic" if val==0 else "manual",off,1,'<b')
+			off+=1
+			for j in range(2):
+				val=struct.unpack('<d', data[off:off+8])[0]
+				add_iter (hd,"%s%s"%("low" if j==0 else "high",wh),val,off,8,'txt')
+				off+=8
+		self.checkFinish(hd,data,off,"hdGraphDef0")
+	def hdGraphDef1(self,hd,data):
+		off=0
+		for i in range(2):
+			fmt=struct.unpack('<B', data[off:off+1])[0]
+			add_iter (hd,"fmtX" if i==0 else "fmtY",self.getFileFormat(fmt),off,1,'<B')
+			off+=1
+		for i in range(2):
+			val=struct.unpack('<B', data[off:off+1])[0]
+			add_iter (hd,"num[tickX]" if i==0 else "num[tickY]",val,off,1,'<B')
+			off+=1
+		for i in range(2):
+			val=struct.unpack('<B', data[off:off+1])[0] # 0=yes,255=no
+			add_iter (hd,"display[scaleX]" if i==0 else "display[scaleY]",val,off,1,'<B')
+			off+=1
+		wh=""
+		for i in range(6):
+			val=struct.unpack('<H', data[off:off+2])[0]
+			wh+="%d,"%val
+			off+=2
+		add_iter (hd,"color[series]",wh,off-12,12,'<H')
+		for i in range(3): # 3 color ?
+			val=struct.unpack('<H', data[off:off+2])[0]
+			add_iter (hd,"f%d"%(i+3),val,off,2,'<H')
+			off+=2
+		wh=""
+		for i in range(6):
+			val=struct.unpack('<H', data[off:off+2])[0]
+			wh+="%d,"%val
+			off+=2
+		add_iter (hd,"type[series]",wh,off-12,12,'<H')
+		for i in range(4): # 3 color +DI?
+			val=struct.unpack('<H', data[off:off+2])[0]
+			add_iter (hd,"f%d"%(i+6),val,off,2,'<H')
+			off+=2
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"color[background]",val,off,1,'<B')
+		off+=1
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"f10",val,off,1,'<B')
+		off+=1
+		self.checkFinish(hd,data,off,"hdGraphDef1")
+	def hdGraphDef2(self,hd,data):
+		off=0
+		add_iter (hd,"unkn0",binascii.hexlify(data[off:off+2]), off, 2, "txt")
+		off+=2
+		wh=""
+		for i in range(6):
+			val=struct.unpack('<b', data[off:off+1])[0] # 0: primary, 1:secondary
+			off+=1
+			wh+="%d:"%val
+			val=struct.unpack('<b', data[off:off+1])[0] # 0: default, 1:bar, 2:line
+			wh+="%d,"%val
+			off+=1
+		add_iter (hd,"yAxis/override[series]",wh,off-12,12,'<H')
+		val=struct.unpack('<b', data[off:off+1])[0] # 0 or ff
+		add_iter (hd,"scaleY2","automatic" if val==0 else "manual",off,1,'<b')
+		off+=1
+		for i in range(2):
+			val=struct.unpack('<d', data[off:off+8])[0]
+			add_iter (hd,"%sY2"%("low" if i==0 else "high"),val,off,8,'txt')
+			off+=8
+		fmt=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"fmtY2",self.getFileFormat(fmt),off,1,'<B')
+		off+=1
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"f0",val,off,1,'<B')
+		off+=1
+		self.checkFinish(hd,data,off,"hdGraphDef2")
+	def hdGraphDef3(self,hd,data):
+		off=0
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"Text[position]",val,off,1,'<B') # 0: bottom, 1: right, 2:none
+		off+=1
+		for i in range(3):
+			wh=["title","legend","graph"]
+			val=struct.unpack('<B', data[off:off+1])[0]
+			 # 0: box,1:double line, 2:thick-line, 3 shadow, 4: 3d, 5:rnd rectangle, 6:none,7:sculpted
+			add_iter (hd,"%s[outline]"%wh[i],val,off,1,'<B')
+			off+=1
+		for i in range(3):
+			wh="X" if i==0 else ("Y" if i==1 else "Y2")
+			val=struct.unpack('<H', data[off:off+2])[0]
+			add_iter (hd,"f0%s"%wh,"%02x"%val,off,2,'<H')
+			off+=2
+			val=struct.unpack('<B', data[off:off+1])[0]
+			add_iter (hd,"axis%s[mode]"%wh,val,off,1,'<B') # 0: normal, 1: log
+			off+=1
+			val=struct.unpack('<d', data[off:off+8])[0]
+			add_iter (hd,"increment%s"%wh,val,off,8,'txt')
+			off+=8
+		val=struct.unpack('<B', data[off:off+1])[0]
+		# 0: solid, 1: dotted, 2:center-line, 3:dashed, 4:heavy solid, 5: heavy dotted, 6:heavy centered, 7: heavy dashed
+		add_iter (hd,"style[gridline]",val,off,1,'<B')
+		off+=1
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"color[grid]",val,off,1,'<B')
+		off+=1
+		add_iter (hd,"unkn1",binascii.hexlify(data[off:off+10]), off, 10, "txt")
+		off+=10
+		self.checkFinish(hd,data,off,"hdGraphDef3")
+	def hdGraphDef4(self,hd,data):
+		off=0
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"tickX[alternate]",val,off,1,'<B')
+		off+=1
+		add_iter (hd,"unkn1",binascii.hexlify(data[off:off+2]), off, 2, "txt")
+		off+=2
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"use[depth]",val,off,1,'<B') # 0: no, ff:yes
+		off+=1
+		add_iter (hd,"unkn2",binascii.hexlify(data[off:off+24]), off, 24, "txt")
+		off+=24
+		val=struct.unpack('<H', data[off:off+2])[0]
+		add_iter (hd,"bar[width]",val,off,2,'<H') # in percent
+		off+=2
+		for i in range(4): # pos0,1: graph position, pos2,3: series label
+			pos,l=self.readCoord(data, off, 2)
+			add_iter (hd,"pos%d"%i,pos,off,l,'txt')
 			off+=l
+		add_iter (hd,"unkn3",binascii.hexlify(data[off:off+9]), off, 9, "txt")
+		off+=9
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"color[fill]",val,off,1,'<B')
+		off+=1
+		val=struct.unpack('<B', data[off:off+1])[0]
+		add_iter (hd,"f0",val,off,1,'<B')
+		off+=1
+		pos,l=self.readCoord(data, off, 2 if self.version==1 else 3)
+		pos1,l1=self.readCoord(data, off+l, 2 if self.version==1 else 3)
+		add_iter (hd,"pos","%s->%s"%(pos,pos1),off,l+l1,'txt')
+		off+=l+l1
+		self.checkFinish(hd,data,off,"hdGraphDef4")
+
 	def hdHiddenCol(self,hd,data):
 		off=0
 		for i in range(8): # list of flag, 1 by column
@@ -1295,13 +1501,13 @@ class QWQDoc():
 		self.checkFinish(hd,data,off,"hdGraphFieldPosData")
 	def hdGraphFieldData(self,hd,data):
 		off=0
-	def hdTypecbData(self,hd,data):
+	def hdSerieAnalyzeData(self,hd,data):
 		off=0
-		for i in range(4): # f1=7,f2=256
+		for i in range(4): # f1=7,f2(2 bytes)=256
 			val=struct.unpack('<h', data[off:off+2])[0]
 			add_iter (hd,"f%d"%i,val,off,2,'<h')
 			off+=2
-		self.checkFinish(hd,data,off,"hdTypecbData")
+		self.checkFinish(hd,data,off,"hdSerieAnalyzeData")
 
 	def hdTyped4(self,hd,data):
 		off=0
