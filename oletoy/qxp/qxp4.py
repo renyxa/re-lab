@@ -186,16 +186,11 @@ def add_para_format(hd, size, data, fmt, version):
 	(uses, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
 	off += 4
-# if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
-	flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
 	(flags, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, para_flags_map), off - 1, 1, fmt('B'))
 	off += 2
-	align_map = {0: 'Left', 1: 'Center', 2: 'Right', 3: 'Justified', 4: 'Forced'}
 	(align, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, fmt('B'))
-	if version < VERSION_4:
-		return # Not checked yet
 	(caps_lines, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Drop caps line count", caps_lines, off - 1, 1, fmt('B'))
 	(caps_chars, off) = rdata(data, off, fmt('B'))
