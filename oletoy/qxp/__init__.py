@@ -56,10 +56,16 @@ def open_v5(page, buf, parent, fmt, version):
 	def read_header():
 		if version < qxp.VERSION_4:
 			off = 0x108
+			(pictures, off) = rdata(buf, off, fmt('H'))
+			off += 8
+			(seed, off) = rdata(buf, off, fmt('H'))
+			(inc, off) = rdata(buf, off, fmt('H'))
 		else:
 			off = 0xe0
-		(pictures, off) = rdata(buf, off, fmt('H'))
-		return pictures
+			(pictures, off) = rdata(buf, off, fmt('H'))
+			seed = 0
+			inc = 0
+		return (pictures, seed, inc)
 
 	def read_story_blocks(pos, length, offset):
 		start = (pos - 1) * rlen
@@ -103,7 +109,7 @@ def open_v5(page, buf, parent, fmt, version):
 	big = False
 	nexts = {}
 	try:
-		pict_count = read_header()
+		(pict_count, seed, inc) = read_header()
 		while off < len(buf):
 			start = off
 			count = 1
@@ -201,6 +207,12 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
 	(pictures, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of picture boxes', pictures, off - 2, 2, fmt('H'))
+	if ver < qxp.VERSION_4:
+		off += 6
+		(seed, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Obfuscation seed', '%x' % seed, off - 2, 2, fmt('H'))
+		(inc, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Obfuscation increment', '%x' % inc, off - 2, 2, fmt('H'))
 
 def add_text(hd, size, data, fmt, version, text):
 	off = 0
