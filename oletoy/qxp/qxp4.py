@@ -21,33 +21,33 @@ def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
 
-def handle_para_style(page, data, parent, fmt, ctx, index):
+def handle_para_style(page, data, parent, fmt, version, index):
 	name = _read_name(data)
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('para_style', ctx), data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('para_style', fmt, version), data, parent)
 
-def handle_char_style(page, data, parent, fmt, ctx, index):
+def handle_char_style(page, data, parent, fmt, version, index):
 	name = _read_name(data)
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('char_style', ctx), data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('char_style', fmt, version), data, parent)
 
-def handle_hj(page, data, parent, fmt, ctx, index):
+def handle_hj(page, data, parent, fmt, version, index):
 	name = _read_name(data, 0x30)
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('hj', ctx), data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('hj', fmt, version), data, parent)
 
-def handle_dash_stripe(page, data, parent, fmt, ctx, index):
+def handle_dash_stripe(page, data, parent, fmt, version, index):
 	name = _read_name(data, 0xb0)
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('dash_stripe', ctx), data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('dash_stripe', fmt, version), data, parent)
 
-def handle_list(page, data, parent, fmt, ctx, index):
+def handle_list(page, data, parent, fmt, version, index):
 	name = _read_name(data, 0)
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('list', ctx), data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('list', fmt, version), data, parent)
 
-def handle_char_format(page, data, parent, fmt, ctx, index):
-	add_pgiter(page, '[%d]' % index, 'qxp4', ('char_format', ctx), data, parent)
+def handle_char_format(page, data, parent, fmt, version, index):
+	add_pgiter(page, '[%d]' % index, 'qxp4', ('char_format', fmt, version), data, parent)
 
-def handle_para_format(page, data, parent, fmt, ctx, index):
-	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', ctx), data, parent)
+def handle_para_format(page, data, parent, fmt, version, index):
+	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
-def handle_doc(page, data, parent, fmt, ctx):
+def handle_doc(page, data, parent, fmt, version):
 	pass
 
 handlers1 = {
@@ -69,7 +69,7 @@ handlers2 = {
 	2: ('Paragraph formats', handle_collection(handle_para_format, 100)),
 }
 
-def handle_document(page, data, parent, fmt, ctx):
+def handle_document(page, data, parent, fmt, version):
 	off = 0
 	i = 1
 	handlers = handlers1
@@ -83,9 +83,9 @@ def handle_document(page, data, parent, fmt, ctx):
 				hid = handlers[i][2]
 		(length, off) = rdata(data, off, fmt('I'))
 		record = data[off - 4:off + length]
-		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, ctx), record, parent)
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, fmt, version), record, parent)
 		if hdl:
-			hdl(page, record[4:], reciter, fmt, ctx)
+			hdl(page, record[4:], reciter, fmt, version)
 		if i == 14:
 			(count2, _) = rdata(data, off, fmt('I'))
 		off += length
@@ -104,16 +104,16 @@ def handle_document(page, data, parent, fmt, ctx):
 				hid = handlers[idx][2]
 		(length, off) = rdata(data, off, fmt('I'))
 		record = data[off - 4:off + length]
-		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, ctx), record, parent)
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp4', (hid, fmt, version), record, parent)
 		if hdl:
-			hdl(page, record[4:], reciter, fmt, ctx)
+			hdl(page, record[4:], reciter, fmt, version)
 		off += length
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp4', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, ctx)
+	handle_doc(page, doc, dociter, fmt, version)
 
-def add_picture(hd, size, data, fmt, ctx):
+def add_picture(hd, size, data, fmt, version):
 	off = 0
 	(sz, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
@@ -132,13 +132,13 @@ def _add_name(hd, size, data, offset=0, name="Name"):
 	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
 	return off
 
-def add_para_style(hd, size, data, fmt, ctx):
+def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 
-def add_char_style(hd, size, data, fmt, ctx):
+def add_char_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 
-def add_hj(hd, size, data, fmt, ctx):
+def add_hj(hd, size, data, fmt, version):
 	off = 4
 	(sm, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Smallest word', sm, off - 1, 1, fmt('B'))
@@ -166,7 +166,7 @@ def add_hj(hd, size, data, fmt, ctx):
 	add_iter(hd, 'Flush zone (in.)', dim2in(flush_zone), off - 2, 2, fmt('H'))
 	off = _add_name(hd, size, data, 0x30)
 
-def add_char_format(hd, size, data, fmt, ctx):
+def add_char_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
@@ -181,7 +181,7 @@ def add_char_format(hd, size, data, fmt, ctx):
 	(color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
-def add_para_format(hd, size, data, fmt, ctx):
+def add_para_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
@@ -220,14 +220,14 @@ def add_para_format(hd, size, data, fmt, ctx):
 	(space_after, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
 
-def add_dash_stripe(hd, size, data, fmt, ctx):
+def add_dash_stripe(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0xb0)
 
-def add_list(hd, size, data, fmt, ctx):
+def add_list(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0)
 
-def add_fonts(hd, size, data, fmt, ctx):
-	off = add_length(hd, size, data, fmt, 0)
+def add_fonts(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
 	(count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of fonts', count, off - 2, 2, fmt('H'))
 	i = 0
@@ -242,8 +242,8 @@ def add_fonts(hd, size, data, fmt, ctx):
 		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 4 + len(name), len(full_name), '%ds' % len(full_name), parent=font_iter)
 		i += 1
 
-def add_index(hd, size, data, fmt, ctx):
-	off = add_length(hd, size, data, fmt, 0)
+def add_index(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
 	(count, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, '# of entries', count, off - 4, 4, fmt('I'))
 	for i in range(0, count):

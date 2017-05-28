@@ -34,19 +34,19 @@ def _handle_collection_named(handler, name_offset):
 			i += 1
 	return hdl
 
-def handle_para_style(page, data, parent, fmt, ctx, index, name):
+def handle_para_style(page, data, parent, fmt, version, index, name):
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', '', data, parent)
 
-def handle_hj(page, data, parent, fmt, ctx, index, name):
+def handle_hj(page, data, parent, fmt, version, index, name):
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', '', data, parent)
 
-def handle_char_format(page, data, parent, fmt, ctx, index):
-	add_pgiter(page, '[%d]' % index, 'qxp33', ('char_format', ctx), data, parent)
+def handle_char_format(page, data, parent, fmt, version, index):
+	add_pgiter(page, '[%d]' % index, 'qxp33', ('char_format', fmt, version), data, parent)
 
-def handle_para_format(page, data, parent, fmt, ctx, index):
-	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', ctx), data, parent)
+def handle_para_format(page, data, parent, fmt, version, index):
+	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
-def handle_doc(page, data, parent, fmt, ctx):
+def handle_doc(page, data, parent, fmt, version):
 	pass
 
 handlers = {
@@ -61,7 +61,7 @@ handlers = {
 	13: ('Paragraph formats', handle_collection(handle_para_format, 256)),
 }
 
-def handle_document(page, data, parent, fmt, ctx):
+def handle_document(page, data, parent, fmt, version):
 	off = 0
 	i = 1
 	while off < len(data) and i < 15:
@@ -74,16 +74,16 @@ def handle_document(page, data, parent, fmt, ctx):
 				hid = handlers[i][2]
 		(length, off) = rdata(data, off, fmt('I'))
 		record = data[off - 4:off + length]
-		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp33', (hid, ctx), record, parent)
+		reciter = add_pgiter(page, "[%d] %s" % (i, name), 'qxp33', (hid, fmt, version), record, parent)
 		if hdl:
-			hdl(page, record[4:], reciter, fmt, ctx)
+			hdl(page, record[4:], reciter, fmt, version)
 		off += length
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, ctx)
+	handle_doc(page, doc, dociter, fmt, version)
 
-def add_char_format(hd, size, data, fmt, ctx):
+def add_char_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
@@ -96,7 +96,7 @@ def add_char_format(hd, size, data, fmt, ctx):
 	(color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
-def add_para_format(hd, size, data, fmt, ctx):
+def add_para_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
@@ -134,8 +134,8 @@ def add_para_format(hd, size, data, fmt, ctx):
 	(space_after, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
 
-def add_fonts(hd, size, data, fmt, ctx):
-	off = add_length(hd, size, data, fmt, 0)
+def add_fonts(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
 	(count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of fonts', count, off - 2, 2, fmt('H'))
 	i = 0
