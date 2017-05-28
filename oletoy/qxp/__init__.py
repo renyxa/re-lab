@@ -11,11 +11,24 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
 
+import copy
 import struct
 from utils import *
 import qxp
 import qxp33
 import qxp4
+
+class Context:
+	def __init__(self, fmt, version=0, seed=0, inc=0):
+		self.fmt = fmt
+		self.version = version
+		self.seed = seed
+		self.inc = inc
+
+	def next(self):
+		ctx = copy.copy(self)
+		ctx.seed += ctx.inc
+		return ctx
 
 def collect_group(data,name,buf,fmt,off,grp_id):
 	grplen = struct.unpack(fmt('H'),buf[off+0x400*(grp_id-1):off+0x400*(grp_id-1)+2])[0]
@@ -41,10 +54,10 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def handle_document(page, data, parent, fmt, version):
+def handle_document(page, data, parent, fmt, ctx):
 	hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
-	if hdl_map.has_key(version):
-		hdl_map[version](page, data, parent, fmt, version)
+	if hdl_map.has_key(ctx.version):
+		hdl_map[ctx.version](page, data, parent, fmt, ctx)
 
 def open_v5(page, buf, parent, fmt, version):
 	chains = []
@@ -173,9 +186,10 @@ def open_v5(page, buf, parent, fmt, version):
 			tid += 1
 		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos + 1)
 		if pos == 0:
-			handle_document(page, stream, streamiter, fmt, version)
+			ctx = Context(fmt, version, seed, inc)
+			handle_document(page, stream, streamiter, ctx.fmt, ctx)
 
-def add_header(hd, size, data, fmt, version):
+def add_header(hd, size, data, fmt):
 	off = 2
 	proc_map = {'II': 'Intel', 'MM': 'Motorola'}
 	(proc, off) = rdata(data, off, '2s')
@@ -214,7 +228,7 @@ def add_header(hd, size, data, fmt, version):
 		(inc, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Obfuscation increment', '%x' % inc, off - 2, 2, fmt('H'))
 
-def add_text(hd, size, data, fmt, version, text):
+def add_text(hd, size, data, fmt, ctx, text):
 	off = 0
 	(length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Text length', length, off - 4, 4, fmt('I'))
@@ -226,7 +240,7 @@ def add_text(hd, size, data, fmt, version, text):
 	while off < begin + blocks_len:
 		(block, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Block %d' % i, block, off - 4, 4, fmt('I'), parent=blockiter)
-		if version < qxp.VERSION_4:
+		if ctx.version < qxp.VERSION_4:
 			(sz, fm) = (2, fmt('H'))
 		else:
 			(sz, fm) = (4, fmt('I'))
@@ -239,7 +253,7 @@ def add_text(hd, size, data, fmt, version, text):
 	i = 0
 	begin = off
 	while off < begin + formatting_len:
-		if version < qxp.VERSION_4:
+		if ctx.version < qxp.VERSION_4:
 			(sz, fm) = (2, fmt('H'))
 		else:
 			(sz, fm) = (4, fmt('I'))
@@ -254,7 +268,7 @@ def add_text(hd, size, data, fmt, version, text):
 	i = 0
 	begin = off
 	while off < begin + paragraphs_len:
-		if version < qxp.VERSION_4:
+		if ctx.version < qxp.VERSION_4:
 			(sz, fm) = (2, fmt('H'))
 		else:
 			(sz, fm) = (4, fmt('I'))
@@ -277,11 +291,15 @@ def call(hd, size, data, cid, args):
 		if len(args) > 1 and ids.has_key(args[0]):
 			f = ids[args[0]]
 			if len(args) == 2:
-				f(hd, size, data, args[1], 0)
-			elif len(args) == 3:
-				f(hd, size, data, args[1], args[2])
+				if hasattr(args[1], 'fmt'):
+					f(hd, size, data, args[1].fmt, args[1]) # expand for convenience
+				else:
+					f(hd, size, data, args[1])
 			else:
-				f(hd, size, data, args[1], args[2], args[3])
+				if hasattr(args[1], 'fmt'):
+					f(hd, size, data, args[1].fmt, args[1], args[2])
+				else:
+					f(hd, size, data, args[1], args[2])
 
 def open (page,buf,parent):
 	if buf[2:4] == 'II':
