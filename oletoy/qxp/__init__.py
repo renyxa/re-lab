@@ -54,7 +54,10 @@ def open_v5(page, buf, parent, fmt, version):
 	rlen = 0x100
 
 	def read_header():
-		off = 0xe0
+		if version < qxp.VERSION_4:
+			off = 0x108
+		else:
+			off = 0xe0
 		(pictures, off) = rdata(buf, off, fmt('H'))
 		return pictures
 
@@ -89,12 +92,14 @@ def open_v5(page, buf, parent, fmt, version):
 			tblocks[block] = ""
 			story.append((block, tlen))
 
-	# parse blocks
-	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[0:len(buf)], parent)
+	add_pgiter(page, 'Header', 'qxp5', ('header', fmt), buf[0:512], parent)
 
-	last_data = 2
-	off = 0
-	i = 1
+	# parse blocks
+	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[512:len(buf)], parent)
+
+	off = 512
+	i = 3
+	last_data = 0
 	big = False
 	nexts = {}
 	try:
@@ -141,29 +146,27 @@ def open_v5(page, buf, parent, fmt, version):
 	# reconstruct data streams from chains of blocks
 	pid = 1
 	tid = 1
-	stream_name_map = {0: "Header", 1: "Unknown", 2: "Document"}
-	stream_map = {0: 'header', 1: '', 2: ''}
 	for (pos, chain) in enumerate(chains):
 		stream = ""
 		for block in chain:
 			start = 2 if len(block) > rlen else 0
 			stream += block[start:len(block) - 4]
-		if stream_name_map.has_key(pos):
-			name = stream_name_map[pos]
-			vis = (stream_map[pos], fmt)
+		if pos == 0:
+			name = 'Document'
+			vis = ''
 		elif pos in pictures:
 			name = "Picture %d" % pid
 			vis = ('picture', fmt, version)
 			pid += 1
-		else:
+		elif stories.has_key(pos):
 			name = "Text %d" % tid
 			text = ""
 			for block in stories[pos]:
 				text += tblocks[block[0]][0:block[1]]
 			vis = ('text', fmt, version, text)
 			tid += 1
-		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos)
-		if pos == 2:
+		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos + 1)
+		if pos == 0:
 			handle_document(page, stream, streamiter, fmt, version)
 
 def add_header(hd, size, data, fmt, version):
@@ -192,6 +195,8 @@ def add_header(hd, size, data, fmt, version):
 	off += 208
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
+	if ver < qxp.VERSION_4:
+		off += 40
 	(texts, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
 	(pictures, off) = rdata(data, off, fmt('H'))
