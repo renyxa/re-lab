@@ -17,6 +17,14 @@ import qxp
 import qxp33
 import qxp4
 
+class ObfuscationContext:
+	def __init__(self, seed, inc):
+		self.seed = seed
+		self.inc = inc
+
+	def next(self):
+		return ObfuscationContext(self.seed + self.inc, self.inc)
+
 def collect_group(data,name,buf,fmt,off,grp_id):
 	grplen = struct.unpack(fmt('H'),buf[off+0x400*(grp_id-1):off+0x400*(grp_id-1)+2])[0]
 	data += buf[off+0x400*(grp_id-1)+2:off+0x400*(grp_id+grplen-1)-4]
@@ -41,10 +49,10 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def handle_document(page, data, parent, fmt, version):
+def handle_document(page, data, parent, fmt, version, obfctx):
 	hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
 	if hdl_map.has_key(version):
-		hdl_map[version](page, data, parent, fmt, version)
+		hdl_map[version](page, data, parent, fmt, version, obfctx)
 
 def open_v5(page, buf, parent, fmt, version):
 	chains = []
@@ -173,7 +181,7 @@ def open_v5(page, buf, parent, fmt, version):
 			tid += 1
 		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos + 1)
 		if pos == 0:
-			handle_document(page, stream, streamiter, fmt, version)
+			handle_document(page, stream, streamiter, fmt, version, ObfuscationContext(seed, inc))
 
 def add_header(hd, size, data, fmt, version):
 	off = 2

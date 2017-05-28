@@ -47,7 +47,7 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
-def handle_doc(page, data, parent, fmt, version):
+def handle_doc(page, data, parent, fmt, version, obfctx):
 	pass
 
 handlers1 = {
@@ -69,7 +69,7 @@ handlers2 = {
 	2: ('Paragraph formats', handle_collection(handle_para_format, 100)),
 }
 
-def handle_document(page, data, parent, fmt, version):
+def handle_document(page, data, parent, fmt, version, obfctx):
 	off = 0
 	i = 1
 	handlers = handlers1
@@ -111,7 +111,7 @@ def handle_document(page, data, parent, fmt, version):
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp4', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, version)
+	handle_doc(page, doc, dociter, fmt, version, obfctx)
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
