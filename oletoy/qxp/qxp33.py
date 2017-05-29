@@ -46,8 +46,48 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
+def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+	off = offset
+	(typ, off) = rdata(data, off, fmt('B'))
+	typ = obfctx.deobfuscate(typ, 1)
+	if typ == 3:
+		off += 123
+		(eh, off) = rdata(data, off, fmt('I'))
+		off += 4
+		if eh == 0: # TODO: this is a wild guess
+			off += 12
+	add_pgiter(page, '[%d]' % index, 'qxp33', ('object', fmt, version, obfctx), data[offset:off], parent)
+	return off
+
 def handle_doc(page, data, parent, fmt, version, obfctx):
-	pass
+	off = 0
+	i = 1
+	while off < len(data):
+		start = off
+		(typ, off) = rdata(data, off + 2, fmt('H'))
+		if typ == 0x40:
+			tname = 'Single'
+			vid = 'page'
+			off += 94
+		elif typ == 0x7c:
+			tname = 'Facing'
+			vid = 'facing_page'
+			off += 166
+		else:
+			add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
+			break
+		(name_len, off) = rdata(data, off, fmt('I'))
+		(name, _) = rcstr(data, off)
+		off += name_len
+		(objs, off) = rdata(data, off, fmt('I'))
+		pname = '[%d] %s page' % (i, tname)
+		if len(name) != 0:
+			pname += ' "%s"' % name
+		pgiter = add_pgiter(page, pname, 'qxp33', (vid, fmt, version), data[start:off], parent)
+		for j in range(1, objs + 1):
+			off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+			obfctx = obfctx.next()
+		i += 1
 
 handlers = {
 	2: ('Print settings',),
@@ -82,6 +122,14 @@ def handle_document(page, data, parent, fmt, version, obfctx):
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx)
+
+def _add_pcstr4(hd, size, data, off, fmt, name="Name"):
+	(length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '%s length' % name, length, off - 4, 4, fmt('I'))
+	(pstring, off) = rdata(data, off, '%ds' % length)
+	string = pstring[0:pstring.find('\0')]
+	add_iter(hd, name, string, off - length, length, '%ds' % length)
+	return off
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
@@ -150,9 +198,34 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 2 + len(name) + 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
 		i += 1
 
+def add_page(hd, size, data, fmt, version):
+	off = 98
+	off = _add_pcstr4(hd, size, data, off, fmt)
+	(objs, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
+
+def add_facing_page(hd, size, data, fmt, version):
+	off = 170
+	off = _add_pcstr4(hd, size, data, off, fmt)
+	(objs, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
+
+def add_object(hd, size, data, fmt, version, obfctx):
+	(typ, off) = rdata(data, 0, fmt('B'))
+	add_iter(hd, 'Type', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
+	off += 5
+	(text, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Text', obfctx.deobfuscate(text, 2), off - 2, 2, fmt('H'))
+	off += 66
+	(toff, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+
 ids = {
 	'char_format': add_char_format,
+	'facing_page': add_facing_page,
 	'fonts': add_fonts,
+	'object': add_object,
+	'page': add_page,
 	'para_format': add_para_format,
 	'record': add_record,
 }

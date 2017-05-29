@@ -23,7 +23,10 @@ class ObfuscationContext:
 		self.inc = inc
 
 	def next(self):
-		return ObfuscationContext(self.seed + self.inc, self.inc)
+		return ObfuscationContext((self.seed + self.inc) & 0xffff, self.inc)
+
+	def deobfuscate(self, value, n):
+		return qxp.deobfuscate(value, self.seed, n)
 
 def collect_group(data,name,buf,fmt,off,grp_id):
 	grplen = struct.unpack(fmt('H'),buf[off+0x400*(grp_id-1):off+0x400*(grp_id-1)+2])[0]
@@ -65,7 +68,7 @@ def open_v5(page, buf, parent, fmt, version):
 		if version < qxp.VERSION_4:
 			off = 0x108
 			(pictures, off) = rdata(buf, off, fmt('H'))
-			off += 8
+			off += 6
 			(seed, off) = rdata(buf, off, fmt('H'))
 			(inc, off) = rdata(buf, off, fmt('H'))
 		else:
