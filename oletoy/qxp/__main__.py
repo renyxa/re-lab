@@ -21,10 +21,17 @@ seed = int(sys.argv[1], 16)
 inc = int(sys.argv[2], 16)
 repeat = int(sys.argv[3])
 value = int(sys.argv[4], 16)
+if len(sys.argv) > 5:
+	n = int(sys.argv[5])
+else:
+	if value >> 8 == 0:
+		n = 1
+	else:
+		n = 2
 
 for i in range(0, repeat):
 	seed = (seed + inc) & 0xffff
 
-print('%x' % qxp.deobfuscate(value, seed))
+print('%x' % qxp.deobfuscate(value, seed, n))
 
 # vim: set ft=python sts=4 sw=4 noet:

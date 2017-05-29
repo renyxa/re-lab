@@ -25,13 +25,15 @@ def big_endian(fmt):
 def dim2in(dim):
 	return dim / 72.0
 
-def deobfuscate(value, seed):
-	assert value >> 16 == 0
-	if value >> 8 == 0:
+def deobfuscate(value, seed, n):
+	assert n in [1, 2]
+	if n == 1:
+		assert value >> 8 == 0
 		mask = 0xff
 	else:
+		assert value >> 16 == 0
 		mask = 0xffff
-	return (value + seed - ((value & seed) << 1)) & mask
+	return ((value + seed) & 0xffff - ((value & seed) << 1) & 0xffff + (1 << 16)) & mask
 
 VERSION_3_3 = 0x3f
 VERSION_4 = 0x41
@@ -63,12 +65,12 @@ align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
 para_flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
 
 if __name__ == '__main__':
-	def test_deobfuscate(seed, value, expected):
-		assert deobfuscate(value, seed) == expected
+	def test_deobfuscate(seed, value, n, expected):
+		assert deobfuscate(value, seed, n) == expected
 
-	test_deobfuscate(0, 0, 0)
-	test_deobfuscate(0xa132, 0x31, 0x3)
-	test_deobfuscate(0xa132, 0xa133, 0x1)
-	test_deobfuscate(0x7236, 0x35, 0x3)
+	test_deobfuscate(0, 0, 1, 0)
+	test_deobfuscate(0xa132, 0x31, 1, 0x3)
+	test_deobfuscate(0xa132, 0xa133, 2, 0x1)
+	test_deobfuscate(0x7236, 0x35, 1, 0x3)
 
 # vim: set ft=python sts=4 sw=4 noet:
