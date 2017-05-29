@@ -199,12 +199,24 @@ def add_fonts(hd, size, data, fmt, version):
 		i += 1
 
 def add_page(hd, size, data, fmt, version):
+	off = 16
+	(width, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Width (in.)', dim2in(width), off - 2, 2, fmt('H'))
+	off += 2
+	(height, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Height (in.)', dim2in(height), off - 2, 2, fmt('H'))
 	off = 98
 	off = _add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
 
 def add_facing_page(hd, size, data, fmt, version):
+	off = 16
+	(width, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Width (in.)', dim2in(width), off - 2, 2, fmt('H'))
+	off += 2
+	(height, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Height (in.)', dim2in(height), off - 2, 2, fmt('H'))
 	off = 170
 	off = _add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
