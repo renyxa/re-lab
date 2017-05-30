@@ -284,7 +284,12 @@ def add_page(hd, size, data, fmt, version):
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
-	off += 92
+	off += 6
+	(width, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
+	(height, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
+	off += 78
 	off = add_pcstr4(hd, size, data, off, fmt)
 
 def add_facing_page(hd, size, data, fmt, version):
@@ -293,7 +298,12 @@ def add_facing_page(hd, size, data, fmt, version):
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
-	off += 168
+	off += 6
+	(width, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
+	(height, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
+	off += 154
 	off = add_pcstr4(hd, size, data, off, fmt)
 
 ids = {
