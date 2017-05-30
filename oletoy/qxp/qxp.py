@@ -54,6 +54,14 @@ def add_length(hd, size, data, fmt, version, offset, name="Length"):
 	add_iter(hd, name, length, off - 4, 4, fmt('I'))
 	return off
 
+def add_pcstr4(hd, size, data, offset, fmt, name="Name"):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, '%s length' % name, length, off - 4, 4, fmt('I'))
+	(pstring, off) = rdata(data, off, '%ds' % length)
+	string = pstring[0:pstring.find('\0')]
+	add_iter(hd, name, string, off - length, length, '%ds' % length)
+	return off
+
 def add_record(hd, size, data, fmt, version):
 	add_length(hd, size, data, fmt, version, 0)
 

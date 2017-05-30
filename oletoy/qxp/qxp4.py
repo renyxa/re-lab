@@ -47,8 +47,36 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
+def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+	return offset
+
 def handle_doc(page, data, parent, fmt, version, obfctx):
-	pass
+	off = 0
+	i = 1
+	while off < len(data):
+		start = off
+		(typ, off) = rdata(data, off + 2, fmt('H'))
+		if typ == 0x44:
+			tname = 'Single'
+			vid = 'page'
+			off += 98
+		elif typ == 0x84:
+			tname = 'Facing'
+			vid = 'facing_page'
+			off += 174
+		else:
+			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
+			break
+		(name_len, off) = rdata(data, off, fmt('I'))
+		(name, _) = rcstr(data, off)
+		off += name_len
+		off += 4
+		pname = '[%d] %s page' % (i, tname)
+		if len(name) != 0:
+			pname += ' "%s"' % name
+		pgiter = add_pgiter(page, pname, 'qxp4', (vid, fmt, version), data[start:off], parent)
+		i += 1
+
 
 handlers1 = {
 	2: ('Print settings',),
@@ -250,14 +278,34 @@ def add_index(hd, size, data, fmt, version):
 		(entry, off) = rdata(data, off, '8s')
 		add_iter(hd, 'Entry %d' % i, '', off - 8, 8, '8s')
 
+def add_page(hd, size, data, fmt, version):
+	off = 8
+	(idx, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
+	(cidx, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
+	off += 92
+	off = add_pcstr4(hd, size, data, off, fmt)
+
+def add_facing_page(hd, size, data, fmt, version):
+	off = 8
+	(idx, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
+	(cidx, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
+	off += 168
+	off = add_pcstr4(hd, size, data, off, fmt)
+
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'dash_stripe': add_dash_stripe,
+	'facing_page': add_facing_page,
 	'hj': add_hj,
 	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
+	'page': add_page,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'picture': add_picture,

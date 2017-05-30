@@ -123,14 +123,6 @@ def handle_document(page, data, parent, fmt, version, obfctx):
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx)
 
-def _add_pcstr4(hd, size, data, off, fmt, name="Name"):
-	(length, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, '%s length' % name, length, off - 4, 4, fmt('I'))
-	(pstring, off) = rdata(data, off, '%ds' % length)
-	string = pstring[0:pstring.find('\0')]
-	add_iter(hd, name, string, off - length, length, '%ds' % length)
-	return off
-
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('H'))
@@ -206,7 +198,7 @@ def add_page(hd, size, data, fmt, version):
 	(height, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 2, 2, fmt('H'))
 	off = 98
-	off = _add_pcstr4(hd, size, data, off, fmt)
+	off = add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
 
@@ -218,7 +210,7 @@ def add_facing_page(hd, size, data, fmt, version):
 	(height, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 2, 2, fmt('H'))
 	off = 170
-	off = _add_pcstr4(hd, size, data, off, fmt)
+	off = add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
 
