@@ -209,7 +209,11 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	(ver, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-	off += 208
+	if ver < qxp.VERSION_4:
+		off = 0x40
+		(pages, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
+	off = 0xdc
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
 	if ver < qxp.VERSION_4:
