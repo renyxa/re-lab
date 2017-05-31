@@ -197,6 +197,13 @@ def add_page(hd, size, data, fmt, version):
 	off += 2
 	(height, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 2, 2, fmt('H'))
+	off = 62
+	# maybe 4 bytes?
+	(col, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+	off += 4
+	(gut, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
 	off = 98
 	off = add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
@@ -209,6 +216,13 @@ def add_facing_page(hd, size, data, fmt, version):
 	off += 2
 	(height, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 2, 2, fmt('H'))
+	off = 62
+	# maybe 4 bytes?
+	(col, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+	off += 4
+	(gut, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
 	off = 170
 	off = add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
