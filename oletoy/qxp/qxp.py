@@ -62,6 +62,20 @@ def add_pcstr4(hd, size, data, offset, fmt, name="Name"):
 	add_iter(hd, name, string, off - length, length, '%ds' % length)
 	return off
 
+def add_margins(hd, size, data, offset, fmt):
+	(top, off) = rdata(data, offset, fmt('H'))
+	add_iter(hd, 'Top margin (in.)', dim2in(top), off - 2, 2, fmt('H'))
+	off += 2
+	(bottom, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Bottom margin (in.)', dim2in(bottom), off - 2, 2, fmt('H'))
+	off += 2
+	(left, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Left margin (in.)', dim2in(left), off - 2, 2, fmt('H'))
+	off += 2
+	(right, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Right margin (in.)', dim2in(right), off - 2, 2, fmt('H'))
+	return off
+
 def add_record(hd, size, data, fmt, version):
 	add_length(hd, size, data, fmt, version, 0)
 
