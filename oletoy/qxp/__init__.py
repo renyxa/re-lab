@@ -213,6 +213,11 @@ def add_header(hd, size, data, fmt, version):
 		off = 0x40
 		(pages, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
+		off = 0x4c
+		qxp.add_margins(hd, size, data, off, fmt)
+	else:
+		off = 0x2e
+		qxp.add_margins(hd, size, data, off, fmt)
 	off = 0xdc
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
