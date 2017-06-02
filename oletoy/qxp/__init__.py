@@ -13,6 +13,7 @@
 
 import struct
 from utils import *
+from qxp import dim2in
 import qxp
 import qxp33
 import qxp4
@@ -214,7 +215,12 @@ def add_header(hd, size, data, fmt, version):
 		(pages, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
 		off = 0x4c
-		qxp.add_margins(hd, size, data, off, fmt)
+		off = qxp.add_margins(hd, size, data, off, fmt)
+		(col, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+		off += 2
+		(gut, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
 	else:
 		off = 0x2e
 		qxp.add_margins(hd, size, data, off, fmt)
