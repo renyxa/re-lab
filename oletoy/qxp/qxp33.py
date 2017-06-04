@@ -235,10 +235,16 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Type', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
 	off += 5
 	(text, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Text', obfctx.deobfuscate(text, 2), off - 2, 2, fmt('H'))
-	off += 66
+	textiter = add_iter(hd, 'Starting block of text chain', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
+	off += 12
+	# Text boxes with the same link ID are linked.
+	(lid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
+	off += 50
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	if toff > 0:
+		hd.model.set(textiter, 0, "Index in linked list?")
 
 ids = {
 	'char_format': add_char_format,

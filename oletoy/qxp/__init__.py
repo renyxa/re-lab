@@ -62,6 +62,7 @@ def open_v5(page, buf, parent, fmt, version):
 	chains = []
 	tblocks = {}
 	stories = {}
+	tstarts = {}
 	pictures = []
 	rlen = 0x100
 
@@ -151,6 +152,7 @@ def open_v5(page, buf, parent, fmt, version):
 					chains.append([])
 					if chain > last_data + pict_count:
 						stories[chain] = []
+						tstarts[chain] = i
 						parse_story(i, stories[chain])
 					elif chain > last_data:
 						pictures.append(chain)
@@ -177,7 +179,7 @@ def open_v5(page, buf, parent, fmt, version):
 			vis = ('picture', fmt, version)
 			pid += 1
 		elif stories.has_key(pos):
-			name = "Text %d" % tid
+			name = "Text %d [%x]" % (tid, tstarts[pos])
 			text = ""
 			for block in stories[pos]:
 				text += tblocks[block[0]][0:block[1]]
