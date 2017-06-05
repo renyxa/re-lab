@@ -48,7 +48,7 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
-	return offset
+	return (obfctx, offset)
 
 def handle_doc(page, data, parent, fmt, version, obfctx):
 	off = 0
@@ -70,11 +70,15 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 		(name_len, off) = rdata(data, off, fmt('I'))
 		(name, _) = rcstr(data, off)
 		off += name_len
-		off += 4
 		pname = '[%d] %s page' % (i, tname)
 		if len(name) != 0:
 			pname += ' "%s"' % name
-		pgiter = add_pgiter(page, pname, 'qxp4', (vid, fmt, version), data[start:off], parent)
+		(objs, off) = rdata(data, off, fmt('I'))
+		pgiter = add_pgiter(page, pname, 'qxp4', (vid, fmt, version, obfctx), data[start:off], parent)
+		objs = obfctx.deobfuscate(objs & 0xffff, 2)
+		obfctx = obfctx.next()
+		for j in range(1, objs + 1):
+			(obfctx, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 		i += 1
 
 
@@ -278,7 +282,24 @@ def add_index(hd, size, data, fmt, version):
 		(entry, off) = rdata(data, off, '8s')
 		add_iter(hd, 'Entry %d' % i, '', off - 8, 8, '8s')
 
-def add_page(hd, size, data, fmt, version):
+def add_object(hd, size, data, fmt, version, obfctx):
+	off = 12
+	(text, off) = rdata(data, off, fmt('I'))
+	# TODO: the value is obfuscated somehow
+	add_iter(hd, 'Starting block of text chain?', text, 4, off - 4, 4, fmt('I'))
+	off += 8
+	# Text boxes with the same link ID are linked.
+	(lid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
+	off += 14
+	(typ, off) = rdata(data, 0, fmt('B'))
+	add_iter(hd, 'Type?', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
+	# Follows another obfuscated byte
+	off += 109
+	(toff, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+
+def add_page(hd, size, data, fmt, version, obfctx):
 	off = 8
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
@@ -299,8 +320,12 @@ def add_page(hd, size, data, fmt, version):
 	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 4, 4, fmt('I'))
 	off = 102
 	off = add_pcstr4(hd, size, data, off, fmt)
+	print("seed: %x, inc: %x" % (obfctx.seed, obfctx.inc))
+	(objs, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
 
-def add_facing_page(hd, size, data, fmt, version):
+def add_facing_page(hd, size, data, fmt, version, obfctx):
+	print("seed: %x, inc: %x" % (obfctx.seed, obfctx.inc))
 	off = 8
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
@@ -321,6 +346,8 @@ def add_facing_page(hd, size, data, fmt, version):
 	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 4, 4, fmt('I'))
 	off = 178
 	off = add_pcstr4(hd, size, data, off, fmt)
+	(objs, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
 
 ids = {
 	'char_format': add_char_format,
@@ -331,6 +358,7 @@ ids = {
 	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
+	'object': add_object,
 	'page': add_page,
 	'para_format': add_para_format,
 	'para_style': add_para_style,

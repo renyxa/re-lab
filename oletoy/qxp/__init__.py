@@ -76,8 +76,9 @@ def open_v5(page, buf, parent, fmt, version):
 		else:
 			off = 0xe0
 			(pictures, off) = rdata(buf, off, fmt('H'))
-			seed = 0
-			inc = 0
+			(seed, off) = rdata(buf, 0x80, fmt('H'))
+			(incseed, off) = rdata(buf, 0x52, fmt('H'))
+			inc = qxp.deobfuscate(0xffff, incseed, 2)
 		return (pictures, seed, inc)
 
 	def read_story_blocks(pos, length, offset):
@@ -224,8 +225,19 @@ def add_header(hd, size, data, fmt, version):
 		(gut, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
 	else:
-		off = 0x2e
+		(seed, off) = rdata(data, 0x80, fmt('H'))
+		off = 0x22
+		(pages, off) = rdata(data, off, fmt('H'))
+		sign = lambda x: 1 if x & 0x8000 == 0 else -1
+		pagesiter = add_iter(hd, 'Number of pages?', qxp.deobfuscate(pages, seed, 2) + sign(seed), off - 2, 2, fmt('H'))
+		off += 10
 		qxp.add_margins(hd, size, data, off, fmt)
+		off = 0x52
+		(incseed, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Obfuscation increment', hex(qxp.deobfuscate(0xffff, incseed, 2)), off - 2, 2, fmt('H'))
+		off += 44
+		off += 2 # We already read the seed
+		add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
 	off = 0xdc
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
