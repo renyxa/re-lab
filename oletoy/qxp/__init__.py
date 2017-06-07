@@ -253,6 +253,10 @@ def add_header(hd, size, data, fmt, version):
 		add_iter(hd, 'Obfuscation seed', '%x' % seed, off - 2, 2, fmt('H'))
 		(inc, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Obfuscation increment', '%x' % inc, off - 2, 2, fmt('H'))
+	if ver >= qxp.VERSION_4:
+		off = 0x148
+		(counter, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Object counter/last id?', counter, off - 4, 4, fmt('I'))
 
 def add_text(hd, size, data, fmt, version, text):
 	off = 0
