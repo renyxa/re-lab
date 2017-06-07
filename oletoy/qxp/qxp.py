@@ -80,6 +80,14 @@ def add_margins(hd, size, data, offset, fmt):
 	add_iter(hd, 'Right margin (in.)', dim2in(right), off - 2, 2, fmt('H'))
 	return off
 
+def add_page_columns(hd, size, data, offset, fmt):
+	(col, off) = rdata(data, offset, fmt('H'))
+	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+	off += 4
+	(gut, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
+	return off
+
 def add_record(hd, size, data, fmt, version):
 	add_length(hd, size, data, fmt, version, 0)
 

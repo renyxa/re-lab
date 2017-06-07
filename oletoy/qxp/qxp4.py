@@ -312,12 +312,7 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
 	off = 48
 	off = add_margins(hd, size, data, off, fmt)
-	# maybe 2 bytes?
-	(col, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Number of columns', col, off - 4, 4, fmt('I'))
-	off += 2
-	(gut, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 4, 4, fmt('I'))
+	off = add_page_columns(hd, size, data, off, fmt)
 	off = 102
 	off = add_pcstr4(hd, size, data, off, fmt)
 	print("seed: %x, inc: %x" % (obfctx.seed, obfctx.inc))
@@ -338,12 +333,7 @@ def add_facing_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
 	off = 48
 	off = add_margins(hd, size, data, off, fmt)
-	# maybe 2 bytes?
-	(col, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Number of columns', col, off - 4, 4, fmt('I'))
-	off += 2
-	(gut, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 4, 4, fmt('I'))
+	off = add_page_columns(hd, size, data, off, fmt)
 	off = 178
 	off = add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
