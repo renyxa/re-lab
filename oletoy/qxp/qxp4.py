@@ -312,7 +312,7 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	off = 0
 	(counter, off) = rdata(data, off, fmt('H'))
 	# This contains number of objects ever saved on the page
-	add_iter(hd, 'Object counter / next object ID?', columns, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
 	(typ, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Page type', 'single', off - 2, 2, fmt('H'))
 	off += 4
@@ -338,7 +338,7 @@ def add_facing_page(hd, size, data, fmt, version, obfctx):
 	off = 0
 	(counter, off) = rdata(data, off, fmt('H'))
 	# This contains number of objects ever saved on the page
-	add_iter(hd, 'Object counter / next object ID?', columns, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
 	(typ, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Page type', 'facing', off - 2, 2, fmt('H'))
 	off += 4
