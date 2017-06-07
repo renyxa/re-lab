@@ -283,11 +283,17 @@ def add_index(hd, size, data, fmt, version):
 		add_iter(hd, 'Entry %d' % i, '', off - 8, 8, '8s')
 
 def add_object(hd, size, data, fmt, version, obfctx):
-	off = 12
+	off = 8
+	(index, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index/ID?', index, off - 2, 2, fmt('H'))
 	(text, off) = rdata(data, off, fmt('I'))
 	# TODO: the value is obfuscated somehow
 	add_iter(hd, 'Starting block of text chain?', text, 4, off - 4, 4, fmt('I'))
-	off += 8
+	(rotf, off) = rdata(data, off, fmt('H'))
+	(roti, off) = rdata(data, off, fmt('h'))
+	rot = roti + rotf / float(0x10000) # TODO: or maybe 0xffff? I don't remember...
+	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
+	off += 4
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
@@ -298,9 +304,18 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off += 109
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	off += 32
+	(columns, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '# of columns', columns, off - 2, 2, fmt('H'))
 
 def add_page(hd, size, data, fmt, version, obfctx):
-	off = 8
+	off = 0
+	(counter, off) = rdata(data, off, fmt('H'))
+	# This contains number of objects ever saved on the page
+	add_iter(hd, 'Object counter / next object ID?', columns, off - 2, 2, fmt('H'))
+	(typ, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Page type', 'single', off - 2, 2, fmt('H'))
+	off += 4
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
@@ -320,8 +335,13 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
 
 def add_facing_page(hd, size, data, fmt, version, obfctx):
-	print("seed: %x, inc: %x" % (obfctx.seed, obfctx.inc))
-	off = 8
+	off = 0
+	(counter, off) = rdata(data, off, fmt('H'))
+	# This contains number of objects ever saved on the page
+	add_iter(hd, 'Object counter / next object ID?', columns, off - 2, 2, fmt('H'))
+	(typ, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Page type', 'facing', off - 2, 2, fmt('H'))
+	off += 4
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
