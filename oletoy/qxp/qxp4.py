@@ -325,7 +325,7 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
 	(height, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
-	off = 48
+	off += 24
 	off = add_margins(hd, size, data, off, fmt)
 	off = add_page_columns(hd, size, data, off, fmt)
 	off = 102
@@ -351,7 +351,15 @@ def add_facing_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
 	(height, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
-	off = 48
+	off += 24
+	off = add_margins(hd, size, data, off, fmt)
+	off = add_page_columns(hd, size, data, off, fmt)
+	off = 0x50
+	(fwidth, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Full width (in.)', dim2in(fwidth), off - 4, 4, fmt('I'))
+	(fheight, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Full height (in.)', dim2in(fheight), off - 4, 4, fmt('I'))
+	off += 24
 	off = add_margins(hd, size, data, off, fmt)
 	off = add_page_columns(hd, size, data, off, fmt)
 	off = 178
