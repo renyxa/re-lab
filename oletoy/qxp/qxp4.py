@@ -325,7 +325,11 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
 	(height, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
-	off += 24
+	(dwidth, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '2x width?', dim2in(dwidth), off - 2, 2, fmt('H'))
+	(d, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Something obfuscated', hex(d), off - 4, 4, fmt('I'))
+	off += 18
 	off = add_margins(hd, size, data, off, fmt)
 	off = add_page_columns(hd, size, data, off, fmt)
 	off = 102
@@ -351,7 +355,11 @@ def add_facing_page(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
 	(height, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
-	off += 24
+	(dwidth, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '2x width?', dim2in(dwidth), off - 2, 2, fmt('H'))
+	(d, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Something obfuscated', hex(d), off - 4, 4, fmt('I'))
+	off += 18
 	off = add_margins(hd, size, data, off, fmt)
 	off = add_page_columns(hd, size, data, off, fmt)
 	off = 0x50
