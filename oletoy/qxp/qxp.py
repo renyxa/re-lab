@@ -66,6 +66,14 @@ def add_pcstr4(hd, size, data, offset, fmt, name="Name"):
 	add_iter(hd, name, string, off - length, length, '%ds' % length)
 	return off
 
+def add_page_header(hd, size, data, offset, fmt):
+	(records_offset, off) = rdata(data, offset, fmt('I'))
+	records_size = size - off - records_offset - 4
+	add_iter(hd, 'Records offset', records_offset, off - 4, 4, fmt('I'))
+	add_iter(hd, 'Parameters', '', off, records_offset, '%ds' % (records_offset - off))
+	add_iter(hd, 'Records', '', off + records_offset, records_size, '%ds' % (records_size))
+	return off, records_offset
+
 def add_margins(hd, size, data, offset, fmt):
 	(top, off) = rdata(data, offset, fmt('H'))
 	add_iter(hd, 'Top margin (in.)', dim2in(top), off - 2, 2, fmt('H'))

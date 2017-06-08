@@ -313,9 +313,9 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	(counter, off) = rdata(data, off, fmt('H'))
 	# This contains number of objects ever saved on the page
 	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
-	(typ, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Page type', 'single', off - 2, 2, fmt('H'))
-	off += 4
+	add_iter(hd, 'Page type', 'single', off + 2, 2, fmt('H'))
+	(off, _) = add_page_header(hd, size, data, off, fmt)
+	off += 2
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
@@ -343,9 +343,9 @@ def add_facing_page(hd, size, data, fmt, version, obfctx):
 	(counter, off) = rdata(data, off, fmt('H'))
 	# This contains number of objects ever saved on the page
 	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
-	(typ, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Page type', 'facing', off - 2, 2, fmt('H'))
-	off += 4
+	add_iter(hd, 'Page type', 'facing', off + 2, 2, fmt('H'))
+	(off, _) = add_page_header(hd, size, data, off, fmt)
+	off += 2
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
