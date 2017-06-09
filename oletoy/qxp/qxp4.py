@@ -314,62 +314,18 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	# This contains number of objects ever saved on the page
 	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
 	add_iter(hd, 'Page type', 'single', off + 2, 2, fmt('H'))
-	(off, _) = add_page_header(hd, size, data, off, fmt)
-	off += 2
-	(idx, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
-	(cidx, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
-	off += 6
-	(width, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
-	(height, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
-	(dwidth, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, '2x width?', dim2in(dwidth), off - 2, 2, fmt('H'))
-	(d, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Something obfuscated', hex(d), off - 4, 4, fmt('I'))
-	off += 18
-	off = add_margins(hd, size, data, off, fmt)
-	off = add_page_columns(hd, size, data, off, fmt)
-	off = 102
-	off = add_pcstr4(hd, size, data, off, fmt)
-	(objs, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
-
-def add_facing_page(hd, size, data, fmt, version, obfctx):
-	off = 0
-	(counter, off) = rdata(data, off, fmt('H'))
-	# This contains number of objects ever saved on the page
-	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
-	add_iter(hd, 'Page type', 'facing', off + 2, 2, fmt('H'))
-	(off, _) = add_page_header(hd, size, data, off, fmt)
-	off += 2
-	(idx, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
-	(cidx, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
-	off += 6
-	(width, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
-	(height, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
-	(dwidth, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, '2x width?', dim2in(dwidth), off - 2, 2, fmt('H'))
-	(d, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Something obfuscated', hex(d), off - 4, 4, fmt('I'))
-	off += 18
-	off = add_margins(hd, size, data, off, fmt)
-	off = add_page_columns(hd, size, data, off, fmt)
-	off = 0x50
-	(fwidth, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Full width (in.)', dim2in(fwidth), off - 4, 4, fmt('I'))
-	(fheight, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Full height (in.)', dim2in(fheight), off - 4, 4, fmt('I'))
-	off += 24
-	off = add_margins(hd, size, data, off, fmt)
-	off = add_page_columns(hd, size, data, off, fmt)
-	off = 178
+	(off, records_offset, settings_blocks_count) = add_page_header(hd, size, data, off, fmt)
+	settings_block_size = (records_offset - 4) / settings_blocks_count
+	for i in range(0, settings_blocks_count):
+		block_iter = add_iter(hd, 'Settings block %d' % (i + 1), '', off, settings_block_size, '%ds' % settings_block_size)
+		off = add_page_bbox(hd, size, data, off, fmt, block_iter)
+		(d, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'ID?', hex(d), off - 4, 4, fmt('I'), parent=block_iter)
+		off += 18
+		off = add_margins(hd, size, data, off, fmt, block_iter)
+		off = add_page_columns(hd, size, data, off, fmt, block_iter)
+		off += 4
+	off += settings_blocks_count * 12 + 16
 	off = add_pcstr4(hd, size, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
@@ -378,7 +334,7 @@ ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'dash_stripe': add_dash_stripe,
-	'facing_page': add_facing_page,
+	'facing_page': add_page,
 	'hj': add_hj,
 	'index': add_index,
 	'list': add_list,
