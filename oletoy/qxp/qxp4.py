@@ -313,7 +313,6 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	(counter, off) = rdata(data, off, fmt('H'))
 	# This contains number of objects ever saved on the page
 	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
-	add_iter(hd, 'Page type', 'single', off + 2, 2, fmt('H'))
 	(off, records_offset, settings_blocks_count) = add_page_header(hd, size, data, off, fmt)
 	settings_block_size = (records_offset - 4) / settings_blocks_count
 	for i in range(0, settings_blocks_count):
