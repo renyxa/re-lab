@@ -193,7 +193,7 @@ def add_fonts(hd, size, data, fmt, version):
 def add_page(hd, size, data, fmt, version):
 	off = 2
 	(off, _) = add_page_header(hd, size, data, off, fmt)
-	off += 12
+	off += 10
 	(width, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
 	(height, off) = rdata(data, off, fmt('I'))
@@ -213,7 +213,7 @@ def add_page(hd, size, data, fmt, version):
 def add_facing_page(hd, size, data, fmt, version):
 	off = 2
 	(off, _) = add_page_header(hd, size, data, off, fmt)
-	off += 12
+	off += 10
 	(width, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
 	(height, off) = rdata(data, off, fmt('I'))
