@@ -334,7 +334,6 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	off = add_page_columns(hd, size, data, off, fmt)
 	off = 102
 	off = add_pcstr4(hd, size, data, off, fmt)
-	print("seed: %x, inc: %x" % (obfctx.seed, obfctx.inc))
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
 
