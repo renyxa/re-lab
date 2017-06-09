@@ -224,14 +224,20 @@ def add_header(hd, size, data, fmt, version):
 		off += 2
 		(gut, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
-		off = 0xb2
-		(width, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
-		off = 0xbe
-		(width, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
-		(height, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Height (in.)', dim2in(height), off - 4, 4, fmt('I'))
+		off = 0xb0
+		off += 2
+		(left, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
+		off += 2
+		(top, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'))
+		off = 0xbc
+		off += 2
+		(left, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
+		off += 2
+		(bottom, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Bottom offset (in.)', dim2in(bottom), off - 2, 2, fmt('H'))
 	else:
 		(seed, off) = rdata(data, 0x80, fmt('H'))
 		off = 0x22
@@ -239,19 +245,29 @@ def add_header(hd, size, data, fmt, version):
 		sign = lambda x: 1 if x & 0x8000 == 0 else -1
 		pagesiter = add_iter(hd, 'Number of pages?', qxp.deobfuscate(pages, seed, 2) + sign(seed), off - 2, 2, fmt('H'))
 		off += 10
-		qxp.add_margins(hd, size, data, off, fmt)
-		off = 0x46
-		(width, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
+		off = qxp.add_margins(hd, size, data, off, fmt)
+		off += 2
+		(gut, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Column gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
+		off += 2
+		(top, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'))
+		off += 2
+		(left, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
 		off = 0x52
 		(incseed, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Obfuscation increment', hex(qxp.deobfuscate(0xffff, incseed, 2)), off - 2, 2, fmt('H'))
 		off += 44
 		off += 2 # We already read the seed
 		add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
-		off = 0x92
-		(width, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Width (in.)', dim2in(width), off - 4, 4, fmt('I'))
+		off = 0x90
+		off += 2
+		(left, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
+		off += 2
+		(top, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'))
 	off = 0xdc
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
