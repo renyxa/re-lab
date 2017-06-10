@@ -224,6 +224,9 @@ def add_header(hd, size, data, fmt, version):
 		off += 2
 		(gut, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
+		off = 0x75
+		(mpages, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
 		off = 0xb0
 		off += 2
 		(left, off) = rdata(data, off, fmt('H'))
@@ -255,6 +258,9 @@ def add_header(hd, size, data, fmt, version):
 		off += 2
 		(left, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
+		off = 0x4d
+		(mpages, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
 		off = 0x52
 		(incseed, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Obfuscation increment', hex(qxp.deobfuscate(0xffff, incseed, 2)), off - 2, 2, fmt('H'))
