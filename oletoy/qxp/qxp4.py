@@ -324,7 +324,10 @@ def add_page(hd, size, data, fmt, version, obfctx):
 		off += 4
 		(master_ind, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Master page index', '' if master_ind == 0xffff else master_ind, off - 2, 2, fmt('H'), parent=block_iter)
-		off += 12
+		off += 6
+		(ind, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=block_iter)
+		off += 4
 		off = add_margins(hd, size, data, off, fmt, block_iter)
 		off = add_page_columns(hd, size, data, off, fmt, block_iter)
 		off += 4

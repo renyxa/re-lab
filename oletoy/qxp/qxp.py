@@ -75,7 +75,7 @@ def add_page_header(hd, size, data, offset, fmt):
 	(settings_blocks_count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Settings blocks count', settings_blocks_count, off - 2, 2, fmt('H'))
 	(idx, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Index', idx, off - 1, 1, fmt('B'))
+	add_iter(hd, 'Index?', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
 	return off, records_offset, settings_blocks_count
