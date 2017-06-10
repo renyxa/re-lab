@@ -1225,6 +1225,11 @@ class ApplicationMainWindow(gtk.Window):
 			if self.options_be == 1:
 				txt += "BE: %s "%((struct.unpack(">h",buf)[0])/self.options_div)
 				txt += "%s\t"%((struct.unpack(">H",buf)[0])/self.options_div)
+			if ftype == "QXP5":
+				if self.options_le == 1:
+					txt += "LE: %.2fin\t" % (struct.unpack('<h', buf)[0] / 72.0)
+				else:
+					txt += "BE: %.2fin\t" % (struct.unpack('>h', buf)[0] / 72.0)
 		if dlen == 4:
 			if ftype == "pub":
 				v = struct.unpack("<i",buf)[0]
