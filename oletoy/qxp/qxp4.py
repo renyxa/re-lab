@@ -318,8 +318,9 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	for i in range(0, settings_blocks_count):
 		block_iter = add_iter(hd, 'Settings block %d' % (i + 1), '', off, settings_block_size, '%ds' % settings_block_size)
 		off = add_page_bbox(hd, size, data, off, fmt, block_iter)
-		(d, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'ID?', hex(d), off - 4, 4, fmt('I'), parent=block_iter)
+		(id, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=block_iter)
+		hd.model.set(block_iter, 1, hex(id))
 		off += 18
 		off = add_margins(hd, size, data, off, fmt, block_iter)
 		off = add_page_columns(hd, size, data, off, fmt, block_iter)
