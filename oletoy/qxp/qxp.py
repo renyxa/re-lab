@@ -14,8 +14,6 @@
 # USA
 #
 
-from numpy import uint16 as u
-
 from utils import *
 
 def little_endian(fmt):
@@ -35,9 +33,7 @@ def deobfuscate(value, seed, n):
 	else:
 		assert value >> 16 == 0
 		mask = 0xffff
-	return int(u(value) + u(seed) - ((u(value) & u(seed)) << u(1)))
-	# TODO: fix this
-	# return ((value + seed) & 0xffff - ((value & seed) << 1) & 0xffff + (1 << 16)) & mask
+	return (((value + seed) & 0xffff) - (((value & seed) << 1) & 0xffff) + (1 << 16)) & mask
 
 VERSION_3_3 = 0x3f
 VERSION_4 = 0x41
@@ -136,5 +132,6 @@ if __name__ == '__main__':
 	test_deobfuscate(0xa132, 0x31, 1, 0x3)
 	test_deobfuscate(0xa132, 0xa133, 2, 0x1)
 	test_deobfuscate(0x7236, 0x35, 1, 0x3)
+	test_deobfuscate(0x7236, 0x34, 1, 0x2)
 
 # vim: set ft=python sts=4 sw=4 noet:
