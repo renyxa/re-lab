@@ -50,9 +50,10 @@ def handle_para_format(page, data, parent, fmt, version, index):
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	return (obfctx, offset)
 
-def handle_doc(page, data, parent, fmt, version, obfctx):
+def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	off = 0
 	i = 1
+	m = 0
 	while off < len(data):
 		start = off
 		(size, off) = rdata(data, off + 2, fmt('I'))
@@ -65,7 +66,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 		(name_len, off) = rdata(data, off, fmt('I'))
 		(name, _) = rcstr(data, off)
 		off += name_len
-		pname = '[%d] %s page' % (i, key2txt(npages, npages_map))
+		pname = '[%d] %s%s page' % (i, key2txt(npages, npages_map), ' master' if m < nmasters else '')
 		if len(name) != 0:
 			pname += ' "%s"' % name
 		(objs, off) = rdata(data, off, fmt('I'))
@@ -75,6 +76,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 		for j in range(1, objs + 1):
 			(obfctx, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 		i += 1
+		m += 1
 
 
 handlers1 = {
@@ -96,7 +98,7 @@ handlers2 = {
 	2: ('Paragraph formats', handle_collection(handle_para_format, 100)),
 }
 
-def handle_document(page, data, parent, fmt, version, obfctx):
+def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = 0
 	i = 1
 	handlers = handlers1
@@ -138,7 +140,7 @@ def handle_document(page, data, parent, fmt, version, obfctx):
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp4', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, version, obfctx)
+	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0

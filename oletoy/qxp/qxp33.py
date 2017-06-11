@@ -59,9 +59,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('object', fmt, version, obfctx), data[offset:off], parent)
 	return off
 
-def handle_doc(page, data, parent, fmt, version, obfctx):
+def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	off = 0
 	i = 1
+	m = 0
 	while off < len(data):
 		start = off
 		(size, off) = rdata(data, off + 2, fmt('I'))
@@ -75,7 +76,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 		(name, _) = rcstr(data, off)
 		off += name_len
 		(objs, off) = rdata(data, off, fmt('I'))
-		pname = '[%d] %s page' % (i, key2txt(npages, npages_map))
+		pname = '[%d] %s%s page' % (i, key2txt(npages, npages_map), ' master' if m < nmasters else '')
 		if len(name) != 0:
 			pname += ' "%s"' % name
 		pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
@@ -83,6 +84,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 			off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 			obfctx = obfctx.next()
 		i += 1
+		m += 1
 
 handlers = {
 	2: ('Print settings',),
@@ -96,7 +98,7 @@ handlers = {
 	13: ('Paragraph formats', handle_collection(handle_para_format, 256)),
 }
 
-def handle_document(page, data, parent, fmt, version, obfctx):
+def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = 0
 	i = 1
 	while off < len(data) and i < 15:
@@ -116,7 +118,7 @@ def handle_document(page, data, parent, fmt, version, obfctx):
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, version, obfctx)
+	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0

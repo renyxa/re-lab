@@ -53,10 +53,10 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def handle_document(page, data, parent, fmt, version, obfctx):
+def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
 	if hdl_map.has_key(version):
-		hdl_map[version](page, data, parent, fmt, version, obfctx)
+		hdl_map[version](page, data, parent, fmt, version, obfctx, nmasters)
 
 def open_v5(page, buf, parent, fmt, version):
 	chains = []
@@ -68,18 +68,17 @@ def open_v5(page, buf, parent, fmt, version):
 
 	def read_header():
 		if version < qxp.VERSION_4:
-			off = 0x108
-			(pictures, off) = rdata(buf, off, fmt('H'))
-			off += 6
-			(seed, off) = rdata(buf, off, fmt('H'))
+			(masters, off) = rdata(buf, 0x75, fmt('B'))
+			(pictures, off) = rdata(buf, 0x108, fmt('H'))
+			(seed, off) = rdata(buf, off + 6, fmt('H'))
 			(inc, off) = rdata(buf, off, fmt('H'))
 		else:
-			off = 0xe0
-			(pictures, off) = rdata(buf, off, fmt('H'))
+			(masters, off) = rdata(buf, 0x4d, fmt('B'))
+			(pictures, off) = rdata(buf, 0xe0, fmt('H'))
 			(seed, off) = rdata(buf, 0x80, fmt('H'))
 			(incseed, off) = rdata(buf, 0x52, fmt('H'))
 			inc = qxp.deobfuscate(0xffff, incseed, 2)
-		return (pictures, seed, inc)
+		return (masters, pictures, seed, inc)
 
 	def read_story_blocks(pos, length, offset):
 		start = (pos - 1) * rlen
@@ -123,7 +122,7 @@ def open_v5(page, buf, parent, fmt, version):
 	big = False
 	nexts = {}
 	try:
-		(pict_count, seed, inc) = read_header()
+		(mp_count, pict_count, seed, inc) = read_header()
 		while off < len(buf):
 			start = off
 			count = 1
@@ -188,7 +187,7 @@ def open_v5(page, buf, parent, fmt, version):
 			tid += 1
 		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos + 1)
 		if pos == 0:
-			handle_document(page, stream, streamiter, fmt, version, ObfuscationContext(seed, inc))
+			handle_document(page, stream, streamiter, fmt, version, ObfuscationContext(seed, inc), mp_count)
 
 def add_header(hd, size, data, fmt, version):
 	off = 2
