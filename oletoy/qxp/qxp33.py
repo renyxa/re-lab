@@ -259,6 +259,18 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
 		hd.model.set(textiter, 0, "Index in linked list?")
+	# TODO: separate objects
+	if size > 112:
+		off = 0x5e
+		(pic_skew, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
+		(pic_rot, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
+		off = add_dim(hd, size, data, off, fmt, 'Offset accross')
+		off = add_dim(hd, size, data, off, fmt, 'Offset down')
+		(col, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+
 
 ids = {
 	'char_format': add_char_format,
