@@ -122,6 +122,13 @@ def add_page_columns(hd, size, data, offset, fmt, parent=None):
 def add_record(hd, size, data, fmt, version):
 	add_length(hd, size, data, fmt, version, 0)
 
+def add_dim(hd, size, data, offset, fmt, name, parent=None):
+	(dim, off) = rfract(data, offset, fmt)
+	sz = off - offset
+	dim_str = '%.2f pt / %.2f in' % (dim, dim2in(dim))
+	add_iter(hd, name, dim_str, off - sz, sz, '%ds' % sz, parent=parent)
+	return off
+
 char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}

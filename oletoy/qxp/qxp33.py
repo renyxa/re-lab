@@ -249,7 +249,12 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
-	off += 50
+	off += 16
+	off = add_dim(hd, size, data, off, fmt, 'Y1')
+	off = add_dim(hd, size, data, off, fmt, 'X1')
+	off = add_dim(hd, size, data, off, fmt, 'Y2')
+	off = add_dim(hd, size, data, off, fmt, 'X2')
+	off += 18
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
