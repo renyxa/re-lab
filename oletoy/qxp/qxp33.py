@@ -50,12 +50,34 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = offset
 	(typ, off) = rdata(data, off, fmt('B'))
 	typ = obfctx.deobfuscate(typ, 1)
-	if typ == 3:
+	if typ == 0: # line
+		off += 61
+	# TODO: this suggests the value is not really a type...
+	elif typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / line[text]
 		off += 123
 		(eh, off) = rdata(data, off, fmt('I'))
 		off += 4
 		if eh == 0: # TODO: this is a wild guess
 			off += 12
+		off += 12
+	elif typ == 5: # rectangle[none]
+		off += 147
+	elif typ == 6: # beveled-corner[none] / rounded-corner[none]
+		off += 147
+	elif typ == 7: # oval[none]
+		off += 147
+	elif typ == 11: # group
+		off += 81
+	elif typ == 12: # rectangle[image]
+		off += 147
+	elif typ == 13: # beveled-corner[image] / rounded-corner[image]
+		off += 147
+	elif typ == 14: # oval[image]
+		off += 147
+	elif typ == 15: # bezier[image]
+		off += 147
+		(length, off) = rdata(data, off, fmt('I')) # length of bezier data
+		off += length
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('object', fmt, version, obfctx), data[offset:off], parent)
 	return off
 
