@@ -82,41 +82,24 @@ def add_page_header(hd, size, data, offset, fmt):
 	return off, records_offset, settings_blocks_count
 
 def add_page_bbox(hd, size, data, offset, fmt, parent=None):
-	off = offset
-	off += 2
-	(top, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'), parent=parent)
-	off += 2
-	(left, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'), parent=parent)
-	off += 2
-	(bottom, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Bottom offset (in.)', dim2in(bottom), off - 2, 2, fmt('H'), parent=parent)
-	off += 2
-	(right, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Right offset (in.)', dim2in(right), off - 2, 2, fmt('H'), parent=parent)
+	off = add_dim(hd, size, data, offset, fmt, 'Top offset', parent=parent)
+	off = add_dim(hd, size, data, off, fmt, 'Left offset', parent=parent)
+	off = add_dim(hd, size, data, off, fmt, 'Bottom offset', parent=parent)
+	off = add_dim(hd, size, data, off, fmt, 'Right offset', parent=parent)
 	return off
 
 def add_margins(hd, size, data, offset, fmt, parent=None):
-	(top, off) = rdata(data, offset, fmt('H'))
-	add_iter(hd, 'Top margin (in.)', dim2in(top), off - 2, 2, fmt('H'), parent=parent)
-	off += 2
-	(bottom, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Bottom margin (in.)', dim2in(bottom), off - 2, 2, fmt('H'), parent=parent)
-	off += 2
-	(left, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Left margin (in.)', dim2in(left), off - 2, 2, fmt('H'), parent=parent)
-	off += 2
-	(right, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Right margin (in.)', dim2in(right), off - 2, 2, fmt('H'), parent=parent)
+	off = add_dim(hd, size, data, offset, fmt, 'Top margin', parent=parent)
+	off = add_dim(hd, size, data, off, fmt, 'Bottom margin', parent=parent)
+	off = add_dim(hd, size, data, off, fmt, 'Left margin', parent=parent)
+	off = add_dim(hd, size, data, off, fmt, 'Right margin', parent=parent)
 	return off
 
 def add_page_columns(hd, size, data, offset, fmt, parent=None):
 	(col, off) = rdata(data, offset, fmt('H'))
 	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'), parent=parent)
-	off += 4
-	(gut, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'), parent=parent)
+	off += 2
+	off = add_dim(hd, size, data, off, fmt, 'Gutter width', parent=parent)
 	return off
 
 def add_record(hd, size, data, fmt, version):

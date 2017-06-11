@@ -13,7 +13,7 @@
 
 import struct
 from utils import *
-from qxp import dim2in
+from qxp import dim2in, add_dim
 import qxp
 import qxp33
 import qxp4
@@ -216,47 +216,31 @@ def add_header(hd, size, data, fmt, version):
 		off = 0x40
 		(pages, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
-		off = 0x4c
+		off = 0x4a
 		off = qxp.add_margins(hd, size, data, off, fmt)
 		(col, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
-		off += 2
-		(gut, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
+		off = add_dim(hd, size, data, off, fmt, 'Gutter width')
 		off = 0x75
 		(mpages, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
 		off = 0xb0
-		off += 2
-		(left, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
-		off += 2
-		(top, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'))
+		off = add_dim(hd, size, data, off, fmt, 'Left offset')
+		off = add_dim(hd, size, data, off, fmt, 'Top offset')
 		off = 0xbc
-		off += 2
-		(left, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
-		off += 2
-		(bottom, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Bottom offset (in.)', dim2in(bottom), off - 2, 2, fmt('H'))
+		off = add_dim(hd, size, data, off, fmt, 'Left offset')
+		off = add_dim(hd, size, data, off, fmt, 'Bottom offset')
 	else:
 		(seed, off) = rdata(data, 0x80, fmt('H'))
 		off = 0x22
 		(pages, off) = rdata(data, off, fmt('H'))
 		sign = lambda x: 1 if x & 0x8000 == 0 else -1
 		pagesiter = add_iter(hd, 'Number of pages?', qxp.deobfuscate(pages, seed, 2) + sign(seed), off - 2, 2, fmt('H'))
-		off += 10
+		off += 8
 		off = qxp.add_margins(hd, size, data, off, fmt)
-		off += 2
-		(gut, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Column gutter width (in.)', dim2in(gut), off - 2, 2, fmt('H'))
-		off += 2
-		(top, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'))
-		off += 2
-		(left, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
+		off = add_dim(hd, size, data, off, fmt, 'Gutter width')
+		off = add_dim(hd, size, data, off, fmt, 'Top offset')
+		off = add_dim(hd, size, data, off, fmt, 'Left offset')
 		off = 0x4d
 		(mpages, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
@@ -267,12 +251,8 @@ def add_header(hd, size, data, fmt, version):
 		off += 2 # We already read the seed
 		add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
 		off = 0x90
-		off += 2
-		(left, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Left offset (in.)', dim2in(left), off - 2, 2, fmt('H'))
-		off += 2
-		(top, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Top offset (in.)', dim2in(top), off - 2, 2, fmt('H'))
+		off = add_dim(hd, size, data, off, fmt, 'Left offset')
+		off = add_dim(hd, size, data, off, fmt, 'Top offset')
 	off = 0xdc
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))

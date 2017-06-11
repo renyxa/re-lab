@@ -228,7 +228,7 @@ def add_page(hd, size, data, fmt, version):
 		off += 6
 		(ind, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=block_iter)
-		off += 4
+		off += 2
 		off = add_margins(hd, size, data, off, fmt, block_iter)
 		off = add_page_columns(hd, size, data, off, fmt, block_iter)
 	off += settings_blocks_count * 12 + 16
