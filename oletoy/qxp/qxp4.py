@@ -55,26 +55,21 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 	i = 1
 	while off < len(data):
 		start = off
-		(typ, off) = rdata(data, off + 2, fmt('H'))
-		if typ == 0x44:
-			tname = 'Single'
-			vid = 'page'
-			off += 98
-		elif typ == 0x84:
-			tname = 'Facing'
-			vid = 'facing_page'
-			off += 174
-		else:
+		(size, off) = rdata(data, off + 2, fmt('I'))
+		npages_map = {1: 'Single', 2: 'Facing'}
+		(npages, off) = rdata(data, off, fmt('H'))
+		if size & 0xffff == 0:
 			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 			break
+		off = start + 6 + size + 16 + npages * 12
 		(name_len, off) = rdata(data, off, fmt('I'))
 		(name, _) = rcstr(data, off)
 		off += name_len
-		pname = '[%d] %s page' % (i, tname)
+		pname = '[%d] %s page' % (i, key2txt(npages, npages_map))
 		if len(name) != 0:
 			pname += ' "%s"' % name
 		(objs, off) = rdata(data, off, fmt('I'))
-		pgiter = add_pgiter(page, pname, 'qxp4', (vid, fmt, version, obfctx), data[start:off], parent)
+		pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, obfctx), data[start:off], parent)
 		objs = obfctx.deobfuscate(objs & 0xffff, 2)
 		obfctx = obfctx.next()
 		for j in range(1, objs + 1):
@@ -340,7 +335,6 @@ ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'dash_stripe': add_dash_stripe,
-	'facing_page': add_page,
 	'hj': add_hj,
 	'index': add_index,
 	'list': add_list,

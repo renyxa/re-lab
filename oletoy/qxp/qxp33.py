@@ -64,26 +64,21 @@ def handle_doc(page, data, parent, fmt, version, obfctx):
 	i = 1
 	while off < len(data):
 		start = off
-		(typ, off) = rdata(data, off + 2, fmt('H'))
-		if typ == 0x40:
-			tname = 'Single'
-			vid = 'page'
-			off += 94
-		elif typ == 0x7c:
-			tname = 'Facing'
-			vid = 'facing_page'
-			off += 166
-		else:
+		(size, off) = rdata(data, off + 2, fmt('I'))
+		npages_map = {1: 'Single', 2: 'Facing'}
+		(npages, off) = rdata(data, off, fmt('H'))
+		if size & 0xffff == 0:
 			add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
 			break
+		off = start + 6 + size + 16 + npages * 12
 		(name_len, off) = rdata(data, off, fmt('I'))
 		(name, _) = rcstr(data, off)
 		off += name_len
 		(objs, off) = rdata(data, off, fmt('I'))
-		pname = '[%d] %s page' % (i, tname)
+		pname = '[%d] %s page' % (i, key2txt(npages, npages_map))
 		if len(name) != 0:
 			pname += ' "%s"' % name
-		pgiter = add_pgiter(page, pname, 'qxp33', (vid, fmt, version), data[start:off], parent)
+		pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
 		for j in range(1, objs + 1):
 			off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 			obfctx = obfctx.next()
@@ -235,7 +230,6 @@ def add_object(hd, size, data, fmt, version, obfctx):
 
 ids = {
 	'char_format': add_char_format,
-	'facing_page': add_page,
 	'fonts': add_fonts,
 	'object': add_object,
 	'page': add_page,
