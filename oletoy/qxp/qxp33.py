@@ -68,16 +68,16 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		off += 147
 	elif typ == 11: # group
 		off += 81
-	elif typ == 12: # rectangle[image]
-		off += 147
-	elif typ == 13: # beveled-corner[image] / rounded-corner[image]
-		off += 147
-	elif typ == 14: # oval[image]
-		off += 147
-	elif typ == 15: # bezier[image]
-		off += 147
-		(length, off) = rdata(data, off, fmt('I')) # length of bezier data
-		off += length
+	# rectangle[image], beveled-corner[image] / rounded-corner[image], oval[image], bezier[image]
+	elif typ in [12, 13, 14, 15]:
+		(bid, off) = rdata(data, off + 19, fmt('I'))
+		off += 124
+		if typ == 15:
+			(length, off) = rdata(data, off, fmt('I')) # length of bezier data
+			off += length
+		if bid != 0:
+			(length, off) = rdata(data, off, fmt('I')) # length of bitmap data
+			off += length
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('object', fmt, version, obfctx), data[offset:off], parent)
 	return off
 
