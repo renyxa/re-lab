@@ -22,6 +22,11 @@ def little_endian(fmt):
 def big_endian(fmt):
 	return '>' + fmt
 
+def rfract(data, off, fmt):
+	(fpart, off) = rdata(data, off, fmt('H'))
+	(ipart, off) = rdata(data, off, fmt('h'))
+	return (ipart + fpart / float(0x10000), off)
+
 def dim2in(dim):
 	return dim / 72.0
 

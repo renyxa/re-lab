@@ -242,7 +242,10 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off += 5
 	(text, off) = rdata(data, off, fmt('H'))
 	textiter = add_iter(hd, 'Starting block of text chain', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
-	off += 12
+	off += 4
+	(rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
+	off += 4
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))

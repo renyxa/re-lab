@@ -286,9 +286,7 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	(text, off) = rdata(data, off, fmt('I'))
 	# TODO: the value is obfuscated somehow
 	add_iter(hd, 'Starting block of text chain?', text, 4, off - 4, 4, fmt('I'))
-	(rotf, off) = rdata(data, off, fmt('H'))
-	(roti, off) = rdata(data, off, fmt('h'))
-	rot = roti + rotf / float(0x10000) # TODO: or maybe 0xffff? I don't remember...
+	(rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
 	off += 4
 	# Text boxes with the same link ID are linked.
