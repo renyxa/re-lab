@@ -17,28 +17,30 @@
 from utils import *
 from qxp import *
 
-def _read_name(data, offset=0):
-	end = data.find('\0', offset)
-	return (data[offset:offset + end], end + 1)
+def _read_name2(data, offset=0, end=0):
+	off = data.find('\0', offset)
+	name = data[offset:off]
+	off += 1
+	if (off - offset) % 2 == 1:
+		off += 1
+	return (name, off)
 
 def _handle_collection_named(handler, name_offset):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
 		i = 0
 		while off + name_offset < len(data):
-			(name, end) = _read_name(data, off + name_offset)
-			if (end - off) % 2 == 1:
-				end += 1
+			(name, end) = _read_name2(data, off + name_offset)
 			(entry, off) = rdata(data, off, '%ds' % (end - off))
 			handler(page, entry, parent, fmt, version, i, name)
 			i += 1
 	return hdl
 
 def handle_para_style(page, data, parent, fmt, version, index, name):
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', '', data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('para_style', fmt, version), data, parent)
 
 def handle_hj(page, data, parent, fmt, version, index, name):
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', '', data, parent)
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('hj', fmt, version), data, parent)
 
 def handle_char_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('char_format', fmt, version), data, parent)
@@ -142,6 +144,11 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
+def _add_name2(hd, size, data, offset, title='Name'):
+	(name, off) = _read_name2(data, offset, size)
+	add_iter(hd, title, name, offset, off - offset, '%ds' % (off - offset))
+	return off
+
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('H'))
@@ -192,6 +199,14 @@ def add_para_format(hd, size, data, fmt, version):
 	off += 2
 	(space_after, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
+
+def add_para_style(hd, size, data, fmt, version):
+	off = 306
+	_add_name2(hd, size, data, off)
+
+def add_hj(hd, size, data, fmt, version):
+	off = 48
+	_add_name2(hd, size, data, off)
 
 def add_fonts(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
@@ -299,13 +314,14 @@ def add_object(hd, size, data, fmt, version, obfctx):
 		(col, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
 
-
 ids = {
 	'char_format': add_char_format,
 	'fonts': add_fonts,
+	'hj': add_hj,
 	'object': add_object,
 	'page': add_page,
 	'para_format': add_para_format,
+	'para_style': add_para_style,
 	'record': add_record,
 }
 
