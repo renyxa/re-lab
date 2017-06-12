@@ -289,7 +289,13 @@ def add_object(hd, size, data, fmt, version, obfctx):
 		(pic_rot, off) = rfract(data, off, fmt)
 		add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
 		off = add_dim(hd, size, data, off, fmt, 'Offset accross')
+		off -= 4
+		(text_rot, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
 		off = add_dim(hd, size, data, off, fmt, 'Offset down')
+		off -= 4
+		(text_skew, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Text skew', '%.2f deg' % text_skew, off - 4, 4, fmt('i'))
 		(col, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
 
