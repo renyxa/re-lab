@@ -258,7 +258,25 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off = add_dim(hd, size, data, off, fmt, 'X1')
 	off = add_dim(hd, size, data, off, fmt, 'Y2')
 	off = add_dim(hd, size, data, off, fmt, 'X2')
-	off += 18
+	off = add_dim(hd, size, data, off, fmt, 'Line width')
+	line_style_map = {
+		0: 'Solid',
+		1: 'Dotted',
+		2: 'Dotted 2',
+		3: 'Dash Dot',
+		4: 'All Dots',
+		0x80: 'Double',
+		0x81: 'Thin-Thick',
+		0x82: 'Thick-Thin',
+		0x83: 'Thin-Thick-Thin',
+		0x84: 'Thick-Thin-Thick',
+		0x85: 'Triple'
+	}
+	(line_style, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
+	(arrow, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	off += 12
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
