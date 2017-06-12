@@ -144,6 +144,20 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
+line_style_map = {
+	0: 'Solid',
+	1: 'Dotted',
+	2: 'Dotted 2',
+	3: 'Dash Dot',
+	4: 'All Dots',
+	0x80: 'Double',
+	0x81: 'Thin-Thick',
+	0x82: 'Thick-Thin',
+	0x83: 'Thin-Thick-Thin',
+	0x84: 'Thick-Thin-Thick',
+	0x85: 'Triple'
+}
+
 def _add_name2(hd, size, data, offset, title='Name'):
 	(name, off) = _read_name2(data, offset, size)
 	add_iter(hd, title, name, offset, off - offset, '%ds' % (off - offset))
@@ -162,13 +176,10 @@ def add_char_format(hd, size, data, fmt, version):
 	(color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'))
 
-def add_para_format(hd, size, data, fmt, version):
-	off = 0
-	(uses, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
-	(flags, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Flags', bflag2txt(flags, para_flags_map), off - 1, 1, fmt('B'))
-	off += 2
+def _add_para_format(hd, size, data, off, fmt, version):
+	(flags, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Flags', bflag2txt(flags, para_flags_map), off - 2, 2, fmt('H'))
+	off += 1
 	(align, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, fmt('B'))
 	(caps_lines, off) = rdata(data, off, fmt('B'))
@@ -199,9 +210,49 @@ def add_para_format(hd, size, data, fmt, version):
 	off += 2
 	(space_after, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
+	for rule in ('above', 'below'):
+		ruleiter = add_iter(hd, 'Rule %s' % rule, '', off, 22, '22s')
+		off = add_dim(hd, size, data, off, fmt, 'Width', parent=ruleiter)
+		(line_style, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'), parent=ruleiter)
+		(color, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Color index?', color, off - 1, 1, fmt('B'), parent=ruleiter)
+		(shade, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
+		off += 2
+		off = add_dim(hd, size, data, off, fmt, 'From left', ruleiter)
+		off = add_dim(hd, size, data, off, fmt, 'From right', ruleiter)
+		(roff, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Offset', '%.2f%%' % (roff / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
+		off += 2
+	off += 8
+	for i in range(0, 20):
+		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 8, '8s')
+		type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align on / decimal'}
+		(typ, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, fmt('B'), parent=tabiter)
+		(align_char, off) = rdata(data, off, '1s')
+		add_iter(hd, 'Align at char', align_char, off - 1, 1, '1s', parent=tabiter)
+		(fill_char, off) = rdata(data, off, '1s')
+		add_iter(hd, 'Fill char', fill_char, off - 1, 1, '1s', parent=tabiter)
+		off += 1
+		(pos, off) = rdata(data, off, fmt('i'))
+		if pos == -1:
+			add_iter(hd, 'Position', 'not defined', off - 4, 4, fmt('i'), parent=tabiter)
+		else:
+			off = add_dim(hd, size, data, off - 4, fmt, 'Position', tabiter)
+	return off
+
+def add_para_format(hd, size, data, fmt, version):
+	off = 0
+	(uses, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
+	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_para_style(hd, size, data, fmt, version):
-	off = 306
+	off = 0x28
+	_add_para_format(hd, size, data, off, fmt, version)
+	off += 18
 	_add_name2(hd, size, data, off)
 
 def add_hj(hd, size, data, fmt, version):
@@ -274,19 +325,6 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off = add_dim(hd, size, data, off, fmt, 'Y2')
 	off = add_dim(hd, size, data, off, fmt, 'X2')
 	off = add_dim(hd, size, data, off, fmt, 'Line width')
-	line_style_map = {
-		0: 'Solid',
-		1: 'Dotted',
-		2: 'Dotted 2',
-		3: 'Dash Dot',
-		4: 'All Dots',
-		0x80: 'Double',
-		0x81: 'Thin-Thick',
-		0x82: 'Thick-Thin',
-		0x83: 'Thin-Thick-Thin',
-		0x84: 'Thick-Thin-Thick',
-		0x85: 'Triple'
-	}
 	(line_style, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))

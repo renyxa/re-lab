@@ -117,7 +117,16 @@ char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
 
 # if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
-para_flags_map = {0x1: 'keep with next', 0x2: 'lock to baseline grid', 0x8: 'keep lines together', 0x10: 'all lines'}
+para_flags_map = {
+	0x1: 'keep with next',
+	0x2: 'lock to baseline grid',
+	0x8: 'keep lines together',
+	0x10: 'all lines',
+	0x20: 'rule above',
+	0x40: 'rule below',
+	0x80: 'r. a. length: text',
+	0x100: 'r. b. length: text',
+}
 
 if __name__ == '__main__':
 	def test_deobfuscate(seed, value, n, expected):
