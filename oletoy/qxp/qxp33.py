@@ -144,6 +144,12 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
+obj_flags_map = {
+	1: 'smth about runaround?', # not sure what is, never set for Line
+	0x10: 'suppress printout',
+	0x20: 'no runaround?',
+}
+
 line_style_map = {
 	0: 'Solid',
 	1: 'Dotted',
@@ -301,7 +307,10 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off += 5
 	(text, off) = rdata(data, off, fmt('H'))
 	textiter = add_iter(hd, 'Starting block of text chain', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
-	off += 4
+	off += 2
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
+	off += 1
 	(rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
 	(skew, off) = rfract(data, off, fmt)
