@@ -326,8 +326,8 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off = add_dim(hd, size, data, off, fmt, 'X1')
 	off = add_dim(hd, size, data, off, fmt, 'Y2')
 	off = add_dim(hd, size, data, off, fmt, 'X2')
-	off = add_dim(hd, size, data, off, fmt, 'Line width')
-	(line_style, off) = rdata(data, off, fmt('B'))
+	off = add_dim(hd, size, data, off, fmt, 'Line width') # also used for frames
+	(line_style, off) = rdata(data, off, fmt('B')) # looks like frames in 3.3 support only Solid
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
