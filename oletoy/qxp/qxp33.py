@@ -192,24 +192,17 @@ def _add_para_format(hd, size, data, off, fmt, version):
 	add_iter(hd, "Min. lines to carry over", end, off - 1, 1, fmt('B'))
 	(hj, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'H&J index', hj, off - 2, 2, fmt('H'))
-	off += 4
-	(left_indent, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Left indent (in.)', dim2in(left_indent), off - 2, 2, fmt('H'))
 	off += 2
-	(first_line, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'First line (in.)', dim2in(first_line), off - 2, 2, fmt('H'))
-	off += 2
-	(right_indent, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Right indent (in.)', dim2in(right_indent), off - 2, 2, fmt('H'))
-	off += 2
-	(lead, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Leading (pt)', 'auto' if lead == 0 else lead, off - 2, 2, fmt('H'))
-	off += 2
-	(space_before, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Space before (in.)', dim2in(space_before), off - 2, 2, fmt('H'))
-	off += 2
-	(space_after, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
+	off = add_dim(hd, size, data, off, fmt, 'Left indent')
+	off = add_dim(hd, size, data, off, fmt, 'First line')
+	off = add_dim(hd, size, data, off, fmt, 'Right indent')
+	(lead, off) = rdata(data, off, fmt('I'))
+	if lead == 0:
+		add_iter(hd, 'Leading', 'auto', off - 4, 4, fmt('I'))
+	else:
+		off = add_dim(hd, size, data, off - 4, fmt, 'Leading')
+	off = add_dim(hd, size, data, off, fmt, 'Space before')
+	off = add_dim(hd, size, data, off, fmt, 'Space after')
 	for rule in ('above', 'below'):
 		ruleiter = add_iter(hd, 'Rule %s' % rule, '', off, 22, '22s')
 		off = add_dim(hd, size, data, off, fmt, 'Width', parent=ruleiter)
