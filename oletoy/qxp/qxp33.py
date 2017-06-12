@@ -245,11 +245,15 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	off += 4
 	(rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
-	off += 4
+	(skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Skew', '%.2f deg' % skew, off - 4, 4, fmt('i'))
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
-	off += 16
+	off += 12
+	(corner_radius, off) = rfract(data, off, fmt)
+	corner_radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off = add_dim(hd, size, data, off, fmt, 'Y1')
 	off = add_dim(hd, size, data, off, fmt, 'X1')
 	off = add_dim(hd, size, data, off, fmt, 'Y2')
