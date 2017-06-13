@@ -304,7 +304,9 @@ def add_page(hd, size, data, fmt, version):
 def add_object(hd, size, data, fmt, version, obfctx):
 	(typ, off) = rdata(data, 0, fmt('B'))
 	add_iter(hd, 'Type', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
-	off += 5
+	(color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
+	off += 4
 	(text, off) = rdata(data, off, fmt('H'))
 	textiter = add_iter(hd, 'Starting block of text chain', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
 	off += 2
@@ -331,7 +333,10 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
-	off += 12
+	off += 2
+	(frame_color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
+	off += 9
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
