@@ -115,7 +115,7 @@ handlers = {
 	3: ('Page setup',),
 	5: ('Fonts', None, 'fonts'),
 	6: ('Physical fonts',),
-	7: ('Colors',),
+	7: ('Colors', None, 'colors'),
 	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306)),
 	10: ('H&Js', _handle_collection_named(handle_hj, 48)),
 	12: ('Character formats', handle_collection(handle_char_format, 46)),
@@ -274,6 +274,28 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 2 + len(name) + 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
 		i += 1
 
+def add_colors(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	off += 1
+	(count, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of colors', count, off - 1, 1, fmt('B'))
+	off += 32
+	i = 0
+	while i < count:
+		start_off = off
+		(index, off) = rdata(data, off, fmt('B'))
+		color_iter = add_iter(hd, 'Color %d' % i, '', start_off, 1, '%ds' % 1)
+		add_iter(hd, 'Index', index, off - 1, 1, fmt('B'), parent=color_iter)
+		off += 49
+		(name, off) = rcstr(data, off)
+		add_iter(hd, 'Name', name, off - (len(name) + 1), len(name) + 1, '%ds' % (len(name) + 1), parent=color_iter)
+		if off % 2 == 1:
+			off += 1
+			add_iter(hd, 'Padding', '', off - 1, 1, '1s', parent=color_iter)
+		length = off - start_off
+		hd.model.set (color_iter, 0, '%d, %s' % (index, name), 3, length, 4, '%ds' % length)
+		i += 1
+
 def add_page(hd, size, data, fmt, version):
 	off = 0
 	(counter, off) = rdata(data, off, fmt('H'))
@@ -362,6 +384,7 @@ def add_object(hd, size, data, fmt, version, obfctx):
 ids = {
 	'char_format': add_char_format,
 	'fonts': add_fonts,
+	'colors': add_colors,
 	'hj': add_hj,
 	'object': add_object,
 	'page': add_page,
