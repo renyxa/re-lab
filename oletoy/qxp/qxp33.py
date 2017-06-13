@@ -144,6 +144,12 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
+color_model_map = {
+	0: 'HSB',
+	1: 'RGB',
+	2: 'CMYK',
+}
+
 obj_flags_map = {
 	1: 'smth about runaround?', # not sure what is, never set for Line
 	0x10: 'suppress printout',
@@ -283,10 +289,18 @@ def add_colors(hd, size, data, fmt, version):
 	i = 0
 	while i < count:
 		start_off = off
-		(index, off) = rdata(data, off, fmt('B'))
 		color_iter = add_iter(hd, 'Color %d' % i, '', start_off, 1, '%ds' % 1)
+		(index, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Index', index, off - 1, 1, fmt('B'), parent=color_iter)
-		off += 49
+		(spot_color, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Spot color', 'Black' if spot_color == 0x2d else 'index %d' % spot_color, off - 1, 1, fmt('B'), parent=color_iter)
+		off += 33
+		(model, off) = rdata(data, off, fmt('B')) # probably doesn't matter and used only for UI
+		add_iter(hd, 'Selected color model', key2txt(model, color_model_map), off - 1, 1, fmt('B'), parent=color_iter)
+		off += 1
+		(disable_spot_color, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Disable Spot color', disable_spot_color, off - 1, 1, fmt('B'), parent=color_iter)
+		off += 12
 		(name, off) = rcstr(data, off)
 		add_iter(hd, 'Name', name, off - (len(name) + 1), len(name) + 1, '%ds' % (len(name) + 1), parent=color_iter)
 		if off % 2 == 1:
