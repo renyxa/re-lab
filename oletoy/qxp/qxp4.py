@@ -177,9 +177,7 @@ def add_hj(hd, size, data, fmt, version):
 	add_iter(hd, 'Minimum after', min_after, off - 1, 1, fmt('B'))
 	(hyprow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Hyphens in a row', 'unlimited' if hyprow == 0 else hyprow, off - 1, 1, fmt('B'))
-	off += 2
-	(hyp_zone, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Hyphenation zone (in.)', dim2in(hyp_zone), off - 2, 2, fmt('H'))
+	off = add_dim(hd, size, data, off, fmt, 'Hyphenation zone')
 	justify_single_map = {0: 'Disabled', 0x80: 'Enabled'}
 	(justify_single, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Don't justify single word", key2txt(justify_single, justify_single_map), off - 1, 1, fmt('B'))
@@ -190,9 +188,8 @@ def add_hj(hd, size, data, fmt, version):
 	breakcap_map = {0: 'Disabled', 1: 'Enabled'}
 	(breakcap, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Don't break capitalized words", key2txt(breakcap, breakcap_map), off - 1, 1, fmt('B'))
-	off = 0x2a
-	(flush_zone, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Flush zone (in.)', dim2in(flush_zone), off - 2, 2, fmt('H'))
+	off = 0x28
+	off = add_dim(hd, size, data, off, fmt, 'Flush zone')
 	off = _add_name(hd, size, data, 0x30)
 
 def add_char_format(hd, size, data, fmt, version):
@@ -230,24 +227,17 @@ def add_para_format(hd, size, data, fmt, version):
 	add_iter(hd, "Min. lines to carry over", end, off - 1, 1, fmt('B'))
 	(hj, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'H&J index', hj, off - 2, 2, fmt('H'))
-	off += 4
-	(left_indent, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Left indent (in.)', dim2in(left_indent), off - 2, 2, fmt('H'))
 	off += 2
-	(first_line, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'First line (in.)', dim2in(first_line), off - 2, 2, fmt('H'))
-	off += 2
-	(right_indent, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Right indent (in.)', dim2in(right_indent), off - 2, 2, fmt('H'))
-	off += 2
-	(lead, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Leading (pt)', 'auto' if lead == 0 else lead, off - 2, 2, fmt('H'))
-	off += 2
-	(space_before, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Space before (in.)', dim2in(space_before), off - 2, 2, fmt('H'))
-	off += 2
-	(space_after, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Space after (in.)', dim2in(space_after), off - 2, 2, fmt('H'))
+	off = add_dim(hd, size, data, off, fmt, 'Left indent')
+	off = add_dim(hd, size, data, off, fmt, 'First line')
+	off = add_dim(hd, size, data, off, fmt, 'Right indent')
+	(lead, off) = rdata(data, off, fmt('I'))
+	if lead == 0:
+		add_iter(hd, 'Leading', 'auto', off - 4, 4, fmt('I'))
+	else:
+		off = add_dim(hd, size, data, off - 4, fmt, 'Leading')
+	off = add_dim(hd, size, data, off, fmt, 'Space before')
+	off = add_dim(hd, size, data, off, fmt, 'Space after')
 
 def add_dash_stripe(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0xb0)
