@@ -280,6 +280,13 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 2 + len(name) + 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
 		i += 1
 
+def add_color_comp(hd, data, offset, fmt, name, parent=None):
+	(c, off) = rdata(data, offset, fmt('H'))
+	f = c / float(0x10000)
+	perc = f * 100
+	add_iter(hd, name, '%.1f%%' % perc, off - 2, 2, fmt('H'), parent=parent)
+	return off
+
 def add_colors(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
 	off += 1
@@ -294,7 +301,10 @@ def add_colors(hd, size, data, fmt, version):
 		add_iter(hd, 'Index', index, off - 1, 1, fmt('B'), parent=color_iter)
 		(spot_color, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Spot color', 'Black' if spot_color == 0x2d else 'index %d' % spot_color, off - 1, 1, fmt('B'), parent=color_iter)
-		off += 33
+		off = add_color_comp(hd, data, off, fmt, 'Red', color_iter)
+		off = add_color_comp(hd, data, off, fmt, 'Green', color_iter)
+		off = add_color_comp(hd, data, off, fmt, 'Blue', color_iter)
+		off += 27
 		(model, off) = rdata(data, off, fmt('B')) # probably doesn't matter and used only for UI
 		add_iter(hd, 'Selected color model', key2txt(model, color_model_map), off - 1, 1, fmt('B'), parent=color_iter)
 		off += 1
