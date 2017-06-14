@@ -54,6 +54,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	typ = obfctx.deobfuscate(typ, 1)
 	if typ == 0: # line
 		off += 61
+	if typ == 1: # orthogonal line
+		off += 61
 	# TODO: this suggests the value is not really a type...
 	elif typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / line[text]
 		off += 123
