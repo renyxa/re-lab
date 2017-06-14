@@ -152,6 +152,25 @@ color_model_map = {
 	2: 'CMYK',
 }
 
+box_types_map = {
+	2: 'Rectangle',
+	3: 'With corners',
+	4: 'Oval',
+}
+
+box_corners_map = {
+	0: 'Rounded',
+	2: 'Beveled',
+	4: 'Concave',
+}
+
+content_types_map = {
+	2: 'None',
+	3: 'Text',
+	4: 'None',
+	5: 'Picture',
+}
+
 obj_flags_map = {
 	1: 'No color?',
 	0x10: 'suppress printout',
@@ -368,7 +387,14 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
-	off += 12
+	off += 9
+	(corner, off) = rdata(data, off, fmt('B'))
+	(content, off) = rdata(data, off, fmt('B'))
+	(shape, off) = rdata(data, off, fmt('B'))
+	if shape == 3:
+		add_iter(hd, 'Corner type', key2txt(corner, box_corners_map), off - 3, 1, fmt('B'))
+	add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 2, 1, fmt('B'))
+	add_iter(hd, 'Shape type', key2txt(shape, box_types_map), off - 1, 1, fmt('B'))
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
