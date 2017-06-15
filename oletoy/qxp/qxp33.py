@@ -14,6 +14,7 @@
 # USA
 #
 
+import traceback
 from utils import *
 from qxp import *
 
@@ -91,26 +92,31 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	m = 0
 	while off < len(data):
 		start = off
-		(size, off) = rdata(data, off + 2, fmt('I'))
-		npages_map = {1: 'Single', 2: 'Facing'}
-		(npages, off) = rdata(data, off, fmt('H'))
-		if size & 0xffff == 0:
+		try:
+			(size, off) = rdata(data, off + 2, fmt('I'))
+			npages_map = {1: 'Single', 2: 'Facing'}
+			(npages, off) = rdata(data, off, fmt('H'))
+			if size & 0xffff == 0:
+				add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
+				break
+			off = start + 6 + size + 16 + npages * 12
+			(name_len, off) = rdata(data, off, fmt('I'))
+			(name, _) = rcstr(data, off)
+			off += name_len
+			(objs, off) = rdata(data, off, fmt('I'))
+			pname = '[%d] %s%s page' % (i, key2txt(npages, npages_map), ' master' if m < nmasters else '')
+			if len(name) != 0:
+				pname += ' "%s"' % name
+			pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
+			for j in range(1, objs + 1):
+				off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				obfctx = obfctx.next()
+			i += 1
+			m += 1
+		except:
+			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
 			break
-		off = start + 6 + size + 16 + npages * 12
-		(name_len, off) = rdata(data, off, fmt('I'))
-		(name, _) = rcstr(data, off)
-		off += name_len
-		(objs, off) = rdata(data, off, fmt('I'))
-		pname = '[%d] %s%s page' % (i, key2txt(npages, npages_map), ' master' if m < nmasters else '')
-		if len(name) != 0:
-			pname += ' "%s"' % name
-		pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
-		for j in range(1, objs + 1):
-			off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
-			obfctx = obfctx.next()
-		i += 1
-		m += 1
 
 handlers = {
 	2: ('Print settings',),
