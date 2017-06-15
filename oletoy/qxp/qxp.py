@@ -44,6 +44,39 @@ VERSION_3_3 = 0x3f
 VERSION_4 = 0x41
 VERSION_6 = 0x43
 
+class HexDumpSave:
+	def __init__(self, offset):
+		self.model = self.Model(offset)
+
+	class Model:
+		def __init__(self, offset):
+			self.offset = offset
+			self.values = []
+
+		def append(self, parent, dummy=None):
+			self.values.append([{}, parent])
+			return len(self.values) - 1
+
+		def set(self, iter, *args):
+			values = self.values[iter][0]
+			i = 0
+			while i < len(args):
+				values[args[i]] = args[i + 1] - self.offset if args[i] == 2 else args[i + 1]
+				i += 2
+
+	def show(self, hd):
+		iters = [None] * len(self.model.values)
+		for i in range(0, len(self.model.values)):
+			(vs, p) = self.model.values[i]
+			parent = None if p == None else iters[p]
+			iter = hd.model.append(parent, None)
+			iters[i] = iter
+			args = []
+			for (idx, val) in vs.items():
+				args.append(idx)
+				args.append(val)
+			hd.model.set(iter, *args)
+
 def handle_collection(handler, size):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
