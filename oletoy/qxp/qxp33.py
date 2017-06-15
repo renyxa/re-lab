@@ -65,9 +65,14 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	if typ == 1: # orthogonal line
 		off += 61
 	elif typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / line[text]
-		off += 123
+		off += 34
+		(frame, off) = rdata(data, off, fmt('B'))
+		off += 88
 		(eh, off) = rdata(data, off, fmt('I'))
 		off += 4
+		if frame == 5:
+			(length, off) = rdata(data, off, fmt('I')) # length of bezier data
+			off += length
 		if eh == 0: # TODO: this is a wild guess
 			off += 12
 		off += 12
@@ -173,6 +178,7 @@ box_types_map = {
 	2: 'Rectangle',
 	3: 'With corners',
 	4: 'Oval',
+	5: 'Freehand',
 }
 
 box_corners_map = {
