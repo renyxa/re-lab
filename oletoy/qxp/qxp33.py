@@ -28,7 +28,7 @@ box_types_map = {
 	2: 'Rectangle',
 	3: 'With corners',
 	4: 'Oval',
-	5: 'Freehand',
+	5: 'Bezier / Freehand',
 }
 
 box_flags_map = {
@@ -105,7 +105,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 
 	# typ == 0: # line
 	# typ == 1: # orthogonal line
-	# typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text]
+	# typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / freehand[text]
 	# typ == 5: # rectangle[none]
 	# typ == 6: # beveled-corner[none] / rounded-corner[none]
 	# typ == 7: # oval[none]
