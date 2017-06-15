@@ -109,11 +109,12 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# typ == 5: # rectangle[none]
 	# typ == 6: # beveled-corner[none] / rounded-corner[none]
 	# typ == 7: # oval[none]
+	# typ == 8: # bezier[none] / freehand[none]
 	# typ == 11: # group
 	# typ == 12: # rectangle[image]
 	# typ == 13: # beveled-corner[image] / rounded-corner[image]
 	# typ == 14: # oval[image]
-	# typ == 15: # bezier[image]
+	# typ == 15: # bezier[image] / freehand[image]
 	(typ, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Type', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
 	(color, off) = rdata(data, off, fmt('B'))
