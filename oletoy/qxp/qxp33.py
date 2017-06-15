@@ -105,7 +105,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 
 	# typ == 0: # line
 	# typ == 1: # orthogonal line
-	# typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / line[text]
+	# typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text]
 	# typ == 5: # rectangle[none]
 	# typ == 6: # beveled-corner[none] / rounded-corner[none]
 	# typ == 7: # oval[none]
