@@ -196,6 +196,7 @@ content_types_map = {
 
 obj_flags_map = {
 	1: 'No color?',
+	0x4: 'lock',
 	0x10: 'suppress printout',
 	0x20: 'no runaround?',
 }
