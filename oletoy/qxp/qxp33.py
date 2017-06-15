@@ -50,6 +50,13 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+	start = offset
+	def handle_gradient(offset):
+		(gradient_id, _) = rdata(data, start + 24, fmt('I'))
+		if gradient_id != 0:
+			return offset + 34
+		return offset
+
 	off = offset
 	(typ, off) = rdata(data, off, fmt('B'))
 	typ = obfctx.deobfuscate(typ, 1)
@@ -57,7 +64,6 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		off += 61
 	if typ == 1: # orthogonal line
 		off += 61
-	# TODO: this suggests the value is not really a type...
 	elif typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / line[text]
 		off += 123
 		(eh, off) = rdata(data, off, fmt('I'))
@@ -65,12 +71,16 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		if eh == 0: # TODO: this is a wild guess
 			off += 12
 		off += 12
+		off = handle_gradient(off)
 	elif typ == 5: # rectangle[none]
 		off += 147
+		off = handle_gradient(off)
 	elif typ == 6: # beveled-corner[none] / rounded-corner[none]
 		off += 147
+		off = handle_gradient(off)
 	elif typ == 7: # oval[none]
 		off += 147
+		off = handle_gradient(off)
 	elif typ == 11: # group
 		off += 81
 	# rectangle[image], beveled-corner[image] / rounded-corner[image], oval[image], bezier[image]
@@ -83,7 +93,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		if bid != 0:
 			(length, off) = rdata(data, off, fmt('I')) # length of bitmap data
 			off += length
-	add_pgiter(page, '[%d]' % index, 'qxp33', ('object', fmt, version, obfctx), data[offset:off], parent)
+		off = handle_gradient(off)
+	add_pgiter(page, '[%d]' % index, 'qxp33', ('object', fmt, version, obfctx), data[start:off], parent)
 	return off
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
@@ -393,7 +404,9 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
-	off += 9
+	(gradient_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
+	off += 5
 	(corner, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Corner type', key2txt(corner, box_corners_map), off - 1, 1, fmt('B'))
 	(content, off) = rdata(data, off, fmt('B'))
@@ -403,6 +416,8 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	if gradient_id != 0:
+		off += 34
 	off = add_dim(hd, size, data, off, fmt, 'Y1')
 	off = add_dim(hd, size, data, off, fmt, 'X1')
 	off = add_dim(hd, size, data, off, fmt, 'Y2')
