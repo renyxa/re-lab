@@ -417,7 +417,11 @@ def add_object(hd, size, data, fmt, version, obfctx):
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	if gradient_id != 0:
-		off += 34
+		gr_iter = add_iter(hd, 'Gradient', '', off, 34, '%ds' % 34)
+		off += 20
+		(color2, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
+		off += 13
 	off = add_dim(hd, size, data, off, fmt, 'Y1')
 	off = add_dim(hd, size, data, off, fmt, 'X1')
 	off = add_dim(hd, size, data, off, fmt, 'Y2')
