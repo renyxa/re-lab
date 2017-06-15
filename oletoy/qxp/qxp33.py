@@ -31,10 +31,11 @@ box_types_map = {
 	5: 'Freehand',
 }
 
-box_corners_map = {
-	0: 'Default / Rounded',
-	2: 'Beveled',
-	4: 'Concave',
+box_flags_map = {
+	128: 'h. flip',
+	256: 'v. flip',
+	512: 'beveled',
+	1024: 'concave',
 }
 
 content_types_map = {
@@ -45,7 +46,7 @@ content_types_map = {
 }
 
 obj_flags_map = {
-	1: 'No color?',
+	1: 'no color?',
 	0x4: 'lock',
 	0x10: 'suppress printout',
 	0x20: 'no runaround?',
@@ -133,9 +134,9 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
 	(gradient_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
-	off += 5
-	(corner, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Corner type', key2txt(corner, box_corners_map), off - 1, 1, fmt('B'))
+	off += 4
+	(flags2, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Flags (corners, flip)', bflag2txt(flags2, box_flags_map), off - 2, 2, fmt('H'))
 	(content, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
 	(shape, off) = rdata(data, off, fmt('B'))
