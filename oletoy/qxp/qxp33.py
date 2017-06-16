@@ -32,10 +32,10 @@ box_types_map = {
 }
 
 box_flags_map = {
-	128: 'h. flip',
-	256: 'v. flip',
-	512: 'beveled',
-	1024: 'concave',
+	0x80: 'h. flip',
+	0x100: 'v. flip',
+	0x200: 'beveled',
+	0x400: 'concave',
 }
 
 content_types_map = {
