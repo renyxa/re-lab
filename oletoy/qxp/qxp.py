@@ -22,10 +22,15 @@ def little_endian(fmt):
 def big_endian(fmt):
 	return '>' + fmt
 
+def rsfloat(data, off, fmt):
+	(num, off) = rdata(data, off, fmt('H'))
+	f = num / float(0x10000)
+	return f, off
+
 def rfract(data, off, fmt):
-	(fpart, off) = rdata(data, off, fmt('H'))
+	(fpart, off) = rsfloat(data, off, fmt)
 	(ipart, off) = rdata(data, off, fmt('h'))
-	return (ipart + fpart / float(0x10000), off)
+	return (ipart + fpart, off)
 
 def dim2in(dim):
 	return dim / 72.0
@@ -164,6 +169,12 @@ def add_dim(hd, size, data, offset, fmt, name, parent=None):
 	sz = off - offset
 	dim_str = '%.2f pt / %.2f in' % (dim, dim2in(dim))
 	add_iter(hd, name, dim_str, off - sz, sz, '%ds' % sz, parent=parent)
+	return off
+
+def add_sfloat_perc(hd, data, offset, fmt, name, parent=None):
+	(f, off) = rsfloat(data, offset, fmt)
+	perc = f * 100
+	add_iter(hd, name, '%.1f%%' % perc, off - 2, 2, fmt('H'), parent=parent)
 	return off
 
 def add_fonts(hd, size, data, fmt, version):

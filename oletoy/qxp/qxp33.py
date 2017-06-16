@@ -438,11 +438,7 @@ def add_hj(hd, size, data, fmt, version):
 	_add_name2(hd, size, data, off)
 
 def add_color_comp(hd, data, offset, fmt, name, parent=None):
-	(c, off) = rdata(data, offset, fmt('H'))
-	f = c / float(0x10000)
-	perc = f * 100
-	add_iter(hd, name, '%.1f%%' % perc, off - 2, 2, fmt('H'), parent=parent)
-	return off
+	return add_sfloat_perc(hd, data, offset, fmt, name, parent=parent)
 
 def add_colors(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
