@@ -111,27 +111,16 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
 class ObjectHeader(object):
-	def __init__(self, typ, shape, link_id, content_iter):
+	def __init__(self, typ, shape, link_id, content_index, content_iter):
 		self.typ = typ
 		self.shape = shape
 		self.link_id = link_id
+		self.content_index = content_index
 		self.content_iter = content_iter
 
 def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off = offset
 
-	# typ == 0: # line
-	# typ == 1: # orthogonal line
-	# typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / freehand[text]
-	# typ == 5: # rectangle[none]
-	# typ == 6: # beveled-corner[none] / rounded-corner[none]
-	# typ == 7: # oval[none]
-	# typ == 8: # bezier[none] / freehand[none]
-	# typ == 11: # group
-	# typ == 12: # rectangle[image]
-	# typ == 13: # beveled-corner[image] / rounded-corner[image]
-	# typ == 14: # oval[image]
-	# typ == 15: # bezier[image] / freehand[image]
 	(typ, off) = rdata(data, off, fmt('B'))
 	typ = obfctx.deobfuscate(typ, 1)
 	add_iter(hd, 'Type', typ, off - 1, 1, fmt('B'))
@@ -140,8 +129,8 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	(shade, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
 	off += 2
-	(text, off) = rdata(data, off, fmt('H'))
-	content_iter = add_iter(hd, 'Content index?', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
+	(content, off) = rdata(data, off, fmt('H'))
+	content_iter = add_iter(hd, 'Content index?', hex(obfctx.deobfuscate(content, 2)), off - 2, 2, fmt('H'))
 	off += 2
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
@@ -176,22 +165,93 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
 	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
 
-	return off, ObjectHeader(typ, shape, link_id, content_iter)
+	return off, ObjectHeader(typ, shape, link_id, content, content_iter)
+
+def add_frame(hd, data, offset, fmt):
+	off = offset
+	off = add_dim(hd, off + 4, data, off, fmt, 'Frame width')
+	# looks like frames in 3.3 support only Solid style
+	off += 4
+	(frame_color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
+	return off
+
+def add_bezier_data(hd, data, offset, fmt):
+	off = offset
+	(bezier_data_length, off) = rdata(data, off, fmt('I'))
+	off += bezier_data_length
+	return off
 
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
+	hd.model.set(header.content_iter, 0, "Starting block of text chain")
+	off = add_frame(hd, data, off, fmt)
+	off += 9
+	(toff, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	if toff > 0:
+		hd.model.set(header.content_iter, 0, "Index in linked list?")
+	off += 24
+	(text_rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
+	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
+	(text_skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Text skew', '%.2f deg' % text_skew, off - 4, 4, fmt('i'))
+	(col, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+	off += 16
+	if header.shape == 5:
+		off = add_bezier_data(hd, data, off, fmt)
+	off += 24
+	return off
 
 def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
+	hd.model.set(header.content_iter, 0, "Picture block?")
+	off = add_frame(hd, data, off, fmt)
+	off += 27
+	(pic_skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
+	(pic_rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
+	off = add_dim(hd, off + 4, data, off, fmt, 'Offset accross')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
+	off += 38
+	if header.shape == 5:
+		off = add_bezier_data(hd, data, off, fmt)
+	(bitmap_length, off) = rdata(data, off, fmt('I')) # length of bitmap data
+	off += bitmap_length
+	return off
 
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
+	off = add_frame(hd, data, off, fmt)
+	off += 83
+	if header.shape == 5:
+		off = add_bezier_data(hd, data, off, fmt)
+	return off
 
 def add_line(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
+	off = add_dim(hd, off + 4, data, off, fmt, 'Line width')
+	(line_style, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
+	(arrow, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	return off
 
 def add_group(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
+	off += 10
+	(count, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of objects?', count, off - 4, 4, fmt('I'))
+	(listlen, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length of index list?', listlen, off - 4, 4, fmt('I'))
+	listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
+	for i in range(1, count + 1):
+		(idx, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
+	return off
 
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = offset
@@ -201,59 +261,33 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 
 	(off, header) = add_object_header(hd, data, off, fmt, version, obfctx)
 
+	# typ == 0: # line
+	# typ == 1: # orthogonal line
+	# typ == 3: # rectangle[text] / beveled-corner[text] / rounded-corner[text] / oval[text] / bezier[text] / freehand[text]
+	# typ == 5: # rectangle[none]
+	# typ == 6: # beveled-corner[none] / rounded-corner[none]
+	# typ == 7: # oval[none]
+	# typ == 8: # bezier[none] / freehand[none]
+	# typ == 11: # group
+	# typ == 12: # rectangle[image]
+	# typ == 13: # beveled-corner[image] / rounded-corner[image]
+	# typ == 14: # oval[image]
+	# typ == 15: # bezier[image] / freehand[image]
+	if header.typ in [0, 1]:
+		off = add_line(hd, data, off, fmt, version, obfctx, header)
+	elif header.typ == 3:
+		off = add_text_box(hd, data, off, fmt, version, obfctx, header)
+	elif header.typ in [5, 6, 7, 8]:
+		off = add_empty_box(hd, data, off, fmt, version, obfctx, header)
+	elif header.typ == 11:
+		off = add_group(hd, data, off, fmt, version, obfctx, header)
+	elif header.typ in [12, 13, 14, 15]:
+		off = add_picture_box(hd, data, off, fmt, version, obfctx, header)
+
 	if header.typ == 11:
 		page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
 	else:
 		page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(header.shape, shape_types_map)))
-
-	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
-	(line_style, off) = rdata(data, off, fmt('B')) # looks like frames in 3.3 support only Solid
-	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
-	(arrow, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
-	if header.typ == 11: # group
-		off += 4
-		(count, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, '# of objects?', count, off - 4, 4, fmt('I'))
-		(listlen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Length of index list?', listlen, off - 4, 4, fmt('I'))
-		listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
-		for i in range(1, count + 1):
-			(idx, off) = rdata(data, off, fmt('I'))
-			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
-	# TODO: separate objects
-	elif header.shape > 1: # only for frames
-		hd.model.set(header.content_iter, 0, "Starting block of text chain")
-		off += 2
-		(frame_color, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
-		off += 9
-		(toff, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
-		if toff > 0:
-			hd.model.set(header.content_iter, 0, "Index in linked list?")
-		off = offset + 0x5e
-		(pic_skew, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
-		(pic_rot, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
-		off = add_dim(hd, off + 4, data, off, fmt, 'Offset accross')
-		off -= 4
-		(text_rot, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
-		off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
-		off -= 4
-		(text_skew, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Text skew', '%.2f deg' % text_skew, off - 4, 4, fmt('i'))
-		(col, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
-		off += 20
-		if header.shape == 5:
-			(bezier_length, off) = rdata(data, off, fmt('I')) # length of bezier data
-			off += bezier_length
-		if header.typ in [12, 13, 14, 15] and header.link_id != 0:
-			(bitmap_length, off) = rdata(data, off, fmt('I')) # length of bitmap data
-			off += bitmap_length
 
 	# update object size
 	page.model.set_value(objiter, 2, off - offset)
