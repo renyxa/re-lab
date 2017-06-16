@@ -77,6 +77,27 @@ class HexDumpSave:
 				args.append(val)
 			hd.model.set(iter, *args)
 
+obj_flags_map = {
+	1: 'no color?',
+	0x4: 'lock',
+	0x10: 'suppress printout',
+	0x20: 'no runaround?',
+}
+
+line_style_map = {
+	0: 'Solid',
+	1: 'Dotted',
+	2: 'Dotted 2',
+	3: 'Dash Dot',
+	4: 'All Dots',
+	0x80: 'Double',
+	0x81: 'Thin-Thick',
+	0x82: 'Thick-Thin',
+	0x83: 'Thin-Thick-Thin',
+	0x84: 'Thick-Thin-Thick',
+	0x85: 'Triple'
+}
+
 def handle_collection(handler, size):
 	def hdl(page, data, parent, fmt, version):
 		off = 0

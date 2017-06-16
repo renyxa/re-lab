@@ -17,6 +17,11 @@
 from utils import *
 from qxp import *
 
+box_flags_map = {
+	0x80: 'h. flip',
+	0x100: 'v. flip',
+}
+
 def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
@@ -48,7 +53,96 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp4', ('para_format', fmt, version), data, parent)
 
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
-	return (obfctx, offset)
+	off = offset
+	hd = HexDumpSave(offset)
+	# the real size is determined at the end
+	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 1], parent)
+
+	typ = 0
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
+	off += 7
+	(index, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index/ID?', index, off - 2, 2, fmt('H'))
+	off += 2
+	(text, off) = rdata(data, off, fmt('I'))
+	# TODO: the value is obfuscated somehow
+	add_iter(hd, 'Starting block of text chain?', hex(text), off - 4, 4, fmt('I'))
+	(rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
+	(skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Skew?', '%.2f deg' % skew, off - 4, 4, fmt('i'))
+	# Text boxes with the same link ID are linked.
+	(lid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
+	(gradient_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
+	off += 8
+	(flags, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
+	(typ, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Type?', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
+	# 1 for line, 2 for orthogonal line
+	(unknown, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Unknown', hex(obfctx.deobfuscate(unknown, 1)), off - 1, 1, fmt('B'))
+	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
+	(shade, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
+	off += 2
+	(color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
+	off += 1
+	(gap_color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Gap color index', gap_color, off - 1, 1, fmt('B'))
+	off += 1
+	(gap_shade, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Gap shade', '%.2f%%' % (gap_shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
+	off += 2
+	(arrow, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	off += 1
+	(line_style, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
+	off += 1
+	off += 48
+	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
+	off = add_dim(hd, off + 4, data, off, fmt, 'X1')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
+	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
+	(corner_radius, off) = rfract(data, off, fmt)
+	corner_radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	off += 20
+
+	# (flags2, off) = rdata(data, off, fmt('H'))
+	# add_iter(hd, 'Flags (corners, flip)', bflag2txt(flags2, box_flags_map), off - 2, 2, fmt('H'))
+	# (content, off) = rdata(data, off, fmt('B'))
+	# add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
+	# (shape, off) = rdata(data, off, fmt('B'))
+	# add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
+	# if typ == 11:
+		# page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
+	# else:
+		# page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(shape, shape_types_map)))
+
+	# if gradient_id != 0:
+		# gr_iter = add_iter(hd, 'Gradient', '', off, 34, '%ds' % 34)
+		# off += 20
+		# (color2, off) = rdata(data, off, fmt('B'))
+		# add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
+		# off += 13
+
+	# off += 109
+	# (toff, off) = rdata(data, off, fmt('I'))
+	# add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	# off += 32
+	# (columns, off) = rdata(data, off, fmt('H'))
+	# add_iter(hd, '# of columns', columns, off - 2, 2, fmt('H'))
+
+	# update object size
+	page.model.set_value(objiter, 2, off - offset)
+	page.model.set_value(objiter, 3, data[offset:off])
+	return (obfctx, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	off = 0
@@ -73,7 +167,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 		pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, obfctx), data[start:off], parent)
 		objs = obfctx.deobfuscate(objs & 0xffff, 2)
 		obfctx = obfctx.next()
-		for j in range(1, objs + 1):
+		for j in range(0, objs):
 			(obfctx, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 		i += 1
 		m += 1
@@ -253,30 +347,6 @@ def add_index(hd, size, data, fmt, version):
 		(entry, off) = rdata(data, off, '8s')
 		add_iter(hd, 'Entry %d' % i, '', off - 8, 8, '8s')
 
-def add_object(hd, size, data, fmt, version, obfctx):
-	off = 8
-	(index, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Index/ID?', index, off - 2, 2, fmt('H'))
-	(text, off) = rdata(data, off, fmt('I'))
-	# TODO: the value is obfuscated somehow
-	add_iter(hd, 'Starting block of text chain?', text, 4, off - 4, 4, fmt('I'))
-	(rot, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
-	off += 4
-	# Text boxes with the same link ID are linked.
-	(lid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
-	off += 14
-	(typ, off) = rdata(data, 0, fmt('B'))
-	add_iter(hd, 'Type?', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
-	# Follows another obfuscated byte
-	off += 109
-	(toff, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
-	off += 32
-	(columns, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, '# of columns', columns, off - 2, 2, fmt('H'))
-
 def add_page(hd, size, data, fmt, version, obfctx):
 	off = 0
 	(counter, off) = rdata(data, off, fmt('H'))
@@ -305,6 +375,9 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
 
+def add_saved(hd, size, data, saved, dummy):
+	saved.show(hd)
+
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
@@ -313,7 +386,7 @@ ids = {
 	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
-	'object': add_object,
+	'object': add_saved,
 	'page': add_page,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
