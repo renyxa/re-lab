@@ -110,11 +110,15 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
-def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+class ObjectHeader(object):
+	def __init__(self, typ, shape, link_id, content_iter):
+		self.typ = typ
+		self.shape = shape
+		self.link_id = link_id
+		self.content_iter = content_iter
+
+def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off = offset
-	hd = HexDumpSave(offset)
-	# the real size is determined at the end
-	objiter = add_pgiter(page, '[%d]' % index, 'qxp33', ('object', hd), data[offset:offset + 1], parent)
 
 	# typ == 0: # line
 	# typ == 1: # orthogonal line
@@ -137,7 +141,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
 	off += 2
 	(text, off) = rdata(data, off, fmt('H'))
-	textiter = add_iter(hd, 'Starting block of text chain', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
+	content_iter = add_iter(hd, 'Content index?', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
 	off += 2
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
@@ -147,8 +151,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(skew, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Skew', '%.2f deg' % skew, off - 4, 4, fmt('i'))
 	# Text boxes with the same link ID are linked.
-	(lid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
+	(link_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Link ID', hex(link_id), off - 4, 4, fmt('I'))
 	(gradient_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
 	off += 4
@@ -158,10 +162,6 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
 	(shape, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
-	if typ == 11:
-		page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
-	else:
-		page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(shape, shape_types_map)))
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
@@ -175,12 +175,43 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = add_dim(hd, off + 4, data, off, fmt, 'X1')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
 	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
+
+	return off, ObjectHeader(typ, shape, link_id, content_iter)
+
+def add_text_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+
+def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+
+def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+
+def add_line(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+
+def add_group(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+
+def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+	off = offset
+	hd = HexDumpSave(offset)
+	# the real size is determined at the end
+	objiter = add_pgiter(page, '[%d]' % index, 'qxp33', ('object', hd), data[offset:offset + 1], parent)
+
+	(off, header) = add_object_header(hd, data, off, fmt, version, obfctx)
+
+	if header.typ == 11:
+		page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
+	else:
+		page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(header.shape, shape_types_map)))
+
 	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
 	(line_style, off) = rdata(data, off, fmt('B')) # looks like frames in 3.3 support only Solid
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
-	if typ == 11: # group
+	if header.typ == 11: # group
 		off += 4
 		(count, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, '# of objects?', count, off - 4, 4, fmt('I'))
@@ -191,7 +222,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			(idx, off) = rdata(data, off, fmt('I'))
 			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
 	# TODO: separate objects
-	elif shape > 1: # only for frames
+	elif header.shape > 1: # only for frames
+		hd.model.set(header.content_iter, 0, "Starting block of text chain")
 		off += 2
 		(frame_color, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
@@ -199,7 +231,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		(toff, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 		if toff > 0:
-			hd.model.set(textiter, 0, "Index in linked list?")
+			hd.model.set(header.content_iter, 0, "Index in linked list?")
 		off = offset + 0x5e
 		(pic_skew, off) = rfract(data, off, fmt)
 		add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
@@ -216,10 +248,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		(col, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
 		off += 20
-		if shape == 5:
+		if header.shape == 5:
 			(bezier_length, off) = rdata(data, off, fmt('I')) # length of bezier data
 			off += bezier_length
-		if typ in [12, 13, 14, 15] and lid != 0:
+		if header.typ in [12, 13, 14, 15] and header.link_id != 0:
 			(bitmap_length, off) = rdata(data, off, fmt('I')) # length of bitmap data
 			off += bitmap_length
 
