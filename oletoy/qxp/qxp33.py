@@ -41,6 +41,7 @@ box_flags_map = {
 }
 
 content_types_map = {
+	1: 'Objects?', # used by group
 	2: 'None',
 	3: 'Text',
 	4: 'None',
@@ -118,7 +119,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# typ == 14: # oval[image]
 	# typ == 15: # bezier[image] / freehand[image]
 	(typ, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Type', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
+	typ = obfctx.deobfuscate(typ, 1)
+	add_iter(hd, 'Type', typ, off - 1, 1, fmt('B'))
 	(color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
 	off += 4
@@ -163,8 +165,18 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	if typ == 11: # group
+		off += 4
+		(count, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, '# of objects?', count, off - 4, 4, fmt('I'))
+		(listlen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Length of index list?', listlen, off - 4, 4, fmt('I'))
+		listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
+		for i in range(1, count + 1):
+			(idx, off) = rdata(data, off, fmt('I'))
+			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
 	# TODO: separate objects
-	if shape > 1: # only for frames
+	elif shape > 1: # only for frames
 		off += 2
 		(frame_color, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
@@ -223,7 +235,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			if len(name) != 0:
 				pname += ' "%s"' % name
 			pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
-			for j in range(1, objs + 1):
+			for j in range(0, objs):
 				off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 				obfctx = obfctx.next()
 			i += 1
