@@ -133,7 +133,9 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Type', typ, off - 1, 1, fmt('B'))
 	(color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
-	off += 4
+	(shade, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
+	off += 2
 	(text, off) = rdata(data, off, fmt('H'))
 	textiter = add_iter(hd, 'Starting block of text chain', hex(obfctx.deobfuscate(text, 2)), off - 2, 2, fmt('H'))
 	off += 2
