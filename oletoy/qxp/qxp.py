@@ -145,6 +145,23 @@ def add_dim(hd, size, data, offset, fmt, name, parent=None):
 	add_iter(hd, name, dim_str, off - sz, sz, '%ds' % sz, parent=parent)
 	return off
 
+def add_fonts(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of fonts', count, off - 2, 2, fmt('H'))
+	for i in range(0, count):
+		start = off
+		font_iter = add_iter(hd, 'Font %d' % i, '', off, 2, '2s')
+		index_fmt = fmt('H') if version < VERSION_4 else fmt('I')
+		index_size = struct.calcsize(index_fmt)
+		(index, off) = rdata(data, off, index_fmt)
+		add_iter(hd, 'Index', index, off - index_size, index_size, index_fmt, parent=font_iter)
+		(name, off) = rcstr(data, off)
+		add_iter(hd, 'Name', name, off - len(name) - 1, len(name) + 1, '%ds' % (len(name) + 1), parent=font_iter)
+		(full_name, off) = rcstr(data, off)
+		add_iter(hd, 'Full name', full_name, off - len(full_name) - 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
+		hd.model.set(font_iter, 1, "%d, %s" % (index, name), 3, off - start, 4, '%ds' % (off - start))
+
 char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}

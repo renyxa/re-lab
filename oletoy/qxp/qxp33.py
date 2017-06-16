@@ -386,22 +386,6 @@ def add_hj(hd, size, data, fmt, version):
 	off = 48
 	_add_name2(hd, size, data, off)
 
-def add_fonts(hd, size, data, fmt, version):
-	off = add_length(hd, size, data, fmt, version, 0)
-	(count, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of fonts', count, off - 2, 2, fmt('H'))
-	i = 0
-	while i < count:
-		(index, off) = rdata(data, off, fmt('H'))
-		(name, off) = rcstr(data, off)
-		(full_name, off) = rcstr(data, off)
-		font_len = 2 + len(name) + len(full_name) + 2
-		font_iter = add_iter(hd, 'Font %d' % i, '%d, %s' % (index, name), off - font_len, font_len, '%ds' % font_len)
-		add_iter(hd, 'Font %d index' % i, index, off - font_len, 2, fmt('H'), parent=font_iter)
-		add_iter(hd, 'Font %d name' % i, name, off - font_len + 2, len(name) + 1, '%ds' % (len(name) + 1), parent=font_iter)
-		add_iter(hd, 'Font %d full name' % i, full_name, off - font_len + 2 + len(name) + 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
-		i += 1
-
 def add_color_comp(hd, data, offset, fmt, name, parent=None):
 	(c, off) = rdata(data, offset, fmt('H'))
 	f = c / float(0x10000)
