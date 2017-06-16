@@ -88,6 +88,16 @@ def _handle_collection_named(handler, name_offset):
 			i += 1
 	return hdl
 
+def handle_colors(page, data, parent, fmt, version):
+	(count, off) = rdata(data, 1, fmt('B'))
+	off += 32
+	for i in range(0, count):
+		start = off
+		(index, off) = rdata(data, off, fmt('B'))
+		off += 49
+		(name, off) = _read_name2(data, off, len(data))
+		add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('color', fmt, version), data[start:off], parent)
+
 def handle_para_style(page, data, parent, fmt, version, index, name):
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('para_style', fmt, version), data, parent)
 
@@ -253,7 +263,7 @@ handlers = {
 	3: ('Page setup',),
 	5: ('Fonts', None, 'fonts'),
 	6: ('Physical fonts',),
-	7: ('Colors', None, 'colors'),
+	7: ('Colors', handle_colors, 'colors'),
 	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306)),
 	10: ('H&Js', _handle_collection_named(handle_hj, 48)),
 	12: ('Character formats', handle_collection(handle_char_format, 46)),
@@ -404,33 +414,24 @@ def add_colors(hd, size, data, fmt, version):
 	off += 1
 	(count, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Number of colors', count, off - 1, 1, fmt('B'))
-	off += 32
-	i = 0
-	while i < count:
-		start_off = off
-		color_iter = add_iter(hd, 'Color %d' % i, '', start_off, 1, '%ds' % 1)
-		(index, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Index', index, off - 1, 1, fmt('B'), parent=color_iter)
-		(spot_color, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Spot color', 'Black' if spot_color == 0x2d else 'index %d' % spot_color, off - 1, 1, fmt('B'), parent=color_iter)
-		off = add_color_comp(hd, data, off, fmt, 'Red', color_iter)
-		off = add_color_comp(hd, data, off, fmt, 'Green', color_iter)
-		off = add_color_comp(hd, data, off, fmt, 'Blue', color_iter)
-		off += 27
-		(model, off) = rdata(data, off, fmt('B')) # probably doesn't matter and used only for UI
-		add_iter(hd, 'Selected color model', key2txt(model, color_model_map), off - 1, 1, fmt('B'), parent=color_iter)
-		off += 1
-		(disable_spot_color, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Disable Spot color', disable_spot_color, off - 1, 1, fmt('B'), parent=color_iter)
-		off += 12
-		(name, off) = rcstr(data, off)
-		add_iter(hd, 'Name', name, off - (len(name) + 1), len(name) + 1, '%ds' % (len(name) + 1), parent=color_iter)
-		if off % 2 == 1:
-			off += 1
-			add_iter(hd, 'Padding', '', off - 1, 1, '1s', parent=color_iter)
-		length = off - start_off
-		hd.model.set (color_iter, 0, '%d, %s' % (index, name), 3, length, 4, '%ds' % length)
-		i += 1
+
+def add_color(hd, size, data, fmt, version):
+	off = 0
+	(index, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Index', index, off - 1, 1, fmt('B'))
+	(spot_color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Spot color', 'Black' if spot_color == 0x2d else 'index %d' % spot_color, off - 1, 1, fmt('B'))
+	off = add_color_comp(hd, data, off, fmt, 'Red')
+	off = add_color_comp(hd, data, off, fmt, 'Green')
+	off = add_color_comp(hd, data, off, fmt, 'Blue')
+	off += 27
+	(model, off) = rdata(data, off, fmt('B')) # probably doesn't matter and used only for UI
+	add_iter(hd, 'Selected color model', key2txt(model, color_model_map), off - 1, 1, fmt('B'))
+	off += 1
+	(disable_spot_color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Disable Spot color', disable_spot_color, off - 1, 1, fmt('B'))
+	off += 12
+	_add_name2(hd, size, data, off)
 
 def add_page(hd, size, data, fmt, version):
 	off = 0
@@ -465,6 +466,7 @@ def add_saved(hd, size, data, saved, dummy):
 ids = {
 	'char_format': add_char_format,
 	'fonts': add_fonts,
+	'color': add_color,
 	'colors': add_colors,
 	'hj': add_hj,
 	'object': add_saved,
