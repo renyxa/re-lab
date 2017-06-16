@@ -109,7 +109,8 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
 	off += 2
 	(content, off) = rdata(data, off, fmt('H'))
-	content_iter = add_iter(hd, 'Content index?', hex(obfctx.deobfuscate(content, 2)), off - 2, 2, fmt('H'))
+	content = obfctx.deobfuscate(content, 2)
+	content_iter = add_iter(hd, 'Content index?', hex(content), off - 2, 2, fmt('H'))
 	off += 2
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
@@ -126,8 +127,8 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off += 4
 	(flags2, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Flags (corners, flip)', bflag2txt(flags2, box_flags_map), off - 2, 2, fmt('H'))
-	(content, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
+	(content_type, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Content type?', key2txt(content_type, content_types_map), off - 1, 1, fmt('B'))
 	(shape, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 	(corner_radius, off) = rfract(data, off, fmt)
@@ -181,7 +182,10 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 16
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
-	off += 24
+	if header.content_index == 0:
+		off += 24
+	else:
+		off += 12
 	return off
 
 def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
