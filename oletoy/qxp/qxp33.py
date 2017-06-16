@@ -151,7 +151,8 @@ def add_frame(hd, data, offset, fmt):
 	off = offset
 	off = add_dim(hd, off + 4, data, off, fmt, 'Frame width')
 	# looks like frames in 3.3 support only Solid style
-	off += 4
+	off = add_sfloat_perc(hd, data, off, fmt, 'Frame shade')
+	off += 2
 	(frame_color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
 	return off
