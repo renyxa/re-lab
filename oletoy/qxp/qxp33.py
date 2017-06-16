@@ -24,7 +24,9 @@ color_model_map = {
 	2: 'CMYK',
 }
 
-box_types_map = {
+shape_types_map = {
+	0: 'Line',
+	1: 'Orthogonal line',
 	2: 'Rectangle',
 	3: 'With corners',
 	4: 'Oval',
@@ -141,7 +143,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(content, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
 	(shape, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Shape type', key2txt(shape, box_types_map), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
@@ -160,16 +162,16 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
-	off += 2
-	(frame_color, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
-	off += 9
-	(toff, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
-	if toff > 0:
-		hd.model.set(textiter, 0, "Index in linked list?")
 	# TODO: separate objects
-	if typ not in [0, 1]:
+	if shape > 1: # only for frames
+		off += 2
+		(frame_color, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
+		off += 9
+		(toff, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+		if toff > 0:
+			hd.model.set(textiter, 0, "Index in linked list?")
 		off = offset + 0x5e
 		(pic_skew, off) = rfract(data, off, fmt)
 		add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
