@@ -146,7 +146,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
 	(shape, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
-	page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(shape, shape_types_map)))
+	if typ == 11:
+		page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
+	else:
+		page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(shape, shape_types_map)))
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
