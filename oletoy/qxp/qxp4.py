@@ -60,7 +60,11 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 1], parent)
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
-	off += 7
+	off += 1
+	(color, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
+	(shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
 	(index, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Index/ID?', index, off - 2, 2, fmt('H'))
 	off += 2
@@ -100,12 +104,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	else:
 		add_iter(hd, 'Unknown', hex(obfctx.deobfuscate(shape, 1)), off - 1, 1, fmt('B'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
-	(shade, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
-	off += 2
-	(color, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
-	off += 1
+	off += 6
 	(gap_color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Gap color index', gap_color, off - 1, 1, fmt('B'))
 	off += 1
