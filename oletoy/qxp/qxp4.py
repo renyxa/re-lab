@@ -58,8 +58,6 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	hd = HexDumpSave(offset)
 	# the real size is determined at the end
 	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 1], parent)
-
-	typ = 0
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
 	off += 7
@@ -81,11 +79,26 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off += 8
 	(flags, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
-	(typ, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Type?', obfctx.deobfuscate(typ, 1), off - 1, 1, fmt('B'))
-	# 1 for line, 2 for orthogonal line
-	(unknown, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Unknown', hex(obfctx.deobfuscate(unknown, 1)), off - 1, 1, fmt('B'))
+	content_type_map = {0: 'None', 3: 'Text', 4: 'Picture'}
+	(content_type, off) = rdata(data, off, fmt('B'))
+	content_type = obfctx.deobfuscate(content_type, 1)
+	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
+	shape_type_map = {
+		1: 'Line',
+		2: 'Orthogonal line',
+		4: 'Bezier line',
+		5: 'Rectangle',
+		6: 'Rounded',
+		7: 'Freehand',
+		8: 'Beveled',
+		9: 'Oval',
+		11: 'Bezier',
+	}
+	(shape, off) = rdata(data, off, fmt('B'))
+	if content_type == 0:
+		add_iter(hd, 'Shape type', key2txt(obfctx.deobfuscate(shape, 1), shape_type_map), off - 1, 1, fmt('B'))
+	else:
+		add_iter(hd, 'Unknown', hex(obfctx.deobfuscate(shape, 1)), off - 1, 1, fmt('B'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
 	(shade, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
