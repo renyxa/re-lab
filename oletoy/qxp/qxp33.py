@@ -211,11 +211,9 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Offset accross')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
-	off += 38
+	off += 40
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
-	(bitmap_length, off) = rdata(data, off, fmt('I')) # length of bitmap data
-	off += bitmap_length
 	return off
 
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
