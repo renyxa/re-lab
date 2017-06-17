@@ -105,9 +105,8 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	add_iter(hd, 'Type', typ, off - 1, 1, fmt('B'))
 	(color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
-	(shade, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
-	off += 2
+	(shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
 	(content, off) = rdata(data, off, fmt('H'))
 	content = obfctx.deobfuscate(content, 2)
 	content_iter = add_iter(hd, 'Content index?', hex(content), off - 2, 2, fmt('H'))
@@ -151,8 +150,8 @@ def add_frame(hd, data, offset, fmt):
 	off = offset
 	off = add_dim(hd, off + 4, data, off, fmt, 'Frame width')
 	# looks like frames in 3.3 support only Solid style
-	off = add_sfloat_perc(hd, data, off, fmt, 'Frame shade')
-	off += 2
+	(shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Frame shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
 	(frame_color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
 	return off
