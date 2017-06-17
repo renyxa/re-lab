@@ -166,7 +166,9 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	hd.model.set(header.content_iter, 0, "Starting block of text chain")
 	off = add_frame(hd, data, off, fmt)
-	off += 9
+	off += 1
+	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
+	off += 4
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
@@ -192,7 +194,9 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	hd.model.set(header.content_iter, 0, "Picture block?")
 	off = add_frame(hd, data, off, fmt)
-	off += 27
+	off += 1
+	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
+	off += 22
 	(pic_skew, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
 	(pic_rot, off) = rfract(data, off, fmt)
@@ -209,7 +213,9 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
-	off += 83
+	off += 1
+	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
+	off += 78
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
 	return off
@@ -221,6 +227,7 @@ def add_line(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	# qxp33 doesn't support custom runaround margins for lines and "Manual" type
 	return off
 
 def add_group(hd, data, offset, fmt, version, obfctx, header):
