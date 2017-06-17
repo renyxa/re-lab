@@ -159,7 +159,15 @@ def add_frame(hd, data, offset, fmt):
 def add_bezier_data(hd, data, offset, fmt):
 	off = offset
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
-	off += bezier_data_length
+	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
+	end_off = off + bezier_data_length
+	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
+	off += 2
+	i = 1
+	while off < end_off:
+		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
+		i += 1
 	return off
 
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
