@@ -86,7 +86,8 @@ obj_flags_map = {
 	1: 'no color?',
 	0x4: 'lock',
 	0x10: 'suppress printout',
-	0x20: 'no runaround?',
+	0x20: 'no item runaround?',
+	0x40: 'user-edited runaround path?', # used for picture in qxp33
 }
 
 line_style_map = {
