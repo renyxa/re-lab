@@ -65,8 +65,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
 	(shade, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
-	(index, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Index/ID?', index, off - 2, 2, fmt('H'))
+	(idx, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index/ID?', idx, off - 2, 2, fmt('H'))
 	off += 2
 	(block, off) = rdata(data, off, fmt('I'))
 	blockiter = add_iter(hd, 'Starting block of text chain', hex(block), off - 4, 4, fmt('I'))
@@ -82,7 +82,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off += 8
 	(flags, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
-	content_type_map = {0: 'None', 3: 'Text', 4: 'Picture'}
+	content_type_map = {0: 'None', 2: 'Objects?', 3: 'Text', 4: 'Picture'}
 	(content_type, off) = rdata(data, off, fmt('B'))
 	content_type = obfctx.deobfuscate(content_type, 1)
 	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
@@ -126,6 +126,17 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off += 20
 
+	if content_type == 2:
+		(count, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, '# of objects', count, off - 4, 4, fmt('I'))
+		off += 4
+		(listlen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Length of index list', listlen, off - 4, 4, fmt('I'))
+		listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
+		for i in range(1, count + 1):
+			(idx, off) = rdata(data, off, fmt('I'))
+			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
+
 	# off += 109
 	# (toff, off) = rdata(data, off, fmt('I'))
 	# add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
@@ -134,7 +145,11 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# add_iter(hd, '# of columns', columns, off - 2, 2, fmt('H'))
 
 	# update object title and size
-	page.model.set_value(objiter, 0, "[%d] %s (%s)" % (index, key2txt(shape, shape_types_map), key2txt(content_type, content_type_map)))
+	if content_type == 2:
+		type_str = 'Group'
+	else:
+		type_str = "%s (%s)" % (key2txt(shape, shape_types_map), key2txt(content_type, content_type_map))
+	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, idx))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
 	return (obfctx.next(), off)
