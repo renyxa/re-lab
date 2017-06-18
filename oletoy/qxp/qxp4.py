@@ -193,8 +193,8 @@ handlers1 = {
 	6: ('Fonts', None, 'fonts'),
 	7: ('Physical fonts',),
 	8: ('Colors', None, 'colors'),
-	9: ('Paragraph styles', handle_collection(handle_para_style, 244)),
-	10: ('Character styles', handle_collection(handle_char_style, 140)),
+	9: ('Paragraph styles', handle_collection(handle_para_style, 244, 1)),
+	10: ('Character styles', handle_collection(handle_char_style, 140, 1)),
 	11: ('H&Js', handle_collection(handle_hj, 112)),
 	12: ('Dashes & Stripes', handle_collection(handle_dash_stripe, 252)),
 	13: ('Lists', handle_collection(handle_list, 324)),
@@ -372,7 +372,12 @@ def add_char_format(hd, size, data, fmt, version):
 
 def add_char_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
-	off += 20
+	off += 8
+	(parent, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Based on', parent, off - 2, 2, fmt('H'))
+	(index, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index', index, off - 2, 2, fmt('H'))
+	off += 8
 	_add_char_format(hd, size, data, off, fmt, version)
 
 def _add_para_format(hd, size, data, offset, fmt, version):
@@ -429,7 +434,15 @@ def add_para_format(hd, size, data, fmt, version):
 
 def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
-	off += 32
+	off += 8
+	(parent, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Based on', parent, off - 2, 2, fmt('H'))
+	(next, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Next style?', next, off - 2, 2, fmt('H'))
+	off += 8
+	(char, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Character style', char, off - 2, 2, fmt('H'))
+	off += 10
 	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):

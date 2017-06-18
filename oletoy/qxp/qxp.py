@@ -111,10 +111,10 @@ line_style_map = {
 	0x85: 'Triple'
 }
 
-def handle_collection(handler, size):
+def handle_collection(handler, size, init=0):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
-		i = 0
+		i = init
 		while off + size <= len(data):
 			(entry, off) = rdata(data, off, '%ds' % size)
 			handler(page, entry, parent, fmt, version, i)
