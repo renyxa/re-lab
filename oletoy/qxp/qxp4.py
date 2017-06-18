@@ -88,19 +88,20 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
 	obfctx = obfctx.next_shift(content_type)
 	hd.model.set(blockiter, 1, hex(obfctx.deobfuscate(block & 0xffff, 2)))
-	shape_type_map = {
+	shape_types_map = {
 		1: 'Line',
 		2: 'Orthogonal line',
 		4: 'Bezier line',
 		5: 'Rectangle',
-		6: 'Rounded',
+		6: 'Rounded rectangle',
 		7: 'Freehand',
-		8: 'Beveled',
+		8: 'Beveled rectangle',
 		9: 'Oval',
 		11: 'Bezier',
 	}
 	(shape, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Shape type', key2txt(obfctx.deobfuscate(shape, 1), shape_type_map), off - 1, 1, fmt('B'))
+	shape = obfctx.deobfuscate(shape, 1)
+	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
 	off += 6
 	(gap_color, off) = rdata(data, off, fmt('B'))
@@ -150,7 +151,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# (columns, off) = rdata(data, off, fmt('H'))
 	# add_iter(hd, '# of columns', columns, off - 2, 2, fmt('H'))
 
-	# update object size
+	# update object title and size
+	page.model.set_value(objiter, 0, "[%d] %s (%s)" % (index, key2txt(shape, shape_types_map), key2txt(content_type, content_type_map)))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
 	return (obfctx.next(), off)
