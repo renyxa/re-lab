@@ -345,11 +345,23 @@ def _add_char_format(hd, size, data, offset, fmt, version):
 	add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
 	(flags, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Format flags', bflag2txt(flags, char_format_map), off - 4, 4, fmt('I'))
-	(fsz, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Font size, pt', fsz, off - 4, 4, fmt('I'))
-	off += 2
+	(fsz, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Font size, pt', fsz, off - 2, 2, fmt('H'))
+	(scale, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Scale', '%.2f%%' % (scale * 100), off - 4, 4, '4s')
 	(color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
+	scale_type_map = {0: 'Horizontal', 1: 'Vertical'}
+	(scale_type, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Scale type', key2txt(scale_type, scale_type_map), off - 2, 2, fmt('H'))
+	(shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, '4s')
+	off += 6
+	(track, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Track amount', track, off - 2, 2, fmt('H'))
+	off = add_dim(hd, size, data, off, fmt, 'Baseline shift')
+	# TODO: this is baseline shift, but I don't understand yet how it's saved
+	off += 2
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
