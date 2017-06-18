@@ -126,24 +126,6 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off += 20
 
-	# (flags2, off) = rdata(data, off, fmt('H'))
-	# add_iter(hd, 'Flags (corners, flip)', bflag2txt(flags2, box_flags_map), off - 2, 2, fmt('H'))
-	# (content, off) = rdata(data, off, fmt('B'))
-	# add_iter(hd, 'Content type?', key2txt(content, content_types_map), off - 1, 1, fmt('B'))
-	# (shape, off) = rdata(data, off, fmt('B'))
-	# add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
-	# if typ == 11:
-		# page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
-	# else:
-		# page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(shape, shape_types_map)))
-
-	# if gradient_id != 0:
-		# gr_iter = add_iter(hd, 'Gradient', '', off, 34, '%ds' % 34)
-		# off += 20
-		# (color2, off) = rdata(data, off, fmt('B'))
-		# add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
-		# off += 13
-
 	# off += 109
 	# (toff, off) = rdata(data, off, fmt('I'))
 	# add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
