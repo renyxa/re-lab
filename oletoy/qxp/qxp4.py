@@ -391,6 +391,22 @@ def add_para_format(hd, size, data, fmt, version):
 		off = add_dim(hd, size, data, off - 4, fmt, 'Leading')
 	off = add_dim(hd, size, data, off, fmt, 'Space before')
 	off = add_dim(hd, size, data, off, fmt, 'Space after')
+	off += 4
+	for rule in ('above', 'below'):
+		ruleiter = add_iter(hd, 'Rule %s' % rule, '', off, 22, '22s')
+		off = add_dim(hd, size, data, off, fmt, 'Width', parent=ruleiter)
+		(line_style, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Style', key2txt(line_style, line_style_map), off - 2, 2, fmt('H'), parent=ruleiter)
+		(color, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'), parent=ruleiter)
+		(shade, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
+		off += 2
+		off = add_dim(hd, size, data, off, fmt, 'From left', ruleiter)
+		off = add_dim(hd, size, data, off, fmt, 'From right', ruleiter)
+		(roff, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Offset', '%.2f%%' % (roff / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
+		off += 2
 
 def add_dash_stripe(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0xb0)
