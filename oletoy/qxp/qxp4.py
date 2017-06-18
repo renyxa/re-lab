@@ -148,7 +148,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	if content_type == 2:
 		type_str = 'Group'
 	else:
-		type_str = "%s (%s)" % (key2txt(shape, shape_types_map), key2txt(content_type, content_type_map))
+		type_str = "%s / %s" % (key2txt(shape, shape_types_map), key2txt(content_type, content_type_map))
 	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, idx))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
