@@ -504,9 +504,6 @@ def add_page(hd, size, data, fmt, version):
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
 
-def add_saved(hd, size, data, saved, dummy):
-	saved.show(hd)
-
 ids = {
 	'char_format': add_char_format,
 	'fonts': add_fonts,

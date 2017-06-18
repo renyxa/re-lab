@@ -399,9 +399,6 @@ def add_page(hd, size, data, fmt, version, obfctx):
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
 
-def add_saved(hd, size, data, saved, dummy):
-	saved.show(hd)
-
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,

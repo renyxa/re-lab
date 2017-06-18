@@ -195,6 +195,9 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Full name', full_name, off - len(full_name) - 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
 		hd.model.set(font_iter, 1, "%d, %s" % (index, name), 3, off - start, 4, '%ds' % (off - start))
 
+def add_saved(hd, size, data, saved, dummy):
+	saved.show(hd)
+
 char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
