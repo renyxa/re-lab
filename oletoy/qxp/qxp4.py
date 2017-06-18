@@ -314,9 +314,6 @@ def add_colors(hd, size, data, fmt, version):
 	(end, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Data end offset?', end, off - 2, 2, fmt('H'))
 
-def add_para_style(hd, size, data, fmt, version):
-	off = _add_name(hd, size, data)
-
 def add_char_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 
@@ -360,11 +357,8 @@ def add_char_format(hd, size, data, fmt, version):
 	(color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
 
-def add_para_format(hd, size, data, fmt, version):
-	off = 0
-	(uses, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
-	off += 4
+def _add_para_format(hd, size, data, offset, fmt, version):
+	off = offset
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, para_flags_map), off - 1, 1, fmt('B'))
 	off += 2
@@ -407,6 +401,18 @@ def add_para_format(hd, size, data, fmt, version):
 		(roff, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Offset', '%.2f%%' % (roff / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
 		off += 2
+
+def add_para_format(hd, size, data, fmt, version):
+	off = 0
+	(uses, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
+	off += 4
+	_add_para_format(hd, size, data, off, fmt, version)
+
+def add_para_style(hd, size, data, fmt, version):
+	off = _add_name(hd, size, data)
+	off += 32
+	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0xb0)
