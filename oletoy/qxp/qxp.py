@@ -82,6 +82,13 @@ class HexDumpSave:
 				args.append(val)
 			hd.model.set(iter, *args)
 
+class Header:
+	def __init__(self, seed=0, inc=0, masters=0, pictures=0):
+		self.seed = seed
+		self.inc = inc
+		self.masters = masters
+		self.pictures = pictures
+
 obj_flags_map = {
 	1: 'no color?',
 	0x4: 'lock',
@@ -197,6 +204,31 @@ def add_fonts(hd, size, data, fmt, version):
 
 def add_saved(hd, size, data, saved, dummy):
 	saved.show(hd)
+
+def add_header_common(hd, size, data, fmt):
+	off = 2
+	proc_map = {'II': 'Intel', 'MM': 'Motorola'}
+	(proc, off) = rdata(data, off, '2s')
+	add_iter(hd, 'Processor', key2txt(proc, proc_map), off - 2, 2, '2s')
+	(sig, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Signature', sig, off - 3, 3, '3s')
+	lang_map = {0x33: 'English', 0x61: 'Korean'}
+	(lang, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Language', key2txt(lang, lang_map), off - 1, 1, fmt('B'))
+	version_map = {
+		0x3e: '3.1',
+		0x3f: '3.3',
+		0x41: '4',
+		0x42: '5',
+		0x43: '6',
+		0x44: '7?',
+		0x45: '8',
+	}
+	(ver, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
+	(ver, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
+	return off
 
 char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 

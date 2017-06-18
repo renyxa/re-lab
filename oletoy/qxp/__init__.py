@@ -12,6 +12,7 @@
 # USA
 
 import struct
+
 from utils import *
 from qxp import dim2in, add_dim
 import qxp
@@ -72,19 +73,6 @@ def open_v5(page, buf, parent, fmt, version):
 	pictures = []
 	rlen = 0x100
 
-	def read_header():
-		if version < qxp.VERSION_4:
-			(masters, off) = rdata(buf, 0x75, fmt('B'))
-			(pictures, off) = rdata(buf, 0x108, fmt('H'))
-			(seed, off) = rdata(buf, off + 6, fmt('H'))
-			(inc, off) = rdata(buf, off, fmt('H'))
-		else:
-			(masters, off) = rdata(buf, 0x4d, fmt('B'))
-			(pictures, off) = rdata(buf, 0xe0, fmt('H'))
-			(seed, off) = rdata(buf, 0x80, fmt('H'))
-			(inc, off) = rdata(buf, 0x52, fmt('H'))
-		return (masters, pictures, seed, inc)
-
 	def read_story_blocks(pos, length, offset):
 		start = (pos - 1) * rlen
 		if rlen - 4 - offset >= length:
@@ -116,18 +104,20 @@ def open_v5(page, buf, parent, fmt, version):
 			tblocks[block] = ""
 			story.append((block, tlen))
 
-	add_pgiter(page, 'Header', 'qxp5', ('header', fmt), buf[0:512], parent)
+	header_hdl_map = {qxp.VERSION_3_3: qxp33.add_header, qxp.VERSION_4: qxp4.add_header}
+	header_hdl = header_hdl_map[version] if header_hdl_map.has_key(version) else add_header
+	header = qxp.HexDumpSave(0)
+	(hdr, off) = header_hdl(header, 512, buf, fmt, version)
+	add_pgiter(page, 'Header', 'qxp5', ('header', header), buf[0:off], parent)
 
 	# parse blocks
-	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[512:len(buf)], parent)
+	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[off:len(buf)], parent)
 
-	off = 512
 	i = 3
 	last_data = 0
 	big = False
 	nexts = {}
 	try:
-		(mp_count, pict_count, seed, inc) = read_header()
 		while off < len(buf):
 			start = off
 			count = 1
@@ -155,7 +145,7 @@ def open_v5(page, buf, parent, fmt, version):
 				else: # a new chain starts here
 					chain = len(chains)
 					chains.append([])
-					if chain > last_data + pict_count:
+					if chain > last_data + hdr.pictures:
 						stories[chain] = []
 						tstarts[chain] = i
 						parse_story(i, stories[chain])
@@ -192,91 +182,11 @@ def open_v5(page, buf, parent, fmt, version):
 			tid += 1
 		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos + 1)
 		if pos == 0:
-			handle_document(page, stream, streamiter, fmt, version, ObfuscationContext(seed, inc), mp_count)
+			handle_document(page, stream, streamiter, fmt, version, ObfuscationContext(hdr.seed, hdr.inc), hdr.masters)
 
 def add_header(hd, size, data, fmt, version):
-	off = 2
-	proc_map = {'II': 'Intel', 'MM': 'Motorola'}
-	(proc, off) = rdata(data, off, '2s')
-	add_iter(hd, 'Processor', key2txt(proc, proc_map), off - 2, 2, '2s')
-	(sig, off) = rdata(data, off, '3s')
-	add_iter(hd, 'Signature', sig, off - 3, 3, '3s')
-	lang_map = {0x33: 'English', 0x61: 'Korean'}
-	(lang, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Language', key2txt(lang, lang_map), off - 1, 1, fmt('B'))
-	version_map = {
-		0x3e: '3.1',
-		0x3f: '3.3',
-		0x41: '4',
-		0x42: '5',
-		0x43: '6',
-		0x44: '7?',
-		0x45: '8',
-	}
-	(ver, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-	(ver, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-	if ver < qxp.VERSION_4:
-		off = 0x40
-		(pages, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
-		off = 0x4a
-		off = qxp.add_margins(hd, size, data, off, fmt)
-		(col, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
-		off = add_dim(hd, size, data, off, fmt, 'Gutter width')
-		off = 0x75
-		(mpages, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
-		off = 0xb0
-		off = add_dim(hd, size, data, off, fmt, 'Left offset')
-		off = add_dim(hd, size, data, off, fmt, 'Top offset')
-		off = 0xbc
-		off = add_dim(hd, size, data, off, fmt, 'Left offset')
-		off = add_dim(hd, size, data, off, fmt, 'Bottom offset')
-	else:
-		(seed, off) = rdata(data, 0x80, fmt('H'))
-		off = 0x22
-		(pages, off) = rdata(data, off, fmt('H'))
-		sign = lambda x: 1 if x & 0x8000 == 0 else -1
-		pagesiter = add_iter(hd, 'Number of pages?', qxp.deobfuscate(pages, seed, 2) + sign(seed), off - 2, 2, fmt('H'))
-		off += 8
-		off = qxp.add_margins(hd, size, data, off, fmt)
-		off = add_dim(hd, size, data, off, fmt, 'Gutter width')
-		off = add_dim(hd, size, data, off, fmt, 'Top offset')
-		off = add_dim(hd, size, data, off, fmt, 'Left offset')
-		off = 0x4d
-		(mpages, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
-		off = 0x52
-		(inc, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Obfuscation increment', hex(inc), off - 2, 2, fmt('H'))
-		off += 44
-		off += 2 # We already read the seed
-		add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
-		off = 0x90
-		off = add_dim(hd, size, data, off, fmt, 'Left offset')
-		off = add_dim(hd, size, data, off, fmt, 'Top offset')
-	off = 0xdc
-	(lines, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
-	if ver < qxp.VERSION_4:
-		off += 40
-	(texts, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
-	(pictures, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of picture boxes', pictures, off - 2, 2, fmt('H'))
-	if ver < qxp.VERSION_4:
-		off += 6
-		(seed, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Obfuscation seed', '%x' % seed, off - 2, 2, fmt('H'))
-		(inc, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Obfuscation increment', '%x' % inc, off - 2, 2, fmt('H'))
-	if ver >= qxp.VERSION_4:
-		off = 0x148
-		(counter, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Object counter/last id?', counter, off - 4, 4, fmt('I'))
+	off = qxp.add_header_common(hd, size, data, fmt)
+	return (qxp.Header(), size)
 
 def add_text(hd, size, data, fmt, version, text):
 	off = 0
@@ -330,7 +240,7 @@ def add_text(hd, size, data, fmt, version, text):
 	add_iter(hd, 'Gargbage?', '', off, size - off, '%ds' % (size - off))
 
 qxp5_ids = {
-	'header': add_header,
+	'header': qxp.add_saved,
 	'text': add_text,
 }
 

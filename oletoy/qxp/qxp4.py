@@ -251,6 +251,42 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp4', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
+def add_header(hd, size, data, fmt, version):
+	off = add_header_common(hd, size, data, fmt)
+	off += 22
+	(pages, off) = rdata(data, off, fmt('H'))
+	pagesiter = add_iter(hd, 'Number of pages?', pages, off - 2, 2, fmt('H'))
+	off += 8
+	off = add_margins(hd, size, data, off, fmt)
+	off = add_dim(hd, size, data, off, fmt, 'Gutter width')
+	off = add_dim(hd, size, data, off, fmt, 'Top offset')
+	off = add_dim(hd, size, data, off, fmt, 'Left offset')
+	off += 5
+	(mpages, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
+	off += 4
+	(inc, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Obfuscation increment', hex(inc), off - 2, 2, fmt('H'))
+	off += 44
+	(seed, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
+	sign = lambda x: 1 if x & 0x8000 == 0 else -1
+	hd.model.set(pagesiter, 1, deobfuscate(pages, seed, 2) + sign(seed))
+	off += 14
+	off = add_dim(hd, size, data, off, fmt, 'Left offset')
+	off = add_dim(hd, size, data, off, fmt, 'Top offset')
+	off += 68
+	(lines, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
+	(texts, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
+	(pictures, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of picture boxes', pictures, off - 2, 2, fmt('H'))
+	off += 102
+	(counter, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Object counter/last id?', counter, off - 4, 4, fmt('I'))
+	return (Header(seed, inc, mpages, pictures), size)
+
 def add_picture(hd, size, data, fmt, version):
 	off = 0
 	(sz, off) = rdata(data, off, fmt('I'))

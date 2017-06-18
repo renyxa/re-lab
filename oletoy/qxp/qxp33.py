@@ -15,6 +15,7 @@
 #
 
 import traceback
+
 from utils import *
 from qxp import *
 
@@ -355,6 +356,40 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
 	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
+
+def add_header(hd, size, data, fmt, version):
+	off = add_header_common(hd, size, data, fmt)
+	off += 52
+	(pages, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
+	off += 8
+	off = add_margins(hd, size, data, off, fmt)
+	(col, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+	off = add_dim(hd, size, data, off, fmt, 'Gutter width')
+	off += 21
+	(mpages, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
+	off += 58
+	off = add_dim(hd, size, data, off, fmt, 'Left offset')
+	off = add_dim(hd, size, data, off, fmt, 'Top offset')
+	off += 4
+	off = add_dim(hd, size, data, off, fmt, 'Left offset')
+	off = add_dim(hd, size, data, off, fmt, 'Bottom offset')
+	off += 24
+	(lines, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
+	off += 40
+	(texts, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
+	(pictures, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of picture boxes', pictures, off - 2, 2, fmt('H'))
+	off += 6
+	(seed, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Obfuscation seed', '%x' % seed, off - 2, 2, fmt('H'))
+	(inc, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Obfuscation increment', '%x' % inc, off - 2, 2, fmt('H'))
+	return (Header(seed, inc, mpages, pictures), size)
 
 def _add_name2(hd, size, data, offset, title='Name'):
 	(name, off) = _read_name2(data, offset, size)
