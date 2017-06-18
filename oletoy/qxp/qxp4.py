@@ -103,13 +103,14 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	shape = obfctx.deobfuscate(shape, 1)
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
-	off += 6
-	(gap_color, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Gap color index', gap_color, off - 1, 1, fmt('B'))
-	off += 1
-	(gap_shade, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Gap shade', '%.2f%%' % (gap_shade / float(1 << 16) * 100), off - 2, 2, fmt('H'))
-	off += 2
+	(frame_shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Frame shade', '%.2f%%' % (frame_shade * 100), off - 4, 4, fmt('i'))
+	(frame_color, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Frame color index', frame_color, off - 2, 2, fmt('H'))
+	(gap_color, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Gap color index', gap_color, off - 2, 2, fmt('H'))
+	(gap_shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Gap shade', '%.2f%%' % (gap_shade * 100), off - 4, 4, fmt('i'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
 	off += 1
