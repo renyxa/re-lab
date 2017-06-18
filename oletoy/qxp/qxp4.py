@@ -68,9 +68,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(index, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Index/ID?', index, off - 2, 2, fmt('H'))
 	off += 2
-	(text, off) = rdata(data, off, fmt('I'))
-	# TODO: the value is obfuscated somehow
-	add_iter(hd, 'Starting block of text chain?', hex(text), off - 4, 4, fmt('I'))
+	(block, off) = rdata(data, off, fmt('I'))
+	blockiter = add_iter(hd, 'Starting block of text chain', hex(block), off - 4, 4, fmt('I'))
 	(rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
 	(skew, off) = rfract(data, off, fmt)
@@ -87,6 +86,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(content_type, off) = rdata(data, off, fmt('B'))
 	content_type = obfctx.deobfuscate(content_type, 1)
 	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
+	obfctx = obfctx.next_shift(content_type)
+	hd.model.set(blockiter, 1, hex(obfctx.deobfuscate(block & 0xffff, 2)))
 	shape_type_map = {
 		1: 'Line',
 		2: 'Orthogonal line',
@@ -99,10 +100,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		11: 'Bezier',
 	}
 	(shape, off) = rdata(data, off, fmt('B'))
-	if content_type == 0:
-		add_iter(hd, 'Shape type', key2txt(obfctx.deobfuscate(shape, 1), shape_type_map), off - 1, 1, fmt('B'))
-	else:
-		add_iter(hd, 'Unknown', hex(obfctx.deobfuscate(shape, 1)), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Shape type', key2txt(obfctx.deobfuscate(shape, 1), shape_type_map), off - 1, 1, fmt('B'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
 	off += 6
 	(gap_color, off) = rdata(data, off, fmt('B'))
@@ -155,7 +153,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# update object size
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (obfctx, off)
+	return (obfctx.next(), off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	off = 0
@@ -180,7 +178,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			(objs, off) = rdata(data, off, fmt('I'))
 			pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, obfctx), data[start:off], parent)
 			objs = obfctx.deobfuscate(objs & 0xffff, 2)
-			obfctx = obfctx.next()
+			obfctx = obfctx.next_rev()
 			for j in range(0, objs):
 				(obfctx, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 			i += 1

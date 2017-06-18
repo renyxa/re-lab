@@ -26,6 +26,12 @@ class ObfuscationContext:
 	def next(self):
 		return ObfuscationContext((self.seed + self.inc) & 0xffff, self.inc)
 
+	def next_rev(self):
+		return ObfuscationContext((self.seed + 0xffff - self.inc) & 0xffff, self.inc)
+
+	def next_shift(self, shift):
+		return ObfuscationContext(((self.seed | (0xffff << 16)) >> shift) & 0xffff, self.inc)
+
 	def deobfuscate(self, value, n):
 		return qxp.deobfuscate(value, self.seed, n)
 
@@ -76,8 +82,7 @@ def open_v5(page, buf, parent, fmt, version):
 			(masters, off) = rdata(buf, 0x4d, fmt('B'))
 			(pictures, off) = rdata(buf, 0xe0, fmt('H'))
 			(seed, off) = rdata(buf, 0x80, fmt('H'))
-			(incseed, off) = rdata(buf, 0x52, fmt('H'))
-			inc = qxp.deobfuscate(0xffff, incseed, 2)
+			(inc, off) = rdata(buf, 0x52, fmt('H'))
 		return (masters, pictures, seed, inc)
 
 	def read_story_blocks(pos, length, offset):
@@ -245,8 +250,8 @@ def add_header(hd, size, data, fmt, version):
 		(mpages, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
 		off = 0x52
-		(incseed, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Obfuscation increment', hex(qxp.deobfuscate(0xffff, incseed, 2)), off - 2, 2, fmt('H'))
+		(inc, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Obfuscation increment', hex(inc), off - 2, 2, fmt('H'))
 		off += 44
 		off += 2 # We already read the seed
 		add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
