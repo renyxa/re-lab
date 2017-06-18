@@ -314,9 +314,6 @@ def add_colors(hd, size, data, fmt, version):
 	(end, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Data end offset?', end, off - 2, 2, fmt('H'))
 
-def add_char_style(hd, size, data, fmt, version):
-	off = _add_name(hd, size, data)
-
 def add_hj(hd, size, data, fmt, version):
 	off = 4
 	(sm, off) = rdata(data, off, fmt('B'))
@@ -342,11 +339,8 @@ def add_hj(hd, size, data, fmt, version):
 	off = add_dim(hd, size, data, off, fmt, 'Flush zone')
 	off = _add_name(hd, size, data, 0x30)
 
-def add_char_format(hd, size, data, fmt, version):
-	off = 0
-	(uses, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
-	off += 4
+def _add_char_format(hd, size, data, offset, fmt, version):
+	off = offset
 	(font, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
 	(flags, off) = rdata(data, off, fmt('I'))
@@ -356,6 +350,18 @@ def add_char_format(hd, size, data, fmt, version):
 	off += 2
 	(color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
+
+def add_char_format(hd, size, data, fmt, version):
+	off = 0
+	(uses, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
+	off += 4
+	_add_char_format(hd, size, data, off, fmt, version)
+
+def add_char_style(hd, size, data, fmt, version):
+	off = _add_name(hd, size, data)
+	off += 20
+	_add_char_format(hd, size, data, off, fmt, version)
 
 def _add_para_format(hd, size, data, offset, fmt, version):
 	off = offset
