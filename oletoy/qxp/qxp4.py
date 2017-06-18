@@ -195,7 +195,7 @@ handlers1 = {
 	3: ('Page setup',),
 	6: ('Fonts', None, 'fonts'),
 	7: ('Physical fonts',),
-	8: ('Colors',),
+	8: ('Colors', None, 'colors'),
 	9: ('Paragraph styles', handle_collection(handle_para_style, 244)),
 	10: ('Character styles', handle_collection(handle_char_style, 140)),
 	11: ('H&Js', handle_collection(handle_hj, 112)),
@@ -271,6 +271,15 @@ def _add_name(hd, size, data, offset=0, name="Name"):
 	(n, off) = rdata(data, offset, '64s')
 	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
 	return off
+
+def add_colors(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	off += 14
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of colors (with different models)?', count, off - 2, 2, fmt('H'))
+	off += 8
+	(end, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Data end offset?', end, off - 2, 2, fmt('H'))
 
 def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
@@ -403,6 +412,7 @@ ids = {
 	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
+	'colors': add_colors,
 	'object': add_saved,
 	'page': add_page,
 	'para_format': add_para_format,
