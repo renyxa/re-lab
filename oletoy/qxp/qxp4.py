@@ -23,6 +23,18 @@ box_flags_map = {
 	0x100: 'v. flip',
 }
 
+frame_bitmap_style_map = {
+	0x5: 'Yearbook',
+	0xa: 'Certificate',
+	0xd: 'Coupon',
+	0xf: 'Deco Shadow',
+	0x10: 'Deco Plain',
+	0x11: 'Maze',
+	0x12: 'Ornate',
+	0x13: 'Op Art1',
+	0x14: 'Op Art2'
+}
+
 def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
@@ -113,9 +125,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Gap shade', '%.2f%%' % (gap_shade * 100), off - 4, 4, fmt('i'))
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
-	off += 1
-	(line_style, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
+	(bmp_frame, off) = rdata(data, off, fmt('B')) # only for rectangles
+	add_iter(hd, 'Is bitmap frame', 'no' if bmp_frame == 0 else 'yes', off - 1, 1, fmt('B'))
+	(frame_style, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Frame style', 'D&S index %d' % frame_style if bmp_frame == 0 else key2txt(frame_style, frame_bitmap_style_map), off - 1, 1, fmt('B'))
 	off += 1
 	off += 48
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
