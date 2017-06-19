@@ -144,6 +144,24 @@ def parse_tabs(page, data, offset, parent, fmt, version, title):
 	add_pgiter(page, title, 'qxp4', ('tabs', fmt, version), data[off - 4:off + length], parent)
 	return off + length
 
+def parse_tabs_spec(page, data, offset, parent, fmt, version):
+	hd = HexDumpSave(offset)
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Length', length, off - 4, 4, fmt('I'))
+	size = off + length
+	add_pgiter(page, 'Tabs spec', 'qxp4', ('tabs_spec', hd), data[off - 4:size], parent)
+	i = 1
+	while off < size:
+		speciter = add_iter(hd, 'Tabs spec %d' % i, '', off, 8, '%8s')
+		off += 2
+		(count, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, '# of tabs', count, off - 2, 2, fmt('H'), parent=speciter)
+		hd.model.set(speciter, 1, count)
+		(id, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=speciter)
+		i += 1
+	return (i - 1, off)
+
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = offset
 	hd = HexDumpSave(offset)
@@ -306,7 +324,9 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	for i in range(0, count):
 		off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_char_formats(page, data, off, parent, fmt, version)
-	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	(tabs, off) = parse_tabs_spec(page, data, off, parent, fmt, version)
+	for i in range(0, tabs):
+		off = parse_tabs(page, data, off, parent, fmt, version, 'Format tabs %d' % i)
 	off = parse_para_formats(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	doc = data[off:]
@@ -575,6 +595,7 @@ ids = {
 	'picture': add_picture,
 	'record': add_record,
 	'tabs': add_tabs,
+	'tabs_spec': add_saved,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:
