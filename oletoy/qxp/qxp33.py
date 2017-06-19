@@ -215,8 +215,10 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
 	(text_skew, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Text skew', '%.2f deg' % text_skew, off - 4, 4, fmt('i'))
-	(col, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
+	(col, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
+	(vert, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Vertical alignment', key2txt(vert, vertical_align_map), off - 1, 1, fmt('B'))
 	off += 16
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
@@ -224,6 +226,7 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 		off += 24
 	else:
 		off += 12
+	# Run Text Around All Sides not supported by qxp33
 	return off
 
 def add_picture_box(hd, data, offset, fmt, version, obfctx, header):

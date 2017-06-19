@@ -210,6 +210,8 @@ char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
 
+vertical_align_map = {0: 'Top', 1: 'Center', 2: 'Right', 3: 'Justified'}
+
 # if 'keep lines together' is enabled, then 'all lines' is used (or Start/End if 'all lines' disabled)
 para_flags_map = {
 	0x1: 'keep with next',
