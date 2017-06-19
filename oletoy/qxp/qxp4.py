@@ -230,12 +230,18 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			(idx, off) = rdata(data, off, fmt('I'))
 			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
 
-	# off += 109
-	# (toff, off) = rdata(data, off, fmt('I'))
-	# add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
-	# off += 32
-	# (columns, off) = rdata(data, off, fmt('H'))
-	# add_iter(hd, '# of columns', columns, off - 2, 2, fmt('H'))
+	off += 6
+	(first_baseline_min, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'First baseline minimum', key2txt(first_baseline_min, first_baseline_map), off - 1, 1, fmt('B'))
+	off += 1
+	off = add_dim(hd, off + 4, data, off, fmt, 'Gutter width')
+	off += 24
+	(col, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
+	(vert, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Vertical alignment', key2txt(vert, vertical_align_map), off - 1, 1, fmt('B'))
+	off += 6
+	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
 
 	# update object title and size
 	if content_type == 2:
