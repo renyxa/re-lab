@@ -35,6 +35,12 @@ frame_bitmap_style_map = {
 	0x14: 'Op Art2'
 }
 
+def idx2txt(value):
+	if value == 0xffff:
+		return 'none'
+	else:
+		return value
+
 def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
@@ -509,6 +515,8 @@ def _add_para_format(hd, size, data, offset, fmt, version):
 		off = add_dim(hd, size, data, off, fmt, 'From right', ruleiter)
 		(roff, off) = rfract(data, off, fmt)
 		add_iter(hd, 'Offset', '%.2f%%' % (roff * 100), off - 4, 4, fmt('i'), parent=ruleiter)
+	(tabs, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Tabs index?', idx2txt(tabs), off - 2, 2, fmt('H'))
 
 def add_para_format(hd, size, data, fmt, version):
 	off = 0
