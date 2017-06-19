@@ -485,7 +485,7 @@ def _add_para_format(hd, size, data, off, fmt, version):
 		off = add_dim(hd, size, data, off, fmt, 'From right', ruleiter)
 		(roff, off) = rfract(data, off, fmt)
 		add_iter(hd, 'Offset', '%.2f%%' % (roff * 100), off - 4, 4, fmt('i'), parent=ruleiter)
-	off += 8
+	off += 4
 	for i in range(0, 20):
 		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 8, '8s')
 		type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align on / decimal'}
