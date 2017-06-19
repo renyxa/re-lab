@@ -435,7 +435,7 @@ def _add_para_format(hd, size, data, offset, fmt, version):
 		off = add_dim(hd, size, data, off, fmt, 'From left', ruleiter)
 		off = add_dim(hd, size, data, off, fmt, 'From right', ruleiter)
 		(roff, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Offset', '%.2f%%' % (roff * 100), off - 2, 2, fmt('H'), parent=ruleiter)
+		add_iter(hd, 'Offset', '%.2f%%' % (roff * 100), off - 4, 4, fmt('i'), parent=ruleiter)
 
 def add_para_format(hd, size, data, fmt, version):
 	off = 0
