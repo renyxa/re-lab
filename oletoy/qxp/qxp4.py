@@ -517,6 +517,14 @@ def add_index(hd, size, data, fmt, version):
 		(entry, off) = rdata(data, off, '8s')
 		add_iter(hd, 'Entry %d' % i, '', off - 8, 8, '8s')
 
+def add_tabs(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	i = 1
+	while off < size:
+		tabiter = add_iter(hd, 'Tab %d' % i, '', off, 8, '8s')
+		off = add_tab(hd, size, data, off, fmt, version, tabiter)
+		i += 1
+
 def add_page(hd, size, data, fmt, version, obfctx):
 	off = 0
 	(counter, off) = rdata(data, off, fmt('H'))
@@ -560,6 +568,7 @@ ids = {
 	'para_style': add_para_style,
 	'picture': add_picture,
 	'record': add_record,
+	'tabs': add_tabs,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:

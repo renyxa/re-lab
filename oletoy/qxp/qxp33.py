@@ -488,19 +488,7 @@ def _add_para_format(hd, size, data, off, fmt, version):
 	off += 4
 	for i in range(0, 20):
 		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 8, '8s')
-		type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align on / decimal'}
-		(typ, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, fmt('B'), parent=tabiter)
-		(align_char, off) = rdata(data, off, '1s')
-		add_iter(hd, 'Align at char', align_char, off - 1, 1, '1s', parent=tabiter)
-		(fill_char, off) = rdata(data, off, '1s')
-		add_iter(hd, 'Fill char', fill_char, off - 1, 1, '1s', parent=tabiter)
-		off += 1
-		(pos, off) = rdata(data, off, fmt('i'))
-		if pos == -1:
-			add_iter(hd, 'Position', 'not defined', off - 4, 4, fmt('i'), parent=tabiter)
-		else:
-			off = add_dim(hd, size, data, off - 4, fmt, 'Position', tabiter)
+		off = add_tab(hd, size, data, off, fmt, version, tabiter)
 	return off
 
 def add_para_format(hd, size, data, fmt, version):

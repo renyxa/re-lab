@@ -206,6 +206,26 @@ def add_header_common(hd, size, data, fmt):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	return off
 
+def add_tab(hd, size, data, offset, fmt, version, parent=None):
+	type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align'}
+	(typ, off) = rdata(data, offset, fmt('B'))
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, fmt('B'), parent=parent)
+	subtype_map = {1: 'decimal', 2: 'comma'}
+	(subtype, off) = rdata(data, off, fmt('B'))
+	if subtype_map.has_key(subtype):
+		add_iter(hd, 'Subtype', key2txt(subtype, subtype_map), off - 1, 1, fmt('B'), parent=parent)
+	else:
+		add_iter(hd, 'Align at char', chr(subtype), off - 1, 1, '1s', parent=parent)
+	(fill_char, off) = rdata(data, off, '1s')
+	add_iter(hd, 'Fill char', fill_char, off - 1, 1, '1s', parent=parent)
+	off += 1
+	(pos, off) = rdata(data, off, fmt('i'))
+	if pos == -1:
+		add_iter(hd, 'Position', 'not defined', off - 4, 4, fmt('i'), parent=parent)
+	else:
+		off = add_dim(hd, size, data, off - 4, fmt, 'Position', parent)
+	return off
+
 char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
