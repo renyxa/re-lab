@@ -330,6 +330,9 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_record(page, data, off, parent, fmt, version, 'Physical fonts')
 	off = parse_colors(page, data, off, parent, fmt, version)
 	(tabs, off) = parse_para_styles(page, data, off, parent, fmt, version)
+	# NOTE: it appears tabs records are saved in the reverse order of
+	# use by styles. I.e., the first tabs record belongs to the last
+	# style that has tabs set.
 	for i in range(0, tabs):
 		off = parse_tabs(page, data, off, parent, fmt, version, 'Style tabs %d' % i)
 	off = parse_char_styles(page, data, off, parent, fmt, version)
