@@ -459,13 +459,12 @@ def _add_para_format(hd, size, data, off, fmt, version):
 		(color, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Color index?', color, off - 1, 1, fmt('B'), parent=ruleiter)
 		(shade, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Shade', '%.2f%%' % (shade / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
-		off += 2
+		(shade, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'), parent=ruleiter)
 		off = add_dim(hd, size, data, off, fmt, 'From left', ruleiter)
 		off = add_dim(hd, size, data, off, fmt, 'From right', ruleiter)
-		(roff, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Offset', '%.2f%%' % (roff / float(1 << 16) * 100), off - 2, 2, fmt('H'), parent=ruleiter)
-		off += 2
+		(roff, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Offset', '%.2f%%' % (roff * 100), off - 2, 2, fmt('H'), parent=ruleiter)
 	off += 8
 	for i in range(0, 20):
 		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 8, '8s')
