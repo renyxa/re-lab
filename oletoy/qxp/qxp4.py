@@ -150,6 +150,17 @@ def parse_tabs(page, data, offset, parent, fmt, version, title):
 	add_pgiter(page, title, 'qxp4', ('tabs', fmt, version), data[off - 4:off + length], parent)
 	return off + length
 
+def _add_tabs_spec(hd, size, data, offset, fmt, version, parent):
+	off = offset
+	off += 2
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '# of tabs', count, off - 2, 2, fmt('H'), parent=parent)
+	if parent:
+		hd.model.set(parent, 1, count)
+	(id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=parent)
+	return off
+
 def parse_tabs_spec(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -158,13 +169,8 @@ def parse_tabs_spec(page, data, offset, parent, fmt, version):
 	add_pgiter(page, 'Tabs spec', 'qxp4', ('tabs_spec', hd), data[off - 4:size], parent)
 	i = 1
 	while off < size:
-		speciter = add_iter(hd, 'Tabs spec %d' % i, '', off, 8, '%8s')
-		off += 2
-		(count, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, '# of tabs', count, off - 2, 2, fmt('H'), parent=speciter)
-		hd.model.set(speciter, 1, count)
-		(id, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=speciter)
+		speciter = add_iter(hd, 'Tabs spec %d' % i, '', off, 8, '8s')
+		off = _add_tabs_spec(hd, size, data, off, fmt, version, speciter)
 		i += 1
 	return (i - 1, off)
 
@@ -535,10 +541,9 @@ def add_para_style(hd, size, data, fmt, version):
 	off += 8
 	(char, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Character style', char, off - 2, 2, fmt('H'))
-	off += 4
-	(tabs, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, '# of tabs', tabs, off - 2, 2, fmt('H'))
-	off += 4
+	off += 2
+	speciter = add_iter(hd, 'Tabs spec', '', off, 8, '8s')
+	off = _add_tabs_spec(hd, size, data, off, fmt, version, speciter)
 	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):
