@@ -225,7 +225,7 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
 	(vert, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Vertical alignment', key2txt(vert, vertical_align_map), off - 1, 1, fmt('B'))
-	off += 4
+	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
 	off += 8
 	if header.shape == 5:

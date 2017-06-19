@@ -277,7 +277,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
 	(vert, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Vertical alignment', key2txt(vert, vertical_align_map), off - 1, 1, fmt('B'))
-	off += 6
+	off += 2
+	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
 
 	# update object title and size
