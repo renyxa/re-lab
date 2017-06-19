@@ -72,6 +72,16 @@ def _read_name2(data, offset=0, end=0):
 		off += 1
 	return (name, off)
 
+def _handle_collection(handler, size, init=0):
+	def hdl(page, data, parent, fmt, version):
+		off = 0
+		i = init
+		while off + size <= len(data):
+			(entry, off) = rdata(data, off, '%ds' % size)
+			handler(page, entry, parent, fmt, version, i)
+			i += 1
+	return hdl
+
 def _handle_collection_named(handler, name_offset):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
@@ -348,8 +358,8 @@ handlers = {
 	7: ('Colors', handle_colors, 'colors'),
 	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306)),
 	10: ('H&Js', _handle_collection_named(handle_hj, 48)),
-	12: ('Character formats', handle_collection(handle_char_format, 46)),
-	13: ('Paragraph formats', handle_collection(handle_para_format, 256)),
+	12: ('Character formats', _handle_collection(handle_char_format, 46)),
+	13: ('Paragraph formats', _handle_collection(handle_para_format, 256)),
 }
 
 def handle_document(page, data, parent, fmt, version, obfctx, nmasters):

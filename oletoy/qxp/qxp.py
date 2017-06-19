@@ -97,16 +97,6 @@ obj_flags_map = {
 	0x40: 'user-edited runaround path?', # used for picture in qxp33
 }
 
-def handle_collection(handler, size, init=0):
-	def hdl(page, data, parent, fmt, version):
-		off = 0
-		i = init
-		while off + size <= len(data):
-			(entry, off) = rdata(data, off, '%ds' % size)
-			handler(page, entry, parent, fmt, version, i)
-			i += 1
-	return hdl
-
 def add_length(hd, size, data, fmt, version, offset, name="Length"):
 	(length, off) = rdata(data, offset, fmt('I'))
 	add_iter(hd, name, length, off - 4, 4, fmt('I'))
