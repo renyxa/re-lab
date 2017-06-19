@@ -427,7 +427,7 @@ def _add_para_format(hd, size, data, offset, fmt, version):
 		ruleiter = add_iter(hd, 'Rule %s' % rule, '', off, 22, '22s')
 		off = add_dim(hd, size, data, off, fmt, 'Width', parent=ruleiter)
 		(line_style, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Style', key2txt(line_style, line_style_map), off - 2, 2, fmt('H'), parent=ruleiter)
+		add_iter(hd, 'Style', 'D&S index %d' % line_style, off - 2, 2, fmt('H'), parent=ruleiter)
 		(color, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'), parent=ruleiter)
 		(shade, off) = rdata(data, off, fmt('H'))
