@@ -253,7 +253,11 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	add_iter(hd, 'First baseline minimum', key2txt(first_baseline_min, first_baseline_map), off - 1, 1, fmt('B'))
 	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Gutter width')
-	off += 24
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset top')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset left')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset right')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset bottom')
+	off += 8
 	(col, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
 	(vert, off) = rdata(data, off, fmt('B'))

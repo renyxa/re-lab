@@ -213,7 +213,10 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'First baseline minimum', key2txt(first_baseline_min, first_baseline_map), off - 1, 1, fmt('B'))
 	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Gutter width')
-	off += 16
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset top')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset left')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset right')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset bottom')
 	(text_rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
 	(text_skew, off) = rfract(data, off, fmt)
