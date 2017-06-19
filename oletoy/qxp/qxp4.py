@@ -497,7 +497,7 @@ def _add_para_format(hd, size, data, offset, fmt, version):
 	off = add_dim(hd, size, data, off, fmt, 'Space after')
 	off += 4
 	for rule in ('above', 'below'):
-		ruleiter = add_iter(hd, 'Rule %s' % rule, '', off, 22, '22s')
+		ruleiter = add_iter(hd, 'Rule %s' % rule, '', off, 24, '24s')
 		off = add_dim(hd, size, data, off, fmt, 'Width', parent=ruleiter)
 		(line_style, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Style', 'D&S index %d' % line_style, off - 2, 2, fmt('H'), parent=ruleiter)
