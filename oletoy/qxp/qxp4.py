@@ -91,8 +91,17 @@ def parse_colors(page, data, offset, parent, fmt, version):
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
-	reciter = add_pgiter(page, 'Paragraph styles', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_para_style, 244, 1)
+	stylesiter = add_pgiter(page, 'Paragraph styles', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
+	size = 244
+	i = 1
+	tabs = 0
+	while off < offset + length + 4:
+		handle_para_style(page, data[off:off + size], stylesiter, fmt, version, i)
+		if rdata(data, off + 0x5a, fmt('H'))[0] != 0:
+			tabs += 1
+		off += size
+		i += 1
+	return (tabs, off)
 
 def parse_char_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -129,6 +138,11 @@ def parse_para_formats(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Paragraph formats', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
 	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_para_format, 100, 1)
+
+def parse_tabs(page, data, offset, parent, fmt, version, title):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, title, 'qxp4', ('tabs', fmt, version), data[off - 4:off + length], parent)
+	return off + length
 
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = offset
@@ -275,7 +289,9 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_fonts(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Physical fonts')
 	off = parse_colors(page, data, off, parent, fmt, version)
-	off = parse_para_styles(page, data, off, parent, fmt, version)
+	(tabs, off) = parse_para_styles(page, data, off, parent, fmt, version)
+	for i in range(0, tabs):
+		off = parse_tabs(page, data, off, parent, fmt, version, 'Style tabs %d' % i)
 	off = parse_char_styles(page, data, off, parent, fmt, version)
 	off = parse_hjs(page, data, off, parent, fmt, version)
 	off = parse_dashes(page, data, off, parent, fmt, version)
