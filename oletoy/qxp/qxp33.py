@@ -208,7 +208,10 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
 		hd.model.set(header.content_iter, 0, "Index in linked list?")
-	off += 4
+	off += 2
+	(first_baseline_min, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'First baseline minimum', key2txt(first_baseline_min, first_baseline_map), off - 1, 1, fmt('B'))
+	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Gutter width')
 	off += 16
 	(text_rot, off) = rfract(data, off, fmt)
@@ -219,7 +222,9 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
 	(vert, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Vertical alignment', key2txt(vert, vertical_align_map), off - 1, 1, fmt('B'))
-	off += 16
+	off += 4
+	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
+	off += 8
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
 	if header.content_index == 0:
