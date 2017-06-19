@@ -41,7 +41,7 @@ box_flags_map = {
 	0x400: 'concave',
 }
 
-content_types_map = {
+content_type_map = {
 	1: 'Objects?', # used by group
 	2: 'None',
 	3: 'Text',
@@ -106,11 +106,12 @@ def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
 class ObjectHeader(object):
-	def __init__(self, typ, shape, link_id, content_index, content_iter):
+	def __init__(self, typ, shape, link_id, content_index, content_type, content_iter):
 		self.typ = typ
 		self.shape = shape
 		self.link_id = link_id
 		self.content_index = content_index
+		self.content_type = content_type
 		self.content_iter = content_iter
 
 def add_object_header(hd, data, offset, fmt, version, obfctx):
@@ -143,7 +144,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	(flags2, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Flags (corners, flip)', bflag2txt(flags2, box_flags_map), off - 2, 2, fmt('H'))
 	(content_type, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Content type?', key2txt(content_type, content_types_map), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Content type?', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
 	(shape, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 	(corner_radius, off) = rfract(data, off, fmt)
@@ -160,7 +161,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
 	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
 
-	return off, ObjectHeader(typ, shape, link_id, content, content_iter)
+	return off, ObjectHeader(typ, shape, link_id, content, content_type, content_iter)
 
 def add_frame(hd, data, offset, fmt):
 	off = offset
@@ -297,11 +298,11 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 		off = add_picture_box(hd, data, off, fmt, version, obfctx, header)
 
 	if header.typ == 11:
-		page.model.set_value(objiter, 0, "[%d] %s" % (index, 'Group'))
+		type_str = 'Group'
 	else:
-		page.model.set_value(objiter, 0, "[%d] %s" % (index, key2txt(header.shape, shape_types_map)))
-
-	# update object size
+		type_str = "%s (%s)" % (key2txt(header.shape, shape_types_map), key2txt(header.content_type, content_type_map))
+	# update object title and size
+	page.model.set_value(objiter, 0, "[%d] %s" % (index, type_str))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
 	return off
