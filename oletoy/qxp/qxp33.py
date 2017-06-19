@@ -198,10 +198,11 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
 		hd.model.set(header.content_iter, 0, "Index in linked list?")
-	off += 24
+	off += 4
+	off = add_dim(hd, off + 4, data, off, fmt, 'Gutter width')
+	off += 16
 	(text_rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
-	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
 	(text_skew, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Text skew', '%.2f deg' % text_skew, off - 4, 4, fmt('i'))
 	(col, off) = rdata(data, off, fmt('H'))
