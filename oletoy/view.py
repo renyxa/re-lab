@@ -1219,17 +1219,18 @@ class ApplicationMainWindow(gtk.Window):
 			txt = "%s %s"%(bup[0],bup[1])
 			
 		if dlen == 2:
+			if ftype == "QXP5":
+				if self.options_le == 1:
+					txt += "LE: %.2f%%\t" % ((struct.unpack("<H",buf)[0]) / float(0x10000) * 100)
+				if self.options_be == 1:
+					txt += "BE: %.2f%%\t" % ((struct.unpack(">H",buf)[0]) / float(0x10000) * 100)
+
 			if self.options_le == 1:
 				txt += "LE: %s "%((struct.unpack("<h",buf)[0])/self.options_div)
 				txt += "%s\t"%((struct.unpack("<H",buf)[0])/self.options_div)
 			if self.options_be == 1:
 				txt += "BE: %s "%((struct.unpack(">h",buf)[0])/self.options_div)
 				txt += "%s\t"%((struct.unpack(">H",buf)[0])/self.options_div)
-			if ftype == "QXP5":
-				if self.options_le == 1:
-					txt += "LE: %.2fin\t" % (struct.unpack('<h', buf)[0] / 72.0)
-				else:
-					txt += "BE: %.2fin\t" % (struct.unpack('>h', buf)[0] / 72.0)
 		if dlen == 4:
 			if ftype == "pub":
 				v = struct.unpack("<i",buf)[0]
@@ -1239,12 +1240,15 @@ class ApplicationMainWindow(gtk.Window):
 				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
 			if ftype == "QXP5":
+				from qxp.qxp import rfract, little_endian, big_endian
+				def fmt(val):
+					return '%.2f pt / %.2f in / %.2f%%' % (val, val / 72.0, val * 100)
 				if self.options_le == 1:
-					dim = struct.unpack("<i",buf)[0]
-					txt += "\tLE: %.2fin\t" % (dim / 72.0)
+					val = rfract(buf, 0, little_endian)[0]
+					txt += "LE: %s\t" % fmt(val)
 				if self.options_be == 1:
-					dim = struct.unpack(">i",buf)[0]
-					txt += "\tBE: %.2fin\t" % (dim / 72.0)
+					val = rfract(buf, 0, big_endian)[0]
+					txt += "BE: %s\t" % fmt(val)
 			
 			if self.options_le == 1:
 				txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)
