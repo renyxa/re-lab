@@ -209,8 +209,8 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	if toff > 0:
 		hd.model.set(header.content_iter, 0, "Index in linked list?")
 	off += 2
-	(first_baseline_min, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'First baseline minimum', key2txt(first_baseline_min, first_baseline_map), off - 1, 1, fmt('B'))
+	(text_flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Text flags (first baseline minimum, ...)', bflag2txt(text_flags, text_flags_map), off - 1, 1, fmt('B'))
 	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Gutter width')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset top')
