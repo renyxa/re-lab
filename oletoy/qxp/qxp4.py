@@ -269,7 +269,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset left')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset right')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Text inset bottom')
-	off += 8
+	(text_rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Text angle', '%.2f deg' % text_rot, off - 4, 4, fmt('i'))
+	(text_skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Text skew', '%.2f deg' % text_skew, off - 4, 4, fmt('i'))
 	(col, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Number of columns', col, off - 1, 1, fmt('B'))
 	(vert, off) = rdata(data, off, fmt('B'))
