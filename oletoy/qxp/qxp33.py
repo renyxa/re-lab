@@ -227,7 +227,11 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, 'Vertical alignment', key2txt(vert, vertical_align_map), off - 1, 1, fmt('B'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
-	off += 8
+	(next_index, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Next linked list index?', next_index, off - 2, 2, fmt('H'))
+	off += 2
+	(id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
 	if header.content_index == 0:

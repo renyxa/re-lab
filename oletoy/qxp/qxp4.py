@@ -286,6 +286,11 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off += 2
 	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
+	(next_index, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Next linked list index?', next_index, off - 2, 2, fmt('H'))
+	off += 2
+	(id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
 
 	# update object title and size
 	if content_type == 2:
