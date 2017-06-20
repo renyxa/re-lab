@@ -168,10 +168,10 @@ def add_fonts(hd, size, data, fmt, version):
 	for i in range(0, count):
 		start = off
 		font_iter = add_iter(hd, 'Font %d' % i, '', off, 2, '2s')
-		index_fmt = fmt('H') if version < VERSION_4 else fmt('I')
-		index_size = struct.calcsize(index_fmt)
-		(index, off) = rdata(data, off, index_fmt)
-		add_iter(hd, 'Index', index, off - index_size, index_size, index_fmt, parent=font_iter)
+		(index, off) = rdata(data, off, fmt('h'))
+		add_iter(hd, 'Index in font list', index, off - 2, 2, fmt('h'), parent=font_iter)
+		if version >= VERSION_4:
+			off += 2
 		(name, off) = rcstr(data, off)
 		add_iter(hd, 'Name', name, off - len(name) - 1, len(name) + 1, '%ds' % (len(name) + 1), parent=font_iter)
 		(full_name, off) = rcstr(data, off)
