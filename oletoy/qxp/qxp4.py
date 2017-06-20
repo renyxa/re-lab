@@ -416,9 +416,17 @@ def add_colors(hd, size, data, fmt, version):
 	off += 14
 	(count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of colors (with different models)?', count, off - 2, 2, fmt('H'))
+	off += 4
+	(length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
+	(end, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
 	off += 8
-	(end, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Data end offset?', end, off - 2, 2, fmt('H'))
+	for i in range(1, count + 1):
+		spec_iter = add_iter(hd, 'Color block spec %d?' % i, '', off, 4, '4s')
+		(start, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Start offset?', start, off - 2, 2, fmt('H'), parent=spec_iter)
+		off += 2
 
 def add_hj(hd, size, data, fmt, version):
 	off = 4
