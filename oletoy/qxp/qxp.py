@@ -178,6 +178,29 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Full name', full_name, off - len(full_name) - 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
 		hd.model.set(font_iter, 1, "%d, %s" % (index, name), 3, off - start, 4, '%ds' % (off - start))
 
+def add_physical_fonts(hd, size, data, fmt, version):
+	def add_name(off, title, parent):
+		(name, off) = rcstr(data, off)
+		sz = len(name) + 1
+		add_iter(hd, title, name, off - sz, sz, '%ds' % sz, parent=parent)
+		return off
+	off = add_length(hd, size, data, fmt, version, 0)
+	off += 12
+	i = 0
+	while off < size:
+		start = off
+		font_iter = add_iter(hd, 'Font %d' % i, '', off, 2, '2s')
+		(index, off) = rdata(data, off, fmt('h'))
+		add_iter(hd, 'Index in font list', index, off - 2, 2, fmt('h'), parent=font_iter)
+		off += 12
+		off = add_name(off, 'Bold name', font_iter)
+		off = add_name(off, 'Italic name', font_iter)
+		off = add_name(off, 'Bold italic name', font_iter)
+		if version >= VERSION_4:
+			off += 17
+		i += 1
+		hd.model.set(font_iter, 1, "%d" % index, 3, off - start, 4, '%ds' % (off - start))
+
 def add_saved(hd, size, data, saved, dummy):
 	saved.show(hd)
 

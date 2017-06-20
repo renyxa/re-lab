@@ -90,6 +90,11 @@ def parse_fonts(page, data, offset, parent, fmt, version):
 	add_pgiter(page, 'Fonts', 'qxp4', ('fonts', fmt, version), data[off - 4:off + length], parent)
 	return off + length
 
+def parse_physical_fonts(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, 'Physical fonts', 'qxp4', ('physical_fonts', fmt, version), data[off - 4:off + length], parent)
+	return off + length
+
 def parse_colors(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	add_pgiter(page, 'Colors', 'qxp4', ('colors', fmt, version), data[off - 4:off + length], parent)
@@ -331,7 +336,7 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_fonts(page, data, off, parent, fmt, version)
-	off = parse_record(page, data, off, parent, fmt, version, 'Physical fonts')
+	off = parse_physical_fonts(page, data, off, parent, fmt, version)
 	off = parse_colors(page, data, off, parent, fmt, version)
 	(tabs, off) = parse_para_styles(page, data, off, parent, fmt, version)
 	# NOTE: it appears tabs records are saved in the reverse order of
@@ -624,6 +629,7 @@ ids = {
 	'page': add_page,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
+	'physical_fonts': add_physical_fonts,
 	'picture': add_picture,
 	'record': add_record,
 	'tabs': add_tabs,

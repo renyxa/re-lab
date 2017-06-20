@@ -365,7 +365,7 @@ handlers = {
 	2: ('Print settings',),
 	3: ('Page setup',),
 	5: ('Fonts', None, 'fonts'),
-	6: ('Physical fonts',),
+	6: ('Physical fonts', None, 'physical_fonts'),
 	7: ('Colors', handle_colors, 'colors'),
 	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306)),
 	10: ('H&Js', _handle_collection_named(handle_hj, 48)),
@@ -574,6 +574,7 @@ ids = {
 	'page': add_page,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
+	'physical_fonts': add_physical_fonts,
 	'record': add_record,
 }
 
