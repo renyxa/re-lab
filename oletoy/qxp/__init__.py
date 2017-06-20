@@ -91,8 +91,9 @@ def open_v5(page, buf, parent, fmt, version):
 	doc = parse_chain(buf, 3, rlen, fmt)
 	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
 	texts = []
+	pictures = []
 	if doc_hdl_map.has_key(version):
-		texts = doc_hdl_map[version](page, doc, dociter, fmt, version, ObfuscationContext(hdr.seed, hdr.inc), hdr.masters)
+		(texts, pictures) = doc_hdl_map[version](page, doc, dociter, fmt, version, ObfuscationContext(hdr.seed, hdr.inc), hdr.masters)
 
 	for text in texts:
 		data = parse_chain(buf, text, rlen, fmt)
@@ -101,6 +102,10 @@ def open_v5(page, buf, parent, fmt, version):
 		textiter = add_pgiter(page, 'Text info [%x]' % text, 'qxp5', ('text_info', hd), data, parent)
 		for (block, length) in blocks:
 			add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
+
+	for picture in pictures:
+		data = parse_chain(buf, picture, rlen, fmt)
+		add_pgiter(page, 'Picture [%x]' % picture, 'qxp5', ('picture', len(data)), data)
 
 def add_header(hd, size, data, fmt, version):
 	off = qxp.add_header_common(hd, size, data, fmt)

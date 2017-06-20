@@ -328,10 +328,11 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	page.model.set_value(objiter, 0, "[%d] %s" % (index, type_str))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (header.content_index, off)
+	return (header, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
+	pictures = set()
 	off = 0
 	i = 1
 	m = 0
@@ -354,9 +355,12 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 				pname += ' "%s"' % name
 			pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
 			for j in range(0, objs):
-				(text, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
-				if text:
-					texts.add(text)
+				(header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				if header.content_index:
+					if header.content_type == 3:
+						texts.add(header.content_index)
+					elif header.content_type == 5:
+						pictures.add(header.content_index)
 				obfctx = obfctx.next()
 			i += 1
 			m += 1
@@ -364,7 +368,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
 			break
-	return texts
+	return texts, pictures
 
 handlers = {
 	2: ('Print settings',),

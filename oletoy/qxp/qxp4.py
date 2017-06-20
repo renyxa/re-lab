@@ -299,6 +299,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
+	pictures = set()
 	off = 0
 	i = 1
 	m = 0
@@ -331,7 +332,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 			break
-	return texts
+	return texts, pictures
 
 def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_record(page, data, 0, parent, fmt, version, 'Unknown')
