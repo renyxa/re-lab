@@ -171,7 +171,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
 	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
 
-	return off, ObjectHeader(typ, shape, link_id, content, content_type, content_iter)
+	return ObjectHeader(typ, shape, link_id, content, content_type, content_iter), off
 
 def add_frame(hd, data, offset, fmt):
 	off = offset
@@ -294,7 +294,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# the real size is determined at the end
 	objiter = add_pgiter(page, '[%d]' % index, 'qxp33', ('object', hd), data[offset:offset + 1], parent)
 
-	(off, header) = add_object_header(hd, data, off, fmt, version, obfctx)
+	(header, off) = add_object_header(hd, data, off, fmt, version, obfctx)
 
 	# typ == 0: # line
 	# typ == 1: # orthogonal line
