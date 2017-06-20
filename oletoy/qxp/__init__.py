@@ -13,6 +13,7 @@
 
 import struct
 
+import traceback
 from utils import *
 from qxp import dim2in, add_dim
 import qxp
@@ -96,16 +97,22 @@ def open_v5(page, buf, parent, fmt, version):
 		(texts, pictures) = doc_hdl_map[version](page, doc, dociter, fmt, version, ObfuscationContext(hdr.seed, hdr.inc), hdr.masters)
 
 	for text in texts:
-		data = parse_chain(buf, text, rlen, fmt)
-		hd = qxp.HexDumpSave(0)
-		blocks = add_text_info(hd, len(data), data, fmt, version)
-		textiter = add_pgiter(page, 'Text info [%x]' % text, 'qxp5', ('text_info', hd), data, parent)
-		for (block, length) in blocks:
-			add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
+		try:
+			data = parse_chain(buf, text, rlen, fmt)
+			hd = qxp.HexDumpSave(0)
+			blocks = add_text_info(hd, len(data), data, fmt, version)
+			textiter = add_pgiter(page, 'Text info [%x]' % text, 'qxp5', ('text_info', hd), data, parent)
+			for (block, length) in blocks:
+				add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
+		except:
+			traceback.print_exc()
 
 	for picture in pictures:
-		data = parse_chain(buf, picture, rlen, fmt)
-		add_pgiter(page, 'Picture [%x]' % picture, 'qxp5', ('picture', len(data)), data)
+		try:
+			data = parse_chain(buf, picture, rlen, fmt)
+			add_pgiter(page, 'Picture [%x]' % picture, 'qxp5', ('picture', len(data)), data)
+		except:
+			traceback.print_exc()
 
 def add_header(hd, size, data, fmt, version):
 	off = qxp.add_header_common(hd, size, data, fmt)
