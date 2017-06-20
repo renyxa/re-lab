@@ -60,49 +60,26 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
-	hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
-	if hdl_map.has_key(version):
-		hdl_map[version](page, data, parent, fmt, version, obfctx, nmasters)
+def parse_chain(buf, idx, rlen, fmt):
+	blocks = []
+	big = False
+	nxt = idx
+	while nxt > 0:
+		off = (nxt - 1) * rlen
+		count = 1
+		if big:
+			(count, off) = rdata(buf, off, fmt('H'))
+		start = off
+		off = (nxt - 1 + count) * rlen - 4
+		(nxt, off) = rdata(buf, off, fmt('i'))
+		big = nxt < 0
+		if nxt < 0:
+			nxt = abs(nxt)
+		blocks.append(buf[start:off - 4])
+	return ''.join(blocks)
 
 def open_v5(page, buf, parent, fmt, version):
-	chains = []
-	tblocks = {}
-	stories = {}
-	tstarts = {}
-	pictures = []
 	rlen = 0x100
-
-	def read_story_blocks(pos, length, offset):
-		start = (pos - 1) * rlen
-		if rlen - 4 - offset >= length:
-			cur = length
-			rem = 0
-		else:
-			cur = rlen - 4 - offset
-			rem = length - cur
-		data = buf[start + offset:start + offset + cur]
-		if rem > 0:
-			(nxt, off) = rdata(buf, start + rlen - 4, fmt('i'))
-			assert nxt > 0
-			return data + read_story_blocks(nxt, rem, 0)
-		return data
-
-	def parse_story(pos, story):
-		start = (pos - 1) * rlen
-		off = start + 4
-		(length, off) = rdata(buf, off, fmt('I'))
-		data = read_story_blocks(pos, length, off - start)
-		off = 0
-		while off < len(data):
-			(block, off) = rdata(data, off, fmt('I'))
-			if version < qxp.VERSION_4:
-				(sz, fm) = (2, fmt('H'))
-			else:
-				(sz, fm) = (4, fmt('I'))
-			(tlen, off) = rdata(data, off, fm)
-			tblocks[block] = ""
-			story.append((block, tlen))
 
 	header_hdl_map = {qxp.VERSION_3_3: qxp33.add_header, qxp.VERSION_4: qxp4.add_header}
 	header_hdl = header_hdl_map[version] if header_hdl_map.has_key(version) else add_header
@@ -110,85 +87,27 @@ def open_v5(page, buf, parent, fmt, version):
 	(hdr, off) = header_hdl(header, 512, buf, fmt, version)
 	add_pgiter(page, 'Header', 'qxp5', ('header', header), buf[0:off], parent)
 
-	# parse blocks
-	blockiter = add_pgiter(page, "Blocks", "qxp5", (), buf[off:len(buf)], parent)
+	doc_hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
+	doc = parse_chain(buf, 3, rlen, fmt)
+	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
+	texts = []
+	if doc_hdl_map.has_key(version):
+		texts = doc_hdl_map[version](page, doc, dociter, fmt, version, ObfuscationContext(hdr.seed, hdr.inc), hdr.masters)
 
-	i = 3
-	last_data = 0
-	big = False
-	nexts = {}
-	try:
-		while off < len(buf):
-			start = off
-			count = 1
-			if tblocks.has_key(i):
-				text = buf[start:start+rlen]
-				add_pgiter(page, "[%02x] Text" % i, "qxp5", (), text, blockiter)
-				tblocks[i] = text
-				off += rlen
-			else:
-				if big:
-					(count, off) = rdata(buf, off, fmt('H'))
-				off = start + rlen * count - 4
-				(nxt, off) = rdata(buf, off, fmt('i'))
-				nextbig = nxt < 0
-				if nxt < 0:
-					nxt = abs(nxt)
-				if big:
-					n = "%02x-%02x [%02x]"%(i,i+count-1,nxt)
-				else:
-					n = "%02x [%02x]"%(i,nxt)
-				block = buf[start:start+rlen*count]
-				add_pgiter(page, n, "qxp5", (), block, blockiter)
-				if nexts.has_key(i):
-					chain = nexts[i]
-				else: # a new chain starts here
-					chain = len(chains)
-					chains.append([])
-					if chain > last_data + hdr.pictures:
-						stories[chain] = []
-						tstarts[chain] = i
-						parse_story(i, stories[chain])
-					elif chain > last_data:
-						pictures.append(chain)
-				chains[chain].append(block)
-				big = nextbig
-				nexts[nxt] = chain
-			i += count
-	except:
-		print "failed in qxp loop at block %d (offset %d)" % (i, start)
-
-	# reconstruct data streams from chains of blocks
-	pid = 1
-	tid = 1
-	for (pos, chain) in enumerate(chains):
-		stream = ""
-		for block in chain:
-			start = 2 if len(block) > rlen else 0
-			stream += block[start:len(block) - 4]
-		if pos == 0:
-			name = 'Document'
-			vis = ''
-		elif pos in pictures:
-			name = "Picture %d" % pid
-			vis = ('picture', fmt, version)
-			pid += 1
-		elif stories.has_key(pos):
-			name = "Text %d [%x]" % (tid, tstarts[pos])
-			text = ""
-			for block in stories[pos]:
-				text += tblocks[block[0]][0:block[1]]
-			vis = ('text', fmt, version, text)
-			tid += 1
-		streamiter = ins_pgiter(page, name, "qxp5", vis, stream, parent, pos + 1)
-		if pos == 0:
-			handle_document(page, stream, streamiter, fmt, version, ObfuscationContext(hdr.seed, hdr.inc), hdr.masters)
+	for text in texts:
+		data = parse_chain(buf, text, rlen, fmt)
+		hd = qxp.HexDumpSave(0)
+		blocks = add_text_info(hd, len(data), data, fmt, version)
+		textiter = add_pgiter(page, 'Text info [%x]' % text, 'qxp5', ('text_info', hd), data, parent)
+		for (block, length) in blocks:
+			add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
 
 def add_header(hd, size, data, fmt, version):
 	off = qxp.add_header_common(hd, size, data, fmt)
 	return (qxp.Header(), size)
 
-def add_text(hd, size, data, fmt, version, text):
+def add_text_info(hd, size, data, fmt, version):
+	blocks = []
 	off = 0
 	(length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Text length', length, off - 4, 4, fmt('I'))
@@ -206,6 +125,7 @@ def add_text(hd, size, data, fmt, version, text):
 			(sz, fm) = (4, fmt('I'))
 		(tlen, off) = rdata(data, off, fm)
 		add_iter(hd, 'Block %d text length' % i, tlen, off - sz, sz, fm, parent=blockiter)
+		blocks.append((block, tlen))
 		i += 1
 	(formatting_len, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Length of formatting spec', formatting_len, off - 4, 4, fmt('I'))
@@ -238,10 +158,16 @@ def add_text(hd, size, data, fmt, version, text):
 		add_iter(hd, 'Paragraph %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=paragraphiter)
 		i += 1
 	add_iter(hd, 'Gargbage?', '', off, size - off, '%ds' % (size - off))
+	return blocks
+
+def add_text(hd, size, data, length, dummy):
+	(text, off) = rdata(data, 0, '%ds' % length)
+	add_iter(hd, 'Text', text, off - length, length, '%ds' % length)
 
 qxp5_ids = {
 	'header': qxp.add_saved,
 	'text': add_text,
+	'text_info': qxp.add_saved,
 }
 
 def call(hd, size, data, cid, args):

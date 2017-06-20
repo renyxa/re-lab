@@ -213,7 +213,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	content_type = obfctx.deobfuscate(content_type, 1)
 	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
 	obfctx = obfctx.next_shift(content_type)
-	hd.model.set(blockiter, 1, hex(obfctx.deobfuscate(block & 0xffff, 2)))
+	block = obfctx.deobfuscate(block & 0xffff, 2)
+	hd.model.set(blockiter, 1, hex(block))
 	shape_types_map = {
 		1: 'Line',
 		2: 'Orthogonal line',
@@ -294,9 +295,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, idx))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (obfctx.next(), off)
+	return (obfctx.next(), block, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
+	texts = set()
 	off = 0
 	i = 1
 	m = 0
@@ -321,13 +323,15 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			objs = obfctx.deobfuscate(objs & 0xffff, 2)
 			obfctx = obfctx.next_rev()
 			for j in range(0, objs):
-				(obfctx, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				(obfctx, text, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				texts.add(text)
 			i += 1
 			m += 1
 		except:
 			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 			break
+	return texts
 
 def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_record(page, data, 0, parent, fmt, version, 'Unknown')
@@ -359,7 +363,7 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	doc = data[off:]
 	dociter = add_pgiter(page, "Document", 'qxp4', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
+	return handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)

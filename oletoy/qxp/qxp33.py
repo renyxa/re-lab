@@ -308,6 +308,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# typ == 13: # beveled-corner[image] / rounded-corner[image]
 	# typ == 14: # oval[image]
 	# typ == 15: # bezier[image] / freehand[image]
+	text = None
 	if header.typ in [0, 1]:
 		off = add_line(hd, data, off, fmt, version, obfctx, header)
 	elif header.typ == 3:
@@ -327,9 +328,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	page.model.set_value(objiter, 0, "[%d] %s" % (index, type_str))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return off
+	return (header.content_index, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
+	texts = set()
 	off = 0
 	i = 1
 	m = 0
@@ -352,7 +354,9 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 				pname += ' "%s"' % name
 			pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
 			for j in range(0, objs):
-				off = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				(text, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				if text:
+					texts.add(text)
 				obfctx = obfctx.next()
 			i += 1
 			m += 1
@@ -360,6 +364,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
 			break
+	return texts
 
 handlers = {
 	2: ('Print settings',),
@@ -393,7 +398,7 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
-	handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
+	return handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)
