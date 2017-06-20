@@ -232,12 +232,16 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 2
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
+	off += 4
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
 	if header.content_index == 0:
 		off += 24
 	else:
-		off += 12
+		if toff == 0:
+			off += 12
+			if next_index > 0:
+				off += 4
 	# Run Text Around All Sides not supported by qxp33
 	return off
 
