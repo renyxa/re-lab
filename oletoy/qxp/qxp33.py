@@ -117,6 +117,7 @@ def handle_para_format(page, data, parent, fmt, version, index):
 
 class ObjectHeader(object):
 	def __init__(self, typ, shape, link_id, content_index, content_type, content_iter):
+		self.linked_text_offset = None
 		self.typ = typ
 		self.shape = shape
 		self.link_id = link_id
@@ -242,6 +243,7 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 			off += 12
 			if next_index > 0:
 				off += 4
+	header.linked_text_offset = toff
 	# Run Text Around All Sides not supported by qxp33
 	return off
 
@@ -364,7 +366,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			pgiter = add_pgiter(page, pname, 'qxp33', ('page', fmt, version), data[start:off], parent)
 			for j in range(0, objs):
 				(header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
-				if header.content_index:
+				if header.content_index and not header.linked_text_offset:
 					if header.content_type == 3:
 						texts.add(header.content_index)
 					elif header.content_type == 5:
