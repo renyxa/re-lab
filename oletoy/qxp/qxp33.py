@@ -166,7 +166,12 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 		off += 20
 		(color2, off) = rdata(data, off, fmt('B'))
 		add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
-		off += 13
+		off += 1
+		(gr_shade, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Shade', '%.2f%%' % (gr_shade * 100), off - 4, 4, fmt('i'), parent=gr_iter)
+		(angle, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Angle', '%.2f deg' % angle, off - 4, 4, fmt('i'), parent=gr_iter)
+		off += 4
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
 	off = add_dim(hd, off + 4, data, off, fmt, 'X1')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
