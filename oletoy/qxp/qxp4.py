@@ -282,7 +282,9 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			(idx, off) = rdata(data, off, fmt('I'))
 			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
 
-	off += 6
+	(toff, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	off += 2
 	(text_flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Text flags (first baseline minimum, ...)', bflag2txt(text_flags, text_flags_map), off - 1, 1, fmt('B'))
 	off += 1
