@@ -162,16 +162,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	if gradient_id != 0:
-		gr_iter = add_iter(hd, 'Gradient', '', off, 34, '%ds' % 34)
-		off += 20
-		(color2, off) = rdata(data, off, fmt('B'))
-		add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
-		off += 1
-		(gr_shade, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Shade', '%.2f%%' % (gr_shade * 100), off - 4, 4, fmt('i'), parent=gr_iter)
-		(angle, off) = rfract(data, off, fmt)
-		add_iter(hd, 'Angle', '%.2f deg' % angle, off - 4, 4, fmt('i'), parent=gr_iter)
-		off += 4
+		off = add_gradient(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
 	off = add_dim(hd, off + 4, data, off, fmt, 'X1')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
@@ -187,6 +178,20 @@ def add_frame(hd, data, offset, fmt):
 	add_iter(hd, 'Frame shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
 	(frame_color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
+	return off
+
+def add_gradient(hd, data, offset, fmt):
+	off = offset
+	gr_iter = add_iter(hd, 'Gradient', '', off, 34, '%ds' % 34)
+	off += 20
+	(color2, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
+	off += 1
+	(gr_shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (gr_shade * 100), off - 4, 4, fmt('i'), parent=gr_iter)
+	(angle, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Angle', '%.2f deg' % angle, off - 4, 4, fmt('i'), parent=gr_iter)
+	off += 4
 	return off
 
 def add_bezier_data(hd, data, offset, fmt):

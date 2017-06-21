@@ -179,6 +179,19 @@ def parse_tabs_spec(page, data, offset, parent, fmt, version):
 		i += 1
 	return (i - 1, off)
 
+def add_gradient(hd, data, offset, fmt):
+	off = offset
+	gr_iter = add_iter(hd, 'Gradient', '', off, 40, '%ds' % 40)
+	off += 26
+	(color2, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Second color index', color2, off - 2, 2, fmt('H'), parent=gr_iter)
+	(gr_shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (gr_shade * 100), off - 4, 4, fmt('i'), parent=gr_iter)
+	(angle, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Angle', '%.2f deg' % angle, off - 4, 4, fmt('i'), parent=gr_iter)
+	off += 4
+	return off
+
 def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = offset
 	hd = HexDumpSave(offset)
@@ -203,9 +216,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
+	off += 4
 	(gradient_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
-	off += 8
+	off += 4
 	(flags, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
 	content_type_map = {0: 'None', 2: 'Objects?', 3: 'Text', 4: 'Picture'}
@@ -254,6 +268,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off += 20
+	if gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
 
 	if content_type == 2:
 		(count, off) = rdata(data, off, fmt('I'))
