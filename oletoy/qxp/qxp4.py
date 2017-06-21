@@ -309,6 +309,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off += 2
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
+	off += 24
 
 	# update object title and size
 	if content_type == 2:
