@@ -257,7 +257,20 @@ def add_tab(hd, size, data, offset, fmt, version, parent=None):
 		hd.model.set(parent, 1, "%s%s / '%s' / %s"  % (key2txt(typ, type_map), subtype_str, fill_char, pos_str))
 	return off
 
-char_format_map = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
+char_format_map = {
+	0x1: 'bold',
+	0x2: 'italic',
+	0x4: 'underline',
+	0x8: 'outline',
+	0x10: 'shadow',
+	0x20: 'superscript',
+	0x40: 'subscript',
+	0x100: 'superior',
+	0x200: 'strike thru',
+	0x400: 'all caps',
+	0x800: 'small caps',
+	0x1000: 'word underline',
+}
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
 
