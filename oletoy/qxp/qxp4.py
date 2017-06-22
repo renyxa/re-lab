@@ -599,6 +599,12 @@ def add_para_style(hd, size, data, fmt, version):
 	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):
+	off = 0xac
+	(count, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of segments', count, off - 1, 1, fmt('B'))
+	off = 0
+	for i in range(1, count + 1):
+		off = add_fract_perc(hd, data, off, fmt, 'Segment %d' % i)
 	off = _add_name(hd, size, data, 0xb0)
 
 def add_list(hd, size, data, fmt, version):

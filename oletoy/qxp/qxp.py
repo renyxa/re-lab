@@ -161,6 +161,11 @@ def add_sfloat_perc(hd, data, offset, fmt, name, parent=None):
 	add_iter(hd, name, '%.1f%%' % perc, off - 2, 2, fmt('H'), parent=parent)
 	return off
 
+def add_fract_perc(hd, data, offset, fmt, name, parent=None):
+	(f, off) = rfract(data, offset, fmt)
+	add_iter(hd, name, '%.2f%%' % (f * 100), off - 4, 4, fmt('i'), parent=parent)
+	return off
+
 def add_fonts(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
 	(count, off) = rdata(data, off, fmt('H'))
