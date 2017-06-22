@@ -41,6 +41,44 @@ def idx2txt(value):
 	else:
 		return value
 
+class ObfuscationContext:
+	def __init__(self, seed, inc):
+		assert seed & 0xffff == seed
+		assert inc & 0xffff == inc
+		self.seed = seed
+		self.inc = inc
+
+	def next(self):
+		return ObfuscationContext((self.seed + self.inc) & 0xffff, self.inc)
+
+	def next_rev(self):
+		return ObfuscationContext((self.seed + 0xffff - self.inc) & 0xffff, self.inc)
+
+	def next_shift(self, shift):
+		# This is a modified rotation. The lower bits in the old value
+		# are moved into the higher bits in the new value, with the
+		# following modifications:
+		# 1. the higher bit of the old value is added
+		# 2. all bits higher than the lowest 1 are filled with 1, e.g.,
+		#	 0b0010 changes into 0b1110.
+		mask = 0xffff >> (16 - shift)
+		def fill(val):
+			r = shift
+			v = val
+			# find the lowest '1'
+			while v & 1 == 0 and r > 0:
+				v >>= 1
+				r -= 1
+			s = shift - r
+			m = (0xffff >> s) << s
+			return (val | m) & mask
+		highinit = self.seed & mask
+		high = fill(highinit | (self.seed >> 15)) << (16 - shift)
+		return ObfuscationContext(high | (self.seed >> shift), self.inc)
+
+	def deobfuscate(self, value, n):
+		return deobfuscate(value, self.seed, n)
+
 def _read_name(data, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')]
@@ -367,7 +405,8 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			break
 	return texts, pictures
 
-def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
+def handle_document(page, data, parent, fmt, version, hdr):
+	obfctx = ObfuscationContext(hdr.seed, hdr.inc)
 	off = parse_record(page, data, 0, parent, fmt, version, 'Unknown')
 	off = parse_record(page, data, off, parent, fmt, version, 'Print settings')
 	off = parse_record(page, data, off, parent, fmt, version, 'Page setup')
@@ -397,7 +436,7 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	doc = data[off:]
 	dociter = add_pgiter(page, "Document", 'qxp4', (), doc, parent)
-	return handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
+	return handle_doc(page, doc, dociter, fmt, version, obfctx, hdr.masters)
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)

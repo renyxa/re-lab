@@ -19,6 +19,19 @@ import traceback
 from utils import *
 from qxp import *
 
+class ObfuscationContext:
+	def __init__(self, seed, inc):
+		assert seed & 0xffff == seed
+		assert inc & 0xffff == inc
+		self.seed = seed
+		self.inc = inc
+
+	def next(self):
+		return ObfuscationContext((self.seed + self.inc) & 0xffff, self.inc)
+
+	def deobfuscate(self, value, n):
+		return deobfuscate(value, self.seed, n)
+
 color_model_map = {
 	0: 'HSB',
 	1: 'RGB',
@@ -402,7 +415,8 @@ handlers = {
 	13: ('Paragraph formats', _handle_collection(handle_para_format, 256)),
 }
 
-def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
+def handle_document(page, data, parent, fmt, version, hdr):
+	obfctx = ObfuscationContext(hdr.seed, hdr.inc)
 	off = 0
 	i = 1
 	while off < len(data) and i < 15:
@@ -422,7 +436,7 @@ def handle_document(page, data, parent, fmt, version, obfctx, nmasters):
 		i += 1
 	doc = data[off:]
 	dociter = add_pgiter(page, "[%d] Document" % i, 'qxp33', (), doc, parent)
-	return handle_doc(page, doc, dociter, fmt, version, obfctx, nmasters)
+	return handle_doc(page, doc, dociter, fmt, version, obfctx, hdr.masters)
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)
