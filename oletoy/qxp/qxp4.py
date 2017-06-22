@@ -35,6 +35,24 @@ frame_bitmap_style_map = {
 	0x14: 'Op Art2'
 }
 
+dash_stripe_type_map = {
+	0: 'Dash',
+	1: 'Stripe'
+}
+
+miter_map = {
+	0: 'Miter',
+	1: 'Round',
+	2: 'Bevel'
+}
+
+endcap_map = {
+	0: 'Butt',
+	1: 'Round',
+	2: 'Protecting rect',
+	3: 'Stretch to corners'
+}
+
 def idx2txt(value):
 	if value == 0xffff:
 		return 'none'
@@ -647,13 +665,27 @@ def add_para_style(hd, size, data, fmt, version):
 	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):
-	off = 0xac
+	off = 0xaa
+	(typ, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Type', key2txt(typ, dash_stripe_type_map), off - 1, 1, fmt('B'))
+	off += 1
 	(count, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Number of segments', count, off - 1, 1, fmt('B'))
+	off += 1
+	(stretch, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Stretch to corners', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	off += 1
+	off = _add_name(hd, size, data, off)
+	off = 0xf4
+	off = add_dim(hd, size, data, off, fmt, 'Pattern length')
+	(miter, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Miter style', key2txt(miter, miter_map), off - 1, 1, fmt('B'))
+	off += 1
+	(endcap, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Endcap style', key2txt(endcap, endcap_map), off - 1, 1, fmt('B'))
 	off = 0
 	for i in range(1, count + 1):
 		off = add_fract_perc(hd, data, off, fmt, 'Segment %d' % i)
-	off = _add_name(hd, size, data, 0xb0)
 
 def add_list(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0)
