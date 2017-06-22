@@ -310,7 +310,10 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
 	off += 24
-	if content_type == 4:
+	if content_type == 3:
+		if block == 0:
+			off += 16
+	elif content_type == 4:
 		off += 44
 		if block != 0:
 			(ilen, off) = rdata(data, off, fmt('I'))
