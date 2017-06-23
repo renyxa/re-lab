@@ -23,6 +23,25 @@ box_flags_map = {
 	0x100: 'v. flip',
 }
 
+shape_types_map = {
+	1: 'Line',
+	2: 'Orthogonal line',
+	4: 'Bezier line',
+	5: 'Rectangle',
+	6: 'Rounded rectangle',
+	7: 'Freehand',
+	8: 'Beveled rectangle',
+	9: 'Oval',
+	11: 'Bezier',
+}
+
+content_type_map = {
+	0: 'None',
+	2: 'Objects?',
+	3: 'Text',
+	4: 'Picture'
+}
+
 frame_bitmap_style_map = {
 	0x5: 'Yearbook',
 	0xa: 'Certificate',
@@ -240,6 +259,57 @@ def parse_tabs_spec(page, data, offset, parent, fmt, version):
 		i += 1
 	return (i - 1, off)
 
+class ObjectHeader(object):
+	def __init__(self, id, shape, link_id, gradient_id, content_index, content_type, content_iter):
+		self.linked_text_offset = None
+		self.id = id
+		self.shape = shape
+		self.link_id = link_id
+		self.gradient_id = gradient_id
+		self.content_index = content_index
+		self.content_type = content_type
+		self.content_iter = content_iter
+
+def add_object_header(hd, data, offset, fmt, version, obfctx):
+	off = offset
+
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
+	off += 1
+	(color, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
+	(shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
+	(idx, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index/ID?', idx, off - 2, 2, fmt('H'))
+	off += 2
+	(content, off) = rdata(data, off, fmt('I'))
+	content_iter = add_iter(hd, 'Starting block of text chain', hex(content), off - 4, 4, fmt('I'))
+	(rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
+	(skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Skew', '%.2f deg' % skew, off - 4, 4, fmt('i'))
+	# Text boxes with the same link ID are linked.
+	(link_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Link ID', hex(link_id), off - 4, 4, fmt('I'))
+	off += 4
+	(gradient_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
+	off += 4
+	(flags, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
+	(content_type, off) = rdata(data, off, fmt('B'))
+	content_type = obfctx.deobfuscate(content_type, 1)
+	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
+	obfctx = obfctx.next_shift(content_type)
+	content = obfctx.deobfuscate(content & 0xffff, 2)
+	hd.model.set(content_iter, 1, hex(content))
+	(shape, off) = rdata(data, off, fmt('B'))
+	shape = obfctx.deobfuscate(shape, 1)
+	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
+
+	return ObjectHeader(idx, shape, link_id, gradient_id, content, content_type, content_iter), off
+
 def add_gradient(hd, data, offset, fmt):
 	off = offset
 	gr_iter = add_iter(hd, 'Gradient', '', off, 40, '%ds' % 40)
@@ -253,62 +323,20 @@ def add_gradient(hd, data, offset, fmt):
 	off += 4
 	return off
 
-def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+def add_coords(hd, data, offset, fmt):
 	off = offset
-	hd = HexDumpSave(offset)
-	# the real size is determined at the end
-	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 1], parent)
-	(flags, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
-	off += 1
-	(color, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'))
-	(shade, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
-	(idx, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Index/ID?', idx, off - 2, 2, fmt('H'))
-	off += 2
-	(block, off) = rdata(data, off, fmt('I'))
-	blockiter = add_iter(hd, 'Starting block of text chain', hex(block), off - 4, 4, fmt('I'))
-	(rot, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
-	(skew, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Skew', '%.2f deg' % skew, off - 4, 4, fmt('i'))
-	# Text boxes with the same link ID are linked.
-	(lid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
-	off += 4
-	(gradient_id, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
-	off += 4
-	(flags, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
-	content_type_map = {0: 'None', 2: 'Objects?', 3: 'Text', 4: 'Picture'}
-	(content_type, off) = rdata(data, off, fmt('B'))
-	content_type = obfctx.deobfuscate(content_type, 1)
-	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
-	obfctx = obfctx.next_shift(content_type)
-	block = obfctx.deobfuscate(block & 0xffff, 2)
-	hd.model.set(blockiter, 1, hex(block))
-	shape_types_map = {
-		1: 'Line',
-		2: 'Orthogonal line',
-		4: 'Bezier line',
-		5: 'Rectangle',
-		6: 'Rounded rectangle',
-		7: 'Freehand',
-		8: 'Beveled rectangle',
-		9: 'Oval',
-		11: 'Bezier',
-	}
-	(shape, off) = rdata(data, off, fmt('B'))
-	shape = obfctx.deobfuscate(shape, 1)
-	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
-	off = add_dim(hd, off + 4, data, off, fmt, 'Line width') # also used for frames
+	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
+	off = add_dim(hd, off + 4, data, off, fmt, 'X1')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
+	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
+	return off
+
+def add_frame(hd, data, offset, fmt, name='Frame'):
+	off = add_dim(hd, offset + 4, data, offset, fmt, '%s width' % name)
 	(frame_shade, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Frame shade', '%.2f%%' % (frame_shade * 100), off - 4, 4, fmt('i'))
+	add_iter(hd, '%s shade' % name, '%.2f%%' % (frame_shade * 100), off - 4, 4, fmt('i'))
 	(frame_color, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Frame color index', frame_color, off - 2, 2, fmt('H'))
+	add_iter(hd, '%s color index' % name, frame_color, off - 2, 2, fmt('H'))
 	(gap_color, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Gap color index', gap_color, off - 2, 2, fmt('H'))
 	(gap_shade, off) = rfract(data, off, fmt)
@@ -316,35 +344,53 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(arrow, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
 	(bmp_frame, off) = rdata(data, off, fmt('B')) # only for rectangles
-	add_iter(hd, 'Is bitmap frame', 'no' if bmp_frame == 0 else 'yes', off - 1, 1, fmt('B'))
-	(frame_style, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Frame style', 'D&S index %d' % frame_style if bmp_frame == 0 else key2txt(frame_style, frame_bitmap_style_map), off - 1, 1, fmt('B'))
-	off += 1
+	add_iter(hd, 'Is bitmap frame', key2txt(bmp_frame, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	(frame_style, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '%s style' % name, 'D&S index %d' % frame_style if bmp_frame == 0 else key2txt(frame_style, frame_bitmap_style_map), off - 2, 2, fmt('H'))
+	return off
+
+def add_bezier_data(hd, data, offset, fmt):
+	off = offset
+	(bezier_data_length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
+	end_off = off + bezier_data_length
+	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
+	off += 2
+	i = 1
+	while off < end_off:
+		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
+		i += 1
+	return off
+
+def add_linked_text_offset(hd, data, offset, fmt, header):
+	off = offset
+	hd.model.set(header.content_iter, 0, "Starting block of text chain")
+	(toff, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	if toff > 0:
+		hd.model.set(header.content_iter, 0, "Index in linked list?")
+	header.linked_text_offset = toff
+	return off
+
+def add_next_linked_text_settings(hd, data, offset, fmt, header):
+	off = offset
+	(next_index, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Next linked list index?', next_index, off - 2, 2, fmt('H'))
+	off += 2
+	(id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
+	return off
+
+def add_text_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt)
 	off += 48
-	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
-	off = add_dim(hd, off + 4, data, off, fmt, 'X1')
-	off = add_dim(hd, off + 4, data, off, fmt, 'Y2')
-	off = add_dim(hd, off + 4, data, off, fmt, 'X2')
+	off = add_coords(hd, data, off, fmt)
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
-	off += 20
-	if gradient_id != 0:
-		off = add_gradient(hd, data, off, fmt)
-
-	if content_type == 2:
-		(count, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, '# of objects', count, off - 4, 4, fmt('I'))
-		off += 4
-		(listlen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Length of index list', listlen, off - 4, 4, fmt('I'))
-		listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
-		for i in range(1, count + 1):
-			(idx, off) = rdata(data, off, fmt('I'))
-			add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
-
-	(toff, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
+	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 2
 	(text_flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Text flags (first baseline minimum, ...)', bflag2txt(text_flags, text_flags_map), off - 1, 1, fmt('B'))
@@ -365,31 +411,114 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off += 2
 	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
-	(next_index, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Next linked list index?', next_index, off - 2, 2, fmt('H'))
-	off += 2
-	(id, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
+	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	off += 20
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
 	off += 24
-	if content_type == 3:
-		if block == 0:
-			off += 16
-	elif content_type == 4:
-		off += 44
-		if block != 0:
-			(ilen, off) = rdata(data, off, fmt('I'))
-			add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
-			off += ilen
+	if header.content_index == 0:
+		off += 16
+	return off
+
+def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	hd.model.set(header.content_iter, 0, "Picture block")
+	off = add_frame(hd, data, off, fmt)
+	off += 48
+	off = add_coords(hd, data, off, fmt)
+	(corner_radius, off) = rfract(data, off, fmt)
+	corner_radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	off += 76
+	if header.content_index != 0:
+		(ilen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
+		off += ilen
+	off += 24
+	off += 44
+	return off
+
+def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt)
+	off += 48
+	off = add_coords(hd, data, off, fmt)
+	(corner_radius, off) = rfract(data, off, fmt)
+	corner_radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	off += 20
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	return off
+
+def add_line(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt, 'Line')
+	off += 48
+	off = add_coords(hd, data, off, fmt)
+	off += 24
+	return off
+
+def add_line_text(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt, 'Line')
+	off += 48
+	off = add_coords(hd, data, off, fmt)
+	off += 4
+	off = add_linked_text_offset(hd, data, off, fmt, header)
+	off += 44
+	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	off += 44
+	return off
+
+def add_group(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off += 68
+	off = add_coords(hd, data, off, fmt)
+	off += 24
+	(count, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of objects', count, off - 4, 4, fmt('I'))
+	off += 4
+	(listlen, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length of index list', listlen, off - 4, 4, fmt('I'))
+	listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
+	for i in range(1, count + 1):
+		(idx, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Index %d' % i, idx, off - 4, 4, fmt('I'), parent=listiter)
+	return off
+
+def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
+	off = offset
+	hd = HexDumpSave(offset)
+	# the real size is determined at the end
+	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 1], parent)
+
+	(header, off) = add_object_header(hd, data, off, fmt, version, obfctx)
+
+	if header.content_type == 0:
+		if header.shape in [1, 2, 4]:
+			off = add_line(hd, data, off, fmt, version, obfctx, header)
+		else:
+			off = add_empty_box(hd, data, off, fmt, version, obfctx, header)
+	elif header.content_type == 2:
+		off = add_group(hd, data, off, fmt, version, obfctx, header)
+	elif header.content_type == 3:
+		if header.shape in [1, 2, 4]:
+			off = add_line_text(hd, data, off, fmt, version, obfctx, header)
+		else:
+			off = add_text_box(hd, data, off, fmt, version, obfctx, header)
+	elif header.content_type == 4:
+		off = add_picture_box(hd, data, off, fmt, version, obfctx, header)
 
 	# update object title and size
-	if content_type == 2:
+	if header.content_type == 2:
 		type_str = 'Group'
 	else:
-		type_str = "%s / %s" % (key2txt(shape, shape_types_map), key2txt(content_type, content_type_map))
-	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, idx))
+		type_str = "%s / %s" % (key2txt(header.shape, shape_types_map), key2txt(header.content_type, content_type_map))
+	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, header.id))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (obfctx.next(), block, off)
+	return (obfctx.next(), header.content_index, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
