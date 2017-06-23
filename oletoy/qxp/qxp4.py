@@ -273,7 +273,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
 	(skew, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Skew?', '%.2f deg' % skew, off - 4, 4, fmt('i'))
+	add_iter(hd, 'Skew', '%.2f deg' % skew, off - 4, 4, fmt('i'))
 	# Text boxes with the same link ID are linked.
 	(lid, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(lid), off - 4, 4, fmt('I'))
