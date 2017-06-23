@@ -414,7 +414,8 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			obfctx = obfctx.next_rev()
 			for j in range(0, objs):
 				(obfctx, text, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
-				texts.add(text)
+				if text:
+					texts.add(text)
 			i += 1
 			m += 1
 		except:
