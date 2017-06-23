@@ -518,7 +518,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, header.id))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (obfctx.next(), header.content_index, off)
+	return (obfctx.next(), header, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
@@ -547,9 +547,12 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			objs = obfctx.deobfuscate(objs & 0xffff, 2)
 			obfctx = obfctx.next_rev()
 			for j in range(0, objs):
-				(obfctx, text, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
-				if text:
-					texts.add(text)
+				(obfctx, header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				if header.content_index and not header.linked_text_offset:
+					if header.content_type == 3:
+						texts.add(header.content_index)
+					elif header.content_type == 4:
+						pictures.add(header.content_index)
 			i += 1
 			m += 1
 		except:
