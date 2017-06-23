@@ -40,6 +40,11 @@ dash_stripe_type_map = {
 	1: 'Stripe'
 }
 
+dash_unit_map = {
+	0: 'Points',
+	1: 'Times width'
+}
+
 miter_map = {
 	0: 'Miter',
 	1: 'Round',
@@ -673,20 +678,30 @@ def add_dash_stripe(hd, size, data, fmt, version):
 	add_iter(hd, 'Is created by user?', key2txt(custom, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
 	(count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of segments', count, off - 2, 2, fmt('H'))
+	# looks like some default stripes use Points, but pattern length is 1.0, so it is the same as %
+	# in UI they always displayed in % and this flag is changed too when duplicating
+	(unit, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Unit', key2txt(unit, dash_unit_map), off - 1, 1, fmt('B'))
+	is_points = unit == 0
 	(stretch, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Stretch to corners?', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
-	(stretch, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Stretch to corners?', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Stretch to corners', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
 	off = _add_name(hd, size, data, off)
 	off = 0xf4
-	off = add_dim(hd, size, data, off, fmt, 'Pattern length')
+	if is_points:
+		off = add_dim(hd, size, data, off, fmt, 'Pattern length')
+	else:
+		(length, off) = rfract(data, off, fmt)
+		add_iter(hd, 'Pattern length', length, off - 4, 4, fmt('i'))
 	(miter, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Miter style', key2txt(miter, miter_map), off - 2, 2, fmt('H'))
 	(endcap, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Endcap style', key2txt(endcap, endcap_map), off - 2, 2, fmt('H'))
 	off = 0
 	for i in range(1, count + 1):
-		off = add_fract_perc(hd, data, off, fmt, 'Segment %d' % i)
+		if is_points:
+			off = add_dim(hd, size, data, off, fmt, 'Segment %d length' % i)
+		else:
+			off = add_fract_perc(hd, data, off, fmt, 'Segment %d length' % i)
 
 def add_list(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0)
