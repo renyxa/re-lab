@@ -668,21 +668,21 @@ def add_dash_stripe(hd, size, data, fmt, version):
 	off = 0xaa
 	(typ, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Type', key2txt(typ, dash_stripe_type_map), off - 1, 1, fmt('B'))
-	off += 1
-	(count, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Number of segments', count, off - 1, 1, fmt('B'))
-	off += 1
+	(custom, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Is created by user?', key2txt(custom, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of segments', count, off - 2, 2, fmt('H'))
 	(stretch, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Stretch to corners', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
-	off += 1
+	add_iter(hd, 'Stretch to corners?', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	(stretch, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Stretch to corners?', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
 	off = _add_name(hd, size, data, off)
 	off = 0xf4
 	off = add_dim(hd, size, data, off, fmt, 'Pattern length')
-	(miter, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Miter style', key2txt(miter, miter_map), off - 1, 1, fmt('B'))
-	off += 1
-	(endcap, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Endcap style', key2txt(endcap, endcap_map), off - 1, 1, fmt('B'))
+	(miter, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Miter style', key2txt(miter, miter_map), off - 2, 2, fmt('H'))
+	(endcap, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Endcap style', key2txt(endcap, endcap_map), off - 2, 2, fmt('H'))
 	off = 0
 	for i in range(1, count + 1):
 		off = add_fract_perc(hd, data, off, fmt, 'Segment %d' % i)
