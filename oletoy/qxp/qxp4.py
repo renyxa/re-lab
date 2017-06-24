@@ -391,6 +391,8 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off += 20
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 2
 	(text_flags, off) = rdata(data, off, fmt('B'))
@@ -413,8 +415,6 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	if header.gradient_id != 0:
-		off = add_gradient(hd, data, off, fmt)
 	off += 24
 	if header.content_index == 0:
 		off += 16
