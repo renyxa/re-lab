@@ -382,19 +382,8 @@ def add_next_linked_text_settings(hd, data, offset, fmt, header):
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
 	return off
 
-def add_text_box(hd, data, offset, fmt, version, obfctx, header):
+def add_text_settings(hd, data, offset, fmt, header):
 	off = offset
-	off = add_frame(hd, data, off, fmt)
-	off += 48
-	off = add_coords(hd, data, off, fmt)
-	(corner_radius, off) = rfract(data, off, fmt)
-	corner_radius /= 2
-	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
-	off += 20
-	if header.gradient_id != 0:
-		off = add_gradient(hd, data, off, fmt)
-	off = add_linked_text_offset(hd, data, off, fmt, header)
-	off += 2
 	(text_flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Text flags (first baseline minimum, ...)', bflag2txt(text_flags, text_flags_map), off - 1, 1, fmt('B'))
 	off += 1
@@ -414,6 +403,22 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 2
 	off = add_dim(hd, off + 4, data, off, fmt, 'Inter max (for Justified)')
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
+	return off
+
+def add_text_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt)
+	off += 48
+	off = add_coords(hd, data, off, fmt)
+	(corner_radius, off) = rfract(data, off, fmt)
+	corner_radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	off += 20
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	off = add_linked_text_offset(hd, data, off, fmt, header)
+	off += 2
+	off = add_text_settings(hd, data, off, fmt, header)
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 24
 	if header.content_index == 0:
@@ -429,7 +434,10 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
-	off += 76
+	off += 20
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	off += 56
 	if header.content_index != 0:
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
@@ -501,6 +509,58 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 		off += 16
 	return off
 
+def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt)
+	off += 48
+	(bz_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
+	off += 36
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	off = add_bezier_data(hd, data, off, fmt)
+	return off
+
+def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt)
+	off += 48
+	(bz_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
+	off += 36
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	off = add_linked_text_offset(hd, data, off, fmt, header)
+	off += 2
+	off = add_text_settings(hd, data, off, fmt, header)
+	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	off += 12
+	off = add_bezier_data(hd, data, off, fmt)
+	if header.content_index == 0:
+		off += 16
+	off += 12
+	return off
+
+def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	hd.model.set(header.content_iter, 0, "Picture block")
+	off = add_frame(hd, data, off, fmt)
+	off += 48
+	(bz_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
+	off += 36
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	off += 56
+	if header.content_index != 0:
+		(ilen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
+		off += ilen
+	off += 24
+	off += 44
+	off = add_bezier_data(hd, data, off, fmt)
+	return off
+
 def add_group(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off += 68
@@ -530,6 +590,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			off = add_line(hd, data, off, fmt, version, obfctx, header)
 		elif header.shape in [4]:
 			off = add_bezier_line(hd, data, off, fmt, version, obfctx, header)
+		elif header.shape in [7, 11]:
+			off = add_bezier_empty_box(hd, data, off, fmt, version, obfctx, header)
 		else:
 			off = add_empty_box(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 2:
@@ -539,10 +601,15 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			off = add_line_text(hd, data, off, fmt, version, obfctx, header)
 		elif header.shape in [4]:
 			off = add_bezier_line_text(hd, data, off, fmt, version, obfctx, header)
+		elif header.shape in [7, 11]:
+			off = add_bezier_text_box(hd, data, off, fmt, version, obfctx, header)
 		else:
 			off = add_text_box(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 4:
-		off = add_picture_box(hd, data, off, fmt, version, obfctx, header)
+		if header.shape in [7, 11]:
+			off = add_bezier_picture_box(hd, data, off, fmt, version, obfctx, header)
+		else:
+			off = add_picture_box(hd, data, off, fmt, version, obfctx, header)
 
 	# update object title and size
 	if header.content_type == 2:
