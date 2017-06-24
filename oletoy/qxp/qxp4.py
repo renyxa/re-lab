@@ -353,14 +353,15 @@ def add_bezier_data(hd, data, offset, fmt):
 	off = offset
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
-	end_off = off + bezier_data_length
+	end_off = off + bezier_data_length - 4
 	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
-	off += 2
+	off += 4
 	i = 1
 	while off < end_off:
 		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
 		off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
 		i += 1
+	off += 4
 	return off
 
 def add_linked_text_offset(hd, data, offset, fmt, header):
@@ -468,7 +469,37 @@ def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	off += 32
+	off += 12
+	if header.content_index == 0:
+		off += 16
+	return off
+
+def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt, 'Line')
+	off += 48
+	(bz_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
+	off += 36
+	off = add_bezier_data(hd, data, off, fmt)
+	return off
+
+def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
+	off = offset
+	off = add_frame(hd, data, off, fmt, 'Line')
+	off += 48
+	(bz_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
+	off += 16
+	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
+	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	off += 32
+	off = add_bezier_data(hd, data, off, fmt)
+	off += 12
+	if header.content_index == 0:
+		off += 16
 	return off
 
 def add_group(hd, data, offset, fmt, version, obfctx, header):
@@ -496,15 +527,19 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	(header, off) = add_object_header(hd, data, off, fmt, version, obfctx)
 
 	if header.content_type == 0:
-		if header.shape in [1, 2, 4]:
+		if header.shape in [1, 2]:
 			off = add_line(hd, data, off, fmt, version, obfctx, header)
+		elif header.shape in [4]:
+			off = add_bezier_line(hd, data, off, fmt, version, obfctx, header)
 		else:
 			off = add_empty_box(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 2:
 		off = add_group(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 3:
-		if header.shape in [1, 2, 4]:
+		if header.shape in [1, 2]:
 			off = add_line_text(hd, data, off, fmt, version, obfctx, header)
+		elif header.shape in [4]:
+			off = add_bezier_line_text(hd, data, off, fmt, version, obfctx, header)
 		else:
 			off = add_text_box(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 4:
