@@ -292,7 +292,8 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	# Text boxes with the same link ID are linked.
 	(link_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(link_id), off - 4, 4, fmt('I'))
-	off += 4
+	(pic_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Picture ID?', hex(pic_id), off - 4, 4, fmt('I'))
 	(gradient_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
 	off += 4
