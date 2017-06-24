@@ -284,7 +284,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	add_iter(hd, 'Index/ID?', idx, off - 2, 2, fmt('H'))
 	off += 2
 	(content, off) = rdata(data, off, fmt('I'))
-	content_iter = add_iter(hd, 'Starting block of text chain', hex(content), off - 4, 4, fmt('I'))
+	content_iter = add_iter(hd, 'Content index', hex(content), off - 4, 4, fmt('I'))
 	(rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Rotation angle', '%.2f deg' % rot, off - 4, 4, fmt('i'))
 	(skew, off) = rfract(data, off, fmt)
