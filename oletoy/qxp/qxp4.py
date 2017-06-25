@@ -77,6 +77,19 @@ endcap_map = {
 	3: 'Stretch to corners'
 }
 
+text_path_align_map = {
+	0: 'Ascent',
+	1: 'Center',
+	2: 'Baseline',
+	3: 'Descent'
+}
+
+text_path_line_align_map = {
+	0: 'Top',
+	1: 'Center',
+	2: 'Bottom'
+}
+
 def idx2txt(value):
 	if value == 0xffff:
 		return 'none'
@@ -406,6 +419,18 @@ def add_text_settings(hd, data, offset, fmt, header):
 	off = add_dim(hd, off + 4, data, off, fmt, 'First baseline offset')
 	return off
 
+def add_text_path_settings(hd, data, offset, fmt, header):
+	off = offset
+	(skew, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Skew characters', key2txt(skew, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	(rot, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Rotate characters', key2txt(rot, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	(align, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Align text', key2txt(align, text_path_align_map), off - 1, 1, fmt('B'))
+	(line_align, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Align with line', key2txt(line_align, text_path_line_align_map), off - 1, 1, fmt('B'))
+	return off
+
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
@@ -477,8 +502,9 @@ def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 32
-	off += 12
+	off += 24
+	off = add_text_path_settings(hd, data, off, fmt, header)
+	off += 16
 	if header.content_index == 0:
 		off += 16
 	return off
@@ -503,7 +529,9 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 32
+	off += 24
+	off = add_text_path_settings(hd, data, off, fmt, header)
+	off += 4
 	off = add_bezier_data(hd, data, off, fmt)
 	off += 12
 	if header.content_index == 0:
