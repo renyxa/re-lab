@@ -431,6 +431,22 @@ def add_text_path_settings(hd, data, offset, fmt, header):
 	add_iter(hd, 'Align with line', key2txt(line_align, text_path_line_align_map), off - 1, 1, fmt('B'))
 	return off
 
+def add_picture_settings(hd, data, offset, fmt, header):
+	off = offset
+	off += 1
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Picture flags', bflag2txt(flags, picture_flags_map), off - 1, 1, fmt('B'))
+	off += 22
+	(pic_rot, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
+	(pic_skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
+	off = add_dim(hd, off + 4, data, off, fmt, 'Offset accross')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
+	off = add_fract_perc(hd, data, off, fmt, 'Scale accross')
+	off = add_fract_perc(hd, data, off, fmt, 'Scale down')
+	return off
+
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
@@ -463,8 +479,10 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 20
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
-	off += 56
+	off = add_picture_settings(hd, data, off, fmt, header)
+	off += 8
 	if header.content_index != 0:
+		# not correct
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
 		off += ilen
@@ -580,8 +598,10 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 36
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
-	off += 56
+	off = add_picture_settings(hd, data, off, fmt, header)
+	off += 8
 	if header.content_index != 0:
+		# not correct
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
 		off += ilen

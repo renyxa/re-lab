@@ -302,6 +302,10 @@ para_flags_map = {
 	0x100: 'r. b. length: text',
 }
 
+picture_flags_map = {
+	0x4: 'suppress printout',
+}
+
 if __name__ == '__main__':
 	def test_deobfuscate(seed, value, n, expected):
 		assert deobfuscate(value, seed, n) == expected

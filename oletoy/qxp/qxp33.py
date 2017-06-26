@@ -276,14 +276,20 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_frame(hd, data, off, fmt)
 	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
-	off += 22
-	(pic_skew, off) = rfract(data, off, fmt)
-	add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
+	off += 24
 	(pic_rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
+	(pic_skew, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Picture skew', '%.2f deg' % pic_skew, off - 4, 4, fmt('i'))
 	off = add_dim(hd, off + 4, data, off, fmt, 'Offset accross')
 	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
-	off += 40
+	# scale values are different when picture is not empty, not sure why
+	off = add_fract_perc(hd, data, off, fmt, 'Scale accross')
+	off = add_fract_perc(hd, data, off, fmt, 'Scale down')
+	off += 21
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Picture flags', bflag2txt(flags, picture_flags_map), off - 1, 1, fmt('B'))
+	off += 8
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
 	return off
