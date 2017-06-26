@@ -476,16 +476,17 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
-	off += 20
+	off += 16
+	if header.content_index != 0:
+		(ilen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
+		off += ilen
+	else:
+		off += 4
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
 	off = add_picture_settings(hd, data, off, fmt, header)
 	off += 8
-	if header.content_index != 0:
-		# not correct
-		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
-		off += ilen
 	off += 24
 	off += 44
 	return off
@@ -595,18 +596,17 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 48
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
-	off += 36
-	if header.gradient_id != 0:
-		off = add_gradient(hd, data, off, fmt)
-	off = add_picture_settings(hd, data, off, fmt, header)
-	off += 8
+	off += 32
 	if header.content_index != 0:
-		# not correct
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
 		off += ilen
-	off += 24
-	off += 44
+	else:
+		off += 4
+	if header.gradient_id != 0:
+		off = add_gradient(hd, data, off, fmt)
+	off = add_picture_settings(hd, data, off, fmt, header)
+	off += 76
 	off = add_bezier_data(hd, data, off, fmt)
 	return off
 
