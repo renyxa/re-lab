@@ -276,11 +276,12 @@ def parse_tabs_spec(page, data, offset, parent, fmt, version):
 	return (i - 1, off)
 
 class ObjectHeader(object):
-	def __init__(self, id, shape, link_id, gradient_id, content_index, content_type, content_iter):
+	def __init__(self, id, shape, link_id, ole_id, gradient_id, content_index, content_type, content_iter):
 		self.linked_text_offset = None
 		self.id = id
 		self.shape = shape
 		self.link_id = link_id
+		self.ole_id = ole_id
 		self.gradient_id = gradient_id
 		self.content_index = content_index
 		self.content_type = content_type
@@ -308,8 +309,8 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	# Text boxes with the same link ID are linked.
 	(link_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Link ID', hex(link_id), off - 4, 4, fmt('I'))
-	(pic_id, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Picture ID?', hex(pic_id), off - 4, 4, fmt('I'))
+	(ole_id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'OLE ID?', hex(ole_id), off - 4, 4, fmt('I'))
 	(gradient_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Gradient ID?', hex(gradient_id), off - 4, 4, fmt('I'))
 	off += 4
@@ -325,7 +326,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	shape = obfctx.deobfuscate(shape, 1)
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 
-	return ObjectHeader(idx, shape, link_id, gradient_id, content, content_type, content_iter), obfctx, off
+	return ObjectHeader(idx, shape, link_id, ole_id, gradient_id, content, content_type, content_iter), obfctx, off
 
 def add_gradient(hd, data, offset, fmt):
 	off = offset
@@ -480,9 +481,9 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off += 16
-	if header.content_index != 0:
+	if header.ole_id != 0:
 		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
+		add_iter(hd, 'OLE data length', ilen, off - 4, 4, fmt('I'))
 		off += ilen
 	else:
 		off += 4
@@ -600,9 +601,9 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 32
-	if header.content_index != 0:
+	if header.ole_id != 0:
 		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
+		add_iter(hd, 'OLE data length', ilen, off - 4, 4, fmt('I'))
 		off += ilen
 	else:
 		off += 4
