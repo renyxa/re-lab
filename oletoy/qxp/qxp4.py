@@ -322,7 +322,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	shape = obfctx.deobfuscate(shape, 1)
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 
-	return ObjectHeader(idx, shape, link_id, gradient_id, content, content_type, content_iter), off
+	return ObjectHeader(idx, shape, link_id, gradient_id, content, content_type, content_iter), obfctx, off
 
 def add_gradient(hd, data, offset, fmt):
 	off = offset
@@ -632,7 +632,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# the real size is determined at the end
 	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 44], parent)
 
-	(header, off) = add_object_header(hd, data, off, fmt, version, obfctx)
+	(header, obfctx, off) = add_object_header(hd, data, off, fmt, version, obfctx)
 
 	if header.content_type == 0:
 		if header.shape in [1, 2]:
