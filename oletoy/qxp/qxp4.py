@@ -452,6 +452,21 @@ def add_picture_settings(hd, data, offset, fmt, header):
 	off = add_fract_perc(hd, data, off, fmt, 'Scale down')
 	return off
 
+def add_ole_object(hd, data, offset, fmt, header, page, parent):
+	off = offset
+	if header.ole_id != 0:
+		(length, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'OLE object length', length, off - 4, 4, fmt('I'))
+		oledata = data[off:off + length]
+		oleiter = add_pgiter(page, 'OLE object', 'qxp', '', oledata, parent)
+		import ole
+		ole.ole_open(oledata, page, oleiter)
+		add_iter(hd, 'OLE object', "", off, length, '%ds' % length)
+		off += length
+	else:
+		off += 4
+	return off
+
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
@@ -472,7 +487,7 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 		off += 16
 	return off
 
-def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
+def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent):
 	off = offset
 	hd.model.set(header.content_iter, 0, "Picture block")
 	off = add_frame(hd, data, off, fmt)
@@ -482,12 +497,7 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	corner_radius /= 2
 	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
 	off += 16
-	if header.ole_id != 0:
-		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'OLE data length', ilen, off - 4, 4, fmt('I'))
-		off += ilen
-	else:
-		off += 4
+	off = add_ole_object(hd, data, off, fmt, header, page, parent)
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
 	off = add_picture_settings(hd, data, off, fmt, header)
@@ -598,7 +608,7 @@ def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 12
 	return off
 
-def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header):
+def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent):
 	off = offset
 	hd.model.set(header.content_iter, 0, "Picture block")
 	off = add_frame(hd, data, off, fmt)
@@ -606,12 +616,7 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 32
-	if header.ole_id != 0:
-		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'OLE data length', ilen, off - 4, 4, fmt('I'))
-		off += ilen
-	else:
-		off += 4
+	off = add_ole_object(hd, data, off, fmt, header, page, parent)
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
 	off = add_picture_settings(hd, data, off, fmt, header)
@@ -669,9 +674,9 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			off = add_text_box(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 4:
 		if header.shape in [7, 11]:
-			off = add_bezier_picture_box(hd, data, off, fmt, version, obfctx, header)
+			off = add_bezier_picture_box(hd, data, off, fmt, version, obfctx, header, page, objiter)
 		else:
-			off = add_picture_box(hd, data, off, fmt, version, obfctx, header)
+			off = add_picture_box(hd, data, off, fmt, version, obfctx, header, page, objiter)
 
 	# update object title and size
 	if header.content_type == 2:
