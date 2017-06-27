@@ -280,6 +280,7 @@ def parse_tabs_spec(page, data, offset, parent, fmt, version):
 class ObjectHeader(object):
 	def __init__(self, id, shape, link_id, ole_id, gradient_id, content_index, content_type, content_iter):
 		self.linked_text_offset = None
+		self.next_linked_index = None
 		self.id = id
 		self.shape = shape
 		self.link_id = link_id
@@ -400,6 +401,7 @@ def add_next_linked_text_settings(hd, data, offset, fmt, header):
 	off += 2
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
+	header.next_linked_index = next_index
 	return off
 
 def add_text_settings(hd, data, offset, fmt, header):
@@ -483,9 +485,12 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 2
 	off = add_text_settings(hd, data, off, fmt, header)
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 24
+	off += 12
 	if header.content_index == 0:
-		off += 16
+		off += 28
+	else:
+		if header.linked_text_offset == 0:
+			off += 12
 	return off
 
 def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent):
@@ -537,15 +542,18 @@ def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = add_frame(hd, data, off, fmt, 'Line')
 	off += 48
 	off = add_coords(hd, data, off, fmt)
-	off += 4
+	off += 24
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 24
+	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
-	off += 16
+	off += 4
 	if header.content_index == 0:
-		off += 16
+		off += 28
+	else:
+		if header.linked_text_offset == 0:
+			off += 12
 	return off
 
 def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
@@ -564,17 +572,19 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off += 48
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
-	off += 16
+	off += 36
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 24
+	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
 	off += 4
 	off = add_bezier_data(hd, data, off, fmt)
-	off += 12
 	if header.content_index == 0:
-		off += 16
+		off += 28
+	else:
+		if header.linked_text_offset == 0:
+			off += 12
 	return off
 
 def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
