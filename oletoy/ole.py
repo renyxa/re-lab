@@ -443,7 +443,7 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 
 
 def ole_open (buf,page,iter=None):
-	print 'Open as OLE',
+	print 'Open as OLE'
 	if iter:
 		print page.model.get_value(iter,0)
 	else:
