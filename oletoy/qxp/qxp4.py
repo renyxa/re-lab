@@ -780,20 +780,6 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Object counter/last id?', counter, off - 4, 4, fmt('I'))
 	return (Header(seed, inc, mpages, pictures), size)
 
-def add_picture(hd, size, data, fmt, version):
-	off = 0
-	(sz, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
-	(sz, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Size', sz, off - 4, 4, fmt('I'))
-	off += 4
-	(w, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Picture width', w, off - 2, 2, fmt('H'))
-	(h, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Picture height', h, off - 2, 2, fmt('H'))
-	off = 50
-	add_iter(hd, 'Bitmap', '', off, sz, '%ds' % sz)
-
 def _add_name(hd, size, data, offset=0, name="Name"):
 	(n, off) = rdata(data, offset, '64s')
 	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
@@ -1046,7 +1032,6 @@ ids = {
 	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'physical_fonts': add_physical_fonts,
-	'picture': add_picture,
 	'record': add_record,
 	'tabs': add_tabs,
 	'tabs_spec': add_saved,

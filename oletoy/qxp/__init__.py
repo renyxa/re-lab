@@ -93,7 +93,9 @@ def open_v5(page, buf, parent, fmt, version):
 	for picture in pictures:
 		try:
 			data = parse_chain(buf, picture, rlen, fmt)
-			add_pgiter(page, 'Picture [%x]' % picture, 'qxp5', ('picture', len(data)), data)
+			hd = qxp.HexDumpSave(0)
+			add_picture(hd, len(data), data, fmt, version)
+			add_pgiter(page, 'Picture [%x]' % picture, 'qxp5', ('picture', hd), data)
 		except:
 			traceback.print_exc()
 
@@ -159,10 +161,23 @@ def add_text(hd, size, data, length, dummy):
 	(text, off) = rdata(data, 0, '%ds' % length)
 	add_iter(hd, 'Text', text, off - length, length, '%ds' % length)
 
+def add_picture(hd, size, data, fmt, version):
+	off = 0
+	(end, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'End offset', end, off - 4, 4, fmt('I'))
+	(end, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'End offset', end, off - 4, 4, fmt('I'))
+	off += 4
+	(w, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Picture width', w, off - 2, 2, fmt('H'))
+	(h, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Picture height', h, off - 2, 2, fmt('H'))
+
 qxp5_ids = {
 	'header': qxp.add_saved,
 	'text': add_text,
 	'text_info': qxp.add_saved,
+	'picture': qxp.add_saved,
 }
 
 def call(hd, size, data, cid, args):
