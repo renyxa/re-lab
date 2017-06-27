@@ -14,7 +14,9 @@
 # USA
 
 
-import sys,struct,subprocess,time
+import os
+import sys,struct,subprocess
+from tempfile import mkstemp
 import gtk
 import tree
 import hexdump
@@ -48,15 +50,16 @@ def my_open (buf,page,parent=None):
 	tbliter = None
 	dirflag=0
 	ftype = ""
+	tmpfile = None
 	try:
 		if parent is None:
 			gsffilename = page.fname
 		else:
-		# need to save tmp file to pass to gsf
-			gsffilename = "tmp%s"%time.time()
-			f = open(gsffilename,"wb")
-			f.write(buf)
-			f.close()
+			# need to save tmp file to pass to gsf
+			(tmpfd, tmpfile) = mkstemp()
+			gsffilename = tmpfile
+			os.write(tmpfd, buf)
+			os.close(tmpfd)
 		gsfout = subprocess.check_output(["gsf", "list", gsffilename])
 		print gsfout
 		print "-----------------"
@@ -172,10 +175,6 @@ def my_open (buf,page,parent=None):
 				
 				if "SummaryInformation" in fn:
 					page.model.set_value(iter1,1,("ole","propset"))
-				
-				if parent is None:
-					try: os.remove(gsffilename)
-					except: pass
 			else:
 				if i.split()[2] == "VBA":
 					page.type = "vba"
@@ -185,9 +184,11 @@ def my_open (buf,page,parent=None):
 	
 	except subprocess.CalledProcessError:
 		print "Failed to run gsf. Please install libgsf."
-		return
 
-	ftype = "TEST"
+	if tmpfile:
+		try: os.remove(tmpfile)
+		except: pass
+
 	return ftype
 
 def gsf_open(src,page,iter=None):
