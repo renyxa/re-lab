@@ -104,13 +104,14 @@ class ObfuscationContext:
 		self.inc = inc
 
 	def next(self, block):
-		return ObfuscationContext((self.seed + self.inc) & 0xffff, self._shift(self.inc, block & 0xf))
+		self.seed = (self.seed + self.inc) & 0xffff
+		self.inc = self._shift(self.inc, block & 0xf)
 
 	def next_rev(self):
-		return ObfuscationContext((self.seed + 0xffff - self.inc) & 0xffff, self.inc)
+		self.seed = (self.seed + 0xffff - self.inc) & 0xffff
 
 	def next_shift(self, shift):
-		return ObfuscationContext(self._shift(self.seed, shift), self.inc)
+		self.seed = self._shift(self.seed, shift)
 
 	def _shift(self, value, shift):
 		# This is a modified rotation. The lower bits in the old value
@@ -319,14 +320,14 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	(content_type, off) = rdata(data, off, fmt('B'))
 	content_type = obfctx.deobfuscate(content_type, 1)
 	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
-	obfctx = obfctx.next_shift(content_type)
+	obfctx.next_shift(content_type)
 	content = obfctx.deobfuscate(content & 0xffff, 2)
 	hd.model.set(content_iter, 1, hex(content))
 	(shape, off) = rdata(data, off, fmt('B'))
 	shape = obfctx.deobfuscate(shape, 1)
 	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
 
-	return ObjectHeader(idx, shape, link_id, ole_id, gradient_id, content, content_type, content_iter), obfctx, off
+	return ObjectHeader(idx, shape, link_id, ole_id, gradient_id, content, content_type, content_iter), off
 
 def add_gradient(hd, data, offset, fmt):
 	off = offset
@@ -644,7 +645,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# the real size is determined at the end
 	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 44], parent)
 
-	(header, obfctx, off) = add_object_header(hd, data, off, fmt, version, obfctx)
+	(header, off) = add_object_header(hd, data, off, fmt, version, obfctx)
 
 	if header.content_type == 0:
 		if header.shape in [1, 2]:
@@ -680,7 +681,8 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, header.id))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (obfctx.next(header.content_index), header, off)
+	obfctx.next(header.content_index)
+	return header, off
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
@@ -707,9 +709,9 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			(objs, off) = rdata(data, off, fmt('I'))
 			pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, obfctx), data[start:off], parent)
 			objs = obfctx.deobfuscate(objs & 0xffff, 2)
-			obfctx = obfctx.next_rev()
+			obfctx.next_rev()
 			for j in range(0, objs):
-				(obfctx, header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
+				(header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
 				if header.content_index and not header.linked_text_offset:
 					if header.content_type == 3:
 						texts.add(header.content_index)
