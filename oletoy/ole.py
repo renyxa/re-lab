@@ -83,10 +83,11 @@ def my_open (buf,page,parent=None):
 					cdir = ""
 				if len(fn) and ord(fn[0]) < 32: 
 					fn = fn[1:]
-				pn = None
 				if cdir:
 					cdir_to_treeiter(page,parent,cdir,dircache)
 					pn = dircache["/"+cdir]
+				else:
+					pn = parent
 				data = subprocess.check_output(["gsf", "cat", gsffilename, fullname])
 				iter1 = add_pgiter(page,fn,"ole",fn,data,pn)
 				
