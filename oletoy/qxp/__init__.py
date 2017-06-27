@@ -79,7 +79,7 @@ def open_v5(page, buf, parent, fmt, version):
 	if doc_hdl_map.has_key(version):
 		(texts, pictures) = doc_hdl_map[version](page, doc, dociter, fmt, version, hdr)
 
-	for text in texts:
+	for text in sorted(texts):
 		try:
 			data = parse_chain(buf, text, rlen, fmt)
 			hd = qxp.HexDumpSave(0)
@@ -90,7 +90,7 @@ def open_v5(page, buf, parent, fmt, version):
 		except:
 			traceback.print_exc()
 
-	for picture in pictures:
+	for picture in sorted(pictures):
 		try:
 			data = parse_chain(buf, picture, rlen, fmt)
 			hd = qxp.HexDumpSave(0)
