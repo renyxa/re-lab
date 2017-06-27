@@ -14,6 +14,7 @@
 # USA
 #
 
+import copy
 import traceback
 from utils import *
 from qxp import *
@@ -712,7 +713,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			if len(name) != 0:
 				pname += ' "%s"' % name
 			(objs, off) = rdata(data, off, fmt('I'))
-			pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, obfctx), data[start:off], parent)
+			pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, copy.copy(obfctx)), data[start:off], parent)
 			objs = obfctx.deobfuscate(objs & 0xffff, 2)
 			obfctx.next_rev()
 			for j in range(0, objs):
