@@ -103,13 +103,16 @@ class ObfuscationContext:
 		self.seed = seed
 		self.inc = inc
 
-	def next(self):
-		return ObfuscationContext((self.seed + self.inc) & 0xffff, self.inc)
+	def next(self, block):
+		return ObfuscationContext((self.seed + self.inc) & 0xffff, self._shift(self.inc, block & 0xf))
 
 	def next_rev(self):
 		return ObfuscationContext((self.seed + 0xffff - self.inc) & 0xffff, self.inc)
 
 	def next_shift(self, shift):
+		return ObfuscationContext(self._shift(self.seed, shift), self.inc)
+
+	def _shift(self, value, shift):
 		# This is a modified rotation. The lower bits in the old value
 		# are moved into the higher bits in the new value, with the
 		# following modifications:
@@ -127,9 +130,9 @@ class ObfuscationContext:
 			s = shift - r
 			m = (0xffff >> s) << s
 			return (val | m) & mask
-		highinit = self.seed & mask
-		high = fill(highinit | (self.seed >> 15)) << (16 - shift)
-		return ObfuscationContext(high | (self.seed >> shift), self.inc)
+		highinit = value & mask
+		high = fill(highinit | (value >> 15)) << (16 - shift)
+		return high | (value >> shift)
 
 	def deobfuscate(self, value, n):
 		return deobfuscate(value, self.seed, n)
@@ -668,7 +671,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	page.model.set_value(objiter, 0, "[%d] %s [%d]" % (index, type_str, header.id))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (obfctx.next(), header, off)
+	return (obfctx.next(header.content_index), header, off)
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
