@@ -62,6 +62,20 @@ def parse_chain(buf, idx, rlen, fmt):
 		blocks.append(buf[start:off - 4])
 	return ''.join(blocks)
 
+def handle_text(page, buf, parent, fmt, version, index, rlen):
+	data = parse_chain(buf, index, rlen, fmt)
+	hd = qxp.HexDumpSave(0)
+	blocks = add_text_info(hd, len(data), data, fmt, version)
+	textiter = add_pgiter(page, 'Text [%x]' % index, 'qxp5', ('text_info', hd), data, parent)
+	for (block, length) in blocks:
+		add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
+
+def handle_picture(page, buf, parent, fmt, version, index, rlen):
+	data = parse_chain(buf, index, rlen, fmt)
+	hd = qxp.HexDumpSave(0)
+	add_picture(hd, len(data), data, fmt, version)
+	add_pgiter(page, 'Picture [%x]' % index, 'qxp5', ('picture', hd), data)
+
 def open_v5(page, buf, parent, fmt, version):
 	rlen = 0x100
 
@@ -74,28 +88,17 @@ def open_v5(page, buf, parent, fmt, version):
 	doc_hdl_map = {qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
 	doc = parse_chain(buf, 3, rlen, fmt)
 	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
-	texts = []
-	pictures = []
 	if doc_hdl_map.has_key(version):
 		(texts, pictures) = doc_hdl_map[version](page, doc, dociter, fmt, version, hdr)
+	else:
+		(texts, pictures) = [], []
 
-	for text in sorted(texts):
-		try:
-			data = parse_chain(buf, text, rlen, fmt)
-			hd = qxp.HexDumpSave(0)
-			blocks = add_text_info(hd, len(data), data, fmt, version)
-			textiter = add_pgiter(page, 'Text info [%x]' % text, 'qxp5', ('text_info', hd), data, parent)
-			for (block, length) in blocks:
-				add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
-		except:
-			traceback.print_exc()
+	chains = [(text, handle_text) for text in texts]
+	chains.extend([(picture, handle_picture) for picture in pictures])
 
-	for picture in sorted(pictures):
+	for (block, hdl) in sorted(chains):
 		try:
-			data = parse_chain(buf, picture, rlen, fmt)
-			hd = qxp.HexDumpSave(0)
-			add_picture(hd, len(data), data, fmt, version)
-			add_pgiter(page, 'Picture [%x]' % picture, 'qxp5', ('picture', hd), data)
+			hdl(page, buf, parent, fmt, version, block, rlen)
 		except:
 			traceback.print_exc()
 
