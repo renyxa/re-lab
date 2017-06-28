@@ -374,14 +374,23 @@ def add_bezier_data(hd, data, offset, fmt):
 	off = offset
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
-	end_off = off + bezier_data_length
 	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
-	off += bezier_data_length
-	# i = 1
-	# while off < end_off:
-	# 	off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
-	# 	off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
-	# 	i += 1
+	off += 4
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y1?', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box X1?', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y2?', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box X2?', parent=bezier_iter)
+	off += 6
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of points?', count, off - 2, 2, fmt('H'), parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y1?', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box X1?', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y2?', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box X2?', parent=bezier_iter)
+	for i in range(1, count + 1):
+		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
+	off = offset + 4 + bezier_data_length
 	return off
 
 def add_linked_text_offset(hd, data, offset, fmt, header):
