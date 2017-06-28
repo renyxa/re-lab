@@ -166,15 +166,20 @@ def add_text(hd, size, data, length, dummy):
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
-	(end, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'End offset', end, off - 4, 4, fmt('I'))
-	(end, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'End offset', end, off - 4, 4, fmt('I'))
+	(length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length', length, off - 4, 4, fmt('I'))
+	end = off + length
+	(length2, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length again?', length2, off - 4, 4, fmt('I'))
 	off += 4
 	(w, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Picture width', w, off - 2, 2, fmt('H'))
 	(h, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Picture height', h, off - 2, 2, fmt('H'))
+	off += 0x22
+	add_iter(hd, 'Bitmap', end - off, off, end - off, '%ds' % (end - off))
+	off = end
+	add_iter(hd, 'Garbage?', '', off, size - off, '%ds' % (size - off))
 
 qxp5_ids = {
 	'header': qxp.add_saved,
