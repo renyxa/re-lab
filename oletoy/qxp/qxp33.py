@@ -214,6 +214,10 @@ def add_bezier_data(hd, data, offset, fmt):
 	end_off = off + bezier_data_length
 	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
 	off += 2
+	off = add_dim(hd, off + 4, data, off, fmt, 'Start Y', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Start X', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'End Y', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'End X', parent=bezier_iter)
 	i = 1
 	while off < end_off:
 		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
