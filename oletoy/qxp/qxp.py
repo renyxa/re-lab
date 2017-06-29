@@ -306,6 +306,15 @@ picture_flags_map = {
 	0x4: 'suppress printout',
 }
 
+gradient_type_map = {
+	0x10: 'Linear',
+	0x18: 'Mid-Linear',
+	0x19: 'Rectangular',
+	0x1a: 'Diamond',
+	0x1b: 'Circular',
+	0x1c: 'Full Circular',
+}
+
 if __name__ == '__main__':
 	def test_deobfuscate(seed, value, n, expected):
 		assert deobfuscate(value, seed, n) == expected

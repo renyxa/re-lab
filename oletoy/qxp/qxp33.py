@@ -199,7 +199,9 @@ def add_gradient(hd, data, offset, fmt):
 	off += 10
 	(xt, off) = rdata(data, off, '4s')
 	add_iter(hd, 'Extension mark?', 'Cool Blends XTension' if xt == 'QXCB' else xt, off - 4, 4, '4s', parent=gr_iter)
-	off += 6
+	(typ, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Type', key2txt(typ, gradient_type_map), off - 1, 1, fmt('B'), parent=gr_iter)
+	off += 5
 	(color2, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Second color index', color2, off - 1, 1, fmt('B'), parent=gr_iter)
 	off += 1
