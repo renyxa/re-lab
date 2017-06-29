@@ -375,22 +375,32 @@ def add_bezier_data(hd, data, offset, fmt):
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
 	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
-	off += 4
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y1?', parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box X1?', parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y2?', parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box X2?', parent=bezier_iter)
-	off += 6
-	(count, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of points?', count, off - 2, 2, fmt('H'), parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y1?', parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box X1?', parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y2?', parent=bezier_iter)
-	off = add_dim(hd, off + 4, data, off, fmt, 'Box X2?', parent=bezier_iter)
-	for i in range(1, count + 1):
-		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
-		off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
-	off = offset + 4 + bezier_data_length
+	bezier_data_start = off
+	off += 2
+	(components_count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of components', components_count, off - 2, 2, fmt('H'), parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y1', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box X1', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box Y2', parent=bezier_iter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Box X2', parent=bezier_iter)
+	components_offsets = []
+	for i in range(1, components_count + 1):
+		(component_offset, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Component %d offset' % i, component_offset, off - 4, 4, fmt('I'), parent=bezier_iter)
+		components_offsets.append(component_offset)
+	for comp in range(1, components_count + 1):
+		off = bezier_data_start + components_offsets[comp - 1]
+		off += 2
+		(count, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Component %d number of points' % comp, count, off - 2, 2, fmt('H'), parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'Component %d Box Y1' % comp, parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'Component %d Box X1' % comp, parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'Component %d Box Y2' % comp, parent=bezier_iter)
+		off = add_dim(hd, off + 4, data, off, fmt, 'Component %d Box X2' % comp, parent=bezier_iter)
+		for i in range(1, count + 1):
+			off = add_dim(hd, off + 4, data, off, fmt, 'Component %d Y%d' % (comp, i), parent=bezier_iter)
+			off = add_dim(hd, off + 4, data, off, fmt, 'Component %d X%d' % (comp, i), parent=bezier_iter)
+	off = bezier_data_start + bezier_data_length
 	return off
 
 def add_linked_text_offset(hd, data, offset, fmt, header):
