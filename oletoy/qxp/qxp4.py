@@ -1025,6 +1025,29 @@ def add_dash_stripe(hd, size, data, fmt, version):
 
 def add_list(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, 0)
+	off += 3
+	flags_map = {0x80: 'alphabetical'}
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_map), off - 1, 1, fmt('B'))
+	i = 1
+	while off < size:
+		(style, off) = rdata(data, off, fmt('H'))
+		if style == 0xffff:
+			off -= 2
+			break
+		styleiter = add_iter(hd, 'Style %d' % i, style, off - 2, 8, '8s')
+		add_iter(hd, 'Style', idx2txt(style), off - 2, 2, fmt('H'), parent=styleiter)
+		(level, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Level', level + 1, off - 1, 1, fmt('B'), parent=styleiter)
+		numbering_map = {0: 'Text only', 1: 'Text...Page#', 2: 'Page#...Text'}
+		(numbering, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Numbering', key2txt(numbering, numbering_map), off - 1, 1, fmt('B'), parent=styleiter)
+		off += 2
+		(fmtstyle, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Format as style', idx2txt(fmtstyle), off - 2, 2, fmt('H'), parent=styleiter)
+		i += 1
+	if off < size:
+		add_iter(hd, 'Unset styles', '', off, size - off, '%ds' % (size - off))
 
 def add_index(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
