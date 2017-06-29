@@ -334,7 +334,10 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 def add_gradient(hd, data, offset, fmt):
 	off = offset
 	gr_iter = add_iter(hd, 'Gradient', '', off, 40, '%ds' % 40)
-	off += 26
+	off += 16
+	(xt, off) = rdata(data, off, '4s')
+	add_iter(hd, 'Extension mark?', 'Cool Blends XTension' if xt == 'QXCB' else xt, off - 4, 4, '4s', parent=gr_iter)
+	off += 6
 	(color2, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Second color index', color2, off - 2, 2, fmt('H'), parent=gr_iter)
 	(gr_shade, off) = rfract(data, off, fmt)
