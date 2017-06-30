@@ -879,8 +879,8 @@ def add_colors(hd, size, data, fmt, version):
 	(end, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
 	off += 8
-	for i in range(1, count + 1):
-		spec_iter = add_iter(hd, 'Block spec %d?' % i, '', off, 4, '4s')
+	for i in range(0, count):
+		spec_iter = add_iter(hd, '%s block spec' % ('Header' if i == 0 else str(i - 1)), '', off, 4, '4s')
 		(info, off) = rdata(data, off, fmt('I'))
 		start = info & 0xFFFFFFF
 		padding = (info >> 28) & 0x7
