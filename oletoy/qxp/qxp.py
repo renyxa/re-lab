@@ -37,7 +37,7 @@ def dim2in(dim):
 
 def style2txt(value):
 	if value == 0:
-		return 'None'
+		return 'No style'
 	else:
 		return value
 

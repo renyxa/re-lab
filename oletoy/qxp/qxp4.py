@@ -952,7 +952,7 @@ def add_char_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 	off += 8
 	(parent, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Based on', parent, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Based on', style2txt(parent), off - 2, 2, fmt('H'))
 	(index, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Index', index, off - 2, 2, fmt('H'))
 	off += 8
@@ -1016,12 +1016,12 @@ def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)
 	off += 8
 	(parent, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Based on', parent, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Based on', style2txt(parent), off - 2, 2, fmt('H'))
 	(next, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Next style?', next, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Next style?', style2txt(next), off - 2, 2, fmt('H'))
 	off += 8
 	(char, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Character style', char, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Character style', style2txt(char), off - 2, 2, fmt('H'))
 	off += 2
 	speciter = add_iter(hd, 'Tabs spec', '', off, 8, '8s')
 	off = _add_tabs_spec(hd, size, data, off, fmt, version, speciter)
