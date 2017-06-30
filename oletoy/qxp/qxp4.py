@@ -235,7 +235,7 @@ def parse_lists(page, data, offset, parent, fmt, version):
 def parse_index(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	(count, off) = rdata(data, off, fmt('I'))
-	add_pgiter(page, 'Template index', 'qxp4', ('index', fmt, version), data[off - 8:off - 4 + length], parent)
+	add_pgiter(page, 'Index', 'qxp4', ('index', fmt, version), data[off - 8:off - 4 + length], parent)
 	return (count, off - 4 + length)
 
 def parse_char_formats(page, data, offset, parent, fmt, version):
@@ -724,7 +724,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	obfctx.next(header.content_index)
 	return header, off
 
-def parse_object(page, data, offset, parent, fmt, version, index):
+def parse_template(page, data, offset, parent, fmt, version, index):
 	class DummyObfuscationContext:
 		def next(self, block):
 			pass
@@ -739,11 +739,8 @@ def parse_object(page, data, offset, parent, fmt, version, index):
 	reciter = add_pgiter(page, 'Template', 'qxp4', ('record', fmt, version), data[off - 4:end], parent)
 	(header, off) = handle_object(page, data, off, reciter, fmt, version, DummyObfuscationContext(), 0)
 	# update object title and size
-	if header.content_type == 2:
-		type_str = 'Group'
-	else:
-		type_str = "%s / %s" % (key2txt(header.shape, shape_types_map), key2txt(header.content_type, content_type_map))
-	page.model.set_value(reciter, 0, "Template: %s" % type_str)
+	type_str = "%s / %s" % (key2txt(header.shape, shape_types_map), key2txt(header.content_type, content_type_map))
+	page.model.set_value(reciter, 0, "[%d] %s" % (index, type_str))
 	return end
 
 def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
@@ -807,10 +804,14 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_hjs(page, data, off, parent, fmt, version)
 	off = parse_dashes(page, data, off, parent, fmt, version)
 	off = parse_lists(page, data, off, parent, fmt, version)
-	(count, off) = parse_index(page, data, off, parent, fmt, version)
-	for i in range(0, count - 1):
-		off = parse_object(page, data, off, parent, fmt, version, i)
-	off = parse_record(page, data, off, parent, fmt, version, 'Unknown template')
+	tmplstart = off
+	tmpliter = add_pgiter(page, 'Templates', 'qxp4', (), data[off:], parent)
+	(count, off) = parse_index(page, data, off, tmpliter, fmt, version)
+	for i in range(1, count):
+		off = parse_template(page, data, off, tmpliter, fmt, version, i)
+	off = parse_record(page, data, off, tmpliter, fmt, version, '[%d] Unknown' % count)
+	page.model.set_value(tmpliter, 2, off - tmplstart)
+	page.model.set_value(tmpliter, 3, data[tmplstart:off])
 	off = parse_char_formats(page, data, off, parent, fmt, version)
 	(tabs, off) = parse_tabs_spec(page, data, off, parent, fmt, version)
 	for i in range(0, tabs):
