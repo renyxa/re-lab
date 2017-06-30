@@ -883,10 +883,12 @@ def add_colors(hd, size, data, fmt, version):
 		spec_iter = add_iter(hd, 'Color block spec %d?' % i, '', off, 4, '4s')
 		(start, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Start offset?', start, off - 2, 2, fmt('H'), parent=spec_iter)
-		(f, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Flags?', hex(f), off - 2, 2, fmt('H'), parent=spec_iter)
+		(d, off) = rdata(data, off, fmt('H'))
+		padding = d >> 12
+		add_iter(hd, 'Info?', hex(d), off - 2, 2, fmt('H'), parent=spec_iter)
+		add_iter(hd, 'Padding', padding, off - 2, 2, fmt('H'), parent=spec_iter)
 		add_iter(hd, 'Start', '', start + 4, 1, '1s', parent=spec_iter)
-		hd.model.set(spec_iter, 1, "%d, %s" % (start, hex(f)))
+		hd.model.set(spec_iter, 1, "%d, %s" % (start, hex(d)))
 
 def add_hj(hd, size, data, fmt, version):
 	off = 4
