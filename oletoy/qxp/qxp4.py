@@ -375,12 +375,17 @@ def add_frame(hd, data, offset, fmt, name='Frame'):
 	add_iter(hd, '%s style' % name, 'D&S index %d' % frame_style if bmp_frame == 0 else key2txt(frame_style, frame_bitmap_style_map), off - 2, 2, fmt('H'))
 	return off
 
-def add_bezier_data(hd, data, offset, fmt):
+def add_bezier(hd, data, offset, fmt):
 	off = offset
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
-	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
-	bezier_data_start = off
+	if bezier_data_length != 0:
+		off = add_bezier_data(hd, bezier_data_length, data, off, fmt)
+	return off
+
+def add_bezier_data(hd, size, data, offset, fmt):
+	off = offset
+	bezier_iter = add_iter(hd, 'Bezier data', '', off, size, '%ds' % size)
 	off += 2
 	(components_count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of components', components_count, off - 2, 2, fmt('H'), parent=bezier_iter)
@@ -394,7 +399,7 @@ def add_bezier_data(hd, data, offset, fmt):
 		add_iter(hd, 'Component %d offset' % i, component_offset, off - 4, 4, fmt('I'), parent=bezier_iter)
 		components_offsets.append(component_offset)
 	for comp in range(1, components_count + 1):
-		off = bezier_data_start + components_offsets[comp - 1]
+		off = offset + components_offsets[comp - 1]
 		off += 2
 		(count, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Component %d number of points' % comp, count, off - 2, 2, fmt('H'), parent=bezier_iter)
@@ -405,7 +410,7 @@ def add_bezier_data(hd, data, offset, fmt):
 		for i in range(1, count + 1):
 			off = add_dim(hd, off + 4, data, off, fmt, 'Component %d Y%d' % (comp, i), parent=bezier_iter)
 			off = add_dim(hd, off + 4, data, off, fmt, 'Component %d X%d' % (comp, i), parent=bezier_iter)
-	off = bezier_data_start + bezier_data_length
+	off = offset + size
 	return off
 
 def add_linked_text_offset(hd, data, offset, fmt, header):
@@ -587,7 +592,7 @@ def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 36
-	off = add_bezier_data(hd, data, off, fmt)
+	off = add_bezier(hd, data, off, fmt)
 	return off
 
 def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
@@ -603,7 +608,7 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
 	off += 4
-	off = add_bezier_data(hd, data, off, fmt)
+	off = add_bezier(hd, data, off, fmt)
 	if header.content_index == 0:
 		off += 28
 	else:
@@ -620,7 +625,7 @@ def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 36
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
-	off = add_bezier_data(hd, data, off, fmt)
+	off = add_bezier(hd, data, off, fmt)
 	return off
 
 def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
@@ -637,7 +642,7 @@ def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_text_settings(hd, data, off, fmt, header)
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 12
-	off = add_bezier_data(hd, data, off, fmt)
+	off = add_bezier(hd, data, off, fmt)
 	if header.content_index == 0:
 		off += 16
 	off += 12
@@ -656,7 +661,7 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page,
 		off = add_gradient(hd, data, off, fmt)
 	off = add_picture_settings(hd, data, off, fmt, header)
 	off += 76
-	off = add_bezier_data(hd, data, off, fmt)
+	off = add_bezier(hd, data, off, fmt)
 	if header.content_index != 0 and header.ole_id == 0:
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
