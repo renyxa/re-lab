@@ -35,6 +35,12 @@ def rfract(data, off, fmt):
 def dim2in(dim):
 	return dim / 72.0
 
+def style2txt(value):
+	if value == 0:
+		return 'None'
+	else:
+		return value
+
 def deobfuscate(value, seed, n):
 	assert n in [1, 2]
 	if n == 1:

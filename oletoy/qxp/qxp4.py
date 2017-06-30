@@ -943,7 +943,9 @@ def add_char_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
-	off += 4
+	(style, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Style', style2txt(style), off - 2, 2, fmt('H'))
+	off += 2
 	_add_char_format(hd, size, data, off, fmt, version)
 
 def add_char_style(hd, size, data, fmt, version):
@@ -1005,8 +1007,10 @@ def add_para_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Use count', uses, off - 4, 4, fmt('I'))
-	off += 4
-	_add_para_format(hd, size, data, off, fmt, version)
+	(style, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Style', style2txt(style), off - 2, 2, fmt('H'))
+	off += 2
+	off = _add_para_format(hd, size, data, off, fmt, version)
 
 def add_para_style(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data)

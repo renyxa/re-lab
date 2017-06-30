@@ -95,10 +95,10 @@ def _handle_collection(handler, size, init=0):
 			i += 1
 	return hdl
 
-def _handle_collection_named(handler, name_offset):
+def _handle_collection_named(handler, name_offset, init=0):
 	def hdl(page, data, parent, fmt, version):
 		off = 0
-		i = 0
+		i = init
 		while off + name_offset < len(data):
 			(name, end) = _read_name2(data, off + name_offset)
 			(entry, off) = rdata(data, off, '%ds' % (end - off))
@@ -424,7 +424,7 @@ handlers = {
 	5: ('Fonts', None, 'fonts'),
 	6: ('Physical fonts', None, 'physical_fonts'),
 	7: ('Colors', handle_colors, 'colors'),
-	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306)),
+	9: ('Paragraph styles', _handle_collection_named(handle_para_style, 306, 1)),
 	10: ('H&Js', _handle_collection_named(handle_hj, 48)),
 	12: ('Character formats', _handle_collection(handle_char_format, 46)),
 	13: ('Paragraph formats', _handle_collection(handle_para_format, 256)),
@@ -556,7 +556,9 @@ def add_para_format(hd, size, data, fmt, version):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
-	_add_para_format(hd, size, data, off, fmt, version)
+	off = _add_para_format(hd, size, data, off, fmt, version)
+	(style, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Style', style2txt(style), off - 2, 2, fmt('H'))
 
 def add_para_style(hd, size, data, fmt, version):
 	off = 0x28
