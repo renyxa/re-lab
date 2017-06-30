@@ -872,7 +872,7 @@ def add_colors(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
 	off += 14
 	(count, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of colors (with different models)?', count, off - 2, 2, fmt('H'))
+	add_iter(hd, 'Number of blocks', count, off - 2, 2, fmt('H'))
 	off += 4
 	(length, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
@@ -880,7 +880,7 @@ def add_colors(hd, size, data, fmt, version):
 	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
 	off += 8
 	for i in range(1, count + 1):
-		spec_iter = add_iter(hd, 'Color block spec %d?' % i, '', off, 4, '4s')
+		spec_iter = add_iter(hd, 'Block spec %d?' % i, '', off, 4, '4s')
 		(info, off) = rdata(data, off, fmt('I'))
 		start = info & 0x8FFFFFFF
 		padding = (info >> 28) & 0xF
