@@ -91,6 +91,21 @@ text_path_line_align_map = {
 	2: 'Bottom'
 }
 
+# second block offset 47
+color_flags_map = {
+	0x2: 'disable spot color',
+	0x4: 'read-only',
+	0x8: 'all plates' # set for Registration color
+}
+
+halftone_map = {
+	0: 'Process Black',
+	1: 'Process Cyan',
+	2: 'Process Magenta',
+	3: 'Process Yellow',
+	4: 'Process Black'
+}
+
 def idx2txt(value):
 	if value == 0xffff:
 		return 'none'
