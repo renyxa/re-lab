@@ -210,9 +210,37 @@ def parse_physical_fonts(page, data, offset, parent, fmt, version):
 	return off + length
 
 def parse_colors(page, data, offset, parent, fmt, version):
+	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
-	add_pgiter(page, 'Colors', 'qxp4', ('colors', fmt, version), data[off - 4:off + length], parent)
-	return off + length
+	iter = add_pgiter(page, 'Colors', 'qxp4', ('colors', hd), data[off - 4:off + length], parent)
+	off += 14
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of blocks', count, off - 2, 2, fmt('H'))
+	off += 4
+	(length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
+	(end, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
+	off += 8
+	blocks = []
+	for i in range(0, count):
+		block_name = 'Header' if i == 0 else str(i - 1)
+		spec_iter = add_iter(hd, '%s block spec' % (block_name), '', off, 4, '4s')
+		(info, off) = rdata(data, off, fmt('I'))
+		start = info & 0xFFFFFFF
+		padding = (info >> 28) & 0x7
+		is_unused = (info >> 31) == 1
+		add_iter(hd, 'Start offset', start, off - 4, 4, fmt('I'), parent=spec_iter)
+		add_iter(hd, 'Padding length', padding, off - 4, 4, fmt('I'), parent=spec_iter)
+		add_iter(hd, 'Start', '', start + 4, 1, '1s', parent=spec_iter)
+		hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
+		blocks.append((block_name, start + 4, padding))
+	blocks.append(('Tail', end, 0))
+	for i in range(0, count):
+		(name, start, padding) = blocks[i]
+		(_, next_start, _) = blocks[i + 1]
+		add_pgiter(page, '%s block' % name, 'qxp4', ('color_block', fmt, version), data[offset + start:offset + next_start - padding], iter)
+	return offset + 4 + length
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -884,28 +912,6 @@ def _add_name(hd, size, data, offset=0, name="Name"):
 	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
 	return off
 
-def add_colors(hd, size, data, fmt, version):
-	off = add_length(hd, size, data, fmt, version, 0)
-	off += 14
-	(count, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of blocks', count, off - 2, 2, fmt('H'))
-	off += 4
-	(length, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
-	(end, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
-	off += 8
-	for i in range(0, count):
-		spec_iter = add_iter(hd, '%s block spec' % ('Header' if i == 0 else str(i - 1)), '', off, 4, '4s')
-		(info, off) = rdata(data, off, fmt('I'))
-		start = info & 0xFFFFFFF
-		padding = (info >> 28) & 0x7
-		is_unused = (info >> 31) == 1
-		add_iter(hd, 'Start offset', start, off - 4, 4, fmt('I'), parent=spec_iter)
-		add_iter(hd, 'Padding length', padding, off - 4, 4, fmt('I'), parent=spec_iter)
-		add_iter(hd, 'Start', '', start + 4, 1, '1s', parent=spec_iter)
-		hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
-
 def add_hj(hd, size, data, fmt, version):
 	off = 4
 	(sm, off) = rdata(data, off, fmt('B'))
@@ -1159,7 +1165,7 @@ ids = {
 	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
-	'colors': add_colors,
+	'colors': add_saved,
 	'object': add_saved,
 	'page': add_page,
 	'para_format': add_para_format,
