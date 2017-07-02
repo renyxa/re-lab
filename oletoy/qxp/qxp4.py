@@ -95,7 +95,8 @@ text_path_line_align_map = {
 color_flags_map = {
 	0x2: 'disable spot color',
 	0x4: 'read-only',
-	0x8: 'all plates' # set for Registration color
+	0x8: 'all plates', # set for Registration color
+	0x40: 'template?', # set for some strange empty blocks
 }
 
 halftone_map = {
