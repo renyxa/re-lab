@@ -16,7 +16,7 @@
 
 import copy
 import traceback
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from utils import *
 from qxp import *
 
@@ -218,12 +218,9 @@ class ColorBlock:
 		self.is_unused = is_unused
 		self.name = name
 
-class ColorsHeader:
-	def __init__(self, first_block, last_block):
-		self.first_block = first_block
-		self.last_block = last_block
+ColorsHeader = namedtuple('ColorsHeader', ['first_block_ind', 'last_block_ind'])
 
-def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
+def parse_color_block_spec(hd, data, offset, record_offset, fmt, name):
 	off = offset
 	spec_iter = add_iter(hd, '%s spec' % (name), '', off, 4, '4s')
 	(info, off) = rdata(data, off, fmt('I'))
@@ -236,6 +233,11 @@ def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
 	hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
 	return ColorBlock(record_offset + start + 4, padding, is_unused, name), off
 
+def add_color_block_ind(hd, data, offset, fmt, name):
+	(ind, off) = rdata(data, offset, fmt('H'))
+	add_iter(hd, name, 'None (0)' if ind == 0 else ind, off - 2, 2, fmt('H'))
+	return ind, off
+
 def parse_colors_header_block(page, data, parent, fmt, version, block):
 	off = block.start
 	hd = HexDumpSave(off)
@@ -244,10 +246,8 @@ def parse_colors_header_block(page, data, parent, fmt, version, block):
 	(count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of colors', count, off - 2, 2, fmt('H'))
 	off += 10
-	(first_block, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Index of first block', first_block, off - 2, 2, fmt('H'))
-	(last_block, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Index of last block', last_block, off - 2, 2, fmt('H'))
+	(first_block, off) = add_color_block_ind(hd, data, off, fmt, 'Index of first block')
+	(last_block, off) = add_color_block_ind(hd, data, off, fmt, 'Index of last block')
 	return ColorsHeader(first_block, last_block)
 
 def parse_colors(page, data, offset, parent, fmt, version):
@@ -266,7 +266,7 @@ def parse_colors(page, data, offset, parent, fmt, version):
 	blocks = OrderedDict()
 	for i in range(1, count + 1):
 		block_name = '[%d] %s' % (i, 'Header block' if i == 1 else 'Block')
-		(block, off) = add_color_block_spec(hd, data, off, offset, fmt, block_name)
+		(block, off) = parse_color_block_spec(hd, data, off, offset, fmt, block_name)
 		blocks[i] = block
 	blocks_iter = add_pgiter(page, 'Blocks', 'qxp4', ('color_blocks', fmt, version), data[blocks[1].start:offset + end + 4], iter)
 	for i, block in blocks.iteritems():
