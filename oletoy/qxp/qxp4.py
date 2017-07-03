@@ -253,7 +253,7 @@ def parse_colors_header_block(page, data, parent, fmt, version, block):
 def parse_color_name(page, data, parent, fmt, version, block):
 	off = block.start
 	hd = HexDumpSave(off)
-	add_pgiter(page, 'Color', 'qxp4', ('color_name', hd), data[off:off + block.length], parent)
+	add_pgiter(page, 'Name', 'qxp4', ('color_name', hd), data[off:off + block.length], parent)
 	off += 4
 	name_len = block.length - 4
 	(name, off) = rdata(data, off, '%ds' % name_len)
