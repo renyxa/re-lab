@@ -209,6 +209,27 @@ def parse_physical_fonts(page, data, offset, parent, fmt, version):
 	add_pgiter(page, 'Physical fonts', 'qxp4', ('physical_fonts', fmt, version), data[off - 4:off + length], parent)
 	return off + length
 
+class ColorBlock:
+	def __init__(self, start, padding=0, is_unused=False, name='Block'):
+		self.length = 0
+		self.start = start
+		self.padding = padding
+		self.is_unused = is_unused
+		self.name = name
+
+def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
+	off = offset
+	spec_iter = add_iter(hd, '%s spec' % (name), '', off, 4, '4s')
+	(info, off) = rdata(data, off, fmt('I'))
+	start = info & 0xFFFFFFF
+	padding = (info >> 28) & 0x7
+	is_unused = (info >> 31) == 1
+	add_iter(hd, 'Start offset', start, off - 4, 4, fmt('I'), parent=spec_iter)
+	add_iter(hd, 'Padding length', padding, off - 4, 4, fmt('I'), parent=spec_iter)
+	add_iter(hd, 'Start', '', start + 4, 1, '1s', parent=spec_iter)
+	hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
+	return ColorBlock(record_offset + start + 4, padding, is_unused, name), off
+
 def parse_colors(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -222,24 +243,15 @@ def parse_colors(page, data, offset, parent, fmt, version):
 	(end, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
 	off += 8
-	blocks = []
+	blocks = { }
 	for i in range(1, count + 1):
 		block_name = '[%d] %s' % (i, 'Header block' if i == 1 else 'Block')
-		spec_iter = add_iter(hd, '%s spec' % (block_name), '', off, 4, '4s')
-		(info, off) = rdata(data, off, fmt('I'))
-		start = info & 0xFFFFFFF
-		padding = (info >> 28) & 0x7
-		is_unused = (info >> 31) == 1
-		add_iter(hd, 'Start offset', start, off - 4, 4, fmt('I'), parent=spec_iter)
-		add_iter(hd, 'Padding length', padding, off - 4, 4, fmt('I'), parent=spec_iter)
-		add_iter(hd, 'Start', '', start + 4, 1, '1s', parent=spec_iter)
-		hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
-		blocks.append((block_name, start + 4, padding))
-	blocks.append(('Tail', end, 0))
-	for i in range(0, count):
-		(name, start, padding) = blocks[i]
-		(_, next_start, _) = blocks[i + 1]
-		add_pgiter(page, name, 'qxp4', ('color_block', fmt, version), data[offset + start:offset + next_start - padding], iter)
+		(block, off) = add_color_block_spec(hd, data, off, offset, fmt, block_name)
+		blocks[i] = block
+	for i, block in blocks.iteritems():
+		next_start = offset + end + 4 if i == count else blocks[i + 1].start
+		block.length = next_start - block.start - block.padding
+		add_pgiter(page, block.name, 'qxp4', ('color_block', fmt, version), data[block.start:block.start + block.length], iter)
 	return offset + 4 + length
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
