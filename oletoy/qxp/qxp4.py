@@ -250,6 +250,33 @@ def parse_colors_header_block(page, data, parent, fmt, version, block):
 	(last_block, off) = add_color_block_ind(hd, data, off, fmt, 'Index of last block')
 	return ColorsHeader(first_block, last_block)
 
+def parse_color_name(page, data, parent, fmt, version, block):
+	off = block.start
+	hd = HexDumpSave(off)
+	add_pgiter(page, 'Color', 'qxp4', ('color_name', hd), data[off:off + block.length], parent)
+	off += 4
+	name_len = block.length - 4
+	(name, off) = rdata(data, off, '%ds' % name_len)
+	add_iter(hd, 'Name', name, off - name_len, name_len, '%ds' % name_len)
+	return name
+
+def parse_color(page, data, parent, fmt, version, main_block, blocks):
+	off = main_block.start
+	hd = HexDumpSave(off)
+	iter = add_pgiter(page, 'C', 'qxp4', ('color', hd), data[off:off + main_block.length], parent)
+	off += 4
+	(prev_block_ind, off) = add_color_block_ind(hd, data, off, fmt, 'Index of prev color main block')
+	(next_block_ind, off) = add_color_block_ind(hd, data, off, fmt, 'Index of next color main block')
+	off += 4
+	(name_block_ind, off) = add_color_block_ind(hd, data, off, fmt, 'Index of name block')
+	name = parse_color_name(page, data, iter, fmt, version, blocks[name_block_ind])
+	off += 20
+	(id, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'ID', id, off - 2, 2, fmt('H'))
+	# update title
+	page.model.set_value(iter, 0, "[%d] %s" % (id, 'Color?' if name == '' else name))
+	return next_block_ind
+
 def parse_colors(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -274,6 +301,9 @@ def parse_colors(page, data, offset, parent, fmt, version):
 		block.length = next_start - block.start - block.padding
 		add_pgiter(page, block.name, 'qxp4', ('color_block', fmt, version), data[block.start:block.start + block.length], blocks_iter)
 	header = parse_colors_header_block(page, data, iter, fmt, version, blocks[1])
+	curr_block_ind = header.first_block_ind
+	while curr_block_ind != 0:
+		curr_block_ind = parse_color(page, data, iter, fmt, version, blocks[curr_block_ind], blocks)
 	return offset + 4 + length
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
@@ -1201,6 +1231,8 @@ ids = {
 	'fonts': add_fonts,
 	'colors': add_saved,
 	'colors_header_block': add_saved,
+	'color_name': add_saved,
+	'color': add_saved,
 	'object': add_saved,
 	'page': add_page,
 	'para_format': add_para_format,
