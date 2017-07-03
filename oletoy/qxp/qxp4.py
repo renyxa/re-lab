@@ -92,7 +92,6 @@ text_path_line_align_map = {
 	2: 'Bottom'
 }
 
-# second block offset 47
 color_flags_map = {
 	0x2: 'disable spot color',
 	0x4: 'read-only',
@@ -260,6 +259,11 @@ def parse_color_name(page, data, parent, fmt, version, block):
 	add_iter(hd, 'Name', name, off - name_len, name_len, '%ds' % name_len)
 	return name
 
+def parse_color_data(page, data, parent, fmt, version, block):
+	off = block.start
+	hd = HexDumpSave(off)
+	add_pgiter(page, 'Color data?', 'qxp4', ('color_data', hd), data[off:off + block.length], parent)
+
 def parse_color(page, data, parent, fmt, version, main_block, blocks):
 	off = main_block.start
 	hd = HexDumpSave(off)
@@ -270,9 +274,20 @@ def parse_color(page, data, parent, fmt, version, main_block, blocks):
 	off += 4
 	(name_block_ind, off) = add_color_block_ind(hd, data, off, fmt, 'Index of name block')
 	name = parse_color_name(page, data, iter, fmt, version, blocks[name_block_ind])
-	off += 20
+	off += 9
+	(model, off) = rdata(data, off, '3s')
+	add_iter(hd, 'Selected color model', model, off - 3, 3, '3s')
+	(data_block_ind, off) = add_color_block_ind(hd, data, off, fmt, 'Index of color data block')
+	parse_color_data(page, data, iter, fmt, version, blocks[data_block_ind])
+	off += 6
 	(id, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'ID', id, off - 2, 2, fmt('H'))
+	off += 10
+	(flags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags', bflag2txt(flags, color_flags_map), off - 1, 1, fmt('B'))
+	off += 3
+	(halftone, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Halftone', key2txt(halftone, halftone_map), off - 2, 2, fmt('H'))
 	# update title
 	page.model.set_value(iter, 0, "[%d] %s" % (id, 'Color?' if name == '' else name))
 	return next_block_ind
@@ -1232,6 +1247,7 @@ ids = {
 	'colors': add_saved,
 	'colors_header_block': add_saved,
 	'color_name': add_saved,
+	'color_data': add_saved,
 	'color': add_saved,
 	'object': add_saved,
 	'page': add_page,
