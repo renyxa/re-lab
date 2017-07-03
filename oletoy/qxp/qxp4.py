@@ -239,7 +239,7 @@ def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
 def parse_colors_header_block(page, data, offset, parent, fmt, version, block):
 	off = offset
 	hd = HexDumpSave(offset)
-	add_pgiter(page, 'Header', 'qxp4', ('colors_header_block', hd), data[off - 4:off + block.length], parent)
+	add_pgiter(page, 'Header', 'qxp4', ('colors_header_block', hd), data[off:off + block.length], parent)
 	off += 4
 	(count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of colors', count, off - 2, 2, fmt('H'))
