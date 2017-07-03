@@ -236,9 +236,9 @@ def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
 	hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
 	return ColorBlock(record_offset + start + 4, padding, is_unused, name), off
 
-def parse_colors_header_block(page, data, offset, parent, fmt, version, block):
-	off = offset
-	hd = HexDumpSave(offset)
+def parse_colors_header_block(page, data, parent, fmt, version, block):
+	off = block.start
+	hd = HexDumpSave(off)
 	add_pgiter(page, 'Header', 'qxp4', ('colors_header_block', hd), data[off:off + block.length], parent)
 	off += 4
 	(count, off) = rdata(data, off, fmt('H'))
@@ -248,7 +248,7 @@ def parse_colors_header_block(page, data, offset, parent, fmt, version, block):
 	add_iter(hd, 'Index of first block', first_block, off - 2, 2, fmt('H'))
 	(last_block, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Index of last block', last_block, off - 2, 2, fmt('H'))
-	return ColorsHeader(first_block, last_block), offset + block.length
+	return ColorsHeader(first_block, last_block)
 
 def parse_colors(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
@@ -273,7 +273,7 @@ def parse_colors(page, data, offset, parent, fmt, version):
 		next_start = offset + end + 4 if i == count else blocks[i + 1].start
 		block.length = next_start - block.start - block.padding
 		add_pgiter(page, block.name, 'qxp4', ('color_block', fmt, version), data[block.start:block.start + block.length], blocks_iter)
-	(header, off) = parse_colors_header_block(page, data, blocks[1].start, iter, fmt, version, blocks[1])
+	header = parse_colors_header_block(page, data, iter, fmt, version, blocks[1])
 	return offset + 4 + length
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
