@@ -248,10 +248,11 @@ def parse_colors(page, data, offset, parent, fmt, version):
 		block_name = '[%d] %s' % (i, 'Header block' if i == 1 else 'Block')
 		(block, off) = add_color_block_spec(hd, data, off, offset, fmt, block_name)
 		blocks[i] = block
+	blocks_iter = add_pgiter(page, 'Blocks', 'qxp4', ('color_blocks', fmt, version), data[blocks[1].start:offset + end + 4], iter)
 	for i, block in blocks.iteritems():
 		next_start = offset + end + 4 if i == count else blocks[i + 1].start
 		block.length = next_start - block.start - block.padding
-		add_pgiter(page, block.name, 'qxp4', ('color_block', fmt, version), data[block.start:block.start + block.length], iter)
+		add_pgiter(page, block.name, 'qxp4', ('color_block', fmt, version), data[block.start:block.start + block.length], blocks_iter)
 	return offset + 4 + length
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
