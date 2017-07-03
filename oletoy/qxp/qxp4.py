@@ -16,6 +16,7 @@
 
 import copy
 import traceback
+from collections import OrderedDict
 from utils import *
 from qxp import *
 
@@ -243,7 +244,7 @@ def parse_colors(page, data, offset, parent, fmt, version):
 	(end, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Data end offset?', end, off - 4, 4, fmt('I'))
 	off += 8
-	blocks = { }
+	blocks = OrderedDict()
 	for i in range(1, count + 1):
 		block_name = '[%d] %s' % (i, 'Header block' if i == 1 else 'Block')
 		(block, off) = add_color_block_spec(hd, data, off, offset, fmt, block_name)
