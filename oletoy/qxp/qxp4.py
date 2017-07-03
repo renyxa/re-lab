@@ -227,7 +227,7 @@ def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
 	is_unused = (info >> 31) == 1
 	add_iter(hd, 'Start offset', start, off - 4, 4, fmt('I'), parent=spec_iter)
 	add_iter(hd, 'Padding length', padding, off - 4, 4, fmt('I'), parent=spec_iter)
-	add_iter(hd, 'Start', '', start + 4, 1, '1s', parent=spec_iter)
+	add_iter(hd, 'Start', '', record_offset + start + 4, 1, '1s', parent=spec_iter)
 	hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
 	return ColorBlock(record_offset + start + 4, padding, is_unused, name), off
 
