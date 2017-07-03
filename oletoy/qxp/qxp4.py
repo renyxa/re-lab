@@ -218,6 +218,11 @@ class ColorBlock:
 		self.is_unused = is_unused
 		self.name = name
 
+class ColorsHeader:
+	def __init__(self, first_block, last_block):
+		self.first_block = first_block
+		self.last_block = last_block
+
 def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
 	off = offset
 	spec_iter = add_iter(hd, '%s spec' % (name), '', off, 4, '4s')
@@ -230,6 +235,20 @@ def add_color_block_spec(hd, data, offset, record_offset, fmt, name):
 	add_iter(hd, 'Start', '', record_offset + start + 4, 1, '1s', parent=spec_iter)
 	hd.model.set(spec_iter, 1, '%d, pad. %d%s, %s' % (start, padding, ', unused?' if is_unused else '', hex(info)))
 	return ColorBlock(record_offset + start + 4, padding, is_unused, name), off
+
+def parse_colors_header_block(page, data, offset, parent, fmt, version, block):
+	off = offset
+	hd = HexDumpSave(offset)
+	add_pgiter(page, 'Header', 'qxp4', ('colors_header_block', hd), data[off - 4:off + block.length], parent)
+	off += 4
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of colors', count, off - 2, 2, fmt('H'))
+	off += 10
+	(first_block, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index of first block', first_block, off - 2, 2, fmt('H'))
+	(last_block, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index of last block', last_block, off - 2, 2, fmt('H'))
+	return ColorsHeader(first_block, last_block), offset + block.length
 
 def parse_colors(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
@@ -254,6 +273,7 @@ def parse_colors(page, data, offset, parent, fmt, version):
 		next_start = offset + end + 4 if i == count else blocks[i + 1].start
 		block.length = next_start - block.start - block.padding
 		add_pgiter(page, block.name, 'qxp4', ('color_block', fmt, version), data[block.start:block.start + block.length], blocks_iter)
+	(header, off) = parse_colors_header_block(page, data, blocks[1].start, iter, fmt, version, blocks[1])
 	return offset + 4 + length
 
 def parse_para_styles(page, data, offset, parent, fmt, version):
@@ -1180,6 +1200,7 @@ ids = {
 	'list': add_list,
 	'fonts': add_fonts,
 	'colors': add_saved,
+	'colors_header_block': add_saved,
 	'object': add_saved,
 	'page': add_page,
 	'para_format': add_para_format,
