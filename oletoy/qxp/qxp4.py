@@ -264,6 +264,16 @@ def parse_color_data(page, data, parent, fmt, version, block):
 	hd = HexDumpSave(off)
 	add_pgiter(page, 'Color data?', 'qxp4', ('color_data', hd), data[off:off + block.length], parent)
 
+def parse_rgb_data(page, data, parent, fmt, version, block):
+	off = block.start
+	hd = HexDumpSave(off)
+	add_pgiter(page, 'RGB', 'qxp4', ('color_rgb', hd), data[off:off + block.length], parent)
+	off += 4
+	off += 12
+	off = add_sfloat_perc(hd, data, off, fmt, 'Red')
+	off = add_sfloat_perc(hd, data, off, fmt, 'Green')
+	off = add_sfloat_perc(hd, data, off, fmt, 'Blue')
+
 def parse_color(page, data, parent, fmt, version, main_block, blocks):
 	off = main_block.start
 	hd = HexDumpSave(off)
@@ -288,6 +298,13 @@ def parse_color(page, data, parent, fmt, version, main_block, blocks):
 	off += 3
 	(halftone, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Halftone', key2txt(halftone, halftone_map), off - 2, 2, fmt('H'))
+	off += 48
+	off = add_sfloat_perc(hd, data, off, fmt, 'LAB L')
+	off = add_sfloat_perc(hd, data, off, fmt, 'LAB A')
+	off = add_sfloat_perc(hd, data, off, fmt, 'LAB B')
+	(rgb_block_ind, off) = add_color_block_ind(hd, data, off, fmt, 'Index of RGB data block')
+	if rgb_block_ind != 0:
+		parse_rgb_data(page, data, iter, fmt, version, blocks[rgb_block_ind])
 	# update title
 	page.model.set_value(iter, 0, "[%d] %s" % (id, 'Color?' if name == '' else name))
 	return next_block_ind
@@ -1248,6 +1265,7 @@ ids = {
 	'colors_header_block': add_saved,
 	'color_name': add_saved,
 	'color_data': add_saved,
+	'color_rgb': add_saved,
 	'color': add_saved,
 	'object': add_saved,
 	'page': add_page,
