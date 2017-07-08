@@ -28,8 +28,12 @@ def rsfloat(data, off, fmt):
 	return f, off
 
 def rfract(data, off, fmt):
-	(fpart, off) = rsfloat(data, off, fmt)
-	(ipart, off) = rdata(data, off, fmt('h'))
+	if fmt('') == '<':
+		(fpart, off) = rsfloat(data, off, fmt)
+		(ipart, off) = rdata(data, off, fmt('h'))
+	else:
+		(ipart, off) = rdata(data, off, fmt('h'))
+		(fpart, off) = rsfloat(data, off, fmt)
 	return (ipart + fpart, off)
 
 def dim2in(dim):
