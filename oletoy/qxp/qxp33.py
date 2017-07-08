@@ -148,10 +148,9 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
 	(shade, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
-	(content, off) = rdata(data, off, fmt('H'))
-	content = obfctx.deobfuscate(content, 2)
+	(content, off) = rdata(data, off, fmt('I'))
+	content = obfctx.deobfuscate(content & 0xffff, 2)
 	content_iter = add_iter(hd, 'Content index?', hex(content), off - 2, 2, fmt('H'))
-	off += 2
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', bflag2txt(flags, obj_flags_map), off - 1, 1, fmt('B'))
 	off += 1
