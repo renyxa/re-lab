@@ -897,12 +897,13 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	while off < len(data):
 		start = off
 		try:
+			stop = rdata(data, off, fmt('I'))[0]
+			if stop == 0x9e:
+				add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
+				break
 			(size, off) = rdata(data, off + 2, fmt('I'))
 			npages_map = {1: 'Single', 2: 'Facing'}
 			(npages, off) = rdata(data, off, fmt('H'))
-			if size & 0xffff == 0:
-				add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
-				break
 			off = start + 6 + size + 16 + npages * 12
 			(name_len, off) = rdata(data, off, fmt('I'))
 			(name, _) = rcstr(data, off)
