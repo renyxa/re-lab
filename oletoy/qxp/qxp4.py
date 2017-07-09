@@ -954,7 +954,10 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	tmpliter = add_pgiter(page, 'Templates', 'qxp4', (), data[off:], parent)
 	(count, off) = parse_index(page, data, off, tmpliter, fmt, version)
 	for i in range(1, count):
-		off = parse_template(page, data, off, tmpliter, fmt, version, i)
+		if fmt() == LITTLE_ENDIAN:
+			off = parse_template(page, data, off, tmpliter, fmt, version, i)
+		else:
+			off = parse_record(page, data, off, tmpliter, fmt, version, '[%d] Template' % i)
 	off = parse_record(page, data, off, tmpliter, fmt, version, '[%d] Unknown' % count)
 	page.model.set_value(tmpliter, 2, off - tmplstart)
 	page.model.set_value(tmpliter, 3, data[tmplstart:off])
