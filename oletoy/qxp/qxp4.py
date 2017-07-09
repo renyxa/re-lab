@@ -869,6 +869,56 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	obfctx.next(header.content_index)
 	return header, off
 
+def handle_page(page, data, offset, parent, fmt, version, obfctx, index, nmasters):
+	off = offset
+	hd = HexDumpSave(offset)
+	# the real size is determined at the end
+	pageiter = add_pgiter(page, 'Page', 'qxp4', ('page', hd), data[offset:offset + 110], parent)
+
+	(counter, off) = rdata(data, off, fmt('H'))
+	# This contains number of objects ever saved on the page
+	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
+	(off, records_offset, settings_blocks_count) = add_page_header(hd, off + 8, data, off, fmt)
+	settings_block_size = (records_offset - 4) / settings_blocks_count
+	for i in range(0, settings_blocks_count):
+		block_iter = add_iter(hd, 'Settings block %d' % (i + 1), '', off, settings_block_size, '%ds' % settings_block_size)
+		off = add_page_bbox(hd, off + 16, data, off, fmt, block_iter)
+		(id, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=block_iter)
+		hd.model.set(block_iter, 1, hex(id))
+		off += 4
+		(master_ind, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Master page index', '' if master_ind == 0xffff else master_ind, off - 2, 2, fmt('H'), parent=block_iter)
+		off += 6
+		(ind, off) = rdata(data, off, fmt('H'))
+		add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=block_iter)
+		off += 2
+		off = add_margins(hd, off + 16, data, off, fmt, block_iter)
+		off = add_page_columns(hd, off + 8, data, off, fmt, block_iter)
+		off += 4
+	off += settings_blocks_count * 12 + 12
+	if fmt() == LITTLE_ENDIAN:
+		off += 4
+		(name, off) = add_pcstr4(hd, data, off, fmt)
+	else:
+		(name_data_length, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Name data length', name_data_length, off - 4, 4, fmt('I'))
+		(name, _) = add_pascal_str(hd, data, off)
+		off += name_data_length
+	(objs, off) = rdata(data, off, fmt('I'))
+	objs = obfctx.deobfuscate(objs & 0xffff, 2)
+	add_iter(hd, 'Number of objects', objs, off - 4, 4, fmt('I'))
+
+	# update object title and size
+	npages_map = {1: 'Single', 2: 'Facing'}
+	pname = '[%d] %s%s page' % (index, key2txt(settings_blocks_count, npages_map), ' master' if index - 1 < nmasters else '')
+	if len(name) != 0:
+		pname += ' "%s"' % name
+	page.model.set_value(pageiter, 0, pname)
+	page.model.set_value(pageiter, 2, off - offset)
+	page.model.set_value(pageiter, 3, data[offset:off])
+	return objs, pageiter, off
+
 def parse_template(page, data, offset, parent, fmt, version, index):
 	class DummyObfuscationContext:
 		def next(self, block):
@@ -893,7 +943,6 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	pictures = set()
 	off = 0
 	i = 1
-	m = 0
 	while off < len(data):
 		start = off
 		try:
@@ -901,19 +950,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			if stop == 0x9e:
 				add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 				break
-			(size, off) = rdata(data, off + 2, fmt('I'))
-			npages_map = {1: 'Single', 2: 'Facing'}
-			(npages, off) = rdata(data, off, fmt('H'))
-			off = start + 6 + size + 16 + npages * 12
-			(name_len, off) = rdata(data, off, fmt('I'))
-			(name, _) = rcstr(data, off)
-			off += name_len
-			pname = '[%d] %s%s page' % (i, key2txt(npages, npages_map), ' master' if m < nmasters else '')
-			if len(name) != 0:
-				pname += ' "%s"' % name
-			(objs, off) = rdata(data, off, fmt('I'))
-			pgiter = add_pgiter(page, pname, 'qxp4', ('page', fmt, version, copy.copy(obfctx)), data[start:off], parent)
-			objs = obfctx.deobfuscate(objs & 0xffff, 2)
+			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, obfctx, i, nmasters)
 			obfctx.next_rev()
 			for j in range(0, objs):
 				(header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
@@ -923,7 +960,6 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 					elif header.content_type == 4:
 						pictures.add(header.content_index)
 			i += 1
-			m += 1
 		except:
 			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
@@ -1229,34 +1265,6 @@ def add_tabs(hd, size, data, fmt, version):
 		off = add_tab(hd, size, data, off, fmt, version, tabiter)
 		i += 1
 
-def add_page(hd, size, data, fmt, version, obfctx):
-	off = 0
-	(counter, off) = rdata(data, off, fmt('H'))
-	# This contains number of objects ever saved on the page
-	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
-	(off, records_offset, settings_blocks_count) = add_page_header(hd, size, data, off, fmt)
-	settings_block_size = (records_offset - 4) / settings_blocks_count
-	for i in range(0, settings_blocks_count):
-		block_iter = add_iter(hd, 'Settings block %d' % (i + 1), '', off, settings_block_size, '%ds' % settings_block_size)
-		off = add_page_bbox(hd, size, data, off, fmt, block_iter)
-		(id, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=block_iter)
-		hd.model.set(block_iter, 1, hex(id))
-		off += 4
-		(master_ind, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Master page index', '' if master_ind == 0xffff else master_ind, off - 2, 2, fmt('H'), parent=block_iter)
-		off += 6
-		(ind, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=block_iter)
-		off += 2
-		off = add_margins(hd, size, data, off, fmt, block_iter)
-		off = add_page_columns(hd, size, data, off, fmt, block_iter)
-		off += 4
-	off += settings_blocks_count * 12 + 16
-	off = add_pcstr4(hd, size, data, off, fmt)
-	(objs, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Number of objects', obfctx.deobfuscate(objs & 0xffff, 2), off - 4, 4, fmt('I'))
-
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
@@ -1272,7 +1280,7 @@ ids = {
 	'color_rgb': add_saved,
 	'color': add_saved,
 	'object': add_saved,
-	'page': add_page,
+	'page': add_saved,
 	'para_format': add_para_format,
 	'para_style': add_para_style,
 	'physical_fonts': add_physical_fonts,

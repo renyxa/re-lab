@@ -618,7 +618,7 @@ def add_page(hd, size, data, fmt, version):
 		off = add_margins(hd, size, data, off, fmt, block_iter)
 		off = add_page_columns(hd, size, data, off, fmt, block_iter)
 	off += settings_blocks_count * 12 + 16
-	off = add_pcstr4(hd, size, data, off, fmt)
+	(name, off) = add_pcstr4(hd, data, off, fmt)
 	(objs, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, '# of objects', objs, off - 4, 4, fmt('I'))
 

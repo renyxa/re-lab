@@ -127,13 +127,19 @@ def add_length(hd, size, data, fmt, version, offset, name="Length"):
 	add_iter(hd, name, length, off - 4, 4, fmt('I'))
 	return off
 
-def add_pcstr4(hd, size, data, offset, fmt, name="Name"):
+def add_pcstr4(hd, data, offset, fmt, name="Name"):
 	(length, off) = rdata(data, offset, fmt('I'))
 	add_iter(hd, '%s length' % name, length, off - 4, 4, fmt('I'))
 	(pstring, off) = rdata(data, off, '%ds' % length)
 	string = pstring[0:pstring.find('\0')]
 	add_iter(hd, name, string, off - length, length, '%ds' % length)
-	return off
+	return string, off
+
+def add_pascal_str(hd, data, offset, name="Name"):
+	(string, off) = read_pascal_str(data, offset)
+	length = off - offset
+	add_iter(hd, name, string, offset, length, '%ds' % length)
+	return string, off
 
 def add_page_header(hd, size, data, offset, fmt):
 	(records_offset, off) = rdata(data, offset, fmt('I'))
