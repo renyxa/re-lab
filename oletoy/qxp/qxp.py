@@ -202,9 +202,10 @@ def add_fonts(hd, size, data, fmt, version):
 		add_iter(hd, 'Index in font list', index, off - 2, 2, fmt('h'), parent=font_iter)
 		if version >= VERSION_4:
 			off += 2
-		(name, off) = rcstr(data, off)
+		rstr = read_c_str if fmt() == LITTLE_ENDIAN else read_pascal_str
+		(name, off) = rstr(data, off)
 		add_iter(hd, 'Name', name, off - len(name) - 1, len(name) + 1, '%ds' % (len(name) + 1), parent=font_iter)
-		(full_name, off) = rcstr(data, off)
+		(full_name, off) = rstr(data, off)
 		add_iter(hd, 'Full name', full_name, off - len(full_name) - 1, len(full_name) + 1, '%ds' % (len(full_name) + 1), parent=font_iter)
 		hd.model.set(font_iter, 1, "%d, %s" % (index, name), 3, off - start, 4, '%ds' % (off - start))
 
