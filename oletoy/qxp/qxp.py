@@ -16,11 +16,14 @@
 
 from utils import *
 
-def little_endian(fmt):
-	return '<' + fmt
+LITTLE_ENDIAN = '<'
+BIG_ENDIAN = '>'
 
-def big_endian(fmt):
-	return '>' + fmt
+def little_endian(fmt=''):
+	return LITTLE_ENDIAN + fmt
+
+def big_endian(fmt=''):
+	return BIG_ENDIAN + fmt
 
 def rsfloat(data, off, fmt):
 	(num, off) = rdata(data, off, fmt('H'))
@@ -28,13 +31,25 @@ def rsfloat(data, off, fmt):
 	return f, off
 
 def rfract(data, off, fmt):
-	if fmt('') == '<':
+	if fmt() == LITTLE_ENDIAN:
 		(fpart, off) = rsfloat(data, off, fmt)
 		(ipart, off) = rdata(data, off, fmt('h'))
 	else:
 		(ipart, off) = rdata(data, off, fmt('h'))
 		(fpart, off) = rsfloat(data, off, fmt)
 	return (ipart + fpart, off)
+
+def read_c_str(data, offset):
+	off = data.find('\0', offset)
+	s = data[offset:off]
+	off += 1
+	return s, off
+
+def read_pascal_str(data, offset):
+	(length, off) = rdata(data, offset, 'B')
+	s = data[off:off + length]
+	off += length
+	return s, off
 
 def dim2in(dim):
 	return dim / 72.0

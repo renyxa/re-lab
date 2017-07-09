@@ -77,13 +77,12 @@ line_style_map = {
 	0x85: 'Triple'
 }
 
-def _read_name2(data, offset=0, end=0):
-	off = data.find('\0', offset)
-	name = data[offset:off]
-	off += 1
+def _read_name2(data, offset, fmt):
+	rstr = read_c_str if fmt() == LITTLE_ENDIAN else read_pascal_str
+	(name, off) = rstr(data, offset)
 	if (off - offset) % 2 == 1:
 		off += 1
-	return (name, off)
+	return name, off
 
 def _handle_collection(handler, size, init=0):
 	def hdl(page, data, parent, fmt, version):
@@ -100,7 +99,7 @@ def _handle_collection_named(handler, name_offset, init=0):
 		off = 0
 		i = init
 		while off + name_offset < len(data):
-			(name, end) = _read_name2(data, off + name_offset)
+			(name, end) = _read_name2(data, off + name_offset, fmt)
 			(entry, off) = rdata(data, off, '%ds' % (end - off))
 			handler(page, entry, parent, fmt, version, i, name)
 			i += 1
@@ -113,7 +112,7 @@ def handle_colors(page, data, parent, fmt, version):
 		start = off
 		(index, off) = rdata(data, off, fmt('B'))
 		off += 49
-		(name, off) = _read_name2(data, off, len(data))
+		(name, off) = _read_name2(data, off, fmt)
 		add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('color', fmt, version), data[start:off], parent)
 
 def handle_para_style(page, data, parent, fmt, version, index, name):
@@ -486,8 +485,8 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Obfuscation increment', '%x' % inc, off - 2, 2, fmt('H'))
 	return (Header(seed, inc, mpages, pictures), size)
 
-def _add_name2(hd, size, data, offset, title='Name'):
-	(name, off) = _read_name2(data, offset, size)
+def _add_name2(hd, size, data, offset, fmt, title='Name'):
+	(name, off) = _read_name2(data, offset, fmt)
 	add_iter(hd, title, name, offset, off - offset, '%ds' % (off - offset))
 	return off
 
@@ -563,11 +562,11 @@ def add_para_style(hd, size, data, fmt, version):
 	off = 0x28
 	_add_para_format(hd, size, data, off, fmt, version)
 	off += 18
-	_add_name2(hd, size, data, off)
+	_add_name2(hd, size, data, off, fmt)
 
 def add_hj(hd, size, data, fmt, version):
 	off = 48
-	_add_name2(hd, size, data, off)
+	_add_name2(hd, size, data, off, fmt)
 
 def add_color_comp(hd, data, offset, fmt, name, parent=None):
 	return add_sfloat_perc(hd, data, offset, fmt, name, parent=parent)
@@ -594,7 +593,7 @@ def add_color(hd, size, data, fmt, version):
 	(disable_spot_color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Disable Spot color', disable_spot_color, off - 1, 1, fmt('B'))
 	off += 12
-	_add_name2(hd, size, data, off)
+	_add_name2(hd, size, data, off, fmt)
 
 def add_page(hd, size, data, fmt, version):
 	off = 0
