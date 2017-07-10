@@ -535,9 +535,17 @@ def add_char_format(hd, size, data, fmt, version):
 	(flags, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Format flags', bflag2txt(flags, char_format_map), off - 2, 2, fmt('H'))
 	off = add_dim(hd, size, data, off, fmt, 'Font size')
-	off += 4
-	(color, off) = rdata(data, off, fmt('H'))
+	(scale, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Scale', '%.2f%%' % (scale * 100), off - 4, 4, '4s')
+	(color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
+	off += 1
+	(shade, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, '4s')
+	off += 4
+	(track, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Track amount', track, off - 4, 4, '4s')
+	off = add_dim(hd, size, data, off, fmt, 'Baseline shift')
 
 def _add_para_format(hd, size, data, off, fmt, version):
 	(flags, off) = rdata(data, off, fmt('H'))
