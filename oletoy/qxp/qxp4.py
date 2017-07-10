@@ -1078,10 +1078,9 @@ def _add_char_format(hd, size, data, offset, fmt, version):
 	off = offset
 	(font, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Font index', font, off - 2, 2, fmt('H'))
-	(flags, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Format flags', bflag2txt(flags, char_format_map), off - 4, 4, fmt('I'))
-	(fsz, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Font size, pt', fsz, off - 2, 2, fmt('H'))
+	(flags, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Format flags', bflag2txt(flags, char_format_map), off - 2, 2, fmt('H'))
+	off = add_dim(hd, size, data, off, fmt, 'Font size')
 	(scale, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Scale', '%.2f%%' % (scale * 100), off - 4, 4, '4s')
 	(color, off) = rdata(data, off, fmt('H'))
