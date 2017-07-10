@@ -155,28 +155,28 @@ class ObfuscationContext:
 	def deobfuscate(self, value, n):
 		return deobfuscate(value, self.seed, n)
 
-def _read_name(data, offset=0):
+def _read_name(data, fmt, offset=0):
 	(n, off) = rdata(data, offset, '64s')
-	return n[0:n.find('\0')]
+	return n[0:n.find('\0')] if fmt() == LITTLE_ENDIAN else read_pascal_str(data, offset)[0]
 
 def handle_para_style(page, data, parent, fmt, version, index):
-	name = _read_name(data)
+	name = _read_name(data, fmt)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('para_style', fmt, version), data, parent)
 
 def handle_char_style(page, data, parent, fmt, version, index):
-	name = _read_name(data)
+	name = _read_name(data, fmt)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('char_style', fmt, version), data, parent)
 
 def handle_hj(page, data, parent, fmt, version, index):
-	name = _read_name(data, 0x30)
+	name = _read_name(data, fmt, 0x30)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('hj', fmt, version), data, parent)
 
 def handle_dash_stripe(page, data, parent, fmt, version, index):
-	name = _read_name(data, 0xb0)
+	name = _read_name(data, fmt, 0xb0)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('dash_stripe', fmt, version), data, parent)
 
 def handle_list(page, data, parent, fmt, version, index):
-	name = _read_name(data, 0)
+	name = _read_name(data, fmt)
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('list', fmt, version), data, parent)
 
 def handle_char_format(page, data, parent, fmt, version, index):
@@ -1043,9 +1043,10 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Object counter/last id?', counter, off - 4, 4, fmt('I'))
 	return (Header(seed, inc, mpages, pictures), size)
 
-def _add_name(hd, size, data, offset=0, name="Name"):
-	(n, off) = rdata(data, offset, '64s')
-	add_iter(hd, name, n[0:n.find('\0')], off - 64, 64, '64s')
+def _add_name(hd, size, data, fmt, offset=0, name="Name"):
+	n = _read_name(data, fmt, offset)
+	off = offset + 64
+	add_iter(hd, name, n, off - 64, 64, '64s')
 	return off
 
 def add_hj(hd, size, data, fmt, version):
@@ -1071,7 +1072,7 @@ def add_hj(hd, size, data, fmt, version):
 	add_iter(hd, "Don't break capitalized words", key2txt(breakcap, breakcap_map), off - 1, 1, fmt('B'))
 	off = 0x28
 	off = add_dim(hd, size, data, off, fmt, 'Flush zone')
-	off = _add_name(hd, size, data, 0x30)
+	off = _add_name(hd, size, data, fmt, 0x30)
 
 def _add_char_format(hd, size, data, offset, fmt, version):
 	off = offset
@@ -1107,7 +1108,7 @@ def add_char_format(hd, size, data, fmt, version):
 	_add_char_format(hd, size, data, off, fmt, version)
 
 def add_char_style(hd, size, data, fmt, version):
-	off = _add_name(hd, size, data)
+	off = _add_name(hd, size, data, fmt)
 	off += 8
 	(parent, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Based on', style2txt(parent), off - 2, 2, fmt('H'))
@@ -1171,7 +1172,7 @@ def add_para_format(hd, size, data, fmt, version):
 	off = _add_para_format(hd, size, data, off, fmt, version)
 
 def add_para_style(hd, size, data, fmt, version):
-	off = _add_name(hd, size, data)
+	off = _add_name(hd, size, data, fmt)
 	off += 8
 	(parent, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Based on', style2txt(parent), off - 2, 2, fmt('H'))
@@ -1200,7 +1201,7 @@ def add_dash_stripe(hd, size, data, fmt, version):
 	is_points = unit == 0
 	(stretch, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Stretch to corners', key2txt(stretch, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
-	off = _add_name(hd, size, data, off)
+	off = _add_name(hd, size, data, fmt, off)
 	off = 0xf4
 	if is_points:
 		off = add_dim(hd, size, data, off, fmt, 'Pattern length')
@@ -1219,7 +1220,7 @@ def add_dash_stripe(hd, size, data, fmt, version):
 			off = add_fract_perc(hd, data, off, fmt, 'Segment %d length' % i)
 
 def add_list(hd, size, data, fmt, version):
-	off = _add_name(hd, size, data, 0)
+	off = _add_name(hd, size, data, fmt, 0)
 	off += 3
 	flags_map = {0x80: 'alphabetical'}
 	(flags, off) = rdata(data, off, fmt('B'))
