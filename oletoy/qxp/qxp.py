@@ -285,13 +285,16 @@ def add_tab(hd, size, data, offset, fmt, version, parent=None):
 	else:
 		off = add_dim(hd, size, data, off - 4, fmt, 'Position', parent)
 	if parent:
-		if typ == 3:
-			subtype_str = ' @ %s' % (key2txt(subtype, subtype_map) if subtype_map.has_key(subtype) else "'%s'" % chr(subtype))
+		if pos == -1:
+			hd.model.set(parent, 1, 'not defined')
 		else:
-			subtype_str = ''
-		pos = rfract(data, off - 4, fmt)[0]
-		pos_str = '%.2f pt / %.2f in' % (pos, dim2in(pos))
-		hd.model.set(parent, 1, "%s%s / '%s' / %s"  % (key2txt(typ, type_map), subtype_str, fill_char, pos_str))
+			if typ == 3:
+				subtype_str = ' @ %s' % (key2txt(subtype, subtype_map) if subtype_map.has_key(subtype) else "'%s'" % chr(subtype))
+			else:
+				subtype_str = ''
+			pos = rfract(data, off - 4, fmt)[0]
+			pos_str = '%.2f pt / %.2f in' % (pos, dim2in(pos))
+			hd.model.set(parent, 1, "%s%s / '%s' / %s"  % (key2txt(typ, type_map), subtype_str, fill_char, pos_str))
 	return off
 
 char_format_map = {
