@@ -562,8 +562,9 @@ def _add_para_format(hd, size, data, off, fmt, version):
 	(end, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Min. lines to carry over", end, off - 1, 1, fmt('B'))
 	off += 2
-	(hj, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'H&J index', hj, off - 2, 2, fmt('H'))
+	(hj, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'H&J index', hj, off - 1, 1, fmt('B'))
+	off += 1
 	off = add_dim(hd, size, data, off, fmt, 'Left indent')
 	off = add_dim(hd, size, data, off, fmt, 'First line')
 	off = add_dim(hd, size, data, off, fmt, 'Right indent')
@@ -599,8 +600,8 @@ def add_para_format(hd, size, data, fmt, version):
 	(uses, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
 	off = _add_para_format(hd, size, data, off, fmt, version)
-	(style, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Style', style2txt(style), off - 2, 2, fmt('H'))
+	(style, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Style', style2txt(style), off - 1, 1, fmt('B'))
 
 def add_para_style(hd, size, data, fmt, version):
 	off = 0x28
