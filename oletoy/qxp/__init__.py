@@ -153,7 +153,7 @@ def add_text_info(hd, size, data, fmt, version):
 		else:
 			(sz, fm) = (4, fmt('I'))
 		(style_ind, off) = rdata(data, off, fm)
-		add_iter(hd, 'Paragraph %d style index' % i, style_ind, off - sz, sz, fm, parent=paragraphiter)
+		add_iter(hd, 'Paragraph %d format index' % i, style_ind, off - sz, sz, fm, parent=paragraphiter)
 		(tlen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Paragraph %d text length' % i, tlen, off - 4, 4, fmt('I'), parent=paragraphiter)
 		i += 1
