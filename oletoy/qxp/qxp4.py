@@ -342,7 +342,7 @@ def parse_para_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	stylesiter = add_pgiter(page, 'Paragraph styles', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
 	size = 244
-	i = 0
+	i = 1
 	tabs = 0
 	while off < offset + length + 4:
 		handle_para_style(page, data[off:off + size], stylesiter, fmt, version, i)
@@ -355,7 +355,7 @@ def parse_para_styles(page, data, offset, parent, fmt, version):
 def parse_char_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Character styles', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_char_style, 140, 0)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_char_style, 140, 1)
 
 def parse_hjs(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
