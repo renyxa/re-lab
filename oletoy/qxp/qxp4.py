@@ -342,7 +342,7 @@ def parse_para_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	stylesiter = add_pgiter(page, 'Paragraph styles', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
 	size = 244
-	i = 1
+	i = 0
 	tabs = 0
 	while off < offset + length + 4:
 		handle_para_style(page, data[off:off + size], stylesiter, fmt, version, i)
@@ -355,22 +355,22 @@ def parse_para_styles(page, data, offset, parent, fmt, version):
 def parse_char_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Character styles', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_char_style, 140, 1)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_char_style, 140, 0)
 
 def parse_hjs(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'H&Js', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_hj, 112, 1)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_hj, 112, 0)
 
 def parse_dashes(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Dashes & stripes', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_dash_stripe, 252, 1)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_dash_stripe, 252, 0)
 
 def parse_lists(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Lists', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_list, 324, 1)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_list, 324, 0)
 
 def parse_index(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -381,12 +381,12 @@ def parse_index(page, data, offset, parent, fmt, version):
 def parse_char_formats(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Character formats', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_char_format, 64, 1)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_char_format, 64, 0)
 
 def parse_para_formats(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Paragraph formats', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_para_format, 100, 1)
+	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_para_format, 100, 0)
 
 def parse_tabs(page, data, offset, parent, fmt, version, title):
 	(length, off) = rdata(data, offset, fmt('I'))
