@@ -1009,7 +1009,10 @@ def handle_document(page, data, parent, fmt, version, hdr):
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)
-	off += 22
+	doctype_map = {'BK': 'Book', 'DC': 'Document', 'LB': 'Library', 'TP': 'Template'}
+	(doctype, off) = rdata(data, off, '2s')
+	add_iter(hd, 'Document type', key2txt(doctype, doctype_map), off - 2, 2, '2s')
+	off += 20
 	(pages, off) = rdata(data, off, fmt('H'))
 	pagesiter = add_iter(hd, 'Number of pages?', pages, off - 2, 2, fmt('H'))
 	off += 8
