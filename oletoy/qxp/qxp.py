@@ -314,7 +314,7 @@ char_format_map = {
 
 align_map = {0: 'left', 1: 'center', 2: 'right', 3: 'justified', 4: 'forced'}
 
-vertical_align_map = {0: 'Top', 1: 'Center', 2: 'Right', 3: 'Justified'}
+vertical_align_map = {0: 'Top', 1: 'Center', 2: 'Bottom', 3: 'Justified'}
 
 # first baseline minimum:
 # 0x20: 'Ascent', 0x28: 'Cap height', 0x38: 'Cap + Accent'
