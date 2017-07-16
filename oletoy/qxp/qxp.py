@@ -329,6 +329,7 @@ text_flags_map = {
 para_flags_map = {
 	0x1: 'keep with next',
 	0x2: 'lock to baseline grid',
+	0x4: 'incremental leading', # +42 pt, -42 pt
 	0x8: 'keep lines together',
 	0x10: 'all lines',
 	0x20: 'rule above',
