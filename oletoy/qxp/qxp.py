@@ -70,6 +70,7 @@ def deobfuscate(value, seed, n):
 		mask = 0xffff
 	return (((value + seed) & 0xffff) - (((value & seed) << 1) & 0xffff) + (1 << 16)) & mask
 
+VERSION_1 = 0x20
 VERSION_3_3 = 0x3f
 VERSION_4 = 0x41
 VERSION_6 = 0x43
