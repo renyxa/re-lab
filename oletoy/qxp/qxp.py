@@ -60,6 +60,12 @@ def style2txt(value):
 	else:
 		return value
 
+
+def qxpbflag2txt(flag, data, fmt):
+	def reverse_bits(x):
+		return int(bin(x)[2:].zfill(8)[::-1], 2)
+	return bflag2txt(flag if fmt() == LITTLE_ENDIAN else reverse_bits(flag), data)
+
 def deobfuscate(value, seed, n):
 	assert n in [1, 2]
 	if n == 1:

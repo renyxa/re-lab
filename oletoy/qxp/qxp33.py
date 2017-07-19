@@ -549,7 +549,7 @@ def add_char_format(hd, size, data, fmt, version):
 
 def _add_para_format(hd, size, data, off, fmt, version):
 	(flags, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Flags', bflag2txt(flags, para_flags_map), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Flags', qxpbflag2txt(flags, para_flags_map, fmt), off - 1, 1, fmt('B'))
 	off += 2
 	(align, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, fmt('B'))
