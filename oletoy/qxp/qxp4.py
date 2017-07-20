@@ -813,9 +813,9 @@ def add_group(hd, data, offset, fmt, version, obfctx, header):
 	off += 68
 	off = add_coords(hd, data, off, fmt)
 	off += 24
-	(count, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, '# of objects', count, off - 4, 4, fmt('I'))
-	off += 4
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '# of objects', count, off - 2, 2, fmt('H'))
+	off += 6
 	(listlen, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Length of index list', listlen, off - 4, 4, fmt('I'))
 	listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)

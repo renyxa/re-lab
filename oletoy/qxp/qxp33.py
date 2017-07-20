@@ -324,8 +324,9 @@ def add_line(hd, data, offset, fmt, version, obfctx, header):
 def add_group(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off += 10
-	(count, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, '# of objects?', count, off - 4, 4, fmt('I'))
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '# of objects', count, off - 2, 2, fmt('H'))
+	off += 2
 	(listlen, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Length of index list?', listlen, off - 4, 4, fmt('I'))
 	listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
