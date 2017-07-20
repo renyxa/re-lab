@@ -828,7 +828,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	off = offset
 	hd = HexDumpSave(offset)
 	# the real size is determined at the end
-	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:offset + 44], parent)
+	objiter = add_pgiter(page, '[%d]' % index, 'qxp4', ('object', hd), data[offset:], parent)
 
 	(header, off) = add_object_header(hd, data, off, fmt, version, obfctx)
 
