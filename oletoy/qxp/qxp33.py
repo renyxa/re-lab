@@ -328,7 +328,7 @@ def add_group(hd, data, offset, fmt, version, obfctx, header):
 	add_iter(hd, '# of objects', count, off - 2, 2, fmt('H'))
 	off += 2
 	(listlen, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Length of index list?', listlen, off - 4, 4, fmt('I'))
+	add_iter(hd, 'Length of index list', listlen, off - 4, 4, fmt('I'))
 	listiter = add_iter(hd, 'Index list', '', off, listlen, '%ds' % listlen)
 	for i in range(1, count + 1):
 		(idx, off) = rdata(data, off, fmt('I'))
