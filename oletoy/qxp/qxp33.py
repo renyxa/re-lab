@@ -355,7 +355,6 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	# typ == 13: # beveled-corner[image] / rounded-corner[image]
 	# typ == 14: # oval[image]
 	# typ == 15: # bezier[image] / freehand[image]
-	text = None
 	if header.typ in [0, 1]:
 		off = add_line(hd, data, off, fmt, version, obfctx, header)
 	elif header.typ == 3:
