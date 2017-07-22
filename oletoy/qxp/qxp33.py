@@ -498,7 +498,8 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Page setup')
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_fonts(page, data, off, parent, fmt, version)
-	off = parse_physical_fonts(page, data, off, parent, fmt, version)
+	if version >= VERSION_3_3:
+		off = parse_physical_fonts(page, data, off, parent, fmt, version)
 	off = parse_colors(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_para_styles(page, data, off, parent, fmt, version)

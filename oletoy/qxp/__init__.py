@@ -82,17 +82,21 @@ def handle_picture(page, buf, parent, fmt, version, index, rlen):
 def open_v5(page, buf, parent, fmt, version):
 	rlen = 0x100
 
-	header_hdl_map = {qxp.VERSION_1: qxp1.add_header, qxp.VERSION_3_3: qxp33.add_header, qxp.VERSION_4: qxp4.add_header}
-	header_hdl = header_hdl_map[version] if header_hdl_map.has_key(version) else add_header
+	mod_map = {
+		qxp.VERSION_1: qxp1,
+		qxp.VERSION_3_1_M: qxp33,
+		qxp.VERSION_3_3: qxp33,
+		qxp.VERSION_4: qxp4,
+	}
+	header_hdl = mod_map[version].add_header if mod_map.has_key(version) else add_header
 	header = qxp.HexDumpSave(0)
 	(hdr, off) = header_hdl(header, 512, buf, fmt, version)
 	add_pgiter(page, 'Header', 'qxp5', ('header', header), buf[0:off], parent)
 
-	doc_hdl_map = {qxp.VERSION_1: qxp1.handle_document, qxp.VERSION_3_3: qxp33.handle_document, qxp.VERSION_4: qxp4.handle_document}
 	doc = parse_chain(buf, 3, rlen, fmt, version)
 	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
-	if doc_hdl_map.has_key(version):
-		(texts, pictures) = doc_hdl_map[version](page, doc, dociter, fmt, version, hdr)
+	if mod_map.has_key(version):
+		(texts, pictures) = mod_map[version].handle_document(page, doc, dociter, fmt, version, hdr)
 	else:
 		(texts, pictures) = [], []
 
