@@ -38,6 +38,28 @@ color_model_map = {
 	2: 'CMYK',
 }
 
+type_map = {
+	0: 'Line',
+	1: 'Orthogonal line',
+	3: 'Text',
+	11: 'Group',
+	12: 'Rectangle / Picture',
+	13: 'Cornered rectangle / Picture',
+	14: 'Oval / Picture',
+	15: 'Bezier / Picture',
+}
+
+v31_type_to_shape_content_map = {
+	0: (0, 2),
+	1: (1, 2),
+	3: (2, 3),
+	11: (2, 1),
+	12: (2, 5),
+	13: (3, 5),
+	14: (4, 5),
+	15: (5, 5),
+}
+
 shape_types_map = {
 	0: 'Line',
 	1: 'Orthogonal line',
@@ -183,6 +205,12 @@ def parse_para_formats(page, data, offset, parent, fmt, version):
 	reciter = add_pgiter(page, 'Paragraph formats', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
 	return _parse_collection(page, data, off, off + length, reciter, fmt, version, handle_para_format, 256)
 
+def _add_corner_radius(hd, data, off, fmt):
+	(corner_radius, off) = rfract(data, off, fmt)
+	corner_radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	return off
+
 class ObjectHeader(object):
 	def __init__(self, typ, shape, link_id, content_index, content_type, content_iter):
 		self.linked_text_offset = None
@@ -198,7 +226,7 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 
 	(typ, off) = rdata(data, off, fmt('B'))
 	typ = obfctx.deobfuscate(typ, 1)
-	add_iter(hd, 'Type', typ, off - 1, 1, fmt('B'))
+	add_iter(hd, 'Type', key2txt(typ, type_map, typ), off - 1, 1, fmt('B'))
 	(color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
 	(shade, off) = rfract(data, off, fmt)
@@ -221,13 +249,14 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	off += 4
 	(flags2, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Flags (corners, flip)', bflag2txt(flags2, box_flags_map), off - 2, 2, fmt('H'))
-	(content_type, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Content type?', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
-	(shape, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
-	(corner_radius, off) = rfract(data, off, fmt)
-	corner_radius /= 2
-	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (corner_radius, dim2in(corner_radius)), off - 4, 4, fmt('i'))
+	if version >= VERSION_3_3:
+		(content_type, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Content type?', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
+		(shape, off) = rdata(data, off, fmt('B'))
+		add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
+		off = _add_corner_radius(hd, data, off, fmt)
+	else:
+		shape, content_type = v31_type_to_shape_content_map[typ]
 	if gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Y1')
@@ -340,7 +369,22 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	hd.model.set(header.content_iter, 0, "Picture block?")
 	off = add_frame(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
-	off += 24
+	if version >= VERSION_3_3:
+		off += 24
+	else:
+		off += 4
+		if header.typ == 13:
+			off = _add_corner_radius(hd, data, off, fmt)
+			corners_map = {0: 'Beveled', 1: 'Rounded', 2: 'Concave'}
+			(corners, off) = rdata(data, off, fmt('B'))
+			add_iter(hd, 'Corners', key2txt(corners, corners_map), off - 1, 1, fmt('B'))
+		elif header.typ == 15:
+			(bid, off) = rdata(data, off, fmt('I'))
+			add_iter(hd, 'Bezier ID?', hex(bid), off - 4, 4, fmt('I'))
+			off += 1
+		else:
+			off += 5
+		off += 15
 	(pic_rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
 	(pic_skew, off) = rfract(data, off, fmt)
