@@ -77,6 +77,25 @@ line_style_map = {
 	0x85: 'Triple'
 }
 
+frame_style_map = {
+	0x80: 'Solid',
+	0x81: 'Double',
+	0x82: 'Thin-Thick',
+	0x83: 'Thick-Thin',
+	0x84: 'Thin-Thick-Thin',
+	0x85: 'Thick-Thin-Thick',
+	0x86: 'Triple',
+	0x5: 'Yearbook',
+	0xa: 'Certificate',
+	0xd: 'Coupon',
+	0xf: 'Deco Shadow',
+	0x10: 'Deco Plain',
+	0x11: 'Maze',
+	0x12: 'Ornate',
+	0x13: 'Op Art1',
+	0x14: 'Op Art2'
+}
+
 def _read_name2(data, offset, fmt):
 	rstr = read_c_str if fmt() == LITTLE_ENDIAN else read_pascal_str
 	(name, off) = rstr(data, offset)
@@ -226,6 +245,8 @@ def add_frame(hd, data, offset, fmt):
 	add_iter(hd, 'Frame shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
 	(frame_color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Frame color index', frame_color, off - 1, 1, fmt('B'))
+	(style, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, fmt('B'))
 	return off
 
 def add_gradient(hd, data, offset, fmt):
@@ -270,7 +291,6 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	hd.model.set(header.content_iter, 0, "Starting block of text chain")
 	off = add_frame(hd, data, off, fmt)
-	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
 	off += 4
 	(toff, off) = rdata(data, off, fmt('I'))
@@ -319,7 +339,6 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	hd.model.set(header.content_iter, 0, "Picture block?")
 	off = add_frame(hd, data, off, fmt)
-	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
 	off += 24
 	(pic_rot, off) = rfract(data, off, fmt)
@@ -342,7 +361,6 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
-	off += 1
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
 	off += 78
 	if header.shape == 5:
