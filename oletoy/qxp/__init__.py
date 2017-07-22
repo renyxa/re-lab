@@ -85,6 +85,7 @@ def open_v5(page, buf, parent, fmt, version):
 	mod_map = {
 		qxp.VERSION_1: qxp1,
 		qxp.VERSION_3_1_M: qxp33,
+		qxp.VERSION_3_1: qxp33,
 		qxp.VERSION_3_3: qxp33,
 		qxp.VERSION_4: qxp4,
 	}

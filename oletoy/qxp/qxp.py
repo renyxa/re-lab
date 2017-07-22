@@ -77,8 +77,8 @@ def deobfuscate(value, seed, n):
 	return (((value + seed) & 0xffff) - (((value & seed) << 1) & 0xffff) + (1 << 16)) & mask
 
 VERSION_1 = 0x20
-# TODO: 3.1 is supposed to be 0x3e, but Mac docs use 0x39 0x38
 VERSION_3_1_M = 0x39
+VERSION_3_1 = 0x3e
 VERSION_3_3 = 0x3f
 VERSION_4 = 0x41
 VERSION_6 = 0x43
