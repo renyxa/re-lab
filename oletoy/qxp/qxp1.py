@@ -88,8 +88,47 @@ def add_char_format(hd, size, data, version, dummy):
 	(track, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Track amount', '%.2f' % (track / 2.0), off - 2, 2, '>H')
 
+def _add_tab(hd, size, data, offset, version, parent=None):
+	type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align'}
+	(typ, off) = rdata(data, offset, '>B')
+	add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, '>B', parent=parent)
+	(fill_char, off) = rdata(data, off, '1s')
+	add_iter(hd, 'Fill char', fill_char, off - 1, 1, '1s', parent=parent)
+	(pos, off) = rdata(data, off, '>i')
+	if pos == -1:
+		add_iter(hd, 'Position', 'not defined', off - 4, 4, '>i', parent=parent)
+	else:
+		off = add_dim(hd, size, data, off - 4, big_endian, 'Position', parent)
+	if parent:
+		if pos == -1:
+			hd.model.set(parent, 1, 'not defined')
+		else:
+			pos = rfract(data, off - 4, big_endian)[0]
+			pos_str = '%.2f pt / %.2f in' % (pos, dim2in(pos))
+			hd.model.set(parent, 1, "%s / '%s' / %s"  % (key2txt(typ, type_map), fill_char, pos_str))
+	return off
+
 def add_para_format(hd, size, data, version, dummy):
-	pass
+	off = 0
+	(uses, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Use count', uses, off - 2, 2, '>H')
+	off += 1
+	(align, off) = rdata(data, off, '>B')
+	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, '>B')
+	off += 2
+	off = add_dim(hd, size, data, off, big_endian, 'Left indent')
+	off = add_dim(hd, size, data, off, big_endian, 'First line')
+	off = add_dim(hd, size, data, off, big_endian, 'Right indent')
+	(lead, off) = rdata(data, off, '>I')
+	if lead == 0:
+		add_iter(hd, 'Leading', 'auto', off - 4, 4, '>I')
+	else:
+		off = add_dim(hd, size, data, off - 4, big_endian, 'Leading')
+	off = add_dim(hd, size, data, off, big_endian, 'Space before')
+	off = add_dim(hd, size, data, off, big_endian, 'Space after')
+	for i in range(0, 20):
+		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 6, '6s')
+		off = _add_tab(hd, size, data, off, version, tabiter)
 
 ids = {
 	'char_format': add_char_format,
