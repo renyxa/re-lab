@@ -287,7 +287,7 @@ def add_tab(hd, size, data, offset, fmt, version, parent=None):
 	else:
 		add_iter(hd, 'Align at char', chr(subtype), off - 1, 1, '1s', parent=parent)
 	(fill_char, off) = rdata(data, off, fmt('H'))
-	fill_char = chr(fill_char)
+	fill_char = chr(fill_char & 0xff)
 	add_iter(hd, 'Fill char', fill_char, off - 2, 2, '2s', parent=parent)
 	(pos, off) = rdata(data, off, fmt('i'))
 	if pos == -1:
