@@ -30,11 +30,6 @@ def add_header(hd, size, data, dummy, version):
 	add_iter(hd, '# of pages', pages, off - 2, 2, '>H')
 	return (None, size)
 
-def parse_record(page, data, offset, parent, version, name):
-	(length, off) = rdata(data, offset, '>I')
-	add_pgiter(page, name, 'qxp1', ('record', version), data[off - 4:off + length], parent)
-	return off + length
-
 def parse_formats(page, data, offset, parent, version, name, hdl, size):
 	(length, off) = rdata(data, offset, '>I')
 	end = off + length
@@ -53,7 +48,6 @@ def handle_document(page, data, parent, dummy, version, hdr):
 	off = 0
 	off = parse_formats(page, data, off, parent, version, 'Character formats', 'char_format', 16)
 	off = parse_formats(page, data, off, parent, version, 'Paragraph formats', 'para_format', 150)
-	off = parse_record(page, data, off, parent, version, 'Unknown') # ???
 	pagesiter = add_pgiter(page, 'Pages', 'qxp1', (), data[off:], parent)
 	return parse_pages(page, data, off, pagesiter, version)
 
