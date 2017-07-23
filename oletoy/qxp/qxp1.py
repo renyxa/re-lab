@@ -44,7 +44,7 @@ def parse_formats(page, data, offset, parent, version, name, hdl, size):
 	return off
 
 def parse_pages(page, data, offset, parent, version):
-	pass
+	return ((), ())
 
 def handle_document(page, data, parent, dummy, version, hdr):
 	off = 0
