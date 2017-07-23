@@ -18,13 +18,13 @@ import traceback
 from utils import *
 from qxp import *
 
-def add_header(hd, size, data, fmt, version):
+def add_header(hd, size, data, dummy, version):
     off = 0
     version_map = {0x1c: '???', 0x20: '1.10'}
-    (ver, off) = rdata(data, off, fmt('H'))
-    add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-    (ver, off) = rdata(data, off, fmt('H'))
-    add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
+    (ver, off) = rdata(data, off, '>H')
+    add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
+    (ver, off) = rdata(data, off, '>H')
+    add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
     return (None, size)
 
 def handle_document(page, data, parent, fmt, version, hdr):
