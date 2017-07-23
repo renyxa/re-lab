@@ -329,6 +329,7 @@ class Page:
 		if buf[0:4] == '\x00\x1c\x00\x1c' or buf[0:4] == '\x00\x20\x00\x20':
 			try:
 				qxp.open_v1(self,buf,parent)
+				self.type = 'QXP5'
 				return 0
 			except:
 				print "Failed after attempt to parse as QXP1..."

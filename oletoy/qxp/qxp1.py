@@ -25,6 +25,9 @@ def add_header(hd, size, data, dummy, version):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
 	(ver, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
+	off += 150
+	(pages, off) = rdata(data, off, '>H')
+	add_iter(hd, '# of pages', pages, off - 2, 2, '>H')
 	return (None, size)
 
 def parse_record(page, data, offset, parent, version, name):
