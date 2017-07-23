@@ -59,7 +59,34 @@ def add_record(hd, size, data, version, dummy):
 	add_iter(hd, 'Length', length, off - 4, 4, '>I')
 
 def add_char_format(hd, size, data, version, dummy):
-	pass
+	off = 0
+	(uses, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Use count', uses, off - 2, 2, '>H')
+	(font, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Font index', font, off - 2, 2, '>H')
+	(sz, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Font size', '%.1d' % (sz / 4.0), off - 2, 2, '>H')
+	(flags, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Format flags', bflag2txt(flags, char_format_map), off - 2, 2, '>H')
+	(scale, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Scale', '%.0f%%' % (scale * 100.0 / 0x800), off - 2, 2, '>H')
+	color_map = {
+		0: 'White',
+		1: 'Black',
+		2: 'Red',
+		3: 'Green',
+		4: 'Blue',
+		5: 'Cyan',
+		6: 'Magenta',
+		7: 'Yellow',
+	}
+	(color, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
+	shade_map = {1: '10%', 2: '20%', 3: '40%', 4: '60%', 5: '80%', 6: 'Solid'}
+	(shade, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
+	(track, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Track amount', '%.2f' % (track / 2.0), off - 2, 2, '>H')
 
 def add_para_format(hd, size, data, version, dummy):
 	pass
