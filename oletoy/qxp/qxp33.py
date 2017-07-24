@@ -32,6 +32,9 @@ class ObfuscationContext:
 	def deobfuscate(self, value, n):
 		return deobfuscate(value, self.seed, n)
 
+	def tip(self):
+		return 'seed: %x' % self.seed
+
 color_model_map = {
 	0: 'HSB',
 	1: 'RGB',
@@ -226,14 +229,14 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 
 	(typ, off) = rdata(data, off, fmt('B'))
 	typ = obfctx.deobfuscate(typ, 1)
-	add_iter(hd, 'Type', key2txt(typ, type_map, typ), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Type', key2txt(typ, type_map, typ), off - 1, 1, fmt('B'), tip=obfctx.tip())
 	(color, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Color index', color, off - 1, 1, fmt('B'))
 	(shade, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'))
 	(content, off) = rdata(data, off, fmt('I'))
 	content = obfctx.deobfuscate(content & 0xffff, 2)
-	content_iter = add_iter(hd, 'Content index?', hex(content), off - 4, 4, fmt('I'))
+	content_iter = add_iter(hd, 'Content index?', hex(content), off - 4, 4, fmt('I'), tip=obfctx.tip())
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', qxpbflag2txt(flags, obj_flags_map, fmt), off - 1, 1, fmt('B'))
 	off += 1

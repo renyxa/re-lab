@@ -155,6 +155,9 @@ class ObfuscationContext:
 	def deobfuscate(self, value, n):
 		return deobfuscate(value, self.seed, n)
 
+	def tip(self):
+		return 'seed: %x / inc: %x' % (self.seed, self.inc)
+
 def _read_name(data, fmt, offset=0):
 	(n, off) = rdata(data, offset, '64s')
 	return n[0:n.find('\0')] if fmt() == LITTLE_ENDIAN else read_pascal_str(data, offset)[0]
@@ -461,13 +464,14 @@ def add_object_header(hd, data, offset, fmt, version, obfctx):
 	add_iter(hd, 'Flags', bflag2txt(flags, box_flags_map), off - 2, 2, fmt('H'))
 	(content_type, off) = rdata(data, off, fmt('B'))
 	content_type = obfctx.deobfuscate(content_type, 1)
-	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Content type', key2txt(content_type, content_type_map), off - 1, 1, fmt('B'), tip=obfctx.tip())
 	obfctx.next_shift(content_type)
 	content = obfctx.deobfuscate(content & 0xffff, 2)
 	hd.model.set(content_iter, 1, hex(content))
+	add_tip(hd, content_iter, obfctx.tip())
 	(shape, off) = rdata(data, off, fmt('B'))
 	shape = obfctx.deobfuscate(shape, 1)
-	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'))
+	add_iter(hd, 'Shape type', key2txt(shape, shape_types_map), off - 1, 1, fmt('B'), tip=obfctx.tip())
 
 	return ObjectHeader(idx, shape, link_id, ole_id, gradient_id, content, content_type, content_iter), off
 
@@ -908,7 +912,7 @@ def handle_page(page, data, offset, parent, fmt, version, obfctx, index, nmaster
 		off += name_data_length
 	(objs, off) = rdata(data, off, fmt('I'))
 	objs = obfctx.deobfuscate(objs & 0xffff, 2)
-	add_iter(hd, 'Number of objects', objs, off - 4, 4, fmt('I'))
+	add_iter(hd, 'Number of objects', objs, off - 4, 4, fmt('I'), tip=obfctx.tip())
 
 	# update object title and size
 	npages_map = {1: 'Single', 2: 'Facing'}
@@ -930,6 +934,8 @@ def parse_template(page, data, offset, parent, fmt, version, index):
 			pass
 		def deobfuscate(self, value, n):
 			return value
+		def tip(self):
+			return ''
 	(length, off) = rdata(data, offset, fmt('I'))
 	end = off + length
 	reciter = add_pgiter(page, 'Template', 'qxp4', ('record', fmt, version), data[off - 4:end], parent)
