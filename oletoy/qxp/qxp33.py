@@ -301,12 +301,12 @@ def add_gradient(hd, data, offset, fmt):
 	off += 4
 	return off
 
-def add_bezier_data(hd, data, offset, fmt):
+def add_bezier_data(hd, data, offset, fmt, name='Bezier data'):
 	off = offset
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Bezier data length', bezier_data_length, off - 4, 4, fmt('I'))
+	add_iter(hd, '%s length' % name, bezier_data_length, off - 4, 4, fmt('I'))
 	end_off = off + bezier_data_length
-	bezier_iter = add_iter(hd, 'Bezier data', '', off, bezier_data_length, '%ds' % bezier_data_length)
+	bezier_iter = add_iter(hd, name, '', off, bezier_data_length, '%ds' % bezier_data_length)
 	off += 2
 	off = add_dim(hd, off + 4, data, off, fmt, 'Start Y', parent=bezier_iter)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Start X', parent=bezier_iter)
@@ -317,6 +317,16 @@ def add_bezier_data(hd, data, offset, fmt):
 		off = add_dim(hd, off + 4, data, off, fmt, 'Y%d' % i, parent=bezier_iter)
 		off = add_dim(hd, off + 4, data, off, fmt, 'X%d' % i, parent=bezier_iter)
 		i += 1
+	return off
+
+def add_runaround(hd, data, offset, fmt):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Runaround length', length, off - 4, 4, fmt('I'))
+	runiter = add_iter(hd, 'Runaround', '', off, length, '%ds' % length)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Top', runiter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Left', runiter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Bottom', runiter)
+	off = add_dim(hd, off + 4, data, off, fmt, 'Right', runiter)
 	return off
 
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
@@ -363,12 +373,7 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 		if toff == 0:
 			off += 12
 	if rid != 0:
-		(length, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Runaround data length', length, off - 4, 4, fmt('I'))
-		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround top')
-		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround left')
-		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround bottom')
-		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround right')
+		off = add_runaround(hd, data, off, fmt)
 	header.linked_text_offset = toff
 	# Run Text Around All Sides not supported by qxp33
 	return off
@@ -379,8 +384,14 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_frame(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
 	if version >= VERSION_3_3:
-		off += 24
+		(rid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Runaround ID', hex(rid), off - 4, 4, fmt('I'))
+		off += 2
+		(cid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Clip ID?', hex(cid), off - 4, 4, fmt('I'))
+		off += 14
 	else:
+		rid = 0
 		off += 4
 		if header.typ == 13:
 			off = _add_corner_radius(hd, data, off, fmt)
@@ -413,15 +424,23 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
 		off += ilen
+	if rid != 0:
+		off = add_runaround(hd, data, off, fmt)
+		if cid != 0:
+			off = add_bezier_data(hd, data, off, fmt, 'Clip path')
 	return off
 
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
-	off += 78
+	(rid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Runaround ID', hex(rid), off - 4, 4, fmt('I'))
+	off += 74
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
+	if rid != 0:
+		off = add_runaround(hd, data, off, fmt)
 	return off
 
 def add_line(hd, data, offset, fmt, version, obfctx, header):
