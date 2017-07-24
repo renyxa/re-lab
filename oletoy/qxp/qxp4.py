@@ -520,6 +520,36 @@ def add_frame(hd, data, offset, fmt, name='Frame'):
 	add_iter(hd, '%s style' % name, 'D&S index %d' % frame_style if bmp_frame == 0 else key2txt(frame_style, frame_bitmap_style_map), off - 2, 2, fmt('H'))
 	return off
 
+def add_runaround(hd, data, offset, fmt, parent=None):
+	type_map = {
+		0: 'None',
+		1: 'Item',
+		2: 'Picture bounds',
+		5: 'Non-white areas',
+		7: 'Same as clipping',
+		8: 'Auto image',
+	}
+	(typ, off) = rdata(data, offset, fmt('B'))
+	add_iter(hd, 'Runaround type', key2txt(typ, type_map), off - 1, 1, fmt('B'))
+	(edges, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Outside edges only', key2txt(edges, {0: 'Yes', 1: 'No'}), off - 1, 1, fmt('B'))
+	(invert, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Invert', key2txt(invert, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
+	off += 1
+	off = add_dim(hd, off + 4, data, off, fmt, 'Noise')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Top')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Left')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Bottom')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Right')
+	off = add_dim(hd, off + 4, data, off, fmt, 'Smoothness')
+	(rid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Runaround-related ID?', hex(rid), off - 4, 4, fmt('i'))
+	(restrict, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Restrict to box', key2txt(restrict, {0: 'No', 4: 'Yes'}), off - 1, 1, fmt('B'))
+	off += 3
+	off = add_fract_perc(hd, data, off, fmt, 'Threshold')
+	return off
+
 def add_bezier(hd, data, offset, fmt):
 	off = offset
 	(bezier_data_length, off) = rdata(data, off, fmt('I'))
@@ -647,7 +677,9 @@ def add_ole_object(hd, data, offset, fmt, header, page, parent):
 def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	off = add_coords(hd, data, off, fmt)
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
@@ -671,7 +703,9 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent
 	off = offset
 	hd.model.set(header.content_iter, 0, "Picture block")
 	off = add_frame(hd, data, off, fmt)
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	off = add_coords(hd, data, off, fmt)
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
@@ -693,7 +727,9 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	off = add_coords(hd, data, off, fmt)
 	(corner_radius, off) = rfract(data, off, fmt)
 	corner_radius /= 2
@@ -706,7 +742,9 @@ def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
 def add_line(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt, 'Line')
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	off = add_coords(hd, data, off, fmt)
 	off += 24
 	return off
@@ -714,7 +752,9 @@ def add_line(hd, data, offset, fmt, version, obfctx, header):
 def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt, 'Line')
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	off = add_coords(hd, data, off, fmt)
 	off += 24
 	off = add_linked_text_offset(hd, data, off, fmt, header)
@@ -733,7 +773,9 @@ def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt, 'Line')
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 36
@@ -743,7 +785,9 @@ def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
 def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt, 'Line')
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 36
@@ -764,7 +808,9 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 36
@@ -776,7 +822,9 @@ def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
 def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = offset
 	off = add_frame(hd, data, off, fmt)
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 36
@@ -797,7 +845,9 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page,
 	off = offset
 	hd.model.set(header.content_iter, 0, "Picture block")
 	off = add_frame(hd, data, off, fmt)
-	off += 48
+	off += 4
+	off = add_runaround(hd, data, off, fmt)
+	off += 4
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 32
