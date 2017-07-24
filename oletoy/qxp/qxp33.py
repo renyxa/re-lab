@@ -488,24 +488,21 @@ def handle_page(page, data, offset, parent, fmt, version, index, nmasters):
 	(counter, off) = rdata(data, off, fmt('H'))
 	# This contains number of objects ever saved on the page
 	add_iter(hd, 'Object counter / next object ID?', counter, off - 2, 2, fmt('H'))
-	(off, records_offset, settings_blocks_count) = add_page_header(hd, off + 8, data, off, fmt)
-	settings_block_size = (records_offset - 4) / settings_blocks_count
-	for i in range(0, settings_blocks_count):
-		block_iter = add_iter(hd, 'Settings block %d' % (i + 1), '', off, settings_block_size, '%ds' % settings_block_size)
-		off = add_page_bbox(hd, off + 16, data, off, fmt, block_iter)
-		(id, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=block_iter)
-		hd.model.set(block_iter, 1, hex(id))
+	(off, settings_block_size, settings_blocks_count) = add_page_header(hd, off + 8, data, off, fmt)
+	def _add_settings(name, offset):
+		block_iter = add_iter(hd, name, '', offset, settings_block_size, '%ds' % settings_block_size)
+		return add_page_settings(hd, settings_block_size, data, offset, fmt, version, block_iter)
+	assert settings_blocks_count in (1, 2)
+	if settings_blocks_count == 1:
+		off = _add_settings('Page settings', off)
+	elif settings_blocks_count == 2:
+		off = _add_settings('Left page settings', off)
+		off = _add_settings('Right page settings', off)
+	for i in range(0, settings_blocks_count + 1):
+		(length, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
+		off += length
 		off += 4
-		(master_ind, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Master page index', '' if master_ind == 0xffff else master_ind, off - 2, 2, fmt('H'), parent=block_iter)
-		off += 6
-		(ind, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=block_iter)
-		off += 2
-		off = add_margins(hd, off + 16, data, off, fmt, block_iter)
-		off = add_page_columns(hd, off + 8, data, off, fmt, block_iter)
-	off += settings_blocks_count * 12 + 12
 	if fmt() == LITTLE_ENDIAN:
 		off += 4
 		(name, off) = add_pcstr4(hd, data, off, fmt)

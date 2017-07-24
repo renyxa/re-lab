@@ -151,18 +151,16 @@ def add_pascal_str(hd, data, offset, name="Name"):
 	return string, off
 
 def add_page_header(hd, size, data, offset, fmt):
-	(records_offset, off) = rdata(data, offset, fmt('I'))
-	records_size = size - off - records_offset - 4
-	add_iter(hd, 'Records offset', records_offset, off - 4, 4, fmt('I'))
-	add_iter(hd, 'Settings', '', off, records_offset, '%ds' % (records_offset - off))
-	add_iter(hd, 'Records', '', off + records_offset, records_size, '%ds' % (records_size))
+	(settings_length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Page settings length', settings_length, off - 4, 4, fmt('I'))
 	(settings_blocks_count, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Settings blocks count', settings_blocks_count, off - 2, 2, fmt('H'))
 	(idx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Index?', idx, off - 1, 1, fmt('B'))
 	(cidx, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Creation index', cidx, off - 1, 1, fmt('B'))
-	return off, records_offset, settings_blocks_count
+	settings_block_size = (settings_length - 4) / settings_blocks_count
+	return off, settings_block_size, settings_blocks_count
 
 def add_page_bbox(hd, size, data, offset, fmt, parent=None):
 	off = add_dim(hd, size, data, offset, fmt, 'Top offset', parent=parent)
@@ -183,6 +181,25 @@ def add_page_columns(hd, size, data, offset, fmt, parent=None):
 	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'), parent=parent)
 	off += 2
 	off = add_dim(hd, size, data, off, fmt, 'Gutter width', parent=parent)
+	return off
+
+def add_page_settings(hd, size, data, offset, fmt, version, parent=None):
+	off = offset
+	off = add_page_bbox(hd, off + 16, data, off, fmt, parent)
+	(id, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=parent)
+	hd.model.set(parent, 1, hex(id))
+	off += 4
+	(master_ind, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Master page index', '' if master_ind == 0xffff else master_ind, off - 2, 2, fmt('H'), parent=parent)
+	off += 6
+	(ind, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=parent)
+	off += 2
+	off = add_margins(hd, off + 16, data, off, fmt, parent)
+	off = add_page_columns(hd, off + 8, data, off, fmt, parent)
+	if version >= VERSION_4:
+		off += 4
 	return off
 
 def add_record(hd, size, data, fmt, version):
