@@ -324,8 +324,8 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	hd.model.set(header.content_iter, 0, "Starting block of text chain")
 	off = add_frame(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
-	(some_id, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'Some ID?', hex(some_id), off - 4, 4, fmt('I'))
+	(rid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Runaround ID', hex(rid), off - 4, 4, fmt('I'))
 	(toff, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Offset into text', toff, off - 4, 4, fmt('I'))
 	if toff > 0:
@@ -362,10 +362,13 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	else:
 		if toff == 0:
 			off += 12
-	if some_id != 0:
+	if rid != 0:
 		(length, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
-		off += length
+		add_iter(hd, 'Runaround data length', length, off - 4, 4, fmt('I'))
+		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround top')
+		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround left')
+		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround bottom')
+		off = add_dim(hd, off + 4, data, off, fmt, 'Runaround right')
 	header.linked_text_offset = toff
 	# Run Text Around All Sides not supported by qxp33
 	return off
