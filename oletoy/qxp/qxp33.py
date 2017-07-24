@@ -401,6 +401,10 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 8
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
+	if header.content_index != 0:
+		(ilen, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
+		off += ilen
 	return off
 
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
