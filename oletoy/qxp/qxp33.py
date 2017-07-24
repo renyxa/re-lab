@@ -524,7 +524,7 @@ def handle_page(page, data, offset, parent, fmt, version, index, master):
 	page.model.set_value(pageiter, 3, data[offset:off])
 	return objs, pageiter, off
 
-def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
+def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
 	pictures = set()
 	off = 0
@@ -574,9 +574,8 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_char_formats(page, data, off, parent, fmt, version)
 	off = parse_para_formats(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
-	doc = data[off:]
-	dociter = add_pgiter(page, 'Document', 'qxp33', (), doc, parent)
-	return handle_doc(page, doc, dociter, fmt, version, obfctx, hdr.masters)
+	pagesiter = add_pgiter(page, 'Pages', 'qxp33', (), data[off:], parent)
+	return handle_pages(page, data[off:], pagesiter, fmt, version, obfctx, hdr.masters)
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)

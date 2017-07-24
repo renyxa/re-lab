@@ -941,7 +941,7 @@ def parse_template(page, data, offset, parent, fmt, version, index):
 	page.model.set_value(reciter, 0, "[%d] %s" % (index, type_str))
 	return end
 
-def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
+def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
 	pictures = set()
 	off = 0
@@ -1010,9 +1010,8 @@ def handle_document(page, data, parent, fmt, version, hdr):
 		off = parse_tabs(page, data, off, parent, fmt, version, 'Format tabs %d' % i)
 	off = parse_para_formats(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
-	doc = data[off:]
-	dociter = add_pgiter(page, "Document", 'qxp4', (), doc, parent)
-	return handle_doc(page, doc, dociter, fmt, version, obfctx, hdr.masters)
+	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
+	return handle_pages(page, data[off:], pagesiter, fmt, version, obfctx, hdr.masters)
 
 def add_header(hd, size, data, fmt, version):
 	off = add_header_common(hd, size, data, fmt)
