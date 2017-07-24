@@ -874,7 +874,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 	obfctx.next(header.content_index)
 	return header, off
 
-def handle_page(page, data, offset, parent, fmt, version, obfctx, index, nmasters):
+def handle_page(page, data, offset, parent, fmt, version, obfctx, index, master):
 	off = offset
 	hd = HexDumpSave(offset)
 	# the real size is determined at the end
@@ -912,7 +912,7 @@ def handle_page(page, data, offset, parent, fmt, version, obfctx, index, nmaster
 
 	# update object title and size
 	npages_map = {1: 'Single', 2: 'Facing'}
-	pname = '[%d] %s%s page' % (index, key2txt(settings_blocks_count, npages_map), ' master' if index - 1 < nmasters else '')
+	pname = '[%d] %s%s page' % (index, key2txt(settings_blocks_count, npages_map), ' master' if master else '')
 	if len(name) != 0:
 		pname += ' "%s"' % name
 	page.model.set_value(pageiter, 0, pname)
@@ -945,6 +945,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
 	pictures = set()
 	off = 0
+	master = True
 	i = 1
 	while off < len(data):
 		start = off
@@ -953,7 +954,7 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 			if stop == 0x9e:
 				add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 				break
-			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, obfctx, i, nmasters)
+			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, obfctx, i, master)
 			obfctx.next_rev()
 			for j in range(0, objs):
 				(header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
@@ -962,6 +963,9 @@ def handle_doc(page, data, parent, fmt, version, obfctx, nmasters):
 						texts.add(header.content_index)
 					elif header.content_type == 4:
 						pictures.add(header.content_index)
+			if i == nmasters:
+				master = False
+				i = 0
 			i += 1
 		except:
 			traceback.print_exc()
