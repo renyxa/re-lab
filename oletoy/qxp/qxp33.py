@@ -361,8 +361,6 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	else:
 		if toff == 0:
 			off += 12
-			if next_index > 0:
-				off += 4
 	header.linked_text_offset = toff
 	# Run Text Around All Sides not supported by qxp33
 	return off
