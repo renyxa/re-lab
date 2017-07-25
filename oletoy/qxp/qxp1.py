@@ -44,20 +44,93 @@ def parse_formats(page, data, offset, parent, version, name, hdl, size):
 		i += 1
 	return off
 
+def add_orthogonal_line(hd, data, offset, version):
+	off = offset
+	return off + 64
+
+def add_line(hd, data, offset, version):
+	off = offset
+	return off + 64
+
+def add_text(hd, data, offset, version):
+	off = offset
+	return off + 79
+
+def add_rectangle(hd, data, offset, version):
+	off = offset
+	return off + 84
+
+def add_rounded_rectangle(hd, data, offset, version):
+	off = offset
+	return off + 84
+
+def add_ellipse(hd, data, offset, version):
+	off = offset
+	return off + 84
+
+def parse_object(page, data, offset, parent, version, index):
+	off = offset
+	hd = HexDumpSave(off)
+	objiter = add_pgiter(page, '', 'qxp1', ('object', hd), data[offset:], parent)
+	type_map = {
+		0: 'Line',
+		1: 'Orthogonal line',
+		3: 'Text',
+		4: 'Rectangle',
+		5: 'Rounded rectangle',
+		6: 'Ellipse',
+	}
+	parser_map = {
+		0: add_line,
+		1: add_orthogonal_line,
+		3: add_text,
+		4: add_rectangle,
+		5: add_rounded_rectangle,
+		6: add_ellipse,
+	}
+	(typ, off) = rdata(data, off, '>B')
+	type_str = key2txt(typ, type_map)
+	add_iter(hd, 'Type', type_str, off - 1, 1, '>B')
+	if parser_map.has_key(typ):
+		off = parser_map[typ](hd, data, off, version)
+	(last, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
+	page.model.set_value(objiter, 0, '[%d] %s' % (index, type_str))
+	page.model.set_value(objiter, 2, off - offset)
+	page.model.set_value(objiter, 3, data[offset:off])
+	return (last == 2, off)
+
+def add_page_prefix(hd, data, offset, version):
+	off = offset + 4
+	(index, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Index', index, off - 2, 2, '>H')
+	off += 9
+	return (index, off)
+
 def parse_master(page, data, offset, parent, version):
 	off = offset
 	hd = HexDumpSave(off)
-	pageiter = add_pgiter(page, 'Master page', 'qxp1', ('page', hd), data[off:off + 97], parent)
-	return off + 97
+	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
+	(index, off) = add_page_prefix(hd, data, off, version)
+	(empty, off) = rdata(data, off, '>B')
+	off += 81
+	add_iter(hd, 'Empty', key2txt(empty, {1: 'No', 2: 'Yes'}), off - 1, 1, '>B')
+	page.model.set_value(pageiter, 0, '[%d] Master page' % index)
+	page.model.set_value(pageiter, 2, off - offset)
+	page.model.set_value(pageiter, 3, data[offset:off])
+	return off
 
 def parse_page(page, data, offset, parent, version):
 	off = offset
 	hd = HexDumpSave(off)
-	pageiter = add_pgiter(page, 'Page', 'qxp1', ('page', hd), data[off:off + 16], parent)
-	return (pageiter, True, off + 16)
-
-def parse_object(page, data, offset, parent, version, index):
-	return (True, offset)
+	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
+	(index, off) = add_page_prefix(hd, data, off, version)
+	(empty, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Empty', key2txt(empty, {1: 'No', 2: 'Yes'}), off - 1, 1, '>B')
+	page.model.set_value(pageiter, 0, '[%d] Page' % index)
+	page.model.set_value(pageiter, 2, off - offset)
+	page.model.set_value(pageiter, 3, data[offset:off])
+	return (pageiter, empty == 2, off)
 
 def parse_pages(page, data, offset, parent, version, npages):
 	off = offset
@@ -163,6 +236,7 @@ def add_para_format(hd, size, data, version, dummy):
 ids = {
 	'char_format': add_char_format,
 	'para_format': add_para_format,
+	'object': add_saved,
 	'page': add_saved,
 	'record': add_record,
 }
