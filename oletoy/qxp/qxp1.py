@@ -14,7 +14,9 @@
 # USA
 #
 
+from collections import namedtuple
 import traceback
+
 from utils import *
 from qxp import *
 
@@ -28,7 +30,8 @@ def add_header(hd, size, data, dummy, version):
 	off += 150
 	(pages, off) = rdata(data, off, '>H')
 	add_iter(hd, '# of pages', pages, off - 2, 2, '>H')
-	return (None, size)
+	Header = namedtuple('Header', ('pages',))
+	return (Header(pages), size)
 
 def parse_formats(page, data, offset, parent, version, name, hdl, size):
 	(length, off) = rdata(data, offset, '>I')
@@ -41,7 +44,33 @@ def parse_formats(page, data, offset, parent, version, name, hdl, size):
 		i += 1
 	return off
 
-def parse_pages(page, data, offset, parent, version):
+def parse_master(page, data, offset, parent, version):
+	off = offset
+	hd = HexDumpSave(off)
+	pageiter = add_pgiter(page, 'Master page', 'qxp1', ('page', hd), data[off:off + 97], parent)
+	return off + 97
+
+def parse_page(page, data, offset, parent, version):
+	off = offset
+	hd = HexDumpSave(off)
+	pageiter = add_pgiter(page, 'Page', 'qxp1', ('page', hd), data[off:off + 16], parent)
+	return (pageiter, True, off + 16)
+
+def parse_object(page, data, offset, parent, version, index):
+	return (True, offset)
+
+def parse_pages(page, data, offset, parent, version, npages):
+	off = offset
+	# ATM I assume there are fixed 2 master pages
+	for i in (1, 2):
+		off = parse_master(page, data, off, parent, version)
+	for i in range(1, npages + 1):
+		(pageiter, empty, off) = parse_page(page, data, off, parent, version)
+		last = empty
+		j = 1
+		while not last and off < len(data):
+			(last, off) = parse_object(page, data, off, pageiter, version, j)
+			j += 1
 	return ((), ())
 
 def handle_document(page, data, parent, dummy, version, hdr):
@@ -49,7 +78,11 @@ def handle_document(page, data, parent, dummy, version, hdr):
 	off = parse_formats(page, data, off, parent, version, 'Character formats', 'char_format', 16)
 	off = parse_formats(page, data, off, parent, version, 'Paragraph formats', 'para_format', 150)
 	pagesiter = add_pgiter(page, 'Pages', 'qxp1', (), data[off:], parent)
-	return parse_pages(page, data, off, pagesiter, version)
+	try:
+		return parse_pages(page, data, off, pagesiter, version, hdr.pages)
+	except:
+		traceback.print_exc()
+		return ((), ())
 
 def add_record(hd, size, data, version, dummy):
 	(length, off) = rdata(data, 0, '>I')
@@ -130,6 +163,7 @@ def add_para_format(hd, size, data, version, dummy):
 ids = {
 	'char_format': add_char_format,
 	'para_format': add_para_format,
+	'page': add_saved,
 	'record': add_record,
 }
 
