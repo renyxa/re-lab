@@ -118,6 +118,18 @@ def add_box(hd, data, offset, version, name):
 	add_iter(hd, '%s X2' % name, '%d pt' % x2, off - 2, 2, '>H')
 	return off
 
+def add_frame(hd, data, offset, version):
+	(size, off) = rdata(data, offset, '>H')
+	add_iter(hd, 'Frame size', '%d pt' % size, off - 2, 2, '>H')
+	off += 2
+	(shade, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Frame shade', key2txt(shade, shade_map), off - 1, 1, '>B')
+	(color, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Frame color', key2txt(color, color_map), off - 1, 1, '>B')
+	(style, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, '>B')
+	return off
+
 def add_line(hd, data, offset, version):
 	# TODO: this doesn't quite match
 	off = add_box(hd, data, offset, version, 'Line')
@@ -133,19 +145,15 @@ def add_line(hd, data, offset, version):
 	return off
 
 def add_text(hd, data, offset, version):
-	off = offset
-	return off + 40
+	off = add_frame(hd, data, offset, version)
+	(col, off) = rdata(data, off, '>B')
+	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
+	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
+	off = add_dim(hd, 4, data, off, big_endian, 'Text inset')
+	return off + 24
 
 def add_picture(hd, data, offset, version):
-	(size, off) = rdata(data, offset, '>H')
-	add_iter(hd, 'Frame size', '%d pt' % size, off - 2, 2, '>H')
-	off += 2
-	(shade, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Frame shade', key2txt(shade, shade_map), off - 1, 1, '>B')
-	(color, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Frame color', key2txt(color, color_map), off - 1, 1, '>B')
-	(style, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, '>B')
+	off = add_frame(hd, data, offset, version)
 	off += 5
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale across')
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale down')
