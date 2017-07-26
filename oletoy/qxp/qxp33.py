@@ -87,25 +87,6 @@ content_type_map = {
 	5: 'Picture',
 }
 
-frame_style_map = {
-	0x80: 'Solid',
-	0x81: 'Double',
-	0x82: 'Thin-Thick',
-	0x83: 'Thick-Thin',
-	0x84: 'Thin-Thick-Thin',
-	0x85: 'Thick-Thin-Thick',
-	0x86: 'Triple',
-	0x5: 'Yearbook',
-	0xa: 'Certificate',
-	0xd: 'Coupon',
-	0xf: 'Deco Shadow',
-	0x10: 'Deco Plain',
-	0x11: 'Maze',
-	0x12: 'Ornate',
-	0x13: 'Op Art1',
-	0x14: 'Op Art2'
-}
-
 def _read_name2(data, offset, fmt):
 	rstr = read_c_str if fmt() == LITTLE_ENDIAN else read_pascal_str
 	(name, off) = rstr(data, offset)

@@ -136,21 +136,25 @@ def add_text(hd, data, offset, version):
 	off = offset
 	return off + 40
 
-def add_rectangle(hd, data, offset, version):
-	off = offset
-	off += 12
+def add_picture(hd, data, offset, version):
+	(size, off) = rdata(data, offset, '>H')
+	add_iter(hd, 'Frame size', '%d pt' % size, off - 2, 2, '>H')
+	off += 2
+	(shade, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Frame shade', key2txt(shade, shade_map), off - 1, 1, '>B')
+	(color, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Frame color', key2txt(color, color_map), off - 1, 1, '>B')
+	(style, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, '>B')
+	off += 5
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale across')
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale down')
 	off = add_dim(hd, 4, data, off, big_endian, 'Text outset')
-	return off + 21
-
-def add_rounded_rectangle(hd, data, offset, version):
-	off = offset
-	return off + 45
-
-def add_ellipse(hd, data, offset, version):
-	off = offset
-	return off + 45
+	off += 12
+	(radius, off) = rfract(data, off, big_endian)
+	radius /= 2
+	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (radius, dim2in(radius)), off - 4, 4, '4s')
+	return off + 5
 
 def parse_object(page, data, offset, parent, version, index):
 	off = offset
@@ -168,9 +172,9 @@ def parse_object(page, data, offset, parent, version, index):
 		0: add_line,
 		1: add_line,
 		3: add_text,
-		4: add_rectangle,
-		5: add_rounded_rectangle,
-		6: add_ellipse,
+		4: add_picture,
+		5: add_picture,
+		6: add_picture,
 	}
 	(typ, off) = rdata(data, off, '>B')
 	type_str = key2txt(typ, type_map)
