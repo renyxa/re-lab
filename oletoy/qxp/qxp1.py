@@ -32,6 +32,7 @@ color_map = {
 }
 
 shade_map = {
+	0: '0%',
 	1: '10%',
 	2: '20%',
 	3: '40%',
@@ -118,22 +119,8 @@ def add_box(hd, data, offset, version, name):
 	return off
 
 def add_line(hd, data, offset, version):
-	off = offset
-	(transparent, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Transparent', bool2txt(transparent), off - 1, 1, '>B')
-	off += 2
-	flags_map = {0x80: 'locked?'}
-	(flags, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 1, 1, '>B')
-	off += 1
-	off = add_box(hd, data, off, version, 'Bounding box')
-	off += 24
-	(shade, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
-	(color, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
 	# TODO: this doesn't quite match
-	off = add_box(hd, data, off, version, 'Line')
+	off = add_box(hd, data, offset, version, 'Line')
 	off += 8
 	(width, off) = rfract(data, off, big_endian)
 	add_iter(hd, 'Width', '%.2f pt' % (width - 0.5), off - 4, 4, '4s')
@@ -147,19 +134,19 @@ def add_line(hd, data, offset, version):
 
 def add_text(hd, data, offset, version):
 	off = offset
-	return off + 79
+	return off + 40
 
 def add_rectangle(hd, data, offset, version):
 	off = offset
-	return off + 84
+	return off + 45
 
 def add_rounded_rectangle(hd, data, offset, version):
 	off = offset
-	return off + 84
+	return off + 45
 
 def add_ellipse(hd, data, offset, version):
 	off = offset
-	return off + 84
+	return off + 45
 
 def parse_object(page, data, offset, parent, version, index):
 	off = offset
@@ -184,6 +171,19 @@ def parse_object(page, data, offset, parent, version, index):
 	(typ, off) = rdata(data, off, '>B')
 	type_str = key2txt(typ, type_map)
 	add_iter(hd, 'Type', type_str, off - 1, 1, '>B')
+	(transparent, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Transparent', bool2txt(transparent), off - 1, 1, '>B')
+	off += 2
+	flags_map = {0x80: 'locked?'}
+	(flags, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 1, 1, '>B')
+	off += 1
+	off = add_box(hd, data, off, version, 'Bounding box')
+	off += 24
+	(shade, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
+	(color, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
 	if parser_map.has_key(typ):
 		off = parser_map[typ](hd, data, off, version)
 	(last, off) = rdata(data, off, '>B')
