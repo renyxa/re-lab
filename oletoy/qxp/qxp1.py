@@ -27,9 +27,48 @@ def add_header(hd, size, data, dummy, version):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
 	(ver, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
-	off += 150
+	off += 120
+	measure_map = {
+		0: 'Inches',
+		1: 'Millimeters',
+		2: 'Picas / Inches',
+		3: 'Picas',
+		4: 'Points',
+		5: 'Inches Decimal',
+		6: 'Ciceros',
+	}
+	(measure, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Measure', key2txt(measure, measure_map), off - 1, 1, '>B')
+	(auto_hyph, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Auto hyphenation', key2txt(auto_hyph, {0: 'Off', 1: 'On'}), off - 1, 1, '>B')
+	flags_map = {
+		0x4: 'fract. widths',
+		0x80: 'auto kerning',
+		0x200: 'typesetting mode',
+	}
+	page_ins_map = {0: 'Off', 1: 'At end of story', 2: 'At end of section', 3: 'At end of document'}
+	(flags, off) = rdata(data, off, '>H')
+	hyphens = (flags >> 11) & 0x7
+	add_iter(hd, 'Hyphens in a row', 'unlimited' if hyphens == 0 else hyphens, off - 2, 1, '>B')
+	add_iter(hd, 'Flags', bflag2txt(flags & 0x7e7, flags_map), off - 2, 2, '>H')
+	add_iter(hd, 'Auto page insertion', key2txt((flags >> 3) & 0x03, page_ins_map), off - 2, 2, '>H')
+	off += 7
+	(smallest, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Smallest word', smallest, off - 1, 1, '>B')
+	(break_after, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Break after', break_after, off - 1, 1, '>B')
+	(break_cap, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Break capitalized words', key2txt(break_cap, {0: 'Yes', 1: 'No'}), off - 1, 1, '>B')
+	off += 16
 	(pages, off) = rdata(data, off, '>H')
 	add_iter(hd, '# of pages', pages, off - 2, 2, '>H')
+	off += 30
+	(spaces, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Spaces', spaces / 2, off - 1, 1, '>B')
+	(overall, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Overall', overall / 2, off - 1, 1, '>B')
+	off += 16
+	off = add_sfloat_perc(hd, data, off, big_endian, 'Default auto leading')
 	Header = namedtuple('Header', ('pages',))
 	return (Header(pages), size)
 
