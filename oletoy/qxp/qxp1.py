@@ -20,6 +20,29 @@ import traceback
 from utils import *
 from qxp import *
 
+color_map = {
+	0: 'White',
+	1: 'Black',
+	2: 'Red',
+	3: 'Green',
+	4: 'Blue',
+	5: 'Cyan',
+	6: 'Magenta',
+	7: 'Yellow',
+}
+
+shade_map = {
+	1: '10%',
+	2: '20%',
+	3: '40%',
+	4: '60%',
+	5: '80%',
+	6: 'Solid'
+}
+
+def bool2txt(value):
+	return key2txt(value, {0: 'No', 1: 'Yes'})
+
 def add_header(hd, size, data, dummy, version):
 	off = 0
 	version_map = {0x1c: '???', 0x20: '1.10'}
@@ -83,13 +106,44 @@ def parse_formats(page, data, offset, parent, version, name, hdl, size):
 		i += 1
 	return off
 
-def add_orthogonal_line(hd, data, offset, version):
-	off = offset
-	return off + 64
+def add_box(hd, data, offset, version, name):
+	(y1, off) = rdata(data, offset, '>H')
+	add_iter(hd, '%s Y1' % name, '%d pt' % y1, off - 2, 2, '>H')
+	(x1, off) = rdata(data, off, '>H')
+	add_iter(hd, '%s X1' % name, '%d pt' % x1, off - 2, 2, '>H')
+	(y2, off) = rdata(data, off, '>H')
+	add_iter(hd, '%s Y2' % name, '%d pt' % y2, off - 2, 2, '>H')
+	(x2, off) = rdata(data, off, '>H')
+	add_iter(hd, '%s X2' % name, '%d pt' % x2, off - 2, 2, '>H')
+	return off
 
 def add_line(hd, data, offset, version):
 	off = offset
-	return off + 64
+	(transparent, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Transparent', bool2txt(transparent), off - 1, 1, '>B')
+	off += 2
+	flags_map = {0x80: 'locked?'}
+	(flags, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 1, 1, '>B')
+	off += 1
+	off = add_box(hd, data, off, version, 'Bounding box')
+	off += 24
+	(shade, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
+	(color, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
+	# TODO: this doesn't quite match
+	off = add_box(hd, data, off, version, 'Line')
+	off += 8
+	(width, off) = rfract(data, off, big_endian)
+	add_iter(hd, 'Width', '%.2f pt' % (width - 0.5), off - 4, 4, '4s')
+	(line_style, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, '>B')
+	endcaps_map = {0: 'None', 1: 'Right', 2: 'Left', 3: 'Right arrow', 4: 'Left arrow', 5: 'Both'}
+	(endcaps, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Endcaps', key2txt(endcaps, endcaps_map), off - 1, 1, '>B')
+	off += 3
+	return off
 
 def add_text(hd, data, offset, version):
 	off = offset
@@ -121,7 +175,7 @@ def parse_object(page, data, offset, parent, version, index):
 	}
 	parser_map = {
 		0: add_line,
-		1: add_orthogonal_line,
+		1: add_line,
 		3: add_text,
 		4: add_rectangle,
 		5: add_rounded_rectangle,
@@ -212,19 +266,8 @@ def add_char_format(hd, size, data, version, dummy):
 	add_iter(hd, 'Format flags', bflag2txt(flags, char_format_map), off - 2, 2, '>H')
 	(scale, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Scale', '%.0f%%' % (scale * 100.0 / 0x800), off - 2, 2, '>H')
-	color_map = {
-		0: 'White',
-		1: 'Black',
-		2: 'Red',
-		3: 'Green',
-		4: 'Blue',
-		5: 'Cyan',
-		6: 'Magenta',
-		7: 'Yellow',
-	}
 	(color, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
-	shade_map = {1: '10%', 2: '20%', 3: '40%', 4: '60%', 5: '80%', 6: 'Solid'}
 	(shade, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
 	(track, off) = rdata(data, off, '>H')
