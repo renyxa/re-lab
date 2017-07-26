@@ -138,7 +138,11 @@ def add_text(hd, data, offset, version):
 
 def add_rectangle(hd, data, offset, version):
 	off = offset
-	return off + 45
+	off += 12
+	off = add_fract_perc(hd, data, off, big_endian, 'Scale across')
+	off = add_fract_perc(hd, data, off, big_endian, 'Scale down')
+	off = add_dim(hd, 4, data, off, big_endian, 'Text outset')
+	return off + 21
 
 def add_rounded_rectangle(hd, data, offset, version):
 	off = offset
