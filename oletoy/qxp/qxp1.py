@@ -130,7 +130,7 @@ def add_frame(hd, data, offset, version):
 	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, '>B')
 	return off
 
-def add_line(hd, data, offset, version):
+def add_line(hd, data, offset, version, dummy):
 	# TODO: this doesn't quite match
 	off = add_box(hd, data, offset, version, 'Line')
 	off += 8
@@ -144,15 +144,18 @@ def add_line(hd, data, offset, version):
 	off += 3
 	return off
 
-def add_text(hd, data, offset, version):
+def add_text(hd, data, offset, version, content):
 	off = add_frame(hd, data, offset, version)
 	(col, off) = rdata(data, off, '>B')
 	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
 	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
 	off = add_dim(hd, 4, data, off, big_endian, 'Text inset')
-	return off + 24
+	off += 12
+	if not content:
+		off += 12
+	return off
 
-def add_picture(hd, data, offset, version):
+def add_picture(hd, data, offset, version, content):
 	off = add_frame(hd, data, offset, version)
 	off += 5
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale across')
@@ -189,7 +192,8 @@ def parse_object(page, data, offset, parent, version, index):
 	add_iter(hd, 'Type', type_str, off - 1, 1, '>B')
 	(transparent, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Transparent', bool2txt(transparent), off - 1, 1, '>B')
-	off += 2
+	(content, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Content index', hex(content), off - 2, 2, '>H')
 	flags_map = {0x80: 'locked?'}
 	(flags, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 1, 1, '>B')
@@ -201,13 +205,13 @@ def parse_object(page, data, offset, parent, version, index):
 	(color, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
 	if parser_map.has_key(typ):
-		off = parser_map[typ](hd, data, off, version)
+		off = parser_map[typ](hd, data, off, version, content != 0)
 	(last, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
 	page.model.set_value(objiter, 0, '[%d] %s' % (index, type_str))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (last == 2, off)
+	return (last == 2, content, typ == 3, off)
 
 def add_page_prefix(hd, data, offset, version):
 	off = offset + 4
@@ -246,14 +250,21 @@ def parse_pages(page, data, offset, parent, version, npages):
 	# ATM I assume there are fixed 2 master pages
 	for i in (1, 2):
 		off = parse_master(page, data, off, parent, version)
+	texts = []
+	pictures = []
 	for i in range(1, npages + 1):
 		(pageiter, empty, off) = parse_page(page, data, off, parent, version)
 		last = empty
 		j = 1
 		while not last and off < len(data):
-			(last, off) = parse_object(page, data, off, pageiter, version, j)
+			(last, content, text, off) = parse_object(page, data, off, pageiter, version, j)
+			if content != 0:
+				if text:
+					texts.append(content)
+				else:
+					pictures.append(content)
 			j += 1
-	return ((), ())
+	return (texts, pictures)
 
 def handle_document(page, data, parent, dummy, version, hdr):
 	off = 0
