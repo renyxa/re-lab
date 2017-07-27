@@ -237,17 +237,21 @@ def add_page_prefix(hd, data, offset, version):
 	off += 9
 	return (index, off)
 
+def add_page_tail(hd, data, offset, version, index, name, start, page, parent):
+	(empty, off) = rdata(data, offset, '>B')
+	add_iter(hd, 'Empty', key2txt(empty, {1: 'No', 2: 'Yes'}), off - 1, 1, '>B')
+	page.model.set_value(parent, 0, '[%d] %s' % (index, name))
+	page.model.set_value(parent, 2, off - start)
+	page.model.set_value(parent, 3, data[start:off])
+	return empty == 2, off
+
 def parse_master(page, data, offset, parent, version):
 	off = offset
 	hd = HexDumpSave(off)
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
 	(index, off) = add_page_prefix(hd, data, off, version)
 	off += 81
-	(empty, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Empty', key2txt(empty, {1: 'No', 2: 'Yes'}), off - 1, 1, '>B')
-	page.model.set_value(pageiter, 0, '[%d] Master page' % index)
-	page.model.set_value(pageiter, 2, off - offset)
-	page.model.set_value(pageiter, 3, data[offset:off])
+	(empty, off) = add_page_tail(hd, data, off, version, index, 'Master page', offset, page, pageiter)
 	return off
 
 def parse_page(page, data, offset, parent, version):
@@ -255,12 +259,8 @@ def parse_page(page, data, offset, parent, version):
 	hd = HexDumpSave(off)
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
 	(index, off) = add_page_prefix(hd, data, off, version)
-	(empty, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Empty', key2txt(empty, {1: 'No', 2: 'Yes'}), off - 1, 1, '>B')
-	page.model.set_value(pageiter, 0, '[%d] Page' % index)
-	page.model.set_value(pageiter, 2, off - offset)
-	page.model.set_value(pageiter, 3, data[offset:off])
-	return (pageiter, empty == 2, off)
+	(empty, off) = add_page_tail(hd, data, off, version, index, 'Page', offset, page, pageiter)
+	return (pageiter, empty, off)
 
 def parse_pages(page, data, offset, parent, version, npages):
 	off = offset
