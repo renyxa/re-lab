@@ -112,18 +112,18 @@ def parse_formats(page, data, offset, parent, version, name, hdl, size):
 
 def add_box(hd, data, offset, version, name):
 	(y1, off) = rdata(data, offset, '>H')
-	add_iter(hd, '%s Y1' % name, '%d pt' % y1, off - 2, 2, '>H')
+	add_iter(hd, '%s Y1' % name, dim2txt(y1), off - 2, 2, '>H')
 	(x1, off) = rdata(data, off, '>H')
-	add_iter(hd, '%s X1' % name, '%d pt' % x1, off - 2, 2, '>H')
+	add_iter(hd, '%s X1' % name, dim2txt(x1), off - 2, 2, '>H')
 	(y2, off) = rdata(data, off, '>H')
-	add_iter(hd, '%s Y2' % name, '%d pt' % y2, off - 2, 2, '>H')
+	add_iter(hd, '%s Y2' % name, dim2txt(y2), off - 2, 2, '>H')
 	(x2, off) = rdata(data, off, '>H')
-	add_iter(hd, '%s X2' % name, '%d pt' % x2, off - 2, 2, '>H')
+	add_iter(hd, '%s X2' % name, dim2txt(x2), off - 2, 2, '>H')
 	return off
 
 def add_frame(hd, data, offset, version):
 	(size, off) = rdata(data, offset, '>H')
-	add_iter(hd, 'Frame size', '%d pt' % size, off - 2, 2, '>H')
+	add_iter(hd, 'Frame size', dim2txt(size), off - 2, 2, '>H')
 	off += 2
 	(shade, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Frame shade', key2txt(shade, shade_map), off - 1, 1, '>B')
@@ -138,7 +138,7 @@ def add_line(hd, data, offset, version, dummy):
 	off = add_box(hd, data, offset, version, 'Line')
 	off += 8
 	(width, off) = rfract(data, off, big_endian)
-	add_iter(hd, 'Width', '%.2f pt' % (width - 0.5), off - 4, 4, '4s')
+	add_iter(hd, 'Width', dim2txt(width - 0.5), off - 4, 4, '4s')
 	(line_style, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, '>B')
 	endcaps_map = {0: 'None', 1: 'Right', 2: 'Left', 3: 'Right arrow', 4: 'Left arrow', 5: 'Both'}
@@ -174,7 +174,7 @@ def add_picture(hd, data, offset, version, content):
 	off += 12
 	(radius, off) = rfract(data, off, big_endian)
 	radius /= 2
-	add_iter(hd, 'Corner radius', '%.2f pt / %.2f in' % (radius, dim2in(radius)), off - 4, 4, '4s')
+	add_iter(hd, 'Corner radius', dim2txt(radius), off - 4, 4, '4s')
 	return off + 5
 
 def parse_object(page, data, offset, parent, version, index):
@@ -349,8 +349,7 @@ def _add_tab(hd, size, data, offset, version, parent=None):
 			hd.model.set(parent, 1, 'not defined')
 		else:
 			pos = rfract(data, off - 4, big_endian)[0]
-			pos_str = '%.2f pt / %.2f in' % (pos, dim2in(pos))
-			hd.model.set(parent, 1, "%s / '%s' / %s"  % (key2txt(typ, type_map), fill_char, pos_str))
+			hd.model.set(parent, 1, "%s / '%s' / %s"  % (key2txt(typ, type_map), fill_char, dim2txt(pos)))
 	return off
 
 def add_para_format(hd, size, data, version, dummy):
