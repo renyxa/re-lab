@@ -150,7 +150,14 @@ def add_text(hd, data, offset, version, content):
 	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
 	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
 	off = add_dim(hd, 4, data, off, big_endian, 'Text inset')
-	off += 12
+	off += 2
+	(next_index, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Next linked list index', next_index, off - 2, 2, '>H')
+	(something, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Something link-related', hex(something), off - 4, 4, '>I')
+	off += 1
+	if something == 0:
+		off += 3
 	if not content:
 		off += 12
 	return off
@@ -193,13 +200,23 @@ def parse_object(page, data, offset, parent, version, index):
 	(transparent, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Transparent', bool2txt(transparent), off - 1, 1, '>B')
 	(content, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Content index', hex(content), off - 2, 2, '>H')
+	content_iter = add_iter(hd, 'Content index', hex(content), off - 2, 2, '>H')
 	flags_map = {0x80: 'locked?'}
 	(flags, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 1, 1, '>B')
 	off += 1
 	off = add_box(hd, data, off, version, 'Bounding box')
-	off += 24
+	off += 8
+	(toff, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Offset into text', toff >> 8, off - 4, 3, '3s')
+	# Saw 0x10, 0x20 and 0x30 here. 0x20 is the default
+	add_iter(hd, 'Offset flags?', hex(toff & 0xff), off - 1, 1, '1s')
+	if (toff >> 8) > 0:
+		hd.model.set(content_iter, 0, 'Index in linked list')
+		hd.model.set(content_iter, 1, content)
+	off += 8
+	(link_id, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Link ID', hex(link_id), off - 4, 4, '>I')
 	(shade, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
 	(color, off) = rdata(data, off, '>B')
