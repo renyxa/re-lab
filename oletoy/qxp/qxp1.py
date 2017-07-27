@@ -242,8 +242,8 @@ def parse_master(page, data, offset, parent, version):
 	hd = HexDumpSave(off)
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
 	(index, off) = add_page_prefix(hd, data, off, version)
-	(empty, off) = rdata(data, off, '>B')
 	off += 81
+	(empty, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Empty', key2txt(empty, {1: 'No', 2: 'Yes'}), off - 1, 1, '>B')
 	page.model.set_value(pageiter, 0, '[%d] Master page' % index)
 	page.model.set_value(pageiter, 2, off - offset)
