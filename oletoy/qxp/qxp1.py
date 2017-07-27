@@ -44,6 +44,9 @@ shade_map = {
 def bool2txt(value):
 	return key2txt(value, {0: 'No', 1: 'Yes'})
 
+def dim2txt(value):
+	return '%.2f pt / %.2f in' % (value, dim2in(value))
+
 def add_header(hd, size, data, dummy, version):
 	off = 0
 	version_map = {0x1c: '???', 0x20: '1.10'}
@@ -250,7 +253,20 @@ def parse_master(page, data, offset, parent, version):
 	hd = HexDumpSave(off)
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
 	(index, off) = add_page_prefix(hd, data, off, version)
-	off += 81
+	off += 7
+	(top, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Top margin', dim2txt(top), off - 2, 2, '>H')
+	(left, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Left margin', dim2txt(left), off - 2, 2, '>H')
+	(bottom, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Bottom margin', dim2txt(bottom), off - 2, 2, '>H')
+	(right, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Right margin', dim2txt(right), off - 2, 2, '>H')
+	off += 33
+	(col, off) = rdata(data, off, '>B')
+	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
+	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
+	off += 28
 	(empty, off) = add_page_tail(hd, data, off, version, index, 'Master page', offset, page, pageiter)
 	return off
 
