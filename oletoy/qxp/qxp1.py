@@ -47,6 +47,21 @@ def bool2txt(value):
 def dim2txt(value):
 	return '%.2f pt / %.2f in' % (value, dim2in(value))
 
+def add_sizes(hd, data, offset, version, names):
+	off = offset
+	for name in names:
+		(i, off) = rdata(data, off, '>H')
+		add_iter(hd, name, '%d pt' % i, off - 2, 2, '>H')
+	def adjust(val):
+		return float(val - 0x8000) / 0x10000
+	for name in names:
+		(a, off) = rdata(data, off, '>H')
+		add_iter(hd, '%s adjustment' % name, '%.2f pt' % adjust(a), off - 2, 2, '>H')
+	return off
+
+def add_size(hd, data, offset, version, name):
+	return add_sizes(hd, data, offset, version, (name,))
+
 def add_header(hd, size, data, dummy, version):
 	off = 0
 	version_map = {0x1c: '???', 0x20: '1.10'}
@@ -111,20 +126,10 @@ def parse_formats(page, data, offset, parent, version, name, hdl, size):
 	return off
 
 def add_box(hd, data, offset, version, name):
-	(y1, off) = rdata(data, offset, '>H')
-	add_iter(hd, '%s Y1' % name, dim2txt(y1), off - 2, 2, '>H')
-	(x1, off) = rdata(data, off, '>H')
-	add_iter(hd, '%s X1' % name, dim2txt(x1), off - 2, 2, '>H')
-	(y2, off) = rdata(data, off, '>H')
-	add_iter(hd, '%s Y2' % name, dim2txt(y2), off - 2, 2, '>H')
-	(x2, off) = rdata(data, off, '>H')
-	add_iter(hd, '%s X2' % name, dim2txt(x2), off - 2, 2, '>H')
-	return off
+	return add_sizes(hd, data, offset, version, ['%s %s' % (name, c) for c in ('Y1', 'X1', 'Y2', 'X2')])
 
 def add_frame(hd, data, offset, version):
-	(size, off) = rdata(data, offset, '>H')
-	add_iter(hd, 'Frame size', dim2txt(size), off - 2, 2, '>H')
-	off += 2
+	off = add_size(hd, data, offset, version, 'Frame size')
 	(shade, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Frame shade', key2txt(shade, shade_map), off - 1, 1, '>B')
 	(color, off) = rdata(data, off, '>B')
@@ -134,11 +139,9 @@ def add_frame(hd, data, offset, version):
 	return off
 
 def add_line(hd, data, offset, version, dummy):
-	# TODO: this doesn't quite match
+	# NOTE: the coords are shifted by +1
 	off = add_box(hd, data, offset, version, 'Line')
-	off += 8
-	(width, off) = rfract(data, off, big_endian)
-	add_iter(hd, 'Width', dim2txt(width - 0.5), off - 4, 4, '4s')
+	off = add_size(hd, data, off, version, 'Width')
 	(line_style, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, '>B')
 	endcaps_map = {0: 'None', 1: 'Right', 2: 'Left', 3: 'Right arrow', 4: 'Left arrow', 5: 'Both'}
@@ -208,8 +211,8 @@ def parse_object(page, data, offset, parent, version, index):
 	(flags, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Flags?', bflag2txt(flags, flags_map), off - 1, 1, '>B')
 	off += 1
+	# NOTE: the coords for lines are shifted by +1
 	off = add_box(hd, data, off, version, 'Bounding box')
-	off += 8
 	(toff, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Offset into text', toff >> 8, off - 4, 3, '3s')
 	# Saw 0x10, 0x20 and 0x30 here. 0x20 is the default
@@ -254,15 +257,8 @@ def parse_master(page, data, offset, parent, version):
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
 	(index, off) = add_page_prefix(hd, data, off, version)
 	off += 7
-	(top, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Top margin', dim2txt(top), off - 2, 2, '>H')
-	(left, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Left margin', dim2txt(left), off - 2, 2, '>H')
-	(bottom, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Bottom margin', dim2txt(bottom), off - 2, 2, '>H')
-	(right, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Right margin', dim2txt(right), off - 2, 2, '>H')
-	off += 33
+	off = add_sizes(hd, data, off, version, ['%s margin' % s for s in ('Top', 'Left', 'Bottom', 'Right')])
+	off += 25
 	(col, off) = rdata(data, off, '>B')
 	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
 	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
