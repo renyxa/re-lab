@@ -94,7 +94,10 @@ def add_header(hd, size, data, dummy, version):
 	add_iter(hd, 'Hyphens in a row', 'unlimited' if hyphens == 0 else hyphens, off - 2, 1, '>B')
 	add_iter(hd, 'Flags', bflag2txt(flags & 0x7e7, flags_map), off - 2, 2, '>H')
 	add_iter(hd, 'Auto page insertion', key2txt((flags >> 3) & 0x03, page_ins_map), off - 2, 2, '>H')
-	off += 7
+	off += 5
+	(double, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Double sided', bool2txt(double), off - 1, 1, '>B')
+	off += 1
 	(smallest, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Smallest word', smallest, off - 1, 1, '>B')
 	(break_after, off) = rdata(data, off, '>B')
@@ -109,8 +112,8 @@ def add_header(hd, size, data, dummy, version):
 	off = add_size(hd, data, off, version, 'Page width')
 	off = add_size(hd, data, off, version, 'Top margin')
 	off = add_size(hd, data, off, version, 'Bottom margin')
-	off = add_size(hd, data, off, version, 'Left margin')
-	off = add_size(hd, data, off, version, 'Right margin')
+	off = add_size(hd, data, off, version, '%s margin' % ('Inside' if double else 'Left'))
+	off = add_size(hd, data, off, version, '%s margin' % ('Outside' if double else 'Right'))
 	off += 6
 	(spaces, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Spaces', spaces / 2, off - 1, 1, '>B')
@@ -270,7 +273,8 @@ def parse_master(page, data, offset, parent, version):
 	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
 	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
 	off += 28
-	(empty, off) = add_page_tail(hd, data, off, version, index, 'Master page', offset, page, pageiter)
+	name_map = {1: 'Right master', 2: 'Left master'}
+	(empty, off) = add_page_tail(hd, data, off, version, index, key2txt(index, name_map), offset, page, pageiter)
 	return off
 
 def parse_page(page, data, offset, parent, version):
