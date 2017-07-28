@@ -104,7 +104,14 @@ def add_header(hd, size, data, dummy, version):
 	off += 16
 	(pages, off) = rdata(data, off, '>H')
 	add_iter(hd, '# of pages', pages, off - 2, 2, '>H')
-	off += 30
+	# NOTE: the height and width are 2 pts greater than they should be
+	off = add_size(hd, data, off, version, 'Page height')
+	off = add_size(hd, data, off, version, 'Page width')
+	off = add_size(hd, data, off, version, 'Top margin')
+	off = add_size(hd, data, off, version, 'Bottom margin')
+	off = add_size(hd, data, off, version, 'Left margin')
+	off = add_size(hd, data, off, version, 'Right margin')
+	off += 6
 	(spaces, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Spaces', spaces / 2, off - 1, 1, '>B')
 	(overall, off) = rdata(data, off, '>B')
