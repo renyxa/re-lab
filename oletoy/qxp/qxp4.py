@@ -600,9 +600,8 @@ def add_linked_text_offset(hd, data, offset, fmt, header):
 
 def add_next_linked_text_settings(hd, data, offset, fmt, header):
 	off = offset
-	(next_index, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Next linked list index?', next_index, off - 2, 2, fmt('H'))
-	off += 2
+	(next_index, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'Next linked list index?', next_index, off - 4, 4, fmt('I'))
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
 	header.next_linked_index = next_index
