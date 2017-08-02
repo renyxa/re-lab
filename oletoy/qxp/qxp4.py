@@ -31,7 +31,7 @@ shape_types_map = {
 	4: 'Bezier line',
 	5: 'Rectangle',
 	6: 'Rounded rectangle',
-	7: 'Freehand',
+	7: 'Concave rectangle',
 	8: 'Beveled rectangle',
 	9: 'Oval',
 	11: 'Bezier',
@@ -891,7 +891,7 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			off = add_line(hd, data, off, fmt, version, obfctx, header)
 		elif header.shape in [4]:
 			off = add_bezier_line(hd, data, off, fmt, version, obfctx, header)
-		elif header.shape in [7, 11]:
+		elif header.shape in [11]:
 			off = add_bezier_empty_box(hd, data, off, fmt, version, obfctx, header)
 		else:
 			off = add_empty_box(hd, data, off, fmt, version, obfctx, header)
@@ -902,12 +902,12 @@ def handle_object(page, data, offset, parent, fmt, version, obfctx, index):
 			off = add_line_text(hd, data, off, fmt, version, obfctx, header)
 		elif header.shape in [4]:
 			off = add_bezier_line_text(hd, data, off, fmt, version, obfctx, header)
-		elif header.shape in [7, 11]:
+		elif header.shape in [11]:
 			off = add_bezier_text_box(hd, data, off, fmt, version, obfctx, header)
 		else:
 			off = add_text_box(hd, data, off, fmt, version, obfctx, header)
 	elif header.content_type == 4:
-		if header.shape in [7, 11]:
+		if header.shape in [11]:
 			off = add_bezier_picture_box(hd, data, off, fmt, version, obfctx, header, page, objiter)
 		else:
 			off = add_picture_box(hd, data, off, fmt, version, obfctx, header, page, objiter)
