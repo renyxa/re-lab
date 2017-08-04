@@ -247,11 +247,25 @@ def parse_object(page, data, offset, parent, version, index):
 	return (last == 2, content, typ == 3, off)
 
 def add_page_prefix(hd, data, offset, version):
-	off = offset + 4
+	off = offset
+	end = data.find('\0', off, off + 4)
+	if end == -1:
+		end = off + 4
+	add_iter(hd, 'Page number prefix', data[off:end], off, 4, '4s')
+	off += 4
 	(index, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Index', index, off - 2, 2, '>H')
-	off += 9
-	return (index, off)
+	add_iter(hd, 'Page number', index, off - 2, 2, '>H')
+	format_map = {
+		1: 'Numeric',
+		2: 'Uppercase Roman',
+		3: 'Lowercase Roman',
+		4: 'Uppercase alphabetic',
+		5: 'Lowercase alphabetic',
+	}
+	(fmt, off) = rdata(data, off, '>b')
+	add_iter(hd, 'Numbering format', key2txt(abs(fmt), format_map), off - 1, 1, '>b')
+	off += 8
+	return (index, off, fmt > 0)
 
 def add_page_tail(hd, data, offset, version, index, name, start, page, parent):
 	(empty, off) = rdata(data, offset, '>B')
@@ -265,7 +279,7 @@ def parse_master(page, data, offset, parent, version):
 	off = offset
 	hd = HexDumpSave(off)
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
-	(index, off) = add_page_prefix(hd, data, off, version)
+	(index, off, section_start) = add_page_prefix(hd, data, off, version)
 	off += 7
 	off = add_sizes(hd, data, off, version, ['%s margin' % s for s in ('Top', 'Left', 'Bottom', 'Right')])
 	off += 25
@@ -281,8 +295,11 @@ def parse_page(page, data, offset, parent, version):
 	off = offset
 	hd = HexDumpSave(off)
 	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
-	(index, off) = add_page_prefix(hd, data, off, version)
-	(empty, off) = add_page_tail(hd, data, off, version, index, 'Page', offset, page, pageiter)
+	(index, off, section_start) = add_page_prefix(hd, data, off, version)
+	name = 'Page'
+	if section_start:
+		name += '*'
+	(empty, off) = add_page_tail(hd, data, off, version, index, name, offset, page, pageiter)
 	return (pageiter, empty, off)
 
 def parse_pages(page, data, offset, parent, version, npages):
