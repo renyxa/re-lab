@@ -148,7 +148,7 @@ def add_frame(hd, data, offset, version):
 	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, '>B')
 	return off
 
-def add_line(hd, data, offset, version, dummy):
+def add_line(hd, data, offset, version, content, content_iter):
 	# NOTE: the coords are shifted by +1
 	off = add_box(hd, data, offset, version, 'Line')
 	off = add_size(hd, data, off, version, 'Width')
@@ -158,9 +158,9 @@ def add_line(hd, data, offset, version, dummy):
 	(endcaps, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Endcaps', key2txt(endcaps, endcaps_map), off - 1, 1, '>B')
 	off += 3
-	return off
+	return content, off
 
-def add_text(hd, data, offset, version, content):
+def add_text(hd, data, offset, version, content, content_iter):
 	off = add_frame(hd, data, offset, version)
 	(col, off) = rdata(data, off, '>B')
 	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
@@ -171,14 +171,17 @@ def add_text(hd, data, offset, version, content):
 	add_iter(hd, 'Next linked list index', next_index, off - 2, 2, '>H')
 	(something, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Something link-related', hex(something), off - 4, 4, '>I')
+	if something:
+		hd.model.set(content_iter, 0, 'Index in linked list')
+		hd.model.set(content_iter, 1, content)
 	off += 1
 	if something == 0:
 		off += 3
-	if not content:
+	if content == 0:
 		off += 12
-	return off
+	return content if something == 0 else 0, off
 
-def add_picture(hd, data, offset, version, content):
+def add_picture(hd, data, offset, version, content, content_iter):
 	off = add_frame(hd, data, offset, version)
 	off += 5
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale across')
@@ -188,7 +191,7 @@ def add_picture(hd, data, offset, version, content):
 	(radius, off) = rfract(data, off, big_endian)
 	radius /= 2
 	add_iter(hd, 'Corner radius', dim2txt(radius), off - 4, 4, '4s')
-	return off + 5
+	return content, off + 5
 
 def parse_object(page, data, offset, parent, version, index):
 	off = offset
@@ -227,9 +230,6 @@ def parse_object(page, data, offset, parent, version, index):
 	add_iter(hd, 'Offset into text', toff >> 8, off - 4, 3, '3s')
 	# Saw 0x10, 0x20 and 0x30 here. 0x20 is the default
 	add_iter(hd, 'Offset flags?', hex(toff & 0xff), off - 1, 1, '1s')
-	if (toff >> 8) > 0:
-		hd.model.set(content_iter, 0, 'Index in linked list')
-		hd.model.set(content_iter, 1, content)
 	off += 8
 	(link_id, off) = rdata(data, off, '>I')
 	add_iter(hd, 'Link ID', hex(link_id), off - 4, 4, '>I')
@@ -238,7 +238,7 @@ def parse_object(page, data, offset, parent, version, index):
 	(color, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
 	if parser_map.has_key(typ):
-		off = parser_map[typ](hd, data, off, version, content != 0)
+		(content, off) = parser_map[typ](hd, data, off, version, content, content_iter)
 	(last, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
 	page.model.set_value(objiter, 0, '[%d] %s' % (index, type_str))
