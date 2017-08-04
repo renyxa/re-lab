@@ -365,37 +365,37 @@ def biff_defcolw (hd,data):
 def biff_condfmt (hd,data):
 	off = 4
 	cce1 = struct.unpack("<H",data[off:off+2])[0]
-	add_iter (hd,"ccf",cce1,off,2,"<H")
+	add_iter (hd,"ccf",cce1,off,2,"<H", tip="Number of CF entries to follow")
 	off += 2
 	flags = struct.unpack("<H",data[off:off+2])[0]
 	print(flags)
 	fToughRecalc = flags&1
 	nID = (flags&0xfffe) >> 1
-	add_iter (hd,"fToughRecalc",fToughRecalc,off,1,"<B")
-	add_iter (hd,"nID",nID,off,2,"<h")
+	add_iter (hd,"fToughRecalc",fToughRecalc,off,1,"<B", tip="Specifies whether the record requires significant processing")
+	add_iter (hd,"nID",nID,off,2,"<h", "ID of the record")
 	off += 2
         rwFirst = struct.unpack("<H",data[off:off+2])[0]
         rwLast = struct.unpack("<H",data[off+2:off+4])[0]
         colFirst = struct.unpack("<H",data[off+4:off+6])[0]
         colLast = struct.unpack("<H",data[off+6:off+8])[0]
-	add_iter (hd,"rwFirst",rwFirst,off,2,"<H")
-	add_iter (hd,"rwLast",rwLast,off+2,2,"<H")
-	add_iter (hd,"colFirst",colFirst,off+4,2,"<H")
-	add_iter (hd,"colLast",colLast,off+6,2,"<H")
+	add_iter (hd,"rwFirst",rwFirst,off,2,"<H", tip="First Row")
+	add_iter (hd,"rwLast",rwLast,off+2,2,"<H", tip="Last Row")
+	add_iter (hd,"colFirst",colFirst,off+4,2,"<H", tip="First Column")
+	add_iter (hd,"colLast",colLast,off+6,2,"<H", tip="Last Column")
 	off += 8
 
 #0x1b1
 def biff_cf (hd,data):
 	off = 4
-	add_iter (hd,"ct",ord(data[off]),off,1,"B")
+	add_iter (hd,"ct",ord(data[off]),off,1,"B", tip="Whether two conditions are applied")
 	off += 1
-	add_iter (hd,"cp",ord(data[off]),off,1,"B")
+        add_iter (hd,"cp",ord(data[off]),off,1,"B", tip="The comparison function to use")
 	off += 1
 	cce1 = struct.unpack("<H",data[off:off+2])[0]
-	add_iter (hd,"cce1",cce1,off,2,"<H")
+	add_iter (hd,"cce1",cce1,off,2,"<H", tip="The size of the condition1 record")
 	off += 2
 	cce2 = struct.unpack("<H",data[off:off+2])[0]
-	add_iter (hd,"cce2",cce2,off,2,"<H")
+	add_iter (hd,"cce2",cce2,off,2,"<H", tip="The size of the condition2 record")
 	off += 2
 	#rgbdxf (variable)
 	#rgce1
