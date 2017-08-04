@@ -247,25 +247,9 @@ def parse_object(page, data, offset, parent, version, index):
 	return (last == 2, content, typ == 3, off)
 
 def add_page_prefix(hd, data, offset, version):
-	off = offset
-	end = data.find('\0', off, off + 4)
-	if end == -1:
-		end = off + 4
-	add_iter(hd, 'Page number prefix', data[off:end], off, 4, '4s')
-	off += 4
-	(index, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Page number', index, off - 2, 2, '>H')
-	format_map = {
-		1: 'Numeric',
-		2: 'Uppercase Roman',
-		3: 'Lowercase Roman',
-		4: 'Uppercase alphabetic',
-		5: 'Lowercase alphabetic',
-	}
-	(fmt, off) = rdata(data, off, '>b')
-	add_iter(hd, 'Numbering format', key2txt(abs(fmt), format_map), off - 1, 1, '>b')
+	(number, sect_start, off) = add_section(hd, data, offset, big_endian, version)
 	off += 8
-	return (index, off, fmt > 0)
+	return (number, off, sect_start)
 
 def add_page_tail(hd, data, offset, version, index, name, start, page, parent):
 	(empty, off) = rdata(data, offset, '>B')

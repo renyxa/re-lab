@@ -183,19 +183,41 @@ def add_page_columns(hd, size, data, offset, fmt, parent=None):
 	off = add_dim(hd, size, data, off, fmt, 'Gutter width', parent=parent)
 	return off
 
+def add_section(hd, data, offset, fmt, version, parent=None):
+	off = offset
+	end = data.find('\0', off, off + 4)
+	if end == -1:
+		end = off + 4
+	prefix = data[off:end]
+	add_iter(hd, 'Page number prefix', prefix, off, 4, '4s', parent=parent)
+	off += 4
+	(number, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Page number', number, off - 2, 2, fmt('H'), parent=parent)
+	format_map = {
+		1: 'Numeric',
+		2: 'Uppercase Roman',
+		3: 'Lowercase Roman',
+		4: 'Uppercase alphabetic',
+		5: 'Lowercase alphabetic',
+	}
+	(format, off) = rdata(data, off, fmt('b'))
+	add_iter(hd, 'Numbering format', key2txt(abs(format), format_map), off - 1, 1, fmt('b'), parent=parent)
+	if parent:
+		prefix_str = '' if prefix == '' else '%s / ' % prefix
+		hd.model.set(parent, 1, '%s%d / %s' % (prefix_str, number, key2txt(abs(format), format_map)))
+	return number, format > 0, off
+
 def add_page_settings(hd, size, data, offset, fmt, version, parent=None):
 	off = offset
 	off = add_page_bbox(hd, off + 16, data, off, fmt, parent)
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=parent)
-	hd.model.set(parent, 1, hex(id))
 	off += 4
 	(master_ind, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Master page index', '' if master_ind == 0xffff else master_ind, off - 2, 2, fmt('H'), parent=parent)
-	off += 6
-	(ind, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Index/Order', ind, off - 2, 2, fmt('H'), parent=parent)
 	off += 2
+	(number, section_start, off) = add_section(hd, data, off, fmt, version, parent)
+	off += 1
 	off = add_margins(hd, off + 16, data, off, fmt, parent)
 	off = add_page_columns(hd, off + 8, data, off, fmt, parent)
 	if version >= VERSION_4:
