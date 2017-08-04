@@ -33,6 +33,13 @@ ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	255:"OEM Latin I"}
 
 def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,tip=None):
+        """ Adds an entry to the view
+
+Parameters
+----------
+tip: str
+    An optional additional explanation of the entry
+        """
 	iter = hd.model.append(parent, None)
 	hd.model.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
 	return iter
