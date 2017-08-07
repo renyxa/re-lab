@@ -433,6 +433,15 @@ frame_style_map = {
 	0x14: 'Op Art2'
 }
 
+arrow_map = {
+	0: 'None',
+	1: 'Right',
+	2: 'Left',
+	3: 'Right with tail',
+	4: 'Left with tail',
+	5: 'Double-sided',
+}
+
 if __name__ == '__main__':
 	def test_deobfuscate(seed, value, n, expected):
 		assert deobfuscate(value, seed, n) == expected

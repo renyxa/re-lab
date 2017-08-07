@@ -414,7 +414,7 @@ def add_line(hd, data, offset, fmt, version, obfctx, header):
 	(line_style, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Line style', key2txt(line_style, line_style_map), off - 1, 1, fmt('B'))
 	(arrow, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	add_iter(hd, 'Arrowheads type', key2txt(arrow, arrow_map), off - 1, 1, fmt('B'))
 	# qxp33 doesn't support custom runaround margins for lines and "Manual" type
 	return off
 

@@ -513,7 +513,7 @@ def add_frame(hd, data, offset, fmt, name='Frame'):
 	(gap_shade, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Gap shade', '%.2f%%' % (gap_shade * 100), off - 4, 4, fmt('i'))
 	(arrow, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Arrowheads type', arrow, off - 1, 1, fmt('B'))
+	add_iter(hd, 'Arrowheads type', key2txt((arrow >> 2) & 7, arrow_map), off - 1, 1, fmt('B'))
 	(bmp_frame, off) = rdata(data, off, fmt('B')) # only for rectangles
 	add_iter(hd, 'Is bitmap frame', key2txt(bmp_frame, {0: 'No', 1: 'Yes'}), off - 1, 1, fmt('B'))
 	(frame_style, off) = rdata(data, off, fmt('H'))
