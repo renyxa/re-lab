@@ -175,8 +175,9 @@ def handle_hj(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('hj', fmt, version), data, parent)
 
 def handle_dash_stripe(page, data, parent, fmt, version, index):
+	(id, _) = rdata(data, 0xa8, fmt('H'))
 	name = _read_name(data, fmt, 0xb0)
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp4', ('dash_stripe', fmt, version), data, parent)
+	add_pgiter(page, '[%d] %s' % (id, name), 'qxp4', ('dash_stripe', fmt, version), data, parent)
 
 def handle_list(page, data, parent, fmt, version, index):
 	name = _read_name(data, fmt)
@@ -1244,7 +1245,9 @@ def add_para_style(hd, size, data, fmt, version):
 	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):
-	off = 0xaa
+	off = 0xa8
+	(id, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'ID', id, off - 2, 2, fmt('H'))
 	(typ, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Type', key2txt(typ, dash_stripe_type_map), off - 1, 1, fmt('B'))
 	(custom, off) = rdata(data, off, fmt('B'))
