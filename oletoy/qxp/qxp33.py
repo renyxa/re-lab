@@ -688,7 +688,7 @@ def add_para_format(hd, size, data, fmt, version):
 
 def add_para_style(hd, size, data, fmt, version):
 	off = 0x28
-	_add_para_format(hd, size, data, off, fmt, version)
+	off = _add_para_format(hd, size, data, off, fmt, version)
 	off += 18
 	_add_name2(hd, size, data, off, fmt)
 
