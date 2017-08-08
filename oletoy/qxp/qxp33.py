@@ -94,9 +94,6 @@ def _read_name2(data, offset, fmt):
 		off += 1
 	return name, off
 
-def handle_para_style(page, data, parent, fmt, version, index, name):
-	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('para_style', fmt, version), data, parent)
-
 def handle_hj(page, data, parent, fmt, version, index, name):
 	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('hj', fmt, version), data, parent)
 
@@ -106,8 +103,8 @@ def handle_char_format(page, data, parent, fmt, version, index):
 def handle_para_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
 
-def _parse_collection(page, data, offset, end, parent, fmt, version, handler, size, init=0):
-	i = init
+def _parse_collection(page, data, offset, end, parent, fmt, version, handler, size):
+	i = 0
 	off = offset
 	while off < end:
 		handler(page, data[off:off + size], parent, fmt, version, i)
@@ -157,7 +154,15 @@ def parse_colors(page, data, offset, parent, fmt, version):
 def parse_para_styles(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Paragraph styles', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_collection_named(page, data, off, off + length, reciter, fmt, version, handle_para_style, 306, 1)
+	end = off + length
+	while off < end:
+		start = off
+		off += 298
+		(idx, off) = rdata(data, off, fmt('H'))
+		off += 6
+		(name, off) = _read_name2(data, off, fmt)
+		add_pgiter(page, '[%d] %s' % (idx, name), 'qxp33', ('para_style', fmt, version), data[start:off], reciter)
+	return off
 
 def parse_hjs(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -689,7 +694,10 @@ def add_para_format(hd, size, data, fmt, version):
 def add_para_style(hd, size, data, fmt, version):
 	off = 0x28
 	off = _add_para_format(hd, size, data, off, fmt, version)
-	off += 18
+	off += 10
+	(idx, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Index', idx, off - 2, 2, fmt('H'))
+	off += 6
 	_add_name2(hd, size, data, off, fmt)
 
 def add_hj(hd, size, data, fmt, version):
