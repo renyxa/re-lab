@@ -1245,7 +1245,9 @@ def add_para_style(hd, size, data, fmt, version):
 	_add_para_format(hd, size, data, off, fmt, version)
 
 def add_dash_stripe(hd, size, data, fmt, version):
-	off = 0xa8
+	seglen = 0xa8
+	segiter = add_iter(hd, 'Segment lengths', '', 0, seglen, '%ds' % seglen)
+	off = seglen
 	(id, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'ID', id, off - 2, 2, fmt('H'))
 	(typ, off) = rdata(data, off, fmt('B'))
@@ -1275,9 +1277,11 @@ def add_dash_stripe(hd, size, data, fmt, version):
 	off = 0
 	for i in range(1, count + 1):
 		if is_points:
-			off = add_dim(hd, size, data, off, fmt, 'Segment %d length' % i)
+			off = add_dim(hd, size, data, off, fmt, '[%d]' % i, segiter)
 		else:
-			off = add_fract_perc(hd, data, off, fmt, 'Segment %d length' % i)
+			off = add_fract_perc(hd, data, off, fmt, '[%d]' % i, segiter)
+	if off < seglen:
+		add_iter(hd, 'Unused', '', off, seglen - off, '%ds' % (seglen - off), parent=segiter)
 
 def add_list(hd, size, data, fmt, version):
 	off = _add_name(hd, size, data, fmt, 0)
