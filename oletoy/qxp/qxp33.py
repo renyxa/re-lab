@@ -635,6 +635,8 @@ def add_char_format(hd, size, data, fmt, version):
 	(track, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Track amount', track, off - 4, 4, '4s')
 	off = add_dim(hd, size, data, off, fmt, 'Baseline shift')
+	(control, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Control char(s)?', key2txt(control, {0: 'No'}, 'Yes'), off - 1, 1, fmt('B'))
 
 def _add_para_format(hd, size, data, off, fmt, version):
 	(flags, off) = rdata(data, off, fmt('B'))

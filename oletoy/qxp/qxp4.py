@@ -1153,8 +1153,8 @@ def _add_char_format(hd, size, data, offset, fmt, version):
 	(track, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Track amount', track, off - 4, 4, '4s')
 	off = add_dim(hd, size, data, off, fmt, 'Baseline shift')
-	# TODO: this is baseline shift, but I don't understand yet how it's saved
-	off += 2
+	(control, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Control char(s)?', key2txt(control, {0: 'No'}, 'Yes'), off - 1, 1, fmt('B'))
 
 def add_char_format(hd, size, data, fmt, version):
 	off = 0
