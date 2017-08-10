@@ -299,7 +299,7 @@ def add_header_common(hd, size, data, fmt):
 	add_iter(hd, 'Signature', sig, off - 3, 3, '3s')
 	lang_map = {
 		0x33: ('English', 'cp1252'),
-		0x61: ('Korean', 'cp969'), # TODO: the cp is just an assumption
+		0x61: ('Korean', 'cp949'), # TODO: the cp is just an assumption
 	}
 	(lang, off) = rdata(data, off, fmt('B'))
 	(language, encoding) = key2txt(lang, lang_map, ('Unknown', 'ascii'))
