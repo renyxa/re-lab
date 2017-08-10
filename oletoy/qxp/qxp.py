@@ -320,7 +320,7 @@ def add_header_common(hd, size, data, fmt):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	return (Header(encoding), off)
 
-def add_tab(hd, size, data, offset, fmt, version, parent=None):
+def add_tab(hd, size, data, offset, fmt, version, encoding, parent=None):
 	type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align'}
 	(typ, off) = rdata(data, offset, fmt('B'))
 	add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, fmt('B'), parent=parent)
@@ -329,12 +329,14 @@ def add_tab(hd, size, data, offset, fmt, version, parent=None):
 	if subtype_map.has_key(subtype):
 		add_iter(hd, 'Subtype', key2txt(subtype, subtype_map), off - 1, 1, fmt('B'), parent=parent)
 	else:
-		add_iter(hd, 'Align at char', chr(subtype), off - 1, 1, '1s', parent=parent)
+		align_char = unicode(chr(subtype), encoding)
+		add_iter(hd, 'Align at char', align_char, off - 1, 1, '1s', parent=parent)
 	(fill, off) = rdata(data, off, fmt('H'))
 	fill_char = chr(fill & 0xff)
 	upper = fill >> 8
 	if upper != 0:
 		fill_char = chr(upper) + fill_char
+	fill_char = unicode(fill_char, encoding)
 	add_iter(hd, 'Fill char', fill_char, off - 2, 2, fmt('H'), parent=parent)
 	(pos, off) = rdata(data, off, fmt('i'))
 	if pos == -1:
@@ -346,7 +348,7 @@ def add_tab(hd, size, data, offset, fmt, version, parent=None):
 			hd.model.set(parent, 1, 'not defined')
 		else:
 			if typ == 3:
-				subtype_str = ' @ %s' % (key2txt(subtype, subtype_map) if subtype_map.has_key(subtype) else "'%s'" % chr(subtype))
+				subtype_str = ' @ %s' % (key2txt(subtype, subtype_map) if subtype_map.has_key(subtype) else "'%s'" % align_char)
 			else:
 				subtype_str = ''
 			pos = rfract(data, off - 4, fmt)[0]

@@ -100,14 +100,17 @@ def handle_hj(page, data, parent, fmt, version, index, name):
 def handle_char_format(page, data, parent, fmt, version, index):
 	add_pgiter(page, '[%d]' % index, 'qxp33', ('char_format', fmt, version), data, parent)
 
-def handle_para_format(page, data, parent, fmt, version, index):
-	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version), data, parent)
+def handle_para_format(page, data, parent, fmt, version, encoding, index):
+	add_pgiter(page, '[%d]' % index, 'qxp33', ('para_format', fmt, version, encoding), data, parent)
 
-def _parse_collection(page, data, offset, end, parent, fmt, version, handler, size):
+def _parse_collection(page, data, offset, end, parent, fmt, version, encoding, handler, size):
 	i = 0
 	off = offset
 	while off < end:
-		handler(page, data[off:off + size], parent, fmt, version, i)
+		if encoding:
+			handler(page, data[off:off + size], parent, fmt, version, encoding, i)
+		else:
+			handler(page, data[off:off + size], parent, fmt, version, i)
 		off += size
 		i += 1
 	return off
@@ -151,7 +154,7 @@ def parse_colors(page, data, offset, parent, fmt, version):
 		add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('color', fmt, version), data[start:off], reciter)
 	return offset + 4 + length
 
-def parse_para_styles(page, data, offset, parent, fmt, version):
+def parse_para_styles(page, data, offset, parent, fmt, version, encoding):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Paragraph styles', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
 	end = off + length
@@ -161,7 +164,7 @@ def parse_para_styles(page, data, offset, parent, fmt, version):
 		(idx, off) = rdata(data, off, fmt('H'))
 		off += 6
 		(name, off) = _read_name2(data, off, fmt)
-		add_pgiter(page, '[%d] %s' % (idx, name), 'qxp33', ('para_style', fmt, version), data[start:off], reciter)
+		add_pgiter(page, '[%d] %s' % (idx, name), 'qxp33', ('para_style', fmt, version, encoding), data[start:off], reciter)
 	return off
 
 def parse_hjs(page, data, offset, parent, fmt, version):
@@ -172,12 +175,12 @@ def parse_hjs(page, data, offset, parent, fmt, version):
 def parse_char_formats(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Character formats', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_collection(page, data, off, off + length, reciter, fmt, version, handle_char_format, 46)
+	return _parse_collection(page, data, off, off + length, reciter, fmt, version, None, handle_char_format, 46)
 
-def parse_para_formats(page, data, offset, parent, fmt, version):
+def parse_para_formats(page, data, offset, parent, fmt, version, encoding):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Paragraph formats', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
-	return _parse_collection(page, data, off, off + length, reciter, fmt, version, handle_para_format, 256)
+	return _parse_collection(page, data, off, off + length, reciter, fmt, version, encoding, handle_para_format, 256)
 
 def _add_corner_radius(hd, data, off, fmt):
 	(corner_radius, off) = rfract(data, off, fmt)
@@ -567,11 +570,11 @@ def handle_document(page, data, parent, fmt, version, hdr):
 		off = parse_physical_fonts(page, data, off, parent, fmt, version)
 	off = parse_colors(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
-	off = parse_para_styles(page, data, off, parent, fmt, version)
+	off = parse_para_styles(page, data, off, parent, fmt, version, hdr.encoding)
 	off = parse_hjs(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_char_formats(page, data, off, parent, fmt, version)
-	off = parse_para_formats(page, data, off, parent, fmt, version)
+	off = parse_para_formats(page, data, off, parent, fmt, version, hdr.encoding)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesiter = add_pgiter(page, 'Pages', 'qxp33', (), data[off:], parent)
 	return handle_pages(page, data[off:], pagesiter, fmt, version, obfctx, hdr.masters)
@@ -638,7 +641,7 @@ def add_char_format(hd, size, data, fmt, version):
 	(control, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Control char(s)?', key2txt(control, {0: 'No'}, 'Yes'), off - 1, 1, fmt('B'))
 
-def _add_para_format(hd, size, data, off, fmt, version):
+def _add_para_format(hd, size, data, off, fmt, version, encoding):
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Flags', qxpbflag2txt(flags, para_flags_map, fmt), off - 1, 1, fmt('B'))
 	off += 2
@@ -682,20 +685,20 @@ def _add_para_format(hd, size, data, off, fmt, version):
 	off += 8
 	for i in range(0, 20):
 		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 8, '8s')
-		off = add_tab(hd, size, data, off, fmt, version, tabiter)
+		off = add_tab(hd, size, data, off, fmt, version, encoding, tabiter)
 	return off
 
-def add_para_format(hd, size, data, fmt, version):
+def add_para_format(hd, size, data, fmt, version, encoding):
 	off = 0
 	(uses, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Use count', uses, off - 2, 2, fmt('H'))
-	off = _add_para_format(hd, size, data, off, fmt, version)
+	off = _add_para_format(hd, size, data, off, fmt, version, encoding)
 	(style, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Style', style2txt(style), off - 1, 1, fmt('B'))
 
-def add_para_style(hd, size, data, fmt, version):
+def add_para_style(hd, size, data, fmt, version, encoding):
 	off = 0x28
-	off = _add_para_format(hd, size, data, off, fmt, version)
+	off = _add_para_format(hd, size, data, off, fmt, version, encoding)
 	off += 10
 	(idx, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Index', idx, off - 2, 2, fmt('H'))

@@ -392,9 +392,9 @@ def parse_para_formats(page, data, offset, parent, fmt, version):
 	reciter = add_pgiter(page, 'Paragraph formats', 'qxp4', ('record', fmt, version), data[off - 4:off + length], parent)
 	return _parse_list(page, data, off, off + length, reciter, fmt, version, handle_para_format, 100, 0)
 
-def parse_tabs(page, data, offset, parent, fmt, version, title):
+def parse_tabs(page, data, offset, parent, fmt, version, encoding, title):
 	(length, off) = rdata(data, offset, fmt('I'))
-	add_pgiter(page, title, 'qxp4', ('tabs', fmt, version), data[off - 4:off + length], parent)
+	add_pgiter(page, title, 'qxp4', ('tabs', fmt, version, encoding), data[off - 4:off + length], parent)
 	return off + length
 
 def _add_tabs_spec(hd, size, data, offset, fmt, version, parent):
@@ -1038,7 +1038,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	# use by styles. I.e., the first tabs record belongs to the last
 	# style that has tabs set.
 	for i in range(0, tabs):
-		off = parse_tabs(page, data, off, parent, fmt, version, 'Style tabs %d' % i)
+		off = parse_tabs(page, data, off, parent, fmt, version, hdr.encoding, 'Style tabs %d' % i)
 	off = parse_char_styles(page, data, off, parent, fmt, version)
 	off = parse_hjs(page, data, off, parent, fmt, version)
 	off = parse_dashes(page, data, off, parent, fmt, version)
@@ -1057,7 +1057,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_char_formats(page, data, off, parent, fmt, version)
 	(tabs, off) = parse_tabs_spec(page, data, off, parent, fmt, version)
 	for i in range(0, tabs):
-		off = parse_tabs(page, data, off, parent, fmt, version, 'Format tabs %d' % i)
+		off = parse_tabs(page, data, off, parent, fmt, version, hdr.encoding, 'Format tabs %d' % i)
 	off = parse_para_formats(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
@@ -1322,12 +1322,12 @@ def add_index(hd, size, data, fmt, version):
 		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=entryiter)
 		hd.model.set(entryiter, 1, key2txt(content, content_type_map))
 
-def add_tabs(hd, size, data, fmt, version):
+def add_tabs(hd, size, data, fmt, version, encoding):
 	off = add_length(hd, size, data, fmt, version, 0)
 	i = 1
 	while off < size:
 		tabiter = add_iter(hd, 'Tab %d' % i, '', off, 8, '8s')
-		off = add_tab(hd, size, data, off, fmt, version, tabiter)
+		off = add_tab(hd, size, data, off, fmt, version, encoding, tabiter)
 		i += 1
 
 ids = {
