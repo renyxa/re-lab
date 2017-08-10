@@ -325,9 +325,12 @@ def add_tab(hd, size, data, offset, fmt, version, parent=None):
 		add_iter(hd, 'Subtype', key2txt(subtype, subtype_map), off - 1, 1, fmt('B'), parent=parent)
 	else:
 		add_iter(hd, 'Align at char', chr(subtype), off - 1, 1, '1s', parent=parent)
-	(fill_char, off) = rdata(data, off, fmt('H'))
-	fill_char = chr(fill_char & 0xff)
-	add_iter(hd, 'Fill char', fill_char, off - 2, 2, '2s', parent=parent)
+	(fill, off) = rdata(data, off, fmt('H'))
+	fill_char = chr(fill & 0xff)
+	upper = fill >> 8
+	if upper != 0:
+		fill_char = chr(upper) + fill_char
+	add_iter(hd, 'Fill char', fill_char, off - 2, 2, fmt('H'), parent=parent)
 	(pos, off) = rdata(data, off, fmt('i'))
 	if pos == -1:
 		add_iter(hd, 'Position', 'not defined', off - 4, 4, fmt('i'), parent=parent)
