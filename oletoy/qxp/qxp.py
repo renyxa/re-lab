@@ -117,11 +117,12 @@ class HexDumpSave:
 			hd.model.set(iter, *args)
 
 class Header:
-	def __init__(self, seed=0, inc=0, masters=0, pictures=0):
-		self.seed = seed
-		self.inc = inc
-		self.masters = masters
-		self.pictures = pictures
+	def __init__(self, encoding):
+		self.encoding = encoding
+		self.seed = 0
+		self.inc = 0
+		self.masters = 0
+		self.pictures = 0
 
 obj_flags_map = {
 	1: 'no color?',
@@ -296,9 +297,13 @@ def add_header_common(hd, size, data, fmt):
 	add_iter(hd, 'Processor', key2txt(proc, proc_map), off - 2, 2, '2s')
 	(sig, off) = rdata(data, off, '3s')
 	add_iter(hd, 'Signature', sig, off - 3, 3, '3s')
-	lang_map = {0x33: 'English', 0x61: 'Korean'}
+	lang_map = {
+		0x33: ('English', 'cp1252'),
+		0x61: ('Korean', 'cp969'), # TODO: the cp is just an assumption
+	}
 	(lang, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Language', key2txt(lang, lang_map), off - 1, 1, fmt('B'))
+	(language, encoding) = key2txt(lang, lang_map, ('Unknown', 'ascii'))
+	add_iter(hd, 'Language', language, off - 1, 1, fmt('B'))
 	version_map = {
 		0x39: '3.1 Mac',
 		0x3e: '3.1',
@@ -313,7 +318,7 @@ def add_header_common(hd, size, data, fmt):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	(ver, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-	return off
+	return (Header(encoding), off)
 
 def add_tab(hd, size, data, offset, fmt, version, parent=None):
 	type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align'}

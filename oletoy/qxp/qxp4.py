@@ -1064,7 +1064,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	return handle_pages(page, data[off:], pagesiter, fmt, version, obfctx, hdr.masters)
 
 def add_header(hd, size, data, fmt, version):
-	off = add_header_common(hd, size, data, fmt)
+	(header, off) = add_header_common(hd, size, data, fmt)
 	doctype_map = {'BK': 'Book', 'DC': 'Document', 'LB': 'Library', 'TP': 'Template'}
 	(doctype, off) = rdata(data, off, '2s')
 	add_iter(hd, 'Document type', key2txt(doctype, doctype_map), off - 2, 2, '2s')
@@ -1077,16 +1077,16 @@ def add_header(hd, size, data, fmt, version):
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off += 5
-	(mpages, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Number of master pages', mpages, off - 1, 1, fmt('B'))
+	(header.masters, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of master pages', header.masters, off - 1, 1, fmt('B'))
 	off += 4
-	(inc, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Obfuscation increment', hex(inc), off - 2, 2, fmt('H'))
+	(header.inc, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Obfuscation increment', hex(header.inc), off - 2, 2, fmt('H'))
 	off += 44
-	(seed, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Obfuscation seed', hex(seed), off - 2, 2, fmt('H'))
+	(header.seed, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Obfuscation seed', hex(header.seed), off - 2, 2, fmt('H'))
 	sign = lambda x: 1 if x & 0x8000 == 0 else -1
-	hd.model.set(pagesiter, 1, deobfuscate(pages, seed, 2) + sign(seed))
+	hd.model.set(pagesiter, 1, deobfuscate(pages, header.seed, 2) + sign(header.seed))
 	off += 14
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
@@ -1095,12 +1095,12 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
 	(texts, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
-	(pictures, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of picture boxes', pictures, off - 2, 2, fmt('H'))
+	(header.pictures, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of picture boxes', header.pictures, off - 2, 2, fmt('H'))
 	off += 102
 	(counter, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Object counter/last id?', counter, off - 4, 4, fmt('I'))
-	return (Header(seed, inc, mpages, pictures), size)
+	return (header, size)
 
 def _add_name(hd, size, data, fmt, offset=0, name="Name"):
 	n = _read_name(data, fmt, offset)

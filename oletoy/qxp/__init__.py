@@ -65,13 +65,13 @@ def parse_chain(buf, idx, rlen, fmt, version):
 		blocks.append(buf[start:off - nxt_sz])
 	return ''.join(blocks)
 
-def handle_text(page, buf, parent, fmt, version, index, rlen):
+def handle_text(page, buf, parent, fmt, version, index, rlen, encoding):
 	data = parse_chain(buf, index, rlen, fmt, version)
 	hd = qxp.HexDumpSave(0)
 	blocks = add_text_info(hd, len(data), data, fmt, version)
 	textiter = add_pgiter(page, 'Text [%x]' % index, 'qxp5', ('text_info', hd), data, parent)
 	for (block, length) in blocks:
-		add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length), buf[(block - 1)* rlen:block * rlen], textiter)
+		add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length, encoding), buf[(block - 1)* rlen:block * rlen], textiter)
 
 def handle_picture(page, buf, parent, fmt, version, index, rlen):
 	data = parse_chain(buf, index, rlen, fmt, version)
@@ -101,7 +101,9 @@ def open_v5(page, buf, parent, fmt, version):
 	else:
 		(texts, pictures) = [], []
 
-	chains = [(text, handle_text) for text in texts]
+	def handle_enc_text(page, buf, parent, fmt, version, index, rlen):
+		return handle_text(page, buf, parent, fmt, version, index, rlen, hdr.encoding)
+	chains = [(text, handle_enc_text) for text in texts]
 	chains.extend([(picture, handle_picture) for picture in pictures])
 
 	for (block, hdl) in sorted(chains):
@@ -111,8 +113,8 @@ def open_v5(page, buf, parent, fmt, version):
 			traceback.print_exc()
 
 def add_header(hd, size, data, fmt, version):
-	off = qxp.add_header_common(hd, size, data, fmt)
-	return (qxp.Header(), size)
+	(header, off) = qxp.add_header_common(hd, size, data, fmt)
+	return (header, size)
 
 def add_text_info(hd, size, data, fmt, version):
 	blocks = []
@@ -169,9 +171,9 @@ def add_text_info(hd, size, data, fmt, version):
 	add_iter(hd, 'Gargbage?', '', off, size - off, '%ds' % (size - off))
 	return blocks
 
-def add_text(hd, size, data, length, dummy):
+def add_text(hd, size, data, length, encoding):
 	(text, off) = rdata(data, 0, '%ds' % length)
-	add_iter(hd, 'Text', text, off - length, length, '%ds' % length)
+	add_iter(hd, 'Text', unicode(text, encoding), off - length, length, '%ds' % length)
 
 def add_picture(hd, size, data, fmt, version):
 	off = 0
