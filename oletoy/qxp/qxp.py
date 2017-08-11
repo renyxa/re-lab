@@ -298,12 +298,16 @@ def add_header_common(hd, size, data, fmt):
 	(sig, off) = rdata(data, off, '3s')
 	add_iter(hd, 'Signature', sig, off - 3, 3, '3s')
 	lang_map = {
-		0x33: ('English', 'cp1252'),
-		0x61: ('Korean', 'cp949'), # TODO: the cp is just an assumption
+		0x33: ('English', {'II': 'cp1252', 'MM': 'macroman'}),
+		0x61: ('Korean', {'II': 'cp949'}), # TODO: the cp is just an assumption
 	}
 	(lang, off) = rdata(data, off, fmt('B'))
-	(language, encoding) = key2txt(lang, lang_map, ('Unknown', 'ascii'))
+	(language, encoding_map) = key2txt(lang, lang_map, ('Unknown', {}))
 	add_iter(hd, 'Language', language, off - 1, 1, fmt('B'))
+	encoding = key2txt(proc, encoding_map, None)
+	if not encoding:
+		encoding = key2txt(proc, lang_map[0x33][1], None) # Use English as default
+	assert encoding
 	version_map = {
 		0x39: '3.1 Mac',
 		0x3e: '3.1',
