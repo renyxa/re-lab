@@ -70,15 +70,6 @@ def add_header(hd, size, data, dummy, version):
 	(ver, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, '>H')
 	off += 120
-	measure_map = {
-		0: 'Inches',
-		1: 'Millimeters',
-		2: 'Picas / Inches',
-		3: 'Picas',
-		4: 'Points',
-		5: 'Inches Decimal',
-		6: 'Ciceros',
-	}
 	(measure, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Measure', key2txt(measure, measure_map), off - 1, 1, '>B')
 	(auto_hyph, off) = rdata(data, off, '>B')
@@ -88,7 +79,6 @@ def add_header(hd, size, data, dummy, version):
 		0x80: 'auto kerning',
 		0x200: 'typesetting mode',
 	}
-	page_ins_map = {0: 'Off', 1: 'At end of story', 2: 'At end of section', 3: 'At end of document'}
 	(flags, off) = rdata(data, off, '>H')
 	hyphens = (flags >> 11) & 0x7
 	add_iter(hd, 'Hyphens in a row', 'unlimited' if hyphens == 0 else hyphens, off - 2, 1, '>B')

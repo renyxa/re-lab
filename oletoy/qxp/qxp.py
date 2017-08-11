@@ -456,6 +456,25 @@ arrow_map = {
 	5: 'Double-sided',
 }
 
+page_ins_map = {
+	0: 'Off',
+	1: 'At end of story',
+	2: 'At end of section',
+	3: 'At end of document',
+}
+
+measure_map = {
+	0: 'Inches',
+	1: 'Millimeters',
+	2: 'Picas / Inches',
+	3: 'Picas',
+	4: 'Points',
+	5: 'Inches Decimal',
+	6: 'Ciceros',
+	7: 'Centimeters',
+	10: 'Agates',
+}
+
 if __name__ == '__main__':
 	def test_deobfuscate(seed, value, n, expected):
 		assert deobfuscate(value, seed, n) == expected

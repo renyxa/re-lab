@@ -1068,7 +1068,30 @@ def add_header(hd, size, data, fmt, version):
 	doctype_map = {'BK': 'Book', 'DC': 'Document', 'LB': 'Library', 'TP': 'Template'}
 	(doctype, off) = rdata(data, off, '2s')
 	add_iter(hd, 'Document type', key2txt(doctype, doctype_map), off - 2, 2, '2s')
-	off += 20
+	off += 6
+	flags1_map = {
+		0x1: 'typesetting mode',
+		0x8: 'guides in front',
+	}
+	(flags1, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags 1', qxpbflag2txt(flags1, flags1_map, fmt), off - 1, 1, fmt('B'))
+	flags2_map = {
+		0x2: 'auto kern above',
+		0x8: 'standard em space',
+		0x20: 'accents for all caps',
+	}
+	(flags2, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags 2', qxpbflag2txt(flags2, flags2_map, fmt), off - 1, 1, fmt('B'))
+	flags3_map = {
+	}
+	(flags3, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags 3', qxpbflag2txt(flags3, flags3_map, fmt), off - 1, 1, fmt('B'))
+	flags4_map = {
+		0x1: 'spread item coords',
+	}
+	(flags4, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Flags 4', qxpbflag2txt(flags4, flags4_map, fmt), off - 1, 1, fmt('B'))
+	off += 10
 	(pages, off) = rdata(data, off, fmt('H'))
 	pagesiter = add_iter(hd, 'Number of pages?', pages, off - 2, 2, fmt('H'))
 	off += 8
@@ -1076,13 +1099,27 @@ def add_header(hd, size, data, fmt, version):
 	off = add_dim(hd, size, data, off, fmt, 'Gutter width')
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
-	off += 5
+	(hmeasure, off) = rdata(data, off, '>B')
+	add_iter(hd, 'H. measure', key2txt(hmeasure, measure_map), off - 1, 1, '>B')
+	(vmeasure, off) = rdata(data, off, '>B')
+	add_iter(hd, 'V. measure', key2txt(vmeasure, measure_map), off - 1, 1, '>B')
+	(auto_ins, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Auto page insertion', key2txt(auto_ins, page_ins_map), off - 1, 1, fmt('B'))
+	framing_map = {0: 'Outside', 1: 'Inside'}
+	(framing, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Framing', key2txt(framing, framing_map), off - 1, 1, fmt('B'))
+	off += 1
 	(header.masters, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Number of master pages', header.masters, off - 1, 1, fmt('B'))
 	off += 4
 	(header.inc, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Obfuscation increment', hex(header.inc), off - 2, 2, fmt('H'))
-	off += 44
+	off += 4
+	off = add_fract_perc(hd, data, off, fmt, 'Auto leading')
+	off += 8
+	off = add_dim(hd, size, data, off, fmt, 'Baseline grid start')
+	off = add_dim(hd, size, data, off, fmt, 'Baseline grid increment')
+	off += 20
 	(header.seed, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Obfuscation seed', hex(header.seed), off - 2, 2, fmt('H'))
 	sign = lambda x: 1 if x & 0x8000 == 0 else -1
@@ -1090,7 +1127,20 @@ def add_header(hd, size, data, fmt, version):
 	off += 14
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
-	off += 68
+	off += 16
+	off = add_dim(hd, size, data, off, fmt, 'Auto kern above')
+	off = add_fract_perc(hd, data, off, fmt, 'Superscript offset')
+	off = add_fract_perc(hd, data, off, fmt, 'Superscript v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Superscript h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Subscript offset')
+	off = add_fract_perc(hd, data, off, fmt, 'Subscript v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Subscript h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Superior v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Superior h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Small caps v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Small caps h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Flex space width')
+	off += 4
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
 	(texts, off) = rdata(data, off, fmt('H'))
