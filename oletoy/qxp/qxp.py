@@ -366,6 +366,13 @@ def add_file_info(hd, data, offset, fmt):
 	add_iter(hd, 'File info data length', length, off - 4, 4, fmt('I'))
 	return off + length
 
+def add_view_scale(hd, data, offset, fmt, version):
+	off = offset
+	off = add_fract_perc(hd, data, off, fmt, 'View scale maximum')
+	off = add_fract_perc(hd, data, off, fmt, 'View scale minimum')
+	off = add_fract_perc(hd, data, off, fmt, 'View scale increment')
+	return off
+
 char_format_map = {
 	0x1: 'bold',
 	0x2: 'italic',

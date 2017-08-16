@@ -990,7 +990,7 @@ def handle_page(page, data, offset, parent, fmt, version, obfctx, index, master)
 	page.model.set_value(pageiter, 3, data[offset:off])
 	return objs, pageiter, off
 
-def parse_template(page, data, offset, parent, fmt, version, index):
+def parse_tool(page, data, offset, parent, fmt, version, index):
 	class DummyObfuscationContext:
 		def next(self, block):
 			pass
@@ -1004,12 +1004,17 @@ def parse_template(page, data, offset, parent, fmt, version, index):
 			return ''
 	(length, off) = rdata(data, offset, fmt('I'))
 	end = off + length
-	reciter = add_pgiter(page, 'Template', 'qxp4', ('record', fmt, version), data[off - 4:end], parent)
+	reciter = add_pgiter(page, 'Tool', 'qxp4', ('record', fmt, version), data[off - 4:end], parent)
 	(header, off) = handle_object(page, data, off, reciter, fmt, version, DummyObfuscationContext(), 0)
 	# update object title and size
 	type_str = "%s / %s" % (key2txt(header.shape, shape_types_map), key2txt(header.content_type, content_type_map))
 	page.model.set_value(reciter, 0, "[%d] %s" % (index, type_str))
 	return end
+
+def parse_tool_zoom(page, data, offset, parent, fmt, version, index):
+	(length, off) = rdata(data, offset, fmt('I'))
+	reciter = add_pgiter(page, '[%d] Zoom' % index, 'qxp4', ('tool_zoom', fmt, version), data[off - 4:off + length], parent)
+	return offset + 4 + length
 
 def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 	texts = set()
@@ -1063,17 +1068,17 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_hjs(page, data, off, parent, fmt, version)
 	off = parse_dashes(page, data, off, parent, fmt, version)
 	off = parse_lists(page, data, off, parent, fmt, version)
-	tmplstart = off
-	tmpliter = add_pgiter(page, 'Templates', 'qxp4', (), data[off:], parent)
-	(count, off) = parse_index(page, data, off, tmpliter, fmt, version)
+	toolstart = off
+	tooliter = add_pgiter(page, 'Tools preferences', 'qxp4', (), data[off:], parent)
+	(count, off) = parse_index(page, data, off, tooliter, fmt, version)
 	for i in range(1, count):
 		if fmt() == LITTLE_ENDIAN:
-			off = parse_template(page, data, off, tmpliter, fmt, version, i)
+			off = parse_tool(page, data, off, tooliter, fmt, version, i)
 		else:
-			off = parse_record(page, data, off, tmpliter, fmt, version, '[%d] Template' % i)
-	off = parse_record(page, data, off, tmpliter, fmt, version, '[%d] Unknown' % count)
-	page.model.set_value(tmpliter, 2, off - tmplstart)
-	page.model.set_value(tmpliter, 3, data[tmplstart:off])
+			off = parse_record(page, data, off, tooliter, fmt, version, '[%d]' % i)
+	off = parse_tool_zoom(page, data, off, tooliter, fmt, version, count)
+	page.model.set_value(tooliter, 2, off - toolstart)
+	page.model.set_value(tooliter, 3, data[toolstart:off])
 	off = parse_char_formats(page, data, off, parent, fmt, version)
 	(tabs, off) = parse_tabs_spec(page, data, off, parent, fmt, version)
 	for i in range(0, tabs):
@@ -1385,11 +1390,13 @@ def add_index(hd, size, data, fmt, version):
 	for i in range(0, count):
 		entryiter = add_iter(hd, 'Entry %d' % i, '', off, 8, '8s')
 		off += 2
+		type_map = content_type_map.copy()
+		type_map.update({0xffff: 'Zoom'})
 		(content, off) = rdata(data, off, '<H')
-		add_iter(hd, 'Content type', key2txt(content, content_type_map), off - 2, 2, fmt('H'), parent=entryiter)
+		add_iter(hd, 'Type', key2txt(content, type_map), off - 2, 2, fmt('H'), parent=entryiter)
 		(id, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'ID?', hex(id), off - 4, 4, fmt('I'), parent=entryiter)
-		hd.model.set(entryiter, 1, key2txt(content, content_type_map))
+		hd.model.set(entryiter, 1, key2txt(content, type_map))
 
 def add_tabs(hd, size, data, fmt, version, encoding):
 	off = add_length(hd, size, data, fmt, version, 0)
@@ -1398,6 +1405,10 @@ def add_tabs(hd, size, data, fmt, version, encoding):
 		tabiter = add_iter(hd, 'Tab %d' % i, '', off, 8, '8s')
 		off = add_tab(hd, size, data, off, fmt, version, encoding, tabiter)
 		i += 1
+
+def add_tool_zoom(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	add_view_scale(hd, data, off, fmt, version)
 
 ids = {
 	'char_format': add_char_format,
@@ -1421,6 +1432,7 @@ ids = {
 	'record': add_record,
 	'tabs': add_tabs,
 	'tabs_spec': add_saved,
+	'tool_zoom': add_tool_zoom,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:

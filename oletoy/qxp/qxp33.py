@@ -807,10 +807,7 @@ def add_color(hd, size, data, fmt, version):
 	_add_name2(hd, size, data, off, fmt)
 
 def add_tool_zoom(hd, size, data, fmt, version):
-	off = 0
-	off = add_fract_perc(hd, data, off, fmt, 'View scale maximum')
-	off = add_fract_perc(hd, data, off, fmt, 'View scale minimum')
-	off = add_fract_perc(hd, data, off, fmt, 'View scale increment')
+	add_view_scale(hd, data, 0, fmt, version)
 
 ids = {
 	'char_format': add_char_format,
