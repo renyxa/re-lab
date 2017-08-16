@@ -643,6 +643,19 @@ def add_text_path_settings(hd, data, offset, fmt, header):
 	add_iter(hd, 'Align with line', key2txt(line_align, text_path_line_align_map), off - 1, 1, fmt('B'))
 	return off
 
+def add_text_file_info(hd, data, offset, fmt, header):
+	off = offset
+	if header.content_index == 0 or header.linked_text_offset == 0:
+		off += 4
+		(fid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
+		off += 4
+		if fid != 0:
+			off = add_file_info(hd, data, off, fmt)
+		if header.content_index == 0:
+			off += 16
+	return off
+
 def add_picture_settings(hd, data, offset, fmt, header):
 	off = offset
 	off += 1
@@ -691,14 +704,8 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 2
 	off = add_text_settings(hd, data, off, fmt, header)
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 16
-	(fid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
-	off += 4
-	if fid != 0:
-		off = add_file_info(hd, data, off, fmt)
-	if header.content_index == 0:
-		off += 16
+	off += 12
+	off = add_text_file_info(hd, data, off, fmt, header)
 	return off
 
 def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent):
@@ -764,14 +771,8 @@ def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
-	off += 8
-	(fid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
 	off += 4
-	if fid != 0:
-		off = add_file_info(hd, data, off, fmt)
-	if header.content_index == 0:
-		off += 16
+	off = add_text_file_info(hd, data, off, fmt, header)
 	return off
 
 def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
@@ -804,14 +805,7 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off += 4
 	if bz_id:
 		off = add_bezier(hd, data, off, fmt)
-	off += 4
-	(fid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
-	off += 4
-	if fid != 0:
-		off = add_file_info(hd, data, off, fmt)
-	if header.content_index == 0:
-		off += 16
+	off = add_text_file_info(hd, data, off, fmt, header)
 	return off
 
 def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
@@ -847,14 +841,7 @@ def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 12
 	if bz_id:
 		off = add_bezier(hd, data, off, fmt)
-	if header.content_index == 0:
-		off += 16
-	off += 4
-	(fid, off) = rdata(data, off, fmt('I'))
-	add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
-	off += 4
-	if fid != 0:
-		off = add_file_info(hd, data, off, fmt)
+	off = add_text_file_info(hd, data, off, fmt, header)
 	return off
 
 def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent):
