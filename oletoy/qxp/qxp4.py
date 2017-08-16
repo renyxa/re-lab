@@ -1125,7 +1125,6 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'V. measure', key2txt(vmeasure, measure_map), off - 1, 1, '>B')
 	(auto_ins, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Auto page insertion', key2txt(auto_ins, page_ins_map), off - 1, 1, fmt('B'))
-	framing_map = {0: 'Outside', 1: 'Inside'}
 	(framing, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Framing', key2txt(framing, framing_map), off - 1, 1, fmt('B'))
 	off += 1

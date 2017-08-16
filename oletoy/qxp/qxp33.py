@@ -594,19 +594,52 @@ def add_header(hd, size, data, fmt, version):
 	(col, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of columns', col, off - 2, 2, fmt('H'))
 	off = add_dim(hd, size, data, off, fmt, 'Gutter width')
-	off += 21
+	off += 12
+	(hmeasure, off) = rdata(data, off, '>B')
+	add_iter(hd, 'H. measure', key2txt(hmeasure, measure_map), off - 1, 1, '>B')
+	(vmeasure, off) = rdata(data, off, '>B')
+	add_iter(hd, 'V. measure', key2txt(vmeasure, measure_map), off - 1, 1, '>B')
+	(auto_ins, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Auto page insertion', key2txt(auto_ins, page_ins_map), off - 1, 1, fmt('B'))
+	(framing, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Framing', key2txt(framing, framing_map), off - 1, 1, fmt('B'))
+	off += 5
 	(header.masters, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Number of master pages', header.masters, off - 1, 1, fmt('B'))
-	off += 58
+	off += 1
+	(snap, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Snap distance', '%d pt' % snap, off - 1, 1, fmt('B'))
+	off += 4
+	off = add_fract_perc(hd, data, off, fmt, 'Auto leading')
+	off = add_dim(hd, size, data, off, fmt, 'Greek below')
+	off += 4
+	off = add_dim(hd, size, data, off, fmt, 'Baseline grid start')
+	off = add_dim(hd, size, data, off, fmt, 'Baseline grid increment')
+	off += 8
+	(above, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Break above', above, off - 2, 2, fmt('H'))
+	off += 22
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
 	off += 4
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off = add_dim(hd, size, data, off, fmt, 'Bottom offset')
-	off += 24
+	off += 12
+	off = add_dim(hd, size, data, off, fmt, 'Auto kern above')
+	off = add_fract_perc(hd, data, off, fmt, 'Superscript offset')
+	off = add_fract_perc(hd, data, off, fmt, 'Superscript v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Superscript h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Subscript offset')
+	off = add_fract_perc(hd, data, off, fmt, 'Subscript v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Subscript h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Superior v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Superior h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Small caps v. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Small caps h. scale')
+	off = add_fract_perc(hd, data, off, fmt, 'Flex space width')
+	off += 4
 	(lines, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of lines', lines, off - 2, 2, fmt('H'))
-	off += 40
 	(texts, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of text boxes', texts, off - 2, 2, fmt('H'))
 	(header.pictures, off) = rdata(data, off, fmt('H'))
@@ -616,6 +649,17 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Obfuscation seed', hex(header.seed), off - 2, 2, fmt('H'))
 	(header.inc, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Obfuscation increment', hex(header.inc), off - 2, 2, fmt('H'))
+	off += 28
+	off = add_fract_perc(hd, data, off, fmt, 'Overprint limit')
+	off = add_dim(hd, size, data, off, fmt, 'Auto amount')
+	off = add_dim(hd, size, data, off, fmt, 'Indeterminate')
+	tflags_map = {
+		0x1: 'absolute',
+		0x2: 'ignore white',
+		0x4: 'process trap',
+	}
+	(tflags, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Trapping flags', qxpbflag2txt(tflags, tflags_map, fmt), off - 1, 1, fmt('B'))
 	return (header, size)
 
 def _add_name2(hd, size, data, offset, fmt, title='Name'):

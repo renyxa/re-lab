@@ -481,6 +481,11 @@ measure_map = {
 	10: 'Agates',
 }
 
+framing_map = {
+	0: 'Outside',
+	1: 'Inside',
+}
+
 if __name__ == '__main__':
 	def test_deobfuscate(seed, value, n, expected):
 		assert deobfuscate(value, seed, n) == expected
