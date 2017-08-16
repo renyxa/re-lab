@@ -172,6 +172,27 @@ def parse_hjs(page, data, offset, parent, fmt, version):
 	reciter = add_pgiter(page, 'H&Js', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
 	return _parse_collection_named(page, data, off, off + length, reciter, fmt, version, handle_hj, 48)
 
+def parse_tools_prefs(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	toolsiter = add_pgiter(page, 'Tools preferences', 'qxp33', ('tools_prefs', fmt, version), data[off - 4:off + length], parent)
+	add_pgiter(page, 'Orthogonal line', 'qxp33', (), data[off:off + 34], toolsiter)
+	off += 34
+	add_pgiter(page, 'Line', 'qxp33', (), data[off:off + 34], toolsiter)
+	off += 34
+	add_pgiter(page, 'Text', 'qxp33', (), data[off:off + 72], toolsiter)
+	off += 72
+	add_pgiter(page, 'Rectangle', 'qxp33', (), data[off:off + 72], toolsiter)
+	off += 72
+	add_pgiter(page, 'Cornered rectangle', 'qxp33', (), data[off:off + 72], toolsiter)
+	off += 72
+	add_pgiter(page, 'Oval', 'qxp33', (), data[off:off + 72], toolsiter)
+	off += 72
+	add_pgiter(page, 'Bezier', 'qxp33', (), data[off:off + 74], toolsiter)
+	off += 74
+	add_pgiter(page, 'Zoom', 'qxp33', ('tool_zoom', fmt, version), data[off:off + 12], toolsiter)
+	off += 12
+	return off
+
 def parse_char_formats(page, data, offset, parent, fmt, version):
 	(length, off) = rdata(data, offset, fmt('I'))
 	reciter = add_pgiter(page, 'Character formats', 'qxp33', ('record', fmt, version), data[off - 4:off + length], parent)
@@ -577,7 +598,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_para_styles(page, data, off, parent, fmt, version, hdr.encoding)
 	off = parse_hjs(page, data, off, parent, fmt, version)
-	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	off = parse_tools_prefs(page, data, off, parent, fmt, version)
 	off = parse_char_formats(page, data, off, parent, fmt, version)
 	off = parse_para_formats(page, data, off, parent, fmt, version, hdr.encoding)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
@@ -785,6 +806,12 @@ def add_color(hd, size, data, fmt, version):
 	off += 12
 	_add_name2(hd, size, data, off, fmt)
 
+def add_tool_zoom(hd, size, data, fmt, version):
+	off = 0
+	off = add_fract_perc(hd, data, off, fmt, 'View scale maximum')
+	off = add_fract_perc(hd, data, off, fmt, 'View scale minimum')
+	off = add_fract_perc(hd, data, off, fmt, 'View scale increment')
+
 ids = {
 	'char_format': add_char_format,
 	'fonts': add_fonts,
@@ -797,6 +824,7 @@ ids = {
 	'para_style': add_para_style,
 	'physical_fonts': add_physical_fonts,
 	'record': add_record,
+	'tool_zoom': add_tool_zoom,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:
