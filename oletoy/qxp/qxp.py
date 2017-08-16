@@ -360,6 +360,12 @@ def add_tab(hd, size, data, offset, fmt, version, encoding, parent=None):
 			hd.model.set(parent, 1, "%s%s / '%s' / %s"  % (key2txt(typ, type_map), subtype_str, fill_char, pos_str))
 	return off
 
+def add_file_info(hd, data, offset, fmt):
+	off = offset
+	(length, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'File info data length', length, off - 4, 4, fmt('I'))
+	return off + length
+
 char_format_map = {
 	0x1: 'bold',
 	0x2: 'italic',
