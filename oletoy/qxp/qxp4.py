@@ -789,7 +789,8 @@ def add_bezier_line(hd, data, offset, fmt, version, obfctx, header):
 	(bz_id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Bezier ID?', hex(bz_id), off - 4, 4, fmt('I'))
 	off += 36
-	off = add_bezier(hd, data, off, fmt)
+	if bz_id:
+		off = add_bezier(hd, data, off, fmt)
 	return off
 
 def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
@@ -807,7 +808,8 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
 	off += 4
-	off = add_bezier(hd, data, off, fmt)
+	if bz_id:
+		off = add_bezier(hd, data, off, fmt)
 	if header.content_index == 0:
 		off += 28
 	else:
@@ -831,7 +833,8 @@ def add_bezier_empty_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 36
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
-	off = add_bezier(hd, data, off, fmt)
+	if bz_id:
+		off = add_bezier(hd, data, off, fmt)
 	return off
 
 def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
@@ -850,7 +853,8 @@ def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_text_settings(hd, data, off, fmt, header)
 	off = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 12
-	off = add_bezier(hd, data, off, fmt)
+	if bz_id:
+		off = add_bezier(hd, data, off, fmt)
 	if header.content_index == 0:
 		off += 16
 	off += 4
@@ -876,7 +880,8 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page,
 		off = add_gradient(hd, data, off, fmt)
 	off = add_picture_settings(hd, data, off, fmt, header)
 	off += 76
-	off = add_bezier(hd, data, off, fmt)
+	if bz_id:
+		off = add_bezier(hd, data, off, fmt)
 	if header.content_index != 0 and header.ole_id == 0:
 		(ilen, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
