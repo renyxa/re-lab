@@ -1069,10 +1069,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	tooliter = add_pgiter(page, 'Tools preferences', 'qxp4', (), data[off:], parent)
 	(count, off) = parse_index(page, data, off, tooliter, fmt, version)
 	for i in range(1, count):
-		if fmt() == LITTLE_ENDIAN:
-			off = parse_tool(page, data, off, tooliter, fmt, version, i)
-		else:
-			off = parse_record(page, data, off, tooliter, fmt, version, '[%d]' % i)
+		off = parse_tool(page, data, off, tooliter, fmt, version, i)
 	off = parse_tool_zoom(page, data, off, tooliter, fmt, version, count)
 	page.model.set_value(tooliter, 2, off - toolstart)
 	page.model.set_value(tooliter, 3, data[toolstart:off])
