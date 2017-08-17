@@ -361,16 +361,15 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off += 4
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
-	if header.content_index == 0:
-		off += 24
-	else:
-		if toff == 0:
-			off += 4
-			(fid, off) = rdata(data, off, fmt('I'))
-			add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
-			off += 4
-			if fid != 0:
-				off = add_file_info(hd, data, off, fmt)
+	if header.content_index == 0 or toff == 0:
+		off += 4
+		(fid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'File info ID', hex(fid), off - 4, 4, fmt('I'))
+		off += 4
+		if fid != 0:
+			off = add_file_info(hd, data, off, fmt)
+		if header.content_index == 0:
+			off += 12 
 	if rid != 0:
 		off = add_runaround(hd, data, off, fmt)
 	header.linked_text_offset = toff
