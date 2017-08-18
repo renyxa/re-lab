@@ -419,9 +419,7 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
 	if header.content_index != 0:
-		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
-		off += ilen
+		off = add_file_info(hd, data, off, fmt)
 	if rid != 0:
 		off = add_runaround(hd, data, off, fmt)
 		if cid != 0:

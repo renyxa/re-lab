@@ -728,9 +728,7 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent
 	off += 24
 	off += 44
 	if header.content_index != 0 and header.ole_id == 0:
-		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
-		off += ilen
+		off = add_file_info(hd, data, off, fmt)
 	return off
 
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
@@ -862,9 +860,7 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page,
 	if bz_id:
 		off = add_bezier(hd, data, off, fmt)
 	if header.content_index != 0 and header.ole_id == 0:
-		(ilen, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Image data length', ilen, off - 4, 4, fmt('I'))
-		off += ilen
+		off = add_file_info(hd, data, off, fmt)
 	return off
 
 def add_group(hd, data, offset, fmt, version, obfctx, header):
