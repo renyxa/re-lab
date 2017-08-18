@@ -1204,7 +1204,7 @@ def _add_char_format(hd, size, data, offset, fmt, version):
 	add_iter(hd, 'Kern', kern, off - 4, 4, '4s') # unit: 1/200 em space
 	(track, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Track amount', track, off - 4, 4, '4s')
-	off = add_dim(hd, size, data, off, fmt, 'Baseline shift')
+	off = add_sfloat_perc(hd, data, off, fmt, 'Baseline shift')
 	(control, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Control char(s)?', key2txt(control, {0: 'No'}, 'Yes'), off - 1, 1, fmt('B'))
 
