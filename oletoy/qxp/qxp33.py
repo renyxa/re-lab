@@ -369,7 +369,7 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 		if fid != 0:
 			off = add_file_info(hd, data, off, fmt)
 		if header.content_index == 0:
-			off += 12 
+			off += 12
 	if rid != 0:
 		off = add_runaround(hd, data, off, fmt)
 	header.linked_text_offset = toff
