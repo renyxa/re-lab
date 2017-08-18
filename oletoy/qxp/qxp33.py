@@ -774,7 +774,8 @@ def add_para_style(hd, size, data, fmt, version, encoding):
 	_add_name2(hd, size, data, off, fmt)
 
 def add_hj(hd, size, data, fmt, version):
-	off = 48
+	off = add_hj_common(hd, size, data, 0, fmt, version)
+	off += 4
 	_add_name2(hd, size, data, off, fmt)
 
 def add_color_comp(hd, data, offset, fmt, name, parent=None):
