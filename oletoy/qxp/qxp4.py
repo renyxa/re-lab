@@ -1180,7 +1180,17 @@ def add_hj(hd, size, data, fmt, version):
 	breakcap_map = {0: 'Disabled', 1: 'Enabled'}
 	(breakcap, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, "Don't break capitalized words", key2txt(breakcap, breakcap_map), off - 1, 1, fmt('B'))
-	off = 0x28
+	def space2txt(val):
+		return '%.2d%%' % (100 * val + 100)
+	(min, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Space minimum', space2txt(min), off - 4, 4, '4s')
+	off = add_fract_perc(hd, data, off, fmt, 'Char minimum')
+	(opt, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Space optimum', space2txt(opt), off - 4, 4, '4s')
+	off = add_fract_perc(hd, data, off, fmt, 'Char optimum')
+	(max, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Space maximum', space2txt(max), off - 4, 4, '4s')
+	off = add_fract_perc(hd, data, off, fmt, 'Char maximum')
 	off = add_dim(hd, size, data, off, fmt, 'Flush zone')
 	off = _add_name(hd, size, data, fmt, 0x30)
 
