@@ -1200,7 +1200,8 @@ def _add_char_format(hd, size, data, offset, fmt, version):
 	add_iter(hd, 'Scale type', key2txt(scale_type, scale_type_map), off - 2, 2, fmt('H'))
 	(shade, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, '4s')
-	off += 4
+	(kern, off) = rfract(data, off, fmt)
+	add_iter(hd, 'Kern', kern, off - 4, 4, '4s') # unit: 1/200 em space
 	(track, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Track amount', track, off - 4, 4, '4s')
 	off = add_dim(hd, size, data, off, fmt, 'Baseline shift')
