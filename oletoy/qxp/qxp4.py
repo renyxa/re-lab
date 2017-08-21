@@ -1242,7 +1242,7 @@ def _add_para_format(hd, size, data, offset, fmt, version):
 		(line_style, off) = rdata(data, off, fmt('H'))
 		add_iter(hd, 'Style', 'D&S index %d' % line_style, off - 2, 2, fmt('H'), parent=ruleiter)
 		(color, off) = rdata(data, off, fmt('H'))
-		add_iter(hd, 'Color index?', color, off - 2, 2, fmt('H'), parent=ruleiter)
+		add_iter(hd, 'Color index', color, off - 2, 2, fmt('H'), parent=ruleiter)
 		(shade, off) = rfract(data, off, fmt)
 		add_iter(hd, 'Shade', '%.2f%%' % (shade * 100), off - 4, 4, fmt('i'), parent=ruleiter)
 		off = add_dim(hd, size, data, off, fmt, 'From left', ruleiter)
