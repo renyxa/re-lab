@@ -1002,6 +1002,36 @@ def parse_hyph_exceptions(page, data, offset, parent, fmt, version, encoding):
 			('hyph_exceptions', fmt, version, encoding), data[off - 4:off + length], parent)
 	return offset + 4 + length
 
+def parse_tracking_index(page, data, offset, parent, fmt, version):
+	hd = HexDumpSave(offset)
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, 'Tracking index', 'qxp4', ('tracking_index', hd), data[off - 4:off + length], parent)
+	off += 158
+	fonts = []
+	i = 1
+	while off < offset + length + 4:
+		start = off
+		(font, off) = rcstr(data, off)
+		add_iter(hd, 'Font name %d' % i, font, start, off - start, '%ds' % (off - start))
+		fonts.append(font)
+		i += 1
+	return fonts, off
+
+def parse_tracking(page, data, offset, parent, fmt, version, fonts):
+	hd = HexDumpSave(offset)
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, 'Tracking', 'qxp4', ('tracking', hd), data[off - 4:off + length], parent)
+	for (i, font) in enumerate(fonts):
+		fontiter = add_iter(hd, '[%d] %s' % (i + 1, font), '', off, 24, '24s')
+		for j in range(1, 5):
+			(size, off) = rdata(data, off, fmt('B'))
+			add_iter(hd, 'Point %d size' % j, size, off - 1, 1, fmt('B'), parent=fontiter)
+		for j in range(1, 5):
+			(tracking, off) = rdata(data, off, fmt('b'))
+			add_iter(hd, 'Point %d tracking' % j, tracking, off - 1, 1, fmt('b'), parent=fontiter)
+		off += 16
+	return off
+
 def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 	texts = set()
 	pictures = set()
@@ -1071,8 +1101,9 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
 	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
-	add_pgiter(page, 'Something', 'qxp4', (), data[off:off + 170], parent)
-	off += 170
+	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
+	off = parse_tracking(page, data, off, parent, fmt, version, fonts)
+	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_hyph_exceptions(page, data, off, parent, fmt, version, hdr.encoding)
 	if off < len(data):
@@ -1452,6 +1483,8 @@ ids = {
 	'tabs': add_tabs,
 	'tabs_spec': add_saved,
 	'tool_zoom': add_tool_zoom,
+	'tracking': add_saved,
+	'tracking_index': add_saved,
 }
 
 # vim: set ft=python sts=4 sw=4 noet:
