@@ -599,6 +599,13 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesiter = add_pgiter(page, 'Pages', 'qxp33', (), data[off:], parent)
 	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
+	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
+	(kernings, off) = parse_tracking(page, data, off, parent, fmt, version, fonts)
+	off = parse_kerning_spec(page, data, off, parent, fmt, version)
+	for (i, font) in reversed(sorted(zip(kernings, fonts))):
+		if i == 0:
+			break
+		off = parse_kerning(page, data, off, parent, fmt, version, hdr.encoding, i, font)
 	add_pgiter(page, 'Tail', 'qxp33', (), data[off:], parent)
 	return texts, pictures
 

@@ -408,6 +408,74 @@ def add_hj_common(hd, size, data, offset, fmt, version):
 	off = add_dim(hd, size, data, off, fmt, 'Flush zone')
 	return off
 
+def add_kerning_spec(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	i = 1
+	while off < size:
+		off += 2
+		(id, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'ID %d' % i, hex(id), off - 4, 4, fmt('I'))
+		off += 4
+		i += 1
+
+def add_kerning(hd, size, data, fmt, version, encoding):
+	off = add_length(hd, size, data, fmt, version, 0)
+	off += 4
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '# of pairs', count, off - 2, 2, fmt('H'))
+	for i in range(1, count + 1):
+		(pair, off) = rdata(data, off, '2s')
+		add_iter(hd, 'Pair %d' % i, unicode(pair, encoding), off - 2, 2, '2s')
+		(kerning, off) = rdata(data, off, fmt('h'))
+		add_iter(hd, 'Kerning %d' % i, kerning, off - 2, 2, fmt('h'))
+
+def parse_tracking_index(page, data, offset, parent, fmt, version):
+	hd = HexDumpSave(offset)
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Length', length, off - 4, 4, fmt('I'))
+	add_pgiter(page, 'Tracking & kerning index', 'qxp', ('tracking_index', hd), data[off - 4:off + length], parent)
+	off += 158
+	fonts = []
+	i = 1
+	while off < offset + length + 4:
+		start = off
+		(font, off) = rcstr(data, off)
+		add_iter(hd, 'Font name %d' % i, font, start, off - start, '%ds' % (off - start))
+		fonts.append(font)
+		i += 1
+	return fonts, off
+
+def parse_tracking(page, data, offset, parent, fmt, version, fonts):
+	hd = HexDumpSave(offset)
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Length', length, off - 4, 4, fmt('I'))
+	add_pgiter(page, 'Tracking & kerning', 'qxp', ('tracking', hd), data[off - 4:off + length], parent)
+	kernings = []
+	for (i, font) in enumerate(fonts):
+		fontiter = add_iter(hd, '[%d] %s' % (i + 1, font), '', off, 24, '24s')
+		for j in range(1, 5):
+			(size, off) = rdata(data, off, fmt('B'))
+			add_iter(hd, 'Point %d size' % j, size, off - 1, 1, fmt('B'), parent=fontiter)
+		for j in range(1, 5):
+			(tracking, off) = rdata(data, off, fmt('b'))
+			add_iter(hd, 'Point %d tracking' % j, tracking, off - 1, 1, fmt('b'), parent=fontiter)
+		off += 8
+		(kid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Kerning ID', kid, off - 4, off, fmt('I'), parent=fontiter)
+		kernings.append(kid)
+		off += 4
+	return (kernings, off)
+
+def parse_kerning_spec(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, 'Kerning spec', 'qxp', ('kerning_spec', fmt, version), data[off - 4:off + length], parent)
+	return off + length
+
+def parse_kerning(page, data, offset, parent, fmt, version, encoding, index, font):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, '[%d] Kerning (%s)' % (index, font), 'qxp', ('kerning', fmt, version, encoding), data[off - 4:off + length], parent)
+	return off + length
+
 char_format_map = {
 	0x1: 'bold',
 	0x2: 'italic',
@@ -526,6 +594,13 @@ measure_map = {
 framing_map = {
 	0: 'Outside',
 	1: 'Inside',
+}
+
+ids = {
+	'kerning': add_kerning,
+	'kerning_spec': add_kerning_spec,
+	'tracking': add_saved,
+	'tracking_index': add_saved,
 }
 
 if __name__ == '__main__':
