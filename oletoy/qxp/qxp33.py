@@ -549,10 +549,10 @@ def handle_page(page, data, offset, parent, fmt, version, index, master):
 	page.model.set_value(pageiter, 3, data[offset:off])
 	return objs, pageiter, off
 
-def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
+def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 	texts = set()
 	pictures = set()
-	off = 0
+	off = offset
 	master = True
 	i = 1
 	while off < len(data):
@@ -560,7 +560,6 @@ def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 		try:
 			stop = rdata(data, off, fmt('I'))[0]
 			if stop == 0x9e:
-				add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
 				break
 			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, i, master)
 			for j in range(0, objs):
@@ -577,9 +576,8 @@ def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 			i += 1
 		except:
 			traceback.print_exc()
-			add_pgiter(page, 'Tail', 'qxp33', (), data[start:], parent)
 			break
-	return texts, pictures
+	return texts, pictures, off
 
 def handle_document(page, data, parent, fmt, version, hdr):
 	obfctx = ObfuscationContext(hdr.seed, hdr.inc)
@@ -600,7 +598,9 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_para_formats(page, data, off, parent, fmt, version, hdr.encoding)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesiter = add_pgiter(page, 'Pages', 'qxp33', (), data[off:], parent)
-	return handle_pages(page, data[off:], pagesiter, fmt, version, obfctx, hdr.masters)
+	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
+	add_pgiter(page, 'Tail', 'qxp33', (), data[off:], parent)
+	return texts, pictures
 
 def add_header(hd, size, data, fmt, version):
 	(header, off) = add_header_common(hd, size, data, fmt)
