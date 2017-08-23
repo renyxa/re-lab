@@ -996,10 +996,16 @@ def parse_tool_zoom(page, data, offset, parent, fmt, version, index):
 	reciter = add_pgiter(page, '[%d] Zoom' % index, 'qxp4', ('tool_zoom', fmt, version), data[off - 4:off + length], parent)
 	return offset + 4 + length
 
-def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
+def parse_hyph_exceptions(page, data, offset, parent, fmt, version, encoding):
+	(length, off) = rdata(data, offset, fmt('I'))
+	reciter = add_pgiter(page, 'Hyphenation exceptions', 'qxp4',
+			('hyph_exceptions', fmt, version, encoding), data[off - 4:off + length], parent)
+	return offset + 4 + length
+
+def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 	texts = set()
 	pictures = set()
-	off = 0
+	off = offset
 	master = True
 	i = 1
 	while off < len(data):
@@ -1007,7 +1013,6 @@ def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 		try:
 			stop = rdata(data, off, fmt('I'))[0]
 			if stop == 0x9e:
-				add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 				break
 			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, obfctx, i, master)
 			obfctx.next_rev()
@@ -1026,7 +1031,9 @@ def handle_pages(page, data, parent, fmt, version, obfctx, nmasters):
 			traceback.print_exc()
 			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 			break
-	return texts, pictures
+	page.model.set_value(parent, 2, off - offset)
+	page.model.set_value(parent, 3, data[offset:off])
+	return texts, pictures, off
 
 def handle_document(page, data, parent, fmt, version, hdr):
 	obfctx = ObfuscationContext(hdr.seed, hdr.inc)
@@ -1063,7 +1070,14 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_para_formats(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
-	return handle_pages(page, data[off:], pagesiter, fmt, version, obfctx, hdr.masters)
+	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
+	add_pgiter(page, 'Something', 'qxp4', (), data[off:off + 170], parent)
+	off += 170
+	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	off = parse_hyph_exceptions(page, data, off, parent, fmt, version, hdr.encoding)
+	if off < len(data):
+		add_pgiter(page, 'Tail', 'qxp4', (), data[off:], parent)
+	return texts, pictures
 
 def add_header(hd, size, data, fmt, version):
 	(header, off) = add_header_common(hd, size, data, fmt)
@@ -1368,11 +1382,58 @@ def add_tool_zoom(hd, size, data, fmt, version):
 	off = add_length(hd, size, data, fmt, version, 0)
 	add_view_scale(hd, data, off, fmt, version)
 
+def add_hyph_exceptions(hd, size, data, fmt, version, encoding):
+	def hyphenate(word, pattern):
+		w = ''
+		mask = 1
+		for c in word:
+			w += c
+			mask <<= 1
+			if mask & pattern != 0:
+				w += '-'
+		return w
+	off = add_length(hd, size, data, fmt, version, 0)
+	start = off
+	(count, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of words', count, off - 4, 4, fmt('I'))
+	blocks = []
+	i = 1
+	while off < start + 116:
+		(block, off) = rdata(data, off, fmt('I'))
+		if block == 0:
+			break
+		add_iter(hd, 'Offset to block %d' % i, block, off - 4, 4, fmt('I'))
+		blocks.append(start + block)
+		i += 1
+	blocks.append(size)
+	for (i, (block, next_block)) in enumerate(zip(blocks[0:-1], blocks[1:])):
+		blockiter = add_iter(hd, 'Block %d' % (i + 1), '', block, next_block - block, '%ds' % (next_block - block))
+		off = block + 3
+		words = []
+		i = 1
+		while True:
+			(word, off) = rdata(data, off, fmt('I'))
+			if word == 0:
+				break
+			add_iter(hd, 'Offset to word %d' % i, word, off - 4, 4, fmt('I'), parent=blockiter)
+			words.append(block + word)
+			i += 1
+		words.append(next_block)
+		for (i, (word, next_word)) in enumerate(zip(words[0:-1], words[1:])):
+			worditer = add_iter(hd, 'Word %d' % (i + 1), '', word, next_word - word, '%ds' % (next_word - word), parent=blockiter)
+			off = word
+			(text, off) = rdata(data, off, '%ds' % (next_word - word - 4))
+			add_iter(hd, 'Word', text, word, off - word, '%ds' % (off - word), parent=worditer)
+			(hyphens, off) = rdata(data, off, fmt('I'))
+			add_iter(hd, 'Hyphenation pattern', hex(hyphens & 0x7fff), off - 4, 4, fmt('I'), parent=worditer)
+			hd.model.set(worditer, 1, hyphenate(text, hyphens & 0x7fff))
+
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
 	'dash_stripe': add_dash_stripe,
 	'hj': add_hj,
+	'hyph_exceptions': add_hyph_exceptions,
 	'index': add_index,
 	'list': add_list,
 	'fonts': add_fonts,
