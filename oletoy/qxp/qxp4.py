@@ -1063,8 +1063,11 @@ def handle_document(page, data, parent, fmt, version, hdr):
 		off = parse_tabs(page, data, off, parent, fmt, version, hdr.encoding, 'Format tabs %d' % i)
 	off = parse_para_formats(page, data, off, parent, fmt, version)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	pagesstart = off
 	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
 	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
+	page.model.set_value(pagesiter, 2, off - pagesstart)
+	page.model.set_value(pagesiter, 3, data[pagesstart:off])
 	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
 	(kernings, off) = parse_tracking(page, data, off, parent, fmt, version, fonts)
 	off = parse_kerning_spec(page, data, off, parent, fmt, version)
