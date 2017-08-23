@@ -429,6 +429,56 @@ def add_kerning(hd, size, data, fmt, version, encoding):
 		(kerning, off) = rdata(data, off, fmt('h'))
 		add_iter(hd, 'Kerning %d' % i, kerning, off - 2, 2, fmt('h'))
 
+def add_hyph_exceptions(hd, size, data, fmt, version, encoding):
+	def hyphenate(word, pattern):
+		w = ''
+		mask = 1
+		for c in word:
+			w += c
+			mask <<= 1
+			if mask & pattern != 0:
+				w += '-'
+		return w
+	off = add_length(hd, size, data, fmt, version, 0)
+	start = off
+	(count, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, '# of words', count, off - 4, 4, fmt('I'))
+	off_fmt = fmt('I') if version >= VERSION_4 else fmt('H')
+	off_sz = struct.calcsize(off_fmt)
+	blocks = []
+	i = 1
+	while off < start + 4 + 28 * off_sz:
+		(block, off) = rdata(data, off, off_fmt)
+		if block == 0:
+			break
+		add_iter(hd, 'Offset to block %d' % i, block, off - off_sz, off_sz, off_fmt)
+		blocks.append(start + block)
+		i += 1
+	blocks.append(size)
+	for (i, (block, next_block)) in enumerate(zip(blocks[0:-1], blocks[1:])):
+		blockiter = add_iter(hd, 'Block %d' % (i + 1), '', block, next_block - block, '%ds' % (next_block - block))
+		off = block + 1
+		if version >= VERSION_4:
+			off += 2
+		words = []
+		i = 1
+		while True:
+			(word, off) = rdata(data, off, off_fmt)
+			if word == 0:
+				break
+			add_iter(hd, 'Offset to word %d' % i, word, off - off_sz, off_sz, off_fmt, parent=blockiter)
+			words.append(block + word)
+			i += 1
+		words.append(next_block)
+		for (i, (word, next_word)) in enumerate(zip(words[0:-1], words[1:])):
+			worditer = add_iter(hd, 'Word %d' % (i + 1), '', word, next_word - word, '%ds' % (next_word - word), parent=blockiter)
+			off = word
+			(text, off) = rdata(data, off, '%ds' % (next_word - word - 4))
+			add_iter(hd, 'Word', text, word, off - word, '%ds' % (off - word), parent=worditer)
+			(hyphens, off) = rdata(data, off, fmt('I'))
+			add_iter(hd, 'Hyphenation pattern', hex(hyphens & 0x7fff), off - 4, 4, fmt('I'), parent=worditer)
+			hd.model.set(worditer, 1, hyphenate(text, hyphens & 0x7fff))
+
 def parse_tracking_index(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
@@ -475,6 +525,12 @@ def parse_kerning(page, data, offset, parent, fmt, version, encoding, index, fon
 	(length, off) = rdata(data, offset, fmt('I'))
 	add_pgiter(page, '[%d] Kerning (%s)' % (index, font), 'qxp', ('kerning', fmt, version, encoding), data[off - 4:off + length], parent)
 	return off + length
+
+def parse_hyph_exceptions(page, data, offset, parent, fmt, version, encoding):
+	(length, off) = rdata(data, offset, fmt('I'))
+	reciter = add_pgiter(page, 'Hyphenation exceptions', 'qxp',
+			('hyph_exceptions', fmt, version, encoding), data[off - 4:off + length], parent)
+	return offset + 4 + length
 
 char_format_map = {
 	0x1: 'bold',
@@ -597,6 +653,7 @@ framing_map = {
 }
 
 ids = {
+	'hyph_exceptions': add_hyph_exceptions,
 	'kerning': add_kerning,
 	'kerning_spec': add_kerning_spec,
 	'tracking': add_saved,

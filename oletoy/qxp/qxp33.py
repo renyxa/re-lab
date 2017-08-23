@@ -606,7 +606,10 @@ def handle_document(page, data, parent, fmt, version, hdr):
 		if i == 0:
 			break
 		off = parse_kerning(page, data, off, parent, fmt, version, hdr.encoding, i, font)
-	add_pgiter(page, 'Tail', 'qxp33', (), data[off:], parent)
+	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	off = parse_hyph_exceptions(page, data, off, parent, fmt, version, hdr.encoding)
+	if off < len(data):
+		add_pgiter(page, 'Tail', 'qxp4', (), data[off:], parent)
 	return texts, pictures
 
 def add_header(hd, size, data, fmt, version):
