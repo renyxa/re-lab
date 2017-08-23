@@ -585,7 +585,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_record(page, data, off, parent, fmt, version, 'Print settings')
 	off = parse_record(page, data, off, parent, fmt, version, 'Page setup')
-	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	off = parse_record(page, data, off, parent, fmt, version, 'Dictionary')
 	off = parse_fonts(page, data, off, parent, fmt, version)
 	if version >= VERSION_3_3:
 		off = parse_physical_fonts(page, data, off, parent, fmt, version)
