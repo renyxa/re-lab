@@ -1005,7 +1005,7 @@ def parse_hyph_exceptions(page, data, offset, parent, fmt, version, encoding):
 def parse_tracking_index(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
-	add_pgiter(page, 'Tracking index', 'qxp4', ('tracking_index', hd), data[off - 4:off + length], parent)
+	add_pgiter(page, 'Tracking & kerning index', 'qxp4', ('tracking_index', hd), data[off - 4:off + length], parent)
 	off += 158
 	fonts = []
 	i = 1
@@ -1020,7 +1020,8 @@ def parse_tracking_index(page, data, offset, parent, fmt, version):
 def parse_tracking(page, data, offset, parent, fmt, version, fonts):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
-	add_pgiter(page, 'Tracking', 'qxp4', ('tracking', hd), data[off - 4:off + length], parent)
+	add_pgiter(page, 'Tracking & kerning', 'qxp4', ('tracking', hd), data[off - 4:off + length], parent)
+	kernings = []
 	for (i, font) in enumerate(fonts):
 		fontiter = add_iter(hd, '[%d] %s' % (i + 1, font), '', off, 24, '24s')
 		for j in range(1, 5):
@@ -1029,8 +1030,22 @@ def parse_tracking(page, data, offset, parent, fmt, version, fonts):
 		for j in range(1, 5):
 			(tracking, off) = rdata(data, off, fmt('b'))
 			add_iter(hd, 'Point %d tracking' % j, tracking, off - 1, 1, fmt('b'), parent=fontiter)
-		off += 16
-	return off
+		off += 8
+		(kid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'Kerning ID', kid, off - 4, off, fmt('I'), parent=fontiter)
+		kernings.append(kid)
+		off += 4
+	return (kernings, off)
+
+def parse_kerning_spec(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, 'Kerning spec', 'qxp4', ('kerning_spec', fmt, version), data[off - 4:off + length], parent)
+	return off + length
+
+def parse_kerning(page, data, offset, parent, fmt, version, encoding, index, font):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, '[%d] Kerning (%s)' % (index, font), 'qxp4', ('kerning', fmt, version, encoding), data[off - 4:off + length], parent)
+	return off + length
 
 def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 	texts = set()
@@ -1102,8 +1117,12 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
 	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
 	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
-	off = parse_tracking(page, data, off, parent, fmt, version, fonts)
-	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	(kernings, off) = parse_tracking(page, data, off, parent, fmt, version, fonts)
+	off = parse_kerning_spec(page, data, off, parent, fmt, version)
+	for (i, font) in reversed(sorted(zip(kernings, fonts))):
+		if i == 0:
+			break
+		off = parse_kerning(page, data, off, parent, fmt, version, hdr.encoding, i, font)
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	off = parse_hyph_exceptions(page, data, off, parent, fmt, version, hdr.encoding)
 	if off < len(data):
@@ -1459,6 +1478,27 @@ def add_hyph_exceptions(hd, size, data, fmt, version, encoding):
 			add_iter(hd, 'Hyphenation pattern', hex(hyphens & 0x7fff), off - 4, 4, fmt('I'), parent=worditer)
 			hd.model.set(worditer, 1, hyphenate(text, hyphens & 0x7fff))
 
+def add_kerning_spec(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	i = 1
+	while off < size:
+		off += 2
+		(id, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'ID %d' % i, hex(id), off - 4, 4, fmt('I'))
+		off += 4
+		i += 1
+
+def add_kerning(hd, size, data, fmt, version, encoding):
+	off = add_length(hd, size, data, fmt, version, 0)
+	off += 4
+	(count, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, '# of pairs', count, off - 2, 2, fmt('H'))
+	for i in range(1, count + 1):
+		(pair, off) = rdata(data, off, '2s')
+		add_iter(hd, 'Pair %d' % i, unicode(pair, encoding), off - 2, 2, '2s')
+		(kerning, off) = rdata(data, off, fmt('h'))
+		add_iter(hd, 'Kerning %d' % i, kerning, off - 2, 2, fmt('h'))
+
 ids = {
 	'char_format': add_char_format,
 	'char_style': add_char_style,
@@ -1466,6 +1506,8 @@ ids = {
 	'hj': add_hj,
 	'hyph_exceptions': add_hyph_exceptions,
 	'index': add_index,
+	'kerning': add_kerning,
+	'kerning_spec': add_kerning_spec,
 	'list': add_list,
 	'fonts': add_fonts,
 	'colors': add_saved,
