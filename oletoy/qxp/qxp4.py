@@ -1005,6 +1005,7 @@ def parse_hyph_exceptions(page, data, offset, parent, fmt, version, encoding):
 def parse_tracking_index(page, data, offset, parent, fmt, version):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Length', length, off - 4, 4, fmt('I'))
 	add_pgiter(page, 'Tracking & kerning index', 'qxp4', ('tracking_index', hd), data[off - 4:off + length], parent)
 	off += 158
 	fonts = []
@@ -1020,6 +1021,7 @@ def parse_tracking_index(page, data, offset, parent, fmt, version):
 def parse_tracking(page, data, offset, parent, fmt, version, fonts):
 	hd = HexDumpSave(offset)
 	(length, off) = rdata(data, offset, fmt('I'))
+	add_iter(hd, 'Length', length, off - 4, 4, fmt('I'))
 	add_pgiter(page, 'Tracking & kerning', 'qxp4', ('tracking', hd), data[off - 4:off + length], parent)
 	kernings = []
 	for (i, font) in enumerate(fonts):
