@@ -570,7 +570,7 @@ def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 					elif header.content_type == 5:
 						pictures.add(header.content_index)
 				obfctx = obfctx.next()
-			if i == nmasters:
+			if master and i == nmasters:
 				master = False
 				i = 0
 			i += 1

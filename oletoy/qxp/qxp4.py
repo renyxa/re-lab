@@ -1017,7 +1017,7 @@ def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 						texts.add(header.content_index)
 					elif header.content_type == 4:
 						pictures.add(header.content_index)
-			if i == nmasters:
+			if master and i == nmasters:
 				master = False
 				i = 0
 			i += 1
