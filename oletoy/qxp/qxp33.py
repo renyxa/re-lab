@@ -549,18 +549,16 @@ def handle_page(page, data, offset, parent, fmt, version, index, master):
 	page.model.set_value(pageiter, 3, data[offset:off])
 	return objs, pageiter, off
 
-def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
+def parse_pages(page, data, offset, parent, fmt, version, obfctx, npages, nmasters):
 	texts = set()
 	pictures = set()
 	off = offset
 	master = True
+	n = 0
 	i = 1
-	while off < len(data):
+	while n < npages + nmasters:
 		start = off
 		try:
-			stop = rdata(data, off, fmt('I'))[0]
-			if stop == 0x9e:
-				break
 			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, i, master)
 			for j in range(0, objs):
 				(header, off) = handle_object(page, data, off, pgiter, fmt, version, obfctx, j)
@@ -574,6 +572,7 @@ def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 				master = False
 				i = 0
 			i += 1
+			n += 1
 		except:
 			traceback.print_exc()
 			break
@@ -599,7 +598,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesstart = off
 	pagesiter = add_pgiter(page, 'Pages', 'qxp33', (), data[off:], parent)
-	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
+	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.pages, hdr.masters)
 	page.model.set_value(pagesiter, 2, off - pagesstart)
 	page.model.set_value(pagesiter, 3, data[pagesstart:off])
 	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
@@ -618,8 +617,8 @@ def handle_document(page, data, parent, fmt, version, hdr):
 def add_header(hd, size, data, fmt, version):
 	(header, off) = add_header_common(hd, size, data, fmt)
 	off += 52
-	(pages, off) = rdata(data, off, fmt('H'))
-	add_iter(hd, 'Number of pages', pages, off - 2, 2, fmt('H'))
+	(header.pages, off) = rdata(data, off, fmt('H'))
+	add_iter(hd, 'Number of pages', header.pages, off - 2, 2, fmt('H'))
 	off += 8
 	off = add_margins(hd, size, data, off, fmt)
 	(col, off) = rdata(data, off, fmt('H'))

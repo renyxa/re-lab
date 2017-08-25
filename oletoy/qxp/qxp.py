@@ -121,6 +121,7 @@ class Header:
 		self.encoding = encoding
 		self.seed = 0
 		self.inc = 0
+		self.pages = 0
 		self.masters = 0
 		self.pictures = 0
 
