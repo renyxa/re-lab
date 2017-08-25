@@ -1139,8 +1139,9 @@ def add_header(hd, size, data, fmt, version):
 	off += 20
 	(header.seed, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Obfuscation seed', hex(header.seed), off - 2, 2, fmt('H'))
-	sign = lambda x: 1 if x & 0x8000 == 0 else -1
-	hd.model.set(pagesiter, 1, deobfuscate(pages, header.seed, 2) + sign(header.seed))
+	def demangle(val):
+		return val & 0xfffc | val & 0x3 ^ 0x3
+	hd.model.set(pagesiter, 1, demangle(deobfuscate(pages, header.seed, 2)))
 	off += 14
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
