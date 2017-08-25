@@ -996,18 +996,16 @@ def parse_tool_zoom(page, data, offset, parent, fmt, version, index):
 	reciter = add_pgiter(page, '[%d] Zoom' % index, 'qxp4', ('tool_zoom', fmt, version), data[off - 4:off + length], parent)
 	return offset + 4 + length
 
-def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
+def parse_pages(page, data, offset, parent, fmt, version, obfctx, npages, nmasters):
 	texts = set()
 	pictures = set()
 	off = offset
 	master = True
+	n = 0
 	i = 1
-	while off < len(data):
+	while n < npages + nmasters:
 		start = off
 		try:
-			stop = rdata(data, off, fmt('I'))[0]
-			if stop == 0x9e:
-				break
 			(objs, pgiter, off) = handle_page(page, data, start, parent, fmt, version, obfctx, i, master)
 			obfctx.next_rev()
 			for j in range(0, objs):
@@ -1021,9 +1019,9 @@ def parse_pages(page, data, offset, parent, fmt, version, obfctx, nmasters):
 				master = False
 				i = 0
 			i += 1
+			n += 1
 		except:
 			traceback.print_exc()
-			add_pgiter(page, 'Tail', 'qxp4', (), data[start:], parent)
 			break
 	page.model.set_value(parent, 2, off - offset)
 	page.model.set_value(parent, 3, data[offset:off])
@@ -1065,7 +1063,7 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
 	pagesstart = off
 	pagesiter = add_pgiter(page, "Pages", 'qxp4', (), data[off:], parent)
-	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.masters)
+	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.pages, hdr.masters)
 	page.model.set_value(pagesiter, 2, off - pagesstart)
 	page.model.set_value(pagesiter, 3, data[pagesstart:off])
 	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
@@ -1141,7 +1139,8 @@ def add_header(hd, size, data, fmt, version):
 	add_iter(hd, 'Obfuscation seed', hex(header.seed), off - 2, 2, fmt('H'))
 	def demangle(val):
 		return val & 0xfffc | val & 0x3 ^ 0x3
-	hd.model.set(pagesiter, 1, demangle(deobfuscate(pages, header.seed, 2)))
+	header.pages = demangle(deobfuscate(pages, header.seed, 2))
+	hd.model.set(pagesiter, 1, header.pages)
 	off += 14
 	off = add_dim(hd, size, data, off, fmt, 'Left offset')
 	off = add_dim(hd, size, data, off, fmt, 'Top offset')
