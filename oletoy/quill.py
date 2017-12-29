@@ -113,32 +113,32 @@ def parse_pl(page,data,parent):
 		print "Failed at PL parsing"
 
 def parse_font(page,data,parent):
-		model = page.model
-		[num] = struct.unpack('<I', data[4:8])
-		for i in range(num):
-			[off] = struct.unpack('<I', data[20+i*4:24+i*4])
-			[nlen] = struct.unpack('<H', data[20+off:20+off+2])
-			fname = unicode(data[20+off+2:20+off+2+nlen*2],"utf-16")
-			[fid] = struct.unpack('<I', data[20+off+2+nlen*2:20+off+2+nlen*2+4])
-			add_pgiter (page,"(%02x) %s"%(fid,fname),"quill","font",data[20+off:20+off+nlen*2+6],parent)
+	model = page.model
+	[num] = struct.unpack('<I', data[4:8])
+	for i in range(num):
+		[off] = struct.unpack('<I', data[20+i*4:24+i*4])
+		[nlen] = struct.unpack('<H', data[20+off:20+off+2])
+		fname = unicode(data[20+off+2:20+off+2+nlen*2],"utf-16")
+		[fid] = struct.unpack('<I', data[20+off+2+nlen*2:20+off+2+nlen*2+4])
+		add_pgiter (page,"(%02x) %s"%(fid,fname),"quill","font",data[20+off:20+off+nlen*2+6],parent)
 
 def parse_mcld(page,data,parent):
-		model = page.model
-		[num] = struct.unpack('<I', data[4:8])
-		off = num*4 + 8
-		for i in range(num):
-			iter1 = add_pgiter (page,"(%02x) %02x"%(i,struct.unpack("<I",data[8+i*4:12+i*4])[0]),"quill",0,data[8+i*4:12+i*4],parent)
-			[nlen] = struct.unpack("<I",data[off:off+4])
-			iter2 = add_pgiter (page,"Hdr","quill",0,data[off:off+nlen],iter1)
-			pubblock.parse (page,data[off+4:off+nlen],iter2,i,0)
-			off += nlen
-			[num2] = struct.unpack('<I', data[off:off+4])
-			off += 4
-			for k in range(num2):
-				[nlen2] = struct.unpack('<I', data[off:off+4])
-				iter3 = add_pgiter (page,"Ch %02x"%k,"quill",0,data[off:off+nlen2],iter1)
-				pubblock.parse (page,data[off+4:off+nlen2],iter3,k,0)
-				off += nlen2
+	model = page.model
+	[num] = struct.unpack('<I', data[4:8])
+	off = num*4 + 8
+	for i in range(num):
+		iter1 = add_pgiter (page,"(%02x) %02x"%(i,struct.unpack("<I",data[8+i*4:12+i*4])[0]),"quill",0,data[8+i*4:12+i*4],parent)
+		[nlen] = struct.unpack("<I",data[off:off+4])
+		iter2 = add_pgiter (page,"Hdr","quill",0,data[off:off+nlen],iter1)
+		pubblock.parse (page,data[off+4:off+nlen],iter2,i,0)
+		off += nlen
+		[num2] = struct.unpack('<I', data[off:off+4])
+		off += 4
+		for k in range(num2):
+			[nlen2] = struct.unpack('<I', data[off:off+4])
+			iter3 = add_pgiter (page,"Ch %02x"%k,"quill",0,data[off:off+nlen2],iter1)
+			pubblock.parse (page,data[off+4:off+nlen2],iter3,k,0)
+			off += nlen2
 
 def parse (page,data,parent):
 	model = page.model
