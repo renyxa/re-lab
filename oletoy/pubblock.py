@@ -31,16 +31,52 @@ block_types = {
 block_ids = {
 	0x10:{0x66:"# of rows",0x67:"# of cols",0x68:"Width",0x69:"Height"}
 }
+
+def make_display(keys, default='unknown'):
+	def display(val):
+		return key2txt(val, keys, default)
+	return display
+
+def make_parser(keys):
+	def parser(page, data, parent, i, j):
+		return parse(page, data, parent, i, j, None, keys)
+	return parser
+
+class block_descs:
+	def __init__(self, names={}, displays={}, parsers={}, display_ids={}):
+		self.names = names
+		self.displays = displays
+		self.display_ids = display_ids
+		self.parsers = parsers
+
+	def find(self, id):
+		name = self._find(id, self.names)
+		disp = self._find(id, self.displays)
+		if disp and not callable(disp):
+			disp = make_display(disp)
+		disp_id = self._find(id, self.display_ids)
+		parser = self._find(id, self.parsers)
+		if parser and not callable(parser):
+			parser = make_parser(parser)
+		return name, disp, disp_id, parser
+
+	def _find(self, id, keys):
+		return keys[id] if keys.has_key(id) else None
+
 # parses semi-standard "block" structures in MS Pub files.
-def parse (page,data,parent,i,j=-1,ptype=None):
+def parse (page,data,parent,i,j=-1,ptype=None,descs=block_descs()):
 	model = page.model
 	off = 0
 	value = None
 	try:
 		while off < len(data) - 2:
 			id = ord(data[off])
+			(block_name, disp, disp_id, block_parser) = descs.find(id)
 			type = ord(data[off+1])
-			name = "ID: %02x  Type %02x"%(id,type)
+			if block_name:
+				name = "ID: %02x  Type %02x: %s" % (id, type, block_name)
+			else:
+				name = "ID: %02x  Type %02x"%(id,type)
 			off+=2
 			dlen = -1
 			if type < 5 or type == 8 or type == 0xa or type == 0xa8:
@@ -53,12 +89,18 @@ def parse (page,data,parent,i,j=-1,ptype=None):
 			if type == 0x10 or type == 0x12 or type == 0x18 or type == 0x19 or type == 0x1a:
 				value = data[off:off+2]
 				dlen = 2
-				name += " (%02d)"%struct.unpack("<H",value)[0]
+				v = struct.unpack("<H",value)[0]
+				if disp:
+					name += " (%s)" % disp(v)
+				else:
+					name += " (%02d)"%v
 			if type == 0x20:
 				value = data[off:off+4]
 				dlen = 4
 				v = struct.unpack("<I",value)[0]
-				if v > 12700 and v < 220370400:
+				if disp:
+					name += " (%s)" % disp(v)
+				elif v > 12700 and v < 220370400:
 					# couldn't be EMU if less than 1 point or more than 241 inch
 					name += " (%.2f pt)"%(v/12700.)
 				else:
@@ -72,10 +114,13 @@ def parse (page,data,parent,i,j=-1,ptype=None):
 			if type == 0x22 or type == 0x58 or type == 0x68 or type == 0x70:
 				value = data[off:off+4]
 				dlen = 4
-				if type != 0x70:
-					name += " (%02d)"%struct.unpack("<I",value)[0]
+				v = struct.unpack("<I",value)[0]
+				if disp:
+					name += " (%s)" % disp(v)
+				elif type != 0x70:
+					name += " (%02d)"%v
 				else:
-					name += " (0x%02x)"%struct.unpack("<I",value)[0]
+					name += " (0x%02x)"%v
 				
 				if id == 5 and type == 0x68:
 					pname = model.get_value(parent,0)
@@ -132,9 +177,10 @@ def parse (page,data,parent,i,j=-1,ptype=None):
 				return
 			else:
 				if type != 0x78 or j > 0xFF:
-					iter1 = add_pgiter (page,name,"pub",0,value,parent)
+					iter1 = add_pgiter (page,name,"pub",disp_id,value,parent)
 					if dlen > 4 and type != 0xc0 and type != 0x80 and type != 0x38 and type != 0x28:
-						parse (page,data[off+4:off+dlen],iter1,i,j-2)
+						parser = block_parser if block_parser else parse
+						parser(page,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:
 		print "Failed at parsing block %d "%i,"val: ",value," off: ",off,model.get_string_from_iter(parent)
