@@ -21,6 +21,15 @@ import hexdump
 import pubblock
 from utils import *
 
+def val2pctxt(val):
+	return '%.1f%%' % (val / 10.0)
+
+def emu2pt(val):
+	return val * 72 / 914400
+
+def emu2pttxt(val):
+	return '%.1fpt' % emu2pt(val)
+
 def fdpc (hd, size, data):
 	offset = 0
 	num = struct.unpack('<H', data[offset:offset+2])[0]
@@ -34,6 +43,71 @@ def fdpc (hd, size, data):
 sub_ids = {"FDPC":fdpc,"FDPP":fdpc}
 
 def parse_fdpc (page,data,offset,fdpciter):
+	text_pos = {1: 'superscript', 2: 'subscript',}
+	locale_id = {
+		1029: 'Czech',
+		1033: 'English (US)',
+	}
+	underline = {
+		0x401: 'single',
+		0x402: 'words only',
+		0x403: 'double',
+		0x404: 'dotted',
+		0x406: 'thick',
+		0x407: 'dash',
+		0x409: 'dot dash',
+		0x40a: 'dot dot dash',
+		0x40b: 'wave',
+		0x410: 'thick wave',
+		0x411: 'thick dot',
+		0x412: 'thick dash',
+		0x413: 'thick dot dash',
+		0x414: 'thick dot dot dash',
+		0x415: 'long dash',
+		0x416: 'thick long dash',
+		0x417: 'double wave',
+	}
+
+	names = {
+		0x2: 'Bold 1',
+		0x3: 'Italic 1',
+		0x4: 'Outline',
+		0x5: 'Shadow',
+		0xc: 'Text size 1',
+		0xf: 'Text position',
+		0x12: 'Locale ID',
+		0x13: 'Small caps',
+		0x14: 'All caps',
+		0x16: 'Emboss',
+		0x17: 'Engrave',
+		0x18: 'Pair kerning',
+		0x1b: 'Kerning',
+		0x1e: 'Underline',
+		0x1f: 'Tracking',
+		0x20: 'Scaling',
+		0x24: 'Font?',
+		0x37: 'Bold 2',
+		0x38: 'Italic 2',
+		0x39: 'Text size 2',
+	}
+
+	displays = {
+		0xc: emu2pttxt,
+		0xf: text_pos,
+		0x12: locale_id,
+		0x18: emu2pttxt,
+		0x1b: emu2pttxt,
+		0x1e: underline,
+		0x1f: val2pctxt,
+		0x20: val2pctxt,
+	}
+
+	parsers = {
+		0x24: pubblock.block_descs({0x0: 'Font index?',}),
+	}
+
+	descs = pubblock.block_descs(names, displays, parsers)
+
 	model = page.model
 	[num] = struct.unpack('<H', data[offset:offset+2])
 	for i in range (num):
@@ -41,7 +115,7 @@ def parse_fdpc (page,data,offset,fdpciter):
 		[tflag] = struct.unpack('<H', data[offset+8+num*4+i*2:offset+8+2+num*4+i*2])
 		iter1 = add_pgiter (page,"[%02x] %02x"%(toff,tflag),"quill","fdpc",data[offset+8+i*4:offset+12+i*4],fdpciter)
 		[nlen] = struct.unpack('<I', data[offset+tflag:offset+tflag+4])
-		pubblock.parse (page,data[offset+tflag+4:offset+tflag+nlen],iter1,0,0)
+		pubblock.parse (page,data[offset+tflag+4:offset+tflag+nlen],iter1,0,0,None,descs)
 	return
 
 def parse_syid (page,data,offset,syiditer,txtiter,j):
