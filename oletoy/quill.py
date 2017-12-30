@@ -48,25 +48,28 @@ def parse_fdpc (page,data,offset,fdpciter):
 		1029: 'Czech',
 		1033: 'English (US)',
 	}
-	underline = {
-		0x401: 'single',
-		0x402: 'words only',
-		0x403: 'double',
-		0x404: 'dotted',
-		0x406: 'thick',
-		0x407: 'dash',
-		0x409: 'dot dash',
-		0x40a: 'dot dot dash',
-		0x40b: 'wave',
-		0x410: 'thick wave',
-		0x411: 'thick dot',
-		0x412: 'thick dash',
-		0x413: 'thick dot dash',
-		0x414: 'thick dot dot dash',
-		0x415: 'long dash',
-		0x416: 'thick long dash',
-		0x417: 'double wave',
-	}
+
+	def underline(val):
+		umap = {
+			0x01: 'single',
+			0x02: 'words only',
+			0x03: 'double',
+			0x04: 'dotted',
+			0x06: 'thick',
+			0x07: 'dash',
+			0x09: 'dot dash',
+			0x0a: 'dot dot dash',
+			0x0b: 'wave',
+			0x10: 'thick wave',
+			0x11: 'thick dot',
+			0x12: 'thick dash',
+			0x13: 'thick dot dash',
+			0x14: 'thick dot dot dash',
+			0x15: 'long dash',
+			0x16: 'thick long dash',
+			0x17: 'double wave',
+		}
+		return key2txt(val & 0xff, umap)
 
 	names = {
 		0x2: 'Bold 1',
