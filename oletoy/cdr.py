@@ -94,28 +94,6 @@ wrap_txt_style = {
 	6:"Square Above/Below"
 	}
 
-charsets = {
-	0:"Latin", #cp1252
-	1:"System default",
-	2:"Symbol",
-	77:"Apple Roman", #cp10000 ?
-	128:"Japanese Shift-JIS", #cp932
-	129:"Korean (Hangul)", #cp949
-	130:"Korean (Johab)", #cp1361
-	134:"Chinese Simplified GBK", #cp936
-	136:"Chinese Traditional BIG5", #cp950
-	161:"Greek", #cp1253
-	162:"Turkish", #cp1254
-	163:"Vietnamese", #cp1258
-	177:"Hebrew", #cp1255
-	178:"Arabic", #cp1256
-	186:"Baltic", #cp1257
-	204:"Cyrillic", #cp1251
-	222:"Thai", #cp874
-	238:"Latin II (Central European)", #cp1250
-	255:"OEM Latin I"
-	}
-
 
 def add_dictiter(page,parent,data,fourcc):
 	d_iter = page.dictmod.append(None,None)
@@ -475,8 +453,8 @@ def font (hd,size,data):
 	add_iter (hd,"Font ID","%02x"%struct.unpack('<H', data[0:2])[0],0,2,"<H")
 	enc = struct.unpack('<H', data[2:4])[0]
 	enctxt = "Unknown"
-	if charsets.has_key(enc):
-		enctxt = charsets[enc]
+	if ms_charsets.has_key(enc):
+		enctxt = ms_charsets[enc]
 	shift = 0
 	if hd.version > 5:
 		add_iter (hd,"Encoding","%s (%02x)"%(enctxt,enc),2,2,"<H")
@@ -1991,8 +1969,8 @@ def txsm (hd,size,data):
 			# Font
 			enctxt = "Unknown"
 			enc = struct.unpack("<H",data[off+2:off+4])[0]
-			if charsets.has_key(enc):
-				enctxt = charsets[enc]
+			if ms_charsets.has_key(enc):
+				enctxt = ms_charsets[enc]
 			add_iter (hd, "\tFont ID, Charset", "%s, %s (%02x)"%(d2hex(data[off:off+2]),enctxt,enc),off,4,"txt")
 			off += 4
 		if flag2&2 == 2:

@@ -24,13 +24,6 @@ import ctypes
 from utils import *
 
 
-charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
-	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
-	134:"Chinese Simplified GBK",136:"Chinese Traditional BIG5",
-	161:"Greek",162:"Turkish",163:"Vietnamese",177:"Hebrew",178:"Arabic",
-	186:"Baltic",204:"Cyrillic",222:"Thai",238:"Latin II (Central European)",
-	255:"OEM Latin I"}
-
 escapement = {0:"None", 1:"Superscript", 2:"Subscript"}
 
 underline = {0:"None",1:"Single",2:"Double",0x21:"Single accounting",0x22:"Double accounting"}
@@ -331,8 +324,8 @@ def biff58_font (hd,data):
 	fam = ord(data[0xb+off])
 	cset = ord(data[0xc+off])
 	cst = ""
-	if charsets.has_key(cset):
-		cst = charsets[cset]
+	if ms_charsets.has_key(cset):
+		cst = ms_charsets[cset]
 	fnlen = ord(data[0xe+off])
 	fname = data[0xf+off:0xf+fnlen+off]
 	if hd.version == 8:
