@@ -16,7 +16,7 @@
 
 import struct
 
-from utils import add_iter, add_pgiter, bflag2txt, d2hex, key2txt, ms_charsets, rdata
+from utils import add_iter, add_pgiter, bflag2txt, d2hex, key2txt, lcid2txt, ms_charsets, rdata
 
 def set_length(hd, iter, length):
 	hd.model.set(iter, 3, length)
@@ -822,9 +822,7 @@ def add_attrset(hd, size, data):
 	outline_map = values({0: 'none', 1: 'outline', 2: 'embossed', 3: 'engraved'})
 	add_iter(hd, 'Outline type', outline_map(outline), off - 2, 2, '<H')
 	(lang, off) = rdata(data, off, '<H')
-	# MS lang ID, just a few useful entries here
-	lang_map = values({0x0: 'default', 0x0405: 'cs-CZ', 0x0409: 'en-US', 0x0415: 'pl-PL', 0x0809: 'en-GB'})
-	add_iter(hd, 'Language code', lang_map(lang), off - 2, 2, '<H')
+	add_iter(hd, 'Language code', lcid2txt(lang), off - 2, 2, '<H')
 
 def _add_attrset_para(hd, size, data, offset):
 	(alignment, off) = rdata(data, offset, '<H')

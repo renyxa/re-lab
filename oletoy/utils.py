@@ -24,6 +24,13 @@ except:
 	print 'Graphviz not found. Only used for FreeHand.' # Grid layout will be used.'
 	usegraphviz = False
 
+try:
+    import icu
+    icu.Locale(1033) # test if pyicu supports creation of locale from LCID
+    useicu = True
+except:
+    print 'Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)'
+    useicu = False
 
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -141,6 +148,16 @@ def bflag2txt(flag,data,txt=""):
 		if len(txt) > 0:
 			txt = txt[:len(txt)-1]
 	return txt
+
+def lcid2txt(lcid):
+	if useicu:
+		try:
+			return icu.Locale(lcid).getDisplayName()
+		except:
+			return "Unknown"
+	else:
+		locale_id = {1029: 'Czech', 1033: 'English (US)',}
+		return key2txt(lcid, locale_id)
 
 def dib2bmp(data,strict=0):
 	flag = struct.unpack("<I",data[:4])[0]

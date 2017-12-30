@@ -44,10 +44,6 @@ sub_ids = {"FDPC":fdpc,"FDPP":fdpc}
 
 def parse_fdpc (page,data,offset,fdpciter):
 	text_pos = {1: 'superscript', 2: 'subscript',}
-	locale_id = {
-		1029: 'Czech',
-		1033: 'English (US)',
-	}
 
 	def underline(val):
 		umap = {
@@ -98,7 +94,7 @@ def parse_fdpc (page,data,offset,fdpciter):
 	displays = {
 		0xc: emu2pttxt,
 		0xf: text_pos,
-		0x12: locale_id,
+		0x12: lcid2txt,
 		0x18: emu2pttxt,
 		0x1b: emu2pttxt,
 		0x1e: underline,

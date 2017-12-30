@@ -116,37 +116,6 @@ charsets = {
 	255:"OEM Latin I"
 	}
 
-langids = {
-	1025:"Arabic",
-	1069:"Basque",
-	1027:"Catalan",
-	2052:"Chinese (Simplified)",
-	1028:"Chinese (Traditional)",
-	1029:"Czech",
-	1030:"Danish",
-	1043:"Dutch",
-	1033:"English (United States)",
-	1035:"Finnish",
-	1036:"French",
-	1031:"German",
-	1032:"Greek",
-	1037:"Hebrew",
-	1038:"Hungarian",
-	1040:"Italian",
-	1041:"Japanese",
-	1042:"Korean",
-	1044:"Norwegian",
-	1045:"Polish",
-	2070:"Portuguese",
-	1046:"Portuguese (Brazil)",
-	1049:"Russian",
-	1051:"Slovakian",
-	1060:"Slovenian",
-	3082:"Spanish",
-	1053:"Swedish",
-	1055:"Turkish",
-}
-
 
 def add_dictiter(page,parent,data,fourcc):
 	d_iter = page.dictmod.append(None,None)
@@ -2490,7 +2459,7 @@ class record:
 				print 'Last saved: %d build %d'%(vid/100.,bid)
 				if len(self.data) >= 0x34:
 					lid = struct.unpack("<I",self.data[0x30:0x34])[0]
-					print key2txt(lid,langids)
+					print(lcid2txt(lid))
 			except:
 				print "Failed to parse 'sumi'"
 		if page.version < 16 and (self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "fill" or self.fourcc == "arrw" or self.fourcc == "bmpf"):
