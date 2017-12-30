@@ -51,6 +51,7 @@ def parse_fdpc (page,data,offset,fdpciter):
 
 	def underline(val):
 		umap = {
+			0x00: 'none',
 			0x01: 'single',
 			0x02: 'words only',
 			0x03: 'double',
