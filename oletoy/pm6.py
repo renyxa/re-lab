@@ -374,64 +374,20 @@ def hd_char (hd, data, page):
 	fnt_color = struct.unpack("%sh"%page.eflag,data[8:10])[0]
 	add_iter (hd,'Font color:',"0x%02x"%fnt_color,8,2,"%sh"%page.eflag)
 
-	biu_props = "0x%s"%d2hex(data[10:11]) # Bold Italic Underline Flag
+	fmt_flags = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
+	(fmt, off) = rdata(data, 10, 'b')
+	add_iter (hd, 'Format', bflag2txt(fmt, fmt_flags), off - 1, 1, 'b')
 
-	if biu_props == "0x01":
-	    add_iter (hd,'BIU:',"Bold",10,1,"%sh"%page.eflag)
-	elif biu_props == "0x02":
-	    add_iter (hd,'BIU:',"Italic",10,1,"%sh"%page.eflag)
-	elif biu_props == "0x03":
-	    add_iter (hd,'BIU:',"Bold Italic",10,1,"%sh"%page.eflag)
-	elif biu_props == "0x04":
-	    add_iter (hd,'BIU:',"Underline",10,1,"%sh"%page.eflag)
-	elif biu_props == "0x05":
-	    add_iter (hd,'BIU:',"Bold Underline",10,1,"%sh"%page.eflag)
-	elif biu_props == "0x06":
-	    add_iter (hd,'BIU:',"Italic Underline",10,1,"%sh"%page.eflag)
-	elif biu_props == "0x07":
-	    add_iter (hd,'BIU:',"Bold Italic Underline",10,1,"%sh"%page.eflag)
-	else:
-	    add_iter (hd,'BIU:',"None",10,1,"%sh"%page.eflag)
-
-	strike_props = "0x%s"%d2hex(data[11:12]) # StrikeThrough SuperScript SubScript SmallCaps and AllCaps Flag
-
-	if strike_props == "0x01":
-	    add_iter (hd,'Strike:',"Strike Through",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x02":
-	    add_iter (hd,'Strike:',"SuperScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x03":
-	    add_iter (hd,'Strike:',"Strike Through and SuperScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x04":
-	    add_iter (hd,'Strike:',"SubScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x05":
-	    add_iter (hd,'Strike:',"Strike Through and SubScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x08":
-	    add_iter (hd,'Strike:',"Small Caps",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x09":
-	    add_iter (hd,'Strike:',"Strike Through and Small Caps",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x0a":
-	    add_iter (hd,'Strike:',"Small Caps and SuperScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x0b":
-	    add_iter (hd,'Strike:',"Strike Through , SuperScript and Small Caps",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x0c":
-	    add_iter (hd,'Strike:',"Small Caps and SubScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x0d":
-	    add_iter (hd,'Strike:',"Strike Through , SubScript and Small Caps",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x10":
-	    add_iter (hd,'Strike:',"All Caps",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x11":
-	    add_iter (hd,'Strike:',"All Caps and Strike Through",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x12":
-	    add_iter (hd,'Strike:',"All Caps and SuperScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x13":
-	    add_iter (hd,'Strike:',"All Caps , Strike Through and SuperScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x14":
-	    add_iter (hd,'Strike:',"All Caps and SubScript",11,1,"%sh"%page.eflag)
-	elif strike_props == "0x15":
-	    add_iter (hd,'Strike:',"All Caps , Strike Through and SubScript",11,1,"%sh"%page.eflag)
-	else:
-	    add_iter (hd,'Strike:',"None",11,1,"%sh"%page.eflag)
-
+	# TODO: this looks like it's just 2-bytes of flags with fmt
+	fmt2_flags = {
+		0x1: 'strike-through',
+		0x2: 'superscript',
+		0x4: 'subscript',
+		0x8: 'small caps',
+		0x10: 'all caps',
+	}
+	(fmt2, off) = rdata(data, off, 'b')
+	add_iter (hd, 'Format 2', bflag2txt(fmt2, fmt2_flags), off - 1, 1, 'b')
 
 	kerning = struct.unpack("%sh"%page.eflag,data[16:18])[0]/1000.
 	add_iter (hd,'Kerning (em):',"%d"%kerning,16,2,"%sI"%page.eflag)
