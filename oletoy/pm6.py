@@ -445,6 +445,10 @@ def hd_char (hd, data, page):
 	super_pos = struct.unpack("%sh"%page.eflag,data[24:26])[0]/10.
 	add_iter (hd,'SuperScript Position (percent):',"%d"%super_pos,24,2,"%sI"%page.eflag)
 
+	off = 28
+	(tint, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sh' % page.eflag)
+
 def hd_para(hd, data, page):
 
 	para_len = struct.unpack("%sh"%page.eflag,data[0:2])[0]
