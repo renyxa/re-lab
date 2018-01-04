@@ -361,23 +361,21 @@ def hd_char (hd, data, page):
 	# 0x18: word sup pos%*10
 	# 0x1a: word baseline shift*20
 	# 0x1c: word tint %
-	char_len = struct.unpack("%sh"%page.eflag,data[0:2])[0]
-	add_iter (hd,'Length:',"%d"%char_len,0,2,"%sh"%page.eflag)
+	off = 0
 
-	fnt_id = struct.unpack("%sh"%page.eflag,data[2:4])[0]
+	(char_len, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Length:',"%d"%char_len,off - 2,2,"%sh"%page.eflag)
+	(fnt_id, off) = rdata(data, off, "%sh"%page.eflag)
 	fnt_name = page.fonts_dir[fnt_id]
-	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),2,2,"%sh"%page.eflag)
-
-	fnt_size = struct.unpack("%sh"%page.eflag,data[4:6])[0]/10.
-	add_iter (hd,'Font size:',"%.1f"%fnt_size,4,2,"%sh"%page.eflag)
-
-	fnt_color = struct.unpack("%sh"%page.eflag,data[8:10])[0]
-	add_iter (hd,'Font color:',"0x%02x"%fnt_color,8,2,"%sh"%page.eflag)
-
+	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),off - 2,2,"%sh"%page.eflag)
+	(fnt_size, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Font size:',"%.1f"%(fnt_size/10.),off - 2,2,"%sh"%page.eflag)
+	off +=2
+	(fnt_color, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Font color:',"0x%02x"%fnt_color,off - 2,2,"%sh"%page.eflag)
 	fmt_flags = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
 	(fmt, off) = rdata(data, 10, 'b')
 	add_iter (hd, 'Format', bflag2txt(fmt, fmt_flags), off - 1, 1, 'b')
-
 	# TODO: this looks like it's just 2-bytes of flags with fmt
 	fmt2_flags = {
 		0x1: 'strike-through',
@@ -388,20 +386,17 @@ def hd_char (hd, data, page):
 	}
 	(fmt2, off) = rdata(data, off, 'b')
 	add_iter (hd, 'Format 2', bflag2txt(fmt2, fmt2_flags), off - 1, 1, 'b')
-
-	kerning = struct.unpack("%sh"%page.eflag,data[16:18])[0]/1000.
-	add_iter (hd,'Kerning (em):',"%d"%kerning,16,2,"%sI"%page.eflag)
-
-	super_sub_size = struct.unpack("%sh"%page.eflag,data[20:22])[0]/10.
-	add_iter (hd,'Super/SubScript Size (percent):',"%d"%super_sub_size,20,2,"%sI"%page.eflag)
-
-	sub_pos = struct.unpack("%sh"%page.eflag,data[22:24])[0]/10.
-	add_iter (hd,'SubScript Position (percent):',"%d"%sub_pos,22,2,"%sI"%page.eflag)
-
-	super_pos = struct.unpack("%sh"%page.eflag,data[24:26])[0]/10.
-	add_iter (hd,'SuperScript Position (percent):',"%d"%super_pos,24,2,"%sI"%page.eflag)
-
-	off = 28
+	off += 4
+	(kerning, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Kerning (em):',"%d"%(kerning/1000.),off - 2,2,"%sI"%page.eflag)
+	off += 2
+	(super_sub_size, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Super/SubScript Size (percent):',"%d"%(super_sub_size/10.),off - 2,2,"%sI"%page.eflag)
+	(sub_pos, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'SubScript Position (percent):',"%d"%(sub_pos/10.), off - 2,2,"%sI"%page.eflag)
+	(super_pos, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'SuperScript Position (percent):',"%d"%(super_pos/10.), off - 2,2,"%sI"%page.eflag)
+	off += 2
 	(tint, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sh' % page.eflag)
 
