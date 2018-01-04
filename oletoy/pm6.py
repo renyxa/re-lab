@@ -14,6 +14,9 @@
 import struct
 from utils import *
 
+def val2txt(value, unit='%', default='normal', scale=.1):
+	return '%.1f%s' % (value * scale, unit) if value != ~0 else default
+
 recs = {
 	0x01:("0x01", 10),
 	0x04:("Print Ops?", 104),
@@ -344,25 +347,7 @@ def hd_shape (hd,data,page):
 
 
 def hd_char (hd, data, page):
-	# 0x2: word -- font id starting from 0
-	# 0x4: word -- fontsize*10
-	# 0x6: word -- lead pts*10
-	# 0x8: clr id starting from 0
-	# 0xa: &1 - bold, &2 - italic, &4 - underline
-	# 0xb: &1 - strikethru, &2 - sup, &4 - sub, &8 - allcaps
-	# 0xb: &10 - smallcaps
-	# 0xc: word (ffff -- "normal") -- Horscale%*10
-	# 0xe: track (127 none, 2 very loose, 1 loose, 0 normal, ff tight, fe very tight)
-	# 0xf: &8 -- no break
-	# 0x10:
-	# 0x12: word SmallCaps%*10
-	# 0x14: word sup/sub size%*10
-	# 0x16: word sub pos%*10
-	# 0x18: word sup pos%*10
-	# 0x1a: word baseline shift*20
-	# 0x1c: word tint %
 	off = 0
-
 	(char_len, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Length:',"%d"%char_len,off - 2,2,"%sh"%page.eflag)
 	(fnt_id, off) = rdata(data, off, "%sh"%page.eflag)
@@ -370,33 +355,43 @@ def hd_char (hd, data, page):
 	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),off - 2,2,"%sh"%page.eflag)
 	(fnt_size, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Font size:',"%.1f"%(fnt_size/10.),off - 2,2,"%sh"%page.eflag)
-	off +=2
+	(leading, off) = rdata(data, off, "%sh" % page.eflag)
+	add_iter (hd, 'Leading', val2txt(leading, 'pt', 'auto'), off - 2, 2, "%sh" % page.eflag)
 	(fnt_color, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Font color:',"0x%02x"%fnt_color,off - 2,2,"%sh"%page.eflag)
-	fmt_flags = {0x1: 'bold', 0x2: 'italic', 0x4: 'underline'}
-	(fmt, off) = rdata(data, 10, 'b')
-	add_iter (hd, 'Format', bflag2txt(fmt, fmt_flags), off - 1, 1, 'b')
-	# TODO: this looks like it's just 2-bytes of flags with fmt
-	fmt2_flags = {
-		0x1: 'strike-through',
-		0x2: 'superscript',
-		0x4: 'subscript',
-		0x8: 'small caps',
-		0x10: 'all caps',
-	}
-	(fmt2, off) = rdata(data, off, 'b')
-	add_iter (hd, 'Format 2', bflag2txt(fmt2, fmt2_flags), off - 1, 1, 'b')
-	off += 4
+	fmt_flags = {
+		0x1: 'bold',
+		0x2: 'italic',
+		0x4: 'underline',
+		0x8: 'outline',
+		0x10: 'shadow',
+		0x100: 'strike-through',
+		0x200: 'superscript',
+		0x400: 'subscript',
+		0x800: 'all caps',
+		0x1000: 'small caps',
+		}
+	(fmt, off) = rdata(data, 10, '%sh' % page.eflag)
+	add_iter (hd, 'Format', bflag2txt(fmt, fmt_flags), off - 2, 2, '%sh' % page.eflag)
+	(hscale, off) = rdata(data, off, "%sh" % page.eflag)
+	add_iter (hd, 'Horiz. scale', val2txt(hscale), off - 2, 2, "%sh" % page.eflag)
+	track_map = {-2: 'very tight', -1: 'tight', 0: 'normal', 1: 'loose', 2: 'very loose', 0x7f: 'none',}
+	(track, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Track', key2txt(track, track_map), off - 1, 1, 'B')
+	(line_end, off) = rdata(data, off, 'b')
+	add_iter(hd, 'Line end', key2txt(line_end, {0: 'break', 8: 'no break'}), off - 1, 1, 'b')
 	(kerning, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Kerning (em):',"%d"%(kerning/1000.),off - 2,2,"%sh"%page.eflag)
-	off += 2
+	(scsize, off) = rdata(data, off, "%sh" % page.eflag)
+	add_iter (hd, 'Small caps size', val2txt(scsize), off - 2, 2, "%sh" % page.eflag)
 	(super_sub_size, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Super/SubScript Size (percent):',"%d"%(super_sub_size/10.),off - 2,2,"%sh"%page.eflag)
 	(sub_pos, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'SubScript Position (percent):',"%d"%(sub_pos/10.), off - 2,2,"%sh"%page.eflag)
 	(super_pos, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'SuperScript Position (percent):',"%d"%(super_pos/10.), off - 2,2,"%sh"%page.eflag)
-	off += 2
+	(shift, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Baseline shift', '%.1d pt' % (shift / 20.), off - 2, 2, '%sh' % page.eflag)
 	(tint, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sh' % page.eflag)
 
