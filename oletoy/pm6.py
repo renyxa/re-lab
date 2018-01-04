@@ -388,14 +388,14 @@ def hd_char (hd, data, page):
 	add_iter (hd, 'Format 2', bflag2txt(fmt2, fmt2_flags), off - 1, 1, 'b')
 	off += 4
 	(kerning, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Kerning (em):',"%d"%(kerning/1000.),off - 2,2,"%sI"%page.eflag)
+	add_iter (hd,'Kerning (em):',"%d"%(kerning/1000.),off - 2,2,"%sh"%page.eflag)
 	off += 2
 	(super_sub_size, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Super/SubScript Size (percent):',"%d"%(super_sub_size/10.),off - 2,2,"%sI"%page.eflag)
+	add_iter (hd,'Super/SubScript Size (percent):',"%d"%(super_sub_size/10.),off - 2,2,"%sh"%page.eflag)
 	(sub_pos, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'SubScript Position (percent):',"%d"%(sub_pos/10.), off - 2,2,"%sI"%page.eflag)
+	add_iter (hd,'SubScript Position (percent):',"%d"%(sub_pos/10.), off - 2,2,"%sh"%page.eflag)
 	(super_pos, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'SuperScript Position (percent):',"%d"%(super_pos/10.), off - 2,2,"%sI"%page.eflag)
+	add_iter (hd,'SuperScript Position (percent):',"%d"%(super_pos/10.), off - 2,2,"%sh"%page.eflag)
 	off += 2
 	(tint, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sh' % page.eflag)
