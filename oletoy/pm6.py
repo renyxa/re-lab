@@ -396,37 +396,31 @@ def hd_char (hd, data, page):
 	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sh' % page.eflag)
 
 def hd_para(hd, data, page):
-
-	para_len = struct.unpack("%sh"%page.eflag,data[0:2])[0]
-	add_iter (hd,'Length:',"%d"%para_len,0,2,"%sh"%page.eflag)
-
-
+	off = 0
+	(para_len, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Length',"%d"%para_len,off-2,2,"%sh"%page.eflag)
 	align = "0x%s"%d2hex(data[3:4])
 	if align == "0x01":
-		add_iter (hd,'ALign:',"Right",3,1,"%sh"%page.eflag)
+		add_iter (hd,'ALign',"Right",3,1,"%sh"%page.eflag)
 	elif align == "0x02":
-		add_iter (hd,'ALign:',"Center",3,1,"%sh"%page.eflag)
+		add_iter (hd,'ALign',"Center",3,1,"%sh"%page.eflag)
 	elif align == "0x03":
-		add_iter (hd,'ALign:',"Justify",3,1,"%sh"%page.eflag)
+		add_iter (hd,'ALign',"Justify",3,1,"%sh"%page.eflag)
 	elif align == "0x04":
-		add_iter (hd,'ALign:',"Force-Justify",3,1,"%sh"%page.eflag)
+		add_iter (hd,'ALign',"Force-Justify",3,1,"%sh"%page.eflag)
 	else:
-		add_iter (hd,'ALign:',"Left",3,1,"%sh"%page.eflag)
-
-	left_indent = struct.unpack("%sh"%page.eflag,data[10:12])[0]/1440.
-	add_iter (hd,'Left Indent (Inches):',left_indent,10,2,"%sh"%page.eflag)
-
-	first_indent = struct.unpack("%sh"%page.eflag,data[12:14])[0]/1440.
-	add_iter (hd,'First Indent (Inches):',first_indent,12,2,"%sh"%page.eflag)
-
-	right_indent = struct.unpack("%sh"%page.eflag,data[14:16])[0]/1440.
-	add_iter (hd,'Right Indent (Inches):',right_indent,14,2,"%sh"%page.eflag)
-
-	before_indent = struct.unpack("%sh"%page.eflag,data[16:18])[0]/1440.
-	add_iter (hd,'Before Indent (Inches):',before_indent,16,2,"%sh"%page.eflag)
-
-	after_indent = struct.unpack("%sh"%page.eflag,data[18:20])[0]/1440.
-	add_iter (hd,'After Indent (Inches):',after_indent,18,2,"%sh"%page.eflag)
+		add_iter (hd,'ALign',"Left",3,1,"%sh"%page.eflag)
+	off += 8
+	(left_indent, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Left Indent (Inches)',left_indent/1440.,off-2,2,"%sh"%page.eflag)
+	(first_indent, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'First Indent (Inches)',first_indent/1440.,off-2,2,"%sh"%page.eflag)
+	(right_indent, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Right Indent (Inches)',right_indent/1440.,off-2,2,"%sh"%page.eflag)
+	(before_indent, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Before Indent (Inches)',before_indent/1440.,off-2,2,"%sh"%page.eflag)
+	(after_indent, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'After Indent (Inches)',after_indent/1440.,off-2,2,"%sh"%page.eflag)
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
