@@ -349,16 +349,16 @@ def hd_shape (hd,data,page):
 def hd_char (hd, data, page):
 	off = 0
 	(char_len, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Length:',"%d"%char_len,off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'Length',"%d"%char_len,off - 2,2,"%sh"%page.eflag)
 	(fnt_id, off) = rdata(data, off, "%sh"%page.eflag)
 	fnt_name = page.fonts_dir[fnt_id]
-	add_iter (hd,'Font:',"%s [0x%02x]"%(fnt_name,fnt_id),off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'Font',"%s [0x%02x]"%(fnt_name,fnt_id),off - 2,2,"%sh"%page.eflag)
 	(fnt_size, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Font size:',"%.1f"%(fnt_size/10.),off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'Font size',"%.1f"%(fnt_size/10.),off - 2,2,"%sh"%page.eflag)
 	(leading, off) = rdata(data, off, "%sh" % page.eflag)
 	add_iter (hd, 'Leading', val2txt(leading, 'pt', 'auto'), off - 2, 2, "%sh" % page.eflag)
 	(fnt_color, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Font color:',"0x%02x"%fnt_color,off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'Font color',"0x%02x"%fnt_color,off - 2,2,"%sh"%page.eflag)
 	fmt_flags = {
 		0x1: 'bold',
 		0x2: 'italic',
@@ -381,15 +381,15 @@ def hd_char (hd, data, page):
 	(line_end, off) = rdata(data, off, 'b')
 	add_iter(hd, 'Line end', key2txt(line_end, {0: 'break', 8: 'no break'}), off - 1, 1, 'b')
 	(kerning, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Kerning (em):',"%d"%(kerning/1000.),off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'Kerning (em)',"%d"%(kerning/1000.),off - 2,2,"%sh"%page.eflag)
 	(scsize, off) = rdata(data, off, "%sh" % page.eflag)
 	add_iter (hd, 'Small caps size', val2txt(scsize), off - 2, 2, "%sh" % page.eflag)
 	(super_sub_size, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Super/SubScript Size (percent):',"%d"%(super_sub_size/10.),off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'Super/SubScript Size (percent)',"%d"%(super_sub_size/10.),off - 2,2,"%sh"%page.eflag)
 	(sub_pos, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'SubScript Position (percent):',"%d"%(sub_pos/10.), off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'SubScript Position (percent)',"%d"%(sub_pos/10.), off - 2,2,"%sh"%page.eflag)
 	(super_pos, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'SuperScript Position (percent):',"%d"%(super_pos/10.), off - 2,2,"%sh"%page.eflag)
+	add_iter (hd,'SuperScript Position (percent)',"%d"%(super_pos/10.), off - 2,2,"%sh"%page.eflag)
 	(shift, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Baseline shift', '%.1d pt' % (shift / 20.), off - 2, 2, '%sh' % page.eflag)
 	(tint, off) = rdata(data, off, '%sh' % page.eflag)
