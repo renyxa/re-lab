@@ -537,10 +537,10 @@ def open (page,buf,parent,off=0):
 	elif vd == 0x33:
 		page.version = 6.5
 	else:
-		print "Unknown version byte: %02x"%(vd)
+		print("Unknown version byte: %02x"%(vd))
 		page.version = 6.5  # 7 seems to be the same, fallback to the latest for now
 
-	print 'Version:',page.version
+	print('Version:',page.version)
 	
 	# FIXME! need to modify treatment of grouped records
 	parse_trailer(page,buf,tr_off,tr_len,triter,page.eflag,tr)
@@ -554,7 +554,7 @@ def open (page,buf,parent,off=0):
 				rname = recs[rec][0]
 			else:
 				if not rec in unkn_records:
-					print "Unknown record: %02x"%rec
+					print("Unknown record: %02x"%rec)
 					unkn_records.append(rec)
 				rlen = size*800
 				rname = "%02x"%rec
