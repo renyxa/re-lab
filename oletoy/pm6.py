@@ -399,18 +399,11 @@ def hd_para(hd, data, page):
 	off = 0
 	(para_len, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Length',"%d"%para_len,off-2,2,"%sh"%page.eflag)
-	align = "0x%s"%d2hex(data[3:4])
-	if align == "0x01":
-		add_iter (hd,'ALign',"Right",3,1,"%sh"%page.eflag)
-	elif align == "0x02":
-		add_iter (hd,'ALign',"Center",3,1,"%sh"%page.eflag)
-	elif align == "0x03":
-		add_iter (hd,'ALign',"Justify",3,1,"%sh"%page.eflag)
-	elif align == "0x04":
-		add_iter (hd,'ALign',"Force-Justify",3,1,"%sh"%page.eflag)
-	else:
-		add_iter (hd,'ALign',"Left",3,1,"%sh"%page.eflag)
-	off += 8
+	off += 1
+	align_map = {0: 'left', 1: 'right', 2: 'center', 3: 'justify', 4: 'force justify',}
+	(align, off) = rdata(data, off, 'b')
+	add_iter(hd, 'Align', key2txt(align, align_map), off - 2, 2, 'b')
+	off += 6
 	(left_indent, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Left Indent (Inches)',left_indent/1440.,off-2,2,"%sh"%page.eflag)
 	(first_indent, off) = rdata(data, off, "%sh"%page.eflag)
