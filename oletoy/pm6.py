@@ -398,6 +398,43 @@ def hd_char (hd, data, page):
 	(tint, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sh' % page.eflag)
 
+def add_rule(hd, data, offset, eflag, parent):
+	flags_bits = {
+		0x1: 'enabled',
+		0x2: 'width of text',
+		0x4: 'align next para to grid',
+	}
+	(flags, off) = rdata(data, offset, '%sH' % eflag)
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_bits), off - 2, 2, '%sh' % eflag, parent=parent)
+	style_map = {
+		0: 'single',
+		1: 'double',
+		2: 'double (upper thicker)',
+		3: 'double (lower thicker)',
+		4: 'triple',
+		5: 'dashed',
+		6: 'dotted (square dot)',
+		7: 'dotted (round dot)',
+	}
+	(style, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Stroke style', key2txt(style, style_map), off - 1, 1, 'B', parent=parent)
+	(transp, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Transparent b/g', key2txt(transp, {0: 'yes', 1: 'no'}), off - 1, 1, 'B', parent=parent)
+	off += 2
+	(width, off) = rdata(data, off, '%sh' % eflag)
+	add_iter(hd, 'Stroke width', '%.1f pt' % (width / 1280.), off - 2, 2, '%sH' % eflag, parent=parent)
+	(color, off) = rdata(data, off, '%sH' % eflag)
+	add_iter(hd, 'Stroke color', hex(color), off - 2, 2, '%sH' % eflag, parent=parent)
+	(tint, off) = rdata(data, off, '%sH' % eflag)
+	add_iter(hd, 'Tint', '%d%%' % tint, off - 2, 2, '%sH' % eflag, parent=parent)
+	(left_indent, off) = rdata(data, off, "%sh"%eflag)
+	add_iter (hd,'Left indent',twip2txt(left_indent),off-2,2,"%sh"%eflag, parent=parent)
+	(right_indent, off) = rdata(data, off, "%sh"%eflag)
+	add_iter (hd,'Right indent',twip2txt(right_indent),off-2,2,"%sh"%eflag, parent=parent)
+	(top, off) = rdata(data, off, '%sh' % eflag)
+	add_iter(hd, 'Distance above baseline', val2txt(top, ' in', 'auto', 1/1440.), off - 2, 2, '%sH' % eflag, parent=parent)
+	return off
+
 def hd_para(hd, data, page):
 	off = 0
 	(para_len, off) = rdata(data, off, "%sh"%page.eflag)
@@ -451,6 +488,12 @@ def hd_para(hd, data, page):
 	add_iter(hd, 'Keep with next', (opts >> 1) & 3, off - 2, 2, '%sh' % page.eflag)
 	add_iter(hd, 'Widows', (opts >> 4) & 3, off - 2, 2, '%sh' % page.eflag)
 	add_iter(hd, 'Orphans', (opts >> 7) & 3, off - 2, 2, '%sh' % page.eflag)
+	(grid_size, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, 'Grid size', '%.1f pt' % (grid_size / 10.), off - 2, 2, '%sh' % page.eflag)
+	aboveiter = add_iter(hd, 'Rule above paragraph', '', off, 18, '18s')
+	off = add_rule(hd, data, off, page.eflag, aboveiter)
+	belowiter = add_iter(hd, 'Rule below paragraph', '', off, 18, '18s')
+	off = add_rule(hd, data, off, page.eflag, belowiter)
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
