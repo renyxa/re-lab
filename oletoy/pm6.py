@@ -424,26 +424,26 @@ def hd_para(hd, data, page):
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
-	rot = struct.unpack("%si"%page.eflag,data[0:4])[0]/1000.
-	add_iter (hd,'Rotation (deg):',"%d"%rot,0,4,"%sI"%page.eflag)
-	skew = struct.unpack("%si"%page.eflag,data[4:8])[0]/1000.
-	add_iter (hd,'Skew (deg):',"%d"%skew,4,4,"%sI"%page.eflag)
-
-	v = struct.unpack("%sh"%page.eflag,data[10:12])[0]
-	add_iter (hd,'X start (inches):',v/1440.,10,2,"%sh"%page.eflag)
-	v = struct.unpack("%sh"%page.eflag,data[12:14])[0]
-	add_iter (hd,'Y start (inches):',v/1440.,12,2,"%sh"%page.eflag)
-	v = struct.unpack("%sh"%page.eflag,data[14:16])[0]
-	add_iter (hd,'X end (inches):',v/1440.,14,2,"%sh"%page.eflag)
-	v = struct.unpack("%sh"%page.eflag,data[16:18])[0]
-	add_iter (hd,'Y end (inches):',v/1440.,16,2,"%sh"%page.eflag)
-	v = struct.unpack("%sh"%page.eflag,data[18:20])[0]
-	add_iter (hd,'Rotating Point X (inches):',v/1440.,18,2,"%sh"%page.eflag)
-	v = struct.unpack("%sh"%page.eflag,data[20:22])[0]
-	add_iter (hd,'Rotating Point Y (inches):',v/1440.,20,2,"%sh"%page.eflag)
-
-	xformnum = struct.unpack("%sI"%page.eflag,data[22:26])[0]
-	add_iter (hd,'Xform-Shape ID:',"%d"%xformnum,22,4,"%sI"%page.eflag)
+	off = 0
+	(rot, off) = rdata(data, off, "%si"%page.eflag)
+	add_iter (hd,'Rotation (deg)',"%d"%(rot/1000.),off-4,4,"%sI"%page.eflag)
+	(skew, off) = rdata(data, off, "%si"%page.eflag)
+	add_iter (hd,'Skew (deg)',"%d"%(skew/1000.),off-4,4,"%sI"%page.eflag)
+	off += 2
+	(v, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'X start (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	(v, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Y start (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	(v, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'X end (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	(v, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Y end (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	(v, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Rotating Point X (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	(v, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Rotating Point Y (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	(xformnum, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Xform-Shape ID',"%d"%xformnum,off-4,4,"%sI"%page.eflag)
 
 
 def hd_color (hd, data, page):
