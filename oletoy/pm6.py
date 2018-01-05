@@ -227,11 +227,11 @@ def hd_header (hd,data,page):
 	endian = "Big"
 	if page.eflag == "<":
 		endian = "Little"
-	add_iter (hd,'Endian:',endian,6,2,">H")
+	add_iter (hd,'Endian',endian,6,2,">H")
 	tr_len = struct.unpack("%sH"%page.eflag,data[0x2e:0x30])[0]
-	add_iter (hd,'ToC length:',"%d"%tr_len,0x2e,2,"%sH"%page.eflag)
+	add_iter (hd,'ToC length',"%d"%tr_len,0x2e,2,"%sH"%page.eflag)
 	tr_off = struct.unpack("%sI"%page.eflag,data[0x30:0x34])[0]
-	add_iter (hd,'ToC offset:',"%d"%tr_off,0x30,4,"%sI"%page.eflag)
+	add_iter (hd,'ToC offset',"%d"%tr_off,0x30,4,"%sI"%page.eflag)
 
 
 def hd_shape_text(hd, data, page):
@@ -450,26 +450,26 @@ def hd_color (hd, data, page):
 	mods = {0x18:"RGB",0x8:"CMYK",0x10:"HLS"}
 	type_id ="Spot"
 	mod_id = ord(data[0x22])
-	add_iter (hd,'Model:',key2txt(mod_id,mods),0x22,1,"%sB"%page.eflag)
+	add_iter (hd,'Model',key2txt(mod_id,mods),0x22,1,"%sB"%page.eflag)
 	
 	tid = ord(data[0x21])
 	if tid&1:
 		type_id = "Process"
 	if tid&0x20:
 		type_id = "Tint"
-	add_iter (hd,'Type:',type_id,0x21,1,"%sB"%page.eflag)
+	add_iter (hd,'Type',type_id,0x21,1,"%sB"%page.eflag)
 	if ord(data[0x20])&0x80:
 		add_iter (hd,'Overprint',"",0x20,1,"%sB"%page.eflag)
 		
 	if mod_id == 0x18:
 		r,g,b = ord(data[0x26]),ord(data[0x27]),ord(data[0x28])
-		add_iter (hd,'Color [RGB]:',"%d %d %d"%(r,g,b),0x26,3,"clr")
+		add_iter (hd,'Color [RGB]',"%d %d %d"%(r,g,b),0x26,3,"clr")
 	elif mod_id == 0x8 or mod_id == 0x10:
 		c = struct.unpack("%sH"%page.eflag,data[0x26:0x28])[0]/655.
 		m = struct.unpack("%sH"%page.eflag,data[0x28:0x2a])[0]/655.
 		y = struct.unpack("%sH"%page.eflag,data[0x2a:0x2c])[0]/655.
 		k = struct.unpack("%sH"%page.eflag,data[0x2c:0x2e])[0]/655.
-		add_iter (hd,'Color [CMYK]:',"%d%% %d%% %d%% %d%%"%(c,m,y,k),0x26,8,"clr")
+		add_iter (hd,'Color [CMYK]',"%d%% %d%% %d%% %d%%"%(c,m,y,k),0x26,8,"clr")
 		
 
 hd_ids = {
