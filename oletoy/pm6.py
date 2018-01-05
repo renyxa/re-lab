@@ -402,10 +402,15 @@ def hd_para(hd, data, page):
 	off = 0
 	(para_len, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Length',"%d"%para_len,off-2,2,"%sh"%page.eflag)
-	off += 1
+	flags_bits = {
+		0x1: 'pair kerning',
+		0x40: 'include in ToC',
+	}
+	(flags, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_bits), off - 1, 1, 'B')
 	align_map = {0: 'left', 1: 'right', 2: 'center', 3: 'justify', 4: 'force justify',}
-	(align, off) = rdata(data, off, 'b')
-	add_iter(hd, 'Align', key2txt(align, align_map), off - 2, 2, 'b')
+	(align, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Align', key2txt(align, align_map), off - 1, 1, 'B')
 	off += 6
 	(left_indent, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Left Indent',twip2txt(left_indent),off-2,2,"%sh"%page.eflag)
@@ -414,9 +419,38 @@ def hd_para(hd, data, page):
 	(right_indent, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Right Indent',twip2txt(right_indent),off-2,2,"%sh"%page.eflag)
 	(before_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Before Indent',twip2txt(before_indent),off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Space before',twip2txt(before_indent),off-2,2,"%sh"%page.eflag)
 	(after_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'After Indent',twip2txt(after_indent),off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Space after',twip2txt(after_indent),off-2,2,"%sh"%page.eflag)
+	(kerning, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Pair kerning auto above', '%.1f pt' % (kerning / 10.), off - 2, 2, '%sh' % page.eflag)
+	(auto_lead, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Auto leading', '%d%%' % auto_lead, off - 2, 2, '%sh' % page.eflag)
+	(wmin, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Min. word spacing', '%d%%' % wmin, off - 2, 2, '%sh' % page.eflag)
+	(wmax, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Max. word spacing', '%d%%' % wmax, off - 2, 2, '%sh' % page.eflag)
+	(wdes, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Desired word spacing', '%d%%' % wdes, off - 2, 2, '%sh' % page.eflag)
+	(lmin, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Min. letter spacing', '%d%%' % lmin, off - 2, 2, '%sh' % page.eflag)
+	(lmax, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Max. letter spacing', '%d%%' % lmax, off - 2, 2, '%sh' % page.eflag)
+	(ldes, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Desired letter spacing', '%d%%' % ldes, off - 2, 2, '%sh' % page.eflag)
+	off += 3
+	leading_map = {0: 'proportional', 1: 'baseline', 2: 'top of caps',}
+	(leading, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Leading', key2txt(leading, leading_map), off - 1, 1, 'B')
+	opts_bits = {
+		0x1: 'keep together',
+		0x400: 'page break before',
+	}
+	(opts, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Options', bflag2txt(opts & 0x401, opts_bits), off - 2, 2, '%sh' % page.eflag)
+	add_iter(hd, 'Keep with next', (opts >> 1) & 3, off - 2, 2, '%sh' % page.eflag)
+	add_iter(hd, 'Widows', (opts >> 4) & 3, off - 2, 2, '%sh' % page.eflag)
+	add_iter(hd, 'Orphans', (opts >> 7) & 3, off - 2, 2, '%sh' % page.eflag)
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
