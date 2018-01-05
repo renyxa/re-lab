@@ -17,6 +17,9 @@ from utils import *
 def val2txt(value, unit='%', default='normal', scale=.1):
 	return '%.1f%s' % (value * scale, unit) if value != ~0 else default
 
+def twip2txt(value):
+	return '%.2f in' % (value / 1440.)
+
 recs = {
 	0x01:("0x01", 10),
 	0x04:("Print Ops?", 104),
@@ -237,13 +240,13 @@ def hd_header (hd,data,page):
 def hd_shape_text(hd, data, page):
 	off = 6
 	(xs, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox X start (inches)',xs/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox X start',twip2txt(xs),off-2,2,"%sh"%page.eflag)
 	(ys, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox Y start (inches)',ys/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox Y start',twip2txt(ys),off-2,2,"%sh"%page.eflag)
 	(xe, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox X end (inches)',xe/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox X end',twip2txt(xe),off-2,2,"%sh"%page.eflag)
 	(ye, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox Y end (inches)',ye/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox Y end',twip2txt(ye),off-2,2,"%sh"%page.eflag)
 	off += 14
 	(xform_id, off) = rdata(data, off, "%sI"%page.eflag)
 	add_iter (hd,'Xform Id',"0x%02x"%xform_id,off-4,4,"%sI"%page.eflag)
@@ -268,13 +271,13 @@ def hd_shape_rect_oval(hd, data, page,sh_type):
 	# 0x0a: word for Xe in twips
 	# 0x0c: word for Ye in twips
 	(xs, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox X start (inches)',xs/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox X start',twip2txt(xs),off-2,2,"%sh"%page.eflag)
 	(ys, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox Y start (inches)',ys/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox Y start',twip2txt(ys),off-2,2,"%sh"%page.eflag)
 	(xe, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox X end (inches)',xe/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox X end',twip2txt(xe),off-2,2,"%sh"%page.eflag)
 	(ye, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Bbox Y end (inches)',ye/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Bbox Y end',twip2txt(ye),off-2,2,"%sh"%page.eflag)
 	off += 14
 	(xform_id, off) = rdata(data, off, "%sI"%page.eflag)
 	add_iter (hd,'Xform Id',"0x%02x"%xform_id,off-4,4,"%sI"%page.eflag)
@@ -405,15 +408,15 @@ def hd_para(hd, data, page):
 	add_iter(hd, 'Align', key2txt(align, align_map), off - 2, 2, 'b')
 	off += 6
 	(left_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Left Indent (Inches)',left_indent/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Left Indent',twip2txt(left_indent),off-2,2,"%sh"%page.eflag)
 	(first_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'First Indent (Inches)',first_indent/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'First Indent',twip2txt(first_indent),off-2,2,"%sh"%page.eflag)
 	(right_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Right Indent (Inches)',right_indent/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Right Indent',twip2txt(right_indent),off-2,2,"%sh"%page.eflag)
 	(before_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Before Indent (Inches)',before_indent/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Before Indent',twip2txt(before_indent),off-2,2,"%sh"%page.eflag)
 	(after_indent, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'After Indent (Inches)',after_indent/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'After Indent',twip2txt(after_indent),off-2,2,"%sh"%page.eflag)
 
 def hd_xform (hd, data, page):
 	# 0x8: flip FL
@@ -424,17 +427,17 @@ def hd_xform (hd, data, page):
 	add_iter (hd,'Skew (deg)',"%d"%(skew/1000.),off-4,4,"%sI"%page.eflag)
 	off += 2
 	(v, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'X start (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'X start',twip2txt(v),off-2,2,"%sh"%page.eflag)
 	(v, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Y start (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Y start',twip2txt(v),off-2,2,"%sh"%page.eflag)
 	(v, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'X end (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'X end',twip2txt(v),off-2,2,"%sh"%page.eflag)
 	(v, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Y end (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Y end',twip2txt(v),off-2,2,"%sh"%page.eflag)
 	(v, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Rotating Point X (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Rotating Point X',twip2txt(v),off-2,2,"%sh"%page.eflag)
 	(v, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Rotating Point Y (inches)',v/1440.,off-2,2,"%sh"%page.eflag)
+	add_iter (hd,'Rotating Point Y',twip2txt(v),off-2,2,"%sh"%page.eflag)
 	(xformnum, off) = rdata(data, off, "%sI"%page.eflag)
 	add_iter (hd,'Xform-Shape ID',"%d"%xformnum,off-4,4,"%sI"%page.eflag)
 
