@@ -235,77 +235,77 @@ def hd_header (hd,data,page):
 
 
 def hd_shape_text(hd, data, page):
-
-	xs = struct.unpack("%sh"%page.eflag,data[6:8])[0]
-	add_iter (hd,'Bbox X start (inches):',xs/1440.,6,2,"%sh"%page.eflag)
-	ys = struct.unpack("%sh"%page.eflag,data[8:0xa])[0]
-	add_iter (hd,'Bbox Y start (inches):',ys/1440.,8,2,"%sh"%page.eflag)
-	xe = struct.unpack("%sh"%page.eflag,data[0xa:0xc])[0]
-	add_iter (hd,'Bbox X end (inches):',xe/1440.,0xa,2,"%sh"%page.eflag)
-	ye = struct.unpack("%sh"%page.eflag,data[0xc:0xe])[0]
-	add_iter (hd,'Bbox Y end (inches):',ye/1440.,0xc,2,"%sh"%page.eflag)
-
-	xform_id = struct.unpack("%sI"%page.eflag,data[0x1c:0x20])[0]
-	add_iter (hd,'Xform Id:',"0x%02x"%xform_id,0x1c,4,"%sI"%page.eflag)
-
-	txtblk_id = struct.unpack("%sI"%page.eflag,data[0x20:0x24])[0]
-	add_iter (hd,'Txt block ID:',"0x%02x"%txtblk_id,0x20,4,"%sI"%page.eflag)
-
-	shapenum = struct.unpack("%sI"%page.eflag,data[0xfe:0x102])[0]
-	add_iter (hd,'Shape Id:',"%d"%shapenum,0xfe,4,"%sI"%page.eflag)
+	off = 6
+	(xs, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox X start (inches)',xs/1440.,off-2,2,"%sh"%page.eflag)
+	(ys, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox Y start (inches)',ys/1440.,off-2,2,"%sh"%page.eflag)
+	(xe, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox X end (inches)',xe/1440.,off-2,2,"%sh"%page.eflag)
+	(ye, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox Y end (inches)',ye/1440.,off-2,2,"%sh"%page.eflag)
+	off += 14
+	(xform_id, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Xform Id',"0x%02x"%xform_id,off-4,4,"%sI"%page.eflag)
+	(txtblk_id, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Txt block ID',"0x%02x"%txtblk_id,off-4,4,"%sI"%page.eflag)
+	off += 218
+	(shapenum, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Shape Id',"%d"%shapenum,0xfe,4,"%sI"%page.eflag)
 	
 
 def hd_shape_rect_oval(hd, data, page,sh_type):
 	# 0x01: &20 lock position
 	# 0x02: &2 no xparent BG, &4 - non-printing
-
-	add_iter (hd,'Fill Overprint:',"0x%s"%d2hex(data[2:3]),2,1,"%sH"%page.eflag)
-
+	off = 2
+	(fovr, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter (hd,'Fill Overprint',hex(fovr),off-2,2,"%sH"%page.eflag)
 	# 0x04: word fill clr ID
-	fclrid = struct.unpack("%sh"%page.eflag,data[0x04:0x06])[0]
-	add_iter (hd,'Fill Clr ID:',"0x%02x"%fclrid,4,2,"%sH"%page.eflag)
-
+	(fclrid, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Fill Clr ID',"0x%02x"%fclrid,off-2,2,"%sH"%page.eflag)
 	# 0x06: word for Xs in twips
 	# 0x08: word for Ys in twips
 	# 0x0a: word for Xe in twips
 	# 0x0c: word for Ye in twips
-	xs = struct.unpack("%sh"%page.eflag,data[6:8])[0]
-	add_iter (hd,'Bbox X start (inches):',xs/1440.,6,2,"%sh"%page.eflag)
-	ys = struct.unpack("%sh"%page.eflag,data[8:0xa])[0]
-	add_iter (hd,'Bbox Y start (inches):',ys/1440.,8,2,"%sh"%page.eflag)
-	xe = struct.unpack("%sh"%page.eflag,data[0xa:0xc])[0]
-	add_iter (hd,'Bbox X end (inches):',xe/1440.,0xa,2,"%sh"%page.eflag)
-	ye = struct.unpack("%sh"%page.eflag,data[0xc:0xe])[0]
-	add_iter (hd,'Bbox Y end (inches):',ye/1440.,0xc,2,"%sh"%page.eflag)
-
-	xform_id = struct.unpack("%sI"%page.eflag,data[0x1c:0x20])[0]
-	add_iter (hd,'Xform Id:',"0x%02x"%xform_id,0x1c,4,"%sI"%page.eflag)
-
-	stroke_type = struct.unpack("%sh"%page.eflag,data[0x20:0x22])[0]
-	add_iter (hd,'Stroke Type:',"0x%02x"%stroke_type,0x20,2,"%sh"%page.eflag)
-
-	stroke_width = struct.unpack("%sh"%page.eflag,data[0x23:0x25])[0]
-	add_iter (hd,'Stroke Width (pt):',stroke_width/5.0,0x23,2,"%sh"%page.eflag)
-
-	fill_type = struct.unpack("%sh"%page.eflag,data[0x26:0x28])[0]
-	add_iter (hd,'Fill Type:',"0x%02x"%fill_type,0x26,2,"%sh"%page.eflag)
-
-	stroke_color = struct.unpack("%sh"%page.eflag,data[0x28:0x2a])[0]
-	add_iter (hd,'Stroke Color:',"0x%02x"%stroke_color,0x28,2,"%sh"%page.eflag)
-
-	add_iter (hd,'Stroke Overprint:',"0x%s"%d2hex(data[0x2a:0x2b]),0x2a,1,"%sh"%page.eflag)
-
-	add_iter (hd,'Stroke Tint:',"0x%s"%d2hex(data[0x2c:0x2d]),0x2c,1,"%sh"%page.eflag)
-
+	(xs, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox X start (inches)',xs/1440.,off-2,2,"%sh"%page.eflag)
+	(ys, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox Y start (inches)',ys/1440.,off-2,2,"%sh"%page.eflag)
+	(xe, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox X end (inches)',xe/1440.,off-2,2,"%sh"%page.eflag)
+	(ye, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Bbox Y end (inches)',ye/1440.,off-2,2,"%sh"%page.eflag)
+	off += 14
+	(xform_id, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Xform Id',"0x%02x"%xform_id,off-4,4,"%sI"%page.eflag)
+	(stroke_type, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Stroke Type',"0x%02x"%stroke_type,off-2,2,"%sh"%page.eflag)
+	off += 1
+	(stroke_width, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Stroke Width (pt)',stroke_width/5.0,off-2,2,"%sh"%page.eflag)
+	off += 1
+	(fill_type, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Fill Type',"0x%02x"%fill_type,off-2,2,"%sh"%page.eflag)
+	(stroke_color, off) = rdata(data, off, "%sh"%page.eflag)
+	add_iter (hd,'Stroke Color',"0x%02x"%stroke_color,off-2,2,"%sh"%page.eflag)
+	(sovr, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd,'Stroke Overprint',hex(sovr),off-2,2,"%sh"%page.eflag)
+	(stint, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd,'Stroke Tint',hex(stint),off-2,2,"%sh"%page.eflag)
 	if sh_type == 12: # Polygon
-		lineset = struct.unpack("%sh"%page.eflag,data[0x2e:0x30])[0]
-		add_iter (hd,'LineSet Seq Number:',"0x%02x"%lineset,0x2e,2,"%sh"%page.eflag)
-		add_iter (hd,'Closed Marker:',"0x%s"%d2hex(data[0x37:0x38]),0x37,1,"%sh"%page.eflag)
-
-	add_iter (hd,'Fill Tint:',"0x%s"%d2hex(data[0xe0:0xe1]),0xe0,1,"%sh"%page.eflag)
-
-	shapenum = struct.unpack("%sI"%page.eflag,data[0xfe:0x102])[0]
-	add_iter (hd,'Shape Id:',"%d"%shapenum,0xfe,4,"%sI"%page.eflag)
+		(lineset, off) = rdata(data, off, "%sh"%page.eflag)
+		add_iter (hd,'LineSet Seq Number',"0x%02x"%lineset,off-2,2,"%sh"%page.eflag)
+		off += 8
+		(closed, off) = rdata(data, off, '%sh' % page.eflag)
+		add_iter (hd,'Closed Marker',hex(closed),off-2,2,"%sh"%page.eflag)
+		off += 167
+	else:
+		off += 178
+	(ftint, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd,'Fill Tint',hex(ftint),off-2,2,"%sh"%page.eflag)
+	off += 28
+	(shapenum, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Shape Id',"%d"%shapenum,off-4,4,"%sI"%page.eflag)
 
 	# 0x0e: frame text wrap option
 	# 0x0f: frame text flow option 1/2/8
@@ -339,7 +339,7 @@ def hd_shape_rect_oval(hd, data, page,sh_type):
 def hd_shape (hd,data,page):
 	sh_type = ord(data[0])
 	ttxt = key2txt(sh_type,sh_types,"%02x"%sh_type)
-	add_iter (hd,'Type:',ttxt,0,1,"%sB"%page.eflag)
+	add_iter (hd,'Type',ttxt,0,1,"%sB"%page.eflag)
 	if sh_type in (3,4,5,6,12):
 		hd_shape_rect_oval(hd, data, page,sh_type)
 	elif sh_type == 1:
