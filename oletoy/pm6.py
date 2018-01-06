@@ -140,27 +140,6 @@ def paras (page, data, size, parent):
 	for i in range(size):
 		tlen = struct.unpack("<H",data[i*rlen:i*rlen+2])[0]
 		add_pgiter(page,"Length : %d"%tlen,"pm","para",data[i*rlen:i*rlen+rlen],parent)
-		# 0x2 0x1c  keep with next offset[0x3] lines
-		# 0x2 &40 -- include in ToC
-		# 0x5 -- dictionary
-		# 0x6: dword -- style id  (& 55 at 0x2)
-		# 0xa: word -- left indent pts*20
-		# 0xc: word -- first indent pts*20
-		# 0xe: word -- right indent pts*20
-		# 0x10: word -- before indent pts*20
-		# 0x12: word -- after indent pts*20
-		# 0x14: word -- auto above pts*10
-		# 0x16: word -- auto leading %
-		# 0x18: word -- word space MIN
-		# 0x1a: word -- word space MAX
-		# 0x1c: word -- word space Desired
-		# 0x1e: word -- letter space MIN
-		# 0x20: word -- letter space MAX
-		# 0x22: word -- letter space Desired
-		# 0x27 &2 -- leading method = top of caps
-		# 0x28 &1 -- keep lines together, &20 -- widow control, &80 -- orphan control
-		# 0x29 &4 -- pg break before, &8 -- column break before
-		# 0x2c -- rule above paragraph
 
 
 def styles (page, data, size, parent):
@@ -488,7 +467,11 @@ def hd_para(hd, data, page):
 	align_map = {0: 'left', 1: 'right', 2: 'center', 3: 'justify', 4: 'force justify',}
 	(align, off) = rdata(data, off, 'B')
 	add_iter(hd, 'Align', key2txt(align, align_map), off - 1, 1, 'B')
-	off += 6
+	off += 1
+	(dictionary, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Dictionary', hex(dictionary), off - 1, 1, 'B')
+	(style, off) = rdata(data, off, '%sI' % page.eflag)
+	add_iter(hd, 'Style ID', 'none' if style == 0xffffffff else hex(style), off - 4, 4, '%sI' % page.eflag)
 	(left_indent, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Left Indent',twip2txt(left_indent),off-2,2,"%sh"%page.eflag)
 	(first_indent, off) = rdata(data, off, "%sh"%page.eflag)
@@ -525,6 +508,7 @@ def hd_para(hd, data, page):
 	opts_bits = {
 		0x1: 'keep together',
 		0x400: 'page break before',
+		0x800: 'column break before',
 	}
 	(opts, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Options', bflag2txt(opts & 0x401, opts_bits), off - 2, 2, '%sh' % page.eflag)
