@@ -420,9 +420,8 @@ def add_rule(hd, data, offset, eflag, parent):
 	add_iter(hd, 'Stroke style', key2txt(style, style_map), off - 1, 1, 'B', parent=parent)
 	(transp, off) = rdata(data, off, 'B')
 	add_iter(hd, 'Transparent b/g', key2txt(transp, {0: 'yes', 1: 'no'}), off - 1, 1, 'B', parent=parent)
-	off += 2
-	(width, off) = rdata(data, off, '%sh' % eflag)
-	add_iter(hd, 'Stroke width', '%.1f pt' % (width / 1280.), off - 2, 2, '%sH' % eflag, parent=parent)
+	(width, off) = rdata(data, off, '%sI' % eflag)
+	add_iter(hd, 'Stroke width', '%.1f pt' % (width / 1280.), off - 4, 4, '%sI' % eflag, parent=parent)
 	(color, off) = rdata(data, off, '%sH' % eflag)
 	add_iter(hd, 'Stroke color', hex(color), off - 2, 2, '%sH' % eflag, parent=parent)
 	(tint, off) = rdata(data, off, '%sH' % eflag)
