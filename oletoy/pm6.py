@@ -441,6 +441,7 @@ def hd_para(hd, data, page):
 	add_iter (hd,'Length',"%d"%para_len,off-2,2,"%sh"%page.eflag)
 	flags_bits = {
 		0x1: 'pair kerning',
+		0x8: 'hyphenate',
 		0x40: 'include in ToC',
 	}
 	(flags, off) = rdata(data, off, 'B')
@@ -475,7 +476,10 @@ def hd_para(hd, data, page):
 	add_iter(hd, 'Max. letter spacing', '%d%%' % lmax, off - 2, 2, '%sh' % page.eflag)
 	(ldes, off) = rdata(data, off, '%sh' % page.eflag)
 	add_iter(hd, 'Desired letter spacing', '%d%%' % ldes, off - 2, 2, '%sh' % page.eflag)
-	off += 3
+	(zone, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter(hd, 'Hyphenation zone', twip2txt(zone), off - 2, 2, '%sh' % page.eflag)
+	(hyphens, off) = rdata(data, off, 'B')
+	add_iter(hd, '# of consecutive hyphens', 'no limit' if hyphens == 0 else hyphens, off - 1, 1, 'B')
 	leading_map = {0: 'proportional', 1: 'baseline', 2: 'top of caps',}
 	(leading, off) = rdata(data, off, 'B')
 	add_iter(hd, 'Leading', key2txt(leading, leading_map), off - 1, 1, 'B')
