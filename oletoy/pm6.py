@@ -283,10 +283,8 @@ def hd_shape_rect_oval(hd, data, page,sh_type):
 	add_iter (hd,'Xform Id',"0x%02x"%xform_id,off-4,4,"%sI"%page.eflag)
 	(stroke_type, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Stroke Type',"0x%02x"%stroke_type,off-2,2,"%sh"%page.eflag)
-	off += 1
-	(stroke_width, off) = rdata(data, off, "%sh"%page.eflag)
-	add_iter (hd,'Stroke Width (pt)',stroke_width/5.0,off-2,2,"%sh"%page.eflag)
-	off += 1
+	(stroke_width, off) = rdata(data, off, "%sI"%page.eflag)
+	add_iter (hd,'Stroke Width', '%.1f pt' % (stroke_width/1280.),off-4,4,"%sI"%page.eflag)
 	(fill_type, off) = rdata(data, off, "%sh"%page.eflag)
 	add_iter (hd,'Fill Type',"0x%02x"%fill_type,off-2,2,"%sh"%page.eflag)
 	(stroke_color, off) = rdata(data, off, "%sh"%page.eflag)
