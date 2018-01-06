@@ -36,7 +36,7 @@ recs = {
 	0x13:("Fonts", 144),
 	0x14:("Styles", 334),
 	0x15:("Colors", 210),
-	0x18:("0x18", 2496),  # FIXME!
+	0x18:("Doc settings", 2496),
 	0x1a:("TextBlock", 36),
 	0x19:("Shapes", 258),  # 136 in ver6?
 	0x1b:("TxtProps [1B]", 0x40), # most likely 0x18
@@ -210,7 +210,6 @@ def txtblks (page, data, size, parent):
 			items += "%02x "%struct.unpack("<H",data[i*rlen+j*2:i*rlen+2+j*2])[0]
 		add_pgiter(page,"Txt %02x [%s]"%(txtblkid,items[:-1]),"pm","txtblock",data[i*rlen:i*rlen+rlen],parent)
 
-
 recfuncs = {
 	0x05:pages,
 	0x0b:paras,
@@ -236,6 +235,49 @@ def hd_header (hd,data,page):
 	tr_off = struct.unpack("%sI"%page.eflag,data[0x30:0x34])[0]
 	add_iter (hd,'ToC offset',"%d"%tr_off,0x30,4,"%sI"%page.eflag)
 
+def hd_doc_settings(hd, data, page):
+	off = 46
+	(cur_page, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, 'Current page?', cur_page, off - 2, 2, '%sH' % page.eflag)
+	(pages, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, '# of pages', pages, off - 2, 2, '%sH' % page.eflag)
+	off += 4
+	(height1, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Height 1?', twip2txt(height1), off - 2, 2, '%sh' % page.eflag)
+	(width1, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Width 1?', twip2txt(width1), off - 2, 2, '%sh' % page.eflag)
+	(height2, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Height 2?', twip2txt(height2), off - 2, 2, '%sh' % page.eflag)
+	(width2, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Width 2?', twip2txt(width2), off - 2, 2, '%sh' % page.eflag)
+	(height3, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Height 3?', twip2txt(height3), off - 2, 2, '%sh' % page.eflag)
+	(width3, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Width 3?', twip2txt(width3), off - 2, 2, '%sh' % page.eflag)
+	(height4, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Height 4?', twip2txt(height4), off - 2, 2, '%sh' % page.eflag)
+	(width4, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Width 4?', twip2txt(width4), off - 2, 2, '%sh' % page.eflag)
+	off += 1330
+	(res, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, 'Target output resolution', res, off - 2, 2, '%sH' % page.eflag)
+	off += 832
+	(top1, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Top margin 1?', twip2txt(top1), off - 2, 2, '%sh' % page.eflag)
+	(right1, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Right margin 1?', twip2txt(right1), off - 2, 2, '%sh' % page.eflag)
+	(bottom1, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Bottom margin 1?', twip2txt(bottom1), off - 2, 2, '%sh' % page.eflag)
+	(left1, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Left margin 1?', twip2txt(left1), off - 2, 2, '%sh' % page.eflag)
+	(top2, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Top margin 2?', twip2txt(top2), off - 2, 2, '%sh' % page.eflag)
+	(left2, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Left margin 2?', twip2txt(left2), off - 2, 2, '%sh' % page.eflag)
+	(bottom2, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Bottom margin 2?', twip2txt(bottom2), off - 2, 2, '%sh' % page.eflag)
+	(right2, off) = rdata(data, off, '%sh' % page.eflag)
+	add_iter (hd, 'Right margin 2?', twip2txt(right2), off - 2, 2, '%sh' % page.eflag)
 
 def hd_shape_text(hd, data, page):
 	off = 6
@@ -547,6 +589,7 @@ def hd_color (hd, data, page):
 		
 
 hd_ids = {
+	'Doc settings': hd_doc_settings,
 	"header":hd_header,
 	"shape":hd_shape,
 	"char":hd_char,
