@@ -20,6 +20,11 @@ def val2txt(value, unit='%', default='normal', scale=.1):
 def twip2txt(value):
 	return '%.2f in' % (value / 1440.)
 
+def xflag2txt(flag, data, eflag):
+	def reverse_bits(x):
+		return int(bin(x)[2:].zfill(8)[::-1], 2)
+	return bflag2txt(flag if eflag == '>' else reverse_bits(flag), data)
+
 recs = {
 	0x01:("0x01", 10),
 	0x04:("Print Ops?", 104),
@@ -215,48 +220,65 @@ def hd_header (hd,data,page):
 	add_iter (hd,'ToC offset',"%d"%tr_off,0x30,4,"%sI"%page.eflag)
 
 def hd_doc_settings(hd, data, page):
-	off = 46
+	def add_page_dims(offset, name, typ):
+		sides = {
+			'<': ('left', 'top', 'right', 'bottom'),
+			'>': ('top', 'left', 'bottom', 'right'),
+		}
+		off = offset
+		for i in range(0, 4):
+			title = '%s page %s %s' % (name, sides[page.eflag][i], typ)
+			(dim, off) = rdata(data, off, '%sh' % page.eflag)
+			add_iter(hd, title, twip2txt(dim), off - 2, 2, '%sh' % page.eflag)
+		return off
+	off = 0
+	opts_bits = {
+		0x20: 'portrait',
+		0x40: 'facing pages',
+		0x80: 'double-sided',
+	}
+	(opts, off) = rdata(data, off, 'B')
+	add_iter(hd, 'Options', xflag2txt(opts, opts_bits, page.eflag), off - 1, 1, 'B')
+	off += 45
 	(cur_page, off) = rdata(data, off, '%sH' % page.eflag)
 	add_iter(hd, 'Current page?', cur_page, off - 2, 2, '%sH' % page.eflag)
 	(pages, off) = rdata(data, off, '%sH' % page.eflag)
 	add_iter(hd, '# of pages', pages, off - 2, 2, '%sH' % page.eflag)
-	off += 4
-	(height1, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Height 1?', twip2txt(height1), off - 2, 2, '%sh' % page.eflag)
-	(width1, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Width 1?', twip2txt(width1), off - 2, 2, '%sh' % page.eflag)
-	(height2, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Height 2?', twip2txt(height2), off - 2, 2, '%sh' % page.eflag)
-	(width2, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Width 2?', twip2txt(width2), off - 2, 2, '%sh' % page.eflag)
-	(height3, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Height 3?', twip2txt(height3), off - 2, 2, '%sh' % page.eflag)
-	(width3, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Width 3?', twip2txt(width3), off - 2, 2, '%sh' % page.eflag)
-	(height4, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Height 4?', twip2txt(height4), off - 2, 2, '%sh' % page.eflag)
-	(width4, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Width 4?', twip2txt(width4), off - 2, 2, '%sh' % page.eflag)
-	off += 1330
+	(start, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, 'Start page', start, off - 2, 2, '%sH' % page.eflag)
+	off += 2
+	off = add_page_dims(off, 'Left', 'offset')
+	off = add_page_dims(off, 'Right', 'offset')
+	off += 1173
+	numbering_map = {
+		0: 'arabic',
+		1: 'upper roman',
+		2: 'lower roman',
+		3: 'upper alphabetic',
+		4: 'lower alphabetic',
+	}
+	(numbering, off) = rdata(data, off, 'B')
+	add_iter (hd, 'Page numbering', key2txt(numbering, numbering_map), off - 1, 1, 'B')
+	(prefix, off) = rdata(data, off, '16s')
+	add_iter(hd, 'ToC and index prefix', rcstr(prefix, 0)[0], off - 16, 16, '16s')
+	off += 138
 	(res, off) = rdata(data, off, '%sH' % page.eflag)
 	add_iter(hd, 'Target output resolution', res, off - 2, 2, '%sH' % page.eflag)
-	off += 832
-	(top1, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Top margin 1?', twip2txt(top1), off - 2, 2, '%sh' % page.eflag)
-	(right1, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Right margin 1?', twip2txt(right1), off - 2, 2, '%sh' % page.eflag)
-	(bottom1, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Bottom margin 1?', twip2txt(bottom1), off - 2, 2, '%sh' % page.eflag)
-	(left1, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Left margin 1?', twip2txt(left1), off - 2, 2, '%sh' % page.eflag)
-	(top2, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Top margin 2?', twip2txt(top2), off - 2, 2, '%sh' % page.eflag)
-	(left2, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Left margin 2?', twip2txt(left2), off - 2, 2, '%sh' % page.eflag)
-	(bottom2, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Bottom margin 2?', twip2txt(bottom2), off - 2, 2, '%sh' % page.eflag)
-	(right2, off) = rdata(data, off, '%sh' % page.eflag)
-	add_iter (hd, 'Right margin 2?', twip2txt(right2), off - 2, 2, '%sh' % page.eflag)
+	(greek, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, 'Greek text below', '%d px' % greek, off - 2, 2, '%sH' % page.eflag)
+	off += 820
+	unit_map = {
+		0: 'picas',
+		1: 'inches',
+		2: 'inches decimal',
+		3: 'millimeters',
+		4: 'ciceros',
+	}
+	(unit, off) = rdata(data, off, '%sH' % page.eflag)
+	add_iter(hd, 'Measurement unit', key2txt(unit, unit_map), off - 2, 2, '%sH' % page.eflag)
+	off += 10
+	off = add_page_dims(off, 'Left', 'margin')
+	off = add_page_dims(off, 'Right', 'margin')
 
 def hd_shape_text(hd, data, page):
 	off = 6
