@@ -65,6 +65,7 @@ class Page:
 
 	def fload(self,buf="",parent=None,package=None):
 		self.pname = os.path.split(self.fname)[1]
+		f = None
 		if buf == "":
 			offset = 0
 			f = open(self.fname,"rb")
@@ -211,7 +212,8 @@ class Page:
 		if buf[0:4] == "\x50\x4b\x03\x04":
 			self.type = "PKZIP"
 			print "Probably PK-ZIP"
-			f.close()
+			if f:
+				f.close()
 			pkzip.open (self.fname,self, parent)
 			return 0
 
