@@ -1258,7 +1258,7 @@ class QWQDoc():
 			val=struct.unpack('<H', data[off:off+2])[0]
 			wh+="%d,"%val
 			off+=2
-		add_iter (hd,"color[series]",wh,off-12,12,'<H')
+		add_iter (hd,"pattern[series]",wh,off-12,12,'<H')
 		for i in range(3): # 3 color ?
 			val=struct.unpack('<H', data[off:off+2])[0]
 			add_iter (hd,"f%d"%(i+3),val,off,2,'<H')
@@ -1268,7 +1268,7 @@ class QWQDoc():
 			val=struct.unpack('<H', data[off:off+2])[0]
 			wh+="%d,"%val
 			off+=2
-		add_iter (hd,"type[series]",wh,off-12,12,'<H')
+		add_iter (hd,"color[series]",wh,off-12,12,'<H')
 		for i in range(4): # 3 color +DI?
 			val=struct.unpack('<H', data[off:off+2])[0]
 			add_iter (hd,"f%d"%(i+6),val,off,2,'<H')
