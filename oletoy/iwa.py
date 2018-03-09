@@ -434,6 +434,11 @@ MESSAGES = {
 		4: ('Direction', int64), # TODO: identify directions
 		5: ('Animation delay', double_),
 	},
+	'Arrow':  {
+		1: ('Path', 'Bezier'),
+		3: ('Position', ),
+		5: ('Name', string)
+	},
 	'Bezier': {1: ('Bezier element',)},
 	'Bezier element': {
 		1: ('Type', enum({1: 'M', 2: 'L', 4: 'C', 5: 'Z'})),
@@ -675,6 +680,8 @@ MESSAGES = {
 		1: ('Shape placement',),
 		2: ('Graphic style ref', 'Ref'),
 		3: ('Path',),
+		4: ('Arrow[start]', 'Arrow'),
+		5: ('Arrow[end]', 'Arrow'),
 	},
 	'Shape placement': {
 		1: ('Geometry',),
@@ -783,6 +790,8 @@ COMMON_OBJECTS = {
 				3: ('Opacity', float_),
 				4: ('Shadow',),
 				5: ('Reflection',),
+				6: ('Arrow[start]', 'Arrow'),
+				7: ('Arrow[end]', 'Arrow'),
 			}),
 		}),
 		10: ('Number of properties', int64),
@@ -1486,6 +1495,7 @@ def add_tile_row(hd, size, data):
 	flags_set = {
 		0x2: 'style', 0x4: 'format', 0x8: 'formula',
 		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
+		0x80: 'unknown',
 		0x200: 'paragraph text',
 		0xc00: 'conditional format',
 		0x1000: 'comment',
@@ -1499,6 +1509,9 @@ def add_tile_row(hd, size, data):
 	if flags & 0x2:
 		(style, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
+	if flags & 0x80:
+		(unkn, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Unknown ID', unkn, off - 4, 4, '<I')
 	if flags & 0xc00:
 		(fmt, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Conditional format ID', fmt, off - 4, 4, '<I')
@@ -1564,9 +1577,12 @@ iwa_ids = {
 ### Entry point
 
 def detect(package):
-	names = package.namelist()
-	if "Index/MasterSlide.iwa" in names:
-		return "Keynote"
+	try:
+		names = package.namelist()
+		if "Index/MasterSlide.iwa" in names:
+			return "Keynote"
+	except:
+		pass
 	# I see no way to differentiate Pages and Numbers document just from
 	# the structure. Luckily, the app-specific object numbers for these
 	# two are in distinct ranges.
