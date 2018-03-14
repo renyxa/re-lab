@@ -600,7 +600,8 @@ MESSAGES = {
 		11: ('Left indent', float_),
 		13: ('Line spacing', {
 			1: ('Type', enum({0: 'lines', 1: 'at least', 2: 'exactly', 4: 'between'})),
-			2: ('Amount', float_)
+			2: ('Amount', float_),
+			3: ('Unknown', float_)
 		}),
 		14: ('Page break before', bool_),
 		15: ('Border type', enum({0: 'None', 1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
@@ -834,6 +835,7 @@ COMMON_OBJECTS = {
 		9: ('Natural size', 'Size'),
 		10: ('Alpha mask path', 'Bezier'),
 		11: ('File ref?', 'Ref'),
+		12: ('Small File ref', 'Ref'),
 		13: ('File ref?', 'Ref'),
 		15: ('Filtered ref', 'Ref'),
 	}),
@@ -1152,6 +1154,8 @@ NUMBERS_OBJECTS = {
 
 PAGES_OBJECTS = {
 	10000: ('Document', {
+		2: ('Stylesheet', 'Ref'),
+		3: ('List drawables ref', 'Ref'),
 		4: ('Text body ref', 'Ref'),
 		7: ('Document settings ref', 'Ref'),
 		30: ('Page width', float_),
@@ -1166,7 +1170,12 @@ PAGES_OBJECTS = {
 		42: ('Page orientation', enum({0: 'Portrait', 1: 'Landscape'})),
 		44: ('Paper size', string),
 	}),
-
+	10010: ('List drawables', {
+		1: ('List by page', {
+			1: ('page', int64),
+			4: ('Drawable', {1: ('ref', 'Ref')}),
+		}),
+	}),
 	10011: ('Section', {
 		17: ('Match previous section', bool_),
 		23: ('Left page h&f ref?', 'Ref'),
