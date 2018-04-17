@@ -405,25 +405,279 @@ def handle_tile_row(parser, page, data, parent):
 	parser.tile_row_offsets = {}
 
 FUNCTIONS = {
+	1: 'ABS',
+	2: 'ACCRINT',
+	3: 'ACCRINTM',
+	4: 'ACOS',
+	5: 'ACOSH',
 	6: 'ADDRESS',
 	7: 'AND',
 	8: 'AREAS',
+	9: 'ASIN',
+	10: 'ASINH',
+	11: 'ATAN',
+	12: 'ATAN2',
+	13: 'ATANH',
+	14: 'AVERAGEDEV',
+	15: 'AVERAGE',
+	16: 'AVERAGEA',
+	17: 'CEILING',
+	18: 'CHAR',
+	19: 'CHOOSE',
 	20: 'CLEAN',
+	21: 'CODE',
 	22: 'COLUMN',
+	23: 'COLUMNS',
+	24: 'COMBIN',
+	25: 'CONCATENATE',
+	26: 'CONFIDENCE',
+	27: 'CORREL',
+	28: 'COS',
+	29: 'COSH',
+	30: 'COUNT',
+	31: 'COUNTA',
+	32: 'COUNTBLANK',
+	33: 'COUNTIF',
+	34: 'COUPDAYBS',
+	35: 'COUPDAYS',
+	36: 'COUPDAYSNC',
+	37: 'COUPNUM',
+	38: 'COVAR',
+	39: 'DATE',
+	40: 'DATEDIF',
+	41: 'DAY',
+	42: 'DB',
+	43: 'DDB',
+	44: 'DEGREES',
+	45: 'DISC',
+	46: 'DOLLAR',
+	47: 'EDATE',
+	48: 'EVEN',
+	49: 'EXACT',
+	50: 'EXP',
+	51: 'FACT',
 	52: 'FALSE',
+	53: 'FIND',
+	54: 'FIXED',
+	55: 'FLOOR',
+	56: 'FORECAST',
+	57: 'FREQUENCY',
+	58: 'GCD',
+	59: 'HLOOKUP',
+	60: 'HOUR',
+	61: 'HYPERLINK',
 	62: 'IF',
+	63: 'INDEX',
+	64: 'INDIRECT',
 	65: 'INT',
+	66: 'INTERCEPT',
+	67: 'IPMT',
+	68: 'IRR',
 	69: 'ISBLANK',
 	70: 'ISERROR',
 	71: 'ISEVEN',
 	72: 'ISODD',
+	73: 'ISPMT',
+	74: 'LARGE',
+	75: 'LCM',
+	76: 'LEFT',
+	77: 'LEN',
+	78: 'LN',
+	79: 'LOG',
+	80: 'LOG10',
+	81: 'LOOKUP',
+	82: 'LOWER',
+	83: 'MATCH',
+	84: 'MAX',
+	85: 'MAXA',
+	86: 'MEDIAN',
+	87: 'MID',
+	88: 'MIN',
+	89: 'MINA',
+	90: 'MINUTE',
+	91: 'MIRR',
+	92: 'MOD',
+	93: 'MODE',
+	94: 'MONTH',
+	95: 'MROUND',
 	96: 'NOT',
 	97: 'NOW',
+	98: 'NPER',
+	99: 'NPV',
+	100: 'ODD',
+	101: 'OFFSET',
 	102: 'OR',
+	103: 'PERCENTILE',
+	104: 'PI',
+	105: 'PMT',
+	106: 'POISSON',
+	107: 'POWER',
+	108: 'PPMT',
+	109: 'PRICE',
+	110: 'PRICEDIC',
+	111: 'PRICEMAT',
+	112: 'PROB',
+	113: 'PRODUCT',
+	114: 'PROPER',
+	115: 'PV',
+	116: 'QUOTIENT',
+	117: 'RADIANS',
+	118: 'RAND',
+	119: 'RANDBETWEEN',
+	120: 'RANK',
+	121: 'RATE',
+	122: 'REPLACE',
+	123: 'RPT',
+	124: 'RIGHT',
+	125: 'ROMAN',
+	126: 'ROUND',
+	127: 'ROUNDDOWN',
+	128: 'ROUNDUP',
+	129: 'ROW',
+	130: 'ROWS',
+	131: 'SEARCH',
+	132: 'SECOND',
+	133: 'SIGN',
+	134: 'SIN',
+	135: 'SINH',
+	136: 'SLN',
+	137: 'SLOPE',
+	138: 'SMALL',
+	139: 'SQRT',
+	140: 'STDEV',
+	141: 'STDEVA',
+	142: 'STDEVP',
+	143: 'STDEVPA',
+	144: 'SUBSTITUTE',
+	145: 'SUMIF',
+	146: 'SUMPRODUCT',
+	147: 'SUMSQ',
+	148: 'SYD',
+	149: 'T',
+	150: 'TAN',
+	151: 'TANH',
+	152: 'TIME',
+	153: 'TIMEVALUE',
+	154: 'TODAY',
+	155: 'TRIM',
 	156: 'TRUE',
+	158: 'UPPER',
+	159: 'VALUE',
+	160: 'VAR',
+	161: 'VARA',
+	162: 'VARP',
+	163: 'VARPA',
+	164: 'VDB',
+	165: 'VLOOKUP',
+	166: 'WEEKDAY',
+	167: 'YEAR',
 	168: 'SUM',
+	185: 'EFFECT',
+	186: 'NOMINAL',
+	187: 'NORMDIST',
+	188: 'NORMSDIST',
+	189: 'NORMINV',
+	190: 'NORMSINV',
+	191: 'YIELD',
+	192: 'YIELDDIST',
+	193: 'YIELDMAT',
+	194: 'BONDDURATION',
+	195: 'BONDMDURATION',
+	196: 'ERF',
+	197: 'ERFC',
+	198: 'STANDARDIZE',
+	199: 'INTRATE',
+	200: 'RECEIVED',
+	201: 'CUMIPMT',
+	202: 'CUMPRINC',
+	203: 'EOMONTH',
+	204: 'WORKDAY',
+	205: 'MONTHNAME',
+	206: 'WEEKNUM',
+	207: 'DUR2HOURS',
+	208: 'DUR2MINUTES',
+	209: 'DUR2SECONDS',
+	210: 'DUR2DAYS',
+	211: 'DUR2WEEKS',
+	212: 'DURATION',
+	213: 'EXPONDIST',
+	214: 'YEARFRAC',
+	215: 'ZTEST',
+	216: 'SUMX2MY2',
+	217: 'SUMX2PY2',
+	218: 'SUMXMY2',
+	219: 'SQRTPI',
+	220: 'TRANSPOSE',
+	221: 'DEVSQ',
+	222: 'FV',
+	223: 'DELTA',
+	224: 'FACTDOUBLE',
+	225: 'GESTEP',
+	226: 'PERCENTRANK',
+	227: 'GAMMALN',
+	228: 'DATEVALUE',
+	229: 'GAMMADIST',
+	230: 'GAMMAINV',
+	231: 'SUMIFS',
+	232: 'AVERAGEIFS',
+	233: 'COUNTIFS',
+	234: 'AVERAGEIF',
 	235: 'IFERROR',
+	236: 'DAYNAME',
+	237: 'BESSELJ',
+	238: 'BESSELY',
+	239: 'LOGNORMDIST',
+	240: 'LOGINV',
+	241: 'TDIST',
+	242: 'BINOMDIST',
+	243: 'NEGBINOMDIST',
+	244: 'FDIST',
+	245: 'PERMUT',
+	246: 'CHIDIST',
+	247: 'CHITEST',
+	248: 'TTEST',
+	249: 'QUARTILE',
+	250: 'MULTIMONIAL',
+	251: 'CRITBINOM',
+	252: 'BASETONUM',
+	253: 'NUMTOBASE',
+	254: 'TINV',
+	255: 'CONVERT',
+	256: 'CHIINV',
+	257: 'FINV',
+	258: 'BETADIST',
+	259: 'BETAINV',
+	260: 'NETWORKDAYS',
+	261: 'DAYS360',
+	262: 'HARMEAN',
+	263: 'GEOMIN',
 	264: 'DEC2HEX',
+	265: 'DEC2BIN',
+	266: 'DEC2OCT',
+	267: 'BIN2HEX',
+	268: 'BIN2DEC',
+	269: 'BIN2OCT',
+	270: 'OCT2BIN',
+	271: 'OCT2DEC',
+	272: 'OCT2HEX',
+	273: 'HEX2BIN',
+	274: 'HEX2DEC',
+	275: 'HEX2OCT',
+	276: 'LINEST',
+	277: 'DUR2MILLISECONDS',
+	278: 'STRIPDURATION',
+	280: 'INTERCEPT.RANGES',
+	285: 'UNION.RANGES',
+	286: 'SERIESSUM',
+	287: 'POLYNOMIAL',
+	288: 'WEIBULL',
+	297: 'PLAINTEXT',
+	298: 'STOCK',
+	299: 'STOCKH',
+	300: 'CURRENCY',
+	301: 'CURRENCYH',
+	302: 'CURRENCYCONVERT',
+	303: 'CURRENCYCODE',
 }
 
 MESSAGES = {
@@ -477,11 +731,28 @@ MESSAGES = {
 			}),
 		}),
 	},
-	'Custom format': {
+	'Custom Format Def': {
 		1: ('Format name', string),
+		2: ('Format type', int64),
 		3: ('Format', { # TODO: I think this is the same type as 6: Format
 			18: ('Format string', string),
 		}),
+	},
+	'Document info': {
+		1: ('Annotations', {
+			4: ('Language', string),
+			7: ('Annotation Author Storage Ref', 'Ref'),
+			9: ('encoding', string),
+			# 10,12 bool
+		}),
+		3: ('Language', string),
+		4: ('Calculation Engine Ref', 'Ref'),
+		5: ('View State Ref', 'Ref'),
+		6: (None, 'Ref'), # ref to 601
+		7: ('Custom format data list ref?', 'Ref'),
+		#8: a bool?
+		9: ('Template', string),
+		12: ('Custom format ref', 'Ref'), # maybe only date time?
 	},
 	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
 	'Fill': {
@@ -536,29 +807,37 @@ MESSAGES = {
 		25: ('Slider orientation?', int64),
 		26: ('Slider position?', int64),
 		38: ('Pop-up start with', enum({0: 'blank', 1: 'first item'})),
+		41: ('Custom format UID', 'UID'),
 	},
 	'Formula': {
 		1: ('Token array', { # formula is saved in RPN
 			1: ('Token', {
 				1: ('Type', enum({
-					1: '+', 2: '-', 3: '*', 4: '/', 5: '^', 7: '>', 8: '>=', 9: '<', 10: '<=', 11: '=', 12: '<>', # infix ops
+					1: '+', 2: '-', 3: '*', 4: '/', 5: '^', 6:'&', 7: '>', 8: '>=', 9: '<', 10: '<=', 11: '=', 12: '<>', # infix ops
 					13: '-', 14: '+', # prefix ops
 					15: '%', # postfix op
 					16: 'function',
-					17: 'double', 19: 'string', # literals
+					17: 'double', 18: 'bool', 19: 'string', # literals
+					22: 'empty',
 					23: 'missing argument',
 					25: '()',
 					29: 'range',
-					34: 'argument?', 35: 'argument pair?',
+					32: 'space', 33: 'space2', # difference, the position?
+					34: 'argument[begin]', 35: 'argument[end]',
 					36: 'address'
 				})),
 				2: ('Function', enum(FUNCTIONS)),
 				3: ('Number of arguments', int64),
 				4: ('Double', double_),
+				5: ('Boolean', bool_),
 				6: ('String', string),
 				10: ('Optional', bool_),
+				13: ('Number of arguments', int64), # of ()
+				25: ('String', string), # arg of 32
 				26: ('Column', {1: ('Column', sint64), 2: ('Absolute', bool_),}),
 				27: ('Row', {1: ('Row', sint64), 2: ('Absolute', bool_),}),
+				28: ('Sheet UUID', {1: ('UUID',)}),
+				# 38: related to file?
 			}),
 		}),
 	},
@@ -716,12 +995,15 @@ MESSAGES = {
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
 	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
+	'UID': {1: ('high', int64), 2: ('low', int64)},
+	'UUID': {2: ('h0', int64), 3: ('h1', int64), 4: ('h2', int64), 5: ('h3', int64)},
 }
 
 COMMON_OBJECTS = {
 	210: ('View State',),
 	212: ('Annotation', {1: ('Author', string)}),
 	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
+	222: ('Custom Format', {1: ('UID', ), 2: ('Custom Format Def', )}),
 	401: ('Stylesheet', {
 		1: ('Style ref', 'Ref'),
 		2: ('Style name association',),
@@ -876,6 +1158,8 @@ COMMON_OBJECTS = {
 	4000: ('Calculation Engine', {
 		3: ('A ref', 'Ref'),
 		5: ('Language', string),
+		#9: a very big number
+		10: ('Locale[hour]', string),
 	}),
 	4004: ('Sort', {
 		3: ('Criterion', 'Formula'),
@@ -945,6 +1229,7 @@ COMMON_OBJECTS = {
 				}),
 			}),
 		}),
+		49: ('GridLines ref', 'Ref'),
 	}),
 	6002: ('Tile', {
 		1: ('Last column', int64),
@@ -1004,6 +1289,7 @@ COMMON_OBJECTS = {
 		10: ('Number of properties', int64),
 		11: ('Properties', {
 			1: ('Fill',),
+			8: ('vAlign', enum({0:'top', 1:'center', 2:'bottom'})),
 			9: ('Text inset', 'Padding'),
 			10: ('Top border', 'Stroke'),
 			11: ('Right border', 'Stroke'),
@@ -1021,7 +1307,7 @@ COMMON_OBJECTS = {
 			4: ('Style ref', 'Ref'),
 			5: ('Formula',),
 			6: ('Format',),
-			8: ('Custom format',),
+			8: ('Custom Format Def',),
 			9: ('Text entry ref', 'Ref'),
 			10: ('Comment ref', 'Ref'),
 		}),
@@ -1055,6 +1341,24 @@ COMMON_OBJECTS = {
 	6220: ('Filter', {
 		3: ('Rule', {1: ('Filter formula', {1: ('Formula',)})}),
 	}),
+	6305: ('GridLines', {
+		1: (None,int64),
+		2: (None,int64),
+		3: (None,int64),
+		4: ('Line[left]', 'Ref'),
+		5: ('Line[right]', 'Ref'),
+		6: ('Line[top]', 'Ref'),
+		7: ('Line[bottom]', 'Ref'),
+	}),
+	6306: ('GridLine', {
+		1: ('pos1', int64),
+		2: ('Style', {
+			1: ('pos2', int64),
+			2: ('length', int64),
+			3: ('Stroke', ),
+			4: (None, int64),
+		}),
+	}),
 	11006: ('Object index', {
 		1: ('Active object ref?', int64),
 		3: ('IWA file',),
@@ -1065,15 +1369,7 @@ COMMON_OBJECTS = {
 KEYNOTE_OBJECTS = {
 	1: ('Document', {
 		2: ('Presentation ref', 'Ref'),
-		3: ('Document info', {
-			1: ('Annotations', {4: ('Language', string), 7: ('Annotation Author Storage Ref', 'Ref')}),
-			3: ('Language', string),
-			4: ('Calculation Engine Ref', 'Ref'),
-			5: ('View State Ref', 'Ref'),
-			6: (None, 'Ref'),
-			7: ('Custom format data list ref?', 'Ref'),
-			9: ('Template', string)
-		})
+		3: ('Document info', )
 	}),
 	2: ('Presentation', {
 		2: ('Theme ref?', 'Ref'),
@@ -1149,7 +1445,37 @@ KEYNOTE_OBJECTS = {
 }
 
 NUMBERS_OBJECTS = {
-	1: ('Document', {}),
+	1: ('Document', {
+		1: ('Sheet ref', 'Ref'),
+		4: ('Stylesheet', 'Ref'),
+		5: (None, 'Ref'), #zone 205
+		6: (None, 'Ref'), #zone 12009
+		8: ('Document info', ),
+		11: ('iso', string),
+		12: ('page', {
+			1: ('Page width', float_),
+			2: ('Page height', float_),
+		}),
+	}),
+	2: ('Sheet', { # in fact, a page which regroup at least one table and other shapes
+		1: ('name', string),
+		2: ('Shape ref', 'Ref'),
+		# 3,5,6,8 bool
+		7: (None, float_), # -1
+		10: (None, {
+			1: (None, float_),
+			2: (None, float_),
+			3: (None, float_),
+			4: (None, float_),
+		}),
+		# 11,12 bool
+		13: (None, float_),
+		14: (None, float_),
+		17: (None, 'Ref'), # to 3047
+		18: ('Header ref', 'Ref'),
+		19: ('Footer ref', 'Ref'),
+		# 20 bool
+	}),
 }
 
 PAGES_OBJECTS = {
@@ -1496,11 +1822,11 @@ def add_tile_offsets(hd, size, data):
 
 def add_tile_row(hd, size, data):
 	# The IDs point to appropriate data lists (c.f. table model)
-	off = 2
-	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6: 'formula', 7: 'duration', 9: 'paragraph text'}
+	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6: 'boolean', 7: 'duration', 9: 'paragraph text'}
+	off = 1
 	(typ, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Cell type', key2txt(typ, type_map), off - 1, 1, '<B')
-	off += 1
+	add_iter(hd, 'Data type', key2txt(typ, data_type_map), off - 1, 1, '<B')
+	off +=2
 	flags_set = {
 		0x2: 'style', 0x4: 'format', 0x8: 'formula',
 		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
@@ -1531,12 +1857,12 @@ def add_tile_row(hd, size, data):
 	if flags & 0x8:
 		(formula, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Formula ID', formula, off - 4, 4, '<I')
-	if flags & 0x10:
-		(text, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Simple text ID', text, off - 4, 4, '<I')
 	if flags & 0x1000:
 		(comment, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Comment ID', comment, off - 4, 4, '<I')
+	if flags & 0x10:
+		(text, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Simple text ID', text, off - 4, 4, '<I')
 	if flags & 0x20:
 		(value, off) = rdata(data, off, '<d')
 		value_str = value
