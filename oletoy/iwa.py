@@ -734,9 +734,7 @@ MESSAGES = {
 	'Custom Format Def': {
 		1: ('Format name', string),
 		2: ('Format type', int64),
-		3: ('Format', { # TODO: I think this is the same type as 6: Format
-			18: ('Format string', string),
-		}),
+		3: ('Format', ),
 	},
 	'Document info': {
 		1: ('Annotations', {
@@ -800,6 +798,8 @@ MESSAGES = {
 		15: ('High duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
 		16: ('Low duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
 		17: ('Custom format ID', int64),
+		18: ('Format String', string),
+		19: (None, double_),
 		21: ('Min. value', double_),
 		22: ('Max. value', double_),
 		23: ('Increment', double_),
