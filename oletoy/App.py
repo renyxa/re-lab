@@ -34,6 +34,8 @@ import c602
 import t602
 import bmi
 import quattro_wq
+import publisher1
+
 from utils import *
 
 class Page:
@@ -346,6 +348,10 @@ class Page:
 				self.model.set_value(parent, 0, "DRW")
 			except:
 				print "Failed after attempt to parse as DRW..."
+		if buf[0:4] == "\xe7\xac\x2c\x00":
+			self.type = 'pub1'
+			print('Probably publisher 1 file')
+			publisher1.publisher_open(self, buf, parent)
 
 		return 0
 
