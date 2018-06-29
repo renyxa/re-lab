@@ -32,10 +32,15 @@ class Publisher1Doc():
 		self.chuncks={
 			"FontNames":self.FontNames,
 			"TextZone":self.TextZone,
+                        "TextSp0":self.TextSp0,
+                        "TextSp1":self.TextSp1,
 			# zone3 N,N1, offset?
 			"Zone":self.Zone,
+			"BorderArts":self.BorderArts,
 		}
 		self.chunkHds = {
+			"BorderArt":self.hdBorderArt,
+			"BorderArts":self.hdBorderArts,
 			"Document":self.hdDocument,
 			"FontName":self.hdFontName,
 			"FontNames":self.hdFontNames,
@@ -53,11 +58,42 @@ class Publisher1Doc():
 			"TextPLC2":self.hdTextPLC,
 			"TextPLC3":self.hdTextPLC,
 			"TextPLC4":self.hdTextPLC,
+			"TextSp0":self.hdTextSp,
+			"TextSp1":self.hdTextSp,
 		}
 		self.unseenA5Data=0
 
-	mainZoneNameDict={0:"TextZone", 1:"Document", 3:"Pages", 4:"Zone", 5:"FontNames"}
+	mainZoneNameDict={0:"TextZone", 1:"Document", 3:"Pages", 4:"Zone", 5:"FontNames", 6:"BorderArts"}
 
+	def BorderArts(self,length,off):
+		subZone=[]
+                begOff=off
+		N=struct.unpack('<H', self.data[off:off+2])[0]
+		off+=2+2 # skip N1
+		lastPtr=struct.unpack('<H', self.data[off:off+2])[0]
+		off+=2+6 # skip 3, c, -1
+
+		ptrs=[]
+		for i in range(N):
+			ptr=struct.unpack('<H', self.data[off:off+2])[0]
+			off+=2
+                        if ptr==0xffff:
+                                continue
+			ptrs.append(ptr)
+			if ptr==lastPtr:
+				break
+		for i in range(len(ptrs)-1):
+			subZone.append(("BorderArt%d"%i,"BorderArt", 12+ptrs[i], 66))
+                        off=begOff+12+ptrs[i]
+                        wmfPos={12+ptrs[i+1]}
+                        for j in range(8):
+                                ptr=struct.unpack('<H', self.data[off+50:off+50+2])[0]
+                                wmfPos.add(12+ptrs[i]+ptr)
+                                off+=2
+                        wmfOrderedPos=sorted(wmfPos)
+                        for j in range(len(wmfOrderedPos)-1):
+			        subZone.append(("BorderData%d-%d"%(i,wmfOrderedPos[j]-12-ptrs[i]),"wmf", wmfOrderedPos[j], wmfOrderedPos[j+1]-wmfOrderedPos[j]))
+		return subZone
 	def FontNames(self,length,off):
 		subZone=[]
 		N=struct.unpack('<H', self.data[off:off+2])[0]
@@ -89,8 +125,15 @@ class Publisher1Doc():
 			elif i==1:
 				subZone.append(("Text","Text",pos,0))
 			else:
-				subZone.append(("Free","Free",pos,0)) # checkme: look like a free zone
-		off+=6
+				subZone.append(("EOF[Text]","Free",pos,0))
+                index=[]
+                for i in range(3):
+			ptr=struct.unpack('<H', self.data[off:off+2])[0]
+			off+=2
+			index.append(ptr)
+                for i in range(2):
+                        for j in range(index[i],index[i+1]):
+				subZone.append(("TextSp%d-%d"%(i,j),"TextSp%d"%i,j*0x200,0x200))
 		for i in range(5):
 			pos=struct.unpack('<I', self.data[off:off+4])[0]
 			off+=4
@@ -105,6 +148,28 @@ class Publisher1Doc():
 				continue
 			subZone.append((subName,subType,subOff-begPos, listZone[i+1][2]-subOff))
 		return subZone
+        def TextSp(self,length,off,wh):
+		subZone=[]
+		begPos=off
+		N=struct.unpack('<B', self.data[begPos+0x1ff:begPos+0x200])[0]
+		off+=4*(N+1)
+                seenOffset={10000000}
+                for i in range(N):
+                        offset=struct.unpack('<B', self.data[off:off+1])[0]
+                        off+=1
+                        if offset==0 or offset in seenOffset:
+                                continue;
+                        seenOffset.add(offset)
+                        len=struct.unpack('<B', self.data[begPos+2*offset:begPos+2*offset+1])[0]
+                        if wh=="TextSpan":
+			        subZone.append(("%s%x"%(wh,offset),wh,2*offset,1+len))
+                        else:
+			        subZone.append(("%s%x"%(wh,offset),wh,2*offset,1+2*len))
+                return subZone
+        def TextSp0(self,length,off):
+                return self.TextSp(length,off,"TextSpan")
+        def TextSp1(self,length,off):
+                return self.TextSp(length,off,"TextPara")
 	def Zone(self,length,off):
 		subZone=[]
 		begPos=off
@@ -125,7 +190,7 @@ class Publisher1Doc():
 			childId=struct.unpack('<H', self.data[off:off+2])[0]
 			parentId=struct.unpack('<H', self.data[off+2:off+4])[0]
 			childDataPos=struct.unpack('<H', self.data[off+4:off+4+2])[0]
-			childSubId=struct.unpack('<h', self.data[off+6:off+6+2])[0]
+			childDataId=struct.unpack('<h', self.data[off+6:off+6+2])[0]
 			childType=struct.unpack('<B', self.data[off+8:off+9])[0]
 			childDataType=struct.unpack('<B', self.data[off+9:off+10])[0]
 			off+=10
@@ -139,7 +204,7 @@ class Publisher1Doc():
 				else:
 					fType=struct.unpack('<I', self.data[newPos:newPos+4])[0];
 					if fType==0x501:
-						what="staticOLE"
+						what="embeddedOLE"
 					elif fType in [0x90001,0xa0002]:
 						what="wmf"
 					elif childType==0 or childDataType==0x81:
@@ -251,7 +316,7 @@ class Publisher1Doc():
 		self.checkFinish(hd,data,off,"hdUInt")
 
 	def hdString(self,hd,data):
-		add_iter(hd,"val",unicode(data.rstrip('\0'),"cp1250"),0,len(data),'txt')
+		add_iter(hd,"val",unicode(data.partition(b'\0')[0],"cp1250"),0,len(data),'txt')
 	def hdCString(self,hd,data):
 		off=0
 		sSz=struct.unpack('<B', data[off:off+1])[0]
@@ -261,6 +326,48 @@ class Publisher1Doc():
 			add_iter(hd,"val","_",off,len(data)-1,'txt')
 		else:
 			add_iter(hd,"val",unicode(data[off:off+sSz],"cp1250"),off,sSz,'txt')
+	def hdBorderArt(self,hd,data):
+		off=0
+		val=struct.unpack('<H', data[off:off+2])[0] # 1
+		add_iter (hd,"type",val,off,2,'<H')
+		off+=2
+		add_iter(hd,"val",unicode(data[2:44].partition(b'\0')[0],"cp1250"),2,66,'txt')
+                off=44
+		dim=""
+		for i in range(3):
+			val=struct.unpack('<H', data[off:off+2])[0]
+			dim += "%d,"%val
+			off+=2
+		add_iter (hd,"dim",dim,off-6,6,'txt')
+                for i in range(8):
+                        ptr=struct.unpack('<H', data[off:off+2])[0]
+                        add_iter (hd,"pos%d"%i,ptr,off,2,'<H')
+                        off+=2
+		self.checkFinish(hd,data,off,"hdBorderArt")
+	def hdBorderArts(self,hd,data):
+		off=0
+		N=struct.unpack('<H', data[off:off+2])[0]
+		add_iter (hd,"N",N,off,2,'<H')
+		off+=2
+		N1=struct.unpack('<H', data[off:off+2])[0]
+		add_iter (hd,"N1",N1,off,2,'<H')
+		off+=2
+		lastPtr=struct.unpack('<H', data[off:off+2])[0] # 
+		add_iter (hd,"last[ptr]","%02x"%lastPtr,off,2,'<H')
+		off+=2
+		val=struct.unpack('<H', data[off:off+2])[0] # 3: type?
+		add_iter (hd,"type?",val,off,2,'<H')
+		off+=2
+		val=struct.unpack('<H', data[off:off+2])[0] # c
+		add_iter (hd,"header[size]",val,off,2,'<H')
+		off+=2
+		val=struct.unpack('<h', data[off:off+2])[0] # -1
+		add_iter (hd,"f0",val,off,2,'<h')
+		off+=2
+		for i in range(N):
+			ptr=struct.unpack('<H', data[off:off+2])[0]
+			add_iter (hd,"ptr%d"%i,"%02x"%ptr,off,2,'<H')
+			off+=2
 	def hdDocument(self,hd,data):
 		off=0
 		val=struct.unpack('<H', data[off:off+2])[0] # 0x3e
@@ -315,7 +422,7 @@ class Publisher1Doc():
 		val=struct.unpack('<B', data[off:off+1])[0] # 2|10|12
 		add_iter (hd,"f1",val,off,1,'<B')
 		off+=1
-		add_iter(hd,"val",unicode(data[2::].rstrip('\0'),"cp1250"),2,len(data)-2,'txt')
+		add_iter(hd,"val",unicode(data[2::].partition(b'\0')[0],"cp1250"),2,len(data)-2,'txt')
 	def hdFontNames(self,hd,data):
 		off=0
 		N=struct.unpack('<H', data[off:off+2])[0]
@@ -328,10 +435,10 @@ class Publisher1Doc():
 		add_iter (hd,"last[ptr]","%02x"%lastPtr,off,2,'<H')
 		off+=2
 		val=struct.unpack('<H', data[off:off+2])[0] # 2
-		add_iter (hd,"f0",val,off,2,'<H')
+		add_iter (hd,"type",val,off,2,'<H')
 		off+=2
 		val=struct.unpack('<H', data[off:off+2])[0] # a, maybe header size
-		add_iter (hd,"f1",val,off,2,'<H')
+		add_iter (hd,"header[sz]",val,off,2,'<H')
 		off+=2
 		for i in range(N):
 			ptr=struct.unpack('<H', data[off:off+2])[0]
@@ -367,10 +474,10 @@ class Publisher1Doc():
 		add_iter (hd,"N1",N1,off,2,'<H')
 		off+=2
 		val=struct.unpack('<H', data[off:off+2])[0] # 2
-		add_iter (hd,"data[size]",val,off,2,'<H')
+		add_iter (hd,"last[ptr]",val,off,2,'<H')
 		off+=2
 		val=struct.unpack('<H', data[off:off+2])[0] # 0
-		add_iter (hd,"f0",val,off,2,'<H')
+		add_iter (hd,"type",val,off,2,'<H')
 		off+=2
 		val=struct.unpack('<H', data[off:off+2])[0] # a, maybe header size
 		add_iter (hd,"header[size]",val,off,2,'<H')
@@ -393,10 +500,10 @@ class Publisher1Doc():
 			off+=4
 			if pos==0:
 				continue
-			add_iter(hd,"text[pos]" if i==0 else "TextA[pos]","%04x"%pos,off-4,4,'<I')
+			add_iter(hd,"text[pos]" if i==0 else "Text[end,pos]","%04x"%pos,off-4,4,'<I')
 		for i in range(3): # 0,0,0 or a,b,c
 			val=struct.unpack('<H', data[off:off+2])[0]
-			add_iter (hd,"g%d"%i,val,off,2,'<H')
+			add_iter (hd,"index%d"%i,val,off,2,'<H')
 			off+=2
 		for i in range(5):
 			pos=struct.unpack('<I', data[off:off+4])[0]
@@ -428,10 +535,28 @@ class Publisher1Doc():
 			     pos=struct.unpack('<I', data[off:off+4])[0]
 			     off+=4
 			     str += ("%04x,"%pos)
-			add_iter (hd,"pos[char]",str,off-4*N,4*N,'<H')
+			add_iter (hd,"pos[char]",str,off-4*N,4*N,'txt')
 			for i in range(N):
+                                # plc2: odd data: 0-0-zId-id1-text zone id[in plc3]
 				add_iter (hd,"data%d"%i,binascii.hexlify(data[off:off+dataSz]),off,dataSz,"text")
 				off+=dataSz
+	def hdTextSp(self,hd,data):
+		N=struct.unpack('<B', data[0x1ff:0x200])[0]
+		add_iter (hd,"N",N,0x1ff,1,'<H')
+                off=0
+		str=""
+                for i in range(1+N):
+			pos=struct.unpack('<I', data[off:off+4])[0]
+			off+=4
+			str += ("%04x,"%pos)
+		add_iter (hd,"pos[char]",str,0,4*(N+1),'txt')
+                if N>0:
+                        str=""
+			for i in range(N):
+			     offset=struct.unpack('<B', data[off:off+1])[0]
+			     off+=1
+			     str += ("%x,"%offset if offset!=0 else "_,")
+			add_iter (hd,"offset",str,4*(N+1),N,'txt')
 
 	def hdZone(self,hd,data):
 		off=0
@@ -453,7 +578,7 @@ class Publisher1Doc():
 		add_iter (hd,"offset","%02x"%val,off,2,'<H')
 		off+=2
 		val=struct.unpack('<h', data[off:off+2])[0]
-		add_iter (hd,"id[sub]",val,off,2,'<h')
+		add_iter (hd,"id[data]","" if val==-1 else val,off,2,'<h') # data Sid for ole, text zone id for text?
 		off+=2
 		val=struct.unpack('<B', data[off:off+1])[0] # 0: normal 2: a string?
 		add_iter (hd,"type",val,off,1,'<B')
@@ -490,19 +615,21 @@ class Publisher1Doc():
 		add_iter (hd,"pattern",val,off,1,'<B')
 		off+=1
 		val=struct.unpack('<B', data[off:off+1])[0]
-		add_iter (hd,"f%d"%i,val,off,1,'<B')
+		add_iter (hd,"col[line]",val,off,1,'<B')
 		off+=1
 		val=struct.unpack('<B', data[off:off+1])[0]
 		add_iter (hd,"width[line]",val,off,1,'<B')
 		off+=1
-		for i in range(2): # f2=0|-1, f3=0
-			val=struct.unpack('<h', data[off:off+2])[0]
-			add_iter (hd,"f%d"%(i+2),val,off,2,'<H')
-			off+=2
+		val=struct.unpack('<h', data[off:off+2])[0]
+		add_iter (hd,"art[pictId]",val,off,2,'<H')
+		off+=2
+		val=struct.unpack('<h', data[off:off+2])[0]
+		add_iter (hd,"f2",val,off,2,'<H')
+		off+=2
 		val=struct.unpack('<B', data[off:off+1])[0] # 0
-		add_iter (hd,"f4",val,off,1,'<B')
+		add_iter (hd,"f3",val,off,1,'<B')
 		off+=1
-		val=struct.unpack('<H', data[off:off+2])[0] # val&2 means selected, val&8 means shadow, val&10 means symetry(for line)
+		val=struct.unpack('<H', data[off:off+2])[0] # val&2 means selected, val&8 means shadow, val&10 means symetry(for line), val&20 means arrow start, val&20 means arrow end
 		add_iter (hd,"fl","%02x"%val,off,2,'<H')
 		off+=2
                 if typ==0:
@@ -512,7 +639,7 @@ class Publisher1Doc():
                         off+=1
                         b = struct.unpack("<B",data[off:off+1])[0]
                         off+=1
-	                add_iter (hd,'RGB',"%d %d %d"%(r,g,b),off,3,"<BBB")
+	                add_iter (hd,'RGB',"%d %d %d"%(r,g,b),off-3,3,"<BBB")
                         for i in range(4): #0,0,78,0 or 78,78,f0,0 or 85,65,78,0
 		                val=struct.unpack('<H', data[off:off+2])[0]
 		                add_iter (hd,"g%d"%i,val,off,2,'<H')
@@ -525,13 +652,17 @@ class Publisher1Doc():
 		                add_iter (hd,"pos%d"%i,val,off,2,'<H') # some id maybe to text
 		                off+=2
                 elif typ==2 or typ==3:
-                        for i in range(3): #0
+                        x = struct.unpack("<B",data[off:off+1])[0]
+                        off+=1
+                        y = struct.unpack("<B",data[off:off+1])[0]
+                        off+=1
+                        z = struct.unpack("<B",data[off:off+1])[0]
+                        off+=1
+	                add_iter (hd,'dims',"%d %d %d"%(x,y,z),off-3,3,"<BBB")
+                        for i in range(2): #0
 		                val=struct.unpack('<H', data[off:off+2])[0]
 		                add_iter (hd,"g%d"%i,val,off,2,'<H')
 		                off+=2
-                        val = struct.unpack("<B",data[off:off+1])[0]
-                        add_iter (hd,"g3",val,off,1,'<B')
-                        off+=1
 		        for i in range(2):
 			        dims="";
 			        for j in range(4):
