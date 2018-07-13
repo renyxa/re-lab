@@ -109,7 +109,7 @@ def my_open (buf,page,parent=None):
 						ftype = "wt602"
 						page.model.set_value(iter1,1,("wt602",dirflag))
 						wt602.parse (page,data,iter1)
-                                        elif fullname.split('/')[0] == "OleObjects":
+					elif fullname.split('/')[0] == "OleObjects":
 						# Nested OLE objects (or images) in WT602
 						wt602.parse_object(page, data, iter1)
 					else:
@@ -120,7 +120,8 @@ def my_open (buf,page,parent=None):
 					if data[:2] == "\xe8\xac": # take signature into account
 						ftype = "pub"
 						page.model.set_value(iter1,1,("pub",dirflag))
-						pub.parse (page,data,iter1)
+						page.appcontentdoc=pub.PublisherContentDoc(page,iter1)
+						page.appcontentdoc.parse(data)
 				if fn == "VisioDocument":
 					ftype = "vsd"
 					page.model.set_value(iter1,1,("vsd",dirflag)) # level = 1?

@@ -295,17 +295,17 @@ class ApplicationMainWindow(gtk.Window):
 				"Diff for two records",							 # tooltip
 				self.activate_diff),
 
-			( "Options", None,                    # name, stock id
-				"Op_tions", "<control>T",                      # label, accelerator
-				"Configuration options",                             # tooltip
+			( "Options", None,		    # name, stock id
+				"Op_tions", "<control>T",		      # label, accelerator
+				"Configuration options",			     # tooltip
 				self.activate_options),
-			( "Save", gtk.STOCK_SAVE,                    # name, stock id
-				"_Save", "<control>S",                      # label, accelerator
-				"Save the file",                             # tooltip
+			( "Save", gtk.STOCK_SAVE,		    # name, stock id
+				"_Save", "<control>S",		      # label, accelerator
+				"Save the file",			     # tooltip
 				self.activate_save),
-			( "Close", gtk.STOCK_CLOSE,                    # name, stock id
-				"Close", "<control>Z",                      # label, accelerator
-				"Close the file",                             # tooltip
+			( "Close", gtk.STOCK_CLOSE,		    # name, stock id
+				"Close", "<control>Z",		      # label, accelerator
+				"Close the file",			     # tooltip
 				self.activate_close),
 			( "Quit", gtk.STOCK_QUIT,					# name, stock id
 				"_Quit", "<control>Q",					 # label, accelerator
@@ -368,9 +368,9 @@ class ApplicationMainWindow(gtk.Window):
 	<tt>rename</tt> - rename current record\n\
 	<tt>split@addr</tt> - split current record by addr\n\
 	<tt>join {args}</tt> - combine few records starting from selected one.\n\
-	               {args} could be number of recs to combine\n\
-	               (@offset to skip first offset bytes in each record)\n\
-	               or a list of offsets in recs to be combined (comma separated)\n\n\
+		       {args} could be number of recs to combine\n\
+		       (@offset to skip first offset bytes in each record)\n\
+		       or a list of offsets in recs to be combined (comma separated)\n\n\
 	<tt>?aSTRING</tt> - search for ASCII string\n\
 	<tt>?uSTRING</tt> - search for Unicode (utf16) string\n\
 	<tt>?x0123</tt> - search for hex value\n\
@@ -1570,8 +1570,9 @@ class ApplicationMainWindow(gtk.Window):
 					if wld.wld_ids.has_key(ntype[1]):
 							wld.wld_ids[ntype[1]](hd,size,data)
 				elif ntype[0][0:3] == "pub":
-					if pub.pub98_ids.has_key(ntype[1]):
-							pub.pub98_ids[ntype[1]](hd,size,data)
+					if page.appcontentdoc != None:
+						if page.appcontentdoc.pub98_ids.has_key(ntype[1]):
+							page.appcontentdoc.pub98_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "lrf":
 					if lrf.lrf_ids.has_key(ntype[1]):
 						lrf.lrf_ids[ntype[1]](hd, size, data)
