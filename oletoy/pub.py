@@ -32,11 +32,11 @@ class PublisherContentDoc():
 			self.version = page.version
 		self.pub98_types = {
 			0:"Text",0x1:"Table",0x2:"Image",0x3:"OLE", 0x4:"Line",0x5:"Rect",0x6:"Shape",0x7:"Ellipse",
-			0x8:"Text block",0xa:"Table",0xb:"Bookmark",0xf:"Group",
-			0x13:"Style",
-			0x14:"Page",0x15:"Document",0x1e:"Font",0x1f:"Art",
-			0x21:"ImgData",0x22:"OleData",
-			0x26:"Styles",0x27:"SpecialPaper",0x28:"Bullet Style",0x29:"Printers",
+			0x8:"Text block",0xa:"Table",0xb:"Bookmark",0xe:"Group2",0xf:"Group",
+			0x13:"Style",0x14:"Page",0x15:"Document",0x16:"TextInfo",
+			0x1a:"TextChunk",0x1c:"TextZone",0x1e:"Font",0x1f:"Art",
+			0x21:"ImgData",0x22:"OleData",0x26:"Styles",0x27:"SpecialPaper",
+			0x28:"Bullet Style",0x29:"Printers",
 			0x47:"ColorSchemes",
 			0x54:"Filename"
 		}
@@ -49,9 +49,9 @@ class PublisherContentDoc():
 			"proplim1-98":self.pub98proplim,
 			"proplim2-98":self.pub98proplim,
 			"proplim3-98":self.pub98proplim,
-	                "style0":self.pub97charstyle,
-	                "style1":self.pub97parastyle,
-	                "style2":self.pub97cellstyle,
+			"style0":self.pub97charstyle,
+			"style1":self.pub97parastyle,
+			"style2":self.pub97cellstyle,
 			"Block0":self.pub98shape,
 			"Block1":self.pub98shape,
 			"Block2":self.pub98shape,
@@ -64,13 +64,18 @@ class PublisherContentDoc():
 			"Blocke":self.pub98shape,
 			"Blockf":self.pub98shape,
 			"Block15":self.pub98doc,
-	                "Block27":self.pub98specialpaper,
+			"Block16":self.pub98textinfo,
+			"Block27":self.pub98specialpaper,
 			"BlockData1":self.pub98idlist, # size 14
+			"BlockData2":self.pub98idlist, # size 8: clip path
+			"BlockData3":self.pub98idlist, # size 8: clip path
 			"BlockDatae":self.pub98idlist,
 			"BlockDataf":self.pub98idlist,
 			"BlockData13":self.pub98ptrlistheader, # first name, second char style, third para style
 			"BlockData14":self.pub98idlist,
 			"BlockData15":self.pub98idlist,
+			"BlockData1a":self.pub98textlist,
+			"BlockData1c":self.pub98textlist,
 			"BlockData1e":self.pub98ptrlistheader,
 			"BlockData1f":self.pub98ptrlistheader,
 			# Data21: wmf
@@ -81,8 +86,12 @@ class PublisherContentDoc():
 			"BlockData2a":self.pub98ptrlistheader,
 			"BlockData2b":self.pub98ptrlistheader,
 			"BlockData2c":self.pub98idlist, # with data size=6
+			"BlockData2d":self.pub98textlist,
+			"BlockData2e":self.pub98textlist,
+			"BlockData2f":self.pub98textlist,
 			"BlockData32":self.pub98ptrlistheader,
 			"BlockData34":self.pub98cstlist,
+			"BlockData3b":self.pub98textlist,
 			"BlockData43":self.pub98idlist,
 			"BlockData47":self.pub98idlist, # with data size=4
 		}
@@ -118,24 +127,24 @@ class PublisherContentDoc():
 			if typ>=0xe: # group have no style
 				return
 			for i in range(2): # col0=first color,col1=background
-	                        if self.version<=2:
+				if self.version<=2:
 					add_iter (hd,"col%d"%i,ord(data[off]),off,1,'<B')
 					off+=1
-	                        else:
+				else:
 					add_iter (hd,"col%d"%i,"%x"%struct.unpack("<I",data[off:off+4])[0],off,4,'<I')
 					off+=4
 			val=struct.unpack('<B', data[off:off+1])[0]
 			add_iter (hd,"pattern",val,off,1,'<B')
 			off+=1
-	                if self.version>2:
+			if self.version>2:
 				add_iter (hd,"f1",ord(data[off]),off,1,'<B')
 				off+=1
-	                if self.version<=2: # patternline
+			if self.version<=2: # patternline
 				add_iter (hd,"width[line]",ord(data[off]),off,1,'<B')
 				off+=1
 				add_iter (hd,"col[line]",ord(data[off]),off,1,'<B')
 				off+=1
-	                else:
+			else:
 				add_iter (hd,"width[line]",ord(data[off]),off,1,'<B')
 				off+=1
 				add_iter (hd,"col[line]","%x"%struct.unpack('<I', data[off:off+4])[0],off,4,'<I')
@@ -156,20 +165,20 @@ class PublisherContentDoc():
 				off+=2
 				add_iter (hd,"width[unkn]",struct.unpack('<B', data[off:off+1])[0],off,1,'<B')
 				off+=1
-	                        if self.version<=2:
+				if self.version<=2:
 					for i in range(3):
 						add_iter (hd,"col[line%d]"%(i+1),struct.unpack('<B', data[off:off+1])[0],off,1,'<B')
 						off+=1
 						add_iter (hd,"width[line%d]"%(i+1),struct.unpack('<B', data[off:off+1])[0],off,1,'<B')
 						off+=1
-	                        else:
+				else:
 					for i in range(3):
-				                add_iter (hd,"type[line%d]"%(i+1),ord(data[off]),off,1,'<B')
-				                off+=1
-				                add_iter (hd,"width[line%d]"%(i+1),ord(data[off]),off,1,'<B')
-				                off+=1
-				                add_iter (hd,"col[line%d]"%(i+1),"%x"%struct.unpack('<I', data[off:off+4])[0],off,4,'<I')
-				                off+=4
+						add_iter (hd,"type[line%d]"%(i+1),ord(data[off]),off,1,'<B')
+						off+=1
+						add_iter (hd,"width[line%d]"%(i+1),ord(data[off]),off,1,'<B')
+						off+=1
+						add_iter (hd,"col[line%d]"%(i+1),"%x"%struct.unpack('<I', data[off:off+4])[0],off,4,'<I')
+						off+=4
 				if typ<=1:
 					strs=""
 					for i in range(4):
@@ -183,33 +192,46 @@ class PublisherContentDoc():
 						off+=2
 						add_iter (hd,"num[col]",struct.unpack('<h', data[off:off+2])[0],off,2,'<H')
 						off+=2
-	                                        if self.version>2:
-	                                                add_iter (hd,"f2",struct.unpack('<i', data[off:off+4])[0],off,4,'<I') # 0
+						if self.version>2:
+							add_iter (hd,"f2",struct.unpack('<i', data[off:off+4])[0],off,4,'<I') # 0
 							off+=4
 						add_iter (hd,"num[row]",struct.unpack('<h', data[off:off+2])[0],off,2,'<H')
 						off+=2
-	                                        if self.version>2:
-	                                                add_iter (hd,"f3",struct.unpack('<i', data[off:off+4])[0],off,4,'<i') # 0
+						if self.version>2:
+							add_iter (hd,"f3",struct.unpack('<i', data[off:off+4])[0],off,4,'<i') # 0
 							off+=4
 						for i in range(2):
 							add_iter(hd,"width" if i==0 else "height",struct.unpack("<i",data[off:off+4])[0]/12700.,off,4,"<I")
 							off+=4
-
+					else:
+						add_iter(hd,"col|fl","%x"%ord(data[off]),off,1,"<B") # col=val>>4,
+						off+=1
 		if off<len(data):
 			add_iter (hd,"extra",binascii.hexlify(data[off:len(data)]), off, len(data)-off, "txt")
 
 	def pub98specialpaper (self,hd,size,data):
 		typ,off=self.pub98zhdr(hd,size,data)
-	        add_iter (hd,"img[id]",struct.unpack('<H', data[off:off+2])[0],off,2,'<H') # 0
+		add_iter (hd,"img[id]",struct.unpack('<H', data[off:off+2])[0],off,2,'<H') # 0
 		off+=2
-	        for i in range(4): # -1, -793, 611, 1
-	                add_iter (hd,"dim%d"%i,struct.unpack('<i', data[off:off+4])[0],off,4,'<I') # 0
-	                off+=4
-	        self.checkFinish(hd,data,off,"pub98specialpaper")
+		for i in range(4): # -1, -793, 611, 1
+			add_iter (hd,"dim%d"%i,struct.unpack('<i', data[off:off+4])[0],off,4,'<I') # 0
+			off+=4
+		self.checkFinish(hd,data,off,"pub98specialpaper")
 
 	def pub98doc (self,hd,size,data):
 		add_iter(hd,"Width",struct.unpack("<I",data[0x14:0x18])[0]/12700.,0x14,4,"<I")
 		add_iter(hd,"Height",struct.unpack("<I",data[0x18:0x1c])[0]/12700.,0x18,4,"<I")
+	def pub98textinfo (self,hd,size,data):
+		(typ,off)=self.pub98zhdr(hd,size,data)
+		add_iter(hd,"text[len]",struct.unpack('<I', data[off:off+4])[0],off,4,"<I");
+		off+=4
+		l=len(data)
+		i=0
+		while off+1<l:
+			add_iter(hd,"Id%d"%i,"%x"%struct.unpack('<H', data[off:off+2])[0],off,2,"<H")
+			off+=2
+			i+=1
+		self.checkFinish(hd,data,off,"pub98textinfo")
 	def pub98oleData (self,hd,size,data):
 		off=0
 		add_iter(hd,"val",unicode(data[off:off+2],"cp1250"),off,2,'txt') # MO
@@ -227,15 +249,16 @@ class PublisherContentDoc():
 		add_iter(hd,"vers",struct.unpack("<H",data[off:off+2])[0],off,2,"<H") # 200 or 300
 		off+=2
 		add_iter(hd,"sub[minor]",ord(data[off]),off,1,"<H") # v2: 3, v3:4, 97:5, 98:5, 2000:4
-	        off+=1
+		off+=1
 		add_iter(hd,"sub[major]","%x"%ord(data[off]),off,1,"<H") # v2: 5f, v3:0, 97:1, 98:1, 2000:a
-	        off+=1
+		off+=1
 		pos=struct.unpack('<I', data[off:off+4])[0]
 		add_iter(hd,"eof","%04x"%pos,off,4,'<I')
 		off+=4
 		for i in range(3): # v7: 2c0,114,134 ; v8?:7d,100,10a v9:268,16c,0
+			wh=[ "f0", "doc[id]", "page1[id]" ]
 			val=struct.unpack('<H', data[off:off+2])[0]
-			add_iter(hd,"f%d"%(i+2),"%02x"%val,off,2,'<H')
+			add_iter(hd,wh[i],"%02x"%val,off,2,'<H')
 			off+=2
 
 		names=["TextZone", "Blocks", "Zone2"];
@@ -281,167 +304,167 @@ class PublisherContentDoc():
 				continue
 			add_iter(hd,"Proplim%d[pos]"%i,"%04x"%pos,off-4,4,'<I')
 	def readCoStruct(self,data,off,sz,signed):
-	        l=len(data)
-	        if sz==4 and off+4<=l:
-	                return (off+4,off,struct.unpack("<i" if signed else "<I",data[off:off+4])[0])
-	        if sz>=2 and off+2<=l:
-	                return (off+2,off,struct.unpack("<h" if signed else "<H",data[off:off+2])[0])
-	        return (off+1,off,struct.unpack("<b" if signed else "<B",data[off:off+1])[0])
+		l=len(data)
+		if sz==4 and off+4<=l:
+			return (off+4,off,struct.unpack("<i" if signed else "<I",data[off:off+4])[0])
+		if sz>=2 and off+2<=l:
+			return (off+2,off,struct.unpack("<h" if signed else "<H",data[off:off+2])[0])
+		return (off+1,off,struct.unpack("<b" if signed else "<B",data[off:off+1])[0])
 	def pub97cellstyle (self,hd,size,data):
-	        off=0
-	        l=len(data)
-	        add_iter(hd,"len",ord(data[off]),off,1,"<B")
-	        off+=1
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"fl","%x"%val,pOff,off-pOff,"<B")
-	        if off<l:
-	                if self.version<3:
-	                        add_iter(hd,"color",ord(data[off]),off,1,"<B")
-	                        off+=1
-	                else:
-	                        off,pOff,val=self.readCoStruct(data,off,4,False)
-	                        add_iter(hd,"color","%x"%val,pOff,off-pOff,"<B")
-	        if off<l:
-	                if self.version<3:
-	                        add_iter(hd,"color2",ord(data[off]),off,1,"<B")
-	                        off+=1
-	                else:
-	                        off,pOff,val=self.readCoStruct(data,off,4,False)
-	                        add_iter(hd,"color2","%x"%val,pOff,off-pOff,"<B")
-	        if off<l:
-	                add_iter(hd,"pat[id]",ord(data[off]),off,1,"<B")
-	                off+=1
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"margin[left]",val,pOff,off-pOff,"<B")
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"margin[top]",val,pOff,off-pOff,"<B")
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"margin[right]",val,pOff,off-pOff,"<B")
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"margin[bottom]",val,pOff,off-pOff,"<B")
-	        if off<l and self.version<3:
-	                add_iter(hd,"f0",ord(data[off]),off,1,"<B")
-	                off+=1
-	        for i in range(4):
-	                if off>=l:
-	                        break
-	                if self.version>=3:
-	                        add_iter(hd,"type[b%d]"%i,ord(data[off]),off,1,"<B")
-	                        off+=1
-	                if off>=l:
-	                        break
-	                add_iter(hd,"width[b%d]"%i,ord(data[off]),off,1,"<B")
-	                off+=1
-	                if off>=l:
-	                        break
-	                if self.version<3:
-	                        add_iter(hd,"color[b%d]"%i,ord(data[off]),off,1,"<B")
-	                        off+=1
-	                else:
-	                        off,pOff,val=self.readCoStruct(data,off,4,False)
-	                        add_iter(hd,"color[b%d]"%i,"%x"%val,pOff,off-pOff,"<B")
+		off=0
+		l=len(data)
+		add_iter(hd,"len",ord(data[off]),off,1,"<B")
+		off+=1
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"fl","%x"%val,pOff,off-pOff,"<B") # 1: merge root, 4: merge with previous x, 8: end row?, 10: begin row?
+		if off<l:
+			if self.version<3:
+				add_iter(hd,"color",ord(data[off]),off,1,"<B")
+				off+=1
+			else:
+				off,pOff,val=self.readCoStruct(data,off,4,False)
+				add_iter(hd,"color","%x"%val,pOff,off-pOff,"<B")
+		if off<l:
+			if self.version<3:
+				add_iter(hd,"color2",ord(data[off]),off,1,"<B")
+				off+=1
+			else:
+				off,pOff,val=self.readCoStruct(data,off,4,False)
+				add_iter(hd,"color2","%x"%val,pOff,off-pOff,"<B")
+		if off<l:
+			add_iter(hd,"pat[id]",ord(data[off]),off,1,"<B")
+			off+=1
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"margin[left]",val,pOff,off-pOff,"<B")
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"margin[top]",val,pOff,off-pOff,"<B")
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"margin[right]",val,pOff,off-pOff,"<B")
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"margin[bottom]",val,pOff,off-pOff,"<B")
+		if off<l and self.version<3:
+			add_iter(hd,"f0",ord(data[off]),off,1,"<B")
+			off+=1
+		for i in range(4):
+			if off>=l:
+				break
+			if self.version>=3:
+				add_iter(hd,"type[b%d]"%i,ord(data[off]),off,1,"<B")
+				off+=1
+			if off>=l:
+				break
+			add_iter(hd,"width[b%d]"%i,ord(data[off]),off,1,"<B")
+			off+=1
+			if off>=l:
+				break
+			if self.version<3:
+				add_iter(hd,"color[b%d]"%i,ord(data[off]),off,1,"<B")
+				off+=1
+			else:
+				off,pOff,val=self.readCoStruct(data,off,4,False)
+				add_iter(hd,"color[b%d]"%i,"%x"%val,pOff,off-pOff,"<B")
 		if off<l:
 			add_iter (hd,"extra",binascii.hexlify(data[off:l]), off, l-off, "txt")
 
 
 	def pub97parastyle (self,hd,size,data):
-	        off=0
-	        l=len(data)
-	        add_iter(hd,"len",ord(data[off]),off,1,"<B")
-	        off+=1
-	        add_iter(hd,"pos[tabs]",ord(data[off]),off,1,"<B")
-	        off+=1
-	        if l>=3:
-	                add_iter(hd,"f0",ord(data[off]),off,1,"<B") # 0-6
-	                off+=1
-	        if l>=4: # align
-	                add_iter(hd,"flag","%x"%ord(data[off]),off,1,"<B")
-	                off+=1
-	        if l>=6:
-	                add_iter(hd,"margin[right]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        if l>=8:
-	                add_iter(hd,"margin[left]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        if l>=10:
-	                add_iter(hd,"first[ident]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        if l>=12:
-	                add_iter(hd,"line[spacing]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        if l>=14:
-	                add_iter(hd,"space[before]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        if l>=16:
-	                add_iter(hd,"space[after]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        if l>=32: # what is that
+		off=0
+		l=len(data)
+		add_iter(hd,"len",ord(data[off]),off,1,"<B")
+		off+=1
+		add_iter(hd,"pos[tabs]",ord(data[off]),off,1,"<B")
+		off+=1
+		if l>=3:
+			add_iter(hd,"f0",ord(data[off]),off,1,"<B") # 0-6
+			off+=1
+		if l>=4: # align
+			add_iter(hd,"flag","%x"%ord(data[off]),off,1,"<B")
+			off+=1
+		if l>=6:
+			add_iter(hd,"margin[right]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		if l>=8:
+			add_iter(hd,"margin[left]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		if l>=10:
+			add_iter(hd,"first[ident]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		if l>=12:
+			add_iter(hd,"line[spacing]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		if l>=14:
+			add_iter(hd,"space[before]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		if l>=16:
+			add_iter(hd,"space[after]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		if l>=32: # what is that
 			add_iter (hd,"unknown0",binascii.hexlify(data[off:32]), off, 32-off, "txt")
-	                off=32
-	        if l>=33:
-	                add_iter(hd,"list[type]",ord(data[off]),off,1,"<B")
-	                off+=1
-	        if l>=34:
-	                add_iter(hd,"list[unkn]",ord(data[off]),off,1,"<B") # 0,1
-	                off+=1
-	        if l>=36:
-	                add_iter(hd,"list[start,value]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-	                off+=2
-	        elif l>=35:
-	                add_iter(hd,"list[start;value]",ord(data[off]),off,1,"<B")
-	                off+=1
-	        if l>=37:
-	                val=ord(data[off])
-	                add_iter(hd,"list[prefix]","%c"%val if val else "", off,1, "<B")
-	                off+=1
-	        if l>=38:
-	                val=ord(data[off])
-	                add_iter(hd,"list[suffix]","%c"%val if val else "", off,1, "<B")
-	                off+=1
-	        if l>=39:
-	                add_iter(hd,"fancy[id]",ord(data[off]),off,1,"<B")
-	                off+=1
-	        if off<l:
+			off=32
+		if l>=33:
+			add_iter(hd,"list[type]",ord(data[off]),off,1,"<B")
+			off+=1
+		if l>=34:
+			add_iter(hd,"list[unkn]",ord(data[off]),off,1,"<B") # 0,1
+			off+=1
+		if l>=36:
+			add_iter(hd,"list[start,value]",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		elif l>=35:
+			add_iter(hd,"list[start;value]",ord(data[off]),off,1,"<B")
+			off+=1
+		if l>=37:
+			val=ord(data[off])
+			add_iter(hd,"list[prefix]","%c"%val if val else "", off,1, "<B")
+			off+=1
+		if l>=38:
+			val=ord(data[off])
+			add_iter(hd,"list[suffix]","%c"%val if val else "", off,1, "<B")
+			off+=1
+		if l>=39:
+			add_iter(hd,"fancy[id]",ord(data[off]),off,1,"<B")
+			off+=1
+		if off<l:
 			add_iter (hd,"extra",binascii.hexlify(data[off:l]), off, l-off, "txt")
 
 	def pub97charstyle (self,hd,size,data):
-	        off=0
-	        l=len(data)
-	        add_iter(hd,"len",ord(data[off]),off,1,"<B")
-	        off+=1
-	        if off<l: # bold, italic, caps
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"fl","%x"%val,pOff,off-pOff,"<B")
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"font[index]",val,pOff,off-pOff,"<B")
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,2,True)
-	                add_iter(hd,"font[sz,diff]",val,pOff,off-pOff,"<B")
-	        if off<l:
-	                off,pOff,val=self.readCoStruct(data,off,1,True)
-	                add_iter(hd,"base[line]",val,pOff,off-pOff,"<B")
-	        if off<l:
-	                if self.version<3:
-	                        off,pOff,val=self.readCoStruct(data,off,1,False)
-	                        add_iter(hd,"color",val,pOff,off-pOff,"<B")
-	                else:
-	                        off+=1
-	        if off<l: # underline and letter spacing
-	                off,pOff,val=self.readCoStruct(data,off,2,False)
-	                add_iter(hd,"fl2","%x"%val,pOff,off-pOff,"<B")
-	        if self.version>=3:
-	                if off<l:
-	                        off,pOff,val=self.readCoStruct(data,off,2,False)
-	                        add_iter(hd,"field[type]",val,pOff,off-pOff,"<B")
-	                if off<l:
-	                        off,pOff,val=self.readCoStruct(data,off,4,False)
-	                        add_iter(hd,"color","%x"%val,pOff,off-pOff,"<B")
+		off=0
+		l=len(data)
+		add_iter(hd,"len",ord(data[off]),off,1,"<B")
+		off+=1
+		if off<l: # bold, italic, caps
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"fl","%x"%val,pOff,off-pOff,"<B")
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"font[index]",val,pOff,off-pOff,"<B")
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,2,True)
+			add_iter(hd,"font[sz,diff]",val,pOff,off-pOff,"<B")
+		if off<l:
+			off,pOff,val=self.readCoStruct(data,off,1,True)
+			add_iter(hd,"base[line]",val,pOff,off-pOff,"<B")
+		if off<l:
+			if self.version<3:
+				off,pOff,val=self.readCoStruct(data,off,1,False)
+				add_iter(hd,"color",val,pOff,off-pOff,"<B")
+			else:
+				off+=1
+		if off<l: # underline and letter spacing
+			off,pOff,val=self.readCoStruct(data,off,2,False)
+			add_iter(hd,"fl2","%x"%val,pOff,off-pOff,"<B")
+		if self.version>=3:
+			if off<l:
+				off,pOff,val=self.readCoStruct(data,off,2,False)
+				add_iter(hd,"field[type]",val,pOff,off-pOff,"<B")
+			if off<l:
+				off,pOff,val=self.readCoStruct(data,off,4,False)
+				add_iter(hd,"color","%x"%val,pOff,off-pOff,"<B")
 		if off<l:
 			add_iter (hd,"extra",binascii.hexlify(data[off:l]), off, l-off, "txt")
 	def pub98proplim (self,hd,size,data):
@@ -478,6 +501,8 @@ class PublisherContentDoc():
 	def pub98listheader (self,hd,size,data,ptrSize=None):
 		if ptrSize==None:
 			ptrSize=4 if self.version>4 else 2
+		if ptrSize==2 and struct.unpack('<H', data[0:2])[0]>struct.unpack('<H', data[2:4])[0]:
+			ptrSize=4
 		ptrType='<I' if ptrSize==4 else '<H'
 		off=0
 		N=struct.unpack(ptrType, data[off:off+ptrSize])[0]
@@ -488,24 +513,22 @@ class PublisherContentDoc():
 		dataSize=struct.unpack(ptrType, data[off:off+ptrSize])[0]
 		add_iter(hd,"data[sz]",dataSize,off,ptrSize,ptrType)
 		off+=ptrSize
-		for i in range(2): # 0 0
-			add_iter(hd,"f%d"%i,struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
-			off+=2
-		if ptrSize==4:
-			add_iter(hd,"f2",struct.unpack("<h", data[off:off+2])[0],off,2,"<h")
-			off+=2
-		return (off,N,dataSize)
+		add_iter(hd,"f0",struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+		off+=2
+		add_iter(hd,"f1",struct.unpack('<i' if ptrSize==4 else '<h', data[off:off+ptrSize])[0],off,ptrSize,ptrType)
+		off+=ptrSize
+		return (off,N,dataSize,ptrSize)
 
 	def pub98ptrlistheader (self,hd,size,data):
-		off,N,lastPtr=self.pub98listheader (hd,size,data)
-		if off+(4 if self.version>4 else 2)*(N+1)>len(data):
+		off,N,lastPtr,ptrSize=self.pub98listheader (hd,size,data)
+		if off+ptrSize*(N+1)>len(data):
 			add_iter (hd,"data0###",binascii.hexlify(data[off:len(data)]),len(data)-off,"text")
 			return
 		zones=[]
 		strs=""
 		begOff=off
 		for i in range(N+1):
-			if self.version>4:
+			if ptrSize==4:
 				ptr=struct.unpack("<I", data[off:off+4])[0]
 				off+=4
 			else:
@@ -519,7 +542,7 @@ class PublisherContentDoc():
 				continue
 			add_iter (hd,"data%x"%zones[i],binascii.hexlify(data[begOff+zones[i]:begOff+zones[i+1]]),begOff+zones[i],zones[i+1]-zones[i],"text")
 	def pub98cstlist (self,hd,size,data,ptrSize=None):
-		off,N,dataSize=self.pub98listheader(hd,size,data,ptrSize)
+		off,N,dataSize,ptrSize=self.pub98listheader(hd,size,data,ptrSize)
 		if off+dataSize*N>len(data):
 			add_iter (hd,"data0###",binascii.hexlify(data[off:len(data)]),off,len(data)-off,"text")
 			return
@@ -534,6 +557,23 @@ class PublisherContentDoc():
 		self.checkFinish(hd,data,off,"cstlist")
 	def pub98idlist(self,hd,size,data):
 		self.pub98cstlist(hd,size,data,2)
+	def pub98textlist (self,hd,size,data):
+		off,N,dataSize,ptrSize=self.pub98listheader (hd,size,data)
+		if off+12+(4+dataSize)*N>len(data):
+			add_iter (hd,"data0###",binascii.hexlify(data[off:len(data)]),off,len(data)-off,"text")
+			return
+		for i in range(6): # -1|0, dataSize, type?, 0, 0
+			add_iter(hd,"g%d"%i,struct.unpack("<h",data[off:off+2])[0],off,2,"<h")
+			off+=2
+		strs=""
+		for i in range(N):
+			strs+=("%x,"%struct.unpack("<I",data[off:off+4])[0])
+			off+=4
+		add_iter(hd,"pos",strs,off-4*N,4*N,"txt")
+		for i in range(N):
+			add_iter(hd,"data%d"%i,binascii.hexlify(data[off:off+dataSize]),off,dataSize,"<H")
+			off+=dataSize
+		self.checkFinish(hd,data,off,"textlist")
 
 	def pub98zone2 (self,hd,size,data):
 		add_iter (hd,"data",binascii.hexlify(data),0,len(data),"text")
@@ -565,9 +605,9 @@ class PublisherContentDoc():
 				l=2*l+1
 				tabPos=ord(data[off+2*t+1])
 				add_pgiter(page,"Style [%02x] "%t,"pub98","style1",data[off+2*t:off+1+2*t+tabPos],propiter)
-	                        if tabPos+2<l:
-				        add_pgiter(page,"Tabs [%02x] "%t,"pub98","tabs",data[off+1+2*t+tabPos+1:off+1+2*t+l],propiter)
-	                else:
+				if tabPos+2<l:
+					add_pgiter(page,"Tabs [%02x] "%t,"pub98","tabs",data[off+1+2*t+tabPos+1:off+1+2*t+l],propiter)
+			else:
 				add_pgiter(page,"Style [%02x] "%t,"pub98","style"+pid,data[off+2*t:off+2*t+1+l],propiter)
 
 	# parse "Quill"-like part in pub97
@@ -585,7 +625,7 @@ class PublisherContentDoc():
 		off += 4
 		if txtstart == endzone:
 			# pub98 or 2000
-	                self.version=6 if self.version>4 else 5
+			self.version=5
 			return
 		txtend = struct.unpack("<I",data[off:off+4])[0]
 		off += 4
@@ -656,11 +696,11 @@ class PublisherContentDoc():
 	# parse "Contents" part of the pub98/pub2k
 	def parse98 (self,data):
 		contentVersion=struct.unpack("<H",data[4:4+2])[0]
-	        subVersion=ord(data[7])
-	        if contentVersion<300:
-	                self.version=2
-	        else:
-	                self.version=3+subVersion
+		subVersion=ord(data[7])
+		if contentVersion<300:
+			self.version=2
+		else:
+			self.version=3
 		zones=[]
 		zones.append((0,struct.unpack("<I",data[8:8+4])[0]))
 		off=0x12
