@@ -520,7 +520,18 @@ def biff_setup(hd, data):
         numFtr = struct.unpack("<d", data[24+off:32+off])[0]
         add_iter (hd, "Footer margin in inches", numFtr, off+24, 4, "<d")
         iCopies = struct.unpack("<H", data[32+off:34+off])[0]
-        add_iter (hd, "Number of copies", iCopies, off+32, 2, "<d")
+        add_iter (hd, "Number of copies", iCopies, off+32, 2, "<H")
+
+def biff_printsize(hd, data):
+        off = 4
+        printSize = struct.unpack("<H", data[0+off:2+off])[0]
+        add_iter (hd, "Chart print size", printSize, off, 2, "<H")
+
+#0x12
+def biff_protect(hd, data):
+        off = 4
+        fLock = struct.unpack("<H", data[0+off:2+off])[0] != 0
+        add_iter (hd, "Protected", fLock, off, 2, "B")
 
 #0x7d
 def biff_colinfo (hd,data):
@@ -778,8 +789,8 @@ def biff_rk (hd,data):
 	
 	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
 
-biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo, 0x83:biff_hvcenter, 0x84:biff_hvcenter,
-        0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
+biff5_ids = {0x12: biff_protect, 0x18:biff_lbl, 0x31:biff58_font, 0x33: biff_printsize, 0x55:biff_defcolw,0x7d:biff_colinfo,
+        0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
         0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1046: biff_axesused, 0x1062: biff_axcext}
 
