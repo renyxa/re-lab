@@ -464,6 +464,63 @@ def biff_cfex (hd,data):
             off += 1
             off += 16
 
+#0x1062
+def biff_axcext(hd, data):
+    pass
+
+#0x1046
+def biff_axesused(hd, data):
+	off = 4
+	num_axes = struct.unpack("<H",data[0+off:2+off])[0]
+	add_iter (hd,"Number of axes groups",num_axes,off,2,"<H")
+
+def biff_hvcenter(hd, data):
+        off = 4
+        num_axes = struct.unpack("<H",data[0+off:2+off])[0]
+        add_iter (hd, "Centered between Top/left or Right/bottom margin", num_axes, off, 2, "B")
+
+def biff_setup(hd, data):
+	off = 4
+        iPaperSize = struct.unpack("<H", data[0+off:2+off])[0]
+        add_iter (hd, "Paper size", iPaperSize, off, 2, "<H")
+        iScale = struct.unpack("<H", data[2+off:4+off])[0]
+        add_iter (hd, "Scale factor", iScale, off+2, 2, "<H")
+        iPageStart = struct.unpack("<H", data[4+off:6+off])[0]
+        add_iter (hd, "Starting page number", iPageStart, off+4, 2, "<H")
+        iFitWidth = struct.unpack("<H", data[6+off:8+off])[0]
+        add_iter (hd, "Number of pages to fit sheet width", iFitWidth, off+6, 2, "<H")
+        iFitHeight = struct.unpack("<H", data[8+off:10+off])[0]
+        add_iter (hd, "Number of pages to fit sheet height", iFitHeight, off+8, 2, "<H")
+        flags = struct.unpack("<H", data[10+off:12+off])[0]
+        fLeftToRight = (flags&0x1) != 0
+        fPortrait = (flags&0x2) != 0
+        fNoPIs = (flags&0x4) != 0
+        fNoColor = (flags&0x8) != 0
+        fDraft = (flags&0x16) != 0
+        fNotes = (flags&0x32) != 0
+        fNoOrient = (flags&0x64) != 0
+        fUsePage = (flags&0x128) != 0
+        fEndNotes = (flags & 0x512) != 0
+        iErrors = (flags&0x3072)
+        add_iter (hd, "Order for multi-page printing", fLeftToRight, off+10, 2, "B")
+        add_iter (hd, "Portrait or Landscape mode", fPortrait, off+10, 2, "B")
+        add_iter (hd, "Ignore print data", fNoPIs, off+10, 2, "B")
+        add_iter (hd, "Print in black and white", fNoColor, off+10, 2, "B")
+        add_iter (hd, "Print in draft quality", fDraft, off+10, 2, "B")
+        add_iter (hd, "Print comments", fNotes, off+10, 2, "B")
+        add_iter (hd, "Paper orientation set", fNoOrient, off+10, 2, "B")
+        add_iter (hd, "Use custom page number", fUsePage, off+10, 2, "B")
+        add_iter (hd, "Print comments at the end", fEndNotes, off+10, 2, "B")
+        iRes = struct.unpack("<H", data[12+off:14+off])[0]
+        add_iter (hd, "Print resolution in DPI", iRes, off+12, 2, "<H")
+        iVRes = struct.unpack("<H", data[14+off:16+off])[0]
+        add_iter (hd, "Vertical print resolution in DPI", iVRes, off+14, 2, "<H")
+        numHdr = struct.unpack("<d", data[16+off:24+off])[0]
+        add_iter (hd, "Header margin in inches", numHdr, off+16, 4, "<d")
+        numFtr = struct.unpack("<d", data[24+off:32+off])[0]
+        add_iter (hd, "Footer margin in inches", numFtr, off+24, 4, "<d")
+        iCopies = struct.unpack("<H", data[32+off:34+off])[0]
+        add_iter (hd, "Number of copies", iCopies, off+32, 2, "<d")
 
 #0x7d
 def biff_colinfo (hd,data):
@@ -721,10 +778,10 @@ def biff_rk (hd,data):
 	
 	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
 
-biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo,0xe0:biff_xf,
-	0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
+biff5_ids = {0x18:biff_lbl, 0x31:biff58_font,0x55:biff_defcolw,0x7d:biff_colinfo, 0x83:biff_hvcenter, 0x84:biff_hvcenter,
+        0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex}
+        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1046: biff_axesused, 0x1062: biff_axcext}
 
 def parse (page, data, parent):
 	offset = 0
