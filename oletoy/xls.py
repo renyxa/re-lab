@@ -533,6 +533,30 @@ def biff_protect(hd, data):
         fLock = struct.unpack("<H", data[0+off:2+off])[0] != 0
         add_iter (hd, "Protected", fLock, off, 2, "B")
 
+def read_fixed_number(hd, data, off):
+        fractional = struct.unpack("<H", data[0+off:2+off])[0]
+        integral = struct.unpack("<H", data[2+off:4+off])[0]
+        val = integral + (fractional / 65536.0)
+        return val
+
+#0x1002
+def biff_chart(hd, data):
+        off = 4
+        x = read_fixed_number(hd, data, off)
+        y = read_fixed_number(hd, data, off+4)
+        dx = read_fixed_number(hd, data, off+8)
+        dy = read_fixed_number(hd, data, off+12)
+        add_iter (hd, "Horizontal position", x, off, 4, "d")
+        add_iter (hd, "Vertical position", y, off+4, 4, "d")
+        add_iter (hd, "Width in points", dx, off+8, 4, "d")
+        add_iter (hd, "Height in points", dy, off+12, 4, "d")
+
+#0x1032
+def biff_frame(hd, data):
+        off = 4
+        frt = struct.unpack("<H", data[0+off:2+off])[0]
+        add_iter (hd, "Frame type", frt, off, 2, "<H")
+
 #0x7d
 def biff_colinfo (hd,data):
 	off = 4
@@ -792,7 +816,8 @@ def biff_rk (hd,data):
 biff5_ids = {0x12: biff_protect, 0x18:biff_lbl, 0x31:biff58_font, 0x33: biff_printsize, 0x55:biff_defcolw,0x7d:biff_colinfo,
         0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1046: biff_axesused, 0x1062: biff_axcext}
+        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1032: biff_frame,
+        0x1046: biff_axesused, 0x1062: biff_axcext}
 
 def parse (page, data, parent):
 	offset = 0
