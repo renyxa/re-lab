@@ -407,7 +407,6 @@ def biff_condfmt (hd,data):
 	add_iter (hd,"ccf",cce1,off,2,"<H", tip="Number of CF entries to follow")
 	off += 2
 	flags = struct.unpack("<H",data[off:off+2])[0]
-	print(flags)
 	fToughRecalc = flags&1
 	nID = (flags&0xfffe) >> 1
 	add_iter (hd,"fToughRecalc",fToughRecalc,off,1,"<B", tip="Specifies whether the record requires significant processing")
@@ -602,6 +601,50 @@ def biff_frame(hd, data):
         off = 4
         frt = struct.unpack("<H", data[0+off:2+off])[0]
         add_iter (hd, "Frame type", frt, off, 2, "<H")
+
+#0x1003
+def biff_series(hd, data):
+        off = 4
+        sdtX = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Type of data in categories", sdtX, off, 2, "<H")
+        off += 2
+        sdtY = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Type of data in values (must be 1)", sdtY, off, 2, "<H")
+        off += 2
+        cValx = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Count of categories", cValx, off, 2, "<H")
+        off += 2
+        cValy = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Count of values", cValy, off, 2, "<H")
+        off += 2
+        sdtBSize = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Type of data in bubble size (must be 1)", sdtBSize, off, 2, "<H")
+        off += 2
+        cValBSize = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Count of values in bubble size", cValBSize, off, 2, "<H")
+
+#0x1051
+def biff_brai(hd, data):
+        off = 4
+        id_ = struct.unpack("B", data[off:1+off])[0]
+        add_iter (hd, "Chart object being referenced", id_, off, 1, "B")
+        off += 1
+        rt = struct.unpack("B", data[off:1+off])[0]
+        add_iter (hd, "Type of data being referenced", rt, off, 1, "B")
+        off += 1
+        flag1 = struct.unpack("B", data[off:1+off])[0]
+        A = (flag1 & 0x1) != 0
+        add_iter (hd, "Use custom number format", A, off, 1, "B")
+        off += 2
+        iFmt = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Custom number format ID", iFmt, off, 2, "<H")
+        off += 2
+        cce = struct.unpack("<H", data[off:2+off])[0]
+        add_iter (hd, "Chart formula stream length", cce, off, 2, "<H")
+        off += 2
+        if cce > 0:
+            parse_formula(hd, data, off)
+            off += cce
 
 #0x7d
 def biff_colinfo (hd,data):
@@ -862,8 +905,8 @@ def biff_rk (hd,data):
 biff5_ids = {0x12: biff_protect, 0x18:biff_lbl, 0x31:biff58_font, 0x33: biff_printsize, 0x55:biff_defcolw,0x7d:biff_colinfo,
         0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1032: biff_frame,
-        0x1046: biff_axesused, 0x1062: biff_axcext}
+        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1003: biff_series, 0x1032: biff_frame,
+        0x1046: biff_axesused, 0x1051: biff_brai, 0x1062: biff_axcext}
 
 def parse (page, data, parent):
 	offset = 0
