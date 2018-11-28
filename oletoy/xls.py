@@ -125,46 +125,82 @@ def RgceArea (hd,data,off):
 	add_tip (hd,it,"14 bits, 0-based Idx of the 1st column in the range. UINT [0;255]. MSBs: colRelative, rowRelative.")
 	it = add_iter(hd,"\tcolLast",cl,off+6,2,"<H")
 	add_tip (hd,it,"14 bits, 0-based Idx of the last column in the range. UINT [0;255]. MSBs: colRelative, rowRelative")
+	return 8
 	
 def PtgAdd (hd,data,off):
 	add_iter(hd,"Add","",off,1,"B")
+	return 1
 
 def PtgConcat (hd,data,off):
 	add_iter(hd,"Concat","",off,1,"B")
+	return 1
 
 def PtgDiv (hd,data,off):
 	add_iter(hd,"Div","",off,1,"B")
+	return 1
 
 def PtgEq (hd,data,off):
 	add_iter(hd,"Equal","",off,1,"B")
+	return 1
 
 def PtgGe (hd,data,off):
 	add_iter(hd,"Greater or Equal","",off,1,"B")
+	return 1
 
 def PtgGt (hd,data,off):
 	add_iter(hd,"Greater","",off,1,"B")
+	return 1
 
 def PtgLe (hd,data,off):
 	add_iter(hd,"Less or Equal","",off,1,"B")
+	return 1
 
 def PtgLt (hd,data,off):
 	add_iter(hd,"Less","",off,1,"B")
+	return 1
 
 def PtgMul (hd,data,off):
 	add_iter(hd,"Mul","",off,1,"B")
+	return 1
 
 def PtgNe (hd,data,off):
 	add_iter(hd,"Not Equal","",off,1,"B")
+	return 1
 
 def PtgPower (hd,data,off):
 	add_iter(hd,"Power","",off,1,"B")
+	return 1
 
 def PtgSub (hd,data,off):
 	add_iter(hd,"Sub","",off,1,"B")
+	return 1
 
 def PtgArea (hd,data,off):
 	add_iter(hd,"Area","",off,1,"B")
-	RgceArea(hd,data,off+1)
+	length_area = RgceArea(hd,data,off+1)
+	return 1 + length_area
+
+def PtgRef3d (hd, data, off):
+        add_iter(hd, "Ref3D", "", off, 1, "B")
+        off += 1
+        ixti = struct.unpack("<H", data[off:2+off])[0]
+        add_iter(hd, "\tIXTI", ixti, off, 2, "<H")
+        off += 2
+        col = struct.unpack("<H", data[off:2+off])[0]
+        add_iter(hd, "\tColumn", col, off, 2, "<H")
+        off += 2
+        row = struct.unpack("<H", data[off:2+off])[0]
+        add_iter(hd, "\tRow", row, off, 2, "<H")
+        return 7
+
+def PtgArea3d (hd, data, off):
+        add_iter(hd, "Area3D", "", off, 1, "B")
+        off += 1
+        ixti = struct.unpack("<H", data[off:2+off])[0]
+        add_iter(hd, "\tIXTI", ixti, off, 2, "<H")
+        off += 2
+        length_area = RgceArea(hd, data, off)
+        return 3 + length_area
 
 def PtgNotImpl (hd,data,off):
 	pass
@@ -179,7 +215,7 @@ ptg = {0x01:("PtgExp",PtgNotImpl),0x02:("PtgTbl",PtgNotImpl),0x03:("PtgAdd",PtgA
 	0x21:("PtgFunc",PtgNotImpl),0x22:("PtgFuncVar",PtgNotImpl),0x23:("PtgName",PtgNotImpl),0x24:("PtgRef",PtgNotImpl),
 	0x25:("PtgArea",PtgArea),0x26:("PtgMemArea",PtgNotImpl),0x27:("PtgMemErr",PtgNotImpl),0x28:("PtgMemNoMem",PtgNotImpl),
 	0x29:("PtgMemFunc",PtgNotImpl),0x2A:("PtgRefErr",PtgNotImpl),0x2B:("PtgAreaErr",PtgNotImpl),0x2C:("PtgRefN",PtgNotImpl),
-	0x2D:("PtgAreaN",PtgNotImpl),0x39:("PtgNameX",PtgNotImpl),0x3A:("PtgRef3d",PtgNotImpl),0x3B:("PtgArea3d",PtgNotImpl),
+	0x2D:("PtgAreaN",PtgNotImpl),0x39:("PtgNameX",PtgNotImpl),0x3A:("PtgRef3d",PtgRef3d),0x3B:("PtgArea3d",PtgArea3d),
 	0x3C:("PtgRefErr3d",PtgNotImpl),0x3D:("PtgAreaErr3d",PtgNotImpl),0x40:("PtgArray",PtgNotImpl),0x41:("PtgFunc",PtgNotImpl),
 	0x42:("PtgFuncVar",PtgNotImpl),0x43:("PtgName",PtgNotImpl),0x44:("PtgRef",PtgNotImpl),0x45:("PtgArea",PtgNotImpl),
 	0x46:("PtgMemArea",PtgNotImpl),0x47:("PtgMemErr",PtgNotImpl),0x48:("PtgMemNoMem",PtgNotImpl),0x49:("PtgMemFunc",PtgNotImpl),
@@ -197,6 +233,16 @@ ptg18 = {0x01:"PtgElfLel",0x02:"PtgElfRw",0x03:"PtgElfCol",0x06:"PtgElfRwV",
 
 ptg19 = {0x01:"PtgAttrSemi",0x02:"PtgAttrIf",0x04:"PtgAttrChoose",0x08:"PtgAttrGoto",
 	0x10:"PtgAttrSum",0x20:"PtgAttrBaxcel",0x21:"PtgAttrBaxcel",0x40:"PtgAttrSpace",0x41:"PtgAttrSpaceSemi"}
+
+def parse_formula(hd, data, off):
+        ptg_val = struct.unpack("B", data[off:off+1])[0]
+        if not ptg.has_key(ptg_val):
+                print("Unknown PTG value in formula!")
+                print("Stop parsing formula")
+                return
+        else:
+            ptg_length = ptg[ptg_val][1](hd, data, off)
+            off += ptg_length
 
 def gentree():
 	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
