@@ -259,6 +259,12 @@ def gentree():
 		model.set(niter, 0, i[1], 1, i[0], 2, "0")
 	return model,view
 
+def read_fixed_number(hd, data, off):
+        fractional = struct.unpack("<H", data[0+off:2+off])[0]
+        integral = struct.unpack("<H", data[2+off:4+off])[0]
+        val = integral + (fractional / 65536.0)
+        return val
+
 def XLUnicodeRichExtendedString (hd,data,offset):
 	cch = struct.unpack("<H",data[0+offset:2+offset])[0]
 	flags = ord(data[offset+2])
@@ -513,6 +519,42 @@ def biff_cfex (hd,data):
 def biff_axcext(hd, data):
     pass
 
+#0xa0
+def biff_scl(hd, data):
+	off = 4
+	nscl = struct.unpack("<h",data[0+off:2+off])[0]
+	add_iter (hd,"Numerator of the zoom level",nscl,off,2,"<H")
+	off += 2
+	dscl = struct.unpack("<h",data[0+off:2+off])[0]
+	add_iter (hd,"Denominator of the zoom level",dscl,off,2,"<H")
+
+#0x1065
+def biff_siiindex(hd, data):
+	off = 4
+	numIndex = struct.unpack("<H",data[0+off:2+off])[0]
+	add_iter (hd,"Type of data of the following number record.",numIndex,off,2,"<H")
+
+#0x1043
+def biff_legendexception(hd, data):
+	off = 4
+	iss = struct.unpack("<H",data[off:2+off])[0]
+	add_iter (hd,"Legend entry", iss,off,2,"<H")
+	off += 2
+	flags = struct.unpack("<H",data[off:2+off])[0]
+	fDeleted = flags & 0x1 != 0
+	fLabel = flags & 0x2 != 0
+	add_iter (hd, "Legend label deleted", fDeleted, off, 2, "b")
+	add_iter (hd, "Legend entry is formatted", fLabel, off, 2, "b")
+
+# 0x1064
+def biff_plotgrowth(hd, data):
+        off = 4
+        dxPlotGrowth = read_fixed_number(hd, data, off)
+        add_iter (hd,"Horizontal growth in points for plot area", dxPlotGrowth,off,4,"d")
+        off += 4
+        dyPlotGrowth = read_fixed_number(hd, data, off)
+        add_iter (hd,"Verical growth in points for plot area", dyPlotGrowth,off,4,"d")
+
 #0x1046
 def biff_axesused(hd, data):
 	off = 4
@@ -577,12 +619,6 @@ def biff_protect(hd, data):
         off = 4
         fLock = struct.unpack("<H", data[0+off:2+off])[0] != 0
         add_iter (hd, "Protected", fLock, off, 2, "B")
-
-def read_fixed_number(hd, data, off):
-        fractional = struct.unpack("<H", data[0+off:2+off])[0]
-        integral = struct.unpack("<H", data[2+off:4+off])[0]
-        val = integral + (fractional / 65536.0)
-        return val
 
 #0x1002
 def biff_chart(hd, data):
@@ -903,10 +939,10 @@ def biff_rk (hd,data):
 	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
 
 biff5_ids = {0x12: biff_protect, 0x18:biff_lbl, 0x31:biff58_font, 0x33: biff_printsize, 0x55:biff_defcolw,0x7d:biff_colinfo,
-        0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
+        0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa0: biff_scl, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1003: biff_series, 0x1032: biff_frame,
-        0x1046: biff_axesused, 0x1051: biff_brai, 0x1062: biff_axcext}
+        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1003: biff_series, 0x1032: biff_frame, 0x1043: biff_legendexception,
+        0x1046: biff_axesused, 0x1051: biff_brai, 0x1062: biff_axcext, 0x1064: biff_plotgrowth, 0x1065: biff_siiindex}
 
 def parse (page, data, parent):
 	offset = 0
