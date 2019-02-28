@@ -14,6 +14,7 @@
 # USA
 #
 
+import re
 import struct
 
 from utils import add_iter, add_pgiter, bflag2txt, key2txt, rdata
@@ -353,7 +354,6 @@ class message:
 				return result(data[start:end], self, start, end)
 
 		desc = None
-
 		if self.desc.has_key(field):
 			global MESSAGES
 			if len(self.desc[field]) > 1 and self.desc[field][1]:
@@ -752,7 +752,7 @@ MESSAGES = {
 		9: ('Template', string),
 		12: ('Custom format ref', 'Ref'), # maybe only date time?
 	},
-	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref')},
+	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref'), 4: ('??? ref', 'Ref')},
 	'Fill': {
 		1: ('Color',),
 		2: ('Gradient',),
@@ -952,6 +952,7 @@ MESSAGES = {
 		3: ('Offset', float_),
 		4: ('Blur', int64),
 		5: ('Opacity', float_),
+                6: ('Visible?', bool_),
 		7: ('Type', enum({0: 'drop', 1: 'contact', 2: 'curved'})),
 		9: ('Contact shadow', {2: ('Perspective', float_)}),
 		10: ('Curved shadow', {1: ('Balance', float_)}),
@@ -1153,7 +1154,8 @@ COMMON_OBJECTS = {
 	3056: ('Comment', {
 		1: ('Text', string),
 		2: ('Modification time?', {1: ('Timestamp', double_)}),
-		3: ('Author ref', 'Ref')
+		3: ('Author ref', 'Ref'),
+		4: ('Answer ref', 'Ref')
 	}),
 	4000: ('Calculation Engine', {
 		3: ('A ref', 'Ref'),
@@ -1574,11 +1576,11 @@ class IWAParser(object):
 				obj_id = hdr.value[1][0].value
 			obj_type = None
 			if hdr.value.has_key(2):
-				if hdr.value[2][0].value.has_key(1):
-					obj_type = hdr.value[2][0].value[1][0].value
-				if hdr.value[2][0].value.has_key(3):
-					data_len = hdr.value[2][0].value[3][0].value
-			obj_data = self.data[obj_start:off + hdr_len + data_len]
+                                for data in hdr.value[2]:
+				        if data.value.has_key(1):
+					        obj_type = data.value[1][0].value
+				        if data.value.has_key(3):
+					        data_len += data.value[3][0].value
 			obj_name = None
 			if obj_type:
 				if self.objects.has_key(obj_type):
@@ -1589,6 +1591,8 @@ class IWAParser(object):
 				obj_name = 'Object'
 			if obj_id:
 				obj_name = '%s (%d)' % (obj_name, obj_id)
+
+			obj_data = self.data[obj_start:off + hdr_len + data_len]
 			objiter = add_pgiter(self.page, '[%d] %s' % (obj_num, obj_name), 'iwa', 'iwa_object', obj_data, self.parent)
 			self._add_pgiter('Header', hdr, off, off + hdr_len, objiter)
 			off += hdr_len
@@ -1825,7 +1829,7 @@ def add_tile_row(hd, size, data):
 	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6: 'boolean', 7: 'duration', 9: 'paragraph text'}
 	off = 1
 	(typ, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Data type', key2txt(typ, data_type_map), off - 1, 1, '<B')
+	add_iter(hd, 'Data type', key2txt(typ, type_map), off - 1, 1, '<B')
 	off +=2
 	flags_set = {
 		0x2: 'style', 0x4: 'format', 0x8: 'formula',
@@ -1916,6 +1920,9 @@ def detect(package):
 		names = package.namelist()
 		if "Index/MasterSlide.iwa" in names:
 			return "Keynote"
+                for name in names:
+                        if re.match(r'^Index/MasterSlide.*\.iwa$', name):
+                                return "Keynote"
 	except:
 		pass
 	# I see no way to differentiate Pages and Numbers document just from
