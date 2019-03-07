@@ -746,7 +746,7 @@ MESSAGES = {
 		3: ('Language', string),
 		4: ('Calculation Engine Ref', 'Ref'),
 		5: ('View State Ref', 'Ref'),
-		6: (None, 'Ref'), # ref to 601
+		6: ('Object 601 ref', 'Ref'),
 		7: ('Custom format data list ref?', 'Ref'),
 		#8: a bool?
 		9: ('Template', string),
@@ -1028,6 +1028,7 @@ COMMON_OBJECTS = {
 		20: ('Change IDs?', {1: ('Change ID', {1: ('Start', int64), 2: ('UUID', string)})}),
 		21: ('Changes', {1: ('Change', {1: ('Start', int64), 2: ('Change ref', 'Ref')})}),
 		23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
+		24: ('Unknown numbers', { 1: ('Unknown number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
 	}),
 	2004: ('Footnote mark', {}),
 	2008: ('Footnote', {2: ('Text ref', 'Ref')}),
@@ -1322,7 +1323,7 @@ COMMON_OBJECTS = {
 			4: ('Number of cells', int64),
 		}),
 	}),
-	6008: (None, {3: ('A ref', 'Ref')}),
+	6008: ('Object 6008', {3: ('Object 6247 ref', 'Ref')}),
 	6010: ('Conditional format', {
 		1: ('Number of rules', int64),
 		2: ('Rule', {
@@ -1343,6 +1344,41 @@ COMMON_OBJECTS = {
 	6220: ('Filter', {
 		3: ('Rule', {1: ('Filter formula', {1: ('Formula',)})}),
 	}),
+	6247: ('Object 6247', {
+                # 1-12 appears 2 times
+                1: ('Para0 style ref', 'Ref'),
+                2: ('Para1 style ref', 'Ref'),
+                3: ('Para2 style ref', 'Ref'),
+                4: ('Para3 style ref', 'Ref'),
+                5: ('Graph1 style ref', 'Ref'),
+                6: ('Graph2 style ref', 'Ref'),
+                7: ('Cell1 style ref', 'Ref'),
+                8: ('Cell2 style ref', 'Ref'),
+                9: ('Table style ref', 'Ref'),
+                10: ('Para4 style ref', 'Ref'),
+                11: ('Graph3 style ref', 'Ref'),
+                # 12 a bool
+                13: ('Para5 style ref', 'Ref'),
+                14: ('Para6 style ref', 'Ref'),
+                15: ('Para7 style ref', 'Ref'),
+                16: ('Para8 style ref', 'Ref'),
+                17: ('Para9 style ref', 'Ref'),
+                18: ('Cell3 style ref', 'Ref'),
+                19: ('Cell4 style ref', 'Ref'),
+                20: ('Cell5 style ref', 'Ref'),
+                21: ('Cell6 style ref', 'Ref'),
+                22: ('Cell7 style ref', 'Ref'),
+                23: ('Cell8 style ref', 'Ref'),
+                24: ('Cell9 style ref', 'Ref'),
+                25: ('Cell10 style ref', 'Ref'),
+                26: ('Cell11 style ref', 'Ref'),
+                27: ('Cell12 style ref', 'Ref'),
+                28: ('Cell13 style ref', 'Ref'),
+                29: ('Cell14 style ref', 'Ref'),
+                30: ('Cell15 style ref', 'Ref'),
+                31: ('Cell16 style ref', 'Ref'),
+                32: ('Cell17 style ref', 'Ref'),
+        }),
 	6305: ('GridLines', {
 		1: (None,int64),
 		2: (None,int64),
@@ -1361,11 +1397,28 @@ COMMON_OBJECTS = {
 			4: (None, int64),
 		}),
 	}),
-	11006: ('Object index', {
-		1: ('Active object ref?', int64),
+	11006: ('MetaData', {
+		1: ('ReplaceColor Corr id', int64),
+                2: (None, {
+                        2: ('ID', string),
+                        3: (None, int64),
+                }),
 		3: ('IWA file',),
 		4: ('Other file',),
+                10: ('ReplaceColor Corr ref', 'Ref'),
 	}),
+        11011: ('Document Metadata', {
+                1: (None, bool_),
+        }),
+        11014: ('ReplaceColor', {
+                1: ('Color', ),
+        }),
+        11015: ('ReplaceColor Corr', {
+                1: ('Corresp', {
+                        1: ('ID', int64),
+                        2: ('ReplaceColor Ref', 'Ref'),
+                }),
+        }),
 }
 
 KEYNOTE_OBJECTS = {
@@ -1380,7 +1433,8 @@ KEYNOTE_OBJECTS = {
 			2: ('A slide list ref', 'Ref'), # TODO: what does this mean?
 		}),
 		4: ('Size',),
-		5: ('Stylesheet ref', 'Ref')
+		5: ('Stylesheet ref', 'Ref'),
+		17: ('Object 21 ref', 'Ref'),
 	}),
 	4: ('Slide list', {
 		1: ('Slide list ref', 'Ref'),
@@ -1401,10 +1455,18 @@ KEYNOTE_OBJECTS = {
 		5: ('Title placeholder ref', 'Ref'),
 		6: ('Body placeholder ref', 'Ref'),
 		7: ('Shape ref', 'Ref'),
+                10: ('Name', string),
 		17: ('Master ref', 'Ref'),
 		20: ('Slide number placeholder ref', 'Ref'),
 		27: ('Notes ref', 'Ref'),
-		42: (None, 'Ref'),
+                29: ('Style name ref', 'Ref'),
+                30: ('PlaceHolder ref', 'Ref'), # main ?
+                31: (None, 'Ref'),
+                35: ('List ref', 'Ref'),
+                36: ('Object 3047 ref', 'Ref'),
+                37: (None, string), # default title?
+                38: (None, string),
+		42: ('Object Bg ref', 'Ref'), # find image, place holder
 	}),
 	7: ('Placeholder', {
 		1: ('Drawable shape',),
@@ -1429,10 +1491,28 @@ KEYNOTE_OBJECTS = {
 		1: ('Theme info', {
 			1: ('Theme stylesheet ref', 'Ref'),
 			3: ('Name', string),
-			5: (None, 'Ref'),
+			4: ('StyleSheet ref', 'Ref'),
+			5: (None, 'Ref'), # checkme
+                        10: ('Color', ),
+                        100: (None, {
+                                1: ('Gradient', 'Fill'),
+                                2: ('Image', 'Fill'),
+                                3: ('Shadow', ),
+                                4: ('Line Graphic Style ref', 'Ref'),
+                                5: ('Shape Graphic Style ref', 'Ref'),
+                                6: ('Textbox Graphic Style ref', 'Ref'),
+                                7: ('Image Graphic Style ref', 'Ref'),
+                                8: ('Movie Graphic Style ref', 'Ref'),
+                                9: ('Drawing Line Graphic Style ref', 'Ref'),
+                        }),
+                        110: (None, { 1: ('List Style Ref', 'Ref'), 6: ('Character Ref', 'Ref'), 7: ('Paragraph Ref', 'Ref'), }),
+                        120: (None, { 1: ('Object 5020 Ref', 'Ref'), }),
+                        200: (None, { 1: ('Object 6008 Ref', 'Ref'), }),
 		}),
 		2: ('Slide list ref', 'Ref'),
 		3: ('Group UUID', string),
+		5: ('SlideList ref', 'Ref'),
+		6: ('SlideList1 ref', 'Ref'),
 	}),
 	15: ('Notes', {1: ('Text ref', 'Ref')}),
 	19: ('Style name map', {
