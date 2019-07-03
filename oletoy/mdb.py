@@ -77,7 +77,7 @@ def hd_table(hd,buf):
 	for i in range(ncols):
 		add_iter(hd,"Column %02x"%i,"",offset+75+i*25,0,"txt")
 		coltype = ord(buf[offset+75+i*25])
-		if coltypes.has_key(coltype):
+		if coltype in coltypes:
 			ctxt = coltypes[coltype][0]
 		else:
 			ctxt = "%02x"%coltype
@@ -206,7 +206,7 @@ def parse (buf,page,parent):
 		page.model.set_value(iter1,2,0x1000)
 		page.model.set_value(iter1,3,buf[offset:offset+0x1000])
 		bt = struct.unpack("<H",buf[offset:offset+2])[0]
-		if block_types.has_key(bt):
+		if bt in block_types:
 			bts = block_types[bt][0]
 			page.model.set_value(iter1,1,("mdb",bts))
 			block_types[bt][1](buf,page,offset,iter1)

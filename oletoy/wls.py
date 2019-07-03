@@ -50,7 +50,7 @@ def deobfuscate(data, orig_pos):
 				val = uadd(val, p)
 				val = uadd(val, base)
 			return val
-		if not obfuscation_map.has_key(pos):
+		if pos not in obfuscation_map:
 			d = {}
 			for b in range(0, 0x100):
 				d[chr(obfuscate_byte(b, pos))] = chr(b)
@@ -615,7 +615,7 @@ if __name__ == '__main__':
 	def test_deobfuscate(byte, pos, expected):
 		got = deobfuscate([chr(byte)], pos)
 		if got != [expected]:
-			print("expected '%s' (%x), got %x" % (expected, ord(expected), ord(got[0])))
+			print(("expected '%s' (%x), got %x" % (expected, ord(expected), ord(got[0]))))
 		assert(got == [expected])
 	test_deobfuscate(0x5f, 6, '`')
 	test_deobfuscate(0x60, 6, 'a')

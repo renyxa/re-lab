@@ -331,8 +331,8 @@ def parse (page, data, parent):
 
 	version = ord(data[ver_offset])
 	page.version = version
-	print "Version: %d"%version
-	print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
+	print("Version: %d"%version)
+	print("Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0])
 
 	if version > 6:
 		lenhdr2 = 74

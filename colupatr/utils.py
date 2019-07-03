@@ -156,5 +156,5 @@ def html_export(app,doc,sline,doff,dlen):
 		f.write("</table></body></html>")
 		f.close()
 	else:
-		print "Nothing to export"
+		print("Nothing to export")
 

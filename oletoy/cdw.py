@@ -65,7 +65,7 @@ def parse_lastrec (page, data,parent):
 			chtype = data[off+4:off+6]
 			add_pgiter(page,"%s [%02x] (%s)"%(tdata,bflag,recs),"cdw",0,data[off_st:off],parent)
 	except:
-		print 'Failed in parseing last record'
+		print('Failed in parseing last record')
 
 
 def open (data,page,parent):

@@ -25,14 +25,14 @@ def open(fname,page,parent=None):
 		for i in z.filelist:
 			fn = i.filename
 			data = z.read(fn)
-			print fn
+			print(fn)
 			pos = fn.rfind("/")
 			if pos == -1:
 				iter = add_pgiter(page,fn,"pkzip",0,data,parent)
 			else:
 				iter = add_pgiter(page,"[%s]%s"%(fn[:pos],fn[pos:]),"pkzip",0,data,parent)
 			if "[%s]%s"%(fn[:pos],fn[pos:]) == "[content]/dataFileList.dat":
-				print "Found XMLish CDR version"
+				print("Found XMLish CDR version")
 				page.wtable = data.split("\n")
 			elif ".dat" in fn[-4:]:
 				if page.wdata == None:
@@ -46,6 +46,6 @@ def open(fname,page,parent=None):
 				page.fload(data,i,z)
 			
 	except zipfile.BadZipfile:
-		print "Open as PKZIP failed"
+		print("Open as PKZIP failed")
 	except zipfile.LargeZipFile:
-		print "Open as PKZIP failed"
+		print("Open as PKZIP failed")

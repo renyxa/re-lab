@@ -43,10 +43,10 @@ def dump_rec_content(doc,model,iter,level,file):
     if done:
         pass
     elif ntype[0] == "fh":
-        if fh.hdp.has_key(ntype[1]):
+        if ntype[1] in fh.hdp:
             fh.hdp[ntype[1]](tmpDoc,data,doc)
     elif ntype[0] == "fh12":
-        if fh12.fh12_ids.has_key(ntype[1]):
+        if ntype[1] in fh12.fh12_ids:
             fh12.fh12_ids[ntype[1]](tmpDoc,size,data,ntype[1])
     tmpModel=tmpDoc.model
     tmpIter = tmpModel.get_iter_first()
@@ -88,7 +88,7 @@ def dump_rec(doc,model,iter,level,file):
 def dump(doc,model,file):
     iter = model.get_iter_first()
     if iter == None:
-        print "can not find any iter"
+        print("can not find any iter")
         return
     while iter != None:
         dump_rec(doc,model,iter,1,file)
@@ -96,13 +96,13 @@ def dump(doc,model,file):
 
 def main():
     if len(sys.argv)!=3:
-        print "Unexpected Number of arguments."
-        print "Syntax: oledump.py inputFile outputFile"
+        print("Unexpected Number of arguments.")
+        print("Syntax: oledump.py inputFile outputFile")
         return
     try:
         fs=open(sys.argv[1],"rb")
     except:
-        print "can not open %s"%sys.argv[1]
+        print("can not open %s"%sys.argv[1])
         return
     buf = fs.read()
     if buf:
@@ -113,19 +113,19 @@ def main():
                 try:
                     doc.appdoc.parse_agd_iter(10000).next()
                 except:
-                    print "incomplete parsing"
+                    print("incomplete parsing")
             model=doc.view.get_model()
             try:
                 output=open(sys.argv[2],"w")
             except:
-                print "can not open output %s"%sys.argv[2]
+                print("can not open output %s"%sys.argv[2])
                 return
             dump(doc,model,output)
             output.close()
         else:
-            print "can not read the file"
+            print("can not read the file")
     else:
-        print "can not retrieve the file content"
+        print("can not retrieve the file content")
     fs.close()
 
 if __name__ == "__main__":

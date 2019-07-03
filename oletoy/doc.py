@@ -486,7 +486,7 @@ def fib_RgFcLcbBlob (hd, data):
 	cb = struct.unpack("<H",data[off:off+2])[0]
 	add_iter(hd,"cbRgFcLcb",cb,off,2,"<H")
 	off += 2
-	if fclcb2nfib.has_key(cb):
+	if cb in fclcb2nfib:
 	  fclcb2nfib[cb][1](hd,data)
 
 fclcb2nfib = {0x5d:(0xc1,FcLcb97),0x6c:(0xd9,FcLcb2k),0x88:(0x101,FcLcb2k2),0xa4:(0x10c,FcLcb2k3),0xb7:(0x112,FcLcb2k7)}
@@ -513,9 +513,9 @@ def parse_table (page):
 	try:
 		offset = 0
 		fclcb = page.model.get_value(page.wdoc,3)
-		print 'ParseTable (%d)'%len(data)
+		print('ParseTable (%d)'%len(data))
 		for i in range(len(fclcb97recs1)):
-			if not ptable_unsd.has_key(i):
+			if i not in ptable_unsd:
 				recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 				reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
 				totlen += reclen
@@ -523,10 +523,10 @@ def parse_table (page):
 					titer = add_pgiter (page,fclcb97recs1[i][0],"doc",fclcb97recs1[i][0],data[recoff:recoff+reclen],parent)
 				if len(fclcb97recs1[i]) > 1:
 					fclcb97recs1[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)
-		print 'Parsed:',totlen
+		print('Parsed:',totlen)
 		if totlen < len(data):
 			for i in range(len(fclcb97recs2)):
-				if not ptable_unsd.has_key(i):
+				if i not in ptable_unsd:
 					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
 					totlen += reclen
@@ -534,10 +534,10 @@ def parse_table (page):
 						titer = add_pgiter (page,fclcb97recs2[i][0],"doc",fclcb97recs2[i][0],data[recoff:recoff+reclen],parent)
 					if len(fclcb97recs2[i]) > 1:
 						fclcb97recs2[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)
-			print 'Parsed:',totlen
+			print('Parsed:',totlen)
 		if totlen < len(data):
 			for i in range(len(fclcb2krecs)):
-				if not ptable_unsd.has_key(i):
+				if i not in ptable_unsd:
 					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
 					totlen += reclen
@@ -545,10 +545,10 @@ def parse_table (page):
 						titer = add_pgiter (page,fclcb2krecs[i][0],"doc",fclcb2krecs[i][0],data[recoff:recoff+reclen],parent)
 					if len(fclcb2krecs[i]) > 1:
 						fclcb2krecs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
-			print 'Parsed:',totlen
+			print('Parsed:',totlen)
 		if totlen < len(data):
 			for i in range(len(fclcb2k2recs)):
-				if not ptable_unsd.has_key(i):
+				if i not in ptable_unsd:
 					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
 					totlen += reclen
@@ -556,10 +556,10 @@ def parse_table (page):
 						titer = add_pgiter (page,fclcb2k2recs[i][0],"doc",fclcb2k2recs[i][0],data[recoff:recoff+reclen],parent)
 					if len(fclcb2k2recs[i]) > 1:
 						fclcb2k2recs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
-			print 'Parsed:',totlen
+			print('Parsed:',totlen)
 		if totlen < len(data):
 			for i in range(len(fclcb2k3recs)):
-				if not ptable_unsd.has_key(i):
+				if i not in ptable_unsd:
 					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
 					totlen += reclen
@@ -567,10 +567,10 @@ def parse_table (page):
 						titer = add_pgiter (page,fclcb2k3recs[i][0],"doc",fclcb2k3recs[i][0],data[recoff:recoff+reclen],parent)
 					if len(fclcb2k3recs[i]) > 1:
 						fclcb2k3recs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
-			print 'Parsed:',totlen
+			print('Parsed:',totlen)
 		if totlen < len(data):
 			for i in range(len(fclcb2k7recs)):
-				if not ptable_unsd.has_key(i):
+				if i not in ptable_unsd:
 					recoff = struct.unpack("<I",fclcb[2+i*8:6+i*8])[0]
 					reclen = struct.unpack("<I",fclcb[6+i*8:10+i*8])[0]
 					totlen += reclen
@@ -578,11 +578,11 @@ def parse_table (page):
 						titer = add_pgiter (page,fclcb2k7recs[i][0],"doc",fclcb2k7recs[i][0],data[recoff:recoff+reclen],parent)
 					if len(fclcb2k7recs[i]) > 1:
 						fclcb2k7recs[i][1](page,data[recoff:recoff+reclen],titer,page.wdata)			
-			print 'Parsed:',totlen
+			print('Parsed:',totlen)
 
 
 	except:
-		print "Failed in doc table parse"
+		print("Failed in doc table parse")
 
 def parse (page, data, parent):
 	offset = 0
@@ -604,7 +604,7 @@ def parse (page, data, parent):
 		
 		parse_table(page)
 	except:
-	  print "Failed in fib parsing"
+	  print("Failed in fib parsing")
 
 def dump_tree (page, parent, outfile):
 	model = page.view.get_model()

@@ -88,7 +88,7 @@ def rtf_read (buf,off,page,parent):
 			else:
 				pflag = 0
 	except:
-		print "failed","%02x"%off,name
+		print("failed","%02x"%off,name)
 
 def recode(buf, enc):
 	off = 0

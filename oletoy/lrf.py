@@ -149,7 +149,7 @@ class lrf_parser(object):
 		start = self.header_size + self.metadata_size
 		end = start + self.thumbnail_size
 		typ = "Unknown"
-		if lrf_thumbnail_types.has_key(self.thumbnail_type):
+		if self.thumbnail_type in lrf_thumbnail_types:
 			typ = lrf_thumbnail_types[self.thumbnail_type]
 		add_pgiter(self.page, 'Thumbnail (%s)' % typ, 'lrf', 0, self.data[start:end], self.parent)
 
@@ -207,7 +207,7 @@ class lrf_parser(object):
 		name = 'Tag 0x%x' % tag
 		length = None
 		if ((tag & 0xff00) >> 8) == 0xf5:
-			if lrf_tags.has_key(tag):
+			if tag in lrf_tags:
 				(name, length, f) = lrf_tags[tag]
 
 		# try to find the next tag
@@ -257,7 +257,7 @@ class lrf_parser(object):
 		otp = read(data, start + 6, '<H')
 
 		otype = otp
-		if lrf_object_types.has_key(otp):
+		if otp in lrf_object_types:
 			otype = lrf_object_types[otp]
 
 		objiter = add_pgiter(self.page, 'Object 0x%x (%s)' % (oid, otype), 'lrf', 0, data[start:start + length], parent)

@@ -363,7 +363,7 @@ def ExtFloodFill (hd, size, value):
 	iter = hd.model.append(None, None)
 	ffm = struct.unpack("<I",value[0x14:0x18])[0]
 	ft = "unknown"
-	if FloodFill.has_key(ffm):
+	if ffm in FloodFill:
 		ft = FloodFill(ffm)
 	hd.model.set (iter, 0, "FloodFillMode", 1, "%d (%s)"%(ffm,ft),2,0x14,3,4,4,"<I")
 
@@ -444,11 +444,11 @@ def GDIComment (hd, size, value):
 	if type == '\x47\x44\x49\x43':
 		ctype = struct.unpack("<I",value[0x10:0x14])[0]
 		ct = "unknown"
-		if gc_ids.has_key(ctype):
+		if ctype in gc_ids:
 			ct = gc_ids[ctype]
 		iter = hd.model.append(None, None)
 		hd.model.set (iter, 0, "PubComment ID", 1, "%d (%s)"%(ctype,ct),2,0x10,3,4,4,"<I")
-		if gcfunc_ids.has_key(ctype):
+		if ctype in gcfunc_ids:
 			gcfunc_ids[ctype](hd,value)
 
 #0x49
@@ -617,13 +617,13 @@ def ClrMatchToTargetW (hd, size, value):
 	iter = hd.model.append(None, None)
 	dwAction = struct.unpack("<I",value[0x8:0xc])[0]
 	dt = "unknown"
-	if ColorSpace.has_key(dwAction):
+	if dwAction in ColorSpace:
 		dt = ColorSpace[dwAction]
 	hd.model.set (iter, 0, "dwAction", 1, "%d (%s)"%(dwAction,dt),2,8,3,4,4,"<I")
 	iter = hd.model.append(None, None)
 	dwFlags = struct.unpack("<I",value[0xc:0x10])[0]
 	dt = "unknown"
-	if ColorMatchToTarget.has_key(dwFlags):
+	if dwFlags in ColorMatchToTarget:
 		dt = ColorMatchToTarget[dwFlags]
 	hd.model.set (iter, 0, "dwFlags", 1, "%d (%s)"%(dwFlags,dt),2,0xc,3,4,4,"<I")
 	iter = hd.model.append(None, None)

@@ -461,7 +461,7 @@ class DiffWindow(gtk.Window):
 			f.write("</table></body></html>")
 			f.close()
 		else:
-			print "Nothing to export"
+			print("Nothing to export")
 
 	def on_diff_va_changed (self,va,damm,s):
 		self.draw_diffmm(damm,None,s)
@@ -910,7 +910,7 @@ class CliWindow(gtk.Window):
 						fs.write("\n")
 				fs.close()
 			except:
-				print 'Failed to save state'
+				print('Failed to save state')
 
 		if mode in ("snippets","all"):
 #			try:
@@ -936,7 +936,7 @@ class CliWindow(gtk.Window):
 				except:
 					pass # file not loaded
 		except:
-			print 'No saved CLI state was found'
+			print('No saved CLI state was found')
 
 		# load snippets
 		try:
@@ -950,7 +950,7 @@ class CliWindow(gtk.Window):
 					self.add_snippet(name,txt[:-1])
 			fs.close()
 		except:
-			print 'Failed to load snippets'
+			print('Failed to load snippets')
 
 
 	def create_tbtv(self):
@@ -1198,13 +1198,13 @@ def recfind (model,path,iter,(page,data)):
 				argvalue = d2hex(recdata[off1:off2])
 				if rdata2 != "":
 					if rdata2 == argtxt:
-						if cdrloda.has_key(argtype):
+						if argtype in cdrloda:
 							argtxt = cdrloda[argtype]
 						s_iter = page.search.append(None,None)
 						page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
 						page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtxt,argvalue))
 				else:
-					if cdrloda.has_key(argtype):
+					if argtype in cdrloda:
 						argtxt = cdrloda[argtype]
 					s_iter = page.search.append(None,None)
 					page.search.set_value(s_iter,0,model.get_string_from_iter(iter))
@@ -1273,7 +1273,7 @@ def compare (cmd, entry, page1, page2):
 		carg = int(cmd[1:])
 	else:
 		carg = "*"
-		print "Search in progress..."
+		print("Search in progress...")
 		treeSelection = page1.view.get_selection()
 		tmp, iter1 = treeSelection.get_selected()
 		if iter1 != None:
@@ -1283,7 +1283,7 @@ def compare (cmd, entry, page1, page2):
 				cmp_children (page1, model1, model2, iter1, iter2, carg)
 				page1.show_search("Diff %s"%carg)
 			except:
-				print "Search failed"
+				print("Search failed")
 			return
 
 	for i in range(model1.iter_n_children(None)):
@@ -1329,7 +1329,7 @@ def parse (cmd, entry, page):
 		else:
 			chtype = cmd[1:]
 			chaddr = "0"
-		print "Command: ",chtype,chaddr
+		print("Command: ",chtype,chaddr)
 		
 		treeSelection = page.view.get_selection()
 		model, iter1 = treeSelection.get_selected()
@@ -1343,7 +1343,7 @@ def parse (cmd, entry, page):
 			if buf[int(chaddr,16):int(chaddr,16)+8] == "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
 				ole.ole_open (buf[int(chaddr,16):],page,iter1)
 			else:
-				print "OLE stream not found at ",chaddr
+				print("OLE stream not found at ",chaddr)
 		elif "bmp" == chtype.lower():
 			#try:
 			if 1:
@@ -1413,7 +1413,7 @@ def parse (cmd, entry, page):
 					f.write(value)
 					f.close()
 				else:
-					print "Nothing to save"
+					print("Nothing to save")
 		elif "wmf" == chtype.lower() or "apwmf" == chtype.lower():
 			pt = page.type
 			page.type = chtype.upper()
@@ -1446,7 +1446,7 @@ def parse (cmd, entry, page):
 			vba.parse (page,buf,iter1)
 		elif "zip" == chtype.lower():
 			try:
-				print int(chaddr,16)
+				print(int(chaddr,16))
 				decobj = zlib.decompressobj()
 				output = decobj.decompress(buf[int(chaddr,16):])
 				add_pgiter (page,"[Decompressed data]","",0,output,iter1)
@@ -1454,13 +1454,13 @@ def parse (cmd, entry, page):
 				if len(tail) > 0:
 					add_pgiter (page,"[Tail]","",0,tail,iter1)
 			except:
-				print "Failed to decompress as zlib"
+				print("Failed to decompress as zlib")
 				try:
 					f = StringIO.StringIO(buf[int(chaddr,16):])
 					pkzip.open(f, page, iter1)
 					f.close()
 				except:
-					print "Failed to decompress as pkzip"
+					print("Failed to decompress as pkzip")
 
 	elif cmd[0] == "?":
 		ctype = cmd[1]

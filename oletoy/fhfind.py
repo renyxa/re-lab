@@ -46,12 +46,12 @@ def main():
 			input = open(filename)
 			buf = input.read()
 			if parse(buf,rname):
-				print filename
+				print(filename)
 		except:
-			print "No file"
+			print("No file")
 			return 0
 	else:
-		print "Use filename as an option"
+		print("Use filename as an option")
 		return
 
 if __name__ == '__main__':

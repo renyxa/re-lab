@@ -18,7 +18,7 @@ import sys,struct,gtk
 from utils import *
 
 def open (buf,page,parent):
-	print "Probably XML",page.model.get_value(parent,0)
+	print("Probably XML",page.model.get_value(parent,0))
         if buf[0:2] == '\xff\xfe':
             buf = unicode(buf[2:], 'utf_16le')
         elif buf[0:2] == '\xfe\xff':

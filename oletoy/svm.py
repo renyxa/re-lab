@@ -99,7 +99,7 @@ def open (buf,page,parent):
 		[ver] = struct.unpack("<h",buf[offset+2:offset+4])
 		[size] = struct.unpack("<I",buf[offset+4:offset+8])
 		cmdname = "Cmd %02x"%cmd
-		if svm_actions.has_key(cmd):
+		if cmd in svm_actions:
 			cmdname = svm_actions[cmd]+ " "*(21-len(svm_actions[cmd]))
 		iter1 = page.model.append(parent,None)
 		page.model.set(iter1,0,cmdname,1,("svm",cmd),2,size+8,3,buf[offset:offset+size+8])

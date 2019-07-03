@@ -142,7 +142,7 @@ def uncompress(data):
 			# print('  far ref: offset = %x, length = %x' % (offset, length))
 			append_ref(offset, length)
 		else:
-			print("unknown type at offset 0x%x inside block" % (off + 4))
+			print(("unknown type at offset 0x%x inside block" % (off + 4)))
 			assert False
 
 	assert uncompressed_length == len(result)
@@ -209,7 +209,7 @@ def enum(values={}):
 
 		def __call__(self, data, off):
 			i = self.parser(data, off)
-			if values.has_key(i):
+			if i in values:
 				return values[i]
 			return 'Unknown'
 
@@ -322,7 +322,7 @@ class message:
 				visualizer = 'iwa_32bit'
 			else:
 				raise self.unknown_type()
-			if not msg.has_key(field_num):
+			if field_num not in msg:
 				msg[field_num] = []
 			desc = self._desc(field_num, wire_type == 2, visualizer)
 			msg[field_num].append(desc(data, stt_data, stt, off))
@@ -354,18 +354,18 @@ class message:
 				return result(data[start:end], self, start, end)
 
 		desc = None
-		if self.desc.has_key(field):
+		if field in self.desc:
 			global MESSAGES
 			if len(self.desc[field]) > 1 and self.desc[field][1]:
 				desc1 = self.desc[field][1]
 				if isinstance(desc1, str):
-					if MESSAGES.has_key(desc1):
+					if desc1 in MESSAGES:
 						desc = MESSAGES[desc1]
 				else:
 					desc = desc1
 			elif self.desc[field][0]:
 				name = self.desc[field][0]
-				if MESSAGES.has_key(name):
+				if name in MESSAGES:
 					desc = MESSAGES[name]
 			if isinstance(desc, dict):
 				desc = message(desc)
@@ -1572,18 +1572,18 @@ class IWAParser(object):
 			hdr = self._parse_header(off, hdr_len)
 			data_len = 0
 			obj_id = None
-			if hdr.value.has_key(1):
+			if 1 in hdr.value:
 				obj_id = hdr.value[1][0].value
 			obj_type = None
-			if hdr.value.has_key(2):
+			if 2 in hdr.value:
                                 for data in hdr.value[2]:
-				        if data.value.has_key(1):
+				        if 1 in data.value:
 					        obj_type = data.value[1][0].value
-				        if data.value.has_key(3):
+				        if 3 in data.value:
 					        data_len += data.value[3][0].value
 			obj_name = None
 			if obj_type:
-				if self.objects.has_key(obj_type):
+				if obj_type in self.objects:
 					obj_name = self.objects[obj_type][0]
 				if not obj_name:
 					obj_name = 'Object %d' % obj_type
@@ -1637,7 +1637,7 @@ class IWAParser(object):
 						n = '%d' % k
 					else:
 						n = "%d[%d]" % (k, i)
-					if obj.desc.desc.has_key(k):
+					if k in obj.desc.desc:
 						if obj.desc.desc[k][0]:
 							n = '%s: %s' % (n, obj.desc.desc[k][0])
 					self._add_pgiter(n, e, e.start, e.end, it, True)
@@ -1646,17 +1646,17 @@ class IWAParser(object):
 
 	def _desc(self, obj_type):
 		desc = None
-		if self.objects.has_key(obj_type):
+		if obj_type in self.objects:
 			if len(self.objects[obj_type]) > 1 and self.objects[obj_type][1]:
 				desc1 = self.objects[obj_type][1]
 				if isinstance(desc1, str):
-					if MESSAGES.has_key(desc1):
+					if desc1 in MESSAGES:
 						desc = MESSAGES[desc1]
 				else:
 					desc = desc1
 			elif self.objects[obj_type][0]:
 				name = self.objects[obj_type][0]
-				if MESSAGES.has_key(name):
+				if name in MESSAGES:
 					desc = MESSAGES[name]
 			if isinstance(desc, dict):
 				desc = message(desc)

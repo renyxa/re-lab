@@ -76,7 +76,7 @@ class tc6_parser:
 		while off + 3 <= len(self.data):
 			(rec, off) = rdata(self.data, off, '<B')
 			(length, off) = rdata(self.data, off, '<H')
-			if tc6_records.has_key(rec):
+			if rec in tc6_records:
 				assert len(tc6_records[rec]) >= 2
 				name = tc6_records[rec][0]
 				handler = tc6_records[rec][1]

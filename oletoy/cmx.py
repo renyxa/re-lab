@@ -153,7 +153,7 @@ def ixmr (hd,size,data):
 	for i in range(rnum):
 		idx_rid = struct.unpack("<H",data[off:off+2])[0]
 		idtxt = "Unknown"
-		if master_ids.has_key(idx_rid):
+		if idx_rid in master_ids:
 			idtxt = master_ids[idx_rid]
 		add_iter (hd, "Idx Record ID", "0x%02x (%s)"%(idx_rid,idtxt),off,2,"<H")
 		off += 2
@@ -253,7 +253,7 @@ def rscr (hd,size,data):
 	# spot
 	spot = struct.unpack("<H",data[off:off+2])[0]
 	sptxt = "Unknown"
-	if spot_ids.has_key(spot):
+	if spot in spot_ids:
 		sptxt = spot_ids[spot]
 	add_iter (hd, "Spot", "0x%02x (%s)"%(spot,sptxt),off,2,"<H")
 	off += 2
@@ -501,7 +501,7 @@ def parse_page(page,data,old_offset,f_iter):
 		if ctype < 0:
 			ctype = - ctype
 		c_iter = add_pgiter(page,"%s (%d)"%(key2txt(ctype,cmds),ctype),"cmx","page",data[offset+corr+4:offset+csize],p_iter)
-		if grps.has_key(ctype):
+		if ctype in grps:
 			if grps[ctype] == 1:
 				# Ends
 				p_iter = t_iter

@@ -89,14 +89,14 @@ def open_v5(page, buf, parent, fmt, version):
 		qxp.VERSION_3_3: qxp33,
 		qxp.VERSION_4: qxp4,
 	}
-	header_hdl = mod_map[version].add_header if mod_map.has_key(version) else add_header
+	header_hdl = mod_map[version].add_header if version in mod_map else add_header
 	header = qxp.HexDumpSave(0)
 	(hdr, off) = header_hdl(header, 512, buf, fmt, version)
 	add_pgiter(page, 'Header', 'qxp5', ('header', header), buf[0:off], parent)
 
 	doc = parse_chain(buf, 3, rlen, fmt, version)
 	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
-	if mod_map.has_key(version):
+	if version in mod_map:
 		(texts, pictures) = mod_map[version].handle_document(page, doc, dociter, fmt, version, hdr)
 	else:
 		(texts, pictures) = [], []
@@ -201,9 +201,9 @@ qxp5_ids = {
 
 def call(hd, size, data, cid, args):
 	ids_map = {'qxp': qxp.ids, 'qxp1': qxp1.ids, 'qxp33': qxp33.ids, 'qxp4': qxp4.ids, 'qxp5': qxp5_ids}
-	if ids_map.has_key(cid):
+	if cid in ids_map:
 		ids = ids_map[cid]
-		if len(args) > 1 and ids.has_key(args[0]):
+		if len(args) > 1 and args[0] in ids:
 			f = ids[args[0]]
 			if len(args) == 2:
 				f(hd, size, data, args[1], 0)
@@ -221,7 +221,7 @@ def open (page,buf,parent):
 	elif buf[2:4] == 'MM':
 		fmt = qxp.big_endian
 	else:
-		print "unknown format '%s', assuming big endian" % buf[2:4]
+		print("unknown format '%s', assuming big endian" % buf[2:4])
 		fmt = qxp.big_endian
 
 	# see header version_map

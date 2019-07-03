@@ -114,7 +114,7 @@ class PublisherContentDoc():
 		if len(data)>off:
 			extra=len(data)-off
 			add_iter (hd,"##extra",binascii.hexlify(data[off:off+extra]), off, extra, "txt")
-			print "%s: Find unexpected data"%name
+			print("%s: Find unexpected data"%name)
 
 	def pub98zhdr (self, hd,size,data):
 		off=0
@@ -767,11 +767,11 @@ class PublisherContentDoc():
 					self.version=5
 				elif maxLen>=0xde: # pub 2000
 					self.version=6
-			if self.pub98_types.has_key(b_type):
+			if b_type in self.pub98_types:
 				b_txt = self.pub98_types[b_type]
 			else:
 				b_txt = "%02x"%b_type
-			if blocks.has_key(par):
+			if par in blocks:
 				p_iter = blocks[par][3]
 			if decal!=0 and start+decal<end:
 				add_pgiter (self.page,"BlockData %02x (%s)"%(i,b_txt),"pub98","BlockData%x"%b_type,data[start+decal:end],p_iter)
@@ -847,8 +847,8 @@ class PublisherContentDoc():
 						[parid] = struct.unpack("<I",model.get_value(child,3))
 				dlen = struct.unpack('<I', data[offset:offset+4])[0]
 				if parid != None:
-					if blocks.has_key(parid):
-						if pubblock.block_types.has_key(type):
+					if parid in blocks:
+						if type in pubblock.block_types:
 							name = "(%02x) %s"%(j,pubblock.block_types[type])
 						else:
 							name = "(%02x) Type: %02x"%(j,type)
@@ -858,7 +858,7 @@ class PublisherContentDoc():
 					else:
 						reorders.append(k+255)
 				else:
-					if pubblock.block_types.has_key(type):
+					if type in pubblock.block_types:
 						name = "(%02x) %s"%(j,pubblock.block_types[type])
 					else:
 						name = "(%02x) Type: %02x"%(j,type)

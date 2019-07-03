@@ -290,7 +290,7 @@ def fh_open (buf,page,parent=None,mode=1):
                 header=ZoneHeader(page.version)
                 header.parse(buf,off)
                 if header.type==-1:
-			print 'Complete!'
+			print('Complete!')
 			break
 		if header.type in rec_types:
                         res=rec_types[header.type](buf,off,header)
@@ -310,7 +310,7 @@ def fh_open (buf,page,parent=None,mode=1):
 			off += rlen
                         rid += 1
 		else:
-			print "Unknown","%02x%02x"%(rid,header.dataSize),"%02x"%header.type
+			print("Unknown","%02x%02x"%(rid,header.dataSize),"%02x"%header.type)
 			add_pgiter(page,"[%02x] Unknown %02x"%(rid,header.type),"fh12","%02x"%header.type,buf[off:off+1000],piter)
 			off += 1000
 
@@ -377,7 +377,7 @@ def StringHdl(hd,size,data,what):
                 (n, endOff) = rdata(data, 7, '%ds'%stringSz)
                 add_iter(hd, "val", n,7,stringSz,"txt")
         elif stringSz < 0 and size>7:
-                print "Can not read a string"
+                print("Can not read a string")
                 add_iter(hd, "val", "###",7,size-7,"txt")
 def TextStringHdl(hd,size,data,what):
         (n, endOff) = rdata(data, 0, '%ds'%size)
@@ -426,7 +426,7 @@ def TextPLCHdl(hd,size,data,what):
         off+=2
         val=struct.unpack(">H",data[off:off+2])[0]
         idtxt = "Unknown"
-        if fontType_ids.has_key(val):
+        if val in fontType_ids:
                 idtxt = fontType_ids[val]
         add_iter (hd, "type", "0x%02x (%s)"%(val,idtxt),off,2,">H")
         off+=2
@@ -439,7 +439,7 @@ def PathPointHdl(hd,size,data,what):
         off=0
         val=struct.unpack(">H",data[off:off+2])[0]
         idtxt = "Unknown"
-        if pathType_ids.has_key(val):
+        if val in pathType_ids:
                 idtxt = pathType_ids[val]
         add_iter (hd, "type", "0x%02x (%s)"%(val,idtxt),off,2,">H")
         off+=2
@@ -623,13 +623,13 @@ def LineStyleHdl(hd,size,data,what):
         if what=="LineStyle":
                 val=struct.unpack(">b",data[off:off+1])[0]
                 idtxt = "Unknown"
-                if join_ids.has_key(val):
+                if val in join_ids:
                         idtxt = join_ids[val]
                 add_iter (hd, "join", "0x%02x (%s)"%(val,idtxt),off,1,">b")
                 off+=1
                 val=struct.unpack(">b",data[off:off+1])[0]
                 idtxt = "Unknown"
-                if cap_ids.has_key(val):
+                if val in cap_ids:
                         idtxt = cap_ids[val]
                 add_iter (hd, "cap", "0x%02x (%s)"%(val,idtxt),off,1,">b")
                 off+=1
@@ -699,7 +699,7 @@ def FillStyleHdl(hd,size,data,what):
                 off+=2
                 val=struct.unpack(">b",data[off:off+1])[0]
                 idtxt = "Unknown"
-                if gradType_ids.has_key(val):
+                if val in gradType_ids:
                         idtxt = gradType_ids[val]
                 add_iter (hd, "gradType", "0x%02x (%s)"%(val,idtxt),off,1,">b")
                 off+=1
@@ -732,7 +732,7 @@ def PSHdl(hd,size,data,what):
                 (n, endOff) = rdata(data, off, '%ds'%stringSz)
                 add_iter(hd, "val", n,off,stringSz,"txt")
         elif stringSz < 0:
-                print "Can not read a PS string"
+                print("Can not read a PS string")
                 add_iter(hd, "val", "###",off,size-off,"txt")
 
 def JoinGroupHdl(hd,size,data,what):
@@ -882,7 +882,7 @@ def TextHdl(hd,size,data,what):
                 off+=1
         val=struct.unpack(">b",data[off:off+1])[0]
         idtxt = "Unknown"
-        if justifyType_ids.has_key(val):
+        if val in justifyType_ids:
                 idtxt = justifyType_ids[val]
         add_iter (hd, "justify", "0x%02x (%s)"%(val,idtxt),off,1,">b")
         off+=1
@@ -937,7 +937,7 @@ def TextHdl(hd,size,data,what):
                 off+=2
                 val=struct.unpack(">H",data[off:off+2])[0]
                 idtxt = "Unknown"
-                if fontType_ids.has_key(val+1):
+                if val+1 in fontType_ids:
                         idtxt = fontType_ids[val+1]
                 add_iter (hd, "type", "0x%02x (%s)"%(val,idtxt),off,2,">H")
                 off+=2
