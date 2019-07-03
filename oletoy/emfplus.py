@@ -210,7 +210,7 @@ def PointType(value,offset):
 		ptf /= 2
 	ptt = ptype&0xF
 	pttt = "unknown"
-	if PathPointType.has_key(ptt):
+	if ptt in PathPointType:
 		pttt = PathPointType[ptt]
 	return ptft,pttt
 
@@ -356,7 +356,7 @@ def BT_HatchFill (hd, value, offset):
 	iter = hd.model.append(None, None)
 	hstyle = struct.unpack("<I",value[offset+0:offset+4])[0]
 	hst = "unknown"
-	if HatchStyle.has_key(hstyle):
+	if hstyle in HatchStyle:
 		hst = HatchStyle(hstyle)
 	hd.model.set(iter, 0, "  HatchStyle", 1, "0x%02X (%s)"%(hstyle,hst),2,offset,3,4,4,"<I")
 	RGBA(hd,value,offset+4,"ForeClr ")
@@ -379,13 +379,13 @@ def BT_TextureFill (hd, value, offset):
 	iter = hd.model.append(None, None)
 	wmode = struct.unpack("<I",value[offset+4:offset+8])[0]
 	wmt = ""
-	if WrapMode.has_key(wmode):
+	if wmode in WrapMode:
 		wmt = WrapMode[wmode]
 	hd.model.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+4,3,4,4,"<I")
 	offset += 8
 	for i in range(8):
 		if bdf[i] == 1:
-			if bdf_ids.has_key(i):
+			if i in bdf_ids:
 				offset += bdf_ids[i](hd,value,offset)
 
 def BT_PathGradient (hd, value, offset):
@@ -405,7 +405,7 @@ def BT_PathGradient (hd, value, offset):
 	iter = hd.model.append(None, None)
 	wmode = struct.unpack("<I",value[offset+4:offset+8])[0]
 	wmt = ""
-	if WrapMode.has_key(wmode):
+	if wmode in WrapMode:
 		wmt = WrapMode[wmode]
 	hd.model.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+4,3,4,4,"<I")
 	RGBA(hd,value,offset+8,"CenterClr")
@@ -430,7 +430,7 @@ def BT_PathGradient (hd, value, offset):
 		offset += 32+surclrcnt*4+numofpts*8
 	for i in range(7): # have to skip first flag
 		if bdf[i+1] == 1:
-			if bdf_ids.has_key(i+1):
+			if i+1 in bdf_ids:
 				offset += bdf_ids[i+1](hd,value,offset)
 
 def BT_LinearGradient (hd, value, offset):
@@ -450,7 +450,7 @@ def BT_LinearGradient (hd, value, offset):
 	iter = hd.model.append(None, None)
 	wmode = struct.unpack("<I",value[offset+4:offset+8])[0]
 	wmt = ""
-	if WrapMode.has_key(wmode):
+	if wmode in WrapMode:
 		wmt = WrapMode[wmode]
 	hd.model.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+4,3,4,4,"<I")
 	PointL(hd,value,offset+8,"s")
@@ -464,7 +464,7 @@ def BT_LinearGradient (hd, value, offset):
 	offset += 40
 	for i in range(8):
 		if bdf[i] == 1:
-			if bdf_ids.has_key(i):
+			if i in bdf_ids:
 				offset += bdf_ids[i](hd,value,offset)
 
 def RegionNode (hd,value,offset,txt=""):
@@ -472,11 +472,11 @@ def RegionNode (hd,value,offset,txt=""):
 	hd.model.set(iter, 0, "%sRegionNode"%txt)
 	rtype = struct.unpack("<I",value[offset:offset+4])[0]
 	rt = "unknown"
-	if RegionNodeDataType.has_key(rtype):
+	if rtype in RegionNodeDataType:
 		rt = RegionNodeDataType[rtype]
 		iter = hd.model.append(None, None)
 		hd.model.set(iter, 0, "  RegionNodeType", 1, rt,2,offset,3,4,4,"<I")
-	if rnd_ids.has_key(rtype):
+	if rtype in rnd_ids:
 		offset = rnd_ids[rtype](hd,value,offset,i)
 	return offset
 
@@ -513,10 +513,10 @@ def ObjBrush (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	btype = struct.unpack("<I",value[offset+0x10:offset+0x14])[0]
 	bt = "unknown"
-	if BrushType.has_key(btype):
+	if btype in BrushType:
 		bt = BrushType[btype]
 	hd.model.set(iter, 0, "  Type", 1, "0x%02X (%s)"%(btype,bt),2,offset+0x10,3,4,4,"<I")
-	if bt_ids.has_key(btype):
+	if btype in bt_ids:
 		bt_ids[btype](hd,value,offset+0x14)
 
 def ObjPen (hd, value):
@@ -547,7 +547,7 @@ def ObjPen (hd, value):
 	iter = hd.model.append(None, None)
 	utype = struct.unpack("<I",value[0x18:0x1c])[0]
 	ut ="unknown"
-	if UnitType.has_key(utype):
+	if utype in UnitType:
 		ut = UnitType[utype]
 	hd.model.set(iter, 0, "  PenUnits", 1, "0x%02X (%s)"%(utype,ut),2,0x18,3,4,4,"<I")
 	iter = hd.model.append(None, None)
@@ -555,7 +555,7 @@ def ObjPen (hd, value):
 	offset = 0x20
 	for i in range(12):
 		if pdf[i] == 1:
-			if pdf_ids.has_key(i):
+			if i in pdf_ids:
 				offset += pdf_ids[i](hd,value[offset:],offset)
 	ObjBrush (hd,value,offset-12) # to adjust ObjBrush header
 
@@ -650,7 +650,7 @@ def ObjImage (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	itype = struct.unpack("<I",value[offset+0x10:offset+0x14])[0]
 	it = "unknown"
-	if ImageType.has_key(itype):
+	if itype in ImageType:
 		it = ImageType[itype]
 	hd.model.set(iter, 0, "  Type", 1, "0x%02X (%s)"%(itype,it),2,offset+0x10,3,4,4,"<I")
 	if itype == 2:  # Metafile
@@ -658,7 +658,7 @@ def ObjImage (hd, value, offset = 0):
 		msize = struct.unpack("<I",value[offset+0x18:offset+0x1c])[0]
 		iter = hd.model.append(None, None)
 		mt = "unknown"
-		if MetaFileType.has_key(mtype):
+		if mtype in MetaFileType:
 			mt = MetaFileType[mtype]
 		hd.model.set(iter, 0, "  MetaFileType", 1, "0x%02X (%s)"%(mtype,mt),2,offset+0x14,3,4,4,"<I")
 		iter = hd.model.append(None, None)
@@ -685,31 +685,31 @@ def ObjStringFormat (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	langid = struct.unpack("<I",value[offset+0x14:offset+0x18])[0]
 	lt = "unknown"
-	if LangIDnames.has_key(lanid):
+	if lanid in LangIDnames:
 		lt = LangIDnames[langid]
 	hd.model.set(iter, 0, "  LangID", 1, "0x%04X (%s)"%(langid,lt),2,offset+0x14,3,4,4,"<I")
 	iter = hd.model.append(None, None)
 	stral = struct.unpack("<I",value[offset+0x18:offset+0x1c])[0]
 	sat = "unknown"
-	if StrAlign.has_key(stral):
+	if stral in StrAlign:
 		sat = StrAlign[stral]
 	hd.model.set(iter, 0, "  StringAlign", 1, "0x%04X (%s)"%(stral,sat),2,offset+0x18,3,4,4,"<I")
 	iter = hd.model.append(None, None)
 	lineal = struct.unpack("<I",value[offset+0x1c:offset+0x20])[0]
 	lat = "unknown"
-	if StrAlign.has_key(lineal):
+	if lineal in StrAlign:
 		lat = StrAlign[lineal]
 	hd.model.set(iter, 0, "  LineAlign", 1, "0x%04X (%s)"%(lineal,lat),2,offset+0x1c,3,4,4,"<I")
 	iter = hd.model.append(None, None)
 	sds = struct.unpack("<I",value[offset+0x20:offset+0x24])[0]
 	sdst = "unknown"
-	if StrDgtSubs.has_key(sds):
+	if sds in StrDgtSubs:
 		sdst = StrDgtSubs[sds]
 	hd.model.set(iter, 0, "  StrDigitSubst", 1, "0x%04X (%s)"%(sbs,sbst),2,offset+0x20,3,4,4,"<I")
 	iter = hd.model.append(None, None)
 	langid = struct.unpack("<I",value[offset+0x24:offset+0x28])[0]
 	lt = "unknown"
-	if LangIDnames.has_key(lanid):
+	if lanid in LangIDnames:
 		lt = LangIDnames[langid]
 	hd.model.set(iter, 0, "  DigitLang", 1, "0x%04X (%s)"%(langid,lt),2,offset+0x24,3,4,4,"<I")
 	iter = hd.model.append(None, None)
@@ -717,7 +717,7 @@ def ObjStringFormat (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	hkp = struct.unpack("<I",value[offset+0x2c:offset+0x30])[0]
 	hkpt = "unknown"
-	if HotPfx.has_key(hkp):
+	if hkp in HotPfx:
 		hkpt = HotPfx[hkp]
 	hd.model.set(iter, 0, "  HotKeyPrefix", 1, "0x%04X (%s)"%(hkp,hkpt),2,offset+0x2c,3,4,4,"<I")
 	iter = hd.model.append(None, None)
@@ -729,7 +729,7 @@ def ObjStringFormat (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	strim = struct.unpack("<I",value[offset+0x3c:offset+0x40])[0]
 	st = "unknown"
-	if StrTrim.has_key(strim):
+	if strim in StrTrim:
 		st = StrTrim[strim]
 	hd.model.set(iter, 0, "  StrTrimming", 1, "0x%04X (%s)"%(strim,st),2,offset+0x3c,3,4,4,"<I")
 	iter = hd.model.append(None, None)
@@ -764,7 +764,7 @@ def ObjFont (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	utype = struct.unpack("<I",value[offset+0x14:offset+0x18])[0]
 	ut ="unknown"
-	if UnitType.has_key(utype):
+	if utype in UnitType:
 		ut = UnitType[utype]
 	hd.model.set(iter, 0, "EmSize Units", 1, "0x%02X (%s)"%(utype,ut),2,offset+0x14,3,4,4,"<I")
 	iter = hd.model.append(None, None)
@@ -799,14 +799,14 @@ def ObjImgAttr (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	wmode = struct.unpack("<I",value[0x14:0x18])[0]
 	wmt = ""
-	if WrapMode.has_key(wmode):
+	if wmode in WrapMode:
 		wmt = WrapMode[wmode]
 	hd.model.set(iter, 0, "  WrapMode", 1, "0x%02X (%s)"%(wmode,wmt),2,offset+0x14,3,4,4,"<I")
 	RGBA(hd,value[0x18:],0x18,"ClampClr ")
 	iter = hd.model.append(None, None)
 	cmode = struct.unpack("<I",value[0x1c:0x20])[0]
 	cmt = ""
-	if ClampMode.has_key(cmode):
+	if cmode in ClampMode:
 		cmt = ClampMode[cmode]
 	hd.model.set(iter, 0, "  ClampMode", 1, "0x%02X (%s)"%(cmode,cmt),2,offset+0x1c,3,4,4,"<I")
 	iter = hd.model.append(None, None)
@@ -825,7 +825,7 @@ def ObjCustLineCap (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
 	citype = struct.unpack("<I",value[offset+0x10:offset+0x14])[0]
 	ct = "unknown"
-	if CustLCapDataType.has_key(ctype):
+	if ctype in CustLCapDataType:
 		ct = CustLCapDataType[ctype]
 	hd.model.set(iter, 0, "  CustLineCapDataType", 1, "0x%02X (%s)"%(ctype,ct),2,offset+0x10,3,4,4,"<I")
 	#FIXME! Parse CustLineCapData
@@ -866,12 +866,12 @@ def Object (hd, value):
 	otf = (flags&0xEF00)/256
 	ot = "unknown"
 	oid = (flags&0xFF)
-	if ObjectType.has_key(otf):
+	if otf in ObjectType:
 		ot = ObjectType[otf]
 	hd.model.set(iter, 0, "Flags (c, type, id)", 1, "0x%04X (%d, %s, %02x)"%(flags,c,ot,oid),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
 	hd.model.set(iter, 0, "Data Size", 1, "0x%02X"%struct.unpack("<I",value[8:0xc])[0],2,8,3,4,4,"<I")
-	if obj_ids.has_key(otf):
+	if otf in obj_ids:
 		obj_ids[otf](hd,value)
 
 #0x4009
@@ -1225,7 +1225,7 @@ def DrawImage (hd, value):
 	iter = hd.model.append(None, None)
 	utype = struct.unpack("<I",value[0x10:0x14])[0]
 	ut = "unknown"
-	if UnitType.has_key(utype):
+	if utype in UnitType:
 		ut = UnitType[utype]
 	hd.model.set(iter, 0, "SrcUnit", 1, "0x%02X (%s)"%(utype,ut),2,0x10,3,4,4,"<I")
 	RectF(hd,value,0x14,"SrcRect ")
@@ -1250,7 +1250,7 @@ def DrawImagePoints (hd, value):
 	iter = hd.model.append(None, None)
 	utype = struct.unpack("<I",value[0x10:0x14])[0]
 	ut = "unknown"
-	if UnitType.has_key(utype):
+	if utype in UnitType:
 		ut = UnitType[utype]
 	hd.model.set(iter, 0, "SrcUnit", 1, "0x%02X (%s)"%(utype,ut),2,0x10,3,4,4,"<I")
 	RectF(hd,value,0x14,"SrcRect ")
@@ -1312,7 +1312,7 @@ def SetAntiAliasMode (hd, value):
 	smf = (flags&0xfe)/2
 	sm = "unknown"
 	a = flags&1
-	if SmoothingMode.has_key(smf):
+	if smf in SmoothingMode:
 		sm = SmoothingMode[smf]
 	hd.model.set(iter, 0, "Flags (mode, a)", 1, "0x%04X (%s, %d)"%(flags,sm,a),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1323,7 +1323,7 @@ def SetTextRenderingHint (hd, value):
 	iter = hd.model.append(None, None)
 	flags = struct.unpack("<H",value[2:4])[0]
 	trh = "unknown"
-	if TextRenderingHint.has_key(flags):
+	if flags in TextRenderingHint:
 		trh = TextRenderingHint[flags]
 	hd.model.set(iter, 0, "Flags (Txt Rendr hint)", 1, "0x%04X (%s)"%(flags,trh),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1344,7 +1344,7 @@ def SetInterpolationMode (hd, value):
 	flags = struct.unpack("<H",value[2:4])[0]
 	imode = ord(value[2])
 	imt = "unknown"
-	if InterpolationMode.has_key(imode):
+	if imode in InterpolationMode:
 		imt = InterpolationMode[imode]
 	hd.model.set(iter, 0, "Flags (IntrpMode)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1356,7 +1356,7 @@ def SetPixelOffsetMode (hd, value):
 	flags = struct.unpack("<H",value[2:4])[0]
 	imode = ord(value[2])
 	imt = "unknown"
-	if InterpolationMode.has_key(imode):
+	if imode in InterpolationMode:
 		imt = InterpolationMode[imode]
 	hd.model.set(iter, 0, "Flags (PxlOffsetMode)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1368,7 +1368,7 @@ def SetCompositingMode (hd, value):
 	flags = struct.unpack("<H",value[2:4])[0]
 	imode = ord(value[2])
 	imt = "unknown"
-	if CompositingMode.has_key(imode):
+	if imode in CompositingMode:
 		imt = CompositingMode[imode]
 	hd.model.set(iter, 0, "Flags (ComposMode)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1380,7 +1380,7 @@ def SetCompositingQuality (hd, value):
 	flags = struct.unpack("<H",value[2:4])[0]
 	imode = ord(value[2])
 	imt = "unknown"
-	if CompositingQuality.has_key(imode):
+	if imode in CompositingQuality:
 		imt = CompositingQuality[imode]
 	hd.model.set(iter, 0, "Flags (ComposQly)", 1, "0x%04X (%s)"%(flags,imt),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1406,7 +1406,7 @@ def BeginContainer (hd, value):
 	flags = struct.unpack("<H",value[2:4])[0]
 	utype = ord(value[3])
 	ut = "unknown"
-	if UnitType.has_key(utype):
+	if utype in UnitType:
 		ut = UnitType[utype]
 	hd.model.set(iter, 0, "Flags (PgUnit)", 1, "0x%04X (%s)"%(flags,ut),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1493,7 +1493,7 @@ def SetPageXform (hd, value):
 	iter = hd.model.append(None, None)
 	flags = struct.unpack("<H",value[2:4])[0]
 	ut ="unknown"
-	if UnitType.has_key(flags):
+	if flags in UnitType:
 		ut = UnitType[flags]
 	hd.model.set(iter, 0, "Flags (UnitType)", 1, "0x%04X (%s)"%(flags,ut),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1515,7 +1515,7 @@ def SetClipRect (hd, value):
 	flags = struct.unpack("<H",value[2:4])[0]
 	combmode = (flags&0xF00)/256
 	cmt = "unknown"
-	if CombineMode.has_key(combmode):
+	if combmode in CombineMode:
 		cmt = CombineMode[combmode]
 	hd.model.set(iter, 0, "Flags (CM)", 1, "0x%04X (%02x (%s))"%(flags,combmode,cmt),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1529,7 +1529,7 @@ def SetClipPath (hd, value):
 	combmode = (flags&0xF00)/256
 	oid = ord(value[2])
 	cmt = "unknown"
-	if CombineMode.has_key(combmode):
+	if combmode in CombineMode:
 		cmt = CombineMode[combmode]
 	hd.model.set(iter, 0, "Flags (CM, PathID)", 1, "0x%04X (%02x (%s), %02x)"%(flags,combmode,cmt,oid),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)
@@ -1542,7 +1542,7 @@ def SetClipRgn (hd, value):
 	combmode = (flags&0xF00)/256
 	oid = ord(value[2])
 	cmt = "unknown"
-	if CombineMode.has_key(combmode):
+	if combmode in CombineMode:
 		cmt = CombineMode[combmode]
 	hd.model.set(iter, 0, "Flags (CM, RgnID)", 1, "0x%04X (%02x (%s), %02x)"%(flags,combmode,cmt,oid),2,2,3,2,4,"<H")
 	iter = hd.model.append(None, None)

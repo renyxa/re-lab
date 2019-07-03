@@ -236,7 +236,7 @@ ptg19 = {0x01:"PtgAttrSemi",0x02:"PtgAttrIf",0x04:"PtgAttrChoose",0x08:"PtgAttrG
 
 def parse_formula(hd, data, off):
         ptg_val = struct.unpack("B", data[off:off+1])[0]
-        if not ptg.has_key(ptg_val):
+        if ptg_val not in ptg:
                 print("Unknown PTG value in formula!")
                 print("Stop parsing formula")
                 return
@@ -355,7 +355,7 @@ def biff_lbl (hd,data):
 	add_iter (hd,"Name",lname,15+off,chKey,"txt")
 	# FIXME: parse the whole expression
 	pkey = ord(data[15+chKey+off])
-	if ptg.has_key(pkey):
+	if pkey in ptg:
 		ptg[pkey][1](hd,data,off+chKey+15)
 
 #0x31
@@ -367,16 +367,16 @@ def biff58_font (hd,data):
 	fontw = struct.unpack("<H",data[6+off:8+off])[0]
 	esc = struct.unpack("<H",data[8+off:0xa+off])[0]
 	et = ""
-	if escapement.has_key(esc):
+	if esc in escapement:
 		et = escapement[esc]
 	und = ord(data[0xa+off])
 	ut = ""
-	if underline.has_key(und):
+	if und in underline:
 		ut = underline[und]
 	fam = ord(data[0xb+off])
 	cset = ord(data[0xc+off])
 	cst = ""
-	if ms_charsets.has_key(cset):
+	if cset in ms_charsets:
 		cst = ms_charsets[cset]
 	fnlen = ord(data[0xe+off])
 	fname = data[0xf+off:0xf+fnlen+off]
@@ -951,37 +951,37 @@ def parse (page, data, parent):
 	lblidx = 1
 	iters = []
 	iters.append(parent)
-	print "Length of iters ",len(iters)
+	print("Length of iters ",len(iters))
 	curiter = iters[len(iters)-1]
 
 	try:
 		while offset < len(data) - 4:
 			rtype = struct.unpack("<H",data[offset:offset+2])[0]
 			if rtype == 0:
-				print "Break.",offset,len(data)
+				print("Break.",offset,len(data))
 				break
 			iter1 = page.model.append(curiter,None)
 			rname = ""
-			if rec_ids.has_key(rtype):
+			if rtype in rec_ids:
 				rname = rec_ids[rtype]
-			print rtype, rname, offset
+			print(rtype, rname, offset)
 			if rtype == 0x809:
 				iters.append(iter1)
 				curiter = iter1
 				ver = struct.unpack("<H",data[offset+4:offset+6])[0]
 				dt = struct.unpack("<H",data[offset+6:offset+8])[0]
-				if substream.has_key(dt):
+				if dt in substream:
 					rname = "BOF (%s)"%substream[dt]
 				else:
 					rname = "BOF (unknown)" 
 				if ver == 0x500:
 					ftype = "XLS5"
 					page.version = 5
-					print "Version: 5"
+					print("Version: 5")
 				elif ver == 0x600:
 					ftype = "XLS8"
 					page.version = 8
-					print "Version: 8"
+					print("Version: 8")
 			elif rtype == 10 or rtype == 0x1034:
 				iters.pop()
 				curiter = iters[len(iters)-1]
@@ -1010,14 +1010,14 @@ def parse (page, data, parent):
 				escher.parse (page.model,rdata[4:],iter1)
 			offset += rlen
 	except:
-		print "Something was wrong in XLS parse"
+		print("Something was wrong in XLS parse")
 
 	return ftype
 
 def collect_tree (model, parent, value=""):
 	for i in range(model.iter_n_children(parent)):
 		citer = model.iter_nth_child(parent, i)
-		print 'mname',model.get_value(citer,0)
+		print('mname',model.get_value(citer,0))
 
 		value += model.get_value(citer,3)
 		if model.iter_n_children(citer):

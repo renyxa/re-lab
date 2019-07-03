@@ -70,7 +70,7 @@ def symbolversion(page,rdata):
 def symbol5(hd,rdata):
 		#1,1,2-2,2-2-2-2,2,2,2,1-1-1-1,2,4,4)
 		(stype,flags,posx,posy,boxx,boxy,boxdx,boxdy,angle,xscale,yscale,color1,color2,color3,color4,handle,rnext,prev) =struct.unpack("<BBhhhhhhHHHBBBBHII",rdata[0:34])
-		if shapetypes.has_key(stype):
+		if stype in shapetypes:
 			shtype = shapetypes[stype]
 		else:
 			shtype = stype
@@ -130,10 +130,10 @@ def open (page,buf,parent,off=0):
 				else:
 					rdata = rdata + tv
 		rname = rtype
-		if rectypes.has_key(rtype):
+		if rtype in rectypes:
 			rname = rectypes[rtype]
 		else:
-			print "DRW: unknown record type",rtype
+			print("DRW: unknown record type",rtype)
 		if rtype == 4: # ID
 			rname += " [%s]"%rdata[:0x10]
 		if rtype == 7: # Symbol

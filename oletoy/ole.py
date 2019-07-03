@@ -61,8 +61,8 @@ def my_open (buf,page,parent=None):
 			os.write(tmpfd, buf)
 			os.close(tmpfd)
 		gsfout = subprocess.check_output(["gsf", "list", gsffilename])
-		print gsfout
-		print "-----------------"
+		print(gsfout)
+		print("-----------------")
 		for i in gsfout.split("\n")[1:-1]:
 			if i[0] == "f":
 				# gsf sometimes lists date even for files. Or, rather, it
@@ -185,7 +185,7 @@ def my_open (buf,page,parent=None):
 			vba.parse (page, vbadata, vbaiter)
 	
 	except subprocess.CalledProcessError:
-		print "Failed to run gsf. Please install libgsf."
+		print("Failed to run gsf. Please install libgsf.")
 
 	if tmpfile:
 		try: os.remove(tmpfile)
@@ -322,7 +322,7 @@ def suminfo(hd,data):
 	off += 4
 	if nps > 1:
 		off += 20 # skip 20 bytes of FMTID1/Offset1 for now
-		print "FMTID1 was skipped"
+		print("FMTID1 was skipped")
 	shift = off
 
 	ps0size = struct.unpack("<I",data[off:off+4])[0]
@@ -446,11 +446,11 @@ def gsf_get_children(page,infile,parent,ftype,dirflag=0):
 
 
 def ole_open (buf,page,iter=None):
-	print 'Open as OLE'
+	print('Open as OLE')
 	if iter:
-		print page.model.get_value(iter,0)
+		print(page.model.get_value(iter,0))
 	else:
-		print
+		print()
 	return ropen(buf,page,iter)
 
 
@@ -507,7 +507,7 @@ def cfb_dir (hd,data):
 	off += 2
 	objtype = ord(data[off])
 	objname = "%02x"%objtype
-	if objtype_ids.has_key(objtype):
+	if objtype in objtype_ids:
 		objname += " (%s)"%objtype_ids[objtype]
 	add_iter (hd,"Obj Type",objname,off,1,"<B")
 	off += 1
@@ -569,7 +569,7 @@ def dump_tree (model, path, parent, f):
 def save (page,fname):
 	model = page.model
 	f = open(fname,'wb')
-	print "ff",model
+	print("ff",model)
 	model.foreach (dump_tree, f)
 	f.close()
 
@@ -600,14 +600,14 @@ def take_chain(chains,idx):
 			else:
 				chain.append(idx)
 		except:
-			print "Failed in take_chain"
+			print("Failed in take_chain")
 			return chain
 
 # to debug libgsf, implement CFB
 def parse (buf,page,iter=None):
 	#check for signature again
 	if buf[:8] != "\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-		print "No OLE signature found"
+		print("No OLE signature found")
 		return
 
 	oiter = add_pgiter (page,"CFB","cfb",None,buf)
@@ -655,7 +655,7 @@ def parse (buf,page,iter=None):
 	i = 0
 	while off < len(buf):
 		sname = "Sector %02x"%i
-		if dirsec.has_key(i):
+		if i in dirsec:
 			sname += " (Dir)"
 			diriter = add_pgiter (page,sname,"cfb","",buf[off:off+hdrsize],oiter)
 			m1,m2 = parse_dir(page,buf[off:off+hdrsize],diriter)
@@ -666,14 +666,14 @@ def parse (buf,page,iter=None):
 				for j in mdatachain:
 					minidata[j] = "mdata"
 				
-		elif minidirsec.has_key(i):
+		elif i in minidirsec:
 			sname += " (MiniDir)"
 			add_pgiter (page,sname,"cfb","mdir",buf[off:off+hdrsize],oiter)
-		elif fatlist.has_key(i):
+		elif i in fatlist:
 			sname += " (FAT)"
 			add_pgiter (page,sname,"cfb","fat",buf[off:off+hdrsize],oiter)
 			chains += buf[off:off+hdrsize]
-		elif minidata.has_key(i):
+		elif i in minidata:
 			sname += " (MiniData)"
 			add_pgiter (page,sname,"cfb","mdata",buf[off:off+hdrsize],oiter)
 		else:

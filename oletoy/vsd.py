@@ -73,8 +73,8 @@ def parse (page, data, parent):
 
 		version = ord(data[ver_offset])
 		page.version = version
-		print "Version: %d"%version
-		print "Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0]
+		print("Version: %d"%version)
+		print("Size: %02x"%struct.unpack("<I",data[size_offset:size_offset+4])[0])
 		if version > 6:
 			lenhdr2 = 74
 		else:
@@ -120,7 +120,7 @@ def parse (page, data, parent):
 		try:
 			ptr_search (page, data, version, iter1)
 		except:
-			print "ptr_search failed in trailer"
+			print("ptr_search failed in trailer")
 
 def ptr_search (page, data, version, parent):
 		model = page.model
@@ -207,7 +207,7 @@ def ptr_search (page, data, version, parent):
 						childlist +=1
 				else:
 					idx = " %02x"%childlist
-					if streamtype.has_key (pntr.type):
+					if pntr.type in streamtype:
 							if pntr.type == 0x33:
 								idx = "%02x"%namelist
 								namelist += 1
@@ -225,7 +225,7 @@ def ptr_search (page, data, version, parent):
 							name2 = streamtype[pntr.type]
 					else:
 							childlist +=1
-							if vsdchunks.chunktype.has_key(pntr.type):
+							if pntr.type in vsdchunks.chunktype:
 								itername = vsdchunks.chunktype[pntr.type]+idx+'\t%04x'%(pntr.length)
 
 					if pntr.format&2 == 2 : #compressed
@@ -265,12 +265,12 @@ def ptr_search (page, data, version, parent):
 							try:
 								ptr_search (page, data, version, iter1)
 							except:
-								print "ptr_search failed in %02x"%pntr.type
+								print("ptr_search failed in %02x"%pntr.type)
 					if pntr.type == 0x16:
 							get_colors (page, res, version, iter1)
 					if pntr.format >>4 > 7:
 							vsdchunks.parse (page, version, iter1, pntr)
-					if version < 5 and vsdchunks.chunklist.has_key (pntr.type):
+					if version < 5 and pntr.type in vsdchunks.chunklist:
 							vsdchunks.v5parse (page, version, iter1, pntr)
 
 		if vbaflag == 1:
@@ -316,7 +316,7 @@ def collect_strD (model, parent):
 		value += model.get_value(miter,3)
 		value += collect_chunks (model,miter)
 	else:
-		print 'None iter?'
+		print('None iter?')
 	return value
 	
 

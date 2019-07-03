@@ -46,7 +46,7 @@ def StencilPage (hd, size, value):
 def Window (hd, size, value):
 	iter1 = hd.model.append(None, None)
 	[type] = struct.unpack("<I",value[6:10])
-	if win_types.has_key(type):
+	if type in win_types:
 		type = win_types[type]
 	else:
 		type = "%02x"%type

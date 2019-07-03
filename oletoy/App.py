@@ -130,12 +130,12 @@ class Page:
 		if buf[:4] == "\x12\x90\xa8\x7f":
 			nki.open(self,buf,parent)
 			return 0
-		
+
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
-			print 'Probably CDR',
+			print('Probably CDR')
 			cdr.cdr_open(buf,self, parent)
-			print self.version
+			print(self.version)
 			return 0
 
 		if buf[0:4] == "RIFF" and buf[8:11] == "CMX":
@@ -166,54 +166,54 @@ class Page:
 		if buf[0:4] == "\xd7\xcd\xc6\x9a":
 			self.type = "APWMF"
 			mf.mf_open(buf,self, parent)
-			print "Aldus Placeable WMF"
+			print("Aldus Placeable WMF")
 			return 0
 
 		if buf[0:8] == "\x4c\x00\x52\x00\x46\x00\x00\x00":
 			self.type = "LRF"
 			lrf.open(buf, self, parent)
-			print "LRF"
+			print("LRF")
 			return 0
 
 		if buf[0:6] == "\x01\x00\x09\x00\x00\x03":
 			self.type = "WMF"
-			print "Probably WMF"
+			print("Probably WMF")
 			mf.mf_open(buf,self, parent)
 			return 0
 
 		if buf[40:44] == "\x20\x45\x4d\x46":
 			self.type = "EMF"
-			print "Probably EMF"
+			print("Probably EMF")
 			mf.mf_open(buf,self, parent)
 			return 0
 
 		if buf[0:2] =="KF" and buf[2] != "\x00":
 			self.type = "CDW"
-			print "Probably CDW"
+			print("Probably CDW")
 			cdw.open(buf,self, parent)
 			return 0
 
 		if buf[0:4] == "CAT " and buf[0x8:0xc] == "REX2":
 			self.type = "REX2"
-			print "Probably REX2"
+			print("Probably REX2")
 			rx2.open(buf,self, parent)
 			return 0
-		
+
 		if buf[0:20] == "Kaydara FBX Binary  ":
 			self.type = "FBX"
-			print "Probably FBX"
+			print("Probably FBX")
 			fbx.open(buf,self, parent)
 			return 0
-		
+
 		if buf[4:19] == "Standard Jet DB" or buf[4:19] == "Standard ACE DB":
 			self.type = "MDB"
-			print "Probably MDB"
+			print("Probably MDB")
 			mdb.parse (buf,self, parent)
 			return 0
-		
+
 		if buf[0:4] == "\x50\x4b\x03\x04":
 			self.type = "PKZIP"
-			print "Probably PK-ZIP"
+			print("Probably PK-ZIP")
 			if f:
 				f.close()
 			pkzip.open (self.fname,self, parent)
@@ -222,25 +222,25 @@ class Page:
 		palmtype = buf[0x3c:0x44]
 		if palmtype in palm.palm_types.keys():
 			self.type = "PALM"
-			print "Probably Palm e-book"
+			print("Probably Palm e-book")
 			palm.open(buf, self, parent, palmtype)
 			return 0
 
 		if buf[2:10] == 'BOOKDOUG':
 			self.type = 'IMP'
-			print 'Probably SoftBook e-book'
+			print('Probably SoftBook e-book')
 			sbimp.open(buf, self, parent)
 			return 0
 
 		if buf[0:8] == 'ITOLITLS':
 			self.type = 'LIT'
-			print 'Probably LIT'
+			print('Probably LIT')
 			lit.open(buf,self,parent)
 			return 0
 
 		if buf[0:6] == 'bplist':
 			self.type = 'PLIST'
-			print 'Probably PLIST'
+			print('Probably PLIST')
 			plist.open(buf,self,parent)
 			return 0
 
@@ -250,22 +250,22 @@ class Page:
 			agd_ver = ord(buf[agd_off+3])
 			try:
 				self.type = "FH"
-				print "Probably Freehand"
+				print("Probably Freehand")
 				fh.fh_open(buf,self)
 				return 0
 			except:
-				print "Check for Freehand failed..."
+				print("Check for Freehand failed...")
 		elif fh_off != -1:
 			agd_off = buf.find('AGD')
 			if agd_off > fh_off:
 				agd_ver = ord(buf[agd_off+3])
 				try:
 					self.type = "FH"
-					print "Probably Freehand 9+"
+					print("Probably Freehand 9+")
 					fh.fh_open(buf,self, parent)
 					return 0
 				except:
-					print "Check for Freehand 9+ failed..."
+					print("Check for Freehand 9+ failed...")
 		if buf[0:4] == "FHD2" or buf[0:4] == "acf3":
 			self.type = "FH12"
 			fh12.fh_open(buf, self, parent, 0)
@@ -275,27 +275,27 @@ class Page:
 			if fh_off != -1:
 				try:
 					self.type = "FH"
-					print "Probably Freehand <5"
+					print("Probably Freehand <5")
 					fh.fh_open(buf, self, parent, 0)
 					return 0
 				except:
-					print "Check for Freehand <5 failed..."
+					print("Check for Freehand <5 failed...")
 		if buf[8:11] == 'xV4':
 			self.type = 'ZMF'
-			print 'Probably Zoner Draw 4+'
+			print('Probably Zoner Draw 4+')
 			zmf.zmf4_open(buf, self, parent)
 			return 0
 
 		# NOTE: 0x29a is 666 in decimal .-)
 		if buf[0:2] == '\x9a\x02' and buf[2:4] in ['\01\0', '\02\0', '\03\0', '\04\0']:
 			self.type = 'ZBR'
-			print 'Probably Zebra Metafile'
+			print('Probably Zebra Metafile')
 			zbr.open(buf, self, parent)
 			return 0
 
 		if buf[0:9] == 'ZonerBMIa':
 			self.type = 'BMI'
-			print 'Probably Zoner Bitmap'
+			print('Probably Zoner Bitmap')
 			bmi.open(buf, self, parent)
 			return 0
 
@@ -307,7 +307,7 @@ class Page:
 			print('Probably Apple iWork file')
 			iwa.open(buf, self, parent, self.subtype)
 			return 0
-			
+
 		if buf[0:0x17] == 'Software602\r\nCalc602 v.' and (buf[0x1c:0x24] == 'Tabulka\x1a' or buf[0x1c:0x21] == 'Graf\x1a'):
 			self.type = 'C602'
 			print('Probably C602 file')
@@ -336,10 +336,10 @@ class Page:
 				self.type = 'QXP5'
 				return 0
 			except:
-				print "Failed after attempt to parse as QXP1..."
+				print("Failed after attempt to parse as QXP1...")
 
 		if parent == None:
-			parent = add_pgiter(self, "File", "file","unknown",buf) 
+			parent = add_pgiter(self, "File", "file","unknown",buf)
 
 		# Likely false detection for DRW
 		if buf[0:3] == "\x01\xff\x02":
@@ -347,7 +347,7 @@ class Page:
 				drw.open(self,buf,parent)
 				self.model.set_value(parent, 0, "DRW")
 			except:
-				print "Failed after attempt to parse as DRW..."
+				print("Failed after attempt to parse as DRW...")
 		if buf[0:4] == "\xe7\xac\x2c\x00":
 			self.type = 'pub1'
 			print('Probably publisher 1 file')
@@ -410,4 +410,4 @@ class Page:
 				doc.hl[0] = (off,length,0.8,1,0.8,1)
 				doc.expose(None,None)
 			except:
-				print "Wrong address"
+				print("Wrong address")

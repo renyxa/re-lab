@@ -51,9 +51,9 @@ def _add_string(view, data, offset, name):
 def add_obj(view, data, offset, length):
 	(obj, off) = rdata(data, offset, '<H')
 	view.add_iter('Type', key2txt(obj, obj_names), off - 2, 2, '<H')
-	if obj_names.has_key(obj):
+	if obj in obj_names:
 		view.set_label(obj_names[obj])
-	if obj_handlers.has_key(obj):
+	if obj in obj_handlers:
 		off = obj_handlers[obj](view, data, off)
 	else:
 		off = offset + length

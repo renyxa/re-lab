@@ -193,7 +193,7 @@ def open (buf,page,piter):
 			add_pgiter (page, name, "CPT", "BlkOffN", buf[offset:offset+4], parent,"[%04x]"%offset)
 			offset += 8
 		except:
-			print "Something wrong with blocks array"
+			print("Something wrong with blocks array")
 	blk[blk_num] = len(buf)
 
 	for i in range(blk_num):
@@ -203,7 +203,7 @@ def open (buf,page,piter):
 			iter = add_pgiter (page, name, "CPT", "BlkN", buf[offset:blk[i+1]], parent,"[%04x]"%offset)
 			blk_hdr(page,buf[offset:blk[i+1]],offset,iter)
 		except:
-			print "Something wrong with block %d header"%i
+			print("Something wrong with block %d header"%i)
 
 	return "CPT"
 

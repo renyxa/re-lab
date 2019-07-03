@@ -327,7 +327,7 @@ def Line (hd, size, value, off = 19):
 	add_iter(hd,"EndArrow","%2x"%ord(value[off+26]),off+26,1,"B")
 	lc = ord(value[off+27])
 	lc_txt = "%2x "%lc
-	if linecaps.has_key(lc):
+	if lc in linecaps:
 		lc_txt += linecaps[lc]
 	add_iter(hd,"LineCap",lc_txt,off+27,1,"txt")
 	add_iter(hd,"BeginArrSize","%2x"%ord(value[off+28]),off+28,1,"B")
@@ -557,7 +557,7 @@ nd_types = {0x80:"Polyline",0x82:"NURBS"}
 def ShapeData (hd, size, value, off = 19):
 	nd_type = ord(value[off])
 	nd_str = "%02x "%nd_type
-	if nd_types.has_key(nd_type):
+	if nd_type in nd_types:
 		nd_str += "("+nd_types[nd_type]+")"
 	add_iter(hd,"Type",nd_str,off,1,"b")
 	if nd_type == 0x80:
@@ -720,7 +720,7 @@ def v5parse(page,version,parent,ptr):
 		chdata = data[choff:chend]
 		chend = choff
 		
-		if chunktype.has_key(chtype):
+		if chtype in chunktype:
 			name = '%-24s'%chunktype[chtype]+'(Len: %02x)'%len(chdata)
 		else:
 			name = "Unkn %02x"%chtype
@@ -761,7 +761,7 @@ def parse(page, version, parent, pntr):
 				[chnk.type] = struct.unpack('<L', pntr.data[offset:offset+4])
 				if chnk.type == 0:
 					# somehow failed with trailer?
-					print "HERE"
+					print("HERE")
 					offset+=4
 					[chnk.type] = struct.unpack('<L', pntr.data[offset:offset+4])
 
@@ -805,11 +805,11 @@ def parse(page, version, parent, pntr):
 			offset = offset + ch_hdr_len+ chnk.length+trailer
 
 			debflag = 0
-			if chunktype.has_key(chnk.type):
+			if chnk.type in chunktype:
 				itername = '%-24s'%chunktype[chnk.type]+'(IX: %02x  Len: %02x Lvl: %u)'%(chnk.IX, chnk.length,chnk.level)
 			else:
 				itername = 'Type: %02x \t\tI/L List/Level/u3: %02x/%02x  %02x %02x %02x'%(chnk.type,chnk.IX,chnk.length,chnk.list,chnk.level,chnk.unkn3)
-				print "!!! --------------- !!!",'%02x'%chnk.type,'%02x'%chnk.level,
+				print("!!! --------------- !!!",'%02x'%chnk.type,'%02x'%chnk.level, end=' ')
 				debflag = 1
 			if chnk.level ==0:
 				path = path0
@@ -832,9 +832,9 @@ def parse(page, version, parent, pntr):
 			model.set_value(iter1,4,ptr)
 			model.set_value(iter1,6,model.get_string_from_iter(iter1))
 			if debflag:
-				print model.get_string_from_iter(iter1)
+				print(model.get_string_from_iter(iter1))
 
-			if version < 6 and chunklist.has_key(chnk.type):
+			if version < 6 and chnk.type in chunklist:
 				v5parse(page,version,iter1,ptr)
 
 			if chnk.type == 0xc: # FrgnData

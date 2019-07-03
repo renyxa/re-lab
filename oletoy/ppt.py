@@ -265,7 +265,7 @@ def parse (page, data, parent):
 			rdata = data[offset-8:offset+rlen]
 			iter1 = page.model.append(parent,None)
 			rname = "%02x  ver %02x inst %02x"%(rtype,verinst&0xf,(verinst&0xFFF0)/0x10)
-			if rec_ids.has_key(rtype):
+			if rtype in rec_ids:
 				rname = rec_ids[rtype] + " ver %02x inst %02x"%(verinst&0xf,(verinst&0xFFF0)/0x10)
 			page.model.set_value(iter1,0,rname)
 			page.model.set_value(iter1,1,("ppt",rtype))
@@ -282,4 +282,4 @@ def parse (page, data, parent):
 				ole.open(uncompdata,page,iter1)
 			offset += rlen
 	except:
-		print "Failed in ppt parse"
+		print("Failed in ppt parse")

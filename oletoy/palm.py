@@ -500,7 +500,7 @@ palm_types = {
 }
 
 def open(buf, page, parent, palmtype):
-	if palm_types.has_key(palmtype):
+	if palmtype in palm_types:
 		parser = palm_types[palmtype]
 		if parser == None:
 			parser = generic_parser

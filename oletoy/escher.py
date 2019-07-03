@@ -338,7 +338,7 @@ def FSPGR (hd, size, value):
 def FSP (hd, size, value):
 	iter1 = hd.model.append(None, None)
 	shtype = struct.unpack("<H",value[0:2])[0]>>4
-	if msospt.has_key(shtype):
+	if shtype in msospt:
 		ntype = "%s (%02x)"%(msospt[shtype],shtype)
 	else:
 		ntype = "%02x"%shtype
@@ -473,7 +473,7 @@ def FOPT (hd, size, data):
 		opid = id&0x3fff
 		fbid = (id&0x4000)/0x4000
 		fcplx = (id&0x8000)/0x8000
-		if escher_opids.has_key(opid):
+		if opid in escher_opids:
 			opids = escher_opids[opid]
 		else:
 			opids = "undef_0x%02x"%opid
@@ -671,7 +671,7 @@ def parse (model,data,parent,doctype=""):
 
 			if newL > 0:
 				iter1 = model.append(parent,None)
-				if odraw_id_names.has_key(newT):
+				if newT in odraw_id_names:
 					name = odraw_id_names[newT]
 				else:
 					name = "%02x"%newT
@@ -702,5 +702,5 @@ def parse (model,data,parent,doctype=""):
 			else:
 				offset += 4
 	except:
-		print "Failed to parse Escher stream",len(data)
+		print("Failed to parse Escher stream",len(data))
 

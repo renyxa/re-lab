@@ -197,9 +197,9 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 			(obj, off) = rdata(data, off, '<I')
 			view.add_iter('Object type', key2txt(obj, zmf2_objects), off - 4, 4, '<I')
 			off += 4
-			if not handler and zmf2_handlers.has_key(int(obj)):
+			if not handler and int(obj) in zmf2_handlers:
 				handler = zmf2_handlers[int(obj)]
-			if zmf2_objects.has_key(int(obj)) and not name:
+			if int(obj) in zmf2_objects and not name:
 				name = '%s' % zmf2_objects[int(obj)]
 		elif typ == 4 and subtyp == 4:
 			off += 4
@@ -220,7 +220,7 @@ def _add_zmf2_object(view, data, offset, objname=None, parser=None):
 				name = '%s (%s)' % (name, ntext)
 				view.add_iter('Name?', ntext, off - nlen, nlen, '%ds' % nlen)
 		else:
-			print("object of unknown type (%d, %d) at %x" % (typ, subtyp, offset))
+			print(("object of unknown type (%d, %d) at %x" % (typ, subtyp, offset)))
 		if not name:
 			name = 'Unknown object'
 		view.set_label(name)
@@ -810,7 +810,7 @@ class ZMF4Parser(object):
 		(length, off) = rdata(data, start, '<I')
 		(typ, off) = rdata(data, off, '<H')
 		if start + length <= len(data):
-			if zmf4_handlers.has_key(int(typ)):
+			if int(typ) in zmf4_handlers:
 				(handler, callback) = zmf4_handlers[int(typ)]
 				return handler(self, data, start, length, parent, typ, callback)
 			else:
@@ -818,7 +818,7 @@ class ZMF4Parser(object):
 				return start + length
 
 	def _do_parse_object(self, data, parent, typ, callback):
-		if zmf4_objects.has_key(typ):
+		if typ in zmf4_objects:
 			obj = zmf4_objects[typ]
 		else:
 			obj = 'Unknown object 0x%x' % typ
@@ -918,7 +918,7 @@ def _zmf4_obj_header(hd, size, data):
 	(size, off) = rdata(data, 0, '<I')
 	add_iter(hd, 'Size', size, off - 4, 4, '<I', parent=header_iter)
 	(typ, off) = rdata(data, off, '<H')
-	if zmf4_objects.has_key(typ):
+	if typ in zmf4_objects:
 		obj = zmf4_objects[typ]
 	else:
 		obj = 'Unknown object 0x%x' % typ
@@ -1029,7 +1029,7 @@ def add_zmf4_obj(parser=None):
 	def add_object(hd, size, data):
 		(off, typ, version, count, refs, types) = _zmf4_obj_header(hd, size, data)
 		parser(hd, size, data, off, version)
-		if zmf4_object_refs.has_key(typ):
+		if typ in zmf4_object_refs:
 			type_map = zmf4_object_refs[typ]
 		else:
 			type_map = {}
@@ -1542,7 +1542,7 @@ def zmf2_open(page, data, parent, fname):
 	if fname == 'Header':
 		update_pgiter_type(page, 'zmf2', 'header', parent)
 		(page.version, off) = rdata(data, 0xa, '<H')
-	elif file_map.has_key(fname):
+	elif fname in file_map:
 		if data != None:
 			file_map[fname](page, data, parent)
 

@@ -82,7 +82,7 @@ class ApplicationMainWindow(gtk.Window):
 		try:
 			mergeid = merge.add_ui_from_string(ui_info)
 		except gobject.GError, msg:
-			print "building menus failed: %s" % msg
+			print("building menus failed: %s" % msg)
 		bar = merge.get_widget("/MenuBar")
 		bar.show()
 
@@ -147,7 +147,7 @@ class ApplicationMainWindow(gtk.Window):
 		try:
 			execfile("options.cfg")
 		except:
-			print "Options config not loaded"
+			print("Options config not loaded")
 		self.run_win = None
 
 		if len(sys.argv) > 1:
@@ -266,7 +266,7 @@ class ApplicationMainWindow(gtk.Window):
 				else:
 					self.ok_btn.set_sensitive(True)
 			except:
-				print "Incorrect value for length"
+				print("Incorrect value for length")
 
 	def on_opt_btn_clicked(self,action,name):
 		if name == "OK":
@@ -347,7 +347,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.calc_status(self.statbuffer,len(self.statbuffer))
 		except:
 			entry.set_text(self.options_enc)
-		print "Enc set to",self.options_enc
+		print("Enc set to",self.options_enc)
 
 	def on_div_entry_activate (self,entry):
 		n = entry.get_text()
@@ -357,7 +357,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.calc_status(self.statbuffer,len(self.statbuffer))
 		except:
 			entry.set_text("%.2f"%self.options_div)
-		print "Div set to",self.options_div
+		print("Div set to",self.options_div)
 
 	def on_option_toggled (self,button):
 		lt = button.get_label()
@@ -397,7 +397,7 @@ class ApplicationMainWindow(gtk.Window):
 			f.write("self.options_htmlhdr = %s\n"%self.options_htmlhdr)
 			f.close()
 		except:
-			print "Failed to save options"
+			print("Failed to save options")
 
 	def activate_options (self, action):
 		if self.options_win != None:
@@ -549,13 +549,13 @@ class ApplicationMainWindow(gtk.Window):
 
 
 	def activate_reload(self, action):
-		print "Reload: not implemented yet"
+		print("Reload: not implemented yet")
 
 	def on_lbl_press (self, view, event,label):
 		if event.type == gtk.gdk._2BUTTON_PRESS:
-			print "will edit the label"
+			print("will edit the label")
 		else:
-			print label.get_selection_bounds()
+			print(label.get_selection_bounds())
 
 
 	def rlp_unpack(self,buf,off):
@@ -584,7 +584,7 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open()
 		else:
 			fname = 'Clipboard'
-		print fname
+		print(fname)
 		if fname:
 			lines = []
 			comments = {}
@@ -592,13 +592,13 @@ class ApplicationMainWindow(gtk.Window):
 				f = open(fname,"rb")
 				rbuf = f.read()
 				if rbuf[:9] == "RE-LABv05":
-					print 'Re-Lab project file'
+					print('Re-Lab project file')
 					# skip "signature"
 					off = 35
 					k = ""
 					while k != "Num of lines":
 						off,k,v = self.rlp_unpack(rbuf,off)
-						print k,v
+						print(k,v)
 					for i in range(v):
 						l = struct.unpack("<I",rbuf[off:off+4])[0]
 						off += 4
@@ -608,7 +608,7 @@ class ApplicationMainWindow(gtk.Window):
 					
 					while k != "Num of comments":
 						off,k,v = self.rlp_unpack(rbuf,off)
-						print k,v
+						print(k,v)
 					for i in range(v):
 						tl = ord(rbuf[off])
 						off += 1
@@ -626,10 +626,10 @@ class ApplicationMainWindow(gtk.Window):
 						comments[coff] = hexview.Comment(txt,coff,clen,(clr0,clr1,clr2),ct)
 					while k != "Data BLOB":
 						off,k,v = self.rlp_unpack(rbuf,off)
-						print k,v
+						print(k,v)
 					buf = rbuf[off:]
 				elif fname[len(fname)-3:] == "rlp":
-					print 'Probably old Re-Lab project file'
+					print('Probably old Re-Lab project file')
 					llen = struct.unpack("<I",rbuf[0:4])[0]
 					clen = struct.unpack("<I",rbuf[4:8])[0]
 					off = 8
@@ -823,7 +823,7 @@ class ApplicationMainWindow(gtk.Window):
 
 					elif mpos == len(cmdline)-1:
 						# repeat wrapping till end
-						print "Rpt to end"
+						print("Rpt to end")
 						cmd = cmdline[4:mpos].split()
 						cmdacc = 0
 						rpt = 0
@@ -855,7 +855,7 @@ class ApplicationMainWindow(gtk.Window):
 							rpt = 1+(doc.lines[len(doc.lines)-1][0]-doc.lines[doc.curr][0])/cmdacc
 
 						#repeat wrapping last arg times
-						print "Rpt",rpt,"times",cmd
+						print("Rpt",rpt,"times",cmd)
 						for i in range(rpt):
 							doc.fmt_row(doc.curr+i*len(cmd),cmd)
 
@@ -888,22 +888,22 @@ class ApplicationMainWindow(gtk.Window):
 										addr = int(goto[1:pos],16)-int(goto[pos+1:],16)
 								else:
 									addr = int(goto[1:], 16)
-							print "Addr: ",addr
+							print("Addr: ",addr)
 						except:
-							print "Wrong string for Hex address"
+							print("Wrong string for Hex address")
 					elif doc.sel:
 						if len(data) <4:
 							dstr = data + "\x00"*(4-len(data[:4]))
 						else:
 							dstr = data[:4]
 						addr = struct.unpack("<I",dstr)
-						print "Addr sel: %04x"%addr
+						print("Addr sel: %04x"%addr)
 					
 					# try to validate/scroll
 					llast = len(doc.lines)
 					if addr < doc.lines[len(doc.lines)-1][0]:
 						lnum = utils.find_line(doc,addr)
-						print "Lnum found",lnum,"%x %x"%(doc.lines[lnum][0],doc.lines[lnum+1][0])
+						print("Lnum found",lnum,"%x %x"%(doc.lines[lnum][0],doc.lines[lnum+1][0]))
 						if addrflag == 0:
 							self.entry.set_text("goto %x"%addr)
 						doc.curr = lnum
@@ -912,7 +912,7 @@ class ApplicationMainWindow(gtk.Window):
 						doc.offset = doc.lines[lnum][0]
 
 					else:
-						print "Address after end of file"
+						print("Address after end of file")
 						doc.offnum = llast-doc.numtl
 						doc.offset = doc.lines[llast-1][0]
 					doc.vadj.value = doc.offnum
@@ -941,7 +941,7 @@ class ApplicationMainWindow(gtk.Window):
 						doc.insert_comment2(text,off,clen)
 						doc.expose(doc.hv,action)
 					except:
-						print "Wrong args",sys.exc_info()
+						print("Wrong args",sys.exc_info())
 				elif cmdline.lower() == "dump":
 					fname = self.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE)
 					if fname:
@@ -949,7 +949,7 @@ class ApplicationMainWindow(gtk.Window):
 						f.write(doc.data)
 						f.close()
 					else:
-						print "Nothing to save"
+						print("Nothing to save")
 				elif cmd[0].lower() == "html":
 					off = -1
 					try:
@@ -962,7 +962,7 @@ class ApplicationMainWindow(gtk.Window):
 							if addr < off:
 								clen += off - addr
 					except:
-						print "Something wrong with arguments",sys.exc_info()
+						print("Something wrong with arguments",sys.exc_info())
 					if off == -1:
 						lnum = 0
 						clen = len(doc.data)
@@ -985,7 +985,7 @@ class ApplicationMainWindow(gtk.Window):
 								lnum = utils.find_line (doc,addr)
 								cnum = addr - doc.lines[lnum][0]
 							except:
-								print "Invalid offset"
+								print("Invalid offset")
 						else:
 							arg = cmdline[1:]
 							try:
@@ -993,7 +993,7 @@ class ApplicationMainWindow(gtk.Window):
 								lnum = utils.find_line (doc,addr)
 								cnum = addr - doc.lines[lnum][0]
 							except:
-								print "Invalid offset"
+								print("Invalid offset")
 					else:
 						lnum = doc.curr
 						cnum = doc.curc
@@ -1059,7 +1059,7 @@ class ApplicationMainWindow(gtk.Window):
 				data += struct.pack("B",int(i,16))
 			self.activate_open(None,data)
 		except:
-			print "Not a copy of hexdump"
+			print("Not a copy of hexdump")
 
 
 	def open_cli(self):
@@ -1083,7 +1083,7 @@ class ApplicationMainWindow(gtk.Window):
 				pn = self.notebook.get_current_page()
 				if pn != -1:
 					doc = self.das[pn]
-					if doc.okp.has_key(event.keyval):
+					if event.keyval in doc.okp:
 						doc.on_key_press(None,event)
 						return True
 		elif len(self.cmdhistory) > 0:

@@ -138,7 +138,7 @@ class ApplicationMainWindow(gtk.Window):
 		try:
 			mergeid = merge.add_ui_from_string(ui_info)
 		except gobject.GError, msg:
-			print "building menus failed: %s" % msg
+			print("building menus failed: %s" % msg)
 		bar = merge.get_widget("/MenuBar")
 		bar.show()
 
@@ -209,7 +209,7 @@ class ApplicationMainWindow(gtk.Window):
 		try:
 			self.cgsf = ctypes.cdll.LoadLibrary(self.gsfname)
 		except:
-			print "Libgsf-1 was not found, do not try to open OLE-based files."
+			print("Libgsf-1 was not found, do not try to open OLE-based files.")
 
 
 		if len(sys.argv) > 1:
@@ -229,7 +229,7 @@ class ApplicationMainWindow(gtk.Window):
 
 		try:
 			execfile("oletoy.cfg")
-			print 'Config loaded...'
+			print('Config loaded...')
 		except:
 			pass
 
@@ -459,7 +459,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.calc_status(self.statbuffer,len(self.statbuffer))
 		except:
 			entry.set_text(self.options_enc)
-		print "Enc set to",self.options_enc
+		print("Enc set to",self.options_enc)
 
 	def on_div_entry_activate (self,entry):
 		n = entry.get_text()
@@ -469,7 +469,7 @@ class ApplicationMainWindow(gtk.Window):
 				self.calc_status(self.statbuffer,len(self.statbuffer))
 		except:
 			entry.set_text("%.2f"%self.options_div)
-		print "Div set to",self.options_div
+		print("Div set to",self.options_div)
 
 	def on_option_toggled (self,button):
 		lt = button.get_label()
@@ -718,7 +718,7 @@ class ApplicationMainWindow(gtk.Window):
 			size = model.get_value(iter1,2)+1
 			model.set_value(iter1,3,value[:2]+struct.pack("<H",size)+value[4:3+size]+'\x00')
 		else:
-			print 'Type',type
+			print('Type',type)
 			return
 		model.set_value(iter1,2,size)
 
@@ -758,7 +758,7 @@ class ApplicationMainWindow(gtk.Window):
 					f.write(value)
 					f.close()
 				else:
-					print "Nothing to save"
+					print("Nothing to save")
 
 
 	def on_dict_row_activated(self, view, path, column):
@@ -805,7 +805,7 @@ class ApplicationMainWindow(gtk.Window):
 					model.set_value(iter1,3,struct.pack("<I",type)+struct.pack("<I",size)+"\x00"*(size-8))
 					model.set_value(iter1,6,model.get_string_from_iter(iter1))
 					self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
-					print "Insert:",rname,size
+					print("Insert:",rname,size)
 
 		elif self.das[pn].type == "APWMF" or self.das[pn].type == "WMF":
 			if type != -1:
@@ -826,13 +826,13 @@ class ApplicationMainWindow(gtk.Window):
 					model.set_value(iter1,3,struct.pack("<I",size/2)+struct.pack("<H",type)+"\x00"*(size-6))
 				model.set_value(iter1,6,model.get_string_from_iter(iter1))
 				self.das[pn].view.set_cursor_on_cell(model.get_string_from_iter(iter1))
-				print "Insert:",rname,size
+				print("Insert:",rname,size)
 
 	def activate_save (self, action):
 		pn = self.notebook.get_current_page()
 		ftype = self.das[pn].type
 		fname = self.das[pn].fname
-		print ftype
+		print(ftype)
 		if  ftype == "WMF" or ftype  == "APWMF" or ftype  == "EMF" or ftype == "SVM":
 			fname = self.file_open('Save',None,None,fname)
 			if fname:
@@ -1095,12 +1095,12 @@ class ApplicationMainWindow(gtk.Window):
 				if val[0] == "path" and val[1] != None:
 					pn = self.notebook.get_current_page()
 					dm = self.das[pn].dictmod
-					print "Go to iter:",val[1]
+					print("Go to iter:",val[1])
 					try:
 						self.das[pn].view.expand_to_path(val[1])
 						self.das[pn].view.set_cursor_on_cell(val[1])
 					except:
-						print "No such path"
+						print("No such path")
 			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65363:
 				pn = self.notebook.get_current_page()
 				ha = self.das[pn].scrolled.get_hadjustment()
@@ -1113,19 +1113,19 @@ class ApplicationMainWindow(gtk.Window):
 						self.das[pn].view.expand_to_path(goto)
 						self.das[pn].view.set_cursor_on_cell(goto)
 					except:
-						print "No such path"
+						print("No such path")
 			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65288:
 				pn = self.notebook.get_current_page()
 				goto = self.das[pn].backpath
 				if goto != None:
-					print goto
+					print(goto)
 					try:
 						self.das[pn].view.expand_to_path(goto)
 						self.das[pn].view.set_cursor_on_cell(goto)
 						self.das[pn].view.row_activated(goto,self.das[pn].view.get_column(0))
 
 					except:
-						print "No such path for back path"
+						print("No such path for back path")
 
 
 
@@ -1151,7 +1151,7 @@ class ApplicationMainWindow(gtk.Window):
 									self.das[pn].view.expand_to_path(goto)
 									self.das[pn].view.set_cursor_on_cell(goto)
 								except:
-									print "No such path"
+									print("No such path")
 					elif val[0] == "fh goto":
 						pn = self.notebook.get_current_page()
 						itr = self.das[pn].model.iter_nth_child(self.das[pn].diter,val[1])
@@ -1165,7 +1165,7 @@ class ApplicationMainWindow(gtk.Window):
 							self.das[pn].view.set_cursor_on_cell(mpath)
 							self.das[pn].view.row_activated(mpath,self.das[pn].view.get_column(0))
 						except:
-							print "No such path"
+							print("No such path")
 						 
 				elif model.iter_n_children(iter1)>0:
 					intPath = model.get_path(iter1)
@@ -1316,7 +1316,7 @@ class ApplicationMainWindow(gtk.Window):
 			try:
 				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
-				print sys.exc_info()
+				print(sys.exc_info())
 
 		if ftype == "IWA":
 			try:
@@ -1438,7 +1438,7 @@ class ApplicationMainWindow(gtk.Window):
 			if result == gtk.RESPONSE_YES:
 				model.set_value(hd.hv.iter,3,hd.hv.data)
 			elif result == gtk.RESPONSE_NO:
-				print "Changes discarded"
+				print("Changes discarded")
 
 		if data != None:
 			hd.hv.modified = 0
@@ -1514,14 +1514,14 @@ class ApplicationMainWindow(gtk.Window):
 							hditer1 = hd.model.iter_next(hditer1)
 						hd.hv.expose(None,None)
 				if ntype[0] == "drw":
-					if drw.recfuncs.has_key(ntype[1]):
+					if ntype[1] in drw.recfuncs:
 						drw.recfuncs[ntype[1]](hd, data, page)
 				if ntype[0] == "escher":
 					if ntype[1] == "odraw":
-						if escher.odraw_ids.has_key(ntype[2]):
+						if ntype[2] in escher.odraw_ids:
 							escher.odraw_ids[ntype[2]](hd, size, data)
 				elif ntype[0] == "quill":
-					if quill.sub_ids.has_key(ntype[1]):
+					if ntype[1] in quill.sub_ids:
 						quill.sub_ids[ntype[1]](hd, size, data)
 				elif ntype[0][:4] == "vsd2":
 					off = 19
@@ -1531,121 +1531,121 @@ class ApplicationMainWindow(gtk.Window):
 						vsdchunks.chnk_func[ntype[1]](hd, size, data,off)
 				elif ntype[0] == "vsd":
 					if ntype[1] == "chnk":
-						if vsdchunks.chnk_func.has_key(ntype[2]):
+						if ntype[2] in vsdchunks.chnk_func:
 							vsdchunks.chnk_func[ntype[2]](hd, size, data)
 					elif ntype[1] == "str4":
-						if vsdstream4.stream_func.has_key(ntype[2]):
+						if ntype[2] in vsdstream4.stream_func:
 							vsdstream4.stream_func[ntype[2]](hd, size, data)
 					elif ntype[1] == "hdr":
 						vsd.hdr(hd,data)
 				elif ntype[0][:4] == "vsdv" and ntype[1][:4] == "chnk":
-						if vsdchunks5.chnk_func.has_key(int(ntype[1][5:])):
+						if int(ntype[1][5:]) in vsdchunks5.chnk_func:
 							vsdchunks5.chnk_func[int(ntype[1][5:])](hd, size, data)
 				elif ntype[0] == "vba" and ntype[1] == "dir":
 					vba.vba_dir(hd,data)
 				elif ntype[0] == "vba" and ntype[1] == "src":
 					vba.vba_src(hd,data)
 				elif ntype[0] == "ppp":
-					if ppp.ppp_ids.has_key(ntype[1]):
+					if ntype[1] in ppp.ppp_ids:
 						ppp.ppp_ids[ntype[1]](hd,size,data,page)
 				elif ntype[0] == "emf":
-					if emfparse.emr_ids.has_key(ntype[1]):
+					if ntype[1] in emfparse.emr_ids:
 						emfparse.emr_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "wmf":
-					if wmfparse.wmr_ids.has_key(ntype[1]):
+					if ntype[1] in wmfparse.wmr_ids:
 						wmfparse.wmr_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "svm":
-					if svm.svm_ids.has_key(ntype[1]):
+					if ntype[1] in svm.svm_ids:
 						svm.svm_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cmx":
-					if cmx.cmx_ids.has_key(ntype[1]):
+					if ntype[1] in cmx.cmx_ids:
 						cmx.cmx_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "cdr":
-					if cdr.cdr_ids.has_key(ntype[1]):
+					if ntype[1] in cdr.cdr_ids:
 						if ntype[1] == 'DISP':
 							cdr.cdr_ids[ntype[1]](hd,size,data,page)
 						else:
 							cdr.cdr_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "wld":
-					if wld.wld_ids.has_key(ntype[1]):
+					if ntype[1] in wld.wld_ids:
 							wld.wld_ids[ntype[1]](hd,size,data)
 				elif ntype[0][0:3] == "pub":
 					if page.appcontentdoc != None:
-						if page.appcontentdoc.pub98_ids.has_key(ntype[1]):
+						if ntype[1] in page.appcontentdoc.pub98_ids:
 							page.appcontentdoc.pub98_ids[ntype[1]](hd,size,data)
 				elif ntype[0] == "lrf":
-					if lrf.lrf_ids.has_key(ntype[1]):
+					if ntype[1] in lrf.lrf_ids:
 						lrf.lrf_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "wls":
-					if wls.wls_ids.has_key(ntype[1]):
+					if ntype[1] in wls.wls_ids:
 						wls.wls_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "wt602":
-					if wt602.wt602_ids.has_key(ntype[1]):
+					if ntype[1] in wt602.wt602_ids:
 						wt602.wt602_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "c602":
-					if c602.c602_ids.has_key(ntype[1]):
+					if ntype[1] in c602.c602_ids:
 						c602.c602_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "t602":
-					if t602.ids.has_key(ntype[1]):
+					if ntype[1] in t602.ids:
 						t602.ids[ntype[1]](hd, size, data)
 				elif ntype[0] == 'imp':
-					if sbimp.imp_ids.has_key(ntype[1]):
+					if ntype[1] in sbimp.imp_ids:
 						sbimp.imp_ids[ntype[1]](hd, size, data)
 				elif	ntype[0] == "emf+":
-					if emfplus.emfplus_ids.has_key(ntype[1]):
+					if ntype[1] in emfplus.emfplus_ids:
 						emfplus.emfplus_ids[ntype[1]](hd,data)
 				elif ntype[0] == "xls":
-					if xls.biff5_ids.has_key(ntype[1]):
+					if ntype[1] in xls.biff5_ids:
 						xls.biff5_ids[ntype[1]](hd,data)
 				elif ntype[0] == "doc":
-					if doc.recs.has_key(ntype[1]):
+					if ntype[1] in doc.recs:
 						doc.recs[ntype[1]](hd,data)
 				elif ntype[0] == "mdb":
-					if mdb.rec_ids.has_key(ntype[1]):
+					if ntype[1] in mdb.rec_ids:
 						mdb.rec_ids[ntype[1]](hd,data)
 				elif	ntype[0] == "cfb":
-					if ole.cfb_ids.has_key(ntype[1]):
+					if ntype[1] in ole.cfb_ids:
 						ole.cfb_ids[ntype[1]](hd,data)
 				elif ntype[0] == "rx2":
-					if rx2.rx2_ids.has_key(ntype[1]):
+					if ntype[1] in rx2.rx2_ids:
 						rx2.rx2_ids[ntype[1]](hd,data)
 				elif ntype[0] == "palm":
-					if palm.palm_ids.has_key(ntype[1]):
+					if ntype[1] in palm.palm_ids:
 						palm.palm_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "pm":
-					if pm6.hd_ids.has_key(ntype[1]):
+					if ntype[1] in pm6.hd_ids:
 						pm6.hd_ids[ntype[1]](hd,data,page)
 				elif ntype[0] == "fh":
-					if fh.hdp.has_key(ntype[1]):
+					if ntype[1] in fh.hdp:
 						fh.hdp[ntype[1]](hd,data,page)
 				elif ntype[0] == "fh12":
-					if fh12.fh12_ids.has_key(ntype[1]):
+					if ntype[1] in fh12.fh12_ids:
 						fh12.fh12_ids[ntype[1]](hd,size,data,ntype[1])
 				elif ntype[0] == "zmf2":
 					if isinstance(ntype[1], tuple):
 						view = uniview.HdView(hd, None, ntype[1][1])
 						ntype[1][0](view, data, 0, size)
-					elif zmf.zmf2_ids.has_key(ntype[1]):
+					elif ntype[1] in zmf.zmf2_ids:
 						zmf.zmf2_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "zmf4":
-					if zmf.zmf4_ids.has_key(ntype[1]):
+					if ntype[1] in zmf.zmf4_ids:
 						zmf.zmf4_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "zbr":
 					if isinstance(ntype[1], tuple):
 						view = uniview.HdView(hd, None, ntype[1][1])
 						ntype[1][0](view, data, 0, size)
-					elif zbr.zbr_ids.has_key(ntype[1]):
+					elif ntype[1] in zbr.zbr_ids:
 						zbr.zbr_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "iwa":
-					if iwa.iwa_ids.has_key(ntype[1]):
+					if ntype[1] in iwa.iwa_ids:
 						iwa.iwa_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "plist":
-					if plist.plist_ids.has_key(ntype[1]):
+					if ntype[1] in plist.plist_ids:
 						plist.plist_ids[ntype[1]](hd, size, data)
 				elif ntype[0] == "bmi":
 					if callable(ntype[1]):
 						ntype[1](hd, size, data)
-					elif bmi.bmi_ids.has_key(ntype[1]):
+					elif ntype[1] in bmi.bmi_ids:
 						bmi.bmi_ids[ntype[1]](hd, size, data)
 				elif ntype[0][0:3] == "qxp":
 					qxp.call(hd, size, data, ntype[0], ntype[1])
@@ -1655,7 +1655,7 @@ class ApplicationMainWindow(gtk.Window):
 					ole.suminfo(hd,data)
 
 	def tab_button_clicked(self, button):
-		print 'Close tab clicked',button.get_parent().get_parent()
+		print('Close tab clicked',button.get_parent().get_parent())
 
 	def activate_new (self,parent=None):
 		doc = App.Page()
@@ -1690,11 +1690,11 @@ class ApplicationMainWindow(gtk.Window):
 		if iter1 and self.das[pn].type == "FH":
 			par = model.iter_parent(iter1)
 			start,off = model.get_value(iter1,4)
-			print "Reloading FH from %02x ..."%off
+			print("Reloading FH from %02x ..."%off)
 			r = model.remove(iter1)
 			while r:
 				r = model.remove(iter1)
-			print "Iters removed"
+			print("Iters removed")
 
 			fho = page.appdoc
 			fhn = fh.FHDoc(fho.data,fho.page,fho.iter)
@@ -1708,7 +1708,7 @@ class ApplicationMainWindow(gtk.Window):
 			del(fho)
 		else:
 			fname = self.das[pn].fname
-			print "Reloading ",fname
+			print("Reloading ",fname)
 			model.clear()
 			self.das[pn].fload()
 		if iter1:
@@ -1735,7 +1735,7 @@ class ApplicationMainWindow(gtk.Window):
 		else:
 			fname = self.file_open()
 		if fname:
-			print fname
+			print(fname)
 			manager = gtk.recent_manager_get_default()
 			manager.add_item(fname)
 			doc = App.Page()
@@ -1774,7 +1774,7 @@ class ApplicationMainWindow(gtk.Window):
 					li = self.cbm.append()
 					self.cbm.set_value(li,0,"%s (tab %s)"%(doc.pname,dnum))
 			else:
-				print err
+				print(err)
 		return
 
 	def file_open (self, title='Open', parent=None, dirname=None, fname=""):
