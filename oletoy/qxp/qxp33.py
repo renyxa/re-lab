@@ -279,7 +279,10 @@ def add_frame(hd, data, offset, fmt):
 def add_gradient(hd, data, offset, fmt):
 	off = offset
 	gr_iter = add_iter(hd, 'Gradient', '', off, 34, '%ds' % 34)
-	off += 10
+        (gradient_length, off) = rdata(data, off, fmt('I')) 
+	add_iter(hd, 'length', gradient_length, off - 4, 4, fmt('I'))
+        endOffset=off+gradient_length
+	off += 6
 	(xt, off) = rdata(data, off, '4s')
 	add_iter(hd, 'Extension mark?', 'Cool Blends XTension' if xt == 'QXCB' else xt, off - 4, 4, '4s', parent=gr_iter)
 	(typ, off) = rdata(data, off, fmt('H'))
@@ -294,7 +297,7 @@ def add_gradient(hd, data, offset, fmt):
 	(angle, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Angle', '%.2f deg' % angle, off - 4, 4, fmt('i'), parent=gr_iter)
 	off += 4
-	return off
+	return endOffset
 
 def add_bezier_data(hd, data, offset, fmt, name='Bezier data'):
 	off = offset
@@ -381,12 +384,13 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	hd.model.set(header.content_iter, 0, "Picture block?")
 	off = add_frame(hd, data, off, fmt)
 	off = add_dim(hd, off + 4, data, off, fmt, 'Runaround %s' % ('top' if header.shape == 2 else 'outset'))
+        
 	if version >= VERSION_3_3:
 		(rid, off) = rdata(data, off, fmt('I'))
 		add_iter(hd, 'Runaround ID', hex(rid), off - 4, 4, fmt('I'))
 		off += 2
-		(cid, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Clip ID?', hex(cid), off - 4, 4, fmt('I'))
+		(fid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'FileInfo ID', hex(fid), off - 4, 4, fmt('I'))
 		off += 14
 	else:
 		rid = 0
@@ -402,7 +406,10 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 			off += 1
 		else:
 			off += 5
-		off += 15
+                off += 1
+		(fid, off) = rdata(data, off, fmt('I'))
+		add_iter(hd, 'FileInfo ID', hex(fid), off - 4, 4, fmt('I'))
+		off += 14
 	(pic_rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
 	(pic_skew, off) = rfract(data, off, fmt)
@@ -412,18 +419,24 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header):
 	# scale values are different when picture is not empty, not sure why
 	off = add_fract_perc(hd, data, off, fmt, 'Scale accross')
 	off = add_fract_perc(hd, data, off, fmt, 'Scale down')
-	off += 21
-	(flags, off) = rdata(data, off, fmt('B'))
-	add_iter(hd, 'Picture flags', bflag2txt(flags, picture_flags_map), off - 1, 1, fmt('B'))
-	off += 8
+        off += 21
+        (flags, off) = rdata(data, off, fmt('B'))
+        add_iter(hd, 'Picture flags', bflag2txt(flags, picture_flags_map), off - 1, 1, fmt('B'))
+	(uid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'UnknownId',"%x"%uid, off - 4, 4, fmt('I'))
+	off += 4
 	if header.shape == 5:
 		off = add_bezier_data(hd, data, off, fmt)
-	if header.content_index != 0:
+	if fid != 0:
 		off = add_file_info(hd, data, off, fmt)
 	if rid != 0:
 		off = add_runaround(hd, data, off, fmt)
-		if cid != 0:
-			off = add_bezier_data(hd, data, off, fmt, 'Clip path')
+        if uid != 0:
+	        (length, off) = rdata(data, off, fmt('I'))
+	        add_iter(hd, 'Unknown data length', length, off - 4, 4, fmt('I'))
+	        off += length
+		#if cid != 0:
+		#	off = add_bezier_data(hd, data, off, fmt, 'Clip path')
 	return off
 
 def add_empty_box(hd, data, offset, fmt, version, obfctx, header):
@@ -523,13 +536,18 @@ def handle_page(page, data, offset, parent, fmt, version, index, master):
 	elif settings_blocks_count == 2:
 		off = _add_settings('Left page settings', off)
 		off = _add_settings('Right page settings', off)
-	for i in range(0, settings_blocks_count + 1):
+	for i in range(0, 2*settings_blocks_count + 2 + (1 if fmt() == LITTLE_ENDIAN else 0)):
+                # for each blocks in range(settings_blocks_count+1):
+                #      'Data%d'%(2*i) often empty ie sz=4, 'Data%d'%(2*i+1) often empty ie sz=0,
+                #       but not always(search for 4PAN1T.E1.qxd)
+                # windows file are followed by 4 bytes: unsure if this is also a data block or a int
 		(length, off) = rdata(data, off, fmt('I'))
-		add_iter(hd, 'Length?', length, off - 4, 4, fmt('I'))
+                if length==0:
+		        add_iter(hd, 'Data%d'%i, length, off - 4, 4, fmt('I'))
+                else:
+                        add_pgiter(page, 'Data%d'%i, 'qxp4', '', data[off - 4:off+length], pageiter)
 		off += length
-		off += 4
 	if fmt() == LITTLE_ENDIAN:
-		off += 4
 		(name, off) = add_pcstr4(hd, data, off, fmt)
 	else:
 		(name_data_length, off) = rdata(data, off, fmt('I'))
@@ -599,24 +617,40 @@ def handle_document(page, data, parent, fmt, version, hdr):
 	pagesstart = off
 	pagesiter = add_pgiter(page, 'Pages', 'qxp33', (), data[off:], parent)
 	(texts, pictures, off) = parse_pages(page, data, off, pagesiter, fmt, version, obfctx, hdr.pages, hdr.masters)
-	page.model.set_value(pagesiter, 2, off - pagesstart)
-	page.model.set_value(pagesiter, 3, data[pagesstart:off])
-	(fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
-	(kernings, off) = parse_tracking(page, data, off, parent, fmt, version, fonts)
-	off = parse_kerning_spec(page, data, off, parent, fmt, version)
-	for (i, font) in reversed(sorted(zip(kernings, fonts))):
-		if i == 0:
-			break
-		off = parse_kerning(page, data, off, parent, fmt, version, hdr.encoding, i, font)
-	off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
-	off = parse_hyph_exceptions(page, data, off, parent, fmt, version, hdr.encoding)
-	if off < len(data):
-		add_pgiter(page, 'Tail', 'qxp4', (), data[off:], parent)
+        try:
+	        page.model.set_value(pagesiter, 2, off - pagesstart)
+	        page.model.set_value(pagesiter, 3, data[pagesstart:off])
+	        (fonts, off) = parse_tracking_index(page, data, off, parent, fmt, version)
+	        (kernings, off) = parse_tracking(page, data, off, parent, fmt, version, fonts)
+	        off = parse_kerning_spec(page, data, off, parent, fmt, version)
+	        for (i, font) in reversed(sorted(zip(kernings, fonts))):
+		        if i == 0:
+			        break
+		        off = parse_kerning(page, data, off, parent, fmt, version, hdr.encoding, i, font)
+	        off = parse_record(page, data, off, parent, fmt, version, 'Unknown')
+	        off = parse_hyph_exceptions(page, data, off, parent, fmt, version, hdr.encoding)
+	        if off < len(data):
+		        add_pgiter(page, 'Tail', 'qxp4', (), data[off:], parent)
+        except:
+		traceback.print_exc()
 	return texts, pictures
 
 def add_header(hd, size, data, fmt, version):
 	(header, off) = add_header_common(hd, size, data, fmt)
-	off += 52
+        if version==VERSION_3_3 and header.bigEndian:
+                off += 14
+                (fl,off)=rdata(data, off, fmt('B'))
+	        add_iter(hd, 'Flags', "%x"%fl, off - 1, 1, fmt('B'))
+                header.indexSize=4 if (fl&0x80)==0x80 else 2
+                off += 37
+        elif version==VERSION_3_1 and not header.bigEndian:
+                off += 14
+                (fl,off)=rdata(data, off, fmt('B'))
+	        add_iter(hd, 'Flags', "%x"%fl, off - 1, 1, fmt('B'))
+                header.indexSize=4 if (fl&0x1)==1 else 2
+                off += 37
+        else:
+	        off += 52
 	(header.pages, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Number of pages', header.pages, off - 2, 2, fmt('H'))
 	off += 8

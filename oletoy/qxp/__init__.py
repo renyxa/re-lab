@@ -15,9 +15,10 @@ import struct
 
 import traceback
 from utils import *
-from qxp import dim2in, add_dim
+from qxp import dim2in, add_dim, add_saved
 import qxp
 import qxp1
+import qxp2
 import qxp33
 import qxp4
 
@@ -45,12 +46,12 @@ def collect_block(data,name,buf,fmt,off,blk_id):
 		data,name = collect_group(data,name,buf,fmt,off,nxt)
 	return data,name
 
-def parse_chain(buf, idx, rlen, fmt, version):
+def parse_chain(buf, idx, rlen, fmt, version, indexSize):
 	blocks = []
 	big = False
 	nxt = idx
-	nxt_fmt = fmt('i') if version > qxp.VERSION_1 else '>h'
-	nxt_sz = 4 if version > qxp.VERSION_1 else 2
+	nxt_sz = indexSize if indexSize>0 else 4 if version > qxp.VERSION_2 else 2
+	nxt_fmt = fmt('i') if nxt_sz == 4 else fmt('h')
 	while nxt > 0:
 		off = (nxt - 1) * rlen
 		count = 1
@@ -65,16 +66,16 @@ def parse_chain(buf, idx, rlen, fmt, version):
 		blocks.append(buf[start:off - nxt_sz])
 	return ''.join(blocks)
 
-def handle_text(page, buf, parent, fmt, version, index, rlen, encoding):
-	data = parse_chain(buf, index, rlen, fmt, version)
+def handle_text(page, buf, parent, fmt, version, index, rlen, hdr):
+	data = parse_chain(buf, index, rlen, fmt, version, hdr.indexSize)
 	hd = qxp.HexDumpSave(0)
-	blocks = add_text_info(hd, len(data), data, fmt, version)
+	blocks = add_text_info(hd, len(data), data, fmt, version, hdr.indexSize)
 	textiter = add_pgiter(page, 'Text [%x]' % index, 'qxp5', ('text_info', hd), data, parent)
 	for (block, length) in blocks:
-		add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length, encoding), buf[(block - 1)* rlen:block * rlen], textiter)
+		add_pgiter(page, 'Text [%x]' % block, 'qxp5', ('text', length, hdr.encoding), buf[(block - 1)* rlen:block * rlen], textiter)
 
-def handle_picture(page, buf, parent, fmt, version, index, rlen):
-	data = parse_chain(buf, index, rlen, fmt, version)
+def handle_picture(page, buf, parent, fmt, version, index, rlen, hdr):
+	data = parse_chain(buf, index, rlen, fmt, version, hdr.indexSize)
 	hd = qxp.HexDumpSave(0)
 	add_picture(hd, len(data), data, fmt, version)
 	add_pgiter(page, 'Picture [%x]' % index, 'qxp5', ('picture', hd), data)
@@ -84,6 +85,7 @@ def open_v5(page, buf, parent, fmt, version):
 
 	mod_map = {
 		qxp.VERSION_1: qxp1,
+		qxp.VERSION_2: qxp2,
 		qxp.VERSION_3_1_M: qxp33,
 		qxp.VERSION_3_1: qxp33,
 		qxp.VERSION_3_3: qxp33,
@@ -91,24 +93,27 @@ def open_v5(page, buf, parent, fmt, version):
 	}
 	header_hdl = mod_map[version].add_header if mod_map.has_key(version) else add_header
 	header = qxp.HexDumpSave(0)
-	(hdr, off) = header_hdl(header, 512, buf, fmt, version)
+        try:
+	        (hdr, off) = header_hdl(header, 512, buf, fmt, version)
+	except:
+		traceback.print_exc()
 	add_pgiter(page, 'Header', 'qxp5', ('header', header), buf[0:off], parent)
 
-	doc = parse_chain(buf, 3, rlen, fmt, version)
+	doc = parse_chain(buf, 3, rlen, fmt, version, hdr.indexSize)
 	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
 	if mod_map.has_key(version):
 		(texts, pictures) = mod_map[version].handle_document(page, doc, dociter, fmt, version, hdr)
 	else:
 		(texts, pictures) = [], []
 
-	def handle_enc_text(page, buf, parent, fmt, version, index, rlen):
-		return handle_text(page, buf, parent, fmt, version, index, rlen, hdr.encoding)
+	def handle_enc_text(page, buf, parent, fmt, version, index, rlen, hdr):
+		return handle_text(page, buf, parent, fmt, version, index, rlen, hdr)
 	chains = [(text, handle_enc_text) for text in texts]
 	chains.extend([(picture, handle_picture) for picture in pictures])
 
 	for (block, hdl) in sorted(chains):
 		try:
-			hdl(page, buf, parent, fmt, version, block, rlen)
+			hdl(page, buf, parent, fmt, version, block, rlen, hdr)
 		except:
 			traceback.print_exc()
 
@@ -116,7 +121,7 @@ def add_header(hd, size, data, fmt, version):
 	(header, off) = qxp.add_header_common(hd, size, data, fmt)
 	return (header, size)
 
-def add_text_info(hd, size, data, fmt, version):
+def add_text_info(hd, size, data, fmt, version, indexSize):
 	blocks = []
 	off = 0
 	(length, off) = rdata(data, off, fmt('I'))
@@ -127,7 +132,7 @@ def add_text_info(hd, size, data, fmt, version):
 	i = 0
 	begin = off
 	while off < begin + blocks_len:
-		(sz, fm) = (2, '>H') if version < qxp.VERSION_3_1_M else (4, fmt('I'))
+		(sz, fm) = (2, '>H') if version < qxp.VERSION_3_1_M or indexSize==2 else (4, fmt('I'))
 		(block, off) = rdata(data, off, fm)
 		add_iter(hd, 'Block %d' % i, block, off - sz, sz, fm, parent=blockiter)
 		if version < qxp.VERSION_4:
@@ -200,7 +205,7 @@ qxp5_ids = {
 }
 
 def call(hd, size, data, cid, args):
-	ids_map = {'qxp': qxp.ids, 'qxp1': qxp1.ids, 'qxp33': qxp33.ids, 'qxp4': qxp4.ids, 'qxp5': qxp5_ids}
+	ids_map = {'qxp': qxp.ids, 'qxp1': qxp1.ids, 'qxp2': qxp2.ids, 'qxp33': qxp33.ids, 'qxp4': qxp4.ids, 'qxp5': qxp5_ids}
 	if ids_map.has_key(cid):
 		ids = ids_map[cid]
 		if len(args) > 1 and ids.has_key(args[0]):
@@ -215,13 +220,16 @@ def call(hd, size, data, cid, args):
 def open_v1(page, buf, parent):
 	open_v5(page, buf, parent, qxp.big_endian, qxp.VERSION_1)
 
+def open_v2(page, buf, parent):
+	open_v5(page, buf, parent, qxp.big_endian, qxp.VERSION_2)
+
 def open (page,buf,parent):
 	if buf[2:4] == 'II':
 		fmt = qxp.little_endian
 	elif buf[2:4] == 'MM':
 		fmt = qxp.big_endian
 	else:
-		print "unknown format '%s', assuming big endian" % buf[2:4]
+		print ("unknown format '%s', assuming big endian" % buf[2:4])
 		fmt = qxp.big_endian
 
 	# see header version_map

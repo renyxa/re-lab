@@ -77,6 +77,7 @@ def deobfuscate(value, seed, n):
 	return (((value + seed) & 0xffff) - (((value & seed) << 1) & 0xffff) + (1 << 16)) & mask
 
 VERSION_1 = 0x20
+VERSION_2 = 0x26
 VERSION_3_1_M = 0x39
 VERSION_3_1 = 0x3e
 VERSION_3_3 = 0x3f
@@ -117,8 +118,10 @@ class HexDumpSave:
 			hd.model.set(iter, *args)
 
 class Header:
-	def __init__(self, encoding):
+	def __init__(self, encoding, bigEndian):
 		self.encoding = encoding
+                self.bigEndian = bigEndian
+                self.indexSize = 0
 		self.seed = 0
 		self.inc = 0
 		self.pages = 0
@@ -323,7 +326,7 @@ def add_header_common(hd, size, data, fmt):
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
 	(ver, off) = rdata(data, off, fmt('H'))
 	add_iter(hd, 'Version', key2txt(ver, version_map), off - 2, 2, fmt('H'))
-	return (Header(encoding), off)
+	return (Header(encoding, proc=='MM'), off)
 
 def add_tab(hd, size, data, offset, fmt, version, encoding, parent=None):
 	type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align'}

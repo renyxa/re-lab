@@ -80,7 +80,7 @@ def add_header(hd, size, data, dummy, version):
 		0x80: 'auto kerning',
 		0x200: 'typesetting mode',
 	}
-        header=qxp.Header('macroman', True)
+        header=qxp.Header('macroman','true')
 	(flags, off) = rdata(data, off, '>H')
 	hyphens = (flags >> 11) & 0x7
 	add_iter(hd, 'Hyphens in a row', 'unlimited' if hyphens == 0 else hyphens, off - 2, 1, '>B')
@@ -119,12 +119,74 @@ def add_header(hd, size, data, dummy, version):
 def parse_formats(page, data, offset, parent, version, name, hdl, size):
 	(length, off) = rdata(data, offset, '>I')
 	end = off + length
-	reciter = add_pgiter(page, name, 'qxp1', ('record', version), data[offset:end], parent)
+	reciter = add_pgiter(page, name, 'qxp2', ('record', version), data[offset:end], parent)
 	i = 0
 	while off < end:
-		add_pgiter(page, '[%d]' % i, 'qxp1', (hdl, version), data[off:off + size], reciter)
+		add_pgiter(page, '[%d]' % i, 'qxp2', (hdl, version), data[off:off + size], reciter)
 		off += size
 		i += 1
+	return end
+
+def parse_record(page, data, offset, parent, fmt, version, name):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, name, 'qxp2', ('record', fmt, version), data[off - 4:off + length], parent)
+	return off + length
+
+def _read_name2(data, offset, fmt):
+	rstr = read_c_str if fmt() == LITTLE_ENDIAN else read_pascal_str
+	(name, off) = rstr(data, offset)
+	if (off - offset) % 2 == 1:
+		off += 1
+	return name, off
+
+def handle_hj(page, data, parent, fmt, version, index, name):
+	add_pgiter(page, '[%d] %s' % (index, name), 'qxp33', ('hj', fmt, version), data, parent)
+
+def _parse_collection_named(page, data, offset, end, parent, fmt, version, handler, name_offset, init=0):
+	i = init
+	off = offset
+	while off < end:
+		start = off
+		(name, off) = _read_name2(data, off + name_offset, fmt)
+		handler(page, data[start:off], parent, fmt, version, i, name)
+		i += 1
+	return off
+
+def parse_colors(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	reciter = add_pgiter(page, 'Colors', 'qxp2', ('colors', fmt, version), data[off - 4:off + length], parent)
+	off += 1
+	(count, off) = rdata(data, off, fmt('B'))
+	off += 32
+	for i in range(0, count):
+		start = off
+		(index, off) = rdata(data, off, fmt('B'))
+		off += 47
+		(name, off) = _read_name2(data, off, fmt)
+		add_pgiter(page, '[%d] %s' % (index, name), 'qxp2', ('color', fmt, version), data[start:off], reciter)
+	return offset + 4 + length
+
+def parse_fonts(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	add_pgiter(page, 'Fonts', 'qxp2', ('fonts', fmt, version), data[off - 4:off + length], parent)
+	return off + length
+
+def parse_hjs(page, data, offset, parent, fmt, version):
+	(length, off) = rdata(data, offset, fmt('I'))
+	reciter = add_pgiter(page, 'H&Js', 'qxp2', ('record', fmt, version), data[off - 4:off + length], parent)
+	return _parse_collection_named(page, data, off, off + length, reciter, fmt, version, handle_hj, 48)
+
+def parse_para_styles(page, data, offset, parent, fmt, version, encoding):
+	(length, off) = rdata(data, offset, fmt('I'))
+	reciter = add_pgiter(page, 'Paragraph styles', 'qxp2', ('record', fmt, version), data[off - 4:off + length], parent)
+	end = off + length
+	while off < end:
+		start = off
+		off += 164
+		(idx, off) = rdata(data, off, fmt('H'))
+		off += 6
+		(name, off) = _read_name2(data, off, fmt)
+		add_pgiter(page, '[%d] %s' % (idx, name), 'qxp2', ('para_style', fmt, version, encoding), data[start:off], reciter)
 	return end
 
 def add_box(hd, data, offset, version, name):
@@ -139,6 +201,52 @@ def add_frame(hd, data, offset, version):
 	(style, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Frame style', key2txt(style, frame_style_map), off - 1, 1, '>B')
 	return off
+
+def _add_name2(hd, size, data, offset, fmt, title='Name'):
+	(name, off) = _read_name2(data, offset, fmt)
+	add_iter(hd, title, name, offset, off - offset, '%ds' % (off - offset))
+	return off
+
+def add_hj(hd, size, data, fmt, version):
+	off = add_hj_common(hd, size, data, 0, fmt, version)
+	off += 4
+	_add_name2(hd, size, data, off, fmt)
+        
+def add_colors(hd, size, data, fmt, version):
+	off = add_length(hd, size, data, fmt, version, 0)
+	off += 1
+	(count, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Number of colors', count, off - 1, 1, fmt('B'))
+
+def add_color_comp(hd, data, offset, fmt, name, parent=None):
+	return add_sfloat_perc(hd, data, offset, fmt, name, parent=parent)
+
+color_model_map = {
+	0: 'HSB',
+	1: 'RGB',
+	2: 'CMYK',
+}
+
+def add_color(hd, size, data, fmt, version):
+	off = 0
+	(index, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Index', index, off - 1, 1, fmt('B'))
+	(spot_color, off) = rdata(data, off, fmt('B'))
+	add_iter(hd, 'Spot color', 'Black' if spot_color == 0x2d else 'index %d' % spot_color, off - 1, 1, fmt('B'))
+	off = add_color_comp(hd, data, off, fmt, 'Red')
+	off = add_color_comp(hd, data, off, fmt, 'Green')
+	off = add_color_comp(hd, data, off, fmt, 'Blue')
+	off = add_color_comp(hd, data, off, fmt, 'C')
+	off = add_color_comp(hd, data, off, fmt, 'M')
+	off = add_color_comp(hd, data, off, fmt, 'Y')
+	off = add_color_comp(hd, data, off, fmt, 'K')
+        off += 8
+	off = add_color_comp(hd, data, off, fmt, 'H')
+	off = add_color_comp(hd, data, off, fmt, 'S')
+	off = add_color_comp(hd, data, off, fmt, 'L')
+	off = add_color_comp(hd, data, off, fmt, 'A')
+	off += 16
+	_add_name2(hd, size, data, off, fmt)
 
 def add_line(hd, data, offset, version, content, content_iter):
 	# NOTE: the coords are shifted by +1
@@ -183,27 +291,30 @@ def add_picture(hd, data, offset, version, content, content_iter):
 	(radius, off) = rfract(data, off, big_endian)
 	radius /= 2
 	add_iter(hd, 'Corner radius', dim2txt(radius), off - 4, 4, '4s')
-	return content, off + 5
+	return content, off + 5+10
 
 def parse_object(page, data, offset, parent, version, index):
 	off = offset
 	hd = HexDumpSave(off)
-	objiter = add_pgiter(page, '', 'qxp1', ('object', hd), data[offset:], parent)
+	objiter = add_pgiter(page, '', 'qxp2', ('object', hd), data[offset:], parent)
 	type_map = {
+		0xfd: 'Text(master)',
+		3: 'Text',
 		0: 'Line',
 		1: 'Orthogonal line',
 		3: 'Text',
-		4: 'Rectangle',
-		5: 'Rounded rectangle',
-		6: 'Ellipse',
+		11: 'Rectangle',
+		12: 'Rounded rectangle',
+		13: 'Ellipse',
 	}
 	parser_map = {
+		0xfd: add_text,
 		0: add_line,
 		1: add_line,
 		3: add_text,
-		4: add_picture,
-		5: add_picture,
-		6: add_picture,
+		11: add_picture,
+		12: add_picture,
+		13: add_picture,
 	}
 	(typ, off) = rdata(data, off, '>B')
 	type_str = key2txt(typ, type_map)
@@ -236,7 +347,7 @@ def parse_object(page, data, offset, parent, version, index):
 	page.model.set_value(objiter, 0, '[%d] %s' % (index, type_str))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])
-	return (last == 2, content, typ == 3, off)
+	return (last == 2, content, typ == 3 or typ==0xfd, off)
 
 def add_page_prefix(hd, data, offset, version):
 	(number, sect_start, off) = add_section(hd, data, offset, big_endian, version)
@@ -251,28 +362,17 @@ def add_page_tail(hd, data, offset, version, index, name, start, page, parent):
 	page.model.set_value(parent, 3, data[start:off])
 	return empty == 2, off
 
-def parse_master(page, data, offset, parent, version):
+def parse_page(page, data, offset, parent, version, i):
 	off = offset
 	hd = HexDumpSave(off)
-	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
+	pageiter = add_pgiter(page, '', 'qxp2', ('page', hd), data[offset:], parent)
 	(index, off, section_start) = add_page_prefix(hd, data, off, version)
-	off += 7
-	off = add_sizes(hd, data, off, version, ['%s margin' % s for s in ('Top', 'Left', 'Bottom', 'Right')])
-	off += 25
-	(col, off) = rdata(data, off, '>B')
-	add_iter(hd, '# of columns', col, off - 1, 1, '>B')
-	off = add_dim(hd, 4, data, off, big_endian, 'Gutter width')
-	off += 28
-	name_map = {1: 'Right master', 2: 'Left master'}
-	(empty, off) = add_page_tail(hd, data, off, version, index, key2txt(index, name_map), offset, page, pageiter)
-	return off
-
-def parse_page(page, data, offset, parent, version):
-	off = offset
-	hd = HexDumpSave(off)
-	pageiter = add_pgiter(page, '', 'qxp1', ('page', hd), data[offset:], parent)
-	(index, off, section_start) = add_page_prefix(hd, data, off, version)
-	name = 'Page'
+        if i==1:
+                name = 'Right master'
+        elif i==2:
+                name = 'Left master'
+        else:
+	        name = 'Page'
 	if section_start:
 		name += '*'
 	(empty, off) = add_page_tail(hd, data, off, version, index, name, offset, page, pageiter)
@@ -280,13 +380,11 @@ def parse_page(page, data, offset, parent, version):
 
 def parse_pages(page, data, offset, parent, version, npages):
 	off = offset
-	# ATM I assume there are fixed 2 master pages
-	for i in (1, 2):
-		off = parse_master(page, data, off, parent, version)
 	texts = []
 	pictures = []
-	for i in range(1, npages + 1):
-		(pageiter, empty, off) = parse_page(page, data, off, parent, version)
+	# ATM I assume there are fixed 2 master pages
+	for i in range(1, npages + 3):
+		(pageiter, empty, off) = parse_page(page, data, off, parent, version, i)
 		last = empty
 		j = 1
 		while not last and off < len(data):
@@ -299,11 +397,15 @@ def parse_pages(page, data, offset, parent, version, npages):
 			j += 1
 	return (texts, pictures)
 
-def handle_document(page, data, parent, dummy, version, hdr):
+def handle_document(page, data, parent, fmt, version, hdr):
 	off = 0
+        off = parse_fonts(page, data, off, parent, fmt, version)
+	off = parse_colors(page, data, off, parent, fmt, version)
+	off = parse_para_styles(page, data, off, parent, fmt, version, hdr.encoding)
+	off = parse_hjs(page, data, off, parent, fmt, version)
 	off = parse_formats(page, data, off, parent, version, 'Character formats', 'char_format', 16)
 	off = parse_formats(page, data, off, parent, version, 'Paragraph formats', 'para_format', 150)
-	pagesiter = add_pgiter(page, 'Pages', 'qxp1', (), data[off:], parent)
+	pagesiter = add_pgiter(page, 'Pages', 'qxp2', (), data[off:], parent)
 	try:
 		return parse_pages(page, data, off, pagesiter, version, hdr.pages)
 	except:
@@ -314,10 +416,7 @@ def add_record(hd, size, data, version, dummy):
 	(length, off) = rdata(data, 0, '>I')
 	add_iter(hd, 'Length', length, off - 4, 4, '>I')
 
-def add_char_format(hd, size, data, version, dummy):
-	off = 0
-	(uses, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Use count', uses, off - 2, 2, '>H')
+def _add_char_format(hd, size, data, off, version, dummy):
 	(font, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Font index', font, off - 2, 2, '>H')
 	(sz, off) = rdata(data, off, '>H')
@@ -332,6 +431,13 @@ def add_char_format(hd, size, data, version, dummy):
 	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
 	(track, off) = rdata(data, off, '>H')
 	add_iter(hd, 'Track amount', '%.2f' % (track / 2.0), off - 2, 2, '>H')
+        return off+2
+
+def add_char_format(hd, size, data, version, dummy):
+	off = 0
+	(uses, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Use count', uses, off - 2, 2, '>H')
+        _add_char_format(hd, size, data, off, version, dummy)
 
 def _add_tab(hd, size, data, offset, version, parent=None):
 	type_map = {0: 'left', 1: 'center', 2: 'right', 3: 'align'}
@@ -352,10 +458,7 @@ def _add_tab(hd, size, data, offset, version, parent=None):
 			hd.model.set(parent, 1, "%s / '%s' / %s"  % (key2txt(typ, type_map), fill_char, dim2txt(pos)))
 	return off
 
-def add_para_format(hd, size, data, version, dummy):
-	off = 0
-	(uses, off) = rdata(data, off, '>H')
-	add_iter(hd, 'Use count', uses, off - 2, 2, '>H')
+def _add_para_format(hd, size, data, off, version, dummy):
 	off += 1
 	(align, off) = rdata(data, off, '>B')
 	add_iter(hd, "Alignment", key2txt(align, align_map), off - 1, 1, '>B')
@@ -373,12 +476,31 @@ def add_para_format(hd, size, data, version, dummy):
 	for i in range(0, 20):
 		tabiter = add_iter(hd, 'Tab %d' % (i + 1), '', off, 6, '6s')
 		off = _add_tab(hd, size, data, off, version, tabiter)
+        return off
+
+def add_para_format(hd, size, data, version, dummy):
+	off = 0
+	(uses, off) = rdata(data, off, '>H')
+	add_iter(hd, 'Use count', uses, off - 2, 2, '>H')
+	off = _add_para_format(hd, size, data, off, version, dummy)
+
+def add_para_style(hd, size, data, fmt, version, encoding):
+        off = 0
+	off = _add_char_format(hd, size, data, off, version, '')
+	off = _add_para_format(hd, size, data, off, version, '')
+	off += 10
+	_add_name2(hd, size, data, off, fmt)
 
 ids = {
 	'char_format': add_char_format,
-	'para_format': add_para_format,
+	'color': add_color,
+	'colors': add_colors,
+	'fonts': add_fonts,
+	'hj': add_hj,
 	'object': add_saved,
 	'page': add_saved,
+	'para_format': add_para_format,
+	'para_style': add_para_style,
 	'record': add_record,
 }
 
