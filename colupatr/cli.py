@@ -259,7 +259,7 @@ class CliWindow():
 						fs.write("\n")
 				fs.close()
 			except:
-				print 'Failed to save state'
+				print('Failed to save state')
 
 		if mode in ("snippets","all"):
 			try:
@@ -273,7 +273,7 @@ class CliWindow():
 					fs.write("\n")
 				fs.close()
 			except:
-				print 'Failed to save snippets'
+				print('Failed to save snippets')
 
 	def restore_state(self):
 		# open recent files
@@ -285,7 +285,7 @@ class CliWindow():
 				except:
 					pass # file not loaded
 		except:
-			print 'No saved CLI state was found'
+			print('No saved CLI state was found')
 
 		# load snippets
 		try:
@@ -304,7 +304,7 @@ class CliWindow():
 						self.add_snippet(name,txt[:-1])
 			fs.close()
 		except:
-			print 'Failed to load snippets'
+			print('Failed to load snippets')
 
 
 	def del_runwin (self, action):
@@ -534,7 +534,7 @@ class TabLabel(gtk.HBox):
 			if tabtype == "doc":
 				gtk.main_quit()
 			elif tabtype == "page":
-				print "FROB: delete the last page -> close file?"
+				print("FROB: delete the last page -> close file?")
 		if pn < len(arr):  ## not the last page
 			for i in range(pn,len(arr)):
 				arr[i] = arr[i+1]

@@ -597,7 +597,7 @@ class HexView():
 		if ma < 1000:
 			self.maxaddr = ma
 		else:
-			print "Something thent wrong in maxaddr calculation"
+			print("Something thent wrong in maxaddr calculation")
 			self.maxaddr = 16
 
 	def cursor_in_sel(self):
@@ -687,7 +687,7 @@ class HexView():
 			self.okp_edit(event)
 		else:
 			self.edpos = 0
-		if self.okp.has_key(event.keyval):
+		if event.keyval in self.okp:
 			tmp = self.okp[event.keyval](event)
 			if tmp:
 				flag = tmp
@@ -794,7 +794,7 @@ class HexView():
 			c = self.curc
 		# helper to handle 'enter' and 'delete'
 		if self.debug == 1:
-			print "Upd",r,"(%02x)"%self.lines[r][0],self.line_size(r),c
+			print("Upd",r,"(%02x)"%self.lines[r][0],self.line_size(r),c)
 		prehex,preasc = self.hvlines[r]
 		lhex = prehex[:c*3]
 		rhex = prehex[c*3:]
@@ -803,7 +803,7 @@ class HexView():
 		self.hvlines[r] = lhex,lasc
 		self.hvlines.insert(r+1,(rhex,rasc))
 		if self.debug == 1:
-			print "Upd2",r,"(%02x) and"%self.lines[r][0],r+1,"(%02x)"%self.lines[r+1][0]
+			print("Upd2",r,"(%02x) and"%self.lines[r][0],r+1,"(%02x)"%self.lines[r+1][0])
 
 	def line_size(self,row):
 		# returns size of line or -1 if 'row' is behind
@@ -827,7 +827,7 @@ class HexView():
 			self.get_string(row)
 			self.get_string(row+1)
 			if self.debug == 1:
-				print "Upd",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
+				print("Upd",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0])
 			nh,na = self.hvlines[row]
 			ph,pa = self.hvlines[row+1]
 			self.hvlines[row] = nh+ph,na+pa
@@ -857,7 +857,7 @@ class HexView():
 						self.lines[row] = (self.lines[row][0],0,None)
 	
 			if self.debug == 1:
-				print "Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1
+				print("Upd",row,"(%02x)"%self.lines[row][0],self.line_size(row),col+1)
 			if self.hvlines[row] == "":
 				self.get_string(row)
 			prehex,preasc = self.hvlines[row]
@@ -868,7 +868,7 @@ class HexView():
 			self.hvlines[row] = lhex,lasc
 			self.hvlines.insert(row+1,(rhex,rasc))
 			if self.debug == 1:
-				print "Upd2",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0]
+				print("Upd2",row,"(%02x) and"%self.lines[row][0],row+1,"(%02x)"%self.lines[row+1][0])
 
 	def fmt_row(self,row,cmd):
 		for i in range(len(cmd)):
@@ -1075,7 +1075,7 @@ class HexView():
 				ctx.set_source_rgb(0,0,0)
 				hex,asc = self.get_string(i+self.offnum)
 				if self.debug == 1:
-					print "mode 0",i,len(self.lines)-self.offnum-1,self.numtl,asc
+					print("mode 0",i,len(self.lines)-self.offnum-1,self.numtl,asc)
 
 				ctx.move_to(self.tdx*10,(i+2)*self.tht+4)
 				ctx.show_text(hex)
@@ -1111,7 +1111,7 @@ class HexView():
 
 		#clear old and new hex and asc
 		if self.debug == 1:
-			print "mode c",self.prer,self.prec,self.curr,self.curc,self.offnum,self.maxaddr,self.lines[self.prer]
+			print("mode c",self.prer,self.prec,self.curr,self.curc,self.offnum,self.maxaddr,self.lines[self.prer])
 		if self.prer-self.offnum > -1:
 			ctx.set_source_rgb(1,1,1)
 			if self.sel:
