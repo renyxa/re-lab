@@ -38,6 +38,6 @@ def parse(page,buf,parent):
 				pos2 = pos3
 				piter = parent
 				citer = add_pgiter(page,tag,"cvx",tag,buf[pos1+12+len(tag):pos3],piter)
-			print tag,pos1,pos2,pos3
+			print(tag,pos1,pos2,pos3)
 		else:
 			off = len(buf)

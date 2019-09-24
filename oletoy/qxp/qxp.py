@@ -334,7 +334,7 @@ def add_tab(hd, size, data, offset, fmt, version, encoding, parent=None):
 	add_iter(hd, 'Type', key2txt(typ, type_map), off - 1, 1, fmt('B'), parent=parent)
 	subtype_map = {1: 'decimal', 2: 'comma'}
 	(subtype, off) = rdata(data, off, fmt('B'))
-	if subtype_map.has_key(subtype):
+	if subtype in subtype_map:
 		add_iter(hd, 'Subtype', key2txt(subtype, subtype_map), off - 1, 1, fmt('B'), parent=parent)
 	else:
 		align_char = unicode(chr(subtype), encoding)
@@ -356,7 +356,7 @@ def add_tab(hd, size, data, offset, fmt, version, encoding, parent=None):
 			hd.model.set(parent, 1, 'not defined')
 		else:
 			if typ == 3:
-				subtype_str = ' @ %s' % (key2txt(subtype, subtype_map) if subtype_map.has_key(subtype) else "'%s'" % align_char)
+				subtype_str = ' @ %s' % (key2txt(subtype, subtype_map) if subtype in subtype_map else "'%s'" % align_char)
 			else:
 				subtype_str = ''
 			pos = rfract(data, off - 4, fmt)[0]

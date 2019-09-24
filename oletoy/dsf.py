@@ -49,4 +49,4 @@ def open (page,buf,parent,off=0):
 		parse_dsf_toc(page, output1, output2, dsfditer)
 		add_pgiter(page,"DSF Tail","dsf","tail",tail2,parent)
 	except:
-		print "Decompression failed"
+		print("Decompression failed")

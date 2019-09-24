@@ -73,10 +73,10 @@ def vba_dir (hd,data):
 		if recid == 9:
 			reclen = 6
 		recname = "%02x"%recid
-		if rec_ids.has_key(recid):
+		if recid in rec_ids:
 			recname = rec_ids[recid]
 		iter = hd.model.append(miter, None)
-		if rec_types.has_key(recid):
+		if recid in rec_types:
 			value = rec_types[recid](data[off+6:off+6+reclen])
 		else:
 			value = data[off+6:off+6+reclen]
@@ -102,7 +102,7 @@ def parse (page, data, parent):
 				model.set_value(iter1,3,value)
 				model.set_value(iter1,6,model.get_string_from_iter(iter1))
 		except:
-			print 'VBA Inflate failed'
+			print('VBA Inflate failed')
 	off = 0
 	mods = {}
 	while off < len(value):
@@ -118,7 +118,7 @@ def parse (page, data, parent):
 				mods[mname1] = moff1
 			off += reclen + 6
 		except:
-			print "Failed at VBA parsing"
+			print("Failed at VBA parsing")
 			off += 2
 
 #	print "Found %d modules"%len(mods)
@@ -127,7 +127,7 @@ def parse (page, data, parent):
 	for k in range(model.iter_n_children(vbaiter)):
 		citer = model.iter_nth_child(vbaiter,k)
 		cname = model.get_value(citer,0)
-		if mods.has_key(cname):
+		if cname in mods:
 			cdata = model.get_value(citer,3)
 			if ord(cdata[mods[cname]]) == 1:
 				try:
@@ -139,4 +139,4 @@ def parse (page, data, parent):
 					model.set_value(iter1,3,cvalue)
 					model.set_value(iter1,6,model.get_string_from_iter(iter1))
 				except:
-					print 'VBA Src Inflate failed ',cname
+					print('VBA Src Inflate failed ',cname)

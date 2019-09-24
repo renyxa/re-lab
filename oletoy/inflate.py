@@ -76,7 +76,7 @@ def inflate_vba_stream (data):
         clean = True
      except:
 			 # FIXME!  Better handling of LZ stream ends?
-       print "Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask)
+       print("Not enough bytes to decompress. Flag/Mask were %02x/%02x"%(flag,mask))
        i += 1
        break
   if pos % 4096:
@@ -85,7 +85,7 @@ def inflate_vba_stream (data):
 
 def inflate_vba_oletoy (data,ptype):
   if ord(data[0]) != 1:
-    print "Attempt to inflate wrong stream"
+    print("Attempt to inflate wrong stream")
     return ""
 
   off = 1
@@ -162,7 +162,7 @@ def inflate(ptr,vsd):
                         res = res + buff[(point+j)&4095]
                     pos = pos + dlen
         except:
-            print 'Inflate failed',i,ptr.length
+            print('Inflate failed',i,ptr.length)
             return res
     return res
 

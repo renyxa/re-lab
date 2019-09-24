@@ -129,7 +129,7 @@ def parse_syid (page,data,offset,syiditer,txtiter,j):
 			model.set(iter,0,"TXid: %02x"%id,1,("quill","syid"),2,4,3,data[offset+8+i*4:offset+12+i*4])
 		return i+j
 	except:
-		print "Failed in parse_syid"
+		print("Failed in parse_syid")
 
 def parse_stsh (page,data,parent,flag):
 	model = page.model
@@ -184,7 +184,7 @@ def parse_pl(page,data,parent):
 			pubblock.parse (page,data[off+4:off+nlen],iter1,i)
 			off += nlen
 	except:
-		print "Failed at PL parsing"
+		print("Failed at PL parsing")
 
 def parse_font(page,data,parent):
 	model = page.model

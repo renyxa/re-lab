@@ -215,7 +215,7 @@ class Publisher1Doc():
 				newPos=idToMainPosChunk[parentId]+childDataPos
 				what="ZoneShape"
 			else:
-				print "Unknown zone 4 type=%02x"%childDataType
+				print("Unknown zone 4 type=%02x"%childDataType)
 			if newPos!=0:
 				listChild.append((childId,newPos-4 if childDataType in [0x81,0x91,0xd1] else newPos,what))
 		listChild=sorted(listChild, key=lambda i: i[1])
@@ -257,7 +257,7 @@ class Publisher1Doc():
 		off = 0
 		hdrsize = struct.unpack("<H",self.data[2:4])[0]
 		if hdrsize != 0x2c:
-			print "Unknown header size"
+			print("Unknown header size")
 			return
 		eof = struct.unpack("<I",self.data[4:8])[0]
 		add_pgiter (self.page,"Header","pub1","Header",self.data[0:hdrsize],self.parent)
@@ -284,13 +284,13 @@ class Publisher1Doc():
 	## local parsing
 	def update_view2(self,hd,model,iter):
 		key=model.get_value(iter,1)[1]
-		if self.chunkHds.has_key(key):
+		if key in self.chunkHds:
 			self.chunkHds[key](hd,model.get_value(iter,3))
 	def checkFinish(self,hd,data,off,name):
 		if len(data)>off:
 			extra=len(data)-off
 			add_iter (hd,"##extra",binascii.hexlify(data[off:off+extra]), off, extra, "txt")
-			print "%s: Find unexpected data"%name
+			print("%s: Find unexpected data"%name)
 	def hdByte(self,hd,data):
 		off=0
 		val=struct.unpack('<b', data[off:off+1])[0]

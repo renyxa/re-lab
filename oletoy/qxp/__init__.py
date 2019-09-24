@@ -91,7 +91,7 @@ def open_v5(page, buf, parent, fmt, version):
 		qxp.VERSION_3_3: qxp33,
 		qxp.VERSION_4: qxp4,
 	}
-	header_hdl = mod_map[version].add_header if mod_map.has_key(version) else add_header
+	header_hdl = mod_map[version].add_header if version in mod_map else add_header
 	header = qxp.HexDumpSave(0)
         try:
 	        (hdr, off) = header_hdl(header, 512, buf, fmt, version)
@@ -101,7 +101,7 @@ def open_v5(page, buf, parent, fmt, version):
 
 	doc = parse_chain(buf, 3, rlen, fmt, version, hdr.indexSize)
 	dociter = add_pgiter(page, 'Document', 'qxp5', '', doc, parent)
-	if mod_map.has_key(version):
+	if version in mod_map:
 		(texts, pictures) = mod_map[version].handle_document(page, doc, dociter, fmt, version, hdr)
 	else:
 		(texts, pictures) = [], []
@@ -206,9 +206,9 @@ qxp5_ids = {
 
 def call(hd, size, data, cid, args):
 	ids_map = {'qxp': qxp.ids, 'qxp1': qxp1.ids, 'qxp2': qxp2.ids, 'qxp33': qxp33.ids, 'qxp4': qxp4.ids, 'qxp5': qxp5_ids}
-	if ids_map.has_key(cid):
+	if cid in ids_map:
 		ids = ids_map[cid]
-		if len(args) > 1 and ids.has_key(args[0]):
+		if len(args) > 1 and args[0] in ids:
 			f = ids[args[0]]
 			if len(args) == 2:
 				f(hd, size, data, args[1], 0)

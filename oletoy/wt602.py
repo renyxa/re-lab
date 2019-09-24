@@ -320,7 +320,7 @@ def handle_strings(page, data, parent, parser = None):
 		(length, off) = rdata(data, off + 4, '<H')
 		off = start + length
 		offset = start - 0x10
-		assert parser.strings.has_key(offset)
+		assert offset in parser.strings
 		string = preview(parser.strings[offset])
 		add_pgiter(page, '[%d] Off %d: %s' % (i, offset, string), 'wt602', 'string_entry', data[start:off], dataiter)
 		i += 1
@@ -418,7 +418,7 @@ def handle_frames(page, data, parent, parser=None):
 		(fid, off) = rdata(data, off, '<H')
 		(kind, off) = rdata(data, off, '<H')
 		kinds.append(kind)
-		if frame_kind_map.has_key(kind):
+		if kind in frame_kind_map:
 			kind_ids[i] = (('%s' % frame_kind_map[kind]).lower().replace(' ', '_'))
 		label = key2txt(kind, frame_kind_map)
 		if kind == 0xf:
@@ -426,7 +426,7 @@ def handle_frames(page, data, parent, parser=None):
 			(controls[i], off) = rdata(data, off, '<H')
 			label += ': ' + key2txt(controls[i], form_control_map)
 		kid = 'frame'
-		if kind_ids.has_key(i):
+		if i in kind_ids:
 			kid += '_' + kind_ids[i]
 		add_pgiter(page, '[%d] %s (ID: 0x%x)' % (i, label, fid), 'wt602', kid, data[start:start + entry_size], defiter)
 		off = start + entry_size
@@ -444,9 +444,9 @@ def handle_frames(page, data, parent, parser=None):
 			(typ, off) = rdata(data, start + 4, '<H')
 			name = ' ' + key2txt(typ, shape_map, '')
 		kid = ''
-		if kind_ids.has_key(i):
+		if i in kind_ids:
 			kid = 'frame_data_' + kind_ids[i]
-		if controls.has_key(i):
+		if i in controls:
 			kid += '_' + form_control_map[controls[i]].lower()
 		add_pgiter(page, '[%d]%s' % (i, name), 'wt602', kid, data[start:end], dataiter)
 		i += 1
@@ -501,7 +501,7 @@ def handle_named_styles(page, data, parent, parser=None):
 		off += 8
 		(string, off) = rdata(data, off, '<I')
 		parser.styles.append(parser.strings[string])
-		assert parser.strings.has_key(string)
+		assert string in parser.strings
 		add_pgiter(page, '[%d] %s' % (i, parser.strings[string]), 'wt602', 'named_style', data[start:end], parent)
 		off = end
 

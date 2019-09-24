@@ -61,7 +61,7 @@ class block_descs:
 		return name, disp, disp_id, parser
 
 	def _find(self, id, keys):
-		return keys[id] if keys.has_key(id) else None
+		return keys[id] if id in keys else None
 
 # parses semi-standard "block" structures in MS Pub files.
 def parse (page,data,parent,i,j=-1,ptype=None,descs=block_descs()):
@@ -141,7 +141,7 @@ def parse (page,data,parent,i,j=-1,ptype=None,descs=block_descs()):
 
 				id2_iter = model.iter_nth_child(parent,0)
 				id2_value = struct.unpack("<H",model.get_value(id2_iter,3))[0]
-				if block_types.has_key(id2_value):
+				if id2_value in block_types:
 					btype = block_types[id2_value]
 				else:
 					btype = "%02x"%id2_value
@@ -159,21 +159,21 @@ def parse (page,data,parent,i,j=-1,ptype=None,descs=block_descs()):
 						name += " %s"%unicode(value,'utf-16')
 					except:
 						name += value
-						print "UCode failed",model.get_string_from_iter(parent)
+						print("UCode failed",model.get_string_from_iter(parent))
 			if type == 0xFF: # current len just to pass parsing
 				value = ord(data[off+1])
 				dlen = 1
 			j += 1
-			if block_ids.has_key(ptype):
+			if ptype in block_ids:
 				bid = block_ids[ptype]
-				if bid.has_key(id):
+				if id in bid:
 					name += " (%s)"%bid[id]
 
 			if dlen == -1:
-				print "Unknown type %02x at block %d %d %02x"%(type,i,j,off),
+				print("Unknown type %02x at block %d %d %02x"%(type,i,j,off))
 				iter1 = add_pgiter (page,"Unkn block","pub",0,"",parent)
 				model.set_value(iter1,5,"#FF0000")
-				print "Path",model.get_string_from_iter(iter1)
+				print("Path",model.get_string_from_iter(iter1))
 				return
 			else:
 				if type != 0x78 or j > 0xFF:
@@ -183,4 +183,4 @@ def parse (page,data,parent,i,j=-1,ptype=None,descs=block_descs()):
 						parser(page,data[off+4:off+dlen],iter1,i,j-2)
 					off += dlen
 	except:
-		print "Failed at parsing block %d "%i,"val: ",value," off: ",off,model.get_string_from_iter(parent)
+		print("Failed at parsing block %d "%i,"val: ",value," off: ",off,model.get_string_from_iter(parent))

@@ -766,7 +766,7 @@ def hdr1item (page,data,parent,offset=0):
 	# i.e. 'offset to the "elements header"'
 	h1off0 = struct.unpack(">I",data[off:off+4])[0]
 	if h1off0 != 0x24:
-		print "ATTENTION! YEP: size of VPRM header2 is not 0x24, it's %02x"%h1off0
+		print("ATTENTION! YEP: size of VPRM header2 is not 0x24, it's %02x"%h1off0)
 	off += 4
 	vdtxt = "Drumkit"
 	if ord(data[0x25]) == 0x00:
@@ -807,7 +807,7 @@ def hdr1item (page,data,parent,offset=0):
 		elements[pid] = 1
 		off += 12
 		if off > h1off1:
-			print "ATTENTION! YEP: not enough bytes for 'dozens'..."
+			print("ATTENTION! YEP: not enough bytes for 'dozens'...")
 	
 	# parse list of offsets to elements
 	poffs = []
@@ -837,7 +837,7 @@ def hdr1item (page,data,parent,offset=0):
 				add_pgiter(page,"Key Bank %d"%j,"vprm","bank",data[off:off+180],piter,"%02x  "%(offset+off))
 				off += 180
 	except:
-		print "Failed in parsing elements","%02x %02x %02x"%(i,j,off), page.model.get_string_from_iter(piter) #sys.exc_info()
+		print("Failed in parsing elements","%02x %02x %02x"%(i,j,off), page.model.get_string_from_iter(piter)) #sys.exc_info()
 
 	# add drumkit's "h1off2" block
 	# FIXME!  Bold assumption that "h1off3 is 'reserved'
@@ -956,7 +956,7 @@ def vprm (page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
 
 					off2 = bend
 		except:
-			print 'Failed in the loop at lines 737..747'
+			print('Failed in the loop at lines 737..747')
 		ind += 1
 
 def vprs(page, data, parent, offset=0, vwdtiter=None, vwdtoff=0):
@@ -990,13 +990,13 @@ def parse_ppi (page, data, parent,align=4.,prefix="",offset=0):
 			try:
 				vprs (page, data[off:off+length], citer, off, vwdtiter,vwdtoff)
 			except:
-				print 'Failed in VPRS'
+				print('Failed in VPRS')
 		if fourcc in ("PACK", "BLOB","XPIH","FBIN","IADM","CASM","CSEG"):
 			if fourcc in ("FBIN","IADM","CSEG","CASM"):
 				try:
 					parse_ppi (page, data[off:off+length], citer, 0, "%s/"%fourcc,off)
 				except:
-					print 'Failed in %s'%fourcc,page.model.get_path(citer)
+					print('Failed in %s'%fourcc,page.model.get_path(citer))
 			else:
 				parse_ppi (page, data[off:off+length], citer, 4., "%s/"%fourcc,off)
 		off += length

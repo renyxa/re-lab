@@ -317,7 +317,7 @@ class imp_parser(object):
 		add_pgiter(self.page, 'Header', 'imp', 'imp_file_header', data[0:20], fileiter)
 
 		filedata = data[20:len(data)]
-		if imp_resource_map.has_key(typ):
+		if typ in imp_resource_map:
 			self.parse_resource(filedata, typ, fileiter)
 		elif typ == '!!sw':
 			self.parse_sw(filedata, typ, fileiter)
@@ -1482,7 +1482,7 @@ def add_imp_text(hd, size, data):
 	for off in range(len(data)):
 		c = data[off]
 		o = ord(c)
-		if control_char_map.has_key(o):
+		if o in control_char_map:
 			if begin != None:
 				add_iter(hd, 'Text', text, begin, off - begin, '%ds' % (off - begin))
 				begin = None
@@ -1500,7 +1500,7 @@ def add_imp_text(hd, size, data):
 		else:
 			if begin == None:
 				begin = off
-			if replacement_char_map.has_key(o):
+			if o in replacement_char_map:
 				text += replacement_char_map[o]
 			else:
 				text += c

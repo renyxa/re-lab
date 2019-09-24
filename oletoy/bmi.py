@@ -126,7 +126,7 @@ class bmi_parser:
 			start = stream[0]
 			end = stream[1]
 			tag = stream[2]
-			if stream_parsers.has_key(tag):
+			if tag in stream_parsers:
 				stream_parsers[tag](self, stream_tags[tag], start, end - start)
 			elif tag != 0xff:
 				add_pgiter(self.page, 'Unknown', 'bmi', '', self.data[start:end], self.parent)

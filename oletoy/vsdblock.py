@@ -256,7 +256,7 @@ def sl_funcs7b(hd, data, shift, offset, blk_off):
 	nargs = struct.unpack("<I",data[offset+blk_off:offset+blk_off+4])[0]
 	fid = struct.unpack("<h",data[offset+blk_off+4:offset+blk_off+6])[0]
 	nm_str = "# of args: %i "%nargs
-	if fnames7ab.has_key(fid):
+	if fid in fnames7ab:
 		nm_str += "("+fnames7ab[fid]+")" 
 	else:
 		nm_str += "%02x"%fid
@@ -269,7 +269,7 @@ def sl_funcs7a(hd, data, shift, offset, blk_off):
 		fid = struct.unpack("<h",data[offset+blk_off:offset+blk_off+2])[0]
 	else:
 		fid = ord(data[offset+blk_off])
-	if fnames7ab.has_key(fid):
+	if fid in fnames7ab:
 		nm_str = fnames7ab[fid]
 	else:
 		nm_str = "%02x"%fid
@@ -299,7 +299,7 @@ sl_opnames = {0x3:'+', 0x4:'-', 0x5:'*', 0x6:'/', 0x7:'^', 0x8:'&', 0x9:'<',
 
 def sl_ops(hd, data, shift, offset, blk_off):
 	op = ord(data[offset+blk_off])
-	if sl_opnames.has_key(op):
+	if op in sl_opnames:
 		op_txt = sl_opnames[op]
 	else:
 		op_txt = "%02x"%op
@@ -339,11 +339,11 @@ def sl_names72 (hd, data, shift, offset, blk_off):
 	var = ord(data[offset+blk_off+5])
 	if obj > 9 and obj < 0xf0:
 		obj_name = "Geometry%d"%(obj-9)
-	elif sl_objs72.has_key(obj):
+	elif obj in sl_objs72:
 		obj_name = sl_objs72[obj]
 	else:
 		obj_name = "Obj%02x"%obj
-	if sl_vars72.has_key(var):
+	if var in sl_vars72:
 		var_name = sl_vars72[var]
 	else:
 		var_name = "Var%02x_"%var
@@ -354,7 +354,7 @@ def sl_names72 (hd, data, shift, offset, blk_off):
 def sl_names74 (hd, data, shift, offset, blk_off):
 	var = struct.unpack("<h",data[offset+blk_off:offset+blk_off+2])[0]
 	idx = struct.unpack("<I",data[offset+blk_off+4:offset+blk_off+8])[0]
-	if names75.has_key(var):
+	if var in names75:
 		var_name = names75[var]
 	else:
 		var_name = "Var%02x"%var
@@ -365,7 +365,7 @@ def sl_names74 (hd, data, shift, offset, blk_off):
 def sl_names75(hd, data, shift, offset, blk_off):
 	value = ord(data[offset+blk_off])
 	nm_str = "%02x"%value
-	if names75.has_key(value):
+	if value in names75:
 		nm_str = names75[value]
 	iter1 = hd.model.append(None, None)
 	l,t = 4,"<I"
@@ -385,7 +385,7 @@ sl_logops = {0xa0:'AND()',0xa1:'OR()',0xa2:'IF()'}
 def sl_logfunc (hd, data, shift, offset, blk_off):
 	# FIXME, just skipping at the moment
 	op = ord(data[offset+blk_off])
-	if sl_logops.has_key(op):
+	if op in sl_logops:
 		op_txt = sl_logops[op]
 	else:
 		op_txt = "%02x"%op

@@ -27,13 +27,13 @@ def firewrk_mkbs (page, buf, parent=None):
 	while len(spl) > 1:
 		name = spl[0]
 		value = spl[1]
-		print ind,name,value,len(spl),"%02x"%(len(buf)-len(" ".join(spl))),"%d%%"%(100-100*len(" ".join(spl))/len(buf)) 
+		print(ind,name,value,len(spl),"%02x"%(len(buf)-len(" ".join(spl))),"%d%%"%(100-100*len(" ".join(spl))/len(buf))) 
 		ind += 1
 		spl.remove(name)
 		spl.remove(value)
 		flag = 0
 		if name[3] == "s":
-			print "STR",name
+			print("STR",name)
 			vlen = struct.unpack(">H",value[:2])[0]*2
 			while vlen > len(value[2:]):
 				rval = spl[0]
@@ -65,7 +65,7 @@ def firewrk_mkbs (page, buf, parent=None):
 
 def open (page, buf, parent=None):
 	if buf[:8] != "\x89PNG\x0d\x0a\x1a\x0a":
-		print 'No PNG signature'
+		print('No PNG signature')
 		return
 	if parent:
 		page.model.set_value(parent,1,("escher","odraw","Blip"))
@@ -96,5 +96,5 @@ def open (page, buf, parent=None):
 					if len(tail) > 0:
 						add_pgiter (page,"[Tail]","",0,tail,chiter)
 				except:
-					print "Failed to decompress"
+					print("Failed to decompress")
 

@@ -25,26 +25,26 @@ def parse_agd (FHDoc,rname,dumpsize):
 				res = FHDoc.chunks[FHDoc.dictitems[i]](offset,j)
 				if -1 < res <= len(FHDoc.data)-offset:
 					if rname == "*" or FHDoc.dictitems[i] == rname:
-						print "%-16s [%4x] "%(FHDoc.dictitems[i],res),"%02x\t"%j,d2hex(FHDoc.data[offset:offset+dumpsize]," ")
+						print("%-16s [%4x] "%(FHDoc.dictitems[i],res),"%02x\t"%j,d2hex(FHDoc.data[offset:offset+dumpsize]," "))
 					offset += res
 				else:
-					print "Failed on record %d (%s)"%(j,FHDoc.dictitems[i]),res
-					print "Next is",FHDoc.dictitems[FHDoc.reclist[j+1]]
+					print("Failed on record %d (%s)"%(j,FHDoc.dictitems[i]),res)
+					print("Next is",FHDoc.dictitems[FHDoc.reclist[j+1]])
 					return
 			except:
-				print "Failed on record %d (%s)"%(j,FHDoc.dictitems[i])
-				print "Next is",FHDoc.dictitems[FHDoc.reclist[j+1]]
+				print("Failed on record %d (%s)"%(j,FHDoc.dictitems[i]))
+				print("Next is",FHDoc.dictitems[FHDoc.reclist[j+1]])
 				return
 				
 		else:
-				print "Unknown record type: %s (%02x)"%(FHDoc.dictitems[i],j)
+				print("Unknown record type: %s (%02x)"%(FHDoc.dictitems[i],j))
 				return
-	print "FH Tail!"
+	print("FH Tail!")
 
 def parse_dict (FHDoc,data,offset):
 	if FHDoc.version > 8:
 		dictsize = struct.unpack('>h', data[offset:offset+2])[0]
-		print 'Dict size:\t%u'%dictsize
+		print('Dict size:\t%u'%dictsize)
 		offset+=4
 		for i in range(dictsize):
 			key = struct.unpack('>h', data[offset:offset+2])[0]
@@ -76,17 +76,17 @@ def main():
 	if len(sys.argv) >= 3:
 		filename = sys.argv[2]
 		rname =  sys.argv[1]
-		print filename
+		print(filename)
 		try:
 			input = open(filename)
 			buf = input.read()
 			if parse(buf,rname):
-				print filename
+				print(filename)
 		except:
-			print "No file"
+			print("No file")
 			return 0
 	else:
-		print "Use filename as an option"
+		print("Use filename as an option")
 		return
 
 if __name__ == '__main__':

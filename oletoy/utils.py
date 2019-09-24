@@ -21,7 +21,7 @@ try:
 	import gv
 	usegraphviz = True
 except:
-	print 'Graphviz not found. Only used for FreeHand.' # Grid layout will be used.'
+	print('Graphviz not found. Only used for FreeHand.') # Grid layout will be used.'
 	usegraphviz = False
 
 try:
@@ -29,7 +29,7 @@ try:
     icu.Locale(1033) # test if pyicu supports creation of locale from LCID
     useicu = True
 except:
-    print 'Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)'
+    print('Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)')
     useicu = False
 
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
@@ -162,7 +162,7 @@ def lcid2txt(lcid):
 def dib2bmp(data,strict=0):
 	flag = struct.unpack("<I",data[:4])[0]
 	if flag != 0x28:
-		print "Doesn't look like DIB, sir..."
+		print("Doesn't look like DIB, sir...")
 		if strict:
 			return 0
 	size = len(data)+14
@@ -297,7 +297,7 @@ def gv_layout(nodes,edges,mode="dot"):
 	try:
 		devs[gv.nameof(fn)] = gv.getv(fn,"pos").split(",")
 	except:
-		print 'Failed in gv_render'
+		print('Failed in gv_render')
 	for i in range(len(nodes)-1):
 		fn = gv.nextnode(G,fn)
 		devs[gv.nameof(fn)] = gv.getv(fn,"pos").split(",")

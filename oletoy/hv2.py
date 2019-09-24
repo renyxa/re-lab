@@ -459,7 +459,7 @@ class HexView():
 		else:
 			self.edpos = 0
 
-		if self.okp.has_key(event.keyval):
+		if event.keyval in self.okp:
 			tmp = self.okp[event.keyval](event)
 			if tmp:
 				flag = tmp
@@ -589,7 +589,7 @@ class HexView():
 
 	def on_button_press (self, widget, event):
 		if event.button == 3:
-			print "Will add context menu in the future",event.x, event.y
+			print("Will add context menu in the future",event.x, event.y)
 		else:
 			rownum = int((event.y-self.tht-4)/self.tht)+self.offnum
 			if event.y - self.tht - 4 < 0:

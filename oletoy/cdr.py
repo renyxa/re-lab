@@ -367,7 +367,7 @@ def obbx (hd,size,data):
 def clr_model(hd,data,offset):
 	cmid = struct.unpack('<H', data[offset:offset+2])[0]
 	cmod = "%02x  "%cmid
-	if clr_models.has_key(cmid):
+	if cmid in clr_models:
 		cmod += clr_models[cmid]
 	cpal = struct.unpack('<H', data[offset+2:offset+4])[0]
 	add_iter (hd,"Color Model",cmod,offset,2,"<H")
@@ -453,7 +453,7 @@ def font (hd,size,data):
 	add_iter (hd,"Font ID","%02x"%struct.unpack('<H', data[0:2])[0],0,2,"<H")
 	enc = struct.unpack('<H', data[2:4])[0]
 	enctxt = "Unknown"
-	if ms_charsets.has_key(enc):
+	if enc in ms_charsets:
 		enctxt = ms_charsets[enc]
 	shift = 0
 	if hd.version > 5:
@@ -492,7 +492,7 @@ def fild (hd,size,data):
 		fill_type = struct.unpack('<h', data[4:6])[0]
 		
 	ft_txt = "%d"%fill_type
-	if fild_types.has_key(fill_type):
+	if fill_type in fild_types:
 		ft_txt += " "+fild_types[fill_type]
 	if hd.version > 12:
 		add_iter (hd,"Fill Type", ft_txt,0xc,2,"txt")
@@ -549,7 +549,7 @@ def fild (hd,size,data):
 			add_iter (hd, "Steps",struct.unpack('<H', data[steps_off:steps_off+2])[0], steps_off,2,"<H")
 			stid = struct.unpack('<H', data[mode_off:mode_off+2])[0]
 			st = "Unknown"
-			if grad_subtypes.has_key(stid):
+			if stid in grad_subtypes:
 				st = grad_subtypes[stid]
 			add_iter (hd, "Sub-type",st, mode_off,2,"<H")
 			add_iter (hd, "Midpoint",midpoint, mid_offset,1,"B")
@@ -1479,10 +1479,10 @@ def loda_v5 (hd,size,data,shift=0,ftype=0):
 	t_txt = "%02x"%l_type
 	if ftype == 0:
 		if hd.version == 3:
-			if loda_types_v3.has_key(l_type):
+			if l_type in loda_types_v3:
 				t_txt += " " + loda_types_v3[l_type]
 		else:
-			if loda_types.has_key(l_type):
+			if l_type in loda_types:
 				t_txt += " " + loda_types[l_type]
 		add_iter (hd, "Type", t_txt,8,2,"<H")
 	else:
@@ -1500,12 +1500,12 @@ def loda_v5 (hd,size,data,shift=0,ftype=0):
 		length = struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset
 		argtype = struct.unpack('<H',data[s_types + (n_args-i)*2:s_types + (n_args-i)*2+2])[0]
 		if ftype == 0:
-			if loda_type_func.has_key(argtype):
+			if argtype in loda_type_func:
 				loda_type_func[argtype](hd,data,offset+shift,l_type,length)
 			else:
 				add_iter (hd,"[%02x]"%(argtype),"???",offset+shift,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"<H")
 		else:
-			if styd_types.has_key(argtype):
+			if argtype in styd_types:
 				add_iter (hd,styd_types[argtype],"...",offset+shift,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"txt")
 			else:
 				add_iter (hd,"[%02x]"%(argtype),"???",offset+shift,struct.unpack('<H',data[s_args+i*2:s_args+i*2+2])[0]-offset,"txt")
@@ -1523,7 +1523,7 @@ def loda (hd,size,data,shift=0,ftype=0):
 	add_iter (hd, "Start of arg types", "%02x"%s_types,0xc+shift,4,"<I")
 	t_txt = "%02x"%l_type
 	if ftype == 0:
-		if loda_types.has_key(l_type):
+		if l_type in loda_types:
 			t_txt += " " + loda_types[l_type]
 		add_iter (hd, "Type", t_txt,0x10+shift,2,"<I")
 	else:
@@ -1544,12 +1544,12 @@ def loda (hd,size,data,shift=0,ftype=0):
 		length = struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset
 		argtype = struct.unpack('<L',data[s_types + (n_args-i)*4:s_types + (n_args-i)*4+4])[0]
 		if ftype == 0:
-			if loda_type_func.has_key(argtype):
+			if argtype in loda_type_func:
 				loda_type_func[argtype](hd,data,offset+shift,l_type,length)
 			else:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 		else:
-			if styd_types.has_key(argtype):
+			if argtype in styd_types:
 				add_iter (hd,styd_types[argtype],"...",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 			else:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
@@ -1601,7 +1601,7 @@ def trfd (hd,size,data):
 			# Distortion type
 			dtype = struct.unpack('<H', data[start:start+2])[0]
 			dtt = "Unknown"
-			if dtypes.has_key(dtype):
+			if dtype in dtypes:
 				dtt = dtypes[dtype]
 			add_iter (hd, "Distortion type", "%02x (%s)"%(dtype,dtt),start,2,"<H")
 			
@@ -1969,7 +1969,7 @@ def txsm (hd,size,data):
 			# Font
 			enctxt = "Unknown"
 			enc = struct.unpack("<H",data[off+2:off+4])[0]
-			if ms_charsets.has_key(enc):
+			if enc in ms_charsets:
 				enctxt = ms_charsets[enc]
 			add_iter (hd, "\tFont ID, Charset", "%s, %s (%02x)"%(d2hex(data[off:off+2]),enctxt,enc),off,4,"txt")
 			off += 4
@@ -2244,7 +2244,7 @@ def stlt(data,page,parent):
 			offset += 4+asize+namelen
 	except:
 			add_pgiter(page,"Tail","cdr","",data[bkpoff:],parent)
-			print "stlt exception, see 'tail'"
+			print("stlt exception, see 'tail'")
 
 cdr_ids = {
 	"arrw":arrw,
@@ -2364,7 +2364,7 @@ def dump_chunk(model, parent):
 
 def save (page,fname):
 	model = page.view.get_model()
-	print "Save request. Ver 7 to 13 only. To be continued..."
+	print("Save request. Ver 7 to 13 only. To be continued...")
 	buf = ""
 	if page.version > 6 and page.version < 14:
 		parent = model.iter_nth_child(None,0)
@@ -2434,12 +2434,12 @@ class record:
 			try:
 				vid = struct.unpack("<I",self.data[0x24:0x28])[0]
 				bid = struct.unpack("<I",self.data[0x28:0x2c])[0]
-				print 'Last saved: %d build %d'%(vid/100.,bid)
+				print('Last saved: %d build %d'%(vid/100.,bid))
 				if len(self.data) >= 0x34:
 					lid = struct.unpack("<I",self.data[0x30:0x34])[0]
 					print(lcid2txt(lid))
 			except:
-				print "Failed to parse 'sumi'"
+				print("Failed to parse 'sumi'")
 		if page.version < 16 and (self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "fill" or self.fourcc == "arrw" or self.fourcc == "bmpf"):
 			d_iter = add_dictiter(page,f_iter,d2hex(self.data[0:4]),self.fourcc)
 			if self.fourcc == "fild" or self.fourcc == "fill":
@@ -2458,7 +2458,7 @@ class record:
 					page.hd.width = struct.unpack("<H",self.data[0x1c:0x20])[0]*0.0254
 					page.hd.height = struct.unpack("<H",self.data[0x20:0x24])[0]*0.0254
 				except:
-					print "Oops"
+					print("Oops")
 			else:
 				page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
 				page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
@@ -2470,7 +2470,7 @@ class record:
 			cmx.parse_page(page,self.data,self.offset+8,f_iter)
 		if self.fourcc == 'vrsn' and len(self.data) == 2: # ver 16
 				page.version = struct.unpack("<H",self.data)[0]/100.
-				print page.version
+				print(page.version)
 
 		page.hd.version = page.version
 
@@ -2496,7 +2496,7 @@ class record:
 #					print 'stlt'
 					stlt(self.data,page,parent)
 				except:
-					print "Something failed in 'stlt'."
+					print("Something failed in 'stlt'.")
 			elif name == 'cmpr':
 				self.cmpr(page,parent,fmttype)
 			else:
@@ -2531,7 +2531,7 @@ class record:
 						try:
 							stlt("stlt"+data,page,p_iter)
 						except:
-							print "Something failed in 'stlt'."
+							print("Something failed in 'stlt'.")
 
 					if self.fourcc == 'mcfg':
 						if page.version == 6:

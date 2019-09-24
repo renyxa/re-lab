@@ -307,7 +307,7 @@ def hdTabTableData (hd,data,page):
 	offset=0
 	val = struct.unpack('>H', data[offset:offset+2])[0]
 	idtxt = 'Unknown'
-	if tabJustifyType_ids.has_key(val):
+	if val in tabJustifyType_ids:
 		idtxt = tabJustifyType_ids[val]
 	add_iter (hd, "justify", "0x%02x (%s)"%(val,idtxt),offset,2,">H")
 	offset+=2
@@ -1530,7 +1530,7 @@ def hdList(hd,data,page):
 	offset = 0
 	ltype = struct.unpack('>H', data[offset+10:offset+12])[0]
 	ltxt = "%02x"%ltype
-	if page.dict.has_key(ltype):
+	if ltype in page.dict:
 		ltxt += " (%s)"%page.dict[ltype]
 		add_iter (hd,'List Type',ltxt,10,2,">H")
 	size = struct.unpack('>h', data[offset+2:offset+4])[0]
@@ -1650,7 +1650,7 @@ def hdDisplayText(hd,data,page):
 	offset += 2
 	val = struct.unpack('>b', data[offset:offset+1])[0]
 	idtxt = 'Unknown'
-	if justifyType_ids.has_key(val):
+	if val in justifyType_ids:
 		idtxt = justifyType_ids[val]
 	add_iter (hd, "justify", "0x%02x (%s)"%(val,idtxt),offset,1,">b")
 	offset += 1
@@ -2559,7 +2559,7 @@ class FHDoc():
 		if flags & 0x800: # baseline shift
 			offset += 4
 		if flags >= 0x1000:
-			print "NEW FLAG IN DISPLAY TEXT!"
+			print("NEW FLAG IN DISPLAY TEXT!")
 		return offset
 
 	def DisplayText(self,off,recid,mode=0):
@@ -3166,7 +3166,7 @@ class FHDoc():
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		shift,recid1 = self.read_recid(off+2)
 		self.edges.append((recid,recid1))
-		print "SPC6",recid,recid1
+		print("SPC6",recid,recid1)
 		res = 26 + size*4 + shift
 #		FIXME! verify it
 		if self.version < 10:
@@ -3264,7 +3264,7 @@ class FHDoc():
 			key = struct.unpack('>h', self.data[off+shift:off+shift+2])[0]
 			rec = struct.unpack('>h', self.data[off+shift+2:off+shift+4])[0]
 			if not rec in teff_rec:
-				print 'Unknown TEffect record: %04x'%rec
+				print('Unknown TEffect record: %04x'%rec)
 			if key == 2:
 				shift+=4
 				L,rid = self.read_recid(off+shift)
@@ -3520,7 +3520,7 @@ class FHDoc():
 		return length
 
 	def fhtail(self,off,recid,mode=0):
-		print "FH Tail!"
+		print("FH Tail!")
 		L1,recid1 = self.read_recid(off)
 		L2,recid2 = self.read_recid(off+L1)
 		L3,recid3 = self.read_recid(off+L1+L2)
@@ -3538,7 +3538,7 @@ class FHDoc():
 		for i in self.reclist[start:]:
 			j += 1
 			if j%5000 == 0:
-				print j
+				print(j)
 			if self.dictitems[i] in self.chunks:
 				#try:
 				if 1:
@@ -3560,7 +3560,7 @@ class FHDoc():
 						self.page.model.set_value(niter,4,(j-1,offset))
 						offset += rLen
 						if uid != "":
-							print self.dictitems[i],uid
+							print(self.dictitems[i],uid)
 						self.nodes[j] = (self.dictitems[i],niter)
 						for i in range(len(subList)):
 							subName,subType,subOff,subLen=subList[i]
@@ -3572,9 +3572,9 @@ class FHDoc():
 							try:
 								add_pgiter(self.page,"!!! %s"%self.dictitems[self.reclist[i+k]],"fh","unknown","",self.diter)
 							except:
-								print "kk",k
-						print "Failed on record %d (%s)"%(j,self.dictitems[i]),rLen
-						print "Next is",self.dictitems[self.reclist[j+1]]
+								print("kk",k)
+						print("Failed on record %d (%s)"%(j,self.dictitems[i]),rLen)
+						print("Next is",self.dictitems[self.reclist[j+1]])
 						return
 				#except:
 				#	add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
@@ -3583,7 +3583,7 @@ class FHDoc():
 				#	return
 
 			else:
-					print "Unknown record type: %s (%02x)"%(self.dictitems[i],j)
+					print("Unknown record type: %s (%02x)"%(self.dictitems[i],j))
 					add_pgiter(self.page,"!!! %s"%self.dictitems[i],"fh","unknown",self.data[offset:offset+256],self.diter)
 					if j < len(self.reclist):
 						add_pgiter(self.page,"!!! %s"%self.dictitems[self.reclist[j]],"fh","unknown","",self.diter)
@@ -3606,7 +3606,7 @@ class FHDoc():
 	def parse_list(self,data,offset):
 		size = struct.unpack('>L', data[offset:offset+4])[0]
 		add_pgiter(self.page,"FH List","fh","list",data[offset:offset+4+2*size],self.iter)
-		print '# of items:\t%u'%size
+		print('# of items:\t%u'%size)
 		offset+= 4
 		for i in range(size):
 			key = struct.unpack('>h', data[offset:offset+2])[0]
@@ -3616,7 +3616,7 @@ class FHDoc():
 
 	def parse_dict (self,data,offset):
 		dictsize = struct.unpack('>h', data[offset:offset+2])[0]
-		print 'Dict size:\t%u'%dictsize
+		print('Dict size:\t%u'%dictsize)
 		dictiter = add_pgiter(self.page,"FH Dictionary","fh","dict","",self.iter)
 		offset+=4
 		if self.version > 8:
@@ -3729,7 +3729,7 @@ typecodes = {
 def read1c(buf,page,parent,off):
 	flag = ord(buf[off])
 	if flag != 0x1c:
-		print "FH: not an 0x1c flag in v10+"
+		print("FH: not an 0x1c flag in v10+")
 		return len(buf)
 	t1 = ord(buf[off+1])
 	t2 = ord(buf[off+2])
@@ -3740,7 +3740,7 @@ def read1c(buf,page,parent,off):
 	else:
 		size = t4
 	tname = "%02x %02x"%(t1,t2)
-	if typecodes.has_key(tname):
+	if tname in typecodes:
 		tname = typecodes[tname]
 	else:
 		tname += " %02x"%t3
@@ -3757,9 +3757,9 @@ def fh_open (buf,page,parent=None,mode=1):
 		offset = 0
 		page.version = ord(buf[2])-48
 	size = struct.unpack('>L', buf[offset+8:offset+12])[0]
-	print 'Version:\t',page.version
-	print 'Offset: \t%x'%offset
-	print 'Size:\t\t%x'%size
+	print('Version:\t',page.version)
+	print('Offset: \t%x'%offset)
+	print('Size:\t\t%x'%size)
 
 	if page.version > 8:
 		output = zlib.decompress(buf[offset+14:offset+14+size],-15)
@@ -3781,4 +3781,4 @@ def fh_open (buf,page,parent=None,mode=1):
 		page.appdoc.parse_agd()
 		return "FH"
 	except:
-		print "Failed in FH parsing"
+		print("Failed in FH parsing")

@@ -35,7 +35,7 @@ def query_parser(data, off):
 	(c, off) = rdata(data, off, '>B')
 	marker = (c & 0xf0) >> 4
 	arg = c & 0xf
-	if not prop_parsers.has_key(marker):
+	if marker not in prop_parsers:
 		raise format_error('unknown marker arg %x' % marker, off - 1)
 	return prop_parsers[marker](data, off, arg)
 
@@ -54,7 +54,7 @@ class record:
 		self.something_fmt = something_fmt
 		try:
 			self.end = self.do_parse(self.data, self.start, self.arg)
-		except format_error, e:
+		except format_error as e:
 			self.end = e.offset
 			raise e
 		return self.end
@@ -86,7 +86,7 @@ class boolean(record):
 class integer(record):
 	def do_parse(self, data, off, width):
 		width_map = {0: 'b', 1: 'h', 2: 'i', 3: 'q'}
-		if not width_map.has_key(width):
+		if width not in width_map:
 			raise format_error('unknown integer width %x' % width, off - 1)
 		(self.value, off) = rdata(data, off, '>%s' % width_map[width])
 		return off
@@ -97,7 +97,7 @@ class integer(record):
 class real(record):
 	def do_parse(self, data, off, width):
 		width_map = {2: 'f', 3: 'd'}
-		if not width_map.has_key(width):
+		if width not in width_map:
 			raise format_error('unknown real width %x' % width, off - 1)
 		(self.value, off) = rdata(data, off, '>%s' % width_map[width])
 		return off
@@ -108,7 +108,7 @@ class real(record):
 class date(record):
 	def do_parse(self, data, off, width):
 		width_map = {3: 'd'}
-		if not width_map.has_key(width):
+		if width not in width_map:
 			raise format_error('unknown date width %x' % width, off - 1)
 		(self.value, off) = rdata(data, off, '>%s' % width_map[width])
 		return off
@@ -246,7 +246,7 @@ class plist_parser:
 			try:
 				parser = query_parser(data, off)
 				off = parser.parse(self.something_fmt)
-			except format_error, e:
+			except format_error as e:
 				parser.show(self.page, parent) # show at least something
 				print(e.what())
 				return
@@ -256,11 +256,11 @@ class plist_parser:
 		off = self.start_trailer + 6
 		format_map = {1: '>B', 2: '>H'}
 		(offset_byte_size, off) = rdata(self.data, off, '>B')
-		if not format_map.has_key(offset_byte_size):
+		if offset_byte_size not in format_map:
 			raise format_error('unknown offset byte size %x' % offset_byte_size, off - 1)
 		self.offset_format = format_map[offset_byte_size]
 		(ref_byte_size, off) = rdata(self.data, off, '>B')
-		if not format_map.has_key(ref_byte_size):
+		if ref_byte_size not in format_map:
 			raise format_error('unknown dict byte size %x' % ref_byte_size, off - 1)
 		self.something_fmt = format_map[ref_byte_size]
 		off += 6

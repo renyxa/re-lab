@@ -57,7 +57,7 @@ def parse_props(page,buf,off,pnum,parent):
 			else:
 				plen = 12+clen
 		else:
-			print "Unknown prop type:",ptype
+			print("Unknown prop type:",ptype)
 		add_pgiter(page,"%s: %s"%(ptype,res),"fbx","prop",buf[off:off+1+plen],parent)
 		off += 1+plen
 

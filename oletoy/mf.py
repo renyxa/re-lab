@@ -300,19 +300,19 @@ def parse_gdiplus (buf, offset, page, piter):
 		eprid = struct.unpack('<H',buf[offset+0x10:offset+0x12])[0]
 		eprlen = struct.unpack('<I',buf[offset+0x14:offset+0x18])[0]
 		eprname = "%02x"%eprid
-		if emrplus_ids.has_key(eprid):
+		if eprid in emrplus_ids:
 			eprname = emrplus_ids[eprid]
 		# for statistics
-		print eprname
+		print(eprname)
 
 		add_pgiter (page, eprname, "emf+", eprid, buf[offset+0x10:offset+0x10+eprlen],piter)
-		if emfplus.emfplus_ids.has_key(eprid):
+		if eprid in emfplus.emfplus_ids:
 			pass
 		else:
-			print "Found ",eprname,page.model.get_string_from_iter(iter2)  # warn on not parsed EMF+ records
+			print("Found ",eprname,page.model.get_string_from_iter(iter2))  # warn on not parsed EMF+ records
 		return eprlen
 	except:
-		print "Oops"
+		print("Oops")
 		return 4
 
 def mf_open (buf,page,parent):

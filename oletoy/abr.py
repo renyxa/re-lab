@@ -38,7 +38,7 @@ def p_vlls(page,buf,offset,name,parent):
 	for i in range(size):
 		type = buf[offset:offset+4]
 		offset+=4
-		if types.has_key(type):
+		if type in types:
 			offset = types[type](page,buf,offset,type,o_iter)
 		else:
 			p_unkn(buf,offset,"",o_iter)
@@ -116,7 +116,7 @@ def p_unkn(page,buf,offset,name,parent):
 	# and offset+8:offset+12 is next enum
 	# check for it
 	name = buf[offset+8:offset+12]
-	if types.has_key(name):
+	if name in types:
 		# everything is fine
 		[size] = struct.unpack('>L',buf[offset:offset+4])
 		return size,offset+4
@@ -132,9 +132,9 @@ def p_unkn(page,buf,offset,name,parent):
 					str_asc +='.'
 				else:
 					str_asc += buf[offset+i]
-				print str_hex, str_asc
+				print(str_hex, str_asc)
 			except:
-				print "Something failed"
+				print("Something failed")
 		return str_hex+" "+str_asc,len(buf)+1
 
 
@@ -150,10 +150,10 @@ def parse_entry(page,buf,offset,parent):
 	offset = offset + nlen
 	type = buf[offset:offset+4]
 	offset+=4
-	if types.has_key(type):
+	if type in types:
 		offset = types[type](page,buf,offset,name,parent)
 	else:
-		print "Unknown key:\t",name,type
+		print("Unknown key:\t",name,type)
 		p_unkn(page,buf,offset,name,parent)
 	return offset
 
@@ -193,7 +193,7 @@ def unpack_samp (data,page,siter):
 def read_8bim(buf,page,parent,off):
 	tag = buf[off:off+4]
 	if tag != "8BIM":
-		print "Something wrong with 8BIM offsets"
+		print("Something wrong with 8BIM offsets")
 		return len(buf)
 	else:
 		off += 4

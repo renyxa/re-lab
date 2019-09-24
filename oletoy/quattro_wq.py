@@ -496,13 +496,13 @@ class QWQDoc():
 	}
 	def update_view2(self,hd,model,iter):
 		key=model.get_value(iter,1)[1]
-		if self.chunkHds.has_key(key):
+		if key in self.chunkHds:
 			self.chunkHds[key](hd,model.get_value(iter,3))
 	def checkFinish(self,hd,data,off,name):
 		if len(data)>off:
 			extra=len(data)-off
 			add_iter (hd,"##extra",binascii.hexlify(data[off:off+extra]), off, extra, "txt")
-			print "%s: Find unexpected data"%name
+			print("%s: Find unexpected data"%name)
 	def readCoord(self,data,beg,num):
 		what=""
 		off=0
@@ -871,7 +871,7 @@ class QWQDoc():
 				add_iter (hd,"func","%s[%d]"%(self.functions_N_map[wh],arity),off-1,2,'txt')
 				off+=1
 			else:
-				print "hdFormula: Find unexpected type=%d"%wh
+				print("hdFormula: Find unexpected type=%d"%wh)
 				off-=1
 				break
 			if wh==3: # sometimes, there can be some text after the end=, some comment?

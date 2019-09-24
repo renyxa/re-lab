@@ -229,7 +229,7 @@ def parse_object(page, data, offset, parent, version, index):
 	add_iter(hd, 'Shade', key2txt(shade, shade_map), off - 1, 1, '>B')
 	(color, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
-	if parser_map.has_key(typ):
+	if typ in parser_map:
 		(content, off) = parser_map[typ](hd, data, off, version, content, content_iter)
 	(last, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
