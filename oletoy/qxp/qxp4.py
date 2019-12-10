@@ -598,7 +598,7 @@ def add_next_linked_text_settings(hd, data, offset, fmt, header):
 	(id, off) = rdata(data, off, fmt('I'))
 	add_iter(hd, 'Some link-related ID?', hex(id), off - 4, 4, fmt('I'))
 	header.next_linked_index = next_index
-	return off
+	return (id, off)
 
 def add_text_settings(hd, data, offset, fmt, header):
 	off = offset
@@ -653,7 +653,10 @@ def add_picture_settings(hd, data, offset, fmt, header):
 	off += 1
 	(flags, off) = rdata(data, off, fmt('B'))
 	add_iter(hd, 'Picture flags', bflag2txt(flags, picture_flags_map), off - 1, 1, fmt('B'))
-	off += 22
+	off += 2
+	(sid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'source ID', hex(sid), off - 4, 4, fmt('I'))
+	off += 16
 	(pic_rot, off) = rfract(data, off, fmt)
 	add_iter(hd, 'Picture angle', '%.2f deg' % pic_rot, off - 4, 4, fmt('i'))
 	(pic_skew, off) = rfract(data, off, fmt)
@@ -662,7 +665,7 @@ def add_picture_settings(hd, data, offset, fmt, header):
 	off = add_dim(hd, off + 4, data, off, fmt, 'Offset down')
 	off = add_fract_perc(hd, data, off, fmt, 'Scale accross')
 	off = add_fract_perc(hd, data, off, fmt, 'Scale down')
-	return off
+	return sid,off
 
 def add_ole_object(hd, data, offset, fmt, header, page, parent):
 	off = offset
@@ -695,9 +698,10 @@ def add_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 2
 	off = add_text_settings(hd, data, off, fmt, header)
-	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	(lid,off) = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 12
-	off = add_text_file_info(hd, data, off, fmt, header)
+	if lid == 0:
+		off = add_text_file_info(hd, data, off, fmt, header)
 	return off
 
 def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent):
@@ -715,11 +719,16 @@ def add_picture_box(hd, data, offset, fmt, version, obfctx, header, page, parent
 	off = add_ole_object(hd, data, off, fmt, header, page, parent)
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
-	off = add_picture_settings(hd, data, off, fmt, header)
+	(sid,off) = add_picture_settings(hd, data, off, fmt, header)
 	off += 8
 	off += 24
-	off += 44
-	if header.content_index != 0 and header.ole_id == 0:
+	off += 20
+	(pid, off) = rdata(data, off, fmt('I'))
+	add_iter(hd, 'points ID', hex(sid), off - 4, 4, fmt('I'))
+	off += 20
+	if pid != 0:
+		off = add_bezier(hd, data, off, fmt)
+	if header.content_index != 0 and sid != 0:
 		off = add_file_info(hd, data, off, fmt)
 	return off
 
@@ -758,7 +767,7 @@ def add_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off += 24
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
-	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	(lid,off) = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
 	off += 4
@@ -789,7 +798,7 @@ def add_bezier_line_text(hd, data, offset, fmt, version, obfctx, header):
 	off += 36
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 44
-	off = add_next_linked_text_settings(hd, data, off, fmt, header)
+	(lid,off) = add_next_linked_text_settings(hd, data, off, fmt, header)
 	off += 4
 	off = add_text_path_settings(hd, data, off, fmt, header)
 	off += 4
@@ -827,8 +836,9 @@ def add_bezier_text_box(hd, data, offset, fmt, version, obfctx, header):
 	off = add_linked_text_offset(hd, data, off, fmt, header)
 	off += 2
 	off = add_text_settings(hd, data, off, fmt, header)
-	off = add_next_linked_text_settings(hd, data, off, fmt, header)
-	off += 12
+	(lid,off) = add_next_linked_text_settings(hd, data, off, fmt, header)
+	if lid == 0:
+		off += 12
 	if bz_id:
 		off = add_bezier(hd, data, off, fmt)
 	off = add_text_file_info(hd, data, off, fmt, header)
@@ -847,11 +857,11 @@ def add_bezier_picture_box(hd, data, offset, fmt, version, obfctx, header, page,
 	off = add_ole_object(hd, data, off, fmt, header, page, parent)
 	if header.gradient_id != 0:
 		off = add_gradient(hd, data, off, fmt)
-	off = add_picture_settings(hd, data, off, fmt, header)
+	(sid,off) = add_picture_settings(hd, data, off, fmt, header)
 	off += 76
 	if bz_id:
 		off = add_bezier(hd, data, off, fmt)
-	if header.content_index != 0 and header.ole_id == 0:
+	if header.content_index != 0 and sid != 0:
 		off = add_file_info(hd, data, off, fmt)
 	return off
 

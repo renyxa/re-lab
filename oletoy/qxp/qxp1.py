@@ -150,7 +150,9 @@ def add_line(hd, data, offset, version, content, content_iter):
 	(endcaps, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Endcaps', key2txt(endcaps, endcaps_map), off - 1, 1, '>B')
 	off += 3
-	return content, off
+	(last, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
+	return last, content, off
 
 def add_text(hd, data, offset, version, content, content_iter):
 	off = add_frame(hd, data, offset, version)
@@ -171,7 +173,9 @@ def add_text(hd, data, offset, version, content, content_iter):
 		off += 3
 	if content == 0:
 		off += 12
-	return content if something == 0 else 0, off
+	(last, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
+	return last, content if something == 0 else 0, off
 
 def add_picture(hd, data, offset, version, content, content_iter):
 	off = add_frame(hd, data, offset, version)
@@ -179,11 +183,21 @@ def add_picture(hd, data, offset, version, content, content_iter):
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale across')
 	off = add_fract_perc(hd, data, off, big_endian, 'Scale down')
 	off = add_dim(hd, 4, data, off, big_endian, 'Text outset')
-	off += 12
+	(data_index, off) = rdata(data, off, '>I')
+	add_iter(hd, 'Unknown index', data_index, off - 4, 4, '>H')
+	off += 8
 	(radius, off) = rfract(data, off, big_endian)
 	radius /= 2
 	add_iter(hd, 'Corner radius', dim2txt(radius), off - 4, 4, '4s')
-	return content, off + 5
+	off += 5
+	(last, off) = rdata(data, off, '>B')
+	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
+	if data_index<>0:
+		for i in range(2):
+			(sz, off) = rdata(data, off, '>H')
+			add_iter(hd, 'Data%d'%i, sz, off - 2, 2+sz, '4s')
+			off+=sz
+	return last, content, off
 
 def parse_object(page, data, offset, parent, version, index):
 	off = offset
@@ -230,9 +244,7 @@ def parse_object(page, data, offset, parent, version, index):
 	(color, off) = rdata(data, off, '>B')
 	add_iter(hd, 'Color', key2txt(color, color_map), off - 1, 1, '>B')
 	if typ in parser_map:
-		(content, off) = parser_map[typ](hd, data, off, version, content, content_iter)
-	(last, off) = rdata(data, off, '>B')
-	add_iter(hd, 'Last object', key2txt(last, {0: 'No', 1: '???', 2: 'Yes'}), off - 1, 1, '>B')
+		(last, content, off) = parser_map[typ](hd, data, off, version, content, content_iter)
 	page.model.set_value(objiter, 0, '[%d] %s' % (index, type_str))
 	page.model.set_value(objiter, 2, off - offset)
 	page.model.set_value(objiter, 3, data[offset:off])

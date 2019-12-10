@@ -132,7 +132,7 @@ def add_text_info(hd, size, data, fmt, version, indexSize):
 	i = 0
 	begin = off
 	while off < begin + blocks_len:
-		(sz, fm) = (2, '>H') if version < qxp.VERSION_3_1_M or indexSize==2 else (4, fmt('I'))
+		(sz, fm) = (2, fmt('H')) if version < qxp.VERSION_3_1_M or indexSize==2 else (4, fmt('I'))
 		(block, off) = rdata(data, off, fm)
 		add_iter(hd, 'Block %d' % i, block, off - sz, sz, fm, parent=blockiter)
 		if version < qxp.VERSION_4:
