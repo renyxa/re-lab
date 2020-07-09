@@ -15,124 +15,128 @@
 #
 
 import sys,struct,os
-import tree,gtk,cairo,zlib
-import gobject
+import zlib
+
+import cairo
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk,GObject, Gdk
+
 import difflib
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6,vba,pkzip
 from utils import *
 from os.path import expanduser
-import StringIO
-
+from io import StringIO
 try:
-	import gtksourceview2
-	usegtksv2 = True
+	import Gtksourceview2
+	useGtksv2 = True
 except:
-	usegtksv2 = False
+	useGtksv2 = False
 
 cdrloda = {0xa:"Outl ID",0x14:"Fild ID",0x1e:"Coords",0xc8:"Stlt ID",
 					0x2af8:"Polygon",0x3e8:"Name",0x2efe:"Rotation",0x7d0:"Palette",
 					0x1f40:"Lens",0x1f45:"Container"}
 
 
-class SelectWindow(gtk.Window):
+class SelectWindow(Gtk.Window):
 	def __init__(self, mainapp, parent=None):
-		gtk.Window.__init__(self)
+		Gtk.Window.__init__(self)
 		self.mainapp = mainapp
 		self.set_title("OLE Toy: Select data to compare")
 		
-		table = gtk.Table(3, 8, False)
+		table = Gtk.Table(3, 8, False)
 
-		left_lbl = gtk.Label("Left Panel")
-		right_lbl = gtk.Label("Right Panel")
+		left_lbl = Gtk.Label("Left Panel")
+		right_lbl = Gtk.Label("Right Panel")
 		
-		tab_lbl = gtk.Label("File:")
+		tab_lbl = Gtk.Label("File:")
 		tab_lbl.set_alignment(xalign=0.0, yalign=0.5)
-		self.ltab_cb = gtk.ComboBoxEntry()
-		self.rtab_cb = gtk.ComboBoxEntry()
+		self.ltab_cb = Gtk.ComboBoxEntry()
+		self.rtab_cb = Gtk.ComboBoxEntry()
 		self.ltab_cb.child.set_can_focus(False)
 		self.rtab_cb.child.set_can_focus(False)
 
-		self.tab_cbm = gtk.ListStore(gobject.TYPE_STRING)
+		self.tab_cbm = Gtk.ListStore(GObject.TYPE_STRING)
 		for i in self.mainapp.das:
 			li = self.tab_cbm.append()
 			self.tab_cbm.set_value(li,0,"%s (tab %s)"%(self.mainapp.das[i].pname,i))
 
-		pathcb_lbl = gtk.Label("Record:")
+		pathcb_lbl = Gtk.Label("Record:")
 		pathcb_lbl.set_alignment(xalign=0.0, yalign=0.5)
-		self.lpath_cb = gtk.ComboBoxEntry()
-		self.rpath_cb = gtk.ComboBoxEntry()
+		self.lpath_cb = Gtk.ComboBoxEntry()
+		self.rpath_cb = Gtk.ComboBoxEntry()
 		self.lpath_cb.child.set_can_focus(False)
 		self.rpath_cb.child.set_can_focus(False)
 
 
-		path_lbl = gtk.Label("Path:")
+		path_lbl = Gtk.Label("Path:")
 		path_lbl.set_alignment(xalign=0.0, yalign=0.5)
-		self.lpath_entry = gtk.Entry()
-		self.rpath_entry = gtk.Entry()
+		self.lpath_entry = Gtk.Entry()
+		self.rpath_entry = Gtk.Entry()
 
-		soff_lbl = gtk.Label("Start offset:")
+		soff_lbl = Gtk.Label("Start offset:")
 		soff_lbl.set_alignment(xalign=0.0, yalign=0.5)
-		self.lsoff_spb = gtk.SpinButton()
-		self.rsoff_spb = gtk.SpinButton()
+		self.lsoff_spb = Gtk.SpinButton()
+		self.rsoff_spb = Gtk.SpinButton()
 
-		eoff_lbl = gtk.Label("End offset:")
+		eoff_lbl = Gtk.Label("End offset:")
 		eoff_lbl.set_alignment(xalign=0.0, yalign=0.5)
-		self.leoff_spb = gtk.SpinButton()
-		self.reoff_spb = gtk.SpinButton()
+		self.leoff_spb = Gtk.SpinButton()
+		self.reoff_spb = Gtk.SpinButton()
 
-		len_lbl = gtk.Label("Length:")
+		len_lbl = Gtk.Label("Length:")
 		len_lbl.set_alignment(xalign=0.0, yalign=0.5)
-		self.llen_spb = gtk.SpinButton()
-		self.rlen_spb = gtk.SpinButton()
+		self.llen_spb = Gtk.SpinButton()
+		self.rlen_spb = Gtk.SpinButton()
 
 		table.attach(left_lbl,
-			1, 2, 0, 1, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(right_lbl,
-			2, 3, 0, 1, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
 		table.attach(tab_lbl,
-			0, 1, 1, 2, gtk.FILL, 0, 0, 0);
+			0, 1, 1, 2, Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.ltab_cb,
-			1, 2, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 1, 2, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.rtab_cb,
-			2, 3, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 1, 2, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
 		table.attach(pathcb_lbl,
-			0, 1, 2, 3, gtk.FILL, 0, 0, 0);
+			0, 1, 2, 3, Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.lpath_cb,
-			1, 2, 2, 3, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 2, 3, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.rpath_cb,
-			2, 3, 2, 3, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 2, 3, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
 		table.attach(path_lbl,
-			0, 1, 3, 4, gtk.FILL, 0, 0, 0);
+			0, 1, 3, 4, Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.lpath_entry,
-			1, 2, 3, 4, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 3, 4, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.rpath_entry,
-			2, 3, 3, 4, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 3, 4, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
 		table.attach(soff_lbl,
-			0, 1, 4, 5, gtk.FILL, 0, 0, 0);
+			0, 1, 4, 5, Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.lsoff_spb,
-			1, 2, 4, 5, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 4, 5, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.rsoff_spb,
-			2, 3, 4, 5, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 4, 5, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
 		table.attach(eoff_lbl,
-			0, 1, 5, 6, gtk.FILL, 0, 0, 0);
+			0, 1, 5, 6, Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.leoff_spb,
-			1, 2, 5, 6, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 5, 6, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.reoff_spb,
-			2, 3, 5, 6, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 5, 6, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
 		table.attach(len_lbl,
-			0, 1, 6, 7, gtk.FILL, 0, 0, 0);
+			0, 1, 6, 7, Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.llen_spb,
-			1, 2, 6, 7, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			1, 2, 6, 7, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 		table.attach(self.rlen_spb,
-			2, 3, 6, 7, gtk.EXPAND | gtk.FILL, 0, 0, 0);
+			2, 3, 6, 7, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 0, 0, 0);
 
-		ok_btn = gtk.Button("Ok")
+		ok_btn = Gtk.Button("Ok")
 		ok_btn.connect("clicked",self.ok_button_clicked)
 
 		table.attach(ok_btn,
@@ -240,12 +244,12 @@ class SelectWindow(gtk.Window):
 			
 			llen = m1.get_value(iter1,2)
 			rlen = m2.get_value(iter2,2)
-			lsadj = gtk.Adjustment(0, 0, llen-1, 1, 256, 0)
-			leadj = gtk.Adjustment(llen-1, 0, llen-1, 1, 256, 0)
-			lladj = gtk.Adjustment(llen-1, 0, llen-1, 1, 256, 0)
-			rsadj = gtk.Adjustment(0, 0, rlen-1, 1, 256, 0)
-			readj = gtk.Adjustment(rlen-1, 0, rlen-1, 1, 256, 0)
-			rladj = gtk.Adjustment(rlen-1, 0, rlen-1, 1, 256, 0)
+			lsadj = Gtk.Adjustment(0, 0, llen-1, 1, 256, 0)
+			leadj = Gtk.Adjustment(llen-1, 0, llen-1, 1, 256, 0)
+			lladj = Gtk.Adjustment(llen-1, 0, llen-1, 1, 256, 0)
+			rsadj = Gtk.Adjustment(0, 0, rlen-1, 1, 256, 0)
+			readj = Gtk.Adjustment(rlen-1, 0, rlen-1, 1, 256, 0)
+			rladj = Gtk.Adjustment(rlen-1, 0, rlen-1, 1, 256, 0)
 
 			self.lsoff_spb.set_adjustment(lsadj)
 			self.lsoff_spb.set_value(0)
@@ -271,48 +275,48 @@ class SelectWindow(gtk.Window):
 			self.rlen_spb.set_sensitive(False)
 
 
-class DiffWindow(gtk.Window):
+class DiffWindow(Gtk.Window):
 	def __init__(self, mainapp, parent=None):
 		self.mainapp = mainapp
 		# Create the toplevel window
-		gtk.Window.__init__(self)
+		Gtk.Window.__init__(self)
 		self.set_title("OLE Toy DIFF")
 
-		s = gtk.ScrolledWindow()
-		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s = Gtk.ScrolledWindow()
+		s.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 		s.set_size_request(1165,400)
-		da = gtk.DrawingArea()
-		da.connect('expose_event', self.draw_diff,s)
+		da = Gtk.DrawingArea()
+		da.connect('draw', self.draw_diff,s)
 		s.add_with_viewport(da)
-		self.damm = gtk.DrawingArea()
-		self.damm.connect('expose_event', self.draw_diffmm,s)
+		self.damm = Gtk.DrawingArea()
+		self.damm.connect('draw', self.draw_diffmm,s)
 		self.damm.set_size_request(42,1)
 		va = s.get_vadjustment()
 		va.connect('value-changed',self.on_diff_va_changed,self.damm,s)
 
-		hbox= gtk.HBox()
+		hbox= Gtk.HBox()
 		hbox.pack_start(self.damm,0,0,0)
 		hbox.pack_start(s,1,1,0)
 
-		tbox = gtk.HBox()
-		flr = gtk.HBox()
+		tbox = Gtk.HBox()
+		flr = Gtk.HBox()
 		flr.set_size_request(42,1)
-		vbl = gtk.VBox()
-		vbr = gtk.VBox()
+		vbl = Gtk.VBox()
+		vbr = Gtk.VBox()
 		tbox.pack_start(flr,0,0,0)
 		tbox.pack_start(vbl,1,1,0)
 		tbox.pack_start(vbr,1,1,0)
 		# Create statusbar
-		self.statusbar = gtk.HBox()
-		self.sblabel = gtk.Label()
+		self.statusbar = Gtk.HBox()
+		self.sblabel = Gtk.Label()
 		self.sblabel.set_use_markup(True)
-		exp_btn = gtk.Button("Export")
+		exp_btn = Gtk.Button("Export")
 		exp_btn.set_alignment(1,0.5)
 		exp_btn.connect("clicked",self.activate_export)
 		self.statusbar.pack_start(self.sblabel, True,True,2)
 		self.statusbar.pack_start(exp_btn, 0,0,0)
 
-		vbox = gtk.VBox()
+		vbox = Gtk.VBox()
 		vbox.pack_start(tbox,0,0,0)
 		vbox.pack_start(hbox,1,1,1)
 		vbox.pack_start(self.statusbar,0,0,0)
@@ -334,10 +338,10 @@ class DiffWindow(gtk.Window):
 		self.f2name = sw.rtab_cb.child.get_text()
 		self.r1name = "%s (%s)"%(sw.lpath_cb.child.get_text(),sw.lpath_entry.get_text())
 		self.r2name = "%s (%s)"%(sw.rpath_cb.child.get_text(),sw.rpath_entry.get_text())
-		filelbll = gtk.Label(self.f1name)
-		filelblr = gtk.Label(self.f2name)
-		reclbll = gtk.Label(self.r1name)
-		reclblr = gtk.Label(self.r2name)
+		filelbll = Gtk.Label(self.f1name)
+		filelblr = Gtk.Label(self.f2name)
+		reclbll = Gtk.Label(self.r1name)
+		reclblr = Gtk.Label(self.r2name)
 		filelbll.set_alignment(xalign=0.0, yalign=0.5)
 		filelblr.set_alignment(xalign=0.0, yalign=0.5)
 		reclbll.set_alignment(xalign=0.0, yalign=0.5)
@@ -349,7 +353,7 @@ class DiffWindow(gtk.Window):
 
 
 	def activate_export(self, button):
-		fname = self.mainapp.file_open('Save',None,gtk.FILE_CHOOSER_ACTION_SAVE,"not_implemented_yet.html")
+		fname = self.mainapp.file_open('Save',None,Gtk.FileChooserAction.SAVE,"not_implemented_yet.html")
 		if fname:
 			f = open(fname,'w')
 			f.write("<!DOCTYPE html><html><body>")
@@ -497,7 +501,11 @@ class DiffWindow(gtk.Window):
 
 
 	def draw_diffmm (self, widget, event,scrollbar):
-		x,y,width,height = widget.allocation
+		alloc = widget.get_allocation()
+		x = alloc.x
+		y = alloc.y
+		width = alloc.width
+		height = alloc.height
 		mctx = widget.window.cairo_create()
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
@@ -539,7 +547,11 @@ class DiffWindow(gtk.Window):
 		# need to move diffsize & diffarr from AppMainWin to DiffWindow
 		mctx = widget.window.cairo_create()
 		if self.draft == 1:
-			x,y,width,height = widget.allocation
+			alloc = widget.get_allocation()
+			x = alloc.x
+			y = alloc.y
+			width = alloc.width
+			height = alloc.height
 			if self.csheight != None:
 				width = self.cswidth
 				height = self.csheight
@@ -709,9 +721,9 @@ class DiffWindow(gtk.Window):
 
 
 
-class OSD_Entry(gtk.Window):
+class OSD_Entry(Gtk.Window):
 	def __init__(self, parent, oid, mode="snippet"):
-		gtk.Window.__init__(self,gtk.WINDOW_TOPLEVEL)
+		Gtk.Window.__init__(self,Gtk.WINDOW_TOPLEVEL)
 		self.Doc = parent
 		self.oid = oid
 		self.mode = mode
@@ -720,7 +732,7 @@ class OSD_Entry(gtk.Window):
 		self.set_decorated(False)
 		self.set_border_width(0)
 		self.xs,self.ys = 0,0
-		self.entry = gtk.Entry()
+		self.entry = Gtk.Entry()
 		self.entry.connect("key-press-event",self.entry_key_pressed)
 		self.add(self.entry)
 
@@ -740,25 +752,25 @@ class OSD_Entry(gtk.Window):
 				self.Doc.OSD_txt = ""
 
 
-class TabLabel(gtk.HBox):
-	__gsignals__ = {"close-clicked": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),}
+class TabLabel(Gtk.HBox):
+	__gsignals__ = {"close-clicked": (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE, ()),}
 
 	def __init__(self, label_text):
-		gtk.HBox.__init__(self)
-		label = gtk.Label(label_text)
-		image = gtk.Image()
-		image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-		btn = gtk.Button()
+		Gtk.HBox.__init__(self)
+		label = Gtk.Label(label_text)
+		image = Gtk.Image()
+		image.set_from_stock(Gtk.STOCK_CLOSE, Gtk.IconSize.MENU)
+		btn = Gtk.Button()
 		btn.set_image(image)
-		btn.set_relief(gtk.RELIEF_NONE)
+		btn.set_relief(Gtk.ReliefStyle.NONE)
 		btn.set_focus_on_click(False)
 		btn.connect("clicked",self.tab_button_clicked)
-		self.eb = gtk.EventBox()
+		self.eb = Gtk.EventBox()
 		self.eb.add(label)
 		self.pack_start(self.eb,1,1,0)
 		self.pack_start(btn,0,0,0)
 		self.show_all()
-		#eb.modify_bg(gtk.STATE_NORMAL,self.get_colormap().alloc_color("green"))
+		#eb.modify_bg(Gtk.STATE_NORMAL,self.get_colormap().alloc_color("green"))
 
 	def change_text(self,text):
 		self.eb.get_children()[0].set_text(text)
@@ -769,7 +781,7 @@ class TabLabel(gtk.HBox):
 	def tab_button_clicked(self, button):
 		self.emit("close-clicked")
 
- 	def on_tab_close_clicked(self, tab_label, notebook, tab_widget, arr, tabtype):
+	def on_tab_close_clicked(self, tab_label, notebook, tab_widget, arr, tabtype):
 		""" Callback for the "close-clicked" emitted by custom TabLabel widget. """
 		# FROB: need to ask for confirmation of file/page removal
 		pn = notebook.page_num(tab_widget)
@@ -778,7 +790,7 @@ class TabLabel(gtk.HBox):
 			notebook.remove_page(pn)
 		else: #if len(arr) == 0:
 			if tabtype == "doc":
-				gtk.main_quit()
+				Gtk.main_quit()
 		if pn < len(arr):  ## not the last page
 			for i in range(pn,len(arr)):
 				arr[i] = arr[i+1]
@@ -787,31 +799,31 @@ class TabLabel(gtk.HBox):
 
 
 def make_cli_view(cli):
-	model = gtk.TreeStore(
-	gobject.TYPE_STRING,	# 0 Snippet Name
-	gobject.TYPE_STRING, 	# 1 Snippet text
+	model = Gtk.TreeStore(
+	GObject.TYPE_STRING,	# 0 Snippet Name
+	GObject.TYPE_STRING, 	# 1 Snippet text
 	)
-	view = gtk.TreeView(model)
+	view = Gtk.TreeView(model)
 	view.set_reorderable(True)
 	view.columns_autosize()
 	view.set_enable_tree_lines(True)
-	cell = gtk.CellRendererText()
+	cell = Gtk.CellRendererText()
 	cell.set_property('family-set',True)
 	cell.set_property('font','monospace 10')
-	column0 = gtk.TreeViewColumn('SnipName', cell, text=0)
+	column0 = Gtk.TreeViewColumn('SnipName', cell, text=0)
 	view.append_column(column0)
 	view.set_headers_visible(False)
 	view.set_tooltip_column(1)
-	treescr = gtk.ScrolledWindow()
-	treescr.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	treescr = Gtk.ScrolledWindow()
+	treescr.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 	treescr.add(view)
 	treescr.set_size_request(150,-1)
 	
 	target_entries = [('text/plain', 0, 0)]
 
 	view.enable_model_drag_source(
-		gtk.gdk.BUTTON1_MASK, target_entries, gtk.gdk.ACTION_DEFAULT|gtk.gdk.ACTION_COPY)
-	view.enable_model_drag_dest(target_entries,gtk.gdk.ACTION_DEFAULT|gtk.gdk.ACTION_COPY)
+		Gdk.EventMask.BUTTON1_MASK, target_entries, Gdk.DragAction.DEFAULT|Gdk.DragAction.COPY)
+	view.enable_model_drag_dest(target_entries,Gdk.DragAction.DEFAULT|Gdk.DragAction.COPY)
 	view.connect('drag-data-received', cli.on_drag_data_received)
 	view.connect("key-press-event", cli.on_row_keypressed)
 
@@ -820,9 +832,9 @@ def make_cli_view(cli):
 
 
 
-class CliWindow(gtk.Window):
+class CliWindow(Gtk.Window):
 	def __init__(self, app):
-		gtk.Window.__init__(self)
+		Gtk.Window.__init__(self)
 		self.app = app
 		self.scripts = {}
 		self.snipsdir = app.snipsdir
@@ -830,14 +842,14 @@ class CliWindow(gtk.Window):
 		self.OSD_txt = ""
 
 		tb,tv = self.create_tbtv()
-		s = gtk.ScrolledWindow()
-		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		s = Gtk.ScrolledWindow()
+		s.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 		s.set_size_request(660,400)
 		s.add(tv)
 		s.show_all()
 		
-		self.clinb = gtk.Notebook()
-		frame = gtk.Frame("Snippets")
+		self.clinb = Gtk.Notebook()
+		frame = Gtk.Frame("Snippets")
 		self.snview,self.snmodel,self.scroll = make_cli_view(self)
 		self.snview.connect("row-activated", self.on_row_activated)
 
@@ -851,31 +863,31 @@ class CliWindow(gtk.Window):
 			self.clinb.show_all()
 			self.scripts[len(self.scripts)] = [tb,"New 1",tab_lbl]
 
-		mainhb = gtk.HBox()
+		mainhb = Gtk.HBox()
 		mainhb.pack_start(self.clinb,1,1,0)
 		mainhb.pack_start(frame,0,0,0)
 
-		new_btn = gtk.Button("New")
-		open_btn = gtk.Button("Open")
-		save_btn = gtk.Button("Save")
-		run_btn = gtk.Button("Run")
+		new_btn = Gtk.Button("New")
+		open_btn = Gtk.Button("Open")
+		save_btn = Gtk.Button("Save")
+		run_btn = Gtk.Button("Run")
 
-		hbox = gtk.HBox()
+		hbox = Gtk.HBox()
 		hbox.pack_start(new_btn,0,0,0)
 		hbox.pack_start(open_btn,0,0,0)
 		hbox.pack_start(save_btn,0,0,0)
 		hbox.pack_end(run_btn,0,0,0)
 
-		vbox = gtk.VBox()
+		vbox = Gtk.VBox()
 		vbox.pack_start(mainhb)
 		vbox.pack_start(hbox,0,0,0)
 
-		runwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-		accgrp = gtk.AccelGroup()
-		accgrp.connect_group(110, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #N
-		accgrp.connect_group(111, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #O
-		accgrp.connect_group(114, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #R
-		accgrp.connect_group(115, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #S
+		runwin = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
+		accgrp = Gtk.AccelGroup()
+		accgrp.connect_group(110, Gdk.ModifierType.CONTROL_MASK, Gtk.ACCEL_VISIBLE, self.on_key_press) #N
+		accgrp.connect_group(111, Gdk.ModifierType.CONTROL_MASK, Gtk.ACCEL_VISIBLE, self.on_key_press) #O
+		accgrp.connect_group(114, Gdk.ModifierType.CONTROL_MASK, Gtk.ACCEL_VISIBLE, self.on_key_press) #R
+		accgrp.connect_group(115, Gdk.ModifierType.CONTROL_MASK, Gtk.ACCEL_VISIBLE, self.on_key_press) #S
 
 		runwin.add_accel_group(accgrp)
 		runwin.set_resizable(True)
@@ -954,11 +966,11 @@ class CliWindow(gtk.Window):
 
 
 	def create_tbtv(self):
-		# rely on gtksourceview2
-		if usegtksv2:
-			tb = gtksourceview2.Buffer()
-			tv = gtksourceview2.View(tb)
-			lm = gtksourceview2.LanguageManager()
+		# rely on Gtksourceview2
+		if useGtksv2:
+			tb = Gtksourceview2.Buffer()
+			tv = Gtksourceview2.View(tb)
+			lm = Gtksourceview2.LanguageManager()
 			lp = lm.get_language("python")
 			tb.set_highlight_syntax(True)
 			tb.set_language(lp)
@@ -972,7 +984,7 @@ class CliWindow(gtk.Window):
 			tv.set_auto_indent(True)
 			tv.set_property("draw-spaces",51) # space, tab, leading, text
 		else:
-			tv = gtk.TextView()
+			tv = Gtk.TextView()
 			tb = tv.get_buffer()
 		return tb,tv
 
@@ -1017,7 +1029,7 @@ class CliWindow(gtk.Window):
 		if fname is None:
 			fname = self.app.file_open('Open',None,os.path.join(home,".oletoy"))
 			if fname:
-				manager = gtk.recent_manager_get_default()
+				manager = Gtk.recent_manager_get_default()
 				manager.add_item(fname)
 		if fname:
 			offset = 0
@@ -1049,7 +1061,7 @@ class CliWindow(gtk.Window):
 				f = open(fname,'wb')
 				f.write(txt)
 				f.close()
-				manager = gtk.recent_manager_get_default()
+				manager = Gtk.recent_manager_get_default()
 				manager.add_item(fname)
 				# need to change tab label and store fname
 				dname,pname = os.path.split(fname)
@@ -1071,8 +1083,8 @@ class CliWindow(gtk.Window):
 				script[2].change_text(pname)
 		else:
 			tb,tv = self.create_tbtv()
-			s = gtk.ScrolledWindow()
-			s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			s = Gtk.ScrolledWindow()
+			s.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 			s.set_size_request(660,400)
 			s.add(tv)
 			s.show_all()
@@ -1108,7 +1120,12 @@ class CliWindow(gtk.Window):
 		self.OSD_txt = selection_data.get_text()
 		if self.OSD is None:
 			self.OSD = OSD_Entry(self,None,"snippet")
-		xv,yv,w,h = self.scroll.allocation
+
+		alloc = self.scroll.get_allocation()
+		xv = alloc.x
+		yv = alloc.y
+		w = alloc.width
+		h = alloc.height
 		xw,yw = self.scroll.get_parent_window().get_position()
 		self.OSD.hide()
 		self.OSD.show_all()
@@ -1126,7 +1143,8 @@ def arg_conv (ctype,carg):
 		data = carg
 	return data
 
-def xlsfind (model,path,iter,(page,rowaddr,coladdr)):
+def xlsfind (model,path,iter,page_rowaddr_coladdr):
+	page,rowaddr,coladdr = page_rowaddr_coladdr
 	rname = model.get_value(iter,0)
 	rdata = model.get_value(iter,3)
 	if rname == 'Dimensions':
@@ -1146,7 +1164,8 @@ def xlsfind (model,path,iter,(page,rowaddr,coladdr)):
 #			print 'Found',model.get_string_from_iter(iter)
 			return True
 
-def recfind (model,path,iter,(page,data)):
+def recfind (model,path,iter,page_data):
+	page, data = page_data
 	rec = model.get_value(iter,0)
 	# for CDR only
 	# ?rloda#hexarg
@@ -1211,7 +1230,8 @@ def recfind (model,path,iter,(page,data)):
 					page.search.set_value(s_iter,2,"%s [%s %s]"%(rec,argtxt,argvalue))
 					page.search.set_value(s_iter,3,page.search.iter_n_children(None))
 
-def cmdfind (model,path,iter,(page,data)):
+def cmdfind (model,path,iter,page_data):
+	page, data = page_data
 	# in cdr look for leaf chunks only, avoid duplication
 	if page.type[0:3] == "CDR" and model.iter_n_children(iter)>0:
 		return
@@ -1267,7 +1287,7 @@ def cmp_children (page1, model1, model2, it1, it2, carg):
 def compare (cmd, entry, page1, page2):
 	model1 = page1.view.get_model()
 	model2 = page2.view.get_model()
-	page1.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
+	page1.search = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT, GObject.TYPE_STRING, GObject.TYPE_INT)
 
 	if len(cmd) > 1:
 		carg = int(cmd[1:])
@@ -1390,12 +1410,12 @@ def parse (cmd, entry, page):
 #			except:
 #				print "Failed to add as a picture"
 		elif "dump" == chtype.lower():
-			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg = Gtk.FileChooserDialog('Save...', action=Gtk.FileChooserAction.SAVE, buttons=(Gtk.STOCK_OK,Gtk.ResponseType.OK,Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL))
 			dlg.set_local_only(True)
 			resp = dlg.run()
 			fname = dlg.get_filename()
 			dlg.hide()
-			if resp != gtk.RESPONSE_CANCEL:
+			if resp != Gtk.ResponseType.CANCEL:
 				nlen = model.get_value(iter1,2)
 				if chaddr != 0:
 					pos = chaddr.find(":")
@@ -1427,7 +1447,7 @@ def parse (cmd, entry, page):
 			else:
 				coladdr = 26*(ord(chaddr[0].lower()) - 96)+ ord(chaddr[1].lower()) - 97
 				rowaddr = int(chaddr[2:]) - 1
-			page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
+			page.search = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT, GObject.TYPE_STRING, GObject.TYPE_INT)
 			model.foreach(xlsfind,(page,rowaddr,coladdr))
 			page.show_search("XLS: cell %s"%chaddr)
 		elif "rx2" == chtype.lower():
@@ -1465,10 +1485,10 @@ def parse (cmd, entry, page):
 	elif cmd[0] == "?":
 		ctype = cmd[1]
 		carg = cmd[2:]
-		# convert line to hex or unicode if required
+		# convert line to hex or str if required
 		data = arg_conv(ctype,carg)
 		model = page.view.get_model()
-		page.search = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_INT)
+		page.search = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT, GObject.TYPE_STRING, GObject.TYPE_INT)
 		if ctype == 'r' or ctype == 'R':
 			model.foreach(recfind,(page,data))
 		else:

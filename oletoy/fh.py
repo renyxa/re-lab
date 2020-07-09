@@ -15,7 +15,10 @@
 #
 
 import binascii
-import sys,struct,tree,zlib,gtk,gobject
+import sys,struct,tree,zlib
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk,GObject
 from utils import *
 
 
@@ -151,7 +154,7 @@ def readid (data,off=0):
 
 def readUTFString(data):
 	try:
-		return unicode(data,"utf-16be")
+		return str(data,"utf-16be")
 	except:
 		return "###Bad string"
 
@@ -233,7 +236,7 @@ def hdUString(hd,data,page):
 	length = struct.unpack('>H', data[off:off+2])[0]
 	add_iter(hd,"length",length,off,2,'>H');
 	off+=2
-	add_iter(hd,"val",unicode(data[off:off+length*2],"utf-16be"),off,2*length,'txt');
+	add_iter(hd,"val",str(data[off:off+length*2],"utf-16be"),off,2*length,'txt');
 	off+=2*length
 
 def hdTextBlok(hd,data,page):
@@ -244,7 +247,7 @@ def hdTextBlok(hd,data,page):
 	length = struct.unpack('>H', data[off:off+2])[0]
 	add_iter(hd,"length",length,off,2,'>H');
 	off+=2
-	add_iter(hd,"val",unicode(data[off:off+length*2],"utf-16be"),off,2*length,'txt');
+	add_iter(hd,"val",str(data[off:off+length*2],"utf-16be"),off,2*length,'txt');
 	off+=2*length
 
 def hdPSFill(hd,data,page):
@@ -1715,7 +1718,7 @@ def hdString(hd,data,page):
 	add_iter (hd,'string[size]',size,off,2,">H")
 	off += 2
 	(n, endOff) = rdata(data, off, '%ds'%size)
-	add_iter (hd,'name',unicode(n,"mac-roman"),off,size,"txt")
+	add_iter (hd,'name',str(n,"mac-roman"),off,size,"txt")
 	off +=size
 
 def hdDictVal(hd,data,page):
@@ -1850,7 +1853,7 @@ def hdTextString(hd,data,page):
 	pos = n.find("\x00")
 	if pos!=-1:
 		n=n[:pos]
-	add_iter (hd,'text',unicode(n,"mac-roman"),0,len(data),"txt")
+	add_iter (hd,'text',str(n,"mac-roman"),0,len(data),"txt")
 
 def hdCompositePath(hd,data,page):
 	offset = 0
@@ -2885,7 +2888,7 @@ class FHDoc():
 	def MName(self,off,recid,mode=0):
 		size = struct.unpack('>H', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
-		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length],"mac-roman"))
+		self.recs[recid] = ("str",str(self.data[off+4:off+4+length],"mac-roman"))
 		return 4*(size+1)
 
 	def MQuickDict(self,off,recid,mode=0):
@@ -2895,7 +2898,7 @@ class FHDoc():
 	def MString(self,off,recid,mode=0):
 		size = struct.unpack('>h', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
-		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length],"mac-roman"))
+		self.recs[recid] = ("str",str(self.data[off+4:off+4+length],"mac-roman"))
 		return 4*(size+1)
 
 	def MDict(self,off,recid,mode=0):
@@ -3446,7 +3449,7 @@ class FHDoc():
 		size = struct.unpack('>H', self.data[off:off+2])[0]
 		length = struct.unpack('>H', self.data[off+2:off+4])[0]
 		res=4*(size+1)
-		self.recs[recid] = ("str",unicode(self.data[off+4:off+4+length*2],"utf-16be"))
+		self.recs[recid] = ("str",str(self.data[off+4:off+4+length*2],"utf-16be"))
 		if mode == 0:
 			return res
 
@@ -3601,7 +3604,7 @@ class FHDoc():
 		if start == 0:
 			self.reclist.append("FHTail")
 		loader = self.parse_agd_iter(500,off,start)
-		gobject.idle_add(loader.next)
+		GObject.idle_add(loader.next)
 
 	def parse_list(self,data,offset):
 		size = struct.unpack('>L', data[offset:offset+4])[0]
@@ -3771,7 +3774,7 @@ def fh_open (buf,page,parent=None,mode=1):
 			off = read1c(buf,page,parent,off)
 
 	piter = add_pgiter(page,"FH file","fh","file",buf,parent)
-	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
+	page.dictmod = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING)
 
 	page.appdoc = FHDoc(output,page,piter)
 	offset = offset + size

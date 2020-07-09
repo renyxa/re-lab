@@ -17,7 +17,9 @@
 import os
 import sys,struct,subprocess
 from tempfile import mkstemp
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 import pub, pubblock, escher, quill
@@ -500,7 +502,7 @@ def cfb_hdr (hd,data):
 def cfb_dir (hd,data):
 	off = 0x40
 	namelen = struct.unpack("<H",data[off:off+2])[0]
-	name = unicode(data[0:namelen],"utf-16")
+	name = str(data[0:namelen],"utf-16")
 	iter = hd.model.append(None, None)
 	hd.model.set (iter, 0, "Dir Entry Name",1, name, 2,0,3,0x40,4,"txt")
 	add_iter (hd,"NameLen",namelen,off,2,"<H")
@@ -580,7 +582,7 @@ def parse_dir(page,buf,parent):
 	mdirsize = -1
 	while off < len(buf):
 		namelen = struct.unpack("<H",buf[off+0x40:off+0x42])[0]
-		name = unicode(buf[off:off+namelen],"utf-16")
+		name = str(buf[off:off+namelen],"utf-16")
 		add_pgiter (page,name,"cfb","dir",buf[off:off+0x80],parent)
 		if name == "Root Entry\x00":
 			mdirstart = struct.unpack("<I",buf[off+0x74:off+0x78])[0]

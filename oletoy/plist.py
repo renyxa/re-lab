@@ -320,7 +320,7 @@ def add_utf16(hd, size, data):
 		(sz, off) = read_int(data, off)
 	sz = 2 * sz
 	(utf16, off) = rdata(data, off, '%ds' % sz)
-	add_iter(hd, 'Value', unicode(utf16, 'utf-16be'), off - sz, sz, '%ds' % sz)
+	add_iter(hd, 'Value', str(utf16, 'utf-16be'), off - sz, sz, '%ds' % sz)
 
 plist_ids = {
 	'header': add_header,

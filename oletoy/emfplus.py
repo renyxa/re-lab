@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 
@@ -782,7 +784,7 @@ def ObjFont (hd, value, offset = 0):
 	nlen = struct.unpack("<I",value[offset+0x20:offset+0x24])[0]
 	hd.model.set(iter, 0, "  FontName Len", 1, "%d"%nlen,2,offset+0x20,3,4,4,"<I")
 	iter = hd.model.append(None, None)
-	hd.model.set(iter, 0, "  FontName", 1, unicode(value[offset+0x24:],"utf-16"),2,offset+0x24,3,nlen*2,4,"<I")
+	hd.model.set(iter, 0, "  FontName", 1, str(value[offset+0x24:],"utf-16"),2,offset+0x24,3,nlen*2,4,"<I")
 
 def ObjImgAttr (hd, value, offset = 0):
 	iter = hd.model.append(None, None)
@@ -1290,7 +1292,7 @@ def DrawString (hd, value):
 	hd.model.set(iter, 0, "  Length", 1, "%d"%glcnt,2,0x14,3,4,4,"<I")
 	RectF(hd,value,0x18,"LayoutRect ")
 	iter = hd.model.append(None, None)
-	txt = unicode(value[0x28:0x28+glcnt*2],"utf-16")
+	txt = str(value[0x28:0x28+glcnt*2],"utf-16")
 	hd.model.set(iter, 0, "  String", 1, txt,2,0x28,3,glcnt*2,4,"utxt")
 
 #0x401D
@@ -1589,8 +1591,8 @@ def DrawDriverString (hd, value):
 	hd.model.set(iter, 0, "  Glyph Count", 1, "%d"%glcnt,2,0x18,3,4,4,"<I")
 	iter = hd.model.append(None, None)
 	glyphs = value[0x1c:0x1c+glcnt*2]
-#	fcm == 1 -- unicode, fcm == 0 -- indexes to glyphs in the font referred by FontID above
-	txt = unicode(glyphs,"utf-16")
+#	fcm == 1 -- str, fcm == 0 -- indexes to glyphs in the font referred by FontID above
+	txt = str(glyphs,"utf-16")
 	hd.model.set(iter, 0, "  Glyphs", 1, txt,2,0x1c,3,glcnt*2,4,"utxt")
 	for i in range(glcnt):
 		PointF(hd,value,0x1c+glcnt*2+i*8,"Glyph%d Pos "%i)

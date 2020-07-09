@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk,Gdk
 import tree
 import hexdump
 import cdr # for disp_expose
@@ -537,24 +539,24 @@ def Blip(hd,size,value,off=0):
 		add_iter(hd,"# of colors in palette","%d"%struct.unpack("<I",value[off+46:off+50])[0],off+46,4,"<I")
 		add_iter(hd,"# of important colors","%d"%struct.unpack("<I",value[off+50:off+54])[0],off+50,4,"<I")
 
-	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader = Gdk.PixbufLoader()
 	pixbufloader.write(value[off:])
 	pixbufloader.close()
 	hd.dispscale = 1
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	da = gtk.DrawingArea()
-	scrolled = gtk.ScrolledWindow()
-	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	da = Gtk.DrawingArea()
+	scrolled = Gtk.ScrolledWindow()
+	scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 	scrolled.add_with_viewport(da)
 	da.set_size_request(imgw,imgh)
 	hd.pixbuf = pixbuf
 	hd.da = scrolled
 #	hd.hbox0.pack_start(hd.da)
 	hd.hdscrolled.add2(hd.da)
-	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
-	da.connect('expose_event',hd.disp_expose)
+	da.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK)
+	da.connect('draw',hd.disp_expose)
 	da.connect("button_press_event",hd.disp_on_button_press)
 	hd.da.show_all()
 

@@ -105,7 +105,7 @@ def _add_zmf2_string0(view, data, offset, size, name):
 	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
 	if length > 1:
 		(text, off) = rdata(data, off, '%ds' % (length - 1))
-		view.add_iter(name, unicode(text, 'cp1250'), off - length + 1, length, '%ds' % length)
+		view.add_iter(name, str(text, 'cp1250'), off - length + 1, length, '%ds' % length)
 	else:
 		view.add_iter(name, '', off, 1, '1s')
 	return off + 1
@@ -116,7 +116,7 @@ def _add_zmf2_string(view, data, offset, size, name):
 	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
 	if length > 0:
 		(text, off) = rdata(data, off, '%ds' % length)
-		view.add_iter(name, unicode(text, 'cp1250'), off - length, length + 1, '%ds' % (length + 1))
+		view.add_iter(name, str(text, 'cp1250'), off - length, length + 1, '%ds' % (length + 1))
 	else:
 		view.add_iter(name, '', off, 1, '1s')
 	return off + 1
@@ -272,7 +272,7 @@ def add_zmf2_view(view, data, offset, size):
 	while c != 0 and off < offset + size:
 		s += chr(c)
 		(c, off) = rdata(data, off, '<B')
-	view.add_iter('Name', unicode(s, 'cp1250'), start, 0x20, '32s')
+	view.add_iter('Name', str(s, 'cp1250'), start, 0x20, '32s')
 	return start + 0x20
 
 def add_zmf2_views(view, data, offset, size):
@@ -590,7 +590,7 @@ def add_zmf2_obj_table(view, data, offset, size):
 
 def add_zmf2_character(view, data, offset, size):
 	(c, off) = rdata(data, offset, '1s')
-	view.add_iter('Character', unicode(c, 'cp1250'), off - 1, 1, '1s')
+	view.add_iter('Character', str(c, 'cp1250'), off - 1, 1, '1s')
 	off += 0x1b
 	(style, off) = rdata(data, off, '<I')
 	view.add_iter('Style index', style, off - 4, 4, '<I')
@@ -1412,7 +1412,7 @@ def add_zmf4_obj_text(hd, size, data, off, version):
 		add_iter(hd, 'Font of span %d' % i, ref2txt(sid), off - 4, 4, '<I')
 		i += 1
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, 'Text', unicode(text, 'utf-16le'), off - length, length, '%ds' % length)
+	add_iter(hd, 'Text', str(text, 'utf-16le'), off - length, length, '%ds' % length)
 
 def add_zmf4_obj_text_frame(hd, size, data, off, version):
 	off = _zmf4_obj_bbox(hd, size, data, off)

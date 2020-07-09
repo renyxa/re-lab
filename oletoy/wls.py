@@ -259,7 +259,7 @@ def add_string(hd, size, data, off, name, fmt):
 	(length, off) = rdata(data, off, fmt)
 	add_iter(hd, '%s length' % name, length, off - fmtlen, fmtlen, fmt)
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
+	add_iter(hd, name, str(text, 'cp1250'), off - length, length, '%ds' % length)
 	return off
 
 def add_short_string(hd, size, data, off, name):

@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 from utils import *
@@ -156,7 +158,7 @@ def parse (page,data,parent,i,j=-1,ptype=None,descs=block_descs()):
 				value = data[off+4:off+dlen]
 				if dlen > 4:
 					try:
-						name += " %s"%unicode(value,'utf-16')
+						name += " %s"%str(value,'utf-16')
 					except:
 						name += value
 						print("UCode failed",model.get_string_from_iter(parent))

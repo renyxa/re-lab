@@ -130,7 +130,7 @@ def NameIDX (hd, size, value):
 def FontFace (hd, size, value):
 	iter1 = hd.model.append(None, None)
 	hd.model.set (iter1, 0, "Flags", 1, "%d"%struct.unpack("<i",value[0x4:0x8]),2,0x4,3,4,4,"<i")
-	facename = unicode(value[0x8:0x48],"utf-16")
+	facename = str(value[0x8:0x48],"utf-16")
 	iter1 = hd.model.append(None, None)
 	hd.model.set (iter1, 0, "Name", 1, facename,2,0x8,3,0x40,4,"txt")
 	ur1 = struct.unpack("<i",value[0x48:0x4c])[0]

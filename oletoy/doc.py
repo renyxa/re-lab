@@ -20,7 +20,9 @@
 # http://msdn.microsoft.com/en-us/library/dd925837%28v=office.12%29.aspx
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 import inflate
@@ -187,136 +189,136 @@ def fib_RgLw (hd, data):
 #PlcfBteLvc
 
 def hdstsh(hd,data):
-  off = 0
-  cbStshi = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"cbStshi",cbStshi,off,2,"<H",0,0,None,"An unsigned integer that specifies the size, in bytes, of stshi.")
-  off += 2
-  siter = add_iter(hd,"stshi","",off,cbStshi,"txt")
-  
-  sfiter = add_iter(hd,"stshif","",off,18,"txt",0,0,siter)
-  
-  cstd = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"cstd",cstd,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the count of elements in STSH.rglpstd. This value MUST be equal to or greater than 0x000F, and MUST be less than 0x0FFE.")
-  off += 2
-  cbSTDBaseInFile = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"cbSTDBaseInFile",cbSTDBaseInFile,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the size, in bytes, of the Stdf structure. The Stdf structure contains an StdfBase structure that is followed by a StdfPost2000OrNone structure which contains an optional StdfPost2000 structure. This value MUST be 0x000A when the Stdf structure does not contain an StdfPost2000 structure and MUST be 0x0012 when the Stdf structure does contain an StdfPost2000 structure.")
-  off += 2
-  fStdStylenamesWritten = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"fStdStylenamesWritten",fStdStylenamesWritten,off,2,"<H",0,0,sfiter,"This flag MUST be 1 and MUST be ignored. Other bits MUST be zero and MUST be ignored.")
-  off += 2
-  stiMaxWhenSaved = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"stiMaxWhenSaved",stiMaxWhenSaved,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies a value that is 1 larger than the largest StdfBase.sti index of any application-defined style. This SHOULD be equal to the largest sti index that is defined in the application, incremented by 1. (w97 - 91, w2k - 105, w2002/3 - 156, w2007/10 - 267).")
-  off += 2
-  istdMaxFixedWhenSaved = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"istdMaxFixedWhenSaved",istdMaxFixedWhenSaved,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the count of elements at the start of STSH.rglpstd that are reserved for fixed-index application-defined styles. This value MUST be 0x000F.")
-  off += 2
-  nVerBuiltInNamesWhenSaved = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"nVerBuiltInNamesWhenSaved",nVerBuiltInNamesWhenSaved,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the version number of the style names as defined by the application that writes the file. This value SHOULD be 0.")
-  off += 2
-  ftcAsci = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"ftcAsci",ftcAsci,off,2,"<H",0,0,sfiter,"A signed integer that specifies an operand value for the sprmCRgFtc0 for default document formatting, as defined in the section Determining Formatting Properties.")
-  off += 2
-  ftcFE = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"ftcFE",ftcFE,off,2,"<H",0,0,sfiter,"A signed integer that specifies an operand value for the sprmCRgFtc1 for default document formatting, as defined in the section Determining Formatting Properties.")
-  off += 2
-  ftcOther = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"ftcOther",ftcOther,off,2,"<H",0,0,sfiter,"A signed integer that specifies an operand value for the sprmCRgFtc2 for default document formatting, as defined in the section Determining Formatting Properties.")
-  off += 2
-  ftcBi = struct.unpack("<H",data[off:off+2])[0]
-  add_iter(hd,"ftcBi",ftcBi,off,2,"<H",0,0,siter,"A signed integer that specifies an operand value for the sprmCFtcBi for default document formatting, as defined in the section Determining Formatting Properties.")
-  off += 2
-  
-  liter = add_iter(hd,"StshiLsd","",off,0,"txt",0,0,siter,"The StshiLsd structure specifies latent style data for application-defined styles. Application-defined styles are considered to be latent if they have an LPStd that is 0x0000 in STSH.rglpstd or if they have no corresponding LPStd in STSH.rglpstd. (For example, if an application has a built-in definition for a \"Heading 1\" style but that style is not currently defined in a document stylesheet, that style is considered latent.) Latent style data specifies a default set of behavior properties to be used when latent styles are first created.")
+	off = 0
+	cbStshi = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"cbStshi",cbStshi,off,2,"<H",0,0,None,"An unsigned integer that specifies the size, in bytes, of stshi.")
+	off += 2
+	siter = add_iter(hd,"stshi","",off,cbStshi,"txt")
+	
+	sfiter = add_iter(hd,"stshif","",off,18,"txt",0,0,siter)
+	
+	cstd = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"cstd",cstd,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the count of elements in STSH.rglpstd. This value MUST be equal to or greater than 0x000F, and MUST be less than 0x0FFE.")
+	off += 2
+	cbSTDBaseInFile = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"cbSTDBaseInFile",cbSTDBaseInFile,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the size, in bytes, of the Stdf structure. The Stdf structure contains an StdfBase structure that is followed by a StdfPost2000OrNone structure which contains an optional StdfPost2000 structure. This value MUST be 0x000A when the Stdf structure does not contain an StdfPost2000 structure and MUST be 0x0012 when the Stdf structure does contain an StdfPost2000 structure.")
+	off += 2
+	fStdStylenamesWritten = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"fStdStylenamesWritten",fStdStylenamesWritten,off,2,"<H",0,0,sfiter,"This flag MUST be 1 and MUST be ignored. Other bits MUST be zero and MUST be ignored.")
+	off += 2
+	stiMaxWhenSaved = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"stiMaxWhenSaved",stiMaxWhenSaved,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies a value that is 1 larger than the largest StdfBase.sti index of any application-defined style. This SHOULD be equal to the largest sti index that is defined in the application, incremented by 1. (w97 - 91, w2k - 105, w2002/3 - 156, w2007/10 - 267).")
+	off += 2
+	istdMaxFixedWhenSaved = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"istdMaxFixedWhenSaved",istdMaxFixedWhenSaved,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the count of elements at the start of STSH.rglpstd that are reserved for fixed-index application-defined styles. This value MUST be 0x000F.")
+	off += 2
+	nVerBuiltInNamesWhenSaved = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"nVerBuiltInNamesWhenSaved",nVerBuiltInNamesWhenSaved,off,2,"<H",0,0,sfiter,"An unsigned integer that specifies the version number of the style names as defined by the application that writes the file. This value SHOULD be 0.")
+	off += 2
+	ftcAsci = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"ftcAsci",ftcAsci,off,2,"<H",0,0,sfiter,"A signed integer that specifies an operand value for the sprmCRgFtc0 for default document formatting, as defined in the section Determining Formatting Properties.")
+	off += 2
+	ftcFE = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"ftcFE",ftcFE,off,2,"<H",0,0,sfiter,"A signed integer that specifies an operand value for the sprmCRgFtc1 for default document formatting, as defined in the section Determining Formatting Properties.")
+	off += 2
+	ftcOther = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"ftcOther",ftcOther,off,2,"<H",0,0,sfiter,"A signed integer that specifies an operand value for the sprmCRgFtc2 for default document formatting, as defined in the section Determining Formatting Properties.")
+	off += 2
+	ftcBi = struct.unpack("<H",data[off:off+2])[0]
+	add_iter(hd,"ftcBi",ftcBi,off,2,"<H",0,0,siter,"A signed integer that specifies an operand value for the sprmCFtcBi for default document formatting, as defined in the section Determining Formatting Properties.")
+	off += 2
+	
+	liter = add_iter(hd,"StshiLsd","",off,0,"txt",0,0,siter,"The StshiLsd structure specifies latent style data for application-defined styles. Application-defined styles are considered to be latent if they have an LPStd that is 0x0000 in STSH.rglpstd or if they have no corresponding LPStd in STSH.rglpstd. (For example, if an application has a built-in definition for a \"Heading 1\" style but that style is not currently defined in a document stylesheet, that style is considered latent.) Latent style data specifies a default set of behavior properties to be used when latent styles are first created.")
 
 
 fclcb97recs1 = [
-  ("StshfOrig",),
-  ("Stshf",),
-  ("PlcffndRef",),
-  ("PlcffndTxt",),
-  ("PlcfandRef",),
-  ("PlcfandTxt",),
-  ("PlcfSed",),
-  ("PlcPad",),
-  ("PlcfPhe",),
-  ("SttbfGlsy",),
-  ("PlcfGlsy",),
-  ("PlcfHdd",),
-  ("PlcfBteChpx",),
-  ("PlcfBtePapx",),
-  ("PlcfSea",),
-  ("SttbfFfn",),
-  ("PlcfFldMom",),
-  ("PlcfFldHdr",),
-  ("PlcfFldFtn",),
-  ("PlcfFldAtn",),
-  ("PlcfFldMcr",),
-  ("SttbfBkmk",),
-  ("PlcfBkf",),
-  ("PlcfBkl",),
-  ("Cmds",),
-  ("Unused1",),
-  ("SttbfMcr",),
-  ("PrDrvr",),
-  ("PrEnvPort",),
-  ("PrEnvLand",),
-  ("Wss",),
-  ("Dop",),
-  ("SttbfAssoc",),
-  ("Clx",),
-  ("PlcfPgdFtn",),
-  ("AutosaveSource",),
-  ("GrpXstAtnOwners",),
-  ("SttbfAtnBkmk",),
-  ("Unused2",),
-  ("Unused3",),
-  ("PlcSpaMom",),
-  ("PlcSpaHdr",),
-  ("PlcfAtnBkf",),
-  ("PlcfAtnBkl",),
-  ("Pms",),
-  ("FormFldSttbs",),
-  ("PlcfendRef",),
-  ("PlcfendTxt",),
-  ("PlcfFldEdn",),
-  ("Unused4",),
-  ("DggInfo",),
-  ("SttbfRMark",),
-  ("SttbfCaption",),
-  ("SttbfAutoCaption",),
-  ("PlcfWkb",),
-  ("PlcfSpl",),
-  ("PlcftxbxTxt",),
-  ("PlcfFldTxbx",),
-  ("PlcfHdrtxbxTxt",),
-  ("PlcffldHdrTxbx",),
-  ("StwUser",),
-  ("SttbTtmbd",),
-  ("CookieData",),
-  ("PgdMotherOldOld",),
-  ("BkdMotherOldOld",),
-  ("PgdFtnOldOld",),
-  ("BkdFtnOldOld",),
-  ("PgdEdnOldOld",),
-  ("BkdEdnOldOld",),
-  ("SttbfIntlFld",),
-  ("RouteSlip",),
-  ("SttbSavedBy",),
-  ("SttbFnm",),
-  ("PlfLst",),
-  ("PlfLfo",),
-  ("PlcfTxbxBkd",),
-  ("PlcfTxbxHdrBkd",),
-  ("DocUndoWord9",),
-  ("RgbUse",),
-  ("Usp",),
-  ("Uskf",),
-  ("PlcupcRgbUse",),
-  ("PlcupcUsp",),
-  ("SttbGlsyStyle",),
-  ("Plgosl",),
-  ("Plcocx",),
-  ("PlcfBteLvc",)]
+	("StshfOrig",),
+	("Stshf",),
+	("PlcffndRef",),
+	("PlcffndTxt",),
+	("PlcfandRef",),
+	("PlcfandTxt",),
+	("PlcfSed",),
+	("PlcPad",),
+	("PlcfPhe",),
+	("SttbfGlsy",),
+	("PlcfGlsy",),
+	("PlcfHdd",),
+	("PlcfBteChpx",),
+	("PlcfBtePapx",),
+	("PlcfSea",),
+	("SttbfFfn",),
+	("PlcfFldMom",),
+	("PlcfFldHdr",),
+	("PlcfFldFtn",),
+	("PlcfFldAtn",),
+	("PlcfFldMcr",),
+	("SttbfBkmk",),
+	("PlcfBkf",),
+	("PlcfBkl",),
+	("Cmds",),
+	("Unused1",),
+	("SttbfMcr",),
+	("PrDrvr",),
+	("PrEnvPort",),
+	("PrEnvLand",),
+	("Wss",),
+	("Dop",),
+	("SttbfAssoc",),
+	("Clx",),
+	("PlcfPgdFtn",),
+	("AutosaveSource",),
+	("GrpXstAtnOwners",),
+	("SttbfAtnBkmk",),
+	("Unused2",),
+	("Unused3",),
+	("PlcSpaMom",),
+	("PlcSpaHdr",),
+	("PlcfAtnBkf",),
+	("PlcfAtnBkl",),
+	("Pms",),
+	("FormFldSttbs",),
+	("PlcfendRef",),
+	("PlcfendTxt",),
+	("PlcfFldEdn",),
+	("Unused4",),
+	("DggInfo",),
+	("SttbfRMark",),
+	("SttbfCaption",),
+	("SttbfAutoCaption",),
+	("PlcfWkb",),
+	("PlcfSpl",),
+	("PlcftxbxTxt",),
+	("PlcfFldTxbx",),
+	("PlcfHdrtxbxTxt",),
+	("PlcffldHdrTxbx",),
+	("StwUser",),
+	("SttbTtmbd",),
+	("CookieData",),
+	("PgdMotherOldOld",),
+	("BkdMotherOldOld",),
+	("PgdFtnOldOld",),
+	("BkdFtnOldOld",),
+	("PgdEdnOldOld",),
+	("BkdEdnOldOld",),
+	("SttbfIntlFld",),
+	("RouteSlip",),
+	("SttbSavedBy",),
+	("SttbFnm",),
+	("PlfLst",),
+	("PlfLfo",),
+	("PlcfTxbxBkd",),
+	("PlcfTxbxHdrBkd",),
+	("DocUndoWord9",),
+	("RgbUse",),
+	("Usp",),
+	("Uskf",),
+	("PlcupcRgbUse",),
+	("PlcupcUsp",),
+	("SttbGlsyStyle",),
+	("Plgosl",),
+	("Plcocx",),
+	("PlcfBteLvc",)]
 
 #dwLowDateTime
 #dwHighDateTime
@@ -487,20 +489,20 @@ def fib_RgFcLcbBlob (hd, data):
 	add_iter(hd,"cbRgFcLcb",cb,off,2,"<H")
 	off += 2
 	if cb in fclcb2nfib:
-	  fclcb2nfib[cb][1](hd,data)
+		fclcb2nfib[cb][1](hd,data)
 
 fclcb2nfib = {0x5d:(0xc1,FcLcb97),0x6c:(0xd9,FcLcb2k),0x88:(0x101,FcLcb2k2),0xa4:(0x10c,FcLcb2k3),0xb7:(0x112,FcLcb2k7)}
 
 recs = {
-  "base":fib_base,
-  "fibRgW":fib_RgW,
-  "fibRgLw":fib_RgLw,
-  "fibRgFcLcbBlob":fib_RgFcLcbBlob,
-  "Stshf":hdstsh,
+	"base":fib_base,
+	"fibRgW":fib_RgW,
+	"fibRgLw":fib_RgLw,
+	"fibRgFcLcbBlob":fib_RgFcLcbBlob,
+	"Stshf":hdstsh,
 }
 
 ptable_unsd = {0:"",7:"",14:"",20:"",25:"",26:"",34:"",35:"",38:"",39:"",45:"",49:"",64:"",65:"",66:"",67:"",68:"",77:"",78:"",79:"",80:"",
-  81:"",82:"",86:""}
+	81:"",82:"",86:""}
 
 def parse_data (page, data, dataiter):
 	pass
@@ -604,36 +606,36 @@ def parse (page, data, parent):
 		
 		parse_table(page)
 	except:
-	  print("Failed in fib parsing")
+		print("Failed in fib parsing")
 
 def dump_tree (page, parent, outfile):
 	model = page.view.get_model()
 	ntype = model.get_value(parent,1)
 	name = model.get_value(parent,0)
 	if ntype[1] == 0:
-	  child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,0)
-	  value = model.get_value(parent,3)
-	  if name[:6] == "Module":
-		piter = model.iter_nth_child(parent,0)
-		data = model.get_value(piter,3)
-		srcoff = model.get_value(piter,1)[2]
-		off = 0
-		value = value[:srcoff]
-		while  off + 4094 < len(data):
-		  value += "\x30\x00"+data[off:off+4094]
-		  off += 4094
-		if off < len(data):
-		  res = inflate.deflate(data[off:],1)
-		  flag = 0xb000+len(res)
-		  value += struct.pack("<H",flag)+res
-	  page.parent.cgsf.gsf_output_write (child,len(value),value)
+		child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,0)
+		value = model.get_value(parent,3)
+		if name[:6] == "Module":
+			piter = model.iter_nth_child(parent,0)
+			data = model.get_value(piter,3)
+			srcoff = model.get_value(piter,1)[2]
+			off = 0
+			value = value[:srcoff]
+			while  off + 4094 < len(data):
+				value += "\x30\x00"+data[off:off+4094]
+				off += 4094
+			if off < len(data):
+				res = inflate.deflate(data[off:],1)
+				flag = 0xb000+len(res)
+				value += struct.pack("<H",flag)+res
+		page.parent.cgsf.gsf_output_write (child,len(value),value)
 
 	else: # Directory
-	  child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,1)
+		child = page.parent.cgsf.gsf_outfile_new_child(outfile,name,1)
 
-	  for i in range(model.iter_n_children(parent)):
-		piter = model.iter_nth_child(parent,i)
-		dump_tree (model, piter, child)
+		for i in range(model.iter_n_children(parent)):
+			piter = model.iter_nth_child(parent,i)
+			dump_tree (model, piter, child)
 
 	page.parent.cgsf.gsf_output_close (child)
 
@@ -645,8 +647,8 @@ def save (page, fname):
 	outfile = page.parent.cgsf.gsf_outfile_msole_new (output);
 	iter1 = model.get_iter_first()
 	while None != iter1:
-	  dump_tree(page, iter1, outfile)
-	  iter1 = model.iter_next(iter1)
+		dump_tree(page, iter1, outfile)
+		iter1 = model.iter_next(iter1)
 	page.parent.cgsf.gsf_output_close(outfile)
 	page.parent.cgsf.gsf_shutdown()
 

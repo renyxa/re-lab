@@ -15,7 +15,9 @@
 #
 
 import sys,struct,zlib
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 from utils import *
 
 def firewrk_mkbs (page, buf, parent=None):

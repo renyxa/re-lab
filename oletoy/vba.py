@@ -14,7 +14,9 @@
 # USA
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 import inflate
@@ -34,7 +36,7 @@ def rt_TL (data):
 	return data[4:]
 
 def rt_U (data):
-	return unicode(data,"utf-16")
+	return str(data,"utf-16")
 
 def rt_UL (data):
 	return rt_U(data[4:])

@@ -14,8 +14,10 @@
 # USA
 #
 
-import sys,struct,gtk,zlib
-import gobject
+import sys,struct,zlib
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GObject, Gdk
 import icc,cmx
 from utils import *
 import traceback
@@ -710,23 +712,23 @@ def bmpf (hd,size,data):
 	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
 	bmpoff = struct.pack("<I",len(data)+10-bmp)
 	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
-	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader = Gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	da = gtk.DrawingArea()
-	scrolled = gtk.ScrolledWindow()
-	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	da = Gtk.DrawingArea()
+	scrolled = Gtk.ScrolledWindow()
+	scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 	scrolled.add_with_viewport(da)
 	da.set_size_request(imgh,imgw)
 	hd.da = scrolled
 #	hd.hbox0.pack_start(hd.da)
 	hd.hdscrolled.add2(hd.da)
 	hd.dispscale = 1
-	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
-	da.connect('expose_event', hd.disp_expose,pixbuf)
+	da.set_events(Gdk.BUTTON_PRESS_MASK | Gdk.BUTTON_RELEASE_MASK | Gdk.POINTER_MOTION_MASK)
+	da.connect('draw', hd.disp_expose,pixbuf)
 	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	ctx = hd.da.window.cairo_create()
 	ctx.set_source_pixbuf(pixbuf,0,0)
@@ -793,23 +795,23 @@ def bmp (hd,size,data):
 	else:
 		img += data[0x7a:palsize*3] + data[bmpoff:]
 
-	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader = Gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
 	hd.dispscale = 1
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	da = gtk.DrawingArea()
-	scrolled = gtk.ScrolledWindow()
-	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	da = Gtk.DrawingArea()
+	scrolled = Gtk.ScrolledWindow()
+	scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 	scrolled.add_with_viewport(da)
 	da.set_size_request(imgh,imgw)
 	hd.da = scrolled
 #	hd.hbox0.pack_start(hd.da)
 	hd.hdscrolled.add2(hd.da)
-	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
-	da.connect('expose_event', hd.disp_expose,pixbuf)
+	da.set_events(Gdk.BUTTON_PRESS_MASK | Gdk.BUTTON_RELEASE_MASK | Gdk.POINTER_MOTION_MASK)
+	da.connect('draw', hd.disp_expose,pixbuf)
 	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	ctx = hd.da.window.cairo_create()
 	ctx.set_source_pixbuf(pixbuf,0,0)
@@ -1637,23 +1639,23 @@ def disp (hd,size,data,page):
 	bmp = struct.unpack("<I",data[0x18:0x1c])[0]
 	bmpoff = struct.pack("<I",len(data)+10-bmp)
 	img = 'BM'+struct.pack("<I",len(data)+8)+'\x00\x00\x00\x00'+bmpoff+data[4:]
-	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader = Gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
 	hd.dispscale = 1
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	da = gtk.DrawingArea()
-	scrolled = gtk.ScrolledWindow()
-	scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+	da = Gtk.DrawingArea()
+	scrolled = Gtk.ScrolledWindow()
+	scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 	scrolled.add_with_viewport(da)
 	da.set_size_request(imgh,imgw)
 	hd.da = scrolled
 #	hd.hbox0.pack_start(hd.da)
 	hd.hdscrolled.add2(hd.da)
-	da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
-	da.connect('expose_event', hd.disp_expose,pixbuf)
+	da.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK)
+	da.connect('draw', hd.disp_expose,pixbuf)
 	da.connect("button_press_event",hd.disp_on_button_press,pixbuf)
 	hd.da.show_all()
 
@@ -2377,7 +2379,7 @@ def save (page,fname):
 
 def cdr_open (buf,page,parent,fmttype="cdr"):
 	# Path, Name, ID
-	page.dictmod = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING)
+	page.dictmod = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING)
 	chunk = record()
 	chunk.load (buf,page,parent,0,(),fmttype)
 

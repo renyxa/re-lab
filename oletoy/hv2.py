@@ -14,7 +14,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
 
-import gtk
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk,Gdk
 import cairo
 import struct
 import os
@@ -25,18 +28,18 @@ class HexView():
 		# UI related objects
 		self.parent = None 						# used to pass info for status bar update (change to signal)
 		self.iter = None 							# to store iter for saving modifications
-		self.hv = gtk.DrawingArea()		# middle column with the main hex context
-		self.vadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
-		self.hadj = gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
-		self.vs = gtk.VScrollbar(self.vadj)
-		self.hs = gtk.HScrollbar(self.hadj)
-		self.hbox1 = gtk.HBox()
-		self.hbox2 = gtk.HBox()
-		self.hbox3 = gtk.HBox()
-		self.table = gtk.Table(3,4,False)
+		self.hv = Gtk.DrawingArea()		# middle column with the main hex context
+		self.vadj = Gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
+		self.hadj = Gtk.Adjustment(0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
+		self.vs = Gtk.VScrollbar(self.vadj)
+		self.hs = Gtk.HScrollbar(self.hadj)
+		self.hbox1 = Gtk.HBox()
+		self.hbox2 = Gtk.HBox()
+		self.hbox3 = Gtk.HBox()
+		self.table = Gtk.Table(3,4,False)
 		self.table.attach(self.hv,0,3,0,2)
 		self.table.attach(self.hbox1,0,1,2,3,0,0)
-		self.table.attach(self.hs,1,2,2,3,gtk.EXPAND|gtk.FILL,0)
+		self.table.attach(self.hs,1,2,2,3,Gtk.AttachOptions.EXPAND|Gtk.AttachOptions.FILL,0)
 		self.table.attach(self.hbox2,2,3,2,3,0,0)
 		self.table.attach(self.hbox3,3,4,0,1,0,0)
 		self.table.attach(self.vs,3,4,1,2,0)
@@ -65,19 +68,19 @@ class HexView():
 		self.editmode = 0
 		self.edpos = 0
 		self.modified = 0
-		self.ch = unicode("\xC2\xB7","utf8") # symbol for non-ascii
+		self.ch = str("\xC2\xB7") # symbol for non-ascii
 		self.hl = {} # highligths (offset,len,colour=clr1)
 		self.numtl = 0 # number of the lines on the screen
 
 		# connect signals and call some init functions
 		self.hv.set_can_focus(True)
 		self.hv.set_app_paintable(True)
-		self.hv.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+		self.hv.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK)
 		self.hv.connect("button_press_event",self.on_button_press)
 		self.hv.connect("button_release_event",self.on_button_release)
 		self.hv.connect ("key-press-event", self.on_key_press)
 		self.hv.connect ("key-release-event", self.on_key_release)
-		self.hv.connect("expose_event", self.expose)
+		self.hv.connect("draw", self.expose)
 		self.hv.connect("motion_notify_event",self.on_motion_notify)
 		self.vadj.connect("value_changed", self.on_vadj_changed)
 
@@ -110,7 +113,7 @@ class HexView():
 		self.lines = len(self.data)/16 # number of lines in file
 		if len(self.data)%16 != 0:
 			self.lines += 1
-		for i in range(self.lines+1):
+		for i in range(int(self.lines)+1):
 			self.hvlines.append("")
 
 
@@ -139,7 +142,11 @@ class HexView():
 		ctx.set_font_size(self.fontsize)
 		ctx.set_line_width(1)
 		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
-		x,y,width,height = self.hv.allocation
+		alloc = self.hv.get_allocation()
+		x = alloc.x
+		y = alloc.y
+		width = alloc.width
+		height = alloc.height
 		self.tdx = int(dx)
 		self.tht = int(ht+6)
 		self.hbox1.set_size_request(self.tdx*9,0)
@@ -174,7 +181,7 @@ class HexView():
 			return -1
 
 	def okp_fledit(self,event):
-		if event.state == gtk.gdk.CONTROL_MASK:
+		if event.state == Gdk.ModifierType.CONTROL_MASK:
 			if self.editmode:
 				self.editmode = 0
 				self.parent.update_data()
@@ -183,7 +190,7 @@ class HexView():
 			self.expose(None,event)
 
 	def okp_selall(self,event):
-		if event.state == gtk.gdk.CONTROL_MASK:
+		if event.state == Gdk.ModifierType.CONTROL_MASK:
 			maxc = len(self.data)%16
 			if maxc == 0:
 				maxc = 16
@@ -192,12 +199,12 @@ class HexView():
 
 	def okp_copy(self,event):
 			#	copy selection to clipboard
-			if event.state&gtk.gdk.CONTROL_MASK and self.sel:
-				clp = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+			if event.state&Gdk.ModifierType.CONTROL_MASK and self.sel:
+				clp = Gtk.clipboard_get(Gdk.SELECTION_CLIPBOARD)
 				r1,c1,r2,c2 = self.sel
 				shift = 0
 				end = "\n"
-				if event.state&gtk.gdk.SHIFT_MASK:
+				if event.state&Gdk.SHIFT_MASK:
 					shift = 1
 					end = ""
 				if r1 == r2:
@@ -245,7 +252,7 @@ class HexView():
 				model, iter1 = treeSelection.get_selected()
 				ntype = model.get_value(iter1,1)
 				if ntype == ("escher","odraw","Blip"):
-					pixbufloader = gtk.gdk.PixbufLoader()
+					pixbufloader = Gdk.PixbufLoader()
 					pixbufloader.write(self.data)
 					pixbufloader.close()
 					self.parent.das[pn].hd.pixbuf = pixbufloader.get_pixbuf()
@@ -364,7 +371,7 @@ class HexView():
 		self.mode = "c"
 		self.shift -= self.curc
 		self.curc = 0
-		if event.state == gtk.gdk.CONTROL_MASK:
+		if event.state == Gdk.ModifierType.CONTROL_MASK:
 			self.curr = 0
 			self.offnum = 0
 			self.mode = ""
@@ -373,7 +380,7 @@ class HexView():
 	def okp_end(self,event):
 		self.mode = "c"
 		self.shift = self.curc
-		if event.state == gtk.gdk.CONTROL_MASK:
+		if event.state == Gdk.ModifierType.CONTROL_MASK:
 			self.curr = self.lines-1
 			self.offnum = self.lines-self.numtl
 			self.mode = ""
@@ -450,11 +457,11 @@ class HexView():
 		self.shift = 0
 		self.prer = self.curr
 		self.prec = self.curc
-		if event.state == gtk.gdk.SHIFT_MASK:
+		if event.state == Gdk.SHIFT_MASK:
 			if self.kdrag == 0:
 				self.sel = (self.curr,self.curc,self.curr,self.curc)
 				self.kdrag = 1
-		if (event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103 and event.state != gtk.gdk.CONTROL_MASK):
+		if (event.keyval>47 and event.keyval<58) or (event.keyval>96 and event.keyval<103 and event.state != Gdk.ModifierType.CONTROL_MASK):
 			self.okp_edit(event)
 		else:
 			self.edpos = 0
@@ -484,7 +491,7 @@ class HexView():
 		if self.offnum > max(self.lines-self.numtl+1,0):
 			self.offnum = self.lines-self.numtl+1
 
-		if event.state == gtk.gdk.SHIFT_MASK:
+		if event.state == Gdk.SHIFT_MASK:
 			if self.sel != None:
 				r1 = self.sel[0]
 				r2 = self.sel[2]
@@ -695,9 +702,13 @@ class HexView():
 	def expose(self,widget,event):
 		if len(self.data) < 1:
 			return
-		x,y,width,height = self.hv.allocation
+		alloc = self.hv.get_allocation()
+		x = alloc.x
+		y = alloc.y
+		width = alloc.width
+		height = alloc.height
 
-		mctx = self.hv.window.cairo_create()
+		mctx = self.hv.get_window().cairo_create()
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
 		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)

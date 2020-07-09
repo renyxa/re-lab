@@ -14,15 +14,18 @@
 # USA
 #
 
-import sys,struct,gtk
+import sys,struct
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 from utils import *
 
 def open (buf,page,parent):
 	print("Probably XML",page.model.get_value(parent,0))
-        if buf[0:2] == '\xff\xfe':
-            buf = unicode(buf[2:], 'utf_16le')
-        elif buf[0:2] == '\xfe\xff':
-            buf = unicode(buf[2:], 'utf_16be')
+	if buf[0:2] == '\xff\xfe':
+		buf = str(buf[2:], 'utf_16le')
+	elif buf[0:2] == '\xfe\xff':
+		buf = str(buf[2:], 'utf_16be')
 	t = buf.split("<")
 	piter = parent
 	citer = []

@@ -16,12 +16,18 @@
 
 import sys,struct,os
 import re
-import tree, gtk
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+import tree
+
 import ole,mf,svm,cdr,clp,cpl
 import rx2,fh,fh12,mdb,cpt,cdw,pkzip,wld,vsd,yep
 import abr,rtf,otxml,chdraw,vfb,fbx,nki,pngot
 import drw
-import qxp
+#import qxp
 import iwa
 import lrf
 import palm
@@ -73,9 +79,9 @@ class Page:
 			f = open(self.fname,"rb")
 			buf = f.read()
 
-		if buf[0:7] == "\0\0IIXPR" or buf[0:7] == "\0\0MMXPR":
-			self.type = qxp.open(self, buf, parent)
-			return 0
+#		if buf[0:7] == "\0\0IIXPR" or buf[0:7] == "\0\0MMXPR":
+#			self.type = qxp.open(self, buf, parent)
+#			return 0
 
 		if buf[:8] == "\x89PNG\x0d\x0a\x1a\x0a":
 			self.type = pngot.open(self, buf, parent)
@@ -244,7 +250,7 @@ class Page:
 			plist.open(buf,self,parent)
 			return 0
 
-		fh_off = buf.find('FreeHand')
+		fh_off = buf.find(b'FreeHand')
 		if buf[0:3] == 'AGD':
 			agd_off = 0
 			agd_ver = ord(buf[agd_off+3])
@@ -271,7 +277,7 @@ class Page:
 			fh12.fh_open(buf, self, parent, 0)
 			return 0
 		if buf[0:2] == "FH":
-			fh_off = buf.find('FHDocHeader')
+			fh_off = buf.find(b'FHDocHeader')
 			if fh_off != -1:
 				try:
 					self.type = "FH"
@@ -299,7 +305,7 @@ class Page:
 			bmi.open(buf, self, parent)
 			return 0
 
-		size = (ord(buf[1]) | (ord(buf[2]) << 8)) + 4
+		size = (buf[1] | (buf[2] << 8)) + 4
 		if buf[0] == '\0' and (size == len(buf) or (size < len(buf) and buf[4:7] == "\x80\x80\x04")):
 			self.type = 'IWA'
 			if not self.subtype:
@@ -317,7 +323,7 @@ class Page:
 				c602.parse_chart(buf, self, parent)
 			return 0
 
-		if re.match('@[A-Z]{2} .*?\\r\\n', buf) and buf[-1] == '\x1a':
+		if re.match('@[A-Z]{2} .*?\\r\\n', str(buf)) and buf[-1] == '\x1a':
 			self.type = 'T602'
 			print('Probably T602 file')
 			t602.parse(buf, self, parent)
@@ -329,21 +335,21 @@ class Page:
 				quattro_wq.wq_open(self, buf, parent)
 				return 0
 
-		# QuarkXPress 1.x data fork
-		if buf[0:4] == '\x00\x1c\x00\x1c' or buf[0:4] == '\x00\x20\x00\x20':
-			try:
-				qxp.open_v1(self,buf,parent)
-				self.type = 'QXP5'
-				return 0
-			except:
-				print ("Failed after attempt to parse as QXP1...")
-		if buf[0:4] == '\x00\x26\x00\x26':
-			try:
-				qxp.open_v2(self,buf,parent)
-				self.type = 'QXP5'
-				return 0
-			except:
-				print ("Failed after attempt to parse as QXP2...")
+#		# QuarkXPress 1.x data fork
+#		if buf[0:4] == '\x00\x1c\x00\x1c' or buf[0:4] == '\x00\x20\x00\x20':
+#			try:
+#				qxp.open_v1(self,buf,parent)
+#				self.type = 'QXP5'
+#				return 0
+#			except:
+#				print ("Failed after attempt to parse as QXP1...")
+#		if buf[0:4] == '\x00\x26\x00\x26':
+#			try:
+#				qxp.open_v2(self,buf,parent)
+#				self.type = 'QXP5'
+#				return 0
+#			except:
+#				print ("Failed after attempt to parse as QXP2...")
 
 		if parent == None:
 			parent = add_pgiter(self, "File", "file","unknown",buf) 
@@ -363,31 +369,31 @@ class Page:
 		return 0
 
 	def show_search(self,carg):
-		view = gtk.TreeView(self.search)
+		view = Gtk.TreeView(self.search)
 		view.set_reorderable(True)
 		view.set_enable_tree_lines(True)
-		cell1 = gtk.CellRendererText()
+		cell1 = Gtk.CellRendererText()
 		cell1.set_property('family-set',True)
 		cell1.set_property('font','monospace 10')
-		cell2 = gtk.CellRendererText()
+		cell2 = Gtk.CellRendererText()
 		cell2.set_property('family-set',True)
 		cell2.set_property('font','monospace 10')
-		column1 = gtk.TreeViewColumn('Type', cell1, text=0)
-		column2 = gtk.TreeViewColumn('Value', cell2, text=2)
-		column3 = gtk.TreeViewColumn('#', cell2, text=3)
+		column1 = Gtk.TreeViewColumn('Type', cell1, text=0)
+		column2 = Gtk.TreeViewColumn('Value', cell2, text=2)
+		column3 = Gtk.TreeViewColumn('#', cell2, text=3)
 		view.append_column(column3)
 		view.append_column(column1)
 		view.append_column(column2)
 		view.show()
 		view.connect("row-activated", self.on_search_row_activated)
-		scrolled = gtk.ScrolledWindow()
+		scrolled = Gtk.ScrolledWindow()
 		scrolled.add(view)
 		scrolled.set_size_request(400,400)
 		scrolled.show()
-		searchwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		searchwin = Gtk.Window(Gtk.WindowType.TOPLEVEL)
 		searchwin.set_resizable(True)
 		searchwin.set_border_width(0)
-		scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 		searchwin.add(scrolled)
 		searchwin.set_title("Search: %s"%carg)
 		searchwin.show_all()

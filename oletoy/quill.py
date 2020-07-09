@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 import pubblock
@@ -192,7 +194,7 @@ def parse_font(page,data,parent):
 	for i in range(num):
 		[off] = struct.unpack('<I', data[20+i*4:24+i*4])
 		[nlen] = struct.unpack('<H', data[20+off:20+off+2])
-		fname = unicode(data[20+off+2:20+off+2+nlen*2],"utf-16")
+		fname = str(data[20+off+2:20+off+2+nlen*2],"utf-16")
 		[fid] = struct.unpack('<I', data[20+off+2+nlen*2:20+off+2+nlen*2+4])
 		add_pgiter (page,"(%02x) %s"%(fid,fname),"quill","font",data[20+off:20+off+nlen*2+6],parent)
 

@@ -15,22 +15,25 @@
 #
 
 import sys,struct,base64
-import gtk, cairo
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, cairo, Gdk
 
 try:
-	import gv
+	import graphviz
 	usegraphviz = True
 except:
 	print('Graphviz not found. Only used for FreeHand.') # Grid layout will be used.'
 	usegraphviz = False
 
 try:
-    import icu
-    icu.Locale(1033) # test if pyicu supports creation of locale from LCID
-    useicu = True
+	import icu
+	icu.Locale(1033) # test if pyicu supports creation of locale from LCID
+	useicu = True
 except:
-    print('Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)')
-    useicu = False
+	print('Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)')
+	useicu = False
 
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -40,13 +43,13 @@ ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	255:"OEM Latin I"}
 
 def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,tip=None):
-        """ Adds an entry to the view
+	""" Adds an entry to the view
 
 Parameters
 ----------
 tip: str
-    An optional additional explanation of the entry
-        """
+	An optional additional explanation of the entry
+	"""
 	iter = hd.model.append(parent, None)
 	hd.model.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
 	return iter
@@ -110,7 +113,7 @@ def cnvrt22(data,end=">"):
 	return i+f
 
 
-def d2asc(data,ln=0,rch=unicode("\xC2\xB7","utf8")):
+def d2asc(data,ln=0,rch="\xC2\xB7"):
 	asc = ""
 	for i in range(len(data)):
 		ch = data[i]
@@ -194,7 +197,7 @@ def bup2 (string, offlen):
 
 
 def graph_on_button_press(da,event,data,hd):
-	if event.type  == gtk.gdk.BUTTON_PRESS:
+	if event.type  == Gdk.EventType.BUTTON_PRESS:
 		if event.button == 1:
 			hd.dispscale *= 1.4
 			graph_expose(da,event,data,hd)
@@ -226,23 +229,27 @@ def graph_expose (da,event,data,hd):
 def graph(hd,data):
 	ch = hd.hdscrolled.get_child2()
 	if ch:
-		ch.connect('expose_event', graph_expose,data,hd)
+		ch.connect('draw', graph_expose,data,hd)
 	else:
-		da = gtk.DrawingArea()
-		scrolled = gtk.ScrolledWindow()
-		scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		da = Gtk.DrawingArea()
+		scrolled = Gtk.ScrolledWindow()
+		scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 		scrolled.add_with_viewport(da)
 		hd.da = scrolled
 		hd.hdscrolled.add2(hd.da)
-		da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
-		da.connect('expose_event', graph_expose,data,hd)
+		da.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK)
+		da.connect('draw', graph_expose,data,hd)
 		da.connect("button_press_event",graph_on_button_press,data,hd)
 
 	hd.da.show_all()
 
 
 def disp_expose (da,event,hd,scale=1):
-	x,y,width,height = da.allocation
+	alloc = da.get_allocation()
+	x = alloc.x
+	y = alloc.y
+	width = alloc.width
+	height = alloc.height
 	ctx = da.window.cairo_create()
 	if event and event.area:
 		ctx.rectangle(event.area[0],event.area[1],event.area[2],event.area[3])

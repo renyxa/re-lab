@@ -478,7 +478,7 @@ def elemhdr (hd, data, off):
 	offset = 0
 	x = struct.unpack(">H",data[offset:offset+2])[0]
 	if x >=32768:
-               x = x-32768
+	       x = x-32768
 	add_iter(hd,"Assigned Sample group",x,offset,2,"<h")
 	
 	offset = 4
@@ -489,7 +489,7 @@ def bank (hd, data, off):
 	offset = 1
 	x = ord(data[offset])-64
 	add_iter(hd,"Panorama",x,offset,1,"B")
-        
+	
 	offset = 2
 	x = ord(data[offset])
 	add_iter(hd,"Key Range - High note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
@@ -542,16 +542,16 @@ def dkblock(hd, data, off):
 	offset = 3
 	x = ord(data[offset])
 	if x == 0:
-                add_iter(hd,"Alternate group","N",offset,1,"B")
+		add_iter(hd,"Alternate group","N",offset,1,"B")
 	else:
-                add_iter(hd,"Alternate group",chr(x+64),offset,1,"B")
+		add_iter(hd,"Alternate group",chr(x+64),offset,1,"B")
 
 	offset = 9
 	x = ord(data[offset])
 	if x == 0:
-                add_iter(hd,"Key Off","Disable",offset,1,"B")
+		add_iter(hd,"Key Off","Disable",offset,1,"B")
 	else:
-                add_iter(hd,"Key Off","Enable",offset,1,"B")
+		add_iter(hd,"Key Off","Enable",offset,1,"B")
 
 def hdralst(hd, data, off):
 	ind = 0
@@ -590,7 +590,7 @@ def hdrbch (hd, data, off):
 	x = ord(data[offset])
 	add_iter(hd,"Velocity Range - Low",x,offset,1,"B")
 	
-        
+	
 	offset = 12
 	x = 255-ord(data[offset])
 	add_iter(hd,"Volume",x,offset,1,"B")
@@ -604,19 +604,19 @@ def hdrbch (hd, data, off):
 	add_iter(hd,"Tuning Center Key-Note","%d (%s)"%(x,key2txt(x,pitches)),offset,1,"B")
 
 	offset = 17
-	x = ord(data[offset])        
+	x = ord(data[offset])	
 	if x >=32:
-                x = ord(data[offset])-128
+		x = ord(data[offset])-128
 	add_iter(hd,"Tuning Coarse",x,offset,1,"B")
 
 	offset = 18
-	x = ord(data[offset])        
+	x = ord(data[offset])	
 	if x >=64:
-                x = ord(data[offset])-256
+		x = ord(data[offset])-256
 	add_iter(hd,"Tuning Fine",x,offset,1,"B")
 
 	offset = 19
-	x = ord(data[offset])        
+	x = ord(data[offset])	
 	add_iter(hd,"Number of channels",x,offset,1,"B")
 
 	offset = 0x20
@@ -708,9 +708,9 @@ def vvst(hd, data, off):
 	offset = 56
 	x = ord(data[offset])
 	if x == 0:
-                add_iter(hd,"Mono / Poly","Mono",offset,1,"B")
+		add_iter(hd,"Mono / Poly","Mono",offset,1,"B")
 	else:
-                add_iter(hd,"Mono / Poly","Poly",offset,1,"B")
+		add_iter(hd,"Mono / Poly","Poly",offset,1,"B")
 
 	offset = 57
 	x = ord(data[offset])
@@ -734,10 +734,10 @@ def vvst(hd, data, off):
 
 	offset = 76
 	x = ord(data[offset])
-        if x == 0:
-                add_iter(hd,"DSP SW","Off",offset,1,"B")
+	if x == 0:
+		add_iter(hd,"DSP SW","Off",offset,1,"B")
 	else:
-                add_iter(hd,"DSP SW","On",offset,1,"B")
+		add_iter(hd,"DSP SW","On",offset,1,"B")
 
 	offset = 88
 	x = struct.unpack(">H",data[offset:offset+2])[0]

@@ -284,7 +284,7 @@ def sl_funcs7a(hd, data, shift, offset, blk_off):
 def sl_str(hd, data, shift, offset, blk_off):
 	slen = ord(data[offset+blk_off])
 	if hd.version == 11:
-		txt = unicode(data[offset+blk_off+1:offset+blk_off+3+slen*2],"utf-16")
+		txt = str(data[offset+blk_off+1:offset+blk_off+3+slen*2],"utf-16")
 		tlen = slen*2+3
 	else:
 		txt = data[offset+blk_off+1:offset+blk_off+2+slen]

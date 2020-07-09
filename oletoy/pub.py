@@ -16,7 +16,9 @@
 
 import binascii
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 import pubblock
@@ -300,7 +302,7 @@ class PublisherContentDoc():
 		self.checkFinish(hd,data,off,"pub98textinfo")
 	def pub98oleData (self,hd,size,data):
 		off=0
-		add_iter(hd,"val",unicode(data[off:off+2],"cp1250"),off,2,'txt') # MO
+		add_iter(hd,"val",str(data[off:off+2],"cp1250"),off,2,'txt') # MO
 		off+=2
 		add_iter (hd,"id",struct.unpack('<H', data[off:off+2])[0],off,2,'<H')
 		off+=2
@@ -649,7 +651,7 @@ class PublisherContentDoc():
 		if self.version<5:
 			self.pub98cstlist(hd,size,data)
 		else:
-			self.pub98ptrlistheader(hd,size,data) # string(unicode), flag, font(name)?
+			self.pub98ptrlistheader(hd,size,data) # string(str), flag, font(name)?
 	def pub98zone2 (self,hd,size,data):
 		add_iter (hd,"data",binascii.hexlify(data),0,len(data),"text")
 
