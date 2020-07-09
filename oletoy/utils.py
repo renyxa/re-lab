@@ -15,10 +15,13 @@
 #
 
 import sys,struct,base64
-import gtk, cairo
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, cairo
 
 try:
-	import gv
+	import graphviz
 	usegraphviz = True
 except:
 	print('Graphviz not found. Only used for FreeHand.') # Grid layout will be used.'
@@ -40,13 +43,13 @@ ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	255:"OEM Latin I"}
 
 def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,tip=None):
-        """ Adds an entry to the view
+	""" Adds an entry to the view
 
 Parameters
 ----------
 tip: str
     An optional additional explanation of the entry
-        """
+	"""
 	iter = hd.model.append(parent, None)
 	hd.model.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
 	return iter
@@ -110,7 +113,7 @@ def cnvrt22(data,end=">"):
 	return i+f
 
 
-def d2asc(data,ln=0,rch=unicode("\xC2\xB7","utf8")):
+def d2asc(data,ln=0,rch="\xC2\xB7"):
 	asc = ""
 	for i in range(len(data)):
 		ch = data[i]
@@ -194,7 +197,7 @@ def bup2 (string, offlen):
 
 
 def graph_on_button_press(da,event,data,hd):
-	if event.type  == gtk.gdk.BUTTON_PRESS:
+	if event.type  == Gtk.gdk.BUTTON_PRESS:
 		if event.button == 1:
 			hd.dispscale *= 1.4
 			graph_expose(da,event,data,hd)
@@ -228,13 +231,13 @@ def graph(hd,data):
 	if ch:
 		ch.connect('expose_event', graph_expose,data,hd)
 	else:
-		da = gtk.DrawingArea()
-		scrolled = gtk.ScrolledWindow()
-		scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		da = Gtk.DrawingArea()
+		scrolled = Gtk.ScrolledWindow()
+		scrolled.set_policy(Gtk.POLICY_AUTOMATIC,Gtk.POLICY_AUTOMATIC)
 		scrolled.add_with_viewport(da)
 		hd.da = scrolled
 		hd.hdscrolled.add2(hd.da)
-		da.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+		da.set_events(Gtk.gdk.BUTTON_PRESS_MASK | Gtk.gdk.BUTTON_RELEASE_MASK | Gtk.gdk.POINTER_MOTION_MASK)
 		da.connect('expose_event', graph_expose,data,hd)
 		da.connect("button_press_event",graph_on_button_press,data,hd)
 
