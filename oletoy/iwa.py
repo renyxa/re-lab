@@ -405,57 +405,57 @@ def handle_tile_row(parser, page, data, parent):
 	parser.tile_row_offsets = {}
 
 FUNCTIONS = {
-	1: 'ABS',
-	2: 'ACCRINT',
-	3: 'ACCRINTM',
-	4: 'ACOS',
-	5: 'ACOSH',
-	6: 'ADDRESS',
-	7: 'AND',
-	8: 'AREAS',
-	9: 'ASIN',
-	10: 'ASINH',
-	11: 'ATAN',
-	12: 'ATAN2',
-	13: 'ATANH',
-	14: 'AVERAGEDEV',
-	15: 'AVERAGE',
-	16: 'AVERAGEA',
-	17: 'CEILING',
-	18: 'CHAR',
-	19: 'CHOOSE',
-	20: 'CLEAN',
-	21: 'CODE',
-	22: 'COLUMN',
-	23: 'COLUMNS',
-	24: 'COMBIN',
-	25: 'CONCATENATE',
-	26: 'CONFIDENCE',
-	27: 'CORREL',
-	28: 'COS',
-	29: 'COSH',
-	30: 'COUNT',
-	31: 'COUNTA',
-	32: 'COUNTBLANK',
-	33: 'COUNTIF',
-	34: 'COUPDAYBS',
-	35: 'COUPDAYS',
-	36: 'COUPDAYSNC',
-	37: 'COUPNUM',
-	38: 'COVAR',
-	39: 'DATE',
-	40: 'DATEDIF',
-	41: 'DAY',
-	42: 'DB',
-	43: 'DDB',
-	44: 'DEGREES',
-	45: 'DISC',
-	46: 'DOLLAR',
-	47: 'EDATE',
-	48: 'EVEN',
-	49: 'EXACT',
-	50: 'EXP',
-	51: 'FACT',
+		1: 'ABS',
+		2: 'ACCRINT',
+		3: 'ACCRINTM',
+		4: 'ACOS',
+		5: 'ACOSH',
+		6: 'ADDRESS',
+		7: 'AND',
+		8: 'AREAS',
+		9: 'ASIN',
+		10: 'ASINH',
+		11: 'ATAN',
+		12: 'ATAN2',
+		13: 'ATANH',
+		14: 'AVERAGEDEV',
+		15: 'AVERAGE',
+		16: 'AVERAGEA',
+		17: 'CEILING',
+		18: 'CHAR',
+		19: 'CHOOSE',
+		20: 'CLEAN',
+		21: 'CODE',
+		22: 'COLUMN',
+		23: 'COLUMNS',
+		24: 'COMBIN',
+		25: 'CONCATENATE',
+		26: 'CONFIDENCE',
+		27: 'CORREL',
+		28: 'COS',
+		29: 'COSH',
+		30: 'COUNT',
+		31: 'COUNTA',
+		32: 'COUNTBLANK',
+		33: 'COUNTIF',
+		34: 'COUPDAYBS',
+		35: 'COUPDAYS',
+		36: 'COUPDAYSNC',
+		37: 'COUPNUM',
+		38: 'COVAR',
+		39: 'DATE',
+		40: 'DATEDIF',
+		41: 'DAY',
+		42: 'DB',
+		43: 'DDB',
+		44: 'DEGREES',
+		45: 'DISC',
+		46: 'DOLLAR',
+		47: 'EDATE',
+		48: 'EVEN',
+		49: 'EXACT',
+		50: 'EXP',
+51: 'FACT',
 	52: 'FALSE',
 	53: 'FIND',
 	54: 'FIXED',
@@ -681,318 +681,318 @@ FUNCTIONS = {
 }
 
 MESSAGES = {
-	'Animation': {
-		1: ('Kind', string),
-		2: ('Type', string),
-		3: ('Animation duration', double_),
-		4: ('Direction', int64), # TODO: identify directions
-		5: ('Animation delay', double_),
-	},
-	'Arrow':  {
-		1: ('Path', 'Bezier'),
-		3: ('Position', ),
-		5: ('Name', string)
-	},
-	'Bezier': {1: ('Bezier element',)},
-	'Bezier element': {
-		1: ('Type', enum({1: 'M', 2: 'L', 4: 'C', 5: 'Z'})),
-		2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
-	},
-	'Character properties': {
-		1: ('Bold', bool_),
-		2: ('Italic', bool_),
-		3: ('Font size', float_),
-		5: ('Font name', string),
-		7: ('Font color', 'Color'),
-		10: ('Superscript', enum({0: 'None', 1: 'Super', 2: 'Sub'})),
-		11: ('Underline', bool_),
-		12: ('Strikethru', bool_),
-		13: ('Capitalization', enum({0: 'None', 1: 'All caps', 2: 'Small caps', 3: 'Title'})),
-		14: ('Baseline shift', float_),
-		16: ('Ligatures', enum({0: 'None', 1: 'Default', 2: 'All'})),
-		18: ('Outline color', 'Color'),
-		19: ('Outline', float_),
-		21: ('Text shadow', 'Shadow'),
-		23: ('Strikethru color', 'Color'),
-		26: ('Text background', 'Color'),
-		27: ('Tracking', float_),
-	},
-	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
-	'Columns': {
-		1: ('Equal columns', {
-			1: ('Number of columns', int64),
-			2: ('Spacing', float_),
-		}),
-		2: ('Columns', {
-			1: ('First column width', float_),
-			2: ('Column', {
-				1: ('Spacing', float_),
-				2: ('Width', float_),
-			}),
-		}),
-	},
-	'Custom Format Def': {
-		1: ('Format name', string),
-		2: ('Format type', int64),
-		3: ('Format', ),
-	},
-	'Document info': {
-		1: ('Annotations', {
-			4: ('Language', string),
-			7: ('Annotation Author Storage Ref', 'Ref'),
-			9: ('encoding', string),
-			# 10,12 bool
-		}),
-		3: ('Language', string),
-		4: ('Calculation Engine Ref', 'Ref'),
-		5: ('View State Ref', 'Ref'),
-		6: ('Object 601 ref', 'Ref'),
-		7: ('Custom format data list ref?', 'Ref'),
-		#8: a bool?
-		9: ('Template', string),
-		12: ('Custom format ref', 'Ref'), # maybe only date time?
-	},
-	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref'), 4: ('??? ref', 'Ref')},
+		'Animation': {
+			1: ('Kind', string),
+			2: ('Type', string),
+			3: ('Animation duration', double_),
+			4: ('Direction', int64), # TODO: identify directions
+			5: ('Animation delay', double_),
+			},
+		'Arrow':  {
+			1: ('Path', 'Bezier'),
+			3: ('Position', ),
+			5: ('Name', string)
+			},
+		'Bezier': {1: ('Bezier element',)},
+		'Bezier element': {
+			1: ('Type', enum({1: 'M', 2: 'L', 4: 'C', 5: 'Z'})),
+			2: ('Coords', {1: ('X', float_), 2: ('Y', float_)}),
+			},
+		'Character properties': {
+			1: ('Bold', bool_),
+			2: ('Italic', bool_),
+			3: ('Font size', float_),
+			5: ('Font name', string),
+			7: ('Font color', 'Color'),
+			10: ('Superscript', enum({0: 'None', 1: 'Super', 2: 'Sub'})),
+			11: ('Underline', bool_),
+			12: ('Strikethru', bool_),
+			13: ('Capitalization', enum({0: 'None', 1: 'All caps', 2: 'Small caps', 3: 'Title'})),
+			14: ('Baseline shift', float_),
+			16: ('Ligatures', enum({0: 'None', 1: 'Default', 2: 'All'})),
+			18: ('Outline color', 'Color'),
+			19: ('Outline', float_),
+			21: ('Text shadow', 'Shadow'),
+			23: ('Strikethru color', 'Color'),
+			26: ('Text background', 'Color'),
+			27: ('Tracking', float_),
+			},
+		'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
+		'Columns': {
+			1: ('Equal columns', {
+				1: ('Number of columns', int64),
+				2: ('Spacing', float_),
+				}),
+			2: ('Columns', {
+				1: ('First column width', float_),
+				2: ('Column', {
+					1: ('Spacing', float_),
+					2: ('Width', float_),
+					}),
+				}),
+			},
+		'Custom Format Def': {
+				1: ('Format name', string),
+				2: ('Format type', int64),
+				3: ('Format', ),
+				},
+		'Document info': {
+				1: ('Annotations', {
+					4: ('Language', string),
+					7: ('Annotation Author Storage Ref', 'Ref'),
+					9: ('encoding', string),
+					# 10,12 bool
+					}),
+				3: ('Language', string),
+				4: ('Calculation Engine Ref', 'Ref'),
+				5: ('View State Ref', 'Ref'),
+				6: ('Object 601 ref', 'Ref'),
+				7: ('Custom format data list ref?', 'Ref'),
+				#8: a bool?
+				9: ('Template', string),
+				12: ('Custom format ref', 'Ref'), # maybe only date time?
+				},
+		'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref'), 4: ('??? ref', 'Ref')},
 	'Fill': {
-		1: ('Color',),
-		2: ('Gradient',),
-		3: ('Image', {
-			2: ('Type', enum({0: 'original size', 1: 'stretch', 2: 'tile', 3: 'scale to fill', 4: 'scale to fit'})),
-			3: ('Color'),
-			4: ('Size',),
-			6: ('File ref', 'Ref'),
-		}),
-	},
+			1: ('Color',),
+			2: ('Gradient',),
+			3: ('Image', {
+				2: ('Type', enum({0: 'original size', 1: 'stretch', 2: 'tile', 3: 'scale to fill', 4: 'scale to fit'})),
+				3: ('Color'),
+				4: ('Size',),
+				6: ('File ref', 'Ref'),
+				}),
+			},
 	'Format': {
-		1: ('Type', enum({
-			1: 'automatic',
-			256: 'number',
-			257: 'currency',
-			258: 'percentage',
-			259: 'scientific',
-			260: 'text',
-			261: 'date & time',
-			262: 'fraction',
-			263: 'checkbox',
-			264: 'stepper',
-			265: 'slider',
-			266: 'pop-up menu',
-			267: 'star rating',
-			268: 'duration',
-			269: 'numeral system',
-			270: 'custom number',
-			271: 'custom text',
-			272: 'custom date & time',
-		})),
-		2: ('Decimal places', int64),
-		3: ('Currency code', string),
-		4: ('Negative style', enum({0: '-1', 1: 'red 1', 2: '(1)', 3: 'red (1)'})),
-		5: ('Show thousands separator', bool_),
-		6: ('Use accounting style', bool_),
-		7: ('Duration style', enum({0: 'punctuation', 1: 'abbreviations', 2: 'words'})),
-		8: ('Numeral base', int64),
-		9: ('Digits', int64),
-		10: ('Negative numbers representation', enum({0: 'two\'s-complement', 1: 'minus sign'})),
-		11: ('Fraction accuracy', int64),
-		14: ('Date format', string),
-		15: ('High duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
-		16: ('Low duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
-		17: ('Custom format ID', int64),
-		18: ('Format String', string),
-		19: (None, double_),
-		21: ('Min. value', double_),
-		22: ('Max. value', double_),
-		23: ('Increment', double_),
-		24: ('Format', enum({256: 'number', 257: 'currency', 258: 'percentage', 259: 'scientific', 262: 'fraction', 269: 'numeral system'})),
-		25: ('Slider orientation?', int64),
-		26: ('Slider position?', int64),
-		38: ('Pop-up start with', enum({0: 'blank', 1: 'first item'})),
-		41: ('Custom format UID', 'UID'),
-	},
-	'Formula': {
-		1: ('Token array', { # formula is saved in RPN
-			1: ('Token', {
-				1: ('Type', enum({
-					1: '+', 2: '-', 3: '*', 4: '/', 5: '^', 6:'&', 7: '>', 8: '>=', 9: '<', 10: '<=', 11: '=', 12: '<>', # infix ops
-					13: '-', 14: '+', # prefix ops
-					15: '%', # postfix op
-					16: 'function',
-					17: 'double', 18: 'bool', 19: 'string', # literals
-					22: 'empty',
-					23: 'missing argument',
-					25: '()',
-					29: 'range',
-					32: 'space', 33: 'space2', # difference, the position?
-					34: 'argument[begin]', 35: 'argument[end]',
-					36: 'address'
+			1: ('Type', enum({
+				1: 'automatic',
+				256: 'number',
+				257: 'currency',
+				258: 'percentage',
+				259: 'scientific',
+				260: 'text',
+				261: 'date & time',
+				262: 'fraction',
+				263: 'checkbox',
+				264: 'stepper',
+				265: 'slider',
+				266: 'pop-up menu',
+				267: 'star rating',
+				268: 'duration',
+				269: 'numeral system',
+				270: 'custom number',
+				271: 'custom text',
+				272: 'custom date & time',
 				})),
-				2: ('Function', enum(FUNCTIONS)),
-				3: ('Number of arguments', int64),
-				4: ('Double', double_),
-				5: ('Boolean', bool_),
-				6: ('String', string),
-				10: ('Optional', bool_),
-				13: ('Number of arguments', int64), # of ()
-				25: ('String', string), # arg of 32
-				26: ('Column', {1: ('Column', sint64), 2: ('Absolute', bool_),}),
-				27: ('Row', {1: ('Row', sint64), 2: ('Absolute', bool_),}),
-				28: ('Sheet UUID', {1: ('UUID',)}),
-				# 38: related to file?
-			}),
-		}),
-	},
+			2: ('Decimal places', int64),
+			3: ('Currency code', string),
+			4: ('Negative style', enum({0: '-1', 1: 'red 1', 2: '(1)', 3: 'red (1)'})),
+			5: ('Show thousands separator', bool_),
+			6: ('Use accounting style', bool_),
+			7: ('Duration style', enum({0: 'punctuation', 1: 'abbreviations', 2: 'words'})),
+			8: ('Numeral base', int64),
+			9: ('Digits', int64),
+			10: ('Negative numbers representation', enum({0: 'two\'s-complement', 1: 'minus sign'})),
+			11: ('Fraction accuracy', int64),
+			14: ('Date format', string),
+			15: ('High duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
+			16: ('Low duration unit', flags({1: 'wk', 2: 'day', 4: 'hr', 8: 'min', 16: 'sec', 32: 'ms'})),
+			17: ('Custom format ID', int64),
+			18: ('Format String', string),
+			19: (None, double_),
+			21: ('Min. value', double_),
+			22: ('Max. value', double_),
+			23: ('Increment', double_),
+			24: ('Format', enum({256: 'number', 257: 'currency', 258: 'percentage', 259: 'scientific', 262: 'fraction', 269: 'numeral system'})),
+			25: ('Slider orientation?', int64),
+			26: ('Slider position?', int64),
+			38: ('Pop-up start with', enum({0: 'blank', 1: 'first item'})),
+			41: ('Custom format UID', 'UID'),
+			},
+	'Formula': {
+			1: ('Token array', { # formula is saved in RPN
+				1: ('Token', {
+					1: ('Type', enum({
+						1: '+', 2: '-', 3: '*', 4: '/', 5: '^', 6:'&', 7: '>', 8: '>=', 9: '<', 10: '<=', 11: '=', 12: '<>', # infix ops
+						13: '-', 14: '+', # prefix ops
+						15: '%', # postfix op
+						16: 'function',
+						17: 'double', 18: 'bool', 19: 'string', # literals
+						22: 'empty',
+						23: 'missing argument',
+						25: '()',
+						29: 'range',
+						32: 'space', 33: 'space2', # difference, the position?
+						34: 'argument[begin]', 35: 'argument[end]',
+						36: 'address'
+						})),
+					2: ('Function', enum(FUNCTIONS)),
+					3: ('Number of arguments', int64),
+					4: ('Double', double_),
+					5: ('Boolean', bool_),
+					6: ('String', string),
+					10: ('Optional', bool_),
+					13: ('Number of arguments', int64), # of ()
+					25: ('String', string), # arg of 32
+					26: ('Column', {1: ('Column', sint64), 2: ('Absolute', bool_),}),
+					27: ('Row', {1: ('Row', sint64), 2: ('Absolute', bool_),}),
+					28: ('Sheet UUID', {1: ('UUID',)}),
+					# 38: related to file?
+					}),
+				}),
+			},
 	'Geometry': {
-		1: ('Position',),
-		2: ('Size',),
-		3: ('Flags', flags({1: 'disable h. autosize', 2: 'disable v. autosize', 4: 'flip h.'})),
-		4: ('Angle', float_),
-	},
+			1: ('Position',),
+			2: ('Size',),
+			3: ('Flags', flags({1: 'disable h. autosize', 2: 'disable v. autosize', 4: 'flip h.'})),
+			4: ('Angle', float_),
+			},
 	'Gradient': {
-		1: ('Type', enum({0: 'linear', 1: 'radial'})),
-		2: ('Gradient stop', {1: ('Color',), 2: ('Fraction', float_), 3: ('Inflection', float_)}),
-		3: ('Opacity', float_),
-		5: ('Angle', {2: ('Angle', float_)}),
-		6: ('Vector?', {1: ('Start', 'Position'), 2: ('End', 'Position'), 3: ('Base size', 'Size')}),
-	},
+			1: ('Type', enum({0: 'linear', 1: 'radial'})),
+			2: ('Gradient stop', {1: ('Color',), 2: ('Fraction', float_), 3: ('Inflection', float_)}),
+			3: ('Opacity', float_),
+			5: ('Angle', {2: ('Angle', float_)}),
+			6: ('Vector?', {1: ('Start', 'Position'), 2: ('End', 'Position'), 3: ('Base size', 'Size')}),
+			},
 	'IWA file': {
-		1: ('First Object ID', int64),
-		2: ('Name', string),
-		3: ('Path', string),
-		6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
-	},
+			1: ('First Object ID', int64),
+			2: ('Name', string),
+			3: ('Path', string),
+			6: ('Reference', {1: ('File object', int64), 2: ('Object', int64), 3: ('Field?', int64)})
+			},
 	'Other file': {
-		1: ('ID', int64),
-		3: ('Path', string),
-		4: ('Internal path', string),
-		5: ('Template', string)
-	},
+			1: ('ID', int64),
+			3: ('Path', string),
+			4: ('Internal path', string),
+			5: ('Template', string)
+			},
 	'Padding': {1: ('Left', float_), 2: ('Top', float_), 3: ('Right', float_), 4: ('Bottom', float_),},
 	'Paragraph properties': {
-		1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify', 4: 'Cell'})),
-		3: ('Decimal character', string),
-		4: ('Default tab stops', float_),
-		6: ('Text background', 'Color'),
-		7: ('First line indent', float_),
-		8: ('Hyphenate', bool_),
-		9: ('Keep lines together', bool_),
-		10: ('Keep with next', bool_),
-		11: ('Left indent', float_),
-		13: ('Line spacing', {
-			1: ('Type', enum({0: 'lines', 1: 'at least', 2: 'exactly', 4: 'between'})),
-			2: ('Amount', float_),
-			3: ('Unknown', float_)
-		}),
-		14: ('Page break before', bool_),
-		15: ('Border type', enum({0: 'None', 1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
-		17: ('Paragraph rule offset', 'Position'),
-		19: ('Right indent', float_),
-		20: ('Space after', float_),
-		21: ('Space before', float_),
-		25: ('Tabs', {
-			1: ('Tab stop', {
-				1: ('Pos', float_),
-				2: ('Alignment', enum({0: 'Left', 1: 'Center', 2: 'Right', 3: 'Decimal'})),
-				3: ('Leader', string),
-			})
-		}),
-		26: ('Widow control', bool_),
-		32: ('Paragraph stroke', 'Stroke'),
-		40: ('List style ref', 'Ref'),
-		42: ('Following paragraph style ref', 'Ref'),
-	},
-	'Paragraph style': {
-		1: ('Style info',),
-		10: ('Number of properties', int64),
-		11: ('Character properties',),
-		12: ('Paragraph properties',),
-	},
-	'Path': {
-		3: ('Point path', {
-			1: ('Type', enum({1: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
-			2: ('Point', 'Position'),
-			3: ('Size',)
-		}),
-		4: ('Scalar path', {
-			1: ('Type', enum({0: 'Rounded rectangle', 1: 'Regular polygon'})),
-			2: ('Value', float_),
-			3: ('Size',)
-		}),
-		5: ('Bezier path', {2: ('Size',), 3: ('Bezier',)}),
-		6: ('Callout2 path', {
-			1: ('Size',),
-			2: ('Tail position', 'Position'),
-			3: ('Tail size', float_),
-			4: ('Corner radius', float_),
-			5: ('Tail at center', bool_),
-		}),
-		7: ('Connection path', {
-			1: (None, {
-				2: ('Size',),
-				3: ('Bezier',),
-			}),
-		}),
-		8: ('Editable path', {
-			1: ('Points', {
-				1: ('Point', {
-					1: ('Control point 1', 'Position'),
-					2: ('Control point 2', 'Position'),
-					3: ('Control point 3', 'Position'),
+			1: ('Alignment', enum({0: 'Left', 1: 'Right', 2: 'Center', 3: 'Justify', 4: 'Cell'})),
+			3: ('Decimal character', string),
+			4: ('Default tab stops', float_),
+			6: ('Text background', 'Color'),
+			7: ('First line indent', float_),
+			8: ('Hyphenate', bool_),
+			9: ('Keep lines together', bool_),
+			10: ('Keep with next', bool_),
+			11: ('Left indent', float_),
+			13: ('Line spacing', {
+				1: ('Type', enum({0: 'lines', 1: 'at least', 2: 'exactly', 4: 'between'})),
+				2: ('Amount', float_),
+				3: ('Unknown', float_)
 				}),
-				2: ('Closed?', bool_),
-			}),
-			2: ('Size',),
-		}),
-	},
+			14: ('Page break before', bool_),
+			15: ('Border type', enum({0: 'None', 1: 'Top', 2: 'Bottom', 3: 'Top and bottom', 4: 'All'})),
+			17: ('Paragraph rule offset', 'Position'),
+			19: ('Right indent', float_),
+			20: ('Space after', float_),
+			21: ('Space before', float_),
+			25: ('Tabs', {
+				1: ('Tab stop', {
+					1: ('Pos', float_),
+					2: ('Alignment', enum({0: 'Left', 1: 'Center', 2: 'Right', 3: 'Decimal'})),
+					3: ('Leader', string),
+					})
+				}),
+			26: ('Widow control', bool_),
+			32: ('Paragraph stroke', 'Stroke'),
+			40: ('List style ref', 'Ref'),
+			42: ('Following paragraph style ref', 'Ref'),
+			},
+	'Paragraph style': {
+			1: ('Style info',),
+			10: ('Number of properties', int64),
+			11: ('Character properties',),
+			12: ('Paragraph properties',),
+			},
+	'Path': {
+			3: ('Point path', {
+				1: ('Type', enum({1: 'Right arrow', 10: 'Double arrow', 100: 'Star'})),
+				2: ('Point', 'Position'),
+				3: ('Size',)
+				}),
+			4: ('Scalar path', {
+				1: ('Type', enum({0: 'Rounded rectangle', 1: 'Regular polygon'})),
+				2: ('Value', float_),
+				3: ('Size',)
+				}),
+			5: ('Bezier path', {2: ('Size',), 3: ('Bezier',)}),
+			6: ('Callout2 path', {
+				1: ('Size',),
+				2: ('Tail position', 'Position'),
+				3: ('Tail size', float_),
+				4: ('Corner radius', float_),
+				5: ('Tail at center', bool_),
+				}),
+			7: ('Connection path', {
+				1: (None, {
+					2: ('Size',),
+					3: ('Bezier',),
+					}),
+				}),
+			8: ('Editable path', {
+				1: ('Points', {
+					1: ('Point', {
+						1: ('Control point 1', 'Position'),
+						2: ('Control point 2', 'Position'),
+						3: ('Control point 3', 'Position'),
+						}),
+					2: ('Closed?', bool_),
+					}),
+				2: ('Size',),
+				}),
+			},
 	'Position': {1: ('X', float_), 2: ('Y', float_)},
 	'Ref': {1: ('Ref', int64)},
 	'Reflection': {1: ('Transparency', float_)},
 	'Shadow': {
-		1: ('Color',),
-		2: ('Angle', float_),
-		3: ('Offset', float_),
-		4: ('Blur', int64),
-		5: ('Opacity', float_),
-                6: ('Visible?', bool_),
-		7: ('Type', enum({0: 'drop', 1: 'contact', 2: 'curved'})),
-		9: ('Contact shadow', {2: ('Perspective', float_)}),
-		10: ('Curved shadow', {1: ('Balance', float_)}),
-	},
+			1: ('Color',),
+			2: ('Angle', float_),
+			3: ('Offset', float_),
+			4: ('Blur', int64),
+			5: ('Opacity', float_),
+			6: ('Visible?', bool_),
+			7: ('Type', enum({0: 'drop', 1: 'contact', 2: 'curved'})),
+			9: ('Contact shadow', {2: ('Perspective', float_)}),
+			10: ('Curved shadow', {1: ('Balance', float_)}),
+			},
 	'Shape': {
-		1: ('Shape placement',),
-		2: ('Graphic style ref', 'Ref'),
-		3: ('Path',),
-		4: ('Arrow[start]', 'Arrow'),
-		5: ('Arrow[end]', 'Arrow'),
-	},
+			1: ('Shape placement',),
+			2: ('Graphic style ref', 'Ref'),
+			3: ('Path',),
+			4: ('Arrow[start]', 'Arrow'),
+			5: ('Arrow[end]', 'Arrow'),
+			},
 	'Shape placement': {
-		1: ('Geometry',),
-		2: ('Parent ref', 'Ref'),
-		3: ('External text wrap', {
-			1: ('Text wrap', enum({0: 'inline with text', 1: 'around', 2: 'above and below', 4: 'automatic', 5: 'none'})),
-			3: ('Wrap style', enum({0: 'tight', 1: 'regular'})),
-			4: ('Margin', float_),
-			5: ('Alpha threshold', float_),
-		}),
-		5: ('Locked', bool_),
-		6: ('Comment ref', 'Ref'),
-		7: ('Aspect ratio locked', bool_),
-		8: ('Description', string),
-	},
+			1: ('Geometry',),
+			2: ('Parent ref', 'Ref'),
+			3: ('External text wrap', {
+				1: ('Text wrap', enum({0: 'inline with text', 1: 'around', 2: 'above and below', 4: 'automatic', 5: 'none'})),
+				3: ('Wrap style', enum({0: 'tight', 1: 'regular'})),
+				4: ('Margin', float_),
+				5: ('Alpha threshold', float_),
+				}),
+			5: ('Locked', bool_),
+			6: ('Comment ref', 'Ref'),
+			7: ('Aspect ratio locked', bool_),
+			8: ('Description', string),
+			},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Stroke': {
-		1: ('Color',),
-		2: ('Width', float_),
-		3: ('Cap', enum({0: 'butt', 1: 'round'})),
-		4: ('Join', enum({0: 'miter', 1: 'round'})),
-		5: ('Miter limit', float_),
-		6: ('Stroke', {
-			1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'auto'})),
-			3: ('Number of elements', int64),
-			4: ('Pattern element', float_),
-		}),
-		7: ('Texture', {2: ('Name', string)}),
-		8: ('Picture frame', {2: ('Name', string), 3: ('Scale', float_)}),
-	},
+			1: ('Color',),
+			2: ('Width', float_),
+			3: ('Cap', enum({0: 'butt', 1: 'round'})),
+			4: ('Join', enum({0: 'miter', 1: 'round'})),
+			5: ('Miter limit', float_),
+			6: ('Stroke', {
+				1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'auto'})),
+				3: ('Number of elements', int64),
+				4: ('Pattern element', float_),
+				}),
+			7: ('Texture', {2: ('Name', string)}),
+			8: ('Picture frame', {2: ('Name', string), 3: ('Scale', float_)}),
+			},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
 	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
@@ -1001,115 +1001,115 @@ MESSAGES = {
 }
 
 COMMON_OBJECTS = {
-	210: ('View State',),
-	212: ('Annotation', {1: ('Author', string)}),
-	213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
-	222: ('Custom Format', {1: ('UID', ), 2: ('Custom Format Def', )}),
-	401: ('Stylesheet', {
-		1: ('Style ref', 'Ref'),
-		2: ('Style name association',),
-		3: ('Parent ref', 'Ref'),
-		5: ('Parent association', {1: ('Parent ref', 'Ref'), 2: ('Style ref', 'Ref')}),
-	}),
-	2001: ('Text', {
-		2: ('Stylesheet ref', 'Ref'),
-		3: ('Text', string),
-		5: ('Paragraphs', {1: ('Paragraph', 'Text address')}),
-		6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
-		7: ('List styles', {1: ('List style', {1: ('Start', int64), 2: ('List style ref', 'Ref')})}),
-		8: ('Spans', {1: ('Span', 'Text address')}),
-		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
-		11: ('Links', {1: ('Link', 'Text address')}),
-		12: ('Layouts', {1: ('Layout', 'Text address')}),
-		14: ('List numbers', { 1: ('List number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
-		16: ('Footnotes', {1: ('Footnote', {1: ('Index', int64), 2: ('Ref',)})}),
-		17: ('Sections', {1: ('Section', {1: ('Start', int64), 2: ('Section ref', 'Ref')})}),
-		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
-		20: ('Change IDs?', {1: ('Change ID', {1: ('Start', int64), 2: ('UUID', string)})}),
-		21: ('Changes', {1: ('Change', {1: ('Start', int64), 2: ('Change ref', 'Ref')})}),
-		23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
-		24: ('Unknown numbers', { 1: ('Unknown number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
-	}),
-	2004: ('Footnote mark', {}),
-	2008: ('Footnote', {2: ('Text ref', 'Ref')}),
-	2011: ('Drawable shape',),
-	2013: ('Text comment', {1: ('Comment ref', 'Ref')}),
-	2014: ('Sticky note', {
-		1: ('Drawable shape',),
-		2: ('Comment ref', 'Ref'),
-	}),
-	2021: ('Character style', {
-		1: ('Style info',),
-		10: ('Number of properties', int64),
-		11: ('Properties', 'Character properties'),
-	}),
-	2022: ('Paragraph style',),
-	2023: ('List style', {
-		1: ('Style info',),
-		10: ('Number of properties', int64),
-		11: ('List label type', enum({0: 'none', 1: 'image',  2: 'bullet', 3: 'number'})),
-		12: ('Text indent', float_),
-		13: ('List label indent', float_),
-		14: ('List label geometry', {1: ('Scale', float_), 2: ('Align', float_)}),
-		15: ('Number format', enum({0: '1.', 1: '`(1)', 2: '1)', 3: 'I.', 4: '`(I)', 5: 'I)', 6: 'i.', 7: '`(i)', 8: 'i)', 9: 'A.', 10: '`(A)', 11: 'A)', 12: 'a.', 13: '`(a)', 14: 'a)'})),
-		16: ('Bullet', string),
-		17: ('Image', {3: ('Image Ref', 'Ref')}),
-		21: ('Bullet color', 'Color'),
-		25: ('Tiered', bool_),
-	}),
-	2024: ('Layout style', {
-		1: ('Style info',),
-		10: ('Number of properties', int64),
-		11: ('Properties', {
-			7: ('Columns',),
-			9: ('Layout margins', 'Padding'),
-		}),
-	}),
-	2025: ('Graphic style', {
-		1: ('Style', {
+		210: ('View State',),
+		212: ('Annotation', {1: ('Author', string)}),
+		213: ('Annotation Author Storage', {1: ('Annotation ref', 'Ref')}),
+		222: ('Custom Format', {1: ('UID', ), 2: ('Custom Format Def', )}),
+		401: ('Stylesheet', {
+			1: ('Style ref', 'Ref'),
+			2: ('Style name association',),
+			3: ('Parent ref', 'Ref'),
+			5: ('Parent association', {1: ('Parent ref', 'Ref'), 2: ('Style ref', 'Ref')}),
+			}),
+		2001: ('Text', {
+			2: ('Stylesheet ref', 'Ref'),
+			3: ('Text', string),
+			5: ('Paragraphs', {1: ('Paragraph', 'Text address')}),
+			6: ('List levels', {1: ('List level', {1: ('Start', int64), 2: ('Level', int64)})}),
+			7: ('List styles', {1: ('List style', {1: ('Start', int64), 2: ('List style ref', 'Ref')})}),
+			8: ('Spans', {1: ('Span', 'Text address')}),
+			9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
+			11: ('Links', {1: ('Link', 'Text address')}),
+			12: ('Layouts', {1: ('Layout', 'Text address')}),
+			14: ('List numbers', { 1: ('List number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
+			16: ('Footnotes', {1: ('Footnote', {1: ('Index', int64), 2: ('Ref',)})}),
+			17: ('Sections', {1: ('Section', {1: ('Start', int64), 2: ('Section ref', 'Ref')})}),
+			19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
+			20: ('Change IDs?', {1: ('Change ID', {1: ('Start', int64), 2: ('UUID', string)})}),
+			21: ('Changes', {1: ('Change', {1: ('Start', int64), 2: ('Change ref', 'Ref')})}),
+			23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
+			24: ('Unknown numbers', { 1: ('Unknown number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
+			}),
+		2004: ('Footnote mark', {}),
+		2008: ('Footnote', {2: ('Text ref', 'Ref')}),
+		2011: ('Drawable shape',),
+		2013: ('Text comment', {1: ('Comment ref', 'Ref')}),
+		2014: ('Sticky note', {
+			1: ('Drawable shape',),
+			2: ('Comment ref', 'Ref'),
+			}),
+		2021: ('Character style', {
+			1: ('Style info',),
+			10: ('Number of properties', int64),
+			11: ('Properties', 'Character properties'),
+			}),
+		2022: ('Paragraph style',),
+		2023: ('List style', {
+			1: ('Style info',),
+			10: ('Number of properties', int64),
+			11: ('List label type', enum({0: 'none', 1: 'image',  2: 'bullet', 3: 'number'})),
+			12: ('Text indent', float_),
+			13: ('List label indent', float_),
+			14: ('List label geometry', {1: ('Scale', float_), 2: ('Align', float_)}),
+			15: ('Number format', enum({0: '1.', 1: '`(1)', 2: '1)', 3: 'I.', 4: '`(I)', 5: 'I)', 6: 'i.', 7: '`(i)', 8: 'i)', 9: 'A.', 10: '`(A)', 11: 'A)', 12: 'a.', 13: '`(a)', 14: 'a)'})),
+			16: ('Bullet', string),
+			17: ('Image', {3: ('Image Ref', 'Ref')}),
+			21: ('Bullet color', 'Color'),
+			25: ('Tiered', bool_),
+			}),
+		2024: ('Layout style', {
 			1: ('Style info',),
 			10: ('Number of properties', int64),
 			11: ('Properties', {
-				1: ('Fill',),
-				2: ('Border', 'Stroke'),
-				3: ('Opacity', float_),
-				4: ('Shadow',),
-				5: ('Reflection',),
-				6: ('Arrow[start]', 'Arrow'),
-				7: ('Arrow[end]', 'Arrow'),
+				7: ('Columns',),
+				9: ('Layout margins', 'Padding'),
+				}),
 			}),
-		}),
-		10: ('Number of properties', int64),
-		11: ('Layout properties', {
-			1: ('Shrink text to fit', bool_),
-			2: ('Vertical alignment', enum({0: 'Top', 1: 'Center', 2: 'Bottom'})),
-			4: ('Columns',),
-			6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
-			10: ('Paragraph style ref', 'Ref'),
-		}),
-	}),
-	2026: ('ToC style', {
-		1: ('Paragraph style',),
-	}),
-	2032: ('Link', {
-		2: ('Href', string),
-	}),
-	2043: ('Slide number', {}),
+		2025: ('Graphic style', {
+			1: ('Style', {
+				1: ('Style info',),
+				10: ('Number of properties', int64),
+				11: ('Properties', {
+					1: ('Fill',),
+					2: ('Border', 'Stroke'),
+					3: ('Opacity', float_),
+					4: ('Shadow',),
+					5: ('Reflection',),
+					6: ('Arrow[start]', 'Arrow'),
+					7: ('Arrow[end]', 'Arrow'),
+					}),
+				}),
+			10: ('Number of properties', int64),
+			11: ('Layout properties', {
+				1: ('Shrink text to fit', bool_),
+				2: ('Vertical alignment', enum({0: 'Top', 1: 'Center', 2: 'Bottom'})),
+				4: ('Columns',),
+				6: ('Text inset', {1: ('A side', float_), 2: ('A side', float_), 3: ('A side', float_), 4: ('A side', float_)}),
+				10: ('Paragraph style ref', 'Ref'),
+				}),
+			}),
+		2026: ('ToC style', {
+			1: ('Paragraph style',),
+			}),
+		2032: ('Link', {
+			2: ('Href', string),
+			}),
+		2043: ('Slide number', {}),
 	2052: ('ToC entry', {
 		4: ('Text', string),
 		5: ('Paragraph style ref', 'Ref'),
-	}),
+		}),
 	2060: ('Change', {
 		3: ('Time?', {1: ('Time?', double_)}),
 		4: ('UUID', string),
-	}),
+		}),
 	2062: ('Change author?', {
 		2: ('Author ref', 'Ref'),
-	}),
+		}),
 	2240: ('Table of contents', {
 		1: ('Drawable shape',),
 		3: ('Entry ref', 'Ref')
-	}),
+		}),
 	2241: ('ToC field', {1: ('Info', {1: ('ToC ref', 'Ref')})}),
 	3005: ('Image', {
 		1: ('Shape placement',),
@@ -1122,11 +1122,11 @@ COMMON_OBJECTS = {
 		12: ('Small File ref', 'Ref'),
 		13: ('File ref?', 'Ref'),
 		15: ('Filtered ref', 'Ref'),
-	}),
+		}),
 	3006: ('Mask', {
 		1: ('Mask placement', 'Shape placement',),
 		2: ('Masking shape path source', 'Path'),
-	}),
+		}),
 	3007: ('Movie', {
 		1: ('Shape placement',),
 		3: ('Start frame', float_),
@@ -1139,7 +1139,7 @@ COMMON_OBJECTS = {
 		19: ('Style ref', 'Ref'),
 		20: ('Size',),
 		24: ('Repeat', enum({0: 'none', 1: 'loop', 2: 'loop back and forth'})),
-	}),
+		}),
 	3008: ('Group', {1: ('Shape placement',), 2: ('Shape ref', 'Ref')}),
 	3009: ('Connection line', {1: ('Shape',), 2: ('Shape 1 ref', 'Ref'), 3: ('Shape 2 ref', 'Ref')}),
 	3016: ('Media style', {
@@ -1150,23 +1150,23 @@ COMMON_OBJECTS = {
 			2: ('Opacity?', float_),
 			3: ('Shadow',),
 			4: ('Reflection',),
+			}),
 		}),
-	}),
 	3056: ('Comment', {
 		1: ('Text', string),
 		2: ('Modification time?', {1: ('Timestamp', double_)}),
 		3: ('Author ref', 'Ref'),
 		4: ('Answer ref', 'Ref')
-	}),
+		}),
 	4000: ('Calculation Engine', {
 		3: ('A ref', 'Ref'),
 		5: ('Language', string),
 		#9: a very big number
 		10: ('Locale[hour]', string),
-	}),
+		}),
 	4004: ('Sort', {
 		3: ('Criterion', 'Formula'),
-	}),
+		}),
 	5021: ('Chart info', {
 		1: ('Shape placement',),
 		10000: ('Chart model', {
@@ -1174,14 +1174,14 @@ COMMON_OBJECTS = {
 				1: ('Chart row name', string),
 				2: ('Chart column name', string),
 				3: ('Chart row data', {1: ('Number', {1: ('Number', double_)})}),
+				}),
 			}),
 		}),
-	}),
 	6000: ('Tabular info', {
 		1: ('Shape placement',),
 		2: ('Tabular model ref', 'Ref'),
 		3: ('A ref', 'Ref'),
-	}),
+		}),
 	6001: ('Tabular model', {
 		1: ('UUID', string),
 		3: ('Table style ref', 'Ref'),
@@ -1199,7 +1199,7 @@ COMMON_OBJECTS = {
 			18: ('Conditional format list ref', 'Ref'),
 			19: ('Comment list ref', 'Ref'),
 			20: ('A data list ref', 'Ref'),
-		}),
+			}),
 		6: ('Number of rows', int64),
 		7: ('Number of columns', int64),
 		8: ('Name', string),
@@ -1229,9 +1229,9 @@ COMMON_OBJECTS = {
 				3: ('Range', {
 					1: ('ID?', int64),
 					2: ('Formula',),
+					}),
 				}),
 			}),
-		}),
 		49: ('GridLines ref', 'Ref'),
 	}),
 	6002: ('Tile', {
@@ -1244,8 +1244,8 @@ COMMON_OBJECTS = {
 			2: ('Number of cells', int64),
 			3: ('Definitions', custom(handle_tile_row_defs)),
 			4: ('Definition offsets', custom(handle_tile_row_offsets, bytes_('iwa_tile_offsets'))),
-		})),
-	}),
+			})),
+		}),
 	6003: ('Table style', {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
@@ -1259,8 +1259,8 @@ COMMON_OBJECTS = {
 					1: ('A stroke', 'Stroke'),
 					2: ('A stroke', 'Stroke'),
 					3: ('A stroke', 'Stroke'),
+					}),
 				}),
-			}),
 			33: ('Gridlines in body rows', bool_),
 			34: ('Gridlines in body columns', bool_),
 			38: ('Table outline', bool_),
@@ -1285,8 +1285,8 @@ COMMON_OBJECTS = {
 			59: ('A table border', 'Stroke'),
 			60: ('Body row gridline?', 'Stroke'),
 			61: ('Body column gridline?', 'Stroke'),
-		})
-	}),
+			})
+		}),
 	6004: ('Cell style', {
 		1: ('Style info',),
 		10: ('Number of properties', int64),
@@ -1298,8 +1298,8 @@ COMMON_OBJECTS = {
 			11: ('Right border', 'Stroke'),
 			12: ('Bottom border', 'Stroke'),
 			13: ('Left border', 'Stroke'),
+			}),
 		}),
-	}),
 	6005: ('Data list', {
 		1: ('Type', enum({1: 'simple text', 2: 'number format', 3: 'formula', 4: 'cell style', 5: 'invalid formula', 6: 'custom format', 7: 'menu', 8: 'paragraph text', 9: 'conditional format', 10: 'comment',})),
 		2: ('Next ID', int64),
@@ -1313,16 +1313,16 @@ COMMON_OBJECTS = {
 			8: ('Custom Format Def',),
 			9: ('Text entry ref', 'Ref'),
 			10: ('Comment ref', 'Ref'),
+			}),
 		}),
-	}),
 	6006: ('Headers', {
 		2: ('Header', {
 			1: ('Row/Column', int64),
 			2: ('Size', float_),
 			3: ('Hidden', bool_),
 			4: ('Number of cells', int64),
+			}),
 		}),
-	}),
 	6008: ('Object 6008', {3: ('Object 6247 ref', 'Ref')}),
 	6010: ('Conditional format', {
 		1: ('Number of rules', int64),
@@ -1330,55 +1330,55 @@ COMMON_OBJECTS = {
 			1: ('Rule formula', {1: ('Formula',)}),
 			2: ('Cell style ref', 'Ref'),
 			3: ('Paragraph style ref', 'Ref'),
+			}),
 		}),
-	}),
 	6206: ('Menu choices', {
 		2: ('Choice', {
 			1: ('Type', enum({1: 'empty', 5: 'text'})),
 			5: ('Text value', {
 				1: ('Text', string),
+				}),
 			}),
 		}),
-	}),
 	6218: ('Text entry', {1: ('Text ref', 'Ref')}),
 	6220: ('Filter', {
 		3: ('Rule', {1: ('Filter formula', {1: ('Formula',)})}),
-	}),
+		}),
 	6247: ('Object 6247', {
-                # 1-12 appears 2 times
-                1: ('Para0 style ref', 'Ref'),
-                2: ('Para1 style ref', 'Ref'),
-                3: ('Para2 style ref', 'Ref'),
-                4: ('Para3 style ref', 'Ref'),
-                5: ('Graph1 style ref', 'Ref'),
-                6: ('Graph2 style ref', 'Ref'),
-                7: ('Cell1 style ref', 'Ref'),
-                8: ('Cell2 style ref', 'Ref'),
-                9: ('Table style ref', 'Ref'),
-                10: ('Para4 style ref', 'Ref'),
-                11: ('Graph3 style ref', 'Ref'),
-                # 12 a bool
-                13: ('Para5 style ref', 'Ref'),
-                14: ('Para6 style ref', 'Ref'),
-                15: ('Para7 style ref', 'Ref'),
-                16: ('Para8 style ref', 'Ref'),
-                17: ('Para9 style ref', 'Ref'),
-                18: ('Cell3 style ref', 'Ref'),
-                19: ('Cell4 style ref', 'Ref'),
-                20: ('Cell5 style ref', 'Ref'),
-                21: ('Cell6 style ref', 'Ref'),
-                22: ('Cell7 style ref', 'Ref'),
-                23: ('Cell8 style ref', 'Ref'),
-                24: ('Cell9 style ref', 'Ref'),
-                25: ('Cell10 style ref', 'Ref'),
-                26: ('Cell11 style ref', 'Ref'),
-                27: ('Cell12 style ref', 'Ref'),
-                28: ('Cell13 style ref', 'Ref'),
-                29: ('Cell14 style ref', 'Ref'),
-                30: ('Cell15 style ref', 'Ref'),
-                31: ('Cell16 style ref', 'Ref'),
-                32: ('Cell17 style ref', 'Ref'),
-        }),
+		# 1-12 appears 2 times
+		1: ('Para0 style ref', 'Ref'),
+		2: ('Para1 style ref', 'Ref'),
+		3: ('Para2 style ref', 'Ref'),
+		4: ('Para3 style ref', 'Ref'),
+		5: ('Graph1 style ref', 'Ref'),
+		6: ('Graph2 style ref', 'Ref'),
+		7: ('Cell1 style ref', 'Ref'),
+		8: ('Cell2 style ref', 'Ref'),
+		9: ('Table style ref', 'Ref'),
+		10: ('Para4 style ref', 'Ref'),
+		11: ('Graph3 style ref', 'Ref'),
+		# 12 a bool
+		13: ('Para5 style ref', 'Ref'),
+		14: ('Para6 style ref', 'Ref'),
+		15: ('Para7 style ref', 'Ref'),
+		16: ('Para8 style ref', 'Ref'),
+		17: ('Para9 style ref', 'Ref'),
+		18: ('Cell3 style ref', 'Ref'),
+		19: ('Cell4 style ref', 'Ref'),
+		20: ('Cell5 style ref', 'Ref'),
+		21: ('Cell6 style ref', 'Ref'),
+		22: ('Cell7 style ref', 'Ref'),
+		23: ('Cell8 style ref', 'Ref'),
+		24: ('Cell9 style ref', 'Ref'),
+		25: ('Cell10 style ref', 'Ref'),
+		26: ('Cell11 style ref', 'Ref'),
+		27: ('Cell12 style ref', 'Ref'),
+		28: ('Cell13 style ref', 'Ref'),
+		29: ('Cell14 style ref', 'Ref'),
+		30: ('Cell15 style ref', 'Ref'),
+		31: ('Cell16 style ref', 'Ref'),
+		32: ('Cell17 style ref', 'Ref'),
+		}),
 	6305: ('GridLines', {
 		1: (None,int64),
 		2: (None,int64),
@@ -1387,7 +1387,7 @@ COMMON_OBJECTS = {
 		5: ('Line[right]', 'Ref'),
 		6: ('Line[top]', 'Ref'),
 		7: ('Line[bottom]', 'Ref'),
-	}),
+		}),
 	6306: ('GridLine', {
 		1: ('pos1', int64),
 		2: ('Style', {
@@ -1395,218 +1395,218 @@ COMMON_OBJECTS = {
 			2: ('length', int64),
 			3: ('Stroke', ),
 			4: (None, int64),
-		}),
-	}),
-	11006: ('MetaData', {
-		1: ('ReplaceColor Corr id', int64),
-                2: (None, {
-                        2: ('ID', string),
-                        3: (None, int64),
-                }),
-		3: ('IWA file',),
-		4: ('Other file',),
-                10: ('ReplaceColor Corr ref', 'Ref'),
-	}),
-        11011: ('Document Metadata', {
-                1: (None, bool_),
-        }),
-        11014: ('ReplaceColor', {
-                1: ('Color', ),
-        }),
-        11015: ('ReplaceColor Corr', {
-                1: ('Corresp', {
-                        1: ('ID', int64),
-                        2: ('ReplaceColor Ref', 'Ref'),
-                }),
-        }),
-}
-
-KEYNOTE_OBJECTS = {
-	1: ('Document', {
-		2: ('Presentation ref', 'Ref'),
-		3: ('Document info', )
-	}),
-	2: ('Presentation', {
-		2: ('Theme ref?', 'Ref'),
-		3: ('Slide list', {
-			1: ('Slide list ref', 'Ref'),
-			2: ('A slide list ref', 'Ref'), # TODO: what does this mean?
-		}),
-		4: ('Size',),
-		5: ('Stylesheet ref', 'Ref'),
-		17: ('Object 21 ref', 'Ref'),
-	}),
-	4: ('Slide list', {
-		1: ('Slide list ref', 'Ref'),
-		2: ('Slide ref', 'Ref'),
-	}),
-	5: ('Slide', {
-		1: ('Style ref', 'Ref'),
-		2: ('Build ref', 'Ref'),
-		3: ('Build chunk', {1: ('Parent build ref', 'Ref'), 2: ('Order?', int64)}),
-		4: ('Transition', {
-			2: ('Transition attributes', {
-				6: ('Animation auto?', bool_),
-				8: ('Animation',),
-				10: ('Number of particles', int64),
-				11: ('Type', int64),
 			}),
 		}),
-		5: ('Title placeholder ref', 'Ref'),
-		6: ('Body placeholder ref', 'Ref'),
-		7: ('Shape ref', 'Ref'),
-                10: ('Name', string),
-		17: ('Master ref', 'Ref'),
-		20: ('Slide number placeholder ref', 'Ref'),
-		27: ('Notes ref', 'Ref'),
-                29: ('Style name ref', 'Ref'),
-                30: ('PlaceHolder ref', 'Ref'), # main ?
-                31: (None, 'Ref'),
-                35: ('List ref', 'Ref'),
-                36: ('Object 3047 ref', 'Ref'),
-                37: (None, string), # default title?
-                38: (None, string),
-		42: ('Object Bg ref', 'Ref'), # find image, place holder
-	}),
-	7: ('Placeholder', {
-		1: ('Drawable shape',),
-		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
-	}),
-	8: ('Build', {
-		1: ('Info ref', 'Ref'),
-		2: ('Mode?', string),
-		4: ('Style', {
-			6: ('Animation delay automatic after?', double_),
-			18: ('Animation',),
+	11006: ('MetaData', {
+		1: ('ReplaceColor Corr id', int64),
+		2: (None, {
+			2: ('ID', string),
+			3: (None, int64),
+			}),
+		3: ('IWA file',),
+		4: ('Other file',),
+		10: ('ReplaceColor Corr ref', 'Ref'),
 		}),
-	}),
-	9: ('Slide style', {
-		1: ('Style info',),
-		10: ('Number of properties', int64),
-		11: ('Properties', {
-			1: ('Background', 'Fill'),
+	11011: ('Document Metadata', {
+		1: (None, bool_),
 		}),
-	}),
-	10: ('Theme?', {
-		1: ('Theme info', {
-			1: ('Theme stylesheet ref', 'Ref'),
-			3: ('Name', string),
-			4: ('StyleSheet ref', 'Ref'),
-			5: (None, 'Ref'), # checkme
-                        10: ('Color', ),
-                        100: (None, {
-                                1: ('Gradient', 'Fill'),
-                                2: ('Image', 'Fill'),
-                                3: ('Shadow', ),
-                                4: ('Line Graphic Style ref', 'Ref'),
-                                5: ('Shape Graphic Style ref', 'Ref'),
-                                6: ('Textbox Graphic Style ref', 'Ref'),
-                                7: ('Image Graphic Style ref', 'Ref'),
-                                8: ('Movie Graphic Style ref', 'Ref'),
-                                9: ('Drawing Line Graphic Style ref', 'Ref'),
-                        }),
-                        110: (None, { 1: ('List Style Ref', 'Ref'), 6: ('Character Ref', 'Ref'), 7: ('Paragraph Ref', 'Ref'), }),
-                        120: (None, { 1: ('Object 5020 Ref', 'Ref'), }),
-                        200: (None, { 1: ('Object 6008 Ref', 'Ref'), }),
+	11014: ('ReplaceColor', {
+		1: ('Color', ),
 		}),
-		2: ('Slide list ref', 'Ref'),
-		3: ('Group UUID', string),
-		5: ('SlideList ref', 'Ref'),
-		6: ('SlideList1 ref', 'Ref'),
-	}),
-	15: ('Notes', {1: ('Text ref', 'Ref')}),
+	11015: ('ReplaceColor Corr', {
+		1: ('Corresp', {
+			1: ('ID', int64),
+			2: ('ReplaceColor Ref', 'Ref'),
+			}),
+		}),
+	}
+
+KEYNOTE_OBJECTS = {
+		1: ('Document', {
+			2: ('Presentation ref', 'Ref'),
+			3: ('Document info', )
+			}),
+		2: ('Presentation', {
+			2: ('Theme ref?', 'Ref'),
+			3: ('Slide list', {
+				1: ('Slide list ref', 'Ref'),
+				2: ('A slide list ref', 'Ref'), # TODO: what does this mean?
+				}),
+			4: ('Size',),
+			5: ('Stylesheet ref', 'Ref'),
+			17: ('Object 21 ref', 'Ref'),
+			}),
+		4: ('Slide list', {
+			1: ('Slide list ref', 'Ref'),
+			2: ('Slide ref', 'Ref'),
+			}),
+		5: ('Slide', {
+			1: ('Style ref', 'Ref'),
+			2: ('Build ref', 'Ref'),
+			3: ('Build chunk', {1: ('Parent build ref', 'Ref'), 2: ('Order?', int64)}),
+			4: ('Transition', {
+				2: ('Transition attributes', {
+					6: ('Animation auto?', bool_),
+					8: ('Animation',),
+					10: ('Number of particles', int64),
+					11: ('Type', int64),
+					}),
+				}),
+			5: ('Title placeholder ref', 'Ref'),
+			6: ('Body placeholder ref', 'Ref'),
+			7: ('Shape ref', 'Ref'),
+			10: ('Name', string),
+			17: ('Master ref', 'Ref'),
+			20: ('Slide number placeholder ref', 'Ref'),
+			27: ('Notes ref', 'Ref'),
+			29: ('Style name ref', 'Ref'),
+			30: ('PlaceHolder ref', 'Ref'), # main ?
+			31: (None, 'Ref'),
+			35: ('List ref', 'Ref'),
+			36: ('Object 3047 ref', 'Ref'),
+			37: (None, string), # default title?
+			38: (None, string),
+			42: ('Object Bg ref', 'Ref'), # find image, place holder
+			}),
+		7: ('Placeholder', {
+			1: ('Drawable shape',),
+			2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
+			}),
+		8: ('Build', {
+			1: ('Info ref', 'Ref'),
+			2: ('Mode?', string),
+			4: ('Style', {
+				6: ('Animation delay automatic after?', double_),
+				18: ('Animation',),
+				}),
+			}),
+		9: ('Slide style', {
+			1: ('Style info',),
+			10: ('Number of properties', int64),
+			11: ('Properties', {
+				1: ('Background', 'Fill'),
+				}),
+			}),
+		10: ('Theme?', {
+			1: ('Theme info', {
+				1: ('Theme stylesheet ref', 'Ref'),
+				3: ('Name', string),
+				4: ('StyleSheet ref', 'Ref'),
+				5: (None, 'Ref'), # checkme
+				10: ('Color', ),
+				100: (None, {
+					1: ('Gradient', 'Fill'),
+					2: ('Image', 'Fill'),
+					3: ('Shadow', ),
+					4: ('Line Graphic Style ref', 'Ref'),
+					5: ('Shape Graphic Style ref', 'Ref'),
+					6: ('Textbox Graphic Style ref', 'Ref'),
+					7: ('Image Graphic Style ref', 'Ref'),
+					8: ('Movie Graphic Style ref', 'Ref'),
+					9: ('Drawing Line Graphic Style ref', 'Ref'),
+					}),
+				110: (None, { 1: ('List Style Ref', 'Ref'), 6: ('Character Ref', 'Ref'), 7: ('Paragraph Ref', 'Ref'), }),
+				120: (None, { 1: ('Object 5020 Ref', 'Ref'), }),
+				200: (None, { 1: ('Object 6008 Ref', 'Ref'), }),
+				}),
+			2: ('Slide list ref', 'Ref'),
+			3: ('Group UUID', string),
+			5: ('SlideList ref', 'Ref'),
+			6: ('SlideList1 ref', 'Ref'),
+			}),
+		15: ('Notes', {1: ('Text ref', 'Ref')}),
 	19: ('Style name map', {
 		1: ('Style name association',),
 		2: ('Theme ref?', 'Ref'),
-	}),
+		}),
 	20: (None, {
 		1: ('Group UUID', string),
 		2: ('Style name map ref', 'Ref'),
 		3: ('Slide ref', 'Ref'),
-	}),
-}
+		}),
+	}
 
 NUMBERS_OBJECTS = {
-	1: ('Document', {
-		1: ('Sheet ref', 'Ref'),
-		4: ('Stylesheet', 'Ref'),
-		5: (None, 'Ref'), #zone 205
-		6: (None, 'Ref'), #zone 12009
-		8: ('Document info', ),
-		11: ('iso', string),
-		12: ('page', {
-			1: ('Page width', float_),
-			2: ('Page height', float_),
-		}),
-	}),
-	2: ('Sheet', { # in fact, a page which regroup at least one table and other shapes
-		1: ('name', string),
-		2: ('Shape ref', 'Ref'),
-		# 3,5,6,8 bool
-		7: (None, float_), # -1
-		10: (None, {
-			1: (None, float_),
-			2: (None, float_),
-			3: (None, float_),
-			4: (None, float_),
-		}),
-		# 11,12 bool
-		13: (None, float_),
-		14: (None, float_),
-		17: (None, 'Ref'), # to 3047
-		18: ('Header ref', 'Ref'),
-		19: ('Footer ref', 'Ref'),
-		# 20 bool
-	}),
-}
+		1: ('Document', {
+			1: ('Sheet ref', 'Ref'),
+			4: ('Stylesheet', 'Ref'),
+			5: (None, 'Ref'), #zone 205
+			6: (None, 'Ref'), #zone 12009
+			8: ('Document info', ),
+			11: ('iso', string),
+			12: ('page', {
+				1: ('Page width', float_),
+				2: ('Page height', float_),
+				}),
+			}),
+		2: ('Sheet', { # in fact, a page which regroup at least one table and other shapes
+			1: ('name', string),
+			2: ('Shape ref', 'Ref'),
+			# 3,5,6,8 bool
+			7: (None, float_), # -1
+			10: (None, {
+				1: (None, float_),
+				2: (None, float_),
+				3: (None, float_),
+				4: (None, float_),
+				}),
+			# 11,12 bool
+			13: (None, float_),
+			14: (None, float_),
+			17: (None, 'Ref'), # to 3047
+			18: ('Header ref', 'Ref'),
+			19: ('Footer ref', 'Ref'),
+			# 20 bool
+			}),
+		}
 
 PAGES_OBJECTS = {
-	10000: ('Document', {
-		2: ('Stylesheet', 'Ref'),
-		3: ('List drawables ref', 'Ref'),
-		4: ('Text body ref', 'Ref'),
-		7: ('Document settings ref', 'Ref'),
-		30: ('Page width', float_),
-		31: ('Page height', float_),
-		32: ('Left page margin', float_),
-		33: ('Right page margin', float_),
-		34: ('Top page margin', float_),
-		35: ('Bottom page margin', float_),
-		36: ('Header top margin', float_),
-		37: ('Footer bottom margin', float_),
-		38: ('Scale', float_),
-		42: ('Page orientation', enum({0: 'Portrait', 1: 'Landscape'})),
-		44: ('Paper size', string),
-	}),
-	10010: ('List drawables', {
-		1: ('List by page', {
-			1: ('page', int64),
-			4: ('Drawable', {1: ('ref', 'Ref')}),
-		}),
-	}),
-	10011: ('Section', {
-		17: ('Match previous section', bool_),
-		23: ('Left page h&f ref?', 'Ref'),
-		24: ('Right page h&f ref?', 'Ref'),
-		25: ('Both pages h&f ref', 'Ref'),
-		28: ('Hide h&f on first page', bool_),
-	}),
-	10012: ('Document settings', {
-		1: ('Type', enum({0: 'Page layout', 1: 'Word processing'})),
-		2: ('Include headers', bool_),
-		3: ('Include footers', bool_),
-		9: ('Hyphenation', bool_),
-		10: ('Ligatures', bool_),
-		30: ('Note type', enum({0: 'Footnotes', 1: 'Document endnotes', 2: 'Section endnotes'})),
-		31: ('Note format', enum({0: '1', 1: 'i', 2: '*'})),
-		32: ('Note numbering', enum({0: 'Document', 1: 'Page', 2: 'Section'})),
-		33: ('Space between notes', int64),
-	}),
-	10143: ('Header & footer', {
-		1: ('Header text ref', 'Ref'),
-		2: ('Footer text ref', 'Ref'),
-	}),
-}
+		10000: ('Document', {
+			2: ('Stylesheet', 'Ref'),
+			3: ('List drawables ref', 'Ref'),
+			4: ('Text body ref', 'Ref'),
+			7: ('Document settings ref', 'Ref'),
+			30: ('Page width', float_),
+			31: ('Page height', float_),
+			32: ('Left page margin', float_),
+			33: ('Right page margin', float_),
+			34: ('Top page margin', float_),
+			35: ('Bottom page margin', float_),
+			36: ('Header top margin', float_),
+			37: ('Footer bottom margin', float_),
+			38: ('Scale', float_),
+			42: ('Page orientation', enum({0: 'Portrait', 1: 'Landscape'})),
+			44: ('Paper size', string),
+			}),
+		10010: ('List drawables', {
+			1: ('List by page', {
+				1: ('page', int64),
+				4: ('Drawable', {1: ('ref', 'Ref')}),
+				}),
+			}),
+		10011: ('Section', {
+			17: ('Match previous section', bool_),
+			23: ('Left page h&f ref?', 'Ref'),
+			24: ('Right page h&f ref?', 'Ref'),
+			25: ('Both pages h&f ref', 'Ref'),
+			28: ('Hide h&f on first page', bool_),
+			}),
+		10012: ('Document settings', {
+			1: ('Type', enum({0: 'Page layout', 1: 'Word processing'})),
+			2: ('Include headers', bool_),
+			3: ('Include footers', bool_),
+			9: ('Hyphenation', bool_),
+			10: ('Ligatures', bool_),
+			30: ('Note type', enum({0: 'Footnotes', 1: 'Document endnotes', 2: 'Section endnotes'})),
+			31: ('Note format', enum({0: '1', 1: 'i', 2: '*'})),
+			32: ('Note numbering', enum({0: 'Document', 1: 'Page', 2: 'Section'})),
+			33: ('Space between notes', int64),
+			}),
+		10143: ('Header & footer', {
+			1: ('Header text ref', 'Ref'),
+			2: ('Footer text ref', 'Ref'),
+			}),
+		}
 
 # Parser for internal IWA files.
 #
@@ -1656,11 +1656,11 @@ class IWAParser(object):
 				obj_id = hdr.value[1][0].value
 			obj_type = None
 			if 2 in hdr.value:
-                                for data in hdr.value[2]:
-				        if 1 in data.value:
-					        obj_type = data.value[1][0].value
-				        if 3 in data.value:
-					        data_len += data.value[3][0].value
+				for data in hdr.value[2]:
+					if 1 in data.value:
+						obj_type = data.value[1][0].value
+						if 3 in data.value:
+							data_len += data.value[3][0].value
 			obj_name = None
 			if obj_type:
 				if obj_type in self.objects:
@@ -1690,8 +1690,8 @@ class IWAParser(object):
 			3: ('Data size', int64),
 			5: ('References', packed(int64)),
 			6: ('File ID', int64),
-		}
-	)})
+			}
+		)})
 
 	def _parse_header(self, off, length):
 		return self._HEADER_MSG(self.data, off, off, off + length)
@@ -1912,13 +1912,13 @@ def add_tile_row(hd, size, data):
 	add_iter(hd, 'Data type', key2txt(typ, type_map), off - 1, 1, '<B')
 	off +=2
 	flags_set = {
-		0x2: 'style', 0x4: 'format', 0x8: 'formula',
-		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
-		0x80: 'unknown',
-		0x200: 'paragraph text',
-		0xc00: 'conditional format',
-		0x1000: 'comment',
-	}
+			0x2: 'style', 0x4: 'format', 0x8: 'formula',
+			0x10: 'simple text', 0x20: 'number', 0x40: 'date',
+			0x80: 'unknown',
+			0x200: 'paragraph text',
+			0xc00: 'conditional format',
+			0x1000: 'comment',
+			}
 	(flags, off) = rdata(data, off, '<H')
 	add_iter(hd, 'Flags', bflag2txt(flags, flags_set), off - 2, 2, '<H')
 	off += 6
@@ -1961,37 +1961,37 @@ def add_tile_row(hd, size, data):
 		add_iter(hd, 'Paragraph text ID', text, off - 4, 4, '<I')
 
 iwa_ids = {
-	'iwa_32bit': add_32bit,
-	'iwa_64bit': add_64bit,
-	'iwa_bool': add_bool,
-	'iwa_compressed_block': add_iwa_compressed_block,
-	'iwa_double': add_double,
-	'iwa_enum': add_enum,
-	'iwa_field': add_field,
-	'iwa_fixed32': add_fixed32,
-	'iwa_fixed64': add_fixed64,
-	'iwa_flags': add_flags,
-	'iwa_float': add_float,
-	'iwa_int64': add_int64,
-	'iwa_object': add_iwa_object,
-	'iwa_packed_bool': add_packed_bool,
-	'iwa_packed_int64': add_packed_int64,
-	'iwa_packed_sint64': add_packed_sint64,
-	'iwa_packed_fixed32': add_packed_fixed32,
-	'iwa_packed_sfixed32': add_packed_sfixed32,
-	'iwa_packed_fixed64': add_packed_fixed64,
-	'iwa_packed_sfixed64': add_packed_sfixed64,
-	'iwa_packed_float': add_packed_float,
-	'iwa_packed_double': add_packed_double,
-	'iwa_sfixed32': add_sfixed32,
-	'iwa_sfixed64': add_sfixed64,
-	'iwa_sint64': add_sint64,
-	'iwa_string': add_string,
-	'iwa_varint': add_varint,
+		'iwa_32bit': add_32bit,
+		'iwa_64bit': add_64bit,
+		'iwa_bool': add_bool,
+		'iwa_compressed_block': add_iwa_compressed_block,
+		'iwa_double': add_double,
+		'iwa_enum': add_enum,
+		'iwa_field': add_field,
+		'iwa_fixed32': add_fixed32,
+		'iwa_fixed64': add_fixed64,
+		'iwa_flags': add_flags,
+		'iwa_float': add_float,
+		'iwa_int64': add_int64,
+		'iwa_object': add_iwa_object,
+		'iwa_packed_bool': add_packed_bool,
+		'iwa_packed_int64': add_packed_int64,
+		'iwa_packed_sint64': add_packed_sint64,
+		'iwa_packed_fixed32': add_packed_fixed32,
+		'iwa_packed_sfixed32': add_packed_sfixed32,
+		'iwa_packed_fixed64': add_packed_fixed64,
+		'iwa_packed_sfixed64': add_packed_sfixed64,
+		'iwa_packed_float': add_packed_float,
+		'iwa_packed_double': add_packed_double,
+		'iwa_sfixed32': add_sfixed32,
+		'iwa_sfixed64': add_sfixed64,
+		'iwa_sint64': add_sint64,
+		'iwa_string': add_string,
+		'iwa_varint': add_varint,
 
-	'iwa_tile_offsets': add_tile_offsets,
-	'iwa_tile_row': add_tile_row,
-}
+		'iwa_tile_offsets': add_tile_offsets,
+		'iwa_tile_row': add_tile_row,
+		}
 
 ### Entry point
 
@@ -2000,9 +2000,9 @@ def detect(package):
 		names = package.namelist()
 		if "Index/MasterSlide.iwa" in names:
 			return "Keynote"
-                for name in names:
-                        if re.match(r'^Index/MasterSlide.*\.iwa$', name):
-                                return "Keynote"
+		for name in names:
+			if re.match(r'^Index/MasterSlide.*\.iwa$', name):
+				return "Keynote"
 	except:
 		pass
 	# I see no way to differentiate Pages and Numbers document just from

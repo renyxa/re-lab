@@ -13,7 +13,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 # USA
 
-import sys,struct,zlib,gtk,cdr
+import sys,struct,zlib,cdr
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 from utils import *
 
 def bmp (hd,size,data,page):
@@ -27,15 +30,15 @@ def bmp (hd,size,data,page):
 	img += data[0x38:0x40] + '\x01\x00\x18\x00\x00\x00\x00\x00'
 	img += struct.pack("<I",size-0x36)+'\x13\x0b\x00\x00'*2+'\x00'*8
 	img += data[off:]
-	pixbufloader = gtk.gdk.PixbufLoader()
+	pixbufloader = Gtk.gdk.PixbufLoader()
 	pixbufloader.write(img)
 	pixbufloader.close()
 	pixbuf = pixbufloader.get_pixbuf()
 	imgw=pixbuf.get_width()
 	imgh=pixbuf.get_height()
-	hd.da = gtk.DrawingArea()
+	hd.da = Gtk.DrawingArea()
 	hd.hbox0.pack_start(hd.da)
-	hd.da.connect('expose_event', cdr.disp_expose,pixbuf)
+	hd.da.connect('draw', cdr.disp_expose,pixbuf)
 	ctx = hd.da.window.cairo_create()
 	ctx.set_source_pixbuf(pixbuf,0,0)
 	ctx.paint()

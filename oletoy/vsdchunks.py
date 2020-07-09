@@ -178,14 +178,14 @@ def Font (hd, size, value, off = 19):
 	charset = ord(value[off+2])
 	chtxt = key2txt(charset,ms_charsets,"%02x"%charset)
 	add_iter(hd, "Charset", chtxt,off+2,1,"<B")
-	fontname = unicode(value[off+6:])
+	fontname = str(value[off+6:])
 	add_iter(hd, "Font name", fontname,off+6,len(fontname),"txt")
 
 
 def Text (hd, size, value, off = 19):
 	# no support for LangID for v.6
 	if hd.version == 11:
-		txt = unicode(value[off+8:],'utf-16').encode('utf-8')
+		txt = str(value[off+8:],'utf-16').encode('utf-8')
 		fmt = "utxt"
 	else:
 		txt = value[0x1b:]

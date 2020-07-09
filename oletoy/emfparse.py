@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 from utils import *
@@ -40,7 +42,7 @@ def GC_BeginGroup (hd, value):
 	PointL(hd,value,0x1c,"E")
 	nlen = struct.unpack("<I",value[0x24:0x28])[0]
 	add_iter (hd,"DescLength",nlen,0x24,4,"<I")
-	txt = unicode(value[0x28:0x28+nlen*2],"utf-16")
+	txt = str(value[0x28:0x28+nlen*2],"utf-16")
 	add_iter (hd,"Description",txt,0x28,nlen*2,"txt")
 
 def GC_EndGroup (hd, value):
@@ -71,7 +73,7 @@ def Header (hd, size, value):
 	add_iter (hd,"offPxlFmt",struct.unpack("<I",value[92:96])[0],92,4,"<I")
 	add_iter (hd,"bOpenGL",struct.unpack("<I",value[96:100])[0],96,4,"<I")
 	PointL (hd, value, 100, " (micrometers)")
-	add_iter (hd,"Description",unicode(value[descoff:descoff+descsize*2],"utf-16"),descoff,descsize*2,"txt")
+	add_iter (hd,"Description",str(value[descoff:descoff+descsize*2],"utf-16"),descoff,descsize*2,"txt")
 
 #2
 def Polybezier (hd, size, value):
@@ -596,7 +598,7 @@ def SetICMProfileW (hd, size, value):
 	cbData = struct.unpack("<I",value[0x10:0x14])[0]
 	hd.model.set (iter, 0, "cbData", 1,cbName,2,0x10,3,4,4,"<I")
 	iter = hd.model.append(None, None)
-	hd.model.set (iter, 0, "Name", 1,unicode(value[0x14:0x14+cbName*2],"utf-16"),2,0x14,3,cbName*2,4,"utxt")
+	hd.model.set (iter, 0, "Name", 1,str(value[0x14:0x14+cbName*2],"utf-16"),2,0x14,3,cbName*2,4,"utxt")
 	iter = hd.model.append(None, None)
 	hd.model.set (iter, 0, "Data",2,0x14+cbName*2,3,cbData,4,"txt")
 
@@ -632,7 +634,7 @@ def ClrMatchToTargetW (hd, size, value):
 	iter = hd.model.append(None, None)
 	cbData = struct.unpack("<I",value[0x14:0x18])[0]
 	hd.model.set (iter, 0, "cbData", 1, "%d"%cbData,2,0x14,3,4,4,"<I")
-	txt = unicode(value[0x18:0x18+cbName*2],"utf-16")
+	txt = str(value[0x18:0x18+cbName*2],"utf-16")
 	iter = hd.model.append(None, None)
 	hd.model.set (iter, 0, "Name", 1, txt,2,0x18,3,cbName*2,4,"utxt")
 	iter = hd.model.append(None, None)

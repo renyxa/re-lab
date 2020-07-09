@@ -15,8 +15,9 @@
 #
 
 import sys,struct
-import gobject
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GObject
 import tree
 import hexdump
 import escher
@@ -181,26 +182,26 @@ def PtgArea (hd,data,off):
 	return 1 + length_area
 
 def PtgRef3d (hd, data, off):
-        add_iter(hd, "Ref3D", "", off, 1, "B")
-        off += 1
-        ixti = struct.unpack("<H", data[off:2+off])[0]
-        add_iter(hd, "\tIXTI", ixti, off, 2, "<H")
-        off += 2
-        col = struct.unpack("<H", data[off:2+off])[0]
-        add_iter(hd, "\tColumn", col, off, 2, "<H")
-        off += 2
-        row = struct.unpack("<H", data[off:2+off])[0]
-        add_iter(hd, "\tRow", row, off, 2, "<H")
-        return 7
+	add_iter(hd, "Ref3D", "", off, 1, "B")
+	off += 1
+	ixti = struct.unpack("<H", data[off:2+off])[0]
+	add_iter(hd, "\tIXTI", ixti, off, 2, "<H")
+	off += 2
+	col = struct.unpack("<H", data[off:2+off])[0]
+	add_iter(hd, "\tColumn", col, off, 2, "<H")
+	off += 2
+	row = struct.unpack("<H", data[off:2+off])[0]
+	add_iter(hd, "\tRow", row, off, 2, "<H")
+	return 7
 
 def PtgArea3d (hd, data, off):
-        add_iter(hd, "Area3D", "", off, 1, "B")
-        off += 1
-        ixti = struct.unpack("<H", data[off:2+off])[0]
-        add_iter(hd, "\tIXTI", ixti, off, 2, "<H")
-        off += 2
-        length_area = RgceArea(hd, data, off)
-        return 3 + length_area
+	add_iter(hd, "Area3D", "", off, 1, "B")
+	off += 1
+	ixti = struct.unpack("<H", data[off:2+off])[0]
+	add_iter(hd, "\tIXTI", ixti, off, 2, "<H")
+	off += 2
+	length_area = RgceArea(hd, data, off)
+	return 3 + length_area
 
 def PtgNotImpl (hd,data,off):
 	pass
@@ -235,21 +236,21 @@ ptg19 = {0x01:"PtgAttrSemi",0x02:"PtgAttrIf",0x04:"PtgAttrChoose",0x08:"PtgAttrG
 	0x10:"PtgAttrSum",0x20:"PtgAttrBaxcel",0x21:"PtgAttrBaxcel",0x40:"PtgAttrSpace",0x41:"PtgAttrSpaceSemi"}
 
 def parse_formula(hd, data, off):
-        ptg_val = struct.unpack("B", data[off:off+1])[0]
-        if ptg_val not in ptg:
-                print("Unknown PTG value in formula!")
-                print("Stop parsing formula")
-                return
-        else:
-            ptg_length = ptg[ptg_val][1](hd, data, off)
-            off += ptg_length
+	ptg_val = struct.unpack("B", data[off:off+1])[0]
+	if ptg_val not in ptg:
+	        print("Unknown PTG value in formula!")
+	        print("Stop parsing formula")
+	        return
+	else:
+	    ptg_length = ptg[ptg_val][1](hd, data, off)
+	    off += ptg_length
 
 def gentree():
-	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
-	view = gtk.TreeView(model)
-	renderer = gtk.CellRendererText()
-	column = gtk.TreeViewColumn('Group/Record', renderer, text=0)
-	column2 = gtk.TreeViewColumn('Length', renderer, text=2)
+	model = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT, GObject.TYPE_STRING, GObject.TYPE_PYOBJECT)
+	view = Gtk.TreeView(model)
+	renderer = Gtk.CellRendererText()
+	column = Gtk.TreeViewColumn('Group/Record', renderer, text=0)
+	column2 = Gtk.TreeViewColumn('Length', renderer, text=2)
 	view.append_column(column)
 	view.append_column(column2)
 	iter = model.append(None, None)
@@ -260,10 +261,10 @@ def gentree():
 	return model,view
 
 def read_fixed_number(hd, data, off):
-        fractional = struct.unpack("<H", data[0+off:2+off])[0]
-        integral = struct.unpack("<H", data[2+off:4+off])[0]
-        val = integral + (fractional / 65536.0)
-        return val
+	fractional = struct.unpack("<H", data[0+off:2+off])[0]
+	integral = struct.unpack("<H", data[2+off:4+off])[0]
+	val = integral + (fractional / 65536.0)
+	return val
 
 def XLUnicodeRichExtendedString (hd,data,offset):
 	cch = struct.unpack("<H",data[0+offset:2+offset])[0]
@@ -285,7 +286,7 @@ def XLUnicodeRichExtendedString (hd,data,offset):
 		add_iter (hd,"  cbExtRst",cbExtRst,offset+1,4,"<H")
 		offset += 4
 	if fHighByte:
-		text = unicode(data[offset+1:offset+1+cch*2],"utf16")
+		text = str(data[offset+1:offset+1+cch*2],"utf16")
 		add_iter (hd,"  text",text,offset+1,cch*2,"txt")
 		offset += cch*2 + 1
 	else:
@@ -351,7 +352,7 @@ def biff_lbl (hd,data):
 		if fhb == 0:
 			lname = data[15+off:15+chKey+off]
 		else:
-			lname = unicode(data[15+off:15+chKey+off],"utf16")
+			lname = str(data[15+off:15+chKey+off],"utf16")
 	add_iter (hd,"Name",lname,15+off,chKey,"txt")
 	# FIXME: parse the whole expression
 	pkey = ord(data[15+chKey+off])
@@ -382,7 +383,7 @@ def biff58_font (hd,data):
 	fname = data[0xf+off:0xf+fnlen+off]
 	if hd.version == 8:
 		if ord(data[0xf+off]) == 1:
-			fname = unicode(data[0x10+off:0x10+fnlen*2+off],"utf-16")
+			fname = str(data[0x10+off:0x10+fnlen*2+off],"utf-16")
 		else:
 			fname = data[0x10+off:0x10+fnlen*2+off]
 
@@ -418,10 +419,10 @@ def biff_condfmt (hd,data):
 	add_iter (hd,"fToughRecalc",fToughRecalc,off,1,"<B", tip="Specifies whether the record requires significant processing")
 	add_iter (hd,"nID",nID,off,2,"<h", "ID of the record")
 	off += 2
-        rwFirst = struct.unpack("<H",data[off:off+2])[0]
-        rwLast = struct.unpack("<H",data[off+2:off+4])[0]
-        colFirst = struct.unpack("<H",data[off+4:off+6])[0]
-        colLast = struct.unpack("<H",data[off+6:off+8])[0]
+	rwFirst = struct.unpack("<H",data[off:off+2])[0]
+	rwLast = struct.unpack("<H",data[off+2:off+4])[0]
+	colFirst = struct.unpack("<H",data[off+4:off+6])[0]
+	colLast = struct.unpack("<H",data[off+6:off+8])[0]
 	add_iter (hd,"rwFirst",rwFirst,off,2,"<H", tip="First Row")
 	add_iter (hd,"rwLast",rwLast,off+2,2,"<H", tip="Last Row")
 	add_iter (hd,"colFirst",colFirst,off+4,2,"<H", tip="First Column")
@@ -433,7 +434,7 @@ def biff_cf (hd,data):
 	off = 4
 	add_iter (hd,"ct",ord(data[off]),off,1,"B", tip="Whether two conditions are applied")
 	off += 1
-        add_iter (hd,"cp",ord(data[off]),off,1,"B", tip="The comparison function to use")
+	add_iter (hd,"cp",ord(data[off]),off,1,"B", tip="The comparison function to use")
 	off += 1
 	cce1 = struct.unpack("<H",data[off:off+2])[0]
 	add_iter (hd,"cce1",cce1,off,2,"<H", tip="The size of the condition1 record")
@@ -446,35 +447,35 @@ def biff_cf (hd,data):
 	#rgce2
 
 def biff_dxfn12 (hd,data,off):
-        cbDxf = struct.unpack("<I",data[off:off+4])[0]
-        add_iter (hd,"cbDxf",cbDxf,off,4,"<I")
-        off += 4
-        if cbDxf is 0:
-            off += 2
-        else:
-            flags1 = struct.unpack("<I",data[off:off+4])[0]
-            flags2 = struct.unpack("<H",data[off+4:off+6])[0]
-            ibitAtrNum = (flags1&0x2000000)!=0
-            ibitAtrFnt = (flags1&0x4000000)!=0
-            ibitAtrAlc = (flags1&0x8000000)!=0
-            ibitAtrBdr = (flags1&0x10000000)!=0
-            ibitAtrPat = (flags1&0x20000000)!=0
-            ibitAtrProt = (flags1&0x40000000)!=0
-            fIfmtUser = (flags2&0x1)!=0
-            fNewBorder = (flags2&0x2)!=0
-            fNewBorder = (flags2&0x4)!=0
-            fZeroInited = (flags2&0x8000)!=0
-            add_iter(hd,"ibitAtrNum",ibitAtrNum,off+3,1,"B")
-            add_iter(hd,"ibitAtrFnt",ibitAtrFnt,off+3,1,"B")
-            add_iter(hd,"ibitAtrAlc",ibitAtrAlc,off+3,1,"B")
-            add_iter(hd,"ibitAtrBdr",ibitAtrBdr,off+3,1,"B")
-            add_iter(hd,"ibitAtrPat",ibitAtrPat,off+3,1,"B")
-            add_iter(hd,"ibitAtrPat",ibitAtrPat,off+3,1,"B")
-            add_iter(hd,"fIfmtUser",fIfmtUser,off+4,1,"B")
-            add_iter(hd,"fNewBorder",fNewBorder,off+4,1,"B")
-            add_iter(hd,"fZeroInited",fZeroInited,off+5,1,"B")
-            off += cbDxf
-        return off
+	cbDxf = struct.unpack("<I",data[off:off+4])[0]
+	add_iter (hd,"cbDxf",cbDxf,off,4,"<I")
+	off += 4
+	if cbDxf is 0:
+	    off += 2
+	else:
+	    flags1 = struct.unpack("<I",data[off:off+4])[0]
+	    flags2 = struct.unpack("<H",data[off+4:off+6])[0]
+	    ibitAtrNum = (flags1&0x2000000)!=0
+	    ibitAtrFnt = (flags1&0x4000000)!=0
+	    ibitAtrAlc = (flags1&0x8000000)!=0
+	    ibitAtrBdr = (flags1&0x10000000)!=0
+	    ibitAtrPat = (flags1&0x20000000)!=0
+	    ibitAtrProt = (flags1&0x40000000)!=0
+	    fIfmtUser = (flags2&0x1)!=0
+	    fNewBorder = (flags2&0x2)!=0
+	    fNewBorder = (flags2&0x4)!=0
+	    fZeroInited = (flags2&0x8000)!=0
+	    add_iter(hd,"ibitAtrNum",ibitAtrNum,off+3,1,"B")
+	    add_iter(hd,"ibitAtrFnt",ibitAtrFnt,off+3,1,"B")
+	    add_iter(hd,"ibitAtrAlc",ibitAtrAlc,off+3,1,"B")
+	    add_iter(hd,"ibitAtrBdr",ibitAtrBdr,off+3,1,"B")
+	    add_iter(hd,"ibitAtrPat",ibitAtrPat,off+3,1,"B")
+	    add_iter(hd,"ibitAtrPat",ibitAtrPat,off+3,1,"B")
+	    add_iter(hd,"fIfmtUser",fIfmtUser,off+4,1,"B")
+	    add_iter(hd,"fNewBorder",fNewBorder,off+4,1,"B")
+	    add_iter(hd,"fZeroInited",fZeroInited,off+5,1,"B")
+	    off += cbDxf
+	return off
 
 #0x87b
 def biff_cfex (hd,data):
@@ -486,34 +487,34 @@ def biff_cfex (hd,data):
 	nID = struct.unpack("<H",data[off:off+2])[0]
 	add_iter (hd,"nID",nID,off,2,"<h")
 	off += 2
-        if fIsCF12 is 0:
-            icf = struct.unpack("<H",data[off:off+2])[0]
-            add_iter(hd,"icf",icf,off,2,"<H")
-            off += 2
-            cp = ord(data[off])
-            add_iter(hd,"cp",cp,off,1,"B")
-            off += 1
-            icfTemplate = ord(data[off])
-            add_iter(hd,"icfTemplate",icfTemplate,off,1,"B")
-            off += 1
-            iPriority = struct.unpack("<H",data[off:off+2])[0]
-            add_iter(hd,"iPriority",iPriority,off,2,"<H")
-            off += 2
-            flags = ord(data[off])
-            fActive = flags&1
-            fStopIfTrue = flags&2
-            add_iter(hd,"fActive",fActive,off,1,"B")
-            add_iter(hd,"fStopIfTrue",fStopIfTrue,off,1,"B")
-            off += 1
-            fHasDxf = ord(data[off])
-            add_iter(hd,"fHasDxf",fHasDxf,off,1,"B")
-            off += 1
-            if fHasDxf is 1:
-                off = biff_dxfn12(hd,data,off)
-            cbTemplateParm = ord(data[off])
-            add_iter(hd,"cbTemplateParm",cbTemplateParm,off,1,"B")
-            off += 1
-            off += 16
+	if fIsCF12 is 0:
+	    icf = struct.unpack("<H",data[off:off+2])[0]
+	    add_iter(hd,"icf",icf,off,2,"<H")
+	    off += 2
+	    cp = ord(data[off])
+	    add_iter(hd,"cp",cp,off,1,"B")
+	    off += 1
+	    icfTemplate = ord(data[off])
+	    add_iter(hd,"icfTemplate",icfTemplate,off,1,"B")
+	    off += 1
+	    iPriority = struct.unpack("<H",data[off:off+2])[0]
+	    add_iter(hd,"iPriority",iPriority,off,2,"<H")
+	    off += 2
+	    flags = ord(data[off])
+	    fActive = flags&1
+	    fStopIfTrue = flags&2
+	    add_iter(hd,"fActive",fActive,off,1,"B")
+	    add_iter(hd,"fStopIfTrue",fStopIfTrue,off,1,"B")
+	    off += 1
+	    fHasDxf = ord(data[off])
+	    add_iter(hd,"fHasDxf",fHasDxf,off,1,"B")
+	    off += 1
+	    if fHasDxf is 1:
+	        off = biff_dxfn12(hd,data,off)
+	    cbTemplateParm = ord(data[off])
+	    add_iter(hd,"cbTemplateParm",cbTemplateParm,off,1,"B")
+	    off += 1
+	    off += 16
 
 #0x1062
 def biff_axcext(hd, data):
@@ -548,12 +549,12 @@ def biff_legendexception(hd, data):
 
 # 0x1064
 def biff_plotgrowth(hd, data):
-        off = 4
-        dxPlotGrowth = read_fixed_number(hd, data, off)
-        add_iter (hd,"Horizontal growth in points for plot area", dxPlotGrowth,off,4,"d")
-        off += 4
-        dyPlotGrowth = read_fixed_number(hd, data, off)
-        add_iter (hd,"Verical growth in points for plot area", dyPlotGrowth,off,4,"d")
+	off = 4
+	dxPlotGrowth = read_fixed_number(hd, data, off)
+	add_iter (hd,"Horizontal growth in points for plot area", dxPlotGrowth,off,4,"d")
+	off += 4
+	dyPlotGrowth = read_fixed_number(hd, data, off)
+	add_iter (hd,"Verical growth in points for plot area", dyPlotGrowth,off,4,"d")
 
 #0x1046
 def biff_axesused(hd, data):
@@ -562,125 +563,125 @@ def biff_axesused(hd, data):
 	add_iter (hd,"Number of axes groups",num_axes,off,2,"<H")
 
 def biff_hvcenter(hd, data):
-        off = 4
-        num_axes = struct.unpack("<H",data[0+off:2+off])[0]
-        add_iter (hd, "Centered between Top/left or Right/bottom margin", num_axes, off, 2, "B")
+	off = 4
+	num_axes = struct.unpack("<H",data[0+off:2+off])[0]
+	add_iter (hd, "Centered between Top/left or Right/bottom margin", num_axes, off, 2, "B")
 
 def biff_setup(hd, data):
 	off = 4
-        iPaperSize = struct.unpack("<H", data[0+off:2+off])[0]
-        add_iter (hd, "Paper size", iPaperSize, off, 2, "<H")
-        iScale = struct.unpack("<H", data[2+off:4+off])[0]
-        add_iter (hd, "Scale factor", iScale, off+2, 2, "<H")
-        iPageStart = struct.unpack("<H", data[4+off:6+off])[0]
-        add_iter (hd, "Starting page number", iPageStart, off+4, 2, "<H")
-        iFitWidth = struct.unpack("<H", data[6+off:8+off])[0]
-        add_iter (hd, "Number of pages to fit sheet width", iFitWidth, off+6, 2, "<H")
-        iFitHeight = struct.unpack("<H", data[8+off:10+off])[0]
-        add_iter (hd, "Number of pages to fit sheet height", iFitHeight, off+8, 2, "<H")
-        flags = struct.unpack("<H", data[10+off:12+off])[0]
-        fLeftToRight = (flags&0x1) != 0
-        fPortrait = (flags&0x2) != 0
-        fNoPIs = (flags&0x4) != 0
-        fNoColor = (flags&0x8) != 0
-        fDraft = (flags&0x16) != 0
-        fNotes = (flags&0x32) != 0
-        fNoOrient = (flags&0x64) != 0
-        fUsePage = (flags&0x128) != 0
-        fEndNotes = (flags & 0x512) != 0
-        iErrors = (flags&0x3072)
-        add_iter (hd, "Order for multi-page printing", fLeftToRight, off+10, 2, "B")
-        add_iter (hd, "Portrait or Landscape mode", fPortrait, off+10, 2, "B")
-        add_iter (hd, "Ignore print data", fNoPIs, off+10, 2, "B")
-        add_iter (hd, "Print in black and white", fNoColor, off+10, 2, "B")
-        add_iter (hd, "Print in draft quality", fDraft, off+10, 2, "B")
-        add_iter (hd, "Print comments", fNotes, off+10, 2, "B")
-        add_iter (hd, "Paper orientation set", fNoOrient, off+10, 2, "B")
-        add_iter (hd, "Use custom page number", fUsePage, off+10, 2, "B")
-        add_iter (hd, "Print comments at the end", fEndNotes, off+10, 2, "B")
-        iRes = struct.unpack("<H", data[12+off:14+off])[0]
-        add_iter (hd, "Print resolution in DPI", iRes, off+12, 2, "<H")
-        iVRes = struct.unpack("<H", data[14+off:16+off])[0]
-        add_iter (hd, "Vertical print resolution in DPI", iVRes, off+14, 2, "<H")
-        numHdr = struct.unpack("<d", data[16+off:24+off])[0]
-        add_iter (hd, "Header margin in inches", numHdr, off+16, 4, "<d")
-        numFtr = struct.unpack("<d", data[24+off:32+off])[0]
-        add_iter (hd, "Footer margin in inches", numFtr, off+24, 4, "<d")
-        iCopies = struct.unpack("<H", data[32+off:34+off])[0]
-        add_iter (hd, "Number of copies", iCopies, off+32, 2, "<H")
+	iPaperSize = struct.unpack("<H", data[0+off:2+off])[0]
+	add_iter (hd, "Paper size", iPaperSize, off, 2, "<H")
+	iScale = struct.unpack("<H", data[2+off:4+off])[0]
+	add_iter (hd, "Scale factor", iScale, off+2, 2, "<H")
+	iPageStart = struct.unpack("<H", data[4+off:6+off])[0]
+	add_iter (hd, "Starting page number", iPageStart, off+4, 2, "<H")
+	iFitWidth = struct.unpack("<H", data[6+off:8+off])[0]
+	add_iter (hd, "Number of pages to fit sheet width", iFitWidth, off+6, 2, "<H")
+	iFitHeight = struct.unpack("<H", data[8+off:10+off])[0]
+	add_iter (hd, "Number of pages to fit sheet height", iFitHeight, off+8, 2, "<H")
+	flags = struct.unpack("<H", data[10+off:12+off])[0]
+	fLeftToRight = (flags&0x1) != 0
+	fPortrait = (flags&0x2) != 0
+	fNoPIs = (flags&0x4) != 0
+	fNoColor = (flags&0x8) != 0
+	fDraft = (flags&0x16) != 0
+	fNotes = (flags&0x32) != 0
+	fNoOrient = (flags&0x64) != 0
+	fUsePage = (flags&0x128) != 0
+	fEndNotes = (flags & 0x512) != 0
+	iErrors = (flags&0x3072)
+	add_iter (hd, "Order for multi-page printing", fLeftToRight, off+10, 2, "B")
+	add_iter (hd, "Portrait or Landscape mode", fPortrait, off+10, 2, "B")
+	add_iter (hd, "Ignore print data", fNoPIs, off+10, 2, "B")
+	add_iter (hd, "Print in black and white", fNoColor, off+10, 2, "B")
+	add_iter (hd, "Print in draft quality", fDraft, off+10, 2, "B")
+	add_iter (hd, "Print comments", fNotes, off+10, 2, "B")
+	add_iter (hd, "Paper orientation set", fNoOrient, off+10, 2, "B")
+	add_iter (hd, "Use custom page number", fUsePage, off+10, 2, "B")
+	add_iter (hd, "Print comments at the end", fEndNotes, off+10, 2, "B")
+	iRes = struct.unpack("<H", data[12+off:14+off])[0]
+	add_iter (hd, "Print resolution in DPI", iRes, off+12, 2, "<H")
+	iVRes = struct.unpack("<H", data[14+off:16+off])[0]
+	add_iter (hd, "Vertical print resolution in DPI", iVRes, off+14, 2, "<H")
+	numHdr = struct.unpack("<d", data[16+off:24+off])[0]
+	add_iter (hd, "Header margin in inches", numHdr, off+16, 4, "<d")
+	numFtr = struct.unpack("<d", data[24+off:32+off])[0]
+	add_iter (hd, "Footer margin in inches", numFtr, off+24, 4, "<d")
+	iCopies = struct.unpack("<H", data[32+off:34+off])[0]
+	add_iter (hd, "Number of copies", iCopies, off+32, 2, "<H")
 
 def biff_printsize(hd, data):
-        off = 4
-        printSize = struct.unpack("<H", data[0+off:2+off])[0]
-        add_iter (hd, "Chart print size", printSize, off, 2, "<H")
+	off = 4
+	printSize = struct.unpack("<H", data[0+off:2+off])[0]
+	add_iter (hd, "Chart print size", printSize, off, 2, "<H")
 
 #0x12
 def biff_protect(hd, data):
-        off = 4
-        fLock = struct.unpack("<H", data[0+off:2+off])[0] != 0
-        add_iter (hd, "Protected", fLock, off, 2, "B")
+	off = 4
+	fLock = struct.unpack("<H", data[0+off:2+off])[0] != 0
+	add_iter (hd, "Protected", fLock, off, 2, "B")
 
 #0x1002
 def biff_chart(hd, data):
-        off = 4
-        x = read_fixed_number(hd, data, off)
-        y = read_fixed_number(hd, data, off+4)
-        dx = read_fixed_number(hd, data, off+8)
-        dy = read_fixed_number(hd, data, off+12)
-        add_iter (hd, "Horizontal position", x, off, 4, "d")
-        add_iter (hd, "Vertical position", y, off+4, 4, "d")
-        add_iter (hd, "Width in points", dx, off+8, 4, "d")
-        add_iter (hd, "Height in points", dy, off+12, 4, "d")
+	off = 4
+	x = read_fixed_number(hd, data, off)
+	y = read_fixed_number(hd, data, off+4)
+	dx = read_fixed_number(hd, data, off+8)
+	dy = read_fixed_number(hd, data, off+12)
+	add_iter (hd, "Horizontal position", x, off, 4, "d")
+	add_iter (hd, "Vertical position", y, off+4, 4, "d")
+	add_iter (hd, "Width in points", dx, off+8, 4, "d")
+	add_iter (hd, "Height in points", dy, off+12, 4, "d")
 
 #0x1032
 def biff_frame(hd, data):
-        off = 4
-        frt = struct.unpack("<H", data[0+off:2+off])[0]
-        add_iter (hd, "Frame type", frt, off, 2, "<H")
+	off = 4
+	frt = struct.unpack("<H", data[0+off:2+off])[0]
+	add_iter (hd, "Frame type", frt, off, 2, "<H")
 
 #0x1003
 def biff_series(hd, data):
-        off = 4
-        sdtX = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Type of data in categories", sdtX, off, 2, "<H")
-        off += 2
-        sdtY = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Type of data in values (must be 1)", sdtY, off, 2, "<H")
-        off += 2
-        cValx = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Count of categories", cValx, off, 2, "<H")
-        off += 2
-        cValy = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Count of values", cValy, off, 2, "<H")
-        off += 2
-        sdtBSize = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Type of data in bubble size (must be 1)", sdtBSize, off, 2, "<H")
-        off += 2
-        cValBSize = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Count of values in bubble size", cValBSize, off, 2, "<H")
+	off = 4
+	sdtX = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Type of data in categories", sdtX, off, 2, "<H")
+	off += 2
+	sdtY = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Type of data in values (must be 1)", sdtY, off, 2, "<H")
+	off += 2
+	cValx = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Count of categories", cValx, off, 2, "<H")
+	off += 2
+	cValy = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Count of values", cValy, off, 2, "<H")
+	off += 2
+	sdtBSize = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Type of data in bubble size (must be 1)", sdtBSize, off, 2, "<H")
+	off += 2
+	cValBSize = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Count of values in bubble size", cValBSize, off, 2, "<H")
 
 #0x1051
 def biff_brai(hd, data):
-        off = 4
-        id_ = struct.unpack("B", data[off:1+off])[0]
-        add_iter (hd, "Chart object being referenced", id_, off, 1, "B")
-        off += 1
-        rt = struct.unpack("B", data[off:1+off])[0]
-        add_iter (hd, "Type of data being referenced", rt, off, 1, "B")
-        off += 1
-        flag1 = struct.unpack("B", data[off:1+off])[0]
-        A = (flag1 & 0x1) != 0
-        add_iter (hd, "Use custom number format", A, off, 1, "B")
-        off += 2
-        iFmt = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Custom number format ID", iFmt, off, 2, "<H")
-        off += 2
-        cce = struct.unpack("<H", data[off:2+off])[0]
-        add_iter (hd, "Chart formula stream length", cce, off, 2, "<H")
-        off += 2
-        if cce > 0:
-            parse_formula(hd, data, off)
-            off += cce
+	off = 4
+	id_ = struct.unpack("B", data[off:1+off])[0]
+	add_iter (hd, "Chart object being referenced", id_, off, 1, "B")
+	off += 1
+	rt = struct.unpack("B", data[off:1+off])[0]
+	add_iter (hd, "Type of data being referenced", rt, off, 1, "B")
+	off += 1
+	flag1 = struct.unpack("B", data[off:1+off])[0]
+	A = (flag1 & 0x1) != 0
+	add_iter (hd, "Use custom number format", A, off, 1, "B")
+	off += 2
+	iFmt = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Custom number format ID", iFmt, off, 2, "<H")
+	off += 2
+	cce = struct.unpack("<H", data[off:2+off])[0]
+	add_iter (hd, "Chart formula stream length", cce, off, 2, "<H")
+	off += 2
+	if cce > 0:
+	    parse_formula(hd, data, off)
+	    off += cce
 
 #0x7d
 def biff_colinfo (hd,data):
@@ -939,10 +940,10 @@ def biff_rk (hd,data):
 	add_iter (hd,"num (%d)"%numv,num,6+off,4,"<I")
 
 biff5_ids = {0x12: biff_protect, 0x18:biff_lbl, 0x31:biff58_font, 0x33: biff_printsize, 0x55:biff_defcolw,0x7d:biff_colinfo,
-        0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa0: biff_scl, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
+	0x83:biff_hvcenter, 0x84:biff_hvcenter, 0xa0: biff_scl, 0xa1: biff_setup, 0xe0:biff_xf, 0xe5:biff_mergecells,0xfc:biff_sst,0xfd:biff_labelsst,
 	0x1ae:biff_supbook,0x1b1:biff_cf,0x200:biff_dimensions,0x201:biff_blank,0x203:biff_number,0x208:biff_row,0x225:biff_defrowh,
-        0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1003: biff_series, 0x1032: biff_frame, 0x1043: biff_legendexception,
-        0x1046: biff_axesused, 0x1051: biff_brai, 0x1062: biff_axcext, 0x1064: biff_plotgrowth, 0x1065: biff_siiindex}
+	0x27e:biff_rk, 0x1b0:biff_condfmt, 0x87b:biff_cfex, 0x1002: biff_chart, 0x1003: biff_series, 0x1032: biff_frame, 0x1043: biff_legendexception,
+	0x1046: biff_axesused, 0x1051: biff_brai, 0x1062: biff_axcext, 0x1064: biff_plotgrowth, 0x1065: biff_siiindex}
 
 def parse (page, data, parent):
 	offset = 0

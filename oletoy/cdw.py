@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 import tree
 import hexdump
 from utils import *
@@ -43,7 +45,7 @@ def parse_lastrec (page, data,parent):
 				off += tlen+16+shift
 			elif tflag == 2:
 				tlen = struct.unpack("<I",data[off+0xe+shift:off+0x12+shift])[0]
-				tdata = unicode(data[off+0x12+shift:off+0x12+tlen*2+shift],"utf-16")
+				tdata = str(data[off+0x12+shift:off+0x12+tlen*2+shift],"utf-16")
 				off += tlen*2+18+shift
 			else:
 				tdata = "%04x"%(struct.unpack("<H",data[off+0xe+shift:off+0x10+shift])[0])

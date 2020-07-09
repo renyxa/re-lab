@@ -14,33 +14,36 @@
 # USA
 #
 
-import sys,struct,gtk,emfplus
+import sys,struct,emfplus
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk,GObject
 from utils import *
 
 emrplus_ids = {
-  0x4001:"E+Header", 0x4002:"E+EOF", 0x4003:"E+Comment", 0x4004:"E+GetDC",
-  0x4005:"E+MultiFormatStart", 0x4006:"E+MultiFormatSection",
-  0x4007:"E+MultiFormatEnd", 0x4008:"E+Object", 0x4009:"E+Clear",
-  0x400A:"E+FillRects", 0x400B:"E+DrawRects", 0x400C:"E+FillPolygon",
-  0x400D:"E+DrawLines", 0x400E:"E+FillEllipse", 0x400F:"E+DrawEllipse",
-  0x4010:"E+FillPie", 0x4011:"E+DrawPie", 0x4012:"E+DrawArc",
-  0x4013:"E+FillRgn", 0x4014:"E+FillPath", 0x4015:"E+DrawPath",
-  0x4016:"E+FillClosedCurve", 0x4017:"E+DrawClosedCurve", 0x4018:"E+DrawCurve",
-  0x4019:"E+DrawBeziers", 0x401A:"E+DrawImage", 0x401B:"E+DrawImagePoints",
-  0x401C:"E+DrawString", 0x401D:"E+SetRenderingOrigin", 0x401E:"E+SetAntiAliasMode",
-  0x401F:"E+SetTextRenderingHint", 0x4020:"E+SetTextContrast", 0x4021:"E+SetInterpolationMode",
-  0x4022:"E+SetPixelOffsetMode", 0x4023:"E+SetCompositingMode",
-  0x4024:"E+SetCompositingQuality", 0x4025:"E+Save", 0x4026:"E+Restore",
-  0x4027:"E+BeginContainer", 0x4028:"E+BeginContainerNoParams",
-  0x4029:"E+EndContainer", 0x402A:"E+SetWorldTransform",
-  0x402B:"E+ResetWorldTransform", 0x402C:"E+MultiplyWorldTransform",
-  0x402D:"E+TranslateWorldTransform", 0x402E:"E+ScaleWorldTransform",
-  0x402F:"E+RotateWorldTransform", 0x4030:"E+SetPageTransform",
-  0x4031:"E+ResetClip", 0x4032:"E+SetClipRect", 0x4033:"E+SetClipPath",
-  0x4034:"E+SetClipRgn", 0x4035:"E+OffsetClip", 0x4036:"E+DrawDriverString",
-  0x4037:"E+StrokeFillPath", 0x4038:"E+SerializableObject", 0x4039:"E+SetTSGraphics",
-  0x403A:"E+SetTSClip"}
-  
+	0x4001:"E+Header", 0x4002:"E+EOF", 0x4003:"E+Comment", 0x4004:"E+GetDC",
+	0x4005:"E+MultiFormatStart", 0x4006:"E+MultiFormatSection",
+	0x4007:"E+MultiFormatEnd", 0x4008:"E+Object", 0x4009:"E+Clear",
+	0x400A:"E+FillRects", 0x400B:"E+DrawRects", 0x400C:"E+FillPolygon",
+	0x400D:"E+DrawLines", 0x400E:"E+FillEllipse", 0x400F:"E+DrawEllipse",
+	0x4010:"E+FillPie", 0x4011:"E+DrawPie", 0x4012:"E+DrawArc",
+	0x4013:"E+FillRgn", 0x4014:"E+FillPath", 0x4015:"E+DrawPath",
+	0x4016:"E+FillClosedCurve", 0x4017:"E+DrawClosedCurve", 0x4018:"E+DrawCurve",
+	0x4019:"E+DrawBeziers", 0x401A:"E+DrawImage", 0x401B:"E+DrawImagePoints",
+	0x401C:"E+DrawString", 0x401D:"E+SetRenderingOrigin", 0x401E:"E+SetAntiAliasMode",
+	0x401F:"E+SetTextRenderingHint", 0x4020:"E+SetTextContrast", 0x4021:"E+SetInterpolationMode",
+	0x4022:"E+SetPixelOffsetMode", 0x4023:"E+SetCompositingMode",
+	0x4024:"E+SetCompositingQuality", 0x4025:"E+Save", 0x4026:"E+Restore",
+	0x4027:"E+BeginContainer", 0x4028:"E+BeginContainerNoParams",
+	0x4029:"E+EndContainer", 0x402A:"E+SetWorldTransform",
+	0x402B:"E+ResetWorldTransform", 0x402C:"E+MultiplyWorldTransform",
+	0x402D:"E+TranslateWorldTransform", 0x402E:"E+ScaleWorldTransform",
+	0x402F:"E+RotateWorldTransform", 0x4030:"E+SetPageTransform",
+	0x4031:"E+ResetClip", 0x4032:"E+SetClipRect", 0x4033:"E+SetClipPath",
+	0x4034:"E+SetClipRgn", 0x4035:"E+OffsetClip", 0x4036:"E+DrawDriverString",
+	0x4037:"E+StrokeFillPath", 0x4038:"E+SerializableObject", 0x4039:"E+SetTSGraphics",
+	0x403A:"E+SetTSClip"}
+	
 emr_ids = {0:'Unknown', 1:'Header',2:'Polybezier',3:'Polygon',4:'Polyline',5:'PolybezierTo',\
 	6:'PolylineTo',7:'PolyPolyline',8:'PolyPolygon',9:'SetWindowExtEx',10:'SetWindowOrgEx',\
 	11:'SetViewportExtEx',12:'SetViewportOrgEx',13:'SetBrushOrgEx',14:'EOF',15:'SetPixelV',\
@@ -89,11 +92,11 @@ wmr_ids = {0:'EOF',1:'Aldus_Header',2:'CLP_Header16',3:'CLP_Header32',4:'Header'
 
 def emf_gentree ():
 	#							Record/Group Name		Rec. Type		Min. Length		Template
-	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
-	view = gtk.TreeView(model)
-	renderer = gtk.CellRendererText()
-	column = gtk.TreeViewColumn('Group/Record', renderer, text=0)
-	column2 = gtk.TreeViewColumn('Length', renderer, text=2)
+	model = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT, GObject.TYPE_STRING, GObject.TYPE_PYOBJECT)
+	view = Gtk.TreeView(model)
+	renderer = Gtk.CellRendererText()
+	column = Gtk.TreeViewColumn('Group/Record', renderer, text=0)
+	column2 = Gtk.TreeViewColumn('Length', renderer, text=2)
 	view.append_column(column)
 	view.append_column(column2)
 
@@ -249,11 +252,11 @@ def emf_gentree ():
 
 def wmf_gentree ():
 	#					Record/Group Name		Rec. Type		Min. Length		Template
-	model = gtk.TreeStore(gobject.TYPE_STRING, gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)
-	view = gtk.TreeView(model)
-	renderer = gtk.CellRendererText()
-	column = gtk.TreeViewColumn('Group/Record', renderer, text=0)
-	column2 = gtk.TreeViewColumn('Length', renderer, text=2)
+	model = Gtk.TreeStore(GObject.TYPE_STRING, GObject.TYPE_INT, GObject.TYPE_STRING, GObject.TYPE_PYOBJECT)
+	view = Gtk.TreeView(model)
+	renderer = Gtk.CellRendererText()
+	column = Gtk.TreeViewColumn('Group/Record', renderer, text=0)
+	column2 = Gtk.TreeViewColumn('Length', renderer, text=2)
 	view.append_column(column)
 	view.append_column(column2)
 
@@ -318,23 +321,23 @@ def parse_gdiplus (buf, offset, page, piter):
 def mf_open (buf,page,parent):
 	offset = 0
 	if page.type == 'EMF':
-	  while offset < len(buf) - 8:
-		newT = struct.unpack('<I', buf[offset:offset+4])[0]
-		newL = struct.unpack('<I', buf[offset+4:offset+8])[0]
-		newV = buf[offset:offset+newL]
-		rname = emr_ids[newT]
-		if newT:
-			iter1 = add_pgiter (page, rname, "emf", newT, newV,parent)
-		if newT == 0x46: # GDIComment
-			eptype = buf[offset+0xc:offset+0x10]
-			if eptype == '\x45\x4d\x46\x2b':  # EMF+
-				eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
-				i = 0
-				while i < eplen - 4:
-					i += parse_gdiplus (buf, offset+i, page, iter1)
-		offset += newL
-		if newL == 0:
-			offset+=8
+		while offset < len(buf) - 8:
+			newT = struct.unpack('<I', buf[offset:offset+4])[0]
+			newL = struct.unpack('<I', buf[offset+4:offset+8])[0]
+			newV = buf[offset:offset+newL]
+			rname = emr_ids[newT]
+			if newT:
+			    iter1 = add_pgiter (page, rname, "emf", newT, newV,parent)
+			if newT == 0x46: # GDIComment
+			    eptype = buf[offset+0xc:offset+0x10]
+			    if eptype == '\x45\x4d\x46\x2b':  # EMF+
+				    eplen = struct.unpack("<I",buf[offset+0x8:offset+0xc])[0]
+				    i = 0
+				    while i < eplen - 4:
+					    i += parse_gdiplus (buf, offset+i, page, iter1)
+			offset += newL
+			if newL == 0:
+			    offset+=8
 
 	elif page.type == 'APWMF' or page.type == 'WMF':
 		if page.type == 'APWMF':

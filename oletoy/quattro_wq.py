@@ -16,7 +16,10 @@
 
 # import of QuattroPro wq1 and wq2 files
 import binascii
-import sys,struct,gtk
+import sys,struct
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 from utils import *
 
 class QWQDoc():
@@ -695,7 +698,7 @@ class QWQDoc():
 		sSz=struct.unpack('<B', data[off:off+1])[0]
 		add_iter (hd,"sSz",sSz,off,1,'<B')
 		off+=1
-		add_iter(hd,"val",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+		add_iter(hd,"val",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 		off+=sSz
 	def hdFormulaCellRes(self,hd,data):
 		self.hdStringCell(hd,data,False)
@@ -862,7 +865,7 @@ class QWQDoc():
 				off+=2
 			elif wh==6:
 				sSz=struct.unpack('<B', data[off:off+1])[0]
-				add_iter(hd,"txt",unicode(data[off+1:off+1+sSz],"cp437"),off-1,2+sSz,'txt')
+				add_iter(hd,"txt",str(data[off+1:off+1+sSz],"cp437"),off-1,2+sSz,'txt')
 				off+=1+sSz
 			elif wh in self.functions_map:
 				add_iter (hd,"func",self.functions_map[wh],off-1,1,'txt')
@@ -877,7 +880,7 @@ class QWQDoc():
 			if wh==3: # sometimes, there can be some text after the end=, some comment?
 				if off<len(data):
 					extra=len(data)-off
-					add_iter (hd,"comment",unicode(data[off:off+extra],"cp437"), off, extra, "txt")
+					add_iter (hd,"comment",str(data[off:off+extra],"cp437"), off, extra, "txt")
 					off=len(data)
 				break
 
@@ -952,7 +955,7 @@ class QWQDoc():
 		self.hdRange(hd,data,20)
 
 	def hdString(self,hd,data):
-		add_iter(hd,"val",unicode(data.rstrip('\0'),"cp437"),0,len(data),'txt')
+		add_iter(hd,"val",str(data.rstrip('\0'),"cp437"),0,len(data),'txt')
 	def hdCString(self,hd,data):
 		off=0
 		sSz=struct.unpack('<B', data[off:off+1])[0]
@@ -961,7 +964,7 @@ class QWQDoc():
 		if sSz==255:
 			add_iter(hd,"val","_",off,len(data)-1,'txt')
 		else:
-			add_iter(hd,"val",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+			add_iter(hd,"val",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 
 	def hdStyleUser(self,hd,data):
 		off=0
@@ -971,7 +974,7 @@ class QWQDoc():
 			off+=1
 			if sSz>15:
 				sSz=15
-			add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+			add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 			off=16
 		val=struct.unpack('<H', data[off:off+2])[0]
 		add_iter (hd,"id",val,off,2,'<H')
@@ -1009,7 +1012,7 @@ class QWQDoc():
 			off+=1
 			if sSz>15:
 				sSz=15
-			add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+			add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 			off+=16
 			val=struct.unpack('<H', data[off:off+2])[0]
 			add_iter (hd,"f1",val,off,2,'<H') # 1
@@ -1074,7 +1077,7 @@ class QWQDoc():
 		off+=1
 		if sSz>9:
 			sSz=9
-		add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+		add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 		off=10
 		val=struct.unpack('<H', data[off:off+2])[0]
 		add_iter (hd,"id",val,off,2,'<H')
@@ -1204,7 +1207,7 @@ class QWQDoc():
 		off+=1
 		if sSz>15:
 			sSz=15
-		add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+		add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 		off=16
 		hdGraphSetup(self,hd,data,off)
 	def hdGraphDef0(self,hd,data):
@@ -1386,7 +1389,7 @@ class QWQDoc():
 		sSz=struct.unpack('<B', data[off:off+1])[0]
 		add_iter (hd,"sSz",sSz,off,1,'<B')
 		off+=1
-		add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+		add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 		off += sSz
 		if self.version==1: # unsure, can be also len(data)=16
 			for i in range(2):
@@ -1400,7 +1403,7 @@ class QWQDoc():
 		off+=1
 		if self.version==1 and sSz>15:
 			sSz=15
-		add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,sSz,'txt')
+		add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,sSz,'txt')
 		if self.version==1:
 			off=16
 			for i in range(2):
@@ -1484,7 +1487,7 @@ class QWQDoc():
 		else:
 			if sSz>15:
 				sSz=15
-			add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,15,'txt')
+			add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,15,'txt')
 		off=16
 		val=struct.unpack('<h', data[off:off+2])[0] # 100
 		add_iter (hd,"f0",val,off,2,'<h')
@@ -1542,7 +1545,7 @@ class QWQDoc():
 		else:
 			if sSz>15:
 				sSz=15
-			add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,15,'txt')
+			add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,15,'txt')
 		off=16
 		val=struct.unpack('<h', data[off:off+2])[0] # 100
 		add_iter (hd,"f0",val,off,2,'<h')
@@ -1558,7 +1561,7 @@ class QWQDoc():
 		else:
 			if sSz>15:
 				sSz=15
-			add_iter(hd,"name",unicode(data[off:off+sSz],"cp437"),off,15,'txt')
+			add_iter(hd,"name",str(data[off:off+sSz],"cp437"),off,15,'txt')
 		off=16
 		for i in range(2): # 100, 0
 			val=struct.unpack('<h', data[off:off+2])[0]

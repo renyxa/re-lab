@@ -43,7 +43,7 @@ def _add_string(view, data, offset, name):
 	view.add_iter('%s length' % name, length, off - 4, 4, '<I')
 	if length > 1:
 		(text, off) = rdata(data, off, '%ds' % (length - 1))
-		view.add_iter(name, unicode(text, 'cp1250'), off - length + 1, length, '%ds' % length)
+		view.add_iter(name, str(text, 'cp1250'), off - length + 1, length, '%ds' % length)
 	else:
 		view.add_iter(name, '', off, 1, '1s')
 	return off + 1

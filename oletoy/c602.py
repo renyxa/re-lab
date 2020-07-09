@@ -168,7 +168,7 @@ def add_text(hd, size, data, off, name='Text'):
 	(length, off) = rdata(data, off, '<B')
 	add_iter(hd, '%s length' % name, length, off - 1, 1, '<B')
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, name, unicode(text, 'cp852'), off - length, length, '%ds' % length)
+	add_iter(hd, name, str(text, 'cp852'), off - length, length, '%ds' % length)
 	return off
 
 def add_range(hd, size, data, off):

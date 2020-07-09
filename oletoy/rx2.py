@@ -14,7 +14,10 @@
 # USA
 #
 
-import sys,struct,gtk
+import sys,struct
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 
 def parse (model,buf,offset = 0,parent=None):
 		newT = buf[offset:offset+4]

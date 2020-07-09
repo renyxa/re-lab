@@ -15,7 +15,9 @@
 #
 
 import sys,struct
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 from utils import *
 
 def header (hd,size,data):

@@ -17,7 +17,10 @@
 
 # Corel palettes
 
-import sys,struct,gtk
+import sys,struct
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 from utils import *
 
 def open(buf,page,parent):

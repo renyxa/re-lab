@@ -18,7 +18,7 @@ import sys,struct,base64
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, cairo
+from gi.repository import Gtk, cairo, Gdk
 
 try:
 	import graphviz
@@ -197,7 +197,7 @@ def bup2 (string, offlen):
 
 
 def graph_on_button_press(da,event,data,hd):
-	if event.type  == Gtk.gdk.BUTTON_PRESS:
+	if event.type  == Gdk.EventType.BUTTON_PRESS:
 		if event.button == 1:
 			hd.dispscale *= 1.4
 			graph_expose(da,event,data,hd)
@@ -229,16 +229,16 @@ def graph_expose (da,event,data,hd):
 def graph(hd,data):
 	ch = hd.hdscrolled.get_child2()
 	if ch:
-		ch.connect('expose_event', graph_expose,data,hd)
+		ch.connect('draw', graph_expose,data,hd)
 	else:
 		da = Gtk.DrawingArea()
 		scrolled = Gtk.ScrolledWindow()
-		scrolled.set_policy(Gtk.POLICY_AUTOMATIC,Gtk.POLICY_AUTOMATIC)
+		scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 		scrolled.add_with_viewport(da)
 		hd.da = scrolled
 		hd.hdscrolled.add2(hd.da)
-		da.set_events(Gtk.gdk.BUTTON_PRESS_MASK | Gtk.gdk.BUTTON_RELEASE_MASK | Gtk.gdk.POINTER_MOTION_MASK)
-		da.connect('expose_event', graph_expose,data,hd)
+		da.set_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK)
+		da.connect('draw', graph_expose,data,hd)
 		da.connect("button_press_event",graph_on_button_press,data,hd)
 
 	hd.da.show_all()

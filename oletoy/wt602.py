@@ -607,7 +607,7 @@ class wt602_parser(object):
 				off += 12
 				(slen, off) = rdata(self.data, off, '<H')
 				(string, off) = rdata(self.data, off, '%ds' % slen)
-				string = unicode(string, 'cp1250')
+				string = str(string, 'cp1250')
 				self.strings[start - begin - 0x10] = string
 				off = start + length
 
@@ -728,7 +728,7 @@ def add_string(hd, size, data, off, name, fmt):
 	(length, off) = rdata(data, off, fmt)
 	add_iter(hd, '%s length' % name, length, off - fmtlen, fmtlen, fmt)
 	(text, off) = rdata(data, off, '%ds' % length)
-	add_iter(hd, name, unicode(text, 'cp1250'), off - length, length, '%ds' % length)
+	add_iter(hd, name, str(text, 'cp1250'), off - length, length, '%ds' % length)
 	return off
 
 def add_long_string(hd, size, data, off, name):
