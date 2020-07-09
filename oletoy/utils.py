@@ -28,12 +28,12 @@ except:
 	usegraphviz = False
 
 try:
-    import icu
-    icu.Locale(1033) # test if pyicu supports creation of locale from LCID
-    useicu = True
+	import icu
+	icu.Locale(1033) # test if pyicu supports creation of locale from LCID
+	useicu = True
 except:
-    print('Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)')
-    useicu = False
+	print('Usable ICU not found. Display of MS locale IDs will be limited. (Used for CDR, PUB and WT602.)')
+	useicu = False
 
 ms_charsets = {0:"Latin", 1:"System default", 2:"Symbol", 77:"Apple Roman",
 	128:"Japanese Shift-JIS",129:"Korean (Hangul)",130:"Korean (Johab)",
@@ -48,7 +48,7 @@ def add_iter (hd,name,value,offset,length,vtype,offset2=0,length2=0,parent=None,
 Parameters
 ----------
 tip: str
-    An optional additional explanation of the entry
+	An optional additional explanation of the entry
 	"""
 	iter = hd.model.append(parent, None)
 	hd.model.set (iter, 0, name, 1, value,2,offset,3,length,4,vtype,5,offset2,6,length2,8,tip)
@@ -245,7 +245,11 @@ def graph(hd,data):
 
 
 def disp_expose (da,event,hd,scale=1):
-	x,y,width,height = da.allocation
+	alloc = da.get_allocation()
+	x = alloc.x
+	y = alloc.y
+	width = alloc.width
+	height = alloc.height
 	ctx = da.window.cairo_create()
 	if event and event.area:
 		ctx.rectangle(event.area[0],event.area[1],event.area[2],event.area[3])

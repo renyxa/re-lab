@@ -142,7 +142,11 @@ class HexView():
 		ctx.set_font_size(self.fontsize)
 		ctx.set_line_width(1)
 		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
-		x,y,width,height = self.hv.allocation
+		alloc = self.hv.get_allocation()
+		x = alloc.x
+		y = alloc.y
+		width = alloc.width
+		height = alloc.height
 		self.tdx = int(dx)
 		self.tht = int(ht+6)
 		self.hbox1.set_size_request(self.tdx*9,0)
@@ -698,9 +702,13 @@ class HexView():
 	def expose(self,widget,event):
 		if len(self.data) < 1:
 			return
-		x,y,width,height = self.hv.allocation
+		alloc = self.hv.get_allocation()
+		x = alloc.x
+		y = alloc.y
+		width = alloc.width
+		height = alloc.height
 
-		mctx = self.hv.window.cairo_create()
+		mctx = self.hv.get_window().cairo_create()
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
 		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)

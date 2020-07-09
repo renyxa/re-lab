@@ -501,7 +501,11 @@ class DiffWindow(Gtk.Window):
 
 
 	def draw_diffmm (self, widget, event,scrollbar):
-		x,y,width,height = widget.allocation
+		alloc = widget.get_allocation()
+		x = alloc.x
+		y = alloc.y
+		width = alloc.width
+		height = alloc.height
 		mctx = widget.window.cairo_create()
 		cs = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
 		ctx = cairo.Context (cs)
@@ -543,7 +547,11 @@ class DiffWindow(Gtk.Window):
 		# need to move diffsize & diffarr from AppMainWin to DiffWindow
 		mctx = widget.window.cairo_create()
 		if self.draft == 1:
-			x,y,width,height = widget.allocation
+			alloc = widget.get_allocation()
+			x = alloc.x
+			y = alloc.y
+			width = alloc.width
+			height = alloc.height
 			if self.csheight != None:
 				width = self.cswidth
 				height = self.csheight
@@ -1112,7 +1120,12 @@ class CliWindow(Gtk.Window):
 		self.OSD_txt = selection_data.get_text()
 		if self.OSD is None:
 			self.OSD = OSD_Entry(self,None,"snippet")
-		xv,yv,w,h = self.scroll.allocation
+
+		alloc = self.scroll.get_allocation()
+		xv = alloc.x
+		yv = alloc.y
+		w = alloc.width
+		h = alloc.height
 		xw,yw = self.scroll.get_parent_window().get_position()
 		self.OSD.hide()
 		self.OSD.show_all()
