@@ -79,9 +79,9 @@ class Page:
 			f = open(self.fname,"rb")
 			buf = f.read()
 
-		if buf[0:7] == "\0\0IIXPR" or buf[0:7] == "\0\0MMXPR":
-			self.type = qxp.open(self, buf, parent)
-			return 0
+#		if buf[0:7] == "\0\0IIXPR" or buf[0:7] == "\0\0MMXPR":
+#			self.type = qxp.open(self, buf, parent)
+#			return 0
 
 		if buf[:8] == "\x89PNG\x0d\x0a\x1a\x0a":
 			self.type = pngot.open(self, buf, parent)
