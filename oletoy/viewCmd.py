@@ -17,9 +17,10 @@
 import sys,struct,os
 import zlib
 
+import cairo
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk,cairo,GObject, Gdk
+from gi.repository import Gtk,GObject, Gdk
 
 import difflib
 import ole,escher,rx2,cdr,icc,mf,pict,chdraw,yep,cvx,pm6,vba,pkzip

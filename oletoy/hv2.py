@@ -17,7 +17,8 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk,cairo,Gdk
+from gi.repository import Gtk,Gdk
+import cairo
 import struct
 import os
 

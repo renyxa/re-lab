@@ -19,8 +19,8 @@ import sys,struct,ctypes,os
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, cairo, Pango, GObject
-
+from gi.repository import Gtk, Gdk, Pango, GObject
+import cairo
 
 import tree
 import uniview
@@ -233,7 +233,7 @@ class ApplicationMainWindow(Gtk.Window):
 		self.snipsdir = os.path.join(os.path.expanduser("~"), ".oletoy")
 
 		try:
-			execfile("oletoy.cfg")
+			exec(open("oletoy.cfg").read())
 			print('Config loaded...')
 		except:
 			pass
