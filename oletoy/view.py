@@ -16,15 +16,20 @@
 
 
 import sys,struct,ctypes,os
-import gobject
-import gtk, pango, cairo
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, cairo, Pango, GObject
+
+
 import tree
 import uniview
 import hexdump
 import App, viewCmd
 import escher,quill
 import vsd,vsd2,vsdchunks,vsdchunks5,vsdstream4
-import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6, qxp
+import xls, vba, ole, doc, mdb, pub, ppt, rtf, pm6
+#import qxp
 import emfparse,svm,mf,wmfparse,emfplus
 import rx2,fh
 import fh12
@@ -92,21 +97,21 @@ ui_info = \
 def register_stock_icons():
 	''' This function registers our custom toolbar icons, so they  can be themed. '''
 	# Add our custom icon factory to the list of defaults
-	factory = gtk.IconFactory()
+	factory = Gtk.IconFactory()
 	factory.add_default()
 
 
-class OldTabLabel(gtk.HBox):
-	__gsignals__ = {"close-clicked": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),}
+class OldTabLabel(Gtk.HBox):
+	__gsignals__ = {"close-clicked": (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE, ()),}
 
 	def __init__(self, label_text):
-		gtk.HBox.__init__(self)
-		label = gtk.Label(label_text)
-		image = gtk.Image()
-		image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-		btn = gtk.Button()
+		Gtk.HBox.__init__(self)
+		label = Gtk.Label(label_text)
+		image = Gtk.Image()
+		image.set_from_stock(Gtk.STOCK_CLOSE, Gtk.IconSize.MENU)
+		btn = Gtk.Button()
 		btn.set_image(image)
-		btn.set_relief(gtk.RELIEF_NONE)
+		btn.set_relief(Gtk.ReliefStyle.NONE)
 		btn.set_focus_on_click(False)
 		btn.connect("clicked",self.tab_button_clicked)
 		self.pack_start(label,1,1,0)
@@ -117,68 +122,68 @@ class OldTabLabel(gtk.HBox):
 		self.emit("close-clicked")
 
 
-class ApplicationMainWindow(gtk.Window):
+class ApplicationMainWindow(Gtk.Window):
 	def __init__(self, parent = None):
 		register_stock_icons()
 		# Create the toplevel window
-		gtk.Window.__init__(self)
+		Gtk.Window.__init__(self)
 		try:
 			self.set_screen(parent.get_screen())
 		except AttributeError:
-			self.connect('destroy', lambda *w: gtk.main_quit())
+			self.connect('destroy', lambda *w: Gtk.main_quit())
 
 		self.set_title("OLE toy")
 		self.set_default_size(1100, 550)
 
-		merge = gtk.UIManager()
-		self.set_data("ui-manager", merge)
+		merge = Gtk.UIManager()
+		#self.set_data("ui-manager", merge)
 		merge.insert_action_group(self.__create_action_group(), 0)
 		self.add_accel_group(merge.get_accel_group())
 
 		try:
 			mergeid = merge.add_ui_from_string(ui_info)
-		except gobject.GError as msg:
+		except GObject.GError as msg:
 			print("building menus failed: %s" % msg)
 		bar = merge.get_widget("/MenuBar")
 		bar.show()
 
-		accgrp = gtk.AccelGroup()
-		accgrp.connect_group(101, gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE, self.on_key_press) #E
+		accgrp = Gtk.AccelGroup()
+		accgrp.connect(101, Gdk.ModifierType.CONTROL_MASK, Gtk.AccelFlags.VISIBLE, self.on_key_press) #E
 		self.add_accel_group(accgrp)
 
-		table = gtk.Table(1, 3, False)
+		table = Gtk.Table(1, 3, False)
 		self.add(table)
 
 		table.attach(bar,
 			# X direction #		  # Y direction
 			0, 1,					  0, 1,
-			gtk.EXPAND | gtk.FILL,	 0,
+			Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,	 0,
 			0,						 0);
 		
-		self.notebook = gtk.Notebook()
+		self.notebook = Gtk.Notebook()
 		self.notebook.connect("page-reordered", self.on_page_reordered)
-		self.notebook.set_tab_pos(gtk.POS_BOTTOM)
+		self.notebook.set_tab_pos(Gtk.PositionType.BOTTOM)
 		self.notebook.set_scrollable(True)
 		table.attach(self.notebook,
 			# X direction #		  # Y direction
 			0, 1,					  1, 2,
-			gtk.EXPAND | gtk.FILL,	 gtk.EXPAND | gtk.FILL,
+			Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,	 Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
 			0,						 0);
 
 		# Create statusbar
-		self.statusbar = gtk.HBox()
-		self.entry = gtk.Entry()
+		self.statusbar = Gtk.HBox()
+		self.entry = Gtk.Entry()
 		self.statusbar.pack_start(self.entry, False, False, 2)
 		self.entry.connect ("activate", self.on_entry_activate)
 		self.entry.connect ("key-press-event", self.on_entry_keypressed)
-		self.label = gtk.Label()
+		self.label = Gtk.Label()
 		self.label.set_use_markup(True)
 		self.statusbar.pack_start(self.label, True, True, 2)
 		
 		table.attach(self.statusbar,
 			# X direction		   Y direction
 			0, 1,				   2, 3,
-			gtk.EXPAND | gtk.FILL,  0,
+			Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,  0,
 			0,					  0)
 		self.show_all()
 		self.das = {}
@@ -246,51 +251,51 @@ class ApplicationMainWindow(gtk.Window):
 			( "EditMenu", None, "_Edit" ),			   # name, stock id, label
 			( "ViewMenu", None, "_View" ),			   # name, stock id, label
 			( "HelpMenu", None, "_Help" ),			   # name, stock id, label
-			( "Insert", gtk.STOCK_ADD,					# name, stock id
+			( "Insert", Gtk.STOCK_ADD,					# name, stock id
 				"_Insert Record", "<control>I",					# label, accelerator
 				"Insert MF Record after the current one",							 # tooltip
 				self.activate_add),
-			( "More", gtk.STOCK_ADD,					# name, stock id
+			( "More", Gtk.STOCK_ADD,					# name, stock id
 				"_More bytes", "<control>M",					  # label, accelerator
 				"Add more bytes at the end of the current record",							 # tooltip
 				self.activate_more),
-			( "Less", gtk.STOCK_ADD,					# name, stock id
+			( "Less", Gtk.STOCK_ADD,					# name, stock id
 				"_Less bytes", "<control>L",					  # label, accelerator
 				"Remove some bytes at the end of the current record",							 # tooltip
 				self.activate_less),
-			( "Config", gtk.STOCK_SAVE,						# name, stock id
+			( "Config", Gtk.STOCK_SAVE,						# name, stock id
 				"Con_fig", "<control>F",					  # label, accelerator
 				"Configure OLE Toy",							 # tooltip
 				self.activate_config),
-			( "Dump", gtk.STOCK_SAVE,						# name, stock id
+			( "Dump", Gtk.STOCK_SAVE,						# name, stock id
 				"D_ump","<control>U",					  # label, accelerator
 				"Dump record to file",							 # tooltip
 				self.activate_dump),
-			( "New", gtk.STOCK_NEW,					# name, stock id
+			( "New", Gtk.STOCK_NEW,					# name, stock id
 				"_New", "<control>N",					  # label, accelerator
 				"Create file",							 # tooltip
 				self.activate_new),
-			( "Open", gtk.STOCK_OPEN,					# name, stock id
+			( "Open", Gtk.STOCK_OPEN,					# name, stock id
 				"_Open","<control>O",					  # label, accelerator
 				"Open a file",							 # tooltip
 				self.activate_open),
-			( "Reload", gtk.STOCK_OPEN,					# name, stock id
+			( "Reload", Gtk.STOCK_OPEN,					# name, stock id
 				"_Reload", "<control>R",					  # label, accelerator
 				"Reload a file",							 # tooltip
 				self.activate_reload),
-			( "Dict", gtk.STOCK_INDEX,					# name, stock id
+			( "Dict", Gtk.STOCK_INDEX,					# name, stock id
 				"_Dictionary","<control>D",					  # label, accelerator
 				"Show type dependant dictionary",							 # tooltip
 				self.activate_dict),
-			( "Graph", gtk.STOCK_INDEX,					# name, stock id
+			( "Graph", Gtk.STOCK_INDEX,					# name, stock id
 				"_Graph", "<control>G",					  # label, accelerator
 				"Show graph",							 # tooltip
 				self.activate_graph),
-			( "Sync Panels", gtk.STOCK_INDEX,					# name, stock id
+			( "Sync Panels", Gtk.STOCK_INDEX,					# name, stock id
 				"S_ync", "<control>Y",					  # label, accelerator
 				"Sync Panels",							 # tooltip
 				self.activate_syncpanels),
-			( "Diff", gtk.STOCK_INDEX,					# name, stock id
+			( "Diff", Gtk.STOCK_INDEX,					# name, stock id
 				"Diff", "<control>X",					  # label, accelerator
 				"Diff for two records",							 # tooltip
 				self.activate_diff),
@@ -299,15 +304,15 @@ class ApplicationMainWindow(gtk.Window):
 				"Op_tions", "<control>T",		      # label, accelerator
 				"Configuration options",			     # tooltip
 				self.activate_options),
-			( "Save", gtk.STOCK_SAVE,		    # name, stock id
+			( "Save", Gtk.STOCK_SAVE,		    # name, stock id
 				"_Save", "<control>S",		      # label, accelerator
 				"Save the file",			     # tooltip
 				self.activate_save),
-			( "Close", gtk.STOCK_CLOSE,		    # name, stock id
+			( "Close", Gtk.STOCK_CLOSE,		    # name, stock id
 				"Close", "<control>Z",		      # label, accelerator
 				"Close the file",			     # tooltip
 				self.activate_close),
-			( "Quit", gtk.STOCK_QUIT,					# name, stock id
+			( "Quit", Gtk.STOCK_QUIT,					# name, stock id
 				"_Quit", "<control>Q",					 # label, accelerator
 				"Quit",									# tooltip
 				self.activate_quit ),
@@ -316,14 +321,14 @@ class ApplicationMainWindow(gtk.Window):
 				"About", "",					# label, accelerator
 				"About OleToy",								   # tooltip
 				self.activate_about ),
-			( "Manual", gtk.STOCK_HELP,							 # name, stock id
+			( "Manual", Gtk.STOCK_HELP,							 # name, stock id
 				"Manual", "<control>H",					# label, accelerator
 				"Manual for OleToy",								   # tooltip
 				self.activate_manual ),
 		);
 
 		# Create the menubar and toolbar
-		action_group = gtk.ActionGroup("AppWindowActions")
+		action_group = Gtk.ActionGroup("AppWindowActions")
 		action_group.add_actions(entries)
 		return action_group
 
@@ -346,7 +351,7 @@ class ApplicationMainWindow(gtk.Window):
 	^E - open CLI window\n\n\
 <b>Entry line:</b>\n\
 	Up/Down - scroll 'command history'\n\
-	gtk tree path - scroll/expand tree\n\
+	Gtk tree path - scroll/expand tree\n\
 	<tt>#addr</tt> - scroll hexdump to addr\n\
 	<tt>#addr+shift, #addr-shift</tt> - calculate new addr and scroll hexdump\n\
 	<tt>$b64{@addr}</tt> - try to decode record as base64 encoded string starting from addr (or 0)\n\
@@ -439,12 +444,12 @@ class ApplicationMainWindow(gtk.Window):
 
 
 	def activate_manual(self, action):
-		w = gtk.Window()
-		s = gtk.ScrolledWindow()
-		s.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+		w = Gtk.Window()
+		s = Gtk.ScrolledWindow()
+		s.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 		s.set_size_request(860,500)
-		da = gtk.DrawingArea()
-		da.connect('expose_event', self.draw_manual)
+		da = Gtk.DrawingArea()
+		da.connect('draw', self.draw_manual)
 		w.set_title("OLE Toy Manual")
 		s.add_with_viewport(da)
 		w.add(s)
@@ -453,7 +458,7 @@ class ApplicationMainWindow(gtk.Window):
 	def on_enc_entry_activate (self,entry):
 		enc = entry.get_text()
 		try:
-			unicode("test",enc)
+			str("test",enc)
 			self.options_enc = enc
 			if self.statbuffer != "":
 				self.calc_status(self.statbuffer,len(self.statbuffer))
@@ -527,14 +532,14 @@ class ApplicationMainWindow(gtk.Window):
 			self.bup_win.show_all()
 			self.bup_win.present()
 		else:
-			vbox = gtk.VBox()
-			self.off_entry = gtk.Entry()
+			vbox = Gtk.VBox()
+			self.off_entry = Gtk.Entry()
 			self.off_entry.connect("activate",self.on_off_entry_activate)
-			self.len_entry = gtk.Entry()
+			self.len_entry = Gtk.Entry()
 			self.len_entry.connect("activate",self.on_off_entry_activate)
 			vbox.pack_start(self.off_entry)
 			vbox.pack_start(self.len_entry)
-			bupwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			bupwin = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
 			bupwin.set_border_width(0)
 			bupwin.add(vbox)
 			bupwin.set_title("Bits unpacker")
@@ -549,11 +554,11 @@ class ApplicationMainWindow(gtk.Window):
 			self.options_win.present()
 		else:
 			# le, be, txt, div, enc
-			vbox = gtk.VBox()
-			le_chkb = gtk.CheckButton("LE")
-			be_chkb = gtk.CheckButton("BE")
-			txt_chkb = gtk.CheckButton("Txt")
-			bup_chkb = gtk.CheckButton("BUP")
+			vbox = Gtk.VBox()
+			le_chkb = Gtk.CheckButton("LE")
+			be_chkb = Gtk.CheckButton("BE")
+			txt_chkb = Gtk.CheckButton("Txt")
+			bup_chkb = Gtk.CheckButton("BUP")
 			
 			if self.options_le:
 				le_chkb.set_active(True)
@@ -569,23 +574,23 @@ class ApplicationMainWindow(gtk.Window):
 			txt_chkb.connect("toggled",self.on_option_toggled)
 			bup_chkb.connect("toggled",self.on_option_toggled)
 
-			hbox0 = gtk.HBox()
+			hbox0 = Gtk.HBox()
 			hbox0.pack_start(le_chkb)
 			hbox0.pack_start(be_chkb)
 			hbox0.pack_start(txt_chkb)
 			hbox0.pack_start(bup_chkb)
 			
-			hbox1 = gtk.HBox()
-			div_lbl = gtk.Label("Div")
-			div_entry = gtk.Entry()
+			hbox1 = Gtk.HBox()
+			div_lbl = Gtk.Label("Div")
+			div_entry = Gtk.Entry()
 			div_entry.connect("activate",self.on_div_entry_activate)
 			div_entry.set_text("%.2f"%self.options_div)
 			hbox1.pack_start(div_lbl)
 			hbox1.pack_start(div_entry)
 	
-			hbox2 = gtk.HBox()
-			enc_lbl = gtk.Label("Enc")
-			enc_entry = gtk.Entry()
+			hbox2 = Gtk.HBox()
+			enc_lbl = Gtk.Label("Enc")
+			enc_entry = Gtk.Entry()
 			enc_entry.connect("activate",self.on_enc_entry_activate)
 			hbox2.pack_start(enc_lbl)
 			hbox2.pack_start(enc_entry)
@@ -595,7 +600,7 @@ class ApplicationMainWindow(gtk.Window):
 			vbox.pack_start(hbox1)
 			vbox.pack_start(hbox2)
 
-			optwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			optwin = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
 			optwin.set_resizable(False)
 			optwin.set_border_width(0)
 			optwin.add(vbox)
@@ -613,64 +618,64 @@ class ApplicationMainWindow(gtk.Window):
 					self.das[pn].dictwin.show_all()
 					self.das[pn].dictwin.present()
 				else:
-					view = gtk.TreeView(self.das[pn].dictmod)
+					view = Gtk.TreeView(self.das[pn].dictmod)
 					view.connect("row-activated", self.das[pn].on_dict_row_activated)
 					view.set_reorderable(True)
 					view.set_enable_tree_lines(True)
-					cell1 = gtk.CellRendererText()
+					cell1 = Gtk.CellRendererText()
 					cell1.set_property('family-set',True)
 					cell1.set_property('font',"%s %s"%(self.font,'10'))
-					cell2 = gtk.CellRendererText()
+					cell2 = Gtk.CellRendererText()
 					cell2.set_property('family-set',True)
 					cell2.set_property('font',"%s %s"%(self.font,'10'))
-					column1 = gtk.TreeViewColumn('Type', cell1, text=1)
-					column2 = gtk.TreeViewColumn('Value', cell2, text=2)
-					column3 = gtk.TreeViewColumn('Value', cell2, text=3)
+					column1 = Gtk.TreeViewColumn('Type', cell1, text=1)
+					column2 = Gtk.TreeViewColumn('Value', cell2, text=2)
+					column3 = Gtk.TreeViewColumn('Value', cell2, text=3)
 					view.append_column(column1)
 					view.append_column(column2)
 					view.append_column(column3)
 					view.show()
-					scrolled = gtk.ScrolledWindow()
+					scrolled = Gtk.ScrolledWindow()
 					scrolled.add(view)
 					scrolled.set_size_request(400,400)
 					scrolled.show()
-					dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+					dictwin = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
 					dictwin.set_resizable(True)
 					dictwin.set_border_width(0)
-					scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+					scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 					dictwin.add(scrolled)
 					dictwin.set_title("CDR Dictionary")
 					dictwin.connect ("destroy", self.del_win,"dict")
 					dictwin.show_all()
 					self.das[pn].dictwin = dictwin
 			elif self.das[pn].type == "FH": # and self.das[pn].version < 9:
-				view = gtk.TreeView(self.das[pn].dictmod)
+				view = Gtk.TreeView(self.das[pn].dictmod)
 				view.set_reorderable(True)
 				view.set_enable_tree_lines(True)
-				cell0 = gtk.CellRendererText()
+				cell0 = Gtk.CellRendererText()
 				cell0.set_property('family-set',True)
 				cell0.set_property('font',"%s %s"%(self.font,'10'))
-				cell1 = gtk.CellRendererText()
+				cell1 = Gtk.CellRendererText()
 				cell1.set_property('family-set',True)
 				cell1.set_property('font',"%s %s"%(self.font,'10'))
-				cell2 = gtk.CellRendererText()
+				cell2 = Gtk.CellRendererText()
 				cell2.set_property('family-set',True)
 				cell2.set_property('font',"%s %s"%(self.font,'10'))
-				column0 = gtk.TreeViewColumn('Key', cell1, text=0)
-				column1 = gtk.TreeViewColumn('Value', cell1, text=1)
-				column2 = gtk.TreeViewColumn('???', cell2, text=2)
+				column0 = Gtk.TreeViewColumn('Key', cell1, text=0)
+				column1 = Gtk.TreeViewColumn('Value', cell1, text=1)
+				column2 = Gtk.TreeViewColumn('???', cell2, text=2)
 				view.append_column(column0)
 				view.append_column(column1)
 				view.append_column(column2)
 				view.show()
-				scrolled = gtk.ScrolledWindow()
+				scrolled = Gtk.ScrolledWindow()
 				scrolled.add(view)
 				scrolled.set_size_request(400,400)
 				scrolled.show()
-				dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+				dictwin = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
 				dictwin.set_resizable(True)
 				dictwin.set_border_width(0)
-				scrolled.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+				scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 				dictwin.add(scrolled)
 				dictwin.set_title("FH Dictionary")
 				dictwin.show_all()
@@ -687,12 +692,12 @@ class ApplicationMainWindow(gtk.Window):
 			else:
 				return
 			dictview.connect("row-activated", self.on_dict_row_activated)
-			dictwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+			dictwin = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
 			dictwin.set_resizable(True)
 			dictwin.set_default_size(650, 700)
 			dictwin.set_border_width(0)
-			dwviewscroll = gtk.ScrolledWindow()
-			dwviewscroll.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+			dwviewscroll = Gtk.ScrolledWindow()
+			dwviewscroll.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC)
 			dwviewscroll.add(dictview)
 			dictwin.add(dwviewscroll)
 			dictwin.set_title("Insert record: "+self.das[pn].pname)
@@ -873,7 +878,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.activate_dump(action)
 
 	def activate_about(self, action):
-		dialog = gtk.AboutDialog()
+		dialog = Gtk.AboutDialog()
 		dialog.set_name("OLE toy v"+version)
 		dialog.set_copyright("\302\251 Copyright 2010-2014 V.F.")
 		dialog.set_website("http://www.documentliberation.org/")
@@ -882,7 +887,7 @@ class ApplicationMainWindow(gtk.Window):
 		dialog.show()
 
 	def activate_quit(self, action):
-		 gtk.main_quit()
+		 Gtk.main_quit()
 		 return
 
 	def activate_config(self, action):
@@ -1014,7 +1019,7 @@ class ApplicationMainWindow(gtk.Window):
 	def activate_close(self, action):
 		pn = self.notebook.get_current_page()
 		if pn == -1:
-			gtk.main_quit()
+			Gtk.main_quit()
 		else:
 			del self.das[pn]
 			self.notebook.remove_page(pn)
@@ -1055,14 +1060,14 @@ class ApplicationMainWindow(gtk.Window):
 						view.set_cursor(intPath2)
 						view.grab_focus()
 				view.columns_autosize()
-			elif event.state == gtk.gdk.CONTROL_MASK and event.keyval == 65364:
+			elif event.state == Gdk.ModifierType.CONTROL_MASK and event.keyval == 65364:
 				iter2 = model.iter_next(iter1)
 				if iter2:
 					intPath2 = model.get_path(iter2)
 					view.set_cursor(intPath2)
 					view.grab_focus()
 				return 1
-			elif event.state == gtk.gdk.CONTROL_MASK and event.keyval == 65362:
+			elif event.state == Gdk.ModifierType.CONTROL_MASK and event.keyval == 65362:
 				position = intPath[-1]
 				if position != 0:
 					Path2 = list(intPath)[:-1]
@@ -1073,9 +1078,9 @@ class ApplicationMainWindow(gtk.Window):
 					view.grab_focus()
 				return 1
 			else:
-				if event.keyval == 99 and event.state == gtk.gdk.CONTROL_MASK:
+				if event.keyval == 99 and event.state == Gdk.ModifierType.CONTROL_MASK:
 					self.selection = (model.get_value(iter1,0),model.get_value(iter1,1),model.get_value(iter1,2),model.get_value(iter1,3))
-				if event.keyval == 118 and event.state == gtk.gdk.CONTROL_MASK and self.selection != None:
+				if event.keyval == 118 and event.state == Gdk.ModifierType.CONTROL_MASK and self.selection != None:
 					niter = model.insert_after (None, iter1)
 					model.set_value (niter, 0, self.selection[0])
 					model.set_value (niter, 1, self.selection[1])
@@ -1089,9 +1094,9 @@ class ApplicationMainWindow(gtk.Window):
 			intPath = model.get_path(iter1)
 			val = model.get_value(iter1,8)
 			self.on_row_activated(view, intPath, 0)
-			if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
+			if event.type  == Gdk.BUTTON_RELEASE and event.button == 3:
 				self.entry.set_text(model.get_string_from_iter(iter1))
-			elif event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 2:
+			elif event.type  == Gdk.BUTTON_RELEASE and event.button == 2:
 				if val[0] == "path" and val[1] != None:
 					pn = self.notebook.get_current_page()
 					dm = self.das[pn].dictmod
@@ -1101,7 +1106,7 @@ class ApplicationMainWindow(gtk.Window):
 						self.das[pn].view.set_cursor_on_cell(val[1])
 					except:
 						print("No such path")
-			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65363:
+			elif event.type  == Gdk.KEY_RELEASE and event.keyval == 65363:
 				pn = self.notebook.get_current_page()
 				ha = self.das[pn].scrolled.get_hadjustment()
 				ha.set_value(0)
@@ -1114,7 +1119,7 @@ class ApplicationMainWindow(gtk.Window):
 						self.das[pn].view.set_cursor_on_cell(goto)
 					except:
 						print("No such path")
-			elif event.type  == gtk.gdk.KEY_RELEASE and event.keyval == 65288:
+			elif event.type  == Gdk.KEY_RELEASE and event.keyval == 65288:
 				pn = self.notebook.get_current_page()
 				goto = self.das[pn].backpath
 				if goto != None:
@@ -1133,7 +1138,7 @@ class ApplicationMainWindow(gtk.Window):
 		treeSelection = view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		if iter1:
-			if event.type == gtk.gdk.KEY_RELEASE and event.keyval == 65363:
+			if event.type == Gdk.KEY_RELEASE and event.keyval == 65363:
 				val = model.get_value(iter1,7)
 				if val != None:
 					if val[0] == "cdr goto":
@@ -1170,13 +1175,13 @@ class ApplicationMainWindow(gtk.Window):
 				elif model.iter_n_children(iter1)>0:
 					intPath = model.get_path(iter1)
 					view.expand_row(intPath,False)
-			elif event.type == gtk.gdk.KEY_RELEASE and event.keyval == 65361 and model.iter_n_children(iter1)>0:
+			elif event.type == Gdk.KEY_RELEASE and event.keyval == 65361 and model.iter_n_children(iter1)>0:
 				intPath = model.get_path(iter1)
 				view.collapse_row(intPath)
 			else:
 				intPath = model.get_path(iter1)
 				self.on_hdrow_activated(view, intPath, 0)
-				if event.type  == gtk.gdk.BUTTON_RELEASE and event.button == 3:
+				if event.type  == Gdk.BUTTON_RELEASE and event.button == 3:
 					val = model.get_value(iter1,1)
 					self.entry.set_text("#%s"%val)
 
@@ -1239,16 +1244,16 @@ class ApplicationMainWindow(gtk.Window):
 				v1 = struct.unpack(">h",buf[0:2])[0]
 				v2 = struct.unpack(">H",buf[2:4])[0]
 				txt += "BE: %s\tX: %.4f\tY: %.4f\tF: %.4f\tRG: %.2f"%(struct.unpack(">i",buf)[0],v1-1692+v2/65536.,v1-1584+v2/65536.,v1+v2/65536.,(v1+v2/65536.)*180/3.1415926)
-			if ftype == "QXP5":
-				from qxp.qxp import rfract, little_endian, big_endian
-				def fmt(val):
-					return '%.2f pt / %.2f in / %.2f%%' % (val, val / 72.0, val * 100)
-				if self.options_le == 1:
-					val = rfract(buf, 0, little_endian)[0]
-					txt += "LE: %s\t" % fmt(val)
-				if self.options_be == 1:
-					val = rfract(buf, 0, big_endian)[0]
-					txt += "BE: %s\t" % fmt(val)
+#			if ftype == "QXP5":
+#				from qxp.qxp import rfract, little_endian, big_endian
+#				def fmt(val):
+#					return '%.2f pt / %.2f in / %.2f%%' % (val, val / 72.0, val * 100)
+#				if self.options_le == 1:
+#					val = rfract(buf, 0, little_endian)[0]
+#					txt += "LE: %s\t" % fmt(val)
+#				if self.options_be == 1:
+#					val = rfract(buf, 0, big_endian)[0]
+#					txt += "BE: %s\t" % fmt(val)
 			
 			if self.options_le == 1:
 				txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)
@@ -1314,7 +1319,7 @@ class ApplicationMainWindow(gtk.Window):
 			txt += '<span background="#%02x%02x%02x">BGR</span>'%(ord(buf[2]),ord(buf[1]),ord(buf[0]))
 		if dlen > 3 and self.options_txt == 1 and ftype != "RTF":
 			try:
-				txt += '\t<span background="#DDFFDD">'+unicode(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
+				txt += '\t<span background="#DDFFDD">'+str(buf,self.options_enc).replace("\n","\\n")[:32]+'</span>'
 			except:
 				print(sys.exc_info())
 
@@ -1428,16 +1433,16 @@ class ApplicationMainWindow(gtk.Window):
 		else:
 			gloff = None
 		if hd.hv.modified:
-			dialog = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_YES_NO, 
-			flags =gtk.DIALOG_DESTROY_WITH_PARENT,type = gtk.MESSAGE_WARNING, 
+			dialog = Gtk.MessageDialog(parent = None, buttons = Gtk.BUTTONS_YES_NO, 
+			flags =Gtk.DIALOG_DESTROY_WITH_PARENT,type = Gtk.MESSAGE_WARNING, 
 			message_format = "Do you want to save your changes?")
 			
 			dialog.set_title("Unsaved changes in data")
 			result = dialog.run()
 			dialog.destroy()
-			if result == gtk.RESPONSE_YES:
+			if result == Gtk.ResponseType.YES:
 				model.set_value(hd.hv.iter,3,hd.hv.data)
-			elif result == gtk.RESPONSE_NO:
+			elif result == Gtk.ResponseType.NO:
 				print("Changes discarded")
 
 		if data != None:
@@ -1647,8 +1652,8 @@ class ApplicationMainWindow(gtk.Window):
 						ntype[1](hd, size, data)
 					elif ntype[1] in bmi.bmi_ids:
 						bmi.bmi_ids[ntype[1]](hd, size, data)
-				elif ntype[0][0:3] == "qxp":
-					qxp.call(hd, size, data, ntype[0], ntype[1])
+#				elif ntype[0][0:3] == "qxp":
+#					qxp.call(hd, size, data, ntype[0], ntype[1])
 				elif ntype[0] == "xml":
 					add_iter (hd,"",data,0,len(data),"txt")
 				elif ntype[0] == "ole" and ntype[1] == "propset":
@@ -1664,7 +1669,7 @@ class ApplicationMainWindow(gtk.Window):
 		scrolled = doc.scrolled
 		doc.hd = hexdump.hexdump()
 		vpaned = doc.hd.vpaned
-		doc.hpaned = gtk.HPaned()
+		doc.hpaned = Gtk.HPaned()
 		doc.hpaned.add1(scrolled)
 		doc.hpaned.add2(vpaned)
 		label = viewCmd.TabLabel("Unnamed")
@@ -1736,7 +1741,7 @@ class ApplicationMainWindow(gtk.Window):
 			fname = self.file_open()
 		if fname:
 			print(fname)
-			manager = gtk.recent_manager_get_default()
+			manager = Gtk.RecentManager.get_default()
 			manager.add_item(fname)
 			doc = App.Page()
 			doc.fname = fname
@@ -1760,7 +1765,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdrend.connect('edited', self.edited_cb)
 				doc.hd.hdview.set_tooltip_column(8)
 				
-				doc.hpaned = gtk.HPaned()
+				doc.hpaned = Gtk.HPaned()
 				doc.hpaned.add1(scrolled)
 				doc.hpaned.add2(vpaned)
 				label = viewCmd.TabLabel(doc.pname)
@@ -1779,10 +1784,12 @@ class ApplicationMainWindow(gtk.Window):
 
 	def file_open (self, title='Open', parent=None, dirname=None, fname=""):
 		if title == 'Save':
-			dlg = gtk.FileChooserDialog('Save...', action=gtk.FILE_CHOOSER_ACTION_SAVE, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg = Gtk.FileChooserDialog(title='Save...', action=Gtk.FileChooserAction.SAVE)
+			dlg.add_buttons(Gtk.STOCK_OK,Gtk.ResponseType.OK,Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL)
 			dlg.set_current_name(fname)
 		else:
-			dlg = gtk.FileChooserDialog('Open...', None, buttons=(gtk.STOCK_OK,gtk.RESPONSE_OK,gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+			dlg = Gtk.FileChooserDialog(title='Open...')
+			dlg.add_buttons(Gtk.STOCK_OK,Gtk.ResponseType.OK,Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL)
 #		dlg.set_current_folder(dirname)
 		dlg.set_local_only(True)
 		if dirname and fname != "":
@@ -1790,7 +1797,7 @@ class ApplicationMainWindow(gtk.Window):
 
 		resp = dlg.run()
 		dlg.hide()
-		if resp == gtk.RESPONSE_CANCEL:
+		if resp == Gtk.ResponseType.CANCEL:
 			return None
 		fname = dlg.get_filename()
 		return fname
@@ -1798,7 +1805,7 @@ class ApplicationMainWindow(gtk.Window):
 
 def main():
 	ApplicationMainWindow()
-	gtk.main()
+	Gtk.main()
 
 if __name__ == '__main__':
 	main()

@@ -14,18 +14,21 @@
 # USA
 #
 
-import gtk
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 import tree
 import hv2
 import utils
 
 class hexdump:
 	def __init__(self):
-		self.vpaned = gtk.VPaned()
+		self.vpaned = Gtk.VPaned()
 		self.model, self.hdview, self.hdscrolled, self.hdrend = tree.make_view2()
-		self.hbox0 =gtk.HBox()
+		self.hbox0 =Gtk.HBox()
 		self.da = None
-		self.hbox0.pack_start(self.hdscrolled)
+		self.hbox0.pack_start(self.hdscrolled,True,True,0)
 		self.vpaned.add1(self.hbox0)
 		self.hdscrolled.set_size_request(300, 300)
 		self.version = None # to support vsdchunks for different versions
@@ -44,7 +47,7 @@ class hexdump:
 		utils.disp_expose(da,event,self,self.dispscale)
 
 	def disp_on_button_press(self,da,event):
-		if event.type  == gtk.gdk.BUTTON_PRESS:
+		if event.type  == Gtk.gdk.BUTTON_PRESS:
 			if event.button == 1:
 				self.dispscale *= 1.4
 				self.disp_expose(da,event)
