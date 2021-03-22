@@ -1722,7 +1722,9 @@ def txsm16 (hd,size,data):
 	flag3  = struct.unpack('<i', data[off:off+4])[0]
 	off += 4
 	flag4  = struct.unpack('<i', data[off:off+4])[0]
-	off = 0x2d
+	off = 0x29
+	add_iter (hd, "Num Frames ????", d2hex(data[off:off+4]),off,4,"<I")
+	off += 4
 	add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
 	off += 4
 	for i in range(6):
