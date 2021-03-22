@@ -1782,12 +1782,14 @@ def txsm16 (hd,size,data):
 		off += 6 #!!! two more bytes
 	len2 = struct.unpack('<I', data[off:off+4])[0]
 	off += 4
-	txt2 = data[off:off+len2*2]
-#	print "---------------------------------"
-#	print txt2
-#	print "---------------------------------"
-	add_iter (hd, "Txt2", unicode(txt2,"utf-16"),off,len2*2,"txt")
-	off += len2*2
+	if hd.version > 16:
+		txt2 = data[off:off+len2]
+		add_iter (hd, "Txt2", unicode(txt2,"utf-8"),off,len2,"txt")
+		off += len2
+	else:
+		txt2 = data[off:off+len2*2]
+		add_iter (hd, "Txt2", unicode(txt2,"utf-16"),off,len2*2,"txt")
+		off += len2*2
 	numrec = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "#of Rec", numrec,off,4,"<I")
 	off += 4
@@ -1796,14 +1798,24 @@ def txsm16 (hd,size,data):
 	# first record
 	len3 = struct.unpack('<I', data[off:off+4])[0]
 	off += 4
-	txt3 = data[off:off+len3*2]
-	add_iter (hd, "Txt 0.0", unicode(txt3,"utf-16"),off,len3*2,"txt")
-	off += len3*2
+	if hd.version > 16:
+		txt3 = data[off:off+len3]
+		add_iter (hd, "Txt 0.0", unicode(txt3,"utf-8"),off,len3,"txt")
+		off += len3
+	else:
+		txt3 = data[off:off+len3*2]
+		add_iter (hd, "Txt 0.0", unicode(txt3,"utf-16"),off,len3*2,"txt")
+		off += len3*2
 	len4 = struct.unpack('<I', data[off:off+4])[0]
 	off += 4
-	txt4 = data[off:off+len4*2]
-	add_iter (hd, "Txt 0.1", unicode(txt4,"utf-16"),off,len4*2,"txt")
-	off += len4*2
+	if hd.version > 16:
+		txt4 = data[off:off+len4]
+		add_iter (hd, "Txt 0.1", unicode(txt4,"utf-8"),off,len4,"txt")
+		off += len4
+	else:
+		txt4 = data[off:off+len4*2]
+		add_iter (hd, "Txt 0.1", unicode(txt4,"utf-16"),off,len4*2,"txt")
+		off += len4*2
 	
 	# other recs
 	for i in range(numrec-1):
@@ -1825,7 +1837,6 @@ def txsm16 (hd,size,data):
 	add_iter (hd, "Text length", txtlen,off,4,"<I")
 	off += 4
 	add_iter (hd, "Text", "",off,txtlen,"txt")
-
 
 def txsm5style(hd,siter,data,offset):
 	flags = {0x01:"Font ID",0x02:"Text decoration",0x04:"Font size",0x10:"Fill",0x20:"Outline"}
