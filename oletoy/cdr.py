@@ -1736,9 +1736,14 @@ def txsm16 (hd,size,data):
 		off += 28
 		tlen = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
-		frametxt = data[off:off+tlen*2]
-		add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt")
-		off += tlen*2
+		if hd.version > 16:
+			frametxt = data[off:off+tlen]
+			add_iter (hd, "FrameTxt", unicode(frametxt,"utf-8"),off,tlen,"txt")
+			off += tlen
+		else:
+			frametxt = data[off:off+tlen*2]
+			add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt")
+			off += tlen*2
 		off += 4
 		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 5 #!!! one more byte
