@@ -1960,7 +1960,7 @@ def txsm (hd,size,data):
 	off = 0x24
 	if hd.version == 15:
 		off += 1
-	elif hd.version < 8:
+	if hd.version < 8:
 		off += 4
 	num_frames = struct.unpack("<I", data[off:off+4])[0]
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
@@ -1975,11 +1975,15 @@ def txsm (hd,size,data):
 		off += 36
 		if hd.version > 8:
 			off += 2
-
+		if hd.version > 13:
+			off += 2
+		if hd.version > 14: # i.e. 15 in this case...
+			off += 12
 	num_para = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
 	off += 4
-
+#	print "NUM PARA", num_para
+#	return
 
 	for _ in range(num_para):
 		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
@@ -1990,15 +1994,24 @@ def txsm (hd,size,data):
 			off += 1
 		else:
 			off += 2 # ??
-		if hd.version > 9:
+		if hd.version > 12:
+			enc_len = struct.unpack('<I', data[off:off+4])[0]
+			off += 4
+			off += enc_len * 2 # skip "ENI" for now
+		elif hd.version > 9:
 			off += 4 # encoding?
 		chars_num = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
+		char_len = 4
+		if hd.version > 11:
+			char_len = 8
 		for i in range(chars_num):
-			add_iter (hd, "char %3x" % i, d2hex(data[off:off+4]),off,4,"txt", parent=st_iter)
-			off += 4
+			add_iter (hd, "char %3x" % i, d2hex(data[off:off + char_len]), off, char_len,"txt", parent=st_iter)
+			off += char_len
 			# FIXME! move here parsing of these bytes
 		# FIXME! I'm ignoring encoding...
+		if hd.version > 11:
+			off += 4 # chars_num value is repeated here
 		add_iter (hd, "text", unicode(data[off:off + chars_num], "latin-1"), off, chars_num, "txt")
 		off += chars_num
 		off += 1
