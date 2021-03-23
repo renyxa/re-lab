@@ -466,7 +466,7 @@ def outl (hd,size,data):
 		ang = 0xe
 		lc = 0x10
 		dash = 0x26
-		
+
 
 	ltype = struct.unpack('<H', data[lt:lt+2])[0]
 	ltxt = "Non-scalable"
@@ -490,7 +490,7 @@ def outl (hd,size,data):
 		add_iter (hd,"Angle","%.2f"%round(struct.unpack('<h', data[ang:ang+2])[0]/1000000.0,2),ang,2,"<h")
 
 	if hd.version > 5:
-		for i in range(6):                     
+		for i in range(6):
 			var = struct.unpack('<d', data[varo+i*8:varo+8+i*8])[0]
 			add_iter (hd, "?? var%d"%(i+1), "%f"%var,varo+i*8,8,"<d")
 	clr_model(hd,data,lc)
@@ -538,12 +538,12 @@ def fild (hd,size,data):
 			add_iter(hd,"Flag: %d"%v13offset,d2hex(data[v13offset:v13offset+8]),v13offset,10,"txt")
 			v13offset += 10
 			v13flag = struct.unpack('<h', data[v13offset:v13offset+2])[0]
-			
+
 		ftype_off = v13offset-4
 		fill_type = struct.unpack('<h', data[0xc:0xe])[0]
 	else:
 		fill_type = struct.unpack('<h', data[4:6])[0]
-		
+
 	ft_txt = "%d"%fill_type
 	if fild_types.has_key(fill_type):
 		ft_txt += " "+fild_types[fill_type]
@@ -551,7 +551,7 @@ def fild (hd,size,data):
 		add_iter (hd,"Fill Type", ft_txt,0xc,2,"txt")
 	else:
 		add_iter (hd,"Fill Type", ft_txt,4,2,"txt")
-		
+
 	if fill_type > 0:
 		if fill_type == 1:
 			clrm_off = 8
@@ -612,7 +612,7 @@ def fild (hd,size,data):
 				clr_model(hd,data,mid_offset+6+pal_off+i*pal_len)
 				prcnt = ord(data[mid_offset+18+prcnt_off+i*pal_len])
 				add_iter (hd, "  Percent","%u"%prcnt,mid_offset+18+prcnt_off+i*pal_len,1,"B")
-				
+
 		elif fill_type == 6:
 			add_iter (hd,"PS fill ID",d2hex(data[8:10]),8,2,"<H")
 
@@ -657,7 +657,7 @@ def fild (hd,size,data):
 			add_iter (hd,"Flags", "%02x (%s)"%(flag,ftxt),fl_off,1,"B")
 
 			# Colors (model + color) started at 0x1c and 0x28
-			
+
 			clr_model(hd,data,clr1_off)
 			clr_model(hd,data,clr2_off)
 
@@ -675,7 +675,7 @@ def fild (hd,size,data):
 				rcp_off = 0x22
 				fl_off = 0x24
 				patt_off = 0x36
-			
+
 			add_iter (hd,"Width", struct.unpack("<I",data[w_off:w_off+4])[0]/10000.,w_off,4,"<I")
 			add_iter (hd,"Height", struct.unpack("<I",data[h_off:h_off+4])[0]/10000.,h_off,4,"<I")
 			add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
@@ -693,7 +693,7 @@ def fild (hd,size,data):
 				add_iter (hd,"Image ID",struct.unpack("<H",data[patt_off:patt_off+2])[0],patt_off,2,"<H")
 				add_iter (hd,"Width", struct.unpack("<H",data[w_off:w_off+2])[0]*0.0254,w_off,2,"<H")
 				add_iter (hd,"Height", struct.unpack("<H",data[h_off:h_off+2])[0]*0.0254,h_off,2,"<H")
-				
+
 			else:
 				w_off = 0xc
 				h_off = 0x10
@@ -719,7 +719,7 @@ def fild (hd,size,data):
 			if hd.version < 6:
 				patt_off = 8
 				add_iter (hd,"Image ID",struct.unpack("<H",data[patt_off:patt_off+2])[0],patt_off,2,"<H")
-				
+
 			else:
 				v1_off = 0xc
 				rcp_off = 0x18
@@ -728,7 +728,7 @@ def fild (hd,size,data):
 				imgid_off = 0x30
 				bmpres_off = 0x38
 				maxtw_off = 0x3a
-				
+
 				if hd.version > 12:
 					v1_off = 0x1e
 					rcp_off = 0x22
@@ -745,7 +745,7 @@ def fild (hd,size,data):
 						imgid_off = 0x56
 						bmpres_off = 0x66
 						maxtw_off = 0x68
-	
+
 				add_iter (hd,"Width",struct.unpack("<I",data[v1_off:v1_off+4])[0]/10000.,v1_off,4,"<I")
 				add_iter (hd,"Height",struct.unpack("<I",data[v1_off+4:v1_off+8])[0]/10000.,v1_off+4,4,"<I")
 				add_iter (hd,"R/C Offset %", ord(data[rcp_off]),rcp_off,1,"B")
@@ -873,7 +873,7 @@ def bmp (hd,size,data):
 
 def ftil (hd,size,data):
 	for i in range(6):
-		[var] = struct.unpack('<d', data[i*8:i*8+8]) 
+		[var] = struct.unpack('<d', data[i*8:i*8+8])
 		add_iter(hd,'Var%d'%i,var,i*8,8,"<d")
 
 def loda_outl (hd,data,offset,l_type,length):
@@ -1010,7 +1010,7 @@ def loda_polygon (hd,data,offset,l_type,length):
 	add_iter (hd,"[2af8] var1 ?",var,offset+0x10,8,"<d")
 	var = struct.unpack('<d', data[offset+0x18:offset+0x18+8])[0]
 	add_iter (hd,"[2af8] var2 ?",var,offset+0x18,8,"<d")
-	
+
 	if hd.version > 6:
 		for i in range(2):
 			varX = struct.unpack('<l', data[offset+0x18+8+i*8:offset+0x1c+8+i*8])[0]
@@ -1188,7 +1188,7 @@ def loda_coords_0x6(hd,data,offset,l_type,length):
 	add_iter (hd,"[001e] ??","",off,4,"<I")
 	add_iter (hd,"[001e] W/H","%.2f/%.2f mm"%(w,h),off+4,8,"<ll")
 	add_iter (hd,"[001e] ??","",off+12,length-12,"txt")
-	
+
 def loda_coords_0xa(hd,data,offset,l_type,length):
 	off = offset
 	w = round(struct.unpack('<l', data[off:off+4])[0]/10000.,2)
@@ -1238,7 +1238,7 @@ def loda_coords_0x25(hd,data,offset,l_type):
 		if Type&0x40 == 0x40 and Type&0x80 == 0x80:
 			NodeType = NodeType+'  Arc'
 		add_iter (hd,"[001e] X%u/Y%u/Type"%(i+1,i+1),"%.2f/%.2f mm  (corr. %.2f/%.2f)"%(x,y,x+hd.width/2,y+hd.height/2)+NodeType,off+i*8,8,"txt",off+numpts*8+i,1)
- 
+
 lcv3styles = {
 	6:"Underline",
 	4:"Bold",
@@ -1298,7 +1298,7 @@ lcv4styles = {
 def loda_coords_v4 (hd,data,offset,l_type,length):
 	x = struct.unpack("<h",data[offset:offset+2])[0]*0.0254
 	y = struct.unpack("<h",data[offset+2:offset+4])[0]
-	if l_type == 4: # artistic text 
+	if l_type == 4: # artistic text
 		add_iter (hd,"[001e] # of chars",y,offset+2,2,"<h")
 		term = 6 + 25*y
 	else:
@@ -1308,7 +1308,7 @@ def loda_coords_v4 (hd,data,offset,l_type,length):
 	off = 4
 	clen = struct.unpack("<h",data[offset+off:offset+off+2])[0]
 	off += 2
-	
+
 	while off < term:
 		flag = ord(data[offset+off])
 		ch = data[offset+off+1]
@@ -1606,7 +1606,7 @@ def loda (hd,size,data,shift=0,ftype=0):
 				add_iter (hd,styd_types[argtype],"...",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
 			else:
 				add_iter (hd,"[%04x]"%(argtype),"???",offset+shift,struct.unpack('<L',data[s_args+i*4:s_args+i*4+4])[0]-offset,"txt")
-			
+
 #				print 'Unknown argtype: %x'%argtype
 
 dtypes = {1:"Push",2:"Zip",3:"Twist"}
@@ -1642,7 +1642,7 @@ def trfd (hd,size,data):
 		switch = struct.unpack('<H', data[start:start+2])[0]
 		start += 8
 		if switch == 8:
-			for i in (0,1):                     
+			for i in (0,1):
 				var = struct.unpack('<d', data[start+i*8:start+8+i*8])[0]
 				add_iter (hd, "var%d"%(i+1), "%f"%var,start+i*8,8,"<d")
 			add_iter (hd, "x0", "%u"%(struct.unpack('<d', data[start+16:start+24])[0]/10000),start+16,8,"<d")
@@ -1657,12 +1657,12 @@ def trfd (hd,size,data):
 			if dtypes.has_key(dtype):
 				dtt = dtypes[dtype]
 			add_iter (hd, "Distortion type", "%02x (%s)"%(dtype,dtt),start,2,"<H")
-			
+
 			# Coords of the distortion
 			Xd = round(struct.unpack('<i', data[start+2:start+6])[0]/10000.,2)
 			Yd = round(struct.unpack('<i', data[start+6:start+10])[0]/10000.,2)
 			add_iter (hd, "Distortion Coords", "%.2f/%.2f   (corr. %.2f/%.2f)"%(Xd,Yd,Xd+hd.width/2,Yd+hd.height/2),start+2,8,"<txt")
-			
+
 			# Distiortion sub-type
 			dstype = struct.unpack('<I', data[start+10:start+14])[0]
 			dstt = ""
@@ -1676,7 +1676,7 @@ def trfd (hd,size,data):
 				if dstype&4 == 4:
 					dstt = "Local"
 			add_iter (hd, "Distortion Subtype", "%02x (%s)"%(dstype,dstt),start+10,4,"<I")
-			
+
 			# Options
 			dopt1 = struct.unpack('<i', data[start+14:start+18])[0]
 			dopt2 = struct.unpack('<i', data[start+18:start+22])[0]
@@ -1723,32 +1723,32 @@ def txsm16 (hd,size,data):
 	off += 4
 	flag4  = struct.unpack('<i', data[off:off+4])[0]
 	off = 0x29
-	add_iter (hd, "Num Frames ????", d2hex(data[off:off+4]),off,4,"<I")
+	num_frames = struct.unpack("<I", data[off:off+4])[0]
+	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
-	add_iter (hd, "txt ID", d2hex(data[off:off+4]),off,4,"<I")
-	off += 4
-	for i in range(6):
-		var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-		add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
-	off += 48
+
 	if frameflag == 0:
-		for i in range(7):
-			var = struct.unpack('<i', data[off+i*4:off+4+i*4])[0]
-			add_iter (hd, "var%d"%(i+1), "%d"%var,off+i*4,4,"<d")
-		off += 28
-		tlen = struct.unpack('<I', data[off:off+4])[0]
+		for i in range(num_frames):
+			fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
+			off += 4
+			for i in range(6):
+				var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+				add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
+			off += 48
+			off += 28
+			tlen = struct.unpack('<I', data[off:off+4])[0]
+			off += 4
+			if hd.version > 16:
+				frametxt = data[off:off+tlen]
+				add_iter (hd, "FrameTxt", unicode(frametxt,"utf-8"),off,tlen,"txt", parent=fr_iter)
+				off += tlen
+			else:
+				frametxt = data[off:off+tlen*2]
+				add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt", parent=fr_iter)
+				off += tlen*2
+		num_para = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
 		off += 4
-		if hd.version > 16:
-			frametxt = data[off:off+tlen]
-			add_iter (hd, "FrameTxt", unicode(frametxt,"utf-8"),off,tlen,"txt")
-			off += tlen
-		else:
-			frametxt = data[off:off+tlen*2]
-			add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt")
-			off += tlen*2
-		off += 4
-		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
-		off += 5 #!!! one more byte
 	else:
 		txtonpath = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
@@ -1780,65 +1780,76 @@ def txsm16 (hd,size,data):
 		else:
 			off += 8
 		off += 4
-		add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
-		off += 6 #!!! two more bytes
-	len2 = struct.unpack('<I', data[off:off+4])[0]
-	off += 4
-	if hd.version > 16:
-		txt2 = data[off:off+len2]
-		add_iter (hd, "Txt2", unicode(txt2,"utf-8"),off,len2,"txt")
-		off += len2
-	else:
-		txt2 = data[off:off+len2*2]
-		add_iter (hd, "Txt2", unicode(txt2,"utf-16"),off,len2*2,"txt")
-		off += len2*2
-	numrec = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "#of Rec", numrec,off,4,"<I")
-	off += 4
-	add_iter (hd, "??? 0", d2hex(data[off:off+6]),off,6,"txt")
-	off += 6
-	# first record
-	len3 = struct.unpack('<I', data[off:off+4])[0]
-	off += 4
-	if hd.version > 16:
-		txt3 = data[off:off+len3]
-		add_iter (hd, "Txt 0.0", unicode(txt3,"utf-8"),off,len3,"txt")
-		off += len3
-	else:
-		txt3 = data[off:off+len3*2]
-		add_iter (hd, "Txt 0.0", unicode(txt3,"utf-16"),off,len3*2,"txt")
-		off += len3*2
-	len4 = struct.unpack('<I', data[off:off+4])[0]
-	off += 4
-	if hd.version > 16:
-		txt4 = data[off:off+len4]
-		add_iter (hd, "Txt 0.1", unicode(txt4,"utf-8"),off,len4,"txt")
-		off += len4
-	else:
-		txt4 = data[off:off+len4*2]
-		add_iter (hd, "Txt 0.1", unicode(txt4,"utf-16"),off,len4*2,"txt")
-		off += len4*2
-	
-	# other recs
-	for i in range(numrec-1):
-		add_iter (hd, "??? %d"%(i+1), d2hex(data[off:off+6]),off,6,"txt")
-		off += 6
-		rlen = struct.unpack('<I', data[off:off+4])[0]
+	print "NUM para", num_para
+	for _ in range(num_para):
+		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
+		off += 5 #!!! one more byte
+		if frameflag:
+			off += 1 # !!! one extra for txtonpath
+		style_len = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
-		rtxt = data[off:off+rlen*2]
-		add_iter (hd, "Txt %d"%(i+1), unicode(rtxt,"utf-16"),off,rlen*2,"txt")
-		off += rlen*2
+		if hd.version > 16:
+			frametxt = data[off:off+tlen]
+			add_iter (hd, "Style Txt", unicode(frametxt,"utf-8"), off, style_len,"txt", parent=st_iter)
+			off += style_len
+		else:
+			frametxt = data[off:off+tlen*2]
+			add_iter (hd, "Style Txt", unicode(frametxt,"utf-16"),off,style_len*2,"txt", parent=st_iter)
+			off += style_len*2
+		num_rec = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "#of Rec", num_rec,off,4,"<I")
+		off += 4
+		print "NUM rec", num_rec
+		for nr in range(num_rec):
+			off += 2 # nchars
+			st_flag1 = struct.unpack('<H', data[off:off+2])[0]
+			off += 2
+			st_flag2 = struct.unpack('<H', data[off:off+2])[0]
+			off += 2
+			rec_iter = add_iter (hd, "Rec %#x" % nr, "%#x, %#x" % (st_flag1, st_flag2), off - 6, 6, "txt")
+			if st_flag1 == 0x3fff:
+				if st_flag2 == 0x2c34:
+					# "ENI"
+					enc_len = struct.unpack('<I', data[off:off+4])[0]
+					off += 4
+					off += enc_len * 2 # skip for now ("ENI")
+				# JSON
+				json_len = struct.unpack('<I', data[off:off+4])[0]
+				off += 4
+				enc = "utf-8"
+				if hd.version < 17:
+					json_len *= 2
+					enc = "utf-16"
+				add_iter (hd, "Style Txt", unicode(data[off:off+json_len], enc), off, json_len, "txt", parent=rec_iter)
+				off += json_len
+			elif st_flag2 == 4:
+				# ENI + 'character" JSON
+				enc_len = struct.unpack('<I', data[off:off+4])[0]
+				off += 4
+				off += enc_len * 2 # skip for now ("ENI")
+				enc_len2 = struct.unpack('<I', data[off:off+4])[0]
+				off += 4
+				if hd.version < 17:
+					enc_len2 *= 2
+				off += enc_len2 # skip for now ("{{'character'}}")
 
-	num2 = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
-	off += 4
-	for i in range(num2):
-		add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
-		off += 8
-	txtlen = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Text length", txtlen,off,4,"<I")
-	off += 4
-	add_iter (hd, "Text", "",off,txtlen,"txt")
+		num2 = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
+		off += 4
+		for i in range(num2):
+			add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
+			off += 8
+		txtlen = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "Text length", txtlen,off,4,"<I")
+		off += 4
+		enc = "utf-8"
+		try:
+			txt = unicode(data[off:off+txtlen], enc)
+		except:
+			txt = unicode(data[off:off+txtlen], "latin-1")
+		add_iter (hd, "Text", txt, off, txtlen, "txt")
+		off += txtlen
+		off += 1 # !!! extra 0
 
 def txsm5style(hd,siter,data,offset):
 	flags = {0x01:"Font ID",0x02:"Text decoration",0x04:"Font size",0x10:"Fill",0x20:"Outline"}
@@ -1891,8 +1902,8 @@ def txsm6style(hd,siter,data,offset):
 		shift = 4
 	if flag1&0x20:
 		add_iter(hd,"Outl ID","%08x"%(struct.unpack("<I",data[0x3c+shift:0x40+shift])[0]),offset+0x3c+shift,4,"<I",0,0,siter)
-	
-	
+
+
 
 def txsm6 (hd,size,data):
 	if round(hd.version) == 5:
@@ -1999,7 +2010,7 @@ def txsm (hd,size,data):
 		num1 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "num1", num1,off,4,"<I")
 		off += 4
-	
+
 	if num1 == 0:
 		if hd.version > 7:
 			off += 4
@@ -2035,7 +2046,7 @@ def txsm (hd,size,data):
 		else:
 			add_iter (hd, "fl0 fl1 fl2 [%d]"%(i*2), "%02x %02x %02x"%(id,flag1,flag2),off,3,"txt")
 			off += 3
-			
+
 		if flag2&1 == 1:
 			# Font
 			enctxt = "Unknown"
@@ -2100,7 +2111,7 @@ def txsm (hd,size,data):
 	off += 4
 #	if num2 > 100:
 #		print 'num2 > 100',num2
-		
+
 	for i in range(num2):
 		if hd.version >= 12:
 			add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
@@ -2286,11 +2297,11 @@ def stlt(data,page,parent):
 
 		s_iter = add_pgiter(page,"set12","cdr","","",parent)
 		# based on latest idea -- parse to end
-	
+
 		while offset < len(data):
 			num = struct.unpack("<I",data[offset:offset+4])[0]
 			num2 = struct.unpack("<I",data[offset+12:offset+16])[0]
-			
+
 			t_iter = add_pgiter(page,"num %d ID %s (pID %s) %s"%(num,d2hex(data[offset+4:offset+8]),d2hex(data[offset+8:offset+12]),d2hex(data[offset+12:offset+16])),"cdr","stlt_s12",data[offset:offset+20],s_iter)
 			tmpcache[d2hex(data[offset+4:offset+8])] = t_iter
 			add_dictiter(page,t_iter,d2hex(data[offset+4:offset+8]),"stlt st12")
@@ -2382,7 +2393,7 @@ def collect_cmpr(model,parent,idx):
 				cbs += bs+8
 				if cbs & 1:
 					cbs += 1
-				
+
 		blksize = cbs + 4
 		blk.insert(0,blksize)
 	return data,blk,blksize,idx
@@ -2402,7 +2413,7 @@ def pack_cmpr(model,parent):
 	for i in range(len(blocks)):
 		sblocks += struct.pack("<I",blocks[i])
 	zblk = zlib.compress(sblocks)
-	
+
 	res = "cmpr"+struct.pack("<I",len(zdata)+8) + struct.pack("<I",len(data))
 	res += struct.pack("<I",len(zblk)+8) + struct.pack("<I",len(blocks)*4)
 	res += "CPng\x01\x00\x04\x00"+zdata + "CPng\x01\x00\x04\x00"+ zblk
@@ -2465,7 +2476,7 @@ class record:
 #		print "------------"
 #		print d2hex(self.uncmprdata," ",16)
 #		print "------------"
-		
+
 ##		add_pgiter(page,"Uncompressed data",fmttype,"",self.uncmprdata,parent)
 		while offset < len(self.uncmprdata):
 			chunk = record()
