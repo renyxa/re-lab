@@ -1904,59 +1904,54 @@ def txsm (hd,size,data):
 	# 6,7,8 -- 3, 8bidi,9 -- 4
 	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
 
-
 	off = 0x24
 	if hd.version == 15:
 		off += 1
-	blk_flag1 = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "blk_flag1", blk_flag1,off,4,"<i")
-	off += 4
-	if blk_flag1 == 1:
-		if hd.version > 7:
-			add_iter (hd, "txt ID", "%08x"%(struct.unpack("<I",data[off:off+4])[0]),off,4,"<I")
-			off += 4
-			for i in range(6):
-				var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-				add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
-			off += 48
-
-			blk_flag2 = struct.unpack('<I', data[off:off+4])[0]
-			add_iter (hd, "blk_flag2", blk_flag2,off,4,"<i")
-			off += 4
-			if blk_flag2:
-				skipnum = 8
-				if hd.version > 12:
-					skipnum = 10
-				for i in range(skipnum):
-					var = struct.unpack('<i', data[off+i*4:off+4+i*4])[0]
-					add_iter (hd, "v%d"%(i+1), "%d"%var,off+i*4,4,"<i")
-				off += skipnum*4
-
-		else:
-			for i in range(8):
-				var = struct.unpack('<h', data[off+i*4:off+4+i*4])[0]
-				add_iter (hd, "v%d"%(i+1), "%d"%var,off+i*4,4,"<h")
-			off += 32
-	elif hd.version <8:
+	elif hd.version < 8:
 		off += 4
-
-	if hd.version < 8:
-		add_iter (hd, "txt ID", "%08x"%(struct.unpack("<I",data[off:off+4])[0]),off,4,"<I")
+	num_frames = struct.unpack("<I", data[off:off+4])[0]
+	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
+	off += 4
+	for i in range(num_frames):
+		fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 4
 		for i in range(6):
 			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000),off+i*8,8,"<d")
+			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
 		off += 48
+		off += 36
+		if hd.version > 8:
+			off += 2
 
-	if hd.version < 15:
-		num1 = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "num1", num1,off,4,"<I")
+	num_para = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
+	off += 4
+
+
+	for _ in range(num_para):
+		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
+		off += 5 # !!! one more byte
+		off += 4 # "flags"
+		off += 2 # len of text + 1
+		if hd.version < 8:
+			off += 1
+		else:
+			off += 2 # ??
+		if hd.version > 9:
+			off += 4 # encoding?
+		chars_num = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
-	else:
-		off += 12
-		num1 = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "num1", num1,off,4,"<I")
-		off += 4
+		for i in range(chars_num):
+			add_iter (hd, "char %3x" % i, d2hex(data[off:off+4]),off,4,"txt", parent=st_iter)
+			off += 4
+			# FIXME! move here parsing of these bytes
+		# FIXME! I'm ignoring encoding...
+		add_iter (hd, "text", unicode(data[off:off + chars_num], "latin-1"), off, chars_num, "txt")
+		off += chars_num
+		off += 1
+
+	# FIXME! need to move flags parsing here
+	return
 
 	if num1 == 0:
 		if hd.version > 7:
@@ -2056,8 +2051,6 @@ def txsm (hd,size,data):
 	num2 = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 	off += 4
-#	if num2 > 100:
-#		print 'num2 > 100',num2
 
 	for i in range(num2):
 		if hd.version >= 12:
