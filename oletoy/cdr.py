@@ -1935,12 +1935,19 @@ def txsm (hd,size,data):
 	for _ in range(num_para):
 		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 5 # !!! one more byte
-		off += 4 # "flags"
+		numst = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "# style recs",numst,off,4,"<I")
+		off += 4
 		off += 2 # len of text + 1
 		if hd.version < 8:
 			off += 1
 		else:
 			off += 2 # ??
+		for i in range(numst-1):
+			if hd.version < 8:
+				off += 7
+			else:
+				off += 8
 		if hd.version > 12:
 			enc_len = struct.unpack('<I', data[off:off+4])[0]
 			off += 4
@@ -1948,6 +1955,7 @@ def txsm (hd,size,data):
 		elif hd.version > 9:
 			off += 4 # encoding?
 		chars_num = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "# of characters", chars_num, off, 4, "<I")
 		off += 4
 		char_len = 4
 		if hd.version > 11:
