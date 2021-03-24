@@ -1727,7 +1727,6 @@ def txsm16 (hd,size,data):
 		else:
 			off += 8
 		off += 4
-	print "NUM para", num_para
 	for _ in range(num_para):
 		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 5 #!!! one more byte
@@ -1746,7 +1745,6 @@ def txsm16 (hd,size,data):
 		num_rec = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "#of Rec", num_rec,off,4,"<I")
 		off += 4
-		print "NUM rec", num_rec
 		for nr in range(num_rec):
 			off += 2 # nchars
 			st_flag1 = struct.unpack('<H', data[off:off+2])[0]
@@ -1863,33 +1861,44 @@ def txsm6 (hd,size,data):
 	bump = 0
 	if paraflag == 0:
 		bump = 8
-	off = 0x28
-	for i in range(6):
-		var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-		add_iter (hd, "var%d"%i, "%d"%(var/10000),off+i*8,8,"<d")
-	off += 48+bump
-	add_iter (hd, "??? 1",struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+
+	off = 0x20
+	num_frames = struct.unpack("<I", data[off:off+4])[0]
+	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
-	add_iter (hd, "Style ID",struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+	for i in range(num_frames):
+		fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
+		off += 4
+		for i in range(6):
+			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
+		off += 48
+		off += 8
+
+	num_para = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
 	off += 4
-	numst = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "# style recs",numst,off,4,"<I")
-	off += 4
-	for i in range(numst):
+
+	for i in range(num_para):
+		off += 4 # style ID?
+		off += 4 # ???
 		stlen = 60
-		if ord(data[off])&0x10:
-			stlen += 4
-		if ord(data[off])&0x20:
-			stlen += 4
+#		if ord(data[off])&0x10:
+#			stlen += 4
+#		if ord(data[off])&0x20:
+#			stlen += 4
 		siter = add_iter (hd, "style %d"%i, "...",off,stlen,"txt")
 		txsm6style(hd,siter,data[off:off+stlen],off)
 		off += stlen
-	numch = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "# of chars",numch,off,4,"<I")
-	off += 4
-	for i in range(numch):
-		add_iter (hd, "Char %d"%i, "%s\t(%d, style %d)"%(data[off+4],struct.unpack("<I",data[off:off+4])[0],struct.unpack("<H",data[off+10:off+12])[0]),off,12,"txt")
-		off += 12
+		numch = struct.unpack('<I', data[off:off+4])[0]
+		txt_iter = add_iter(hd, "Text %d" % i, "# of chars: %d" % numch, off, 4, "<I")
+		off += 4
+		off += 4 # txt ID?
+		for k in range(numch):
+			add_iter (hd, "Char %d" % k, "%s\t(%#x, style %d)" % (unicode(data[off], "latin-1"),
+				struct.unpack("<H", data[off+8:off+10])[0],
+				struct.unpack("<H", data[off+10:off+12])[0]), off, 12, "txt", parent=txt_iter)
+			off += 12
 
 
 def txsm (hd,size,data):
@@ -1902,7 +1911,7 @@ def txsm (hd,size,data):
 
 	# ver16 -- add '40 06' parsing (seems to be different '40 06').
 	# 6,7,8 -- 3, 8bidi,9 -- 4
-	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c
+	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c; 17-21 -- d;
 
 	off = 0x24
 	if hd.version == 15:
@@ -1912,6 +1921,7 @@ def txsm (hd,size,data):
 	num_frames = struct.unpack("<I", data[off:off+4])[0]
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
+
 	for i in range(num_frames):
 		fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 4
@@ -1929,163 +1939,100 @@ def txsm (hd,size,data):
 	num_para = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
 	off += 4
-#	print "NUM PARA", num_para
-#	return
 
 	for _ in range(num_para):
-		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
+		para_iter = add_iter (hd, "Para ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 5 # !!! one more byte
 		numst = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "# style recs",numst,off,4,"<I")
+		add_iter (hd, "# style recs", numst, off, 4, "<I", parent=para_iter)
 		off += 4
-		off += 2 # len of text + 1
-		if hd.version < 8:
+
+		for sti in range(numst):
+			off += 1 # num of chars using the style
+			flag1 = ord(data[off])
 			off += 1
-		else:
-			off += 2 # ??
-		for i in range(numst-1):
-			if hd.version < 8:
-				off += 7
-			else:
-				off += 8
-		if hd.version > 12:
-			enc_len = struct.unpack('<I', data[off:off+4])[0]
-			off += 4
-			off += enc_len * 2 # skip "ENI" for now
-		elif hd.version > 9:
-			off += 4 # encoding?
+			flag2 = ord(data[off])
+			off += 1
+			stflags = 3 # no need for parsing, just visuals
+			if hd.version > 7:
+				flag3 = ord(data[off]) # seems to be 8 all the time
+				off += 1
+				stflags = 4
+			st_iter = add_iter (hd, "Style %#02x" % (sti * 2), "", off - stflags, stflags, "txt", parent=para_iter)
+			if flag2&1 == 1:
+				# Font
+				enctxt = "Unknown"
+				enc = struct.unpack("<H", data[off+2:off+4])[0]
+				if charsets.has_key(enc):
+					enctxt = charsets[enc]
+				add_iter (hd, "\tFont ID, Charset", "%s, %s (%02x)"%(d2hex(data[off:off+2]), enctxt, enc), off, 4, "txt", parent=st_iter)
+				off += 4
+			if flag2&2 == 2:
+				# Bold/Italic etc
+				add_iter (hd, "\tFont Style", d2hex(data[off:off+4]), off, 4, "txt", parent=st_iter)
+				off += 4
+			if flag2&4 == 4:
+				# Font Size
+				add_iter (hd, "\tFont Size", struct.unpack("<I",data[off:off+4])[0]*72/254000, off, 4, "txt", parent=st_iter)
+				off += 4
+			if flag2&8 == 8:
+				# assumption
+				add_iter (hd, "\tRotate", struct.unpack("<i",data[off:off+4])[0]/1000000, off, 4, "txt", parent=st_iter)
+				off += 4
+			if flag2&0x10 == 0x10:
+				# Offset X
+				add_iter (hd, "\tOffsetX", struct.unpack("<i",data[off:off+4])[0], off, 4, "txt", parent=st_iter)
+				off += 4
+			if flag2&0x20 == 0x20:
+				# Offset Y
+				add_iter (hd, "\tOffsetY", struct.unpack("<i",data[off:off+4])[0], off, 4, "txt", parent=st_iter)
+				off += 4
+			if flag2&0x40 == 0x40:
+				# Fild ID (font colour)
+				add_iter (hd, "\tFild ID", d2hex(data[off:off+4]), off, 4, "txt", parent=st_iter)
+				off += 4
+				if hd.version > 12:
+					off += 48 # ftil
+			if flag2&0x80 == 0x80:
+				# Outl ID (colour of the text outline)
+				add_iter (hd, "\tOutl ID", d2hex(data[off:off+4]), off, 4, "txt", parent=st_iter)
+				off += 4
+			if hd.version > 7:
+				if flag3&8 == 8:
+					if hd.version > 12:
+						tlen = struct.unpack("<I",data[off:off+4])[0]
+						txt = unicode(data[off+4:off+4+tlen*2],"utf16")
+						add_iter (hd, "\tEncoding", txt, off, 4+tlen*2, "txt", parent=st_iter)
+						off += 4 + tlen * 2
+					else:
+						enc = data[off:off+2]
+						add_iter (hd, "\tEncoding", enc, off, 4, "txt", parent=st_iter)
+						off += 4
+				if flag3&0x20 == 0x20:
+					flag = ord(data[off])
+					add_iter (hd, "\tFild/ftil flag", flag , off, 1, "<B", parent=st_iter)
+					if flag:
+						add_iter (hd, "\tFild ID", d2hex(data[off:off+4]), off, 4, "txt", parent=st_iter)
+						off += 4
+						if hd.version > 14:
+							off += 48 # ftil
+
 		chars_num = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "# of characters", chars_num, off, 4, "<I")
+		add_iter (hd, "# of characters", chars_num, off, 4, "<I", parent=para_iter)
 		off += 4
 		char_len = 4
 		if hd.version > 11:
 			char_len = 8
 		for i in range(chars_num):
-			add_iter (hd, "char %3x" % i, d2hex(data[off:off + char_len]), off, char_len,"txt", parent=st_iter)
+			add_iter (hd, "char %#02x" % i, d2hex(data[off:off + char_len]), off, char_len, "txt", parent=para_iter)
 			off += char_len
-			# FIXME! move here parsing of these bytes
 		# FIXME! I'm ignoring encoding...
 		if hd.version > 11:
 			off += 4 # chars_num value is repeated here
-		add_iter (hd, "text", unicode(data[off:off + chars_num], "latin-1"), off, chars_num, "txt")
+		add_iter (hd, "text", unicode(data[off:off + chars_num], "latin-1"), off, chars_num, "txt", parent=para_iter)
 		off += chars_num
 		off += 1
 
-	# FIXME! need to move flags parsing here
-	return
-
-	if num1 == 0:
-		if hd.version > 7:
-			off += 4
-			if hd.version > 8: #( txsm ver4+)
-				off += 2
-			if hd.version > 13:
-				off += 2
-		for i in range(6):
-			v = struct.unpack('<i', data[off:off+4])[0]
-			add_iter (hd, "v%d"%i,v,off,4,"<i")
-			off += 4
-		if hd.version < 8:
-			off += 8
-		num4 = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "num4", num4,off,4,"<I")
-		off += 4
-	add_iter (hd, "Stlt ID", "%08x"%(struct.unpack("<I",data[off:off+4])[0]),off,4,"txt")
-	# skip 1 byte
-	off += 5
-	if hd.version > 12 and num1 != 0: # skip one more byte for version 13
-		off += 1
-	num = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Num of recs (Style)", num,off,4,"<I")
-	off += 4
-	for i in range(num):
-		id = ord(data[off])
-		flag1 = ord(data[off+1])
-		flag2 = ord(data[off+2])
-		if hd.version > 7:
-			flag3 = ord(data[off+3]) # seems to be 8 all the time
-			add_iter (hd, "fl0 fl1 fl2 fl3 [%d]"%(i*2), "%02x %02x %02x %02x"%(id,flag1,flag2,flag3),off,4,"txt")
-			off += 4
-		else:
-			add_iter (hd, "fl0 fl1 fl2 [%d]"%(i*2), "%02x %02x %02x"%(id,flag1,flag2),off,3,"txt")
-			off += 3
-
-		if flag2&1 == 1:
-			# Font
-			enctxt = "Unknown"
-			enc = struct.unpack("<H",data[off+2:off+4])[0]
-			if enc in ms_charsets:
-				enctxt = ms_charsets[enc]
-			add_iter (hd, "\tFont ID, Charset", "%s, %s (%02x)"%(d2hex(data[off:off+2]),enctxt,enc),off,4,"txt")
-			off += 4
-		if flag2&2 == 2:
-			# Bold/Italic etc
-			add_iter (hd, "\tFont Style", d2hex(data[off:off+4]),off,4,"txt")
-			off += 4
-		if flag2&4 == 4:
-			# Font Size
-			add_iter (hd, "\tFont Size", struct.unpack("<I",data[off:off+4])[0]*72/254000,off,4,"txt")
-			off += 4
-		if flag2&8 == 8:
-			# assumption
-			add_iter (hd, "\tRotate", struct.unpack("<i",data[off:off+4])[0]/1000000,off,4,"txt")
-			off += 4
-		if flag2&0x10 == 0x10:
-			# Offset X
-			add_iter (hd, "\tOffsetX", struct.unpack("<i",data[off:off+4])[0],off,4,"txt")
-			off += 4
-		if flag2&0x20 == 0x20:
-			# Offset Y
-			add_iter (hd, "\tOffsetY", struct.unpack("<i",data[off:off+4])[0],off,4,"txt")
-			off += 4
-		if flag2&0x40 == 0x40:
-			# Fild ID (font colour)
-			add_iter (hd, "\tFild ID", d2hex(data[off:off+4]),off,4,"txt")
-			off += 4
-			if hd.version > 14:
-				off += 48 # ftil
-		if flag2&0x80 == 0x80:
-			# Outl ID (colour of the text outline)
-			add_iter (hd, "\tOutl ID", d2hex(data[off:off+4]),off,4,"txt")
-			off += 4
-
-		if hd.version > 7:
-			if flag3&8 == 8:
-				if hd.version > 12:
-					tlen = struct.unpack("<I",data[off:off+4])[0]
-					txt = unicode(data[off+4:off+4+tlen*2],"utf16")
-					add_iter (hd, "\tEncoding", txt,off,4+tlen*2,"txt")
-					off += 4 + tlen*2
-				else:
-					enc = data[off:off+2]
-					add_iter (hd, "\tEncoding", enc,off,2,"txt")
-					off += 4
-			if flag3&0x20 == 0x20:
-				flag = ord(data[off])
-				add_iter (hd, "\tFild/ftil flag",flag ,off,1,"<B")
-				if flag:
-					add_iter (hd, "\tFild ID", d2hex(data[off:off+4]),off,4,"txt")
-					off += 4
-					if hd.version > 14:
-						off += 48 # ftil
-
-	num2 = struct.unpack('<I', data[off:off+4])[0]
-	add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
-	off += 4
-
-	for i in range(num2):
-		if hd.version >= 12:
-			add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
-			off += 8
-		else:
-			add_iter (hd, "char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+4])),off,4,"txt")
-			off += 4
-	txtlen = num2
-	if hd.version >= 12:
-		txtlen = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "Text length", txtlen,off,4,"<I")
-		off += 4
-	add_iter (hd, "Text", "",off,txtlen,"txt")
 
 def stlt(data,page,parent):
 	# tmpcache -- probably will use to cross reference between stlt and fild/outl etc
