@@ -1831,6 +1831,8 @@ def txsm5 (hd,size,data):
 	add_iter (hd, "# of paragraphs", num_para, off, 2, "<H")
 	off += 2
 	for j in range(num_para):
+		styleId = struct.unpack('<H', data[off:off+2])[0]
+		add_iter (hd, "Style Id",styleId,off,2,"<H")
 		off += 2
 		numst = struct.unpack('<H', data[off:off+2])[0]
 		add_iter (hd, "# style recs",numst,off,2,"<H")
