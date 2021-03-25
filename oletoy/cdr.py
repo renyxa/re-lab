@@ -352,10 +352,16 @@ def arrw (hd, size, data):
 
 def bbox (hd,size,data):
 	offset = 0
-	for i in range(2):
-		varX = struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]
-		varY = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
-		add_iter (hd,"X%u/Y%u"%(i,i),"%u/%u mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
+	if hd.version < 6:
+		for i in range(2):
+			varX = struct.unpack('<h', data[offset+i*4:offset+2+i*4])[0]
+			varY = struct.unpack('<h', data[offset+2+i*4:offset+4+i*4])[0]
+			add_iter (hd,"X%u/Y%u"%(i,i),"%g/%g in"%(round(varX/1000.0,2),round(varY/1000.0,2)),offset+i*4,4,"txt")
+	else:
+		for i in range(2):
+			varX = struct.unpack('<l', data[offset+i*8:offset+4+i*8])[0]
+			varY = struct.unpack('<l', data[offset+4+i*8:offset+8+i*8])[0]
+			add_iter (hd,"X%u/Y%u"%(i,i),"%g/%g mm"%(round(varX/10000.0,2),round(varY/10000.0,2)),offset+i*8,8,"txt")
 
 def obbx (hd,size,data):
 	offset = 0
@@ -1849,7 +1855,6 @@ def txsm6style(hd,siter,data,offset):
 		add_iter(hd,"Outl ID","%08x"%(struct.unpack("<I",data[0x3c+shift:0x40+shift])[0]),offset+0x3c+shift,4,"<I",0,0,siter)
 
 
-
 def txsm6 (hd,size,data):
 	if round(hd.version) == 5:
 		txsm5 (hd,size,data)
@@ -1881,15 +1886,17 @@ def txsm6 (hd,size,data):
 
 	for i in range(num_para):
 		off += 4 # style ID?
-		off += 4 # ???
-		stlen = 60
-#		if ord(data[off])&0x10:
-#			stlen += 4
-#		if ord(data[off])&0x20:
-#			stlen += 4
-		siter = add_iter (hd, "style %d"%i, "...",off,stlen,"txt")
-		txsm6style(hd,siter,data[off:off+stlen],off)
-		off += stlen
+		numst = struct.unpack('<I', data[off:off+4])[0]
+		off += 4
+		for k in range(numst):
+			stlen = 60
+			if ord(data[off])&0x10:
+				stlen += 4
+			if ord(data[off])&0x20:
+				stlen += 4
+			siter = add_iter (hd, "style %d"%i, "...", off, stlen, "txt")
+			txsm6style(hd, siter, data[off:off+stlen], off)
+			off += stlen
 		numch = struct.unpack('<I', data[off:off+4])[0]
 		txt_iter = add_iter(hd, "Text %d" % i, "# of chars: %d" % numch, off, 4, "<I")
 		off += 4
