@@ -1873,21 +1873,34 @@ def txsm5style(hd,siter,data,offset):
 		add_iter(hd,"Outl ID","%08x"%(struct.unpack("<I",data[18:22])[0]),offset+18,4,"<I",0,0,siter)
 
 def txsm5 (hd,size,data):
-	off = 10
-	add_iter (hd, "Style ID","%08x"%(struct.unpack('<H', data[off:off+2])[0]),off,2,"<H")
+	off = 2
+	num_frames = struct.unpack("<H", data[off:off+2])[0]
+	add_iter (hd, "Num Frames", num_frames, off, 2, "<H")
 	off += 2
-	numst = struct.unpack('<H', data[off:off+2])[0]
-	add_iter (hd, "# style recs",numst,off,2,"<H")
+	for i in range(num_frames):
+		add_iter (hd, "Frame ID", d2hex(data[off:off+2]), off, 2, "<H")
+		off += 4 # possibly 2 bytes of flags that will then extend it with frame styles, so, length can be variable
+	num_para = struct.unpack('<H', data[off:off+2])[0]
+	add_iter (hd, "# of paragraphs", num_para, off, 2, "<H")
 	off += 2
-	for i in range(numst):
-		siter = add_iter (hd, "style %d"%i, "...",off,36,"txt")
-		txsm5style(hd,siter,data[off:off+36],off)
-		off += 36
-	numch = struct.unpack('<H', data[off:off+2])[0]
-	off += 2
-	for i in range(numch):
-		add_iter (hd, "Char %d"%i, "%s\t(%d, %d\tstyle %d)"%(data[off+4],struct.unpack("<H",data[off:off+2])[0],struct.unpack("<H",data[off+2:off+4])[0],struct.unpack("<H",data[off+6:off+8])[0]/16),off,8,"txt")
-		off += 8
+	for j in range(num_para):
+		off += 2
+		numst = struct.unpack('<H', data[off:off+2])[0]
+		add_iter (hd, "# style recs",numst,off,2,"<H")
+		off += 2
+		for i in range(numst):
+			siter = add_iter (hd, "style %d"%i, "...",off,36,"txt")
+			txsm5style(hd,siter,data[off:off+36],off)
+			off += 36
+		numch = struct.unpack('<H', data[off:off+2])[0]
+		txt_iter = add_iter(hd, "Text %d" % j, "# of chars: %d" % numch, off, 2, "<H")
+		off += 2
+		for i in range(numch):
+			add_iter (hd, "Char %d"%i,
+				"%s\t(%d, %d\tstyle %d)"%(data[off+4] ,struct.unpack("<H",data[off:off+2])[0],
+				struct.unpack("<H",data[off+2:off+4])[0],
+				struct.unpack("<H",data[off+6:off+8])[0]/16),off,8,"txt", parent=txt_iter)
+			off += 8
 
 def txsm6style(hd,siter,data,offset):
 	flags = {0x01:"Font ID",0x02:"Text decoration",0x04:"Font size",0x10:"Fill",0x20:"Outline"}
