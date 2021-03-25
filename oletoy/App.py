@@ -39,7 +39,8 @@ import publisher1
 from utils import *
 
 class Page:
-	def __init__(self):
+	def __init__(self, app):
+		self.app = app
 		self.parent = None
 		self.type = ''
 		self.subtype = None # used by IWA
@@ -58,7 +59,7 @@ class Page:
 		self.wdoc = None  # need to store 'WordDocument' stream
 		self.wtable = None # need to store 'xTable' stream of ms-doc; use for CDRs map of dat-files IDs to names
 		self.wdata = None # need to store 'Data' stream; use for CDR to store iters of "dat" files
-		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
+		self.model, self.view, self.scrolled = tree.make_view(self.app.fontsize) #None, None, None
 		self.win = None # for preview
 		self.debug = 0
 		self.appdoc = None
@@ -130,7 +131,19 @@ class Page:
 		if buf[:4] == "\x12\x90\xa8\x7f":
 			nki.open(self,buf,parent)
 			return 0
-		
+
+#		This one should be before CDR to properly handle v17
+		if parent != None:
+			parname = self.model.get_value(parent,0)
+			if parname == "[content]/dataFileList.dat":
+				print "Found XMLish CDR version"
+				self.wtable = self.model.get_value(parent,3).split("\n")
+			elif "[content/" in parname and ".dat" in parname:
+				if self.wdata == None:
+					self.wdata = {}
+				p = parname.rfind("/")
+				self.wdata[parname[p+1:]] = parent
+
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
 			print ('Probably CDR')
@@ -198,19 +211,19 @@ class Page:
 			print ("Probably REX2")
 			rx2.open(buf,self, parent)
 			return 0
-		
+
 		if buf[0:20] == "Kaydara FBX Binary  ":
 			self.type = "FBX"
 			print ("Probably FBX")
 			fbx.open(buf,self, parent)
 			return 0
-		
+
 		if buf[4:19] == "Standard Jet DB" or buf[4:19] == "Standard ACE DB":
 			self.type = "MDB"
 			print ("Probably MDB")
 			mdb.parse (buf,self, parent)
 			return 0
-		
+
 		if buf[0:4] == "\x50\x4b\x03\x04":
 			self.type = "PKZIP"
 			print ("Probably PK-ZIP")
@@ -346,7 +359,7 @@ class Page:
 				print ("Failed after attempt to parse as QXP2...")
 
 		if parent == None:
-			parent = add_pgiter(self, "File", "file","unknown",buf) 
+			parent = add_pgiter(self, "File", "file","unknown",buf)
 
 		# Likely false detection for DRW
 		if buf[0:3] == "\x01\xff\x02":

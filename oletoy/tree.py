@@ -56,7 +56,7 @@ def on_drag_data_received(treeview, drag_context, x, y, selection_data, info, ev
 	else:
 		drag_context.finish(success=False, del_=False, time=eventtime)
 
-def make_view():
+def make_view(fontsize=10):
 	# Create the model.
 	model = gtk.TreeStore(
 	gobject.TYPE_STRING,    # Name
@@ -70,7 +70,7 @@ def make_view():
 	gobject.TYPE_PYOBJECT,  # Command
 	gobject.TYPE_STRING     # Tooltip
 	)
-    
+
 	# Create the view itself.
 	view = gtk.TreeView(model)
 	view.set_reorderable(True)
@@ -84,19 +84,19 @@ def make_view():
 	view.set_enable_tree_lines(True)
 	cell = gtk.CellRendererText()
 	cell.set_property('family-set',True)
-	cell.set_property('font','monospace 10')
+	cell.set_property('font','monospace %s' % fontsize)
 
 	cell1 = gtk.CellRendererText()
 	cell1.set_property('family-set',True)
-	cell1.set_property('font','monospace 10')
+	cell1.set_property('font','monospace %s' % fontsize)
 	cell1.set_property('xalign',1)
 
 	cell2 = gtk.CellRendererText()
 	cell2.set_property('family-set',True)
-	cell2.set_property('font','monospace 8')
+	cell2.set_property('font','monospace %s' % int(fontsize * .8))
 
 #	renderer.family="monospace"
-	column0 = gtk.TreeViewColumn('Record', cell, text=0,background=5)
+	column0 = gtk.TreeViewColumn('Record', cell, text=0, background=5)
 	column1 = gtk.TreeViewColumn('Type', cell1, text=7)
 	column2 = gtk.TreeViewColumn('Path', cell2, text=6)
 	column3 = gtk.TreeViewColumn('Length', cell, text=2)

@@ -72,7 +72,8 @@ class HexView():
 		# connect signals and call some init functions
 		self.hv.set_can_focus(True)
 		self.hv.set_app_paintable(True)
-		self.hv.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+		self.hv.set_events(gtk.gdk.SCROLL_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
+		self.hv.connect("scroll-event", self.on_scroll)
 		self.hv.connect("button_press_event",self.on_button_press)
 		self.hv.connect("button_release_event",self.on_button_release)
 		self.hv.connect ("key-press-event", self.on_key_press)
@@ -113,8 +114,6 @@ class HexView():
 		for i in range(self.lines+1):
 			self.hvlines.append("")
 
-
-
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"
 		self.fontsize = 14
@@ -127,10 +126,7 @@ class HexView():
 		self.txtcurclr = 0,0,1
 		self.mttclr = 0.9,0.95,0.95,0.85
 		self.mttxtclr = 0.5,0,0
-		try:
-			execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
-		except:
-			pass
+		self.scr_speed = .2
 
 	def set_dxdy(self):
 		# calculate character extents
@@ -138,11 +134,11 @@ class HexView():
 		ctx.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 		ctx.set_font_size(self.fontsize)
 		ctx.set_line_width(1)
-		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
+		(xt, yt, wt, ht, dx, dy) = ctx.text_extents("O")
 		x,y,width,height = self.hv.allocation
-		self.tdx = int(dx)
-		self.tht = int(ht+6)
-		self.hbox1.set_size_request(self.tdx*9,0)
+		self.tdx = dx
+		self.tht = int(self.fontsize * 1.2)
+		self.hbox1.set_size_request(int(self.tdx*9), 0)
 		self.hbox3.set_size_request(0,self.tht+4)
 		self.vadj.upper = self.lines-self.numtl+2
 		self.vadj.value = self.offnum
@@ -172,6 +168,14 @@ class HexView():
 			return len(self.data)%16
 		else:
 			return -1
+
+	def on_scroll(self, w, e):
+		if e.direction == gtk.gdk.SCROLL_UP:
+			self.vadj.set_value(max(0, self.vadj.get_value() - self.tht * self.scr_speed))
+		elif e.direction == gtk.gdk.SCROLL_DOWN:
+			self.vadj.set_value(min(self.vadj.get_upper(), self.vadj.get_value() + self.tht * self.scr_speed))
+		return True
+
 
 	def okp_fledit(self,event):
 		if event.state == gtk.gdk.CONTROL_MASK:
@@ -444,6 +448,35 @@ class HexView():
 
 	def on_key_press (self, view, event):
 		# handle keyboard input
+		if event.keyval in (79, 81, 111, 113):
+			self.prer = self.curr
+			self.prec = self.curc
+			rep = 4
+			if event.keyval in (79, 111):
+				rep = 8
+			for _ in range(rep):
+				if event.state == gtk.gdk.SHIFT_MASK:
+					self.okp_left(None)
+				else:
+					self.okp_right(None)
+			if event.state == gtk.gdk.SHIFT_MASK:
+				self.prer, self.prec, self.curr, self.curc = self.curr, self.curc, self.prer, self.prec
+			self.sel = self.prer, self.prec, self.curr, self.curc
+			self.mode = ""
+			y = (self.curr - self.offnum + 1.5) * self.tht # +1
+			x = (self.curc * 3 + 11.5) * self.tdx
+			s = self.curc - self.prec
+			if self.prer != self.curr:
+				s = (self.curr - self.prer) * 16 + self.curc - self.prec
+			if self.curr == self.lines:
+				s += len(data)%16
+			self.mtt = x,y,s
+			self.parent.calc_status(self.data[self.prer * 16 + self.prec:self.curr * 16 + self.curc], s)
+			if event.state == gtk.gdk.SHIFT_MASK:
+				self.prer, self.prec, self.curr, self.curc = self.curr, self.curc, self.prer, self.prec
+			self.expose(None, event)
+			self.hv.grab_focus()
+			return
 		flag = 0
 		self.exposed = 0
 		self.mode = ""
@@ -539,7 +572,7 @@ class HexView():
 				self.exposed = 1
 				y = (r2-self.offnum+1.5)*self.tht # +1
 				x = (self.curc*3+11.5)*self.tdx
-				
+
 				s = c2 - c1
 				if r1 != r2:
 					s = (r2-r1)*16 + c2 - c1
@@ -708,7 +741,7 @@ class HexView():
 			self.set_dxdy()
 		self.numtl = min(int((height - self.tht-4)/self.tht)+1,self.lines+1)
 
-		self.hbox2.set_size_request(max(width-self.tdx*(10+16*3),0),0)
+		self.hbox2.set_size_request(max(width-int(self.tdx*(10+16*3)),0),0)
 		if self.numtl >= self.lines:
 			self.vs.hide()
 		else:
@@ -738,13 +771,16 @@ class HexView():
 			ctx.stroke()
 
 #  Selection
-			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl) or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl) or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
+			if self.sel and ((self.sel[0] >= self.offnum and self.sel[0] <= self.offnum + self.numtl)
+			 or (self.sel[2] >= self.offnum and self.sel[2] <= self.offnum + self.numtl)
+			  or (self.sel[0] < self.offnum and self.sel[2] > self.offnum+self.numtl)):
 				self.draw_selection(ctx,self.sel[0],self.sel[1],self.sel[2],self.sel[3],self.selclr)
 
 # Highlights
 			for i in self.hl:
 				r0,c0,r1,c1 = self.ol2quad(self.hl[i][0],self.hl[i][1])
-				if r0 != -1 and ((r0 >= self.offnum and r0 <= self.offnum + self.numtl) or (r1 >= self.offnum and r1 <= self.offnum + self.numtl) or (r0 < self.offnum and r1 > self.offnum+self.numtl)):
+				if r0 != -1 and ((r0 >= self.offnum and r0 <= self.offnum + self.numtl)
+				 or (r1 >= self.offnum and r1 <= self.offnum + self.numtl) or (r0 < self.offnum and r1 > self.offnum+self.numtl)):
 					self.draw_selection(ctx,r0,c0,r1,c1,(self.hl[i][2],self.hl[i][3],self.hl[i][4],self.hl[i][5]))
 
 #hdr
@@ -766,8 +802,8 @@ class HexView():
 			ctx.move_to(self.tdx*(11+16*3),self.tht)
 			ctx.show_text(haddr)
 			ctx.set_source_rgb(self.lineclr[0],self.lineclr[1],self.lineclr[2])
-			
-#addr 
+
+#addr
 			for i in range(min(self.lines-self.offnum,self.numtl)):
 				ctx.move_to(0,(i+2)*self.tht+4)
 				if i == self.curr-self.offnum:
@@ -777,9 +813,9 @@ class HexView():
 # hex/asc  part
 			for i in range(min(self.lines-self.offnum,self.numtl)):
 				ctx.set_source_rgb(0,0,0)
-				hex,asc = self.get_string(i+self.offnum)
+				hx,asc = self.get_string(i+self.offnum)
 				ctx.move_to(self.tdx*10,(i+2)*self.tht+4)
-				ctx.show_text(hex)
+				ctx.show_text(hx)
 				ctx.move_to(self.tdx*(10+1+16*3),self.tht*(i+2)+4)
 				ctx.show_text(asc)
 
@@ -798,7 +834,7 @@ class HexView():
 		ctx.move_to(self.tdx*(10+self.curc*3),self.tht+1.5)
 		ctx.line_to(self.tdx*(12+self.curc*3),self.tht+1.5)
 		ctx.stroke()
-		
+
 		#draw haddr
 		if self.global_off != None:
 			haddr = "%02x %04x"%(self.curr*16+self.curc,self.global_off+self.curr*16+self.curc)
@@ -810,7 +846,7 @@ class HexView():
 		#clear old and new hex and asc
 		if self.prer-self.offnum > -1:
 			ctx.set_source_rgb(1,1,1)
-			
+
 			if self.sel:
 				if self.sel[0] == self.sel[2]:
 					if self.prer == self.sel[0] and self.prec >= self.sel[1] and self.prec < self.sel[3]:

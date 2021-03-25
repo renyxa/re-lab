@@ -64,7 +64,7 @@ def pgiter(page, name, ftype, stype, data, iter1,coltype=None, vprmsmp = None):
 		page.model.set_value(iter1,7,coltype)
 	if vprmsmp !=None:
 		page.model.set_value(iter1,8,vprmsmp)
-	
+
 	page.model.set_value(iter1,6,page.model.get_string_from_iter(iter1))
 
 def add_pgiter (page, name, ftype, stype, data, parent = None, coltype = None, vprmsmp = None):
@@ -219,7 +219,7 @@ def graph_expose (da,event,data,hd):
 #			ctx.move_to(x*2,256-y1)
 		ctx.line_to(x+0.5,256.5-y1)
 		y = y1
-			
+
 	ctx.stroke()
 
 
