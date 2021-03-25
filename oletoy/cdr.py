@@ -1940,6 +1940,7 @@ def txsm6 (hd,size,data):
 	for i in range(num_para):
 		off += 4 # style ID?
 		numst = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "# style recs",numst,off,4,"<H")
 		off += 4
 		for k in range(numst):
 			stlen = 60
@@ -1947,7 +1948,7 @@ def txsm6 (hd,size,data):
 				stlen += 4
 			if ord(data[off])&0x20:
 				stlen += 4
-			siter = add_iter (hd, "style %d"%i, "...", off, stlen, "txt")
+			siter = add_iter (hd, "style %d"%k, "...", off, stlen, "txt")
 			txsm6style(hd, siter, data[off:off+stlen], off)
 			off += stlen
 		numch = struct.unpack('<I', data[off:off+4])[0]
@@ -1957,7 +1958,7 @@ def txsm6 (hd,size,data):
 		for k in range(numch):
 			add_iter (hd, "Char %d" % k, "%s\t(%#x, style %d)" % (unicode(data[off], "latin-1"),
 				struct.unpack("<H", data[off+8:off+10])[0],
-				struct.unpack("<H", data[off+10:off+12])[0]), off, 12, "txt", parent=txt_iter)
+				struct.unpack("<H", data[off+6:off+8])[0]), off, 12, "txt", parent=txt_iter)
 			off += 12
 
 
