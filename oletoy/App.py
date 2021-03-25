@@ -31,7 +31,8 @@ import lit
 from utils import *
 
 class Page:
-	def __init__(self):
+	def __init__(self, app):
+		self.app = app
 		self.parent = None
 		self.type = ''
 		self.fname = ''
@@ -48,7 +49,7 @@ class Page:
 		self.wdoc = None  # need to store 'WordDocument' stream
 		self.wtable = None # need to store 'xTable' stream of ms-doc; use for CDRs map of dat-files IDs to names
 		self.wdata = None # need to store 'Data' stream; use for CDR to store iters of "dat" files
-		self.model, self.view, self.scrolled = tree.make_view() #None, None, None
+		self.model, self.view, self.scrolled = tree.make_view(self.app.fontsize) #None, None, None
 		self.win = None # for preview
 		self.debug = 0
 		self.appdoc = None
@@ -122,7 +123,7 @@ class Page:
 					self.wdata = {}
 				p = parname.rfind("/")
 				self.wdata[parname[p+1:]] = parent
-			
+
 		if buf[0:4] == "RIFF" and buf[8:11].lower() == "cdr":
 			self.type = "CDR%x"%(ord(buf[11])-0x30)
 			print 'Probably CDR',
@@ -190,19 +191,19 @@ class Page:
 			print "Probably REX2"
 			rx2.open(buf,self, parent)
 			return 0
-		
+
 		if buf[0:20] == "Kaydara FBX Binary  ":
 			self.type = "FBX"
 			print "Probably FBX"
 			fbx.open(buf,self, parent)
 			return 0
-		
+
 		if buf[4:19] == "Standard Jet DB" or buf[4:19] == "Standard ACE DB":
 			self.type = "MDB"
 			print "Probably MDB"
 			mdb.parse (buf,self, parent)
 			return 0
-		
+
 		if buf[0:4] == "\x50\x4b\x03\x04":
 			self.type = "PKZIP"
 			print "Probably PK-ZIP"
@@ -282,10 +283,10 @@ class Page:
 			print('Probably Apple iWork file')
 			iwa.open(buf, self, parent)
 			return 0
-			
+
 
 		if parent == None:
-			parent = add_pgiter(self, "File", "file","unknown",buf) 
+			parent = add_pgiter(self, "File", "file","unknown",buf)
 
 		# Likely false detection for DRW
 		if buf[0:3] == "\x01\xff\x02":

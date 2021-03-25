@@ -38,12 +38,12 @@ class SelectWindow(gtk.Window):
 		gtk.Window.__init__(self)
 		self.mainapp = mainapp
 		self.set_title("OLE Toy: Select data to compare")
-		
+
 		table = gtk.Table(3, 8, False)
 
 		left_lbl = gtk.Label("Left Panel")
 		right_lbl = gtk.Label("Right Panel")
-		
+
 		tab_lbl = gtk.Label("File:")
 		tab_lbl.set_alignment(xalign=0.0, yalign=0.5)
 		self.ltab_cb = gtk.ComboBoxEntry()
@@ -231,12 +231,12 @@ class SelectWindow(gtk.Window):
 			m2, iter2 = s2.get_selected()
 			if iter2 == None:
 				iter2 = doc2.model.get_iter_first()
-			
+
 			self.lpath_cb.set_active_iter(iter1)
 			self.rpath_cb.set_active_iter(iter2)
 			self.lpath_entry.set_text(m1.get_string_from_iter(iter1))
 			self.rpath_entry.set_text(m2.get_string_from_iter(iter2))
-			
+
 			llen = m1.get_value(iter1,2)
 			rlen = m2.get_value(iter2,2)
 			lsadj = gtk.Adjustment(0, 0, llen-1, 1, 256, 0)
@@ -352,7 +352,7 @@ class DiffWindow(gtk.Window):
 		if fname:
 			f = open(fname,'w')
 			f.write("<!DOCTYPE html><html><body>")
-			f.write("<head>\n<meta charset='utf-8'>\n") 
+			f.write("<head>\n<meta charset='utf-8'>\n")
 			f.write("<style type='text/css'>\ntr.top1 td { border-top: 1px solid black; }")
 			f.write("tr.title td { border-bottom: 3px solid black; }\n")
 			f.write(".mid { border-left: 1px solid black; border-right: 1px solid black;}\n")
@@ -374,7 +374,7 @@ class DiffWindow(gtk.Window):
 				ta,tb,tag = i
 				if tag == 'delete':
 					hexa = d2hex(ta, " ", 16).split("\n")
-					asca = d2asc(ta,16).split("\n") 
+					asca = d2asc(ta,16).split("\n")
 					clr = "128,192,255"
 					clrsp="<span style='background-color: rgba(%s,0.3);'>"%clr
 					for j in range(len(hexa)):
@@ -388,7 +388,7 @@ class DiffWindow(gtk.Window):
 						loff += len(asca[j])
 				if tag == 'insert':
 					hexb = d2hex(tb, " ", 16).split("\n")
-					ascb = d2asc(tb,16).split("\n") 
+					ascb = d2asc(tb,16).split("\n")
 					clr = "128,255,192"
 					clrsp="<span style='background-color: rgba(%s,0.3);'>"%clr
 					for j in range(len(hexb)):
@@ -402,7 +402,7 @@ class DiffWindow(gtk.Window):
 						addr += 1
 				if tag == 'equal':
 					hexa = d2hex(ta, " ", 16).split("\n")
-					asca = d2asc(ta,16).split("\n") 
+					asca = d2asc(ta,16).split("\n")
 					for j in range(len(hexa)):
 						hpad = "&nbsp;"*(47-len(hexa[j]))
 						apad = "&nbsp;"*(16-len(asca[j]))
@@ -415,9 +415,9 @@ class DiffWindow(gtk.Window):
 						addr += 1
 				if tag == 'replace':
 					hexa = d2hex(ta, " ", 16).split("\n")
-					asca = d2asc(ta,16).split("\n") 
+					asca = d2asc(ta,16).split("\n")
 					hexb = d2hex(tb, " ", 16).split("\n")
-					ascb = d2asc(tb,16).split("\n") 
+					ascb = d2asc(tb,16).split("\n")
 					clr = "255,192,128"
 					clrsp="<span style='background-color: rgba(%s,0.3);'>"%clr
 					for j in range(min(len(hexa),len(hexb))):
@@ -551,7 +551,7 @@ class DiffWindow(gtk.Window):
 			(xt, yt, wt, ht, dx, dy) = ctx.text_extents("o")
 			wt = int(dx)
 			ht = int(ht+4)
-			
+
 		# clear everything
 			ctx.set_source_rgb(0.95,0.95,0.95)
 			ctx.rectangle(0,0,width,height)
@@ -563,7 +563,7 @@ class DiffWindow(gtk.Window):
 				ta,tb,tag = i
 				if tag == 'delete':
 					hexa = d2hex(ta, " ", 16).split("\n")
-					asca = d2asc(ta,16).split("\n") 
+					asca = d2asc(ta,16).split("\n")
 					r,g,b = 0.5,0.75,1
 					for j in range(len(hexa)):
 						ctx.set_source_rgb(r,g,b)
@@ -580,7 +580,7 @@ class DiffWindow(gtk.Window):
 						loff += len(asca[j])
 				if tag == 'insert':
 					hexb = d2hex(tb, " ", 16).split("\n")
-					ascb = d2asc(tb,16).split("\n") 
+					ascb = d2asc(tb,16).split("\n")
 					r,g,b = 0.5,1,0.75
 					for j in range(len(hexb)):
 						ctx.set_source_rgb(r,g,b)
@@ -597,7 +597,7 @@ class DiffWindow(gtk.Window):
 						addr += 1
 				if tag == 'equal':
 					hexa = d2hex(ta, " ", 16).split("\n")
-					asca = d2asc(ta,16).split("\n") 
+					asca = d2asc(ta,16).split("\n")
 					for j in range(len(hexa)):
 						ctx.set_source_rgb(0,0,0)
 						ctx.move_to(0,ht*addr)
@@ -617,9 +617,9 @@ class DiffWindow(gtk.Window):
 						addr += 1
 				if tag == 'replace':
 					hexa = d2hex(ta, " ", 16).split("\n")
-					asca = d2asc(ta,16).split("\n") 
+					asca = d2asc(ta,16).split("\n")
 					hexb = d2hex(tb, " ", 16).split("\n")
-					ascb = d2asc(tb,16).split("\n") 
+					ascb = d2asc(tb,16).split("\n")
 					r,g,b = 1,0.75,0.5
 					for j in range(min(len(hexa),len(hexb))):
 						ctx.set_source_rgb(r,g,b)
@@ -673,7 +673,7 @@ class DiffWindow(gtk.Window):
 							ctx.show_text(ascb[j+la])
 							roff += len(ascb[j+la])
 							addr += 1
-							
+
 			ctx.set_source_rgb(0,0,0)
 			ctx.move_to(int(wt*6.5)+0.5,0)
 			ctx.line_to(int(wt*6.5)+0.5,height)
@@ -805,7 +805,7 @@ def make_cli_view(cli):
 	treescr.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 	treescr.add(view)
 	treescr.set_size_request(150,-1)
-	
+
 	target_entries = [('text/plain', 0, 0)]
 
 	view.enable_model_drag_source(
@@ -834,7 +834,7 @@ class CliWindow(gtk.Window):
 		s.set_size_request(660,400)
 		s.add(tv)
 		s.show_all()
-		
+
 		self.clinb = gtk.Notebook()
 		frame = gtk.Frame("Snippets")
 		self.snview,self.snmodel,self.scroll = make_cli_view(self)
@@ -1075,7 +1075,7 @@ class CliWindow(gtk.Window):
 			s.set_size_request(660,400)
 			s.add(tv)
 			s.show_all()
-	
+
 			tab_lbl = TabLabel(pname)
 			tab_lbl.connect("close-clicked", tab_lbl.on_tab_close_clicked, self.clinb, s, self.scripts, "script")
 			self.clinb.append_page(s, tab_lbl)
@@ -1316,7 +1316,7 @@ def compare (cmd, entry, page1, page2):
 				page1.search.set_value(s_iter,0,model1.get_string_from_iter(iter1))
 				page1.search.set_value(s_iter,1,0)
 				page1.search.set_value(s_iter,2,"Size mismatch (%s)"%(model1.get_value(iter1,0)))
-				
+
 	page1.show_search("Diff %s"%carg)
 
 def parse (cmd, entry, page):
@@ -1329,7 +1329,7 @@ def parse (cmd, entry, page):
 			chtype = cmd[1:]
 			chaddr = "0"
 		print "Command: ",chtype,chaddr
-		
+
 		treeSelection = page.view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		if iter1 == None:
@@ -1359,7 +1359,7 @@ def parse (cmd, entry, page):
 			yep.parse (page,buf[int(chaddr,16):],iter1)
 		elif "yep0" == chtype.lower():
 			yep.parse (page,buf[int(chaddr,16):],iter1,0)
-			
+
 		elif "emf" == chtype.lower():
 			pt = page.type
 			page.type = "EMF"

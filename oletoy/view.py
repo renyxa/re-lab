@@ -147,7 +147,7 @@ class ApplicationMainWindow(gtk.Window):
 			0, 1,					  0, 1,
 			gtk.EXPAND | gtk.FILL,	 0,
 			0,						 0);
-		
+
 		self.notebook = gtk.Notebook()
 		self.notebook.connect("page-reordered", self.on_page_reordered)
 		self.notebook.set_tab_pos(gtk.POS_BOTTOM)
@@ -167,7 +167,7 @@ class ApplicationMainWindow(gtk.Window):
 		self.label = gtk.Label()
 		self.label.set_use_markup(True)
 		self.statusbar.pack_start(self.label, True, True, 2)
-		
+
 		table.attach(self.statusbar,
 			# X direction		   Y direction
 			0, 1,				   2, 3,
@@ -217,11 +217,12 @@ class ApplicationMainWindow(gtk.Window):
 	def init_config(self): # redefine UI/behaviour options from file
 		self.font = "Monospace"
 		self.fontsize = 14
+		self.hv_fontsize = 14
 		self.gsfname = 'libgsf-1.so'
 		self.snipsdir = os.path.join(os.path.expanduser("~"), ".oletoy")
 
 		try:
-			execfile("oletoy.cfg")
+			execfile(os.path.expanduser("~/.oletoy/oletoy.cfg"))
 			print 'Config loaded...'
 		except:
 			pass
@@ -402,7 +403,7 @@ class ApplicationMainWindow(gtk.Window):
 	  <span bgcolor='#80FFC0'>green</span> for bytes to add on the left side to match with the right side\n\
 	  <span bgcolor='#FFC080'>orange</span> for bytes that need to be interchanged between two\n\n\
 	There are 'minimap' on the left edge and hex offsets of the first byte of each line\n\
-	for both left and right panels." 
+	for both left and right panels."
 
 		pl = widget.create_pango_layout("")
 		pl.set_markup(mytxt)
@@ -475,7 +476,7 @@ class ApplicationMainWindow(gtk.Window):
 			self.options_bup = abs(self.options_bup-1)
 			if self.options_bup == 1:
 				self.activate_bup("")
-			
+
 		if self.statbuffer != "":
 			self.calc_status(self.statbuffer,len(self.statbuffer))
 
@@ -546,7 +547,7 @@ class ApplicationMainWindow(gtk.Window):
 			be_chkb = gtk.CheckButton("BE")
 			txt_chkb = gtk.CheckButton("Txt")
 			bup_chkb = gtk.CheckButton("BUP")
-			
+
 			if self.options_le:
 				le_chkb.set_active(True)
 			if self.options_be:
@@ -566,7 +567,7 @@ class ApplicationMainWindow(gtk.Window):
 			hbox0.pack_start(be_chkb)
 			hbox0.pack_start(txt_chkb)
 			hbox0.pack_start(bup_chkb)
-			
+
 			hbox1 = gtk.HBox()
 			div_lbl = gtk.Label("Div")
 			div_entry = gtk.Entry()
@@ -574,7 +575,7 @@ class ApplicationMainWindow(gtk.Window):
 			div_entry.set_text("%.2f"%self.options_div)
 			hbox1.pack_start(div_lbl)
 			hbox1.pack_start(div_entry)
-	
+
 			hbox2 = gtk.HBox()
 			enc_lbl = gtk.Label("Enc")
 			enc_entry = gtk.Entry()
@@ -879,7 +880,7 @@ class ApplicationMainWindow(gtk.Window):
 
 	def activate_config(self, action):
 		 return
- 
+
 	def update_statusbar(self, buffer):
 		try:
 			self.label.set_markup("%s"%buffer)
@@ -1158,7 +1159,7 @@ class ApplicationMainWindow(gtk.Window):
 							self.das[pn].view.row_activated(mpath,self.das[pn].view.get_column(0))
 						except:
 							print "No such path"
-						 
+
 				elif model.iter_n_children(iter1)>0:
 					intPath = model.get_path(iter1)
 					view.expand_row(intPath,False)
@@ -1214,11 +1215,11 @@ class ApplicationMainWindow(gtk.Window):
 		if ftype == "YEP":
 			if dlen == 1:
 				txt += key2txt(ord(buf),midi.pitches,"")
-		
+
 		if self.offlen and self.options_bup == 1:
 			bup = bup2(d2hex(buf),self.offlen)
 			txt = "%s %s"%(bup[0],bup[1])
-			
+
 		if dlen == 2:
 			if self.options_le == 1:
 				txt += "LE: %s "%((struct.unpack("<h",buf)[0])/self.options_div)
@@ -1310,7 +1311,7 @@ class ApplicationMainWindow(gtk.Window):
 		treeSelection = self.das[pn].view.get_selection()
 		model, iter1 = treeSelection.get_selected()
 		hd = self.das[pn].hd
-		value = model.get_value(iter1,3) 
+		value = model.get_value(iter1,3)
 		hditer = hd.model.get_iter(path)
 
 		offset = hd.model.get_value(hditer,2)
@@ -1340,7 +1341,7 @@ class ApplicationMainWindow(gtk.Window):
 			for i in range(model.iter_n_children(piter)):
 				nvalue += model.get_value(model.iter_nth_child(piter,i),3)
 			model.set_value(piter,3,nvalue)
-			
+
 		self.on_row_activated(self.das[pn].view,model.get_path(iter1),0)
 		hd.hdview.set_cursor(path)
 		hd.hdview.grab_focus()
@@ -1389,10 +1390,10 @@ class ApplicationMainWindow(gtk.Window):
 		else:
 			gloff = None
 		if hd.hv.modified:
-			dialog = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_YES_NO, 
-			flags =gtk.DIALOG_DESTROY_WITH_PARENT,type = gtk.MESSAGE_WARNING, 
+			dialog = gtk.MessageDialog(parent = None, buttons = gtk.BUTTONS_YES_NO,
+			flags =gtk.DIALOG_DESTROY_WITH_PARENT,type = gtk.MESSAGE_WARNING,
 			message_format = "Do you want to save your changes?")
-			
+
 			dialog.set_title("Unsaved changes in data")
 			result = dialog.run()
 			dialog.destroy()
@@ -1445,7 +1446,7 @@ class ApplicationMainWindow(gtk.Window):
 						else:
 							off = offsmp
 						yep.vprmfunc[ntype[1]](hd,data,off)
-						
+
 						# add ligthgreen HL for hdrows
 						hditer1 = hd.model.get_iter_first()
 						hlid = 0
@@ -1654,12 +1655,12 @@ class ApplicationMainWindow(gtk.Window):
 			print fname
 			manager = gtk.recent_manager_get_default()
 			manager.add_item(fname)
-			doc = App.Page()
+			doc = App.Page(self)
 			doc.fname = fname
 			doc.parent = self
 			doc.hd = hexdump.hexdump()
 			doc.hd.hv.font = self.font
-			doc.hd.hv.fontsize = self.fontsize
+			doc.hd.hv.fontsize = self.hv_fontsize
 			err = doc.fload()
 			if err == 0:
 				dnum = len(self.das)
@@ -1675,7 +1676,7 @@ class ApplicationMainWindow(gtk.Window):
 				doc.hd.hdview.connect("button-release-event", self.on_hdrow_keyreleased)
 				doc.hd.hdrend.connect('edited', self.edited_cb)
 				doc.hd.hdview.set_tooltip_column(8)
-				
+
 				doc.hpaned = gtk.HPaned()
 				doc.hpaned.add1(scrolled)
 				doc.hpaned.add2(vpaned)
