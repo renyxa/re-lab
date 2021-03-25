@@ -1900,9 +1900,11 @@ def txsm6 (hd,size,data):
 	off += 4
 
 	for i in range(num_para):
-		off += 4 # style ID?
+		stlId = struct.unpack('<I', data[off:off+4])[0]
+		add_iter (hd, "Style ID",stlId,off,4,"<I")
+		off += 4
 		numst = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "# style recs",numst,off,4,"<H")
+		add_iter (hd, "# style recs",numst,off,4,"<I")
 		off += 4
 		for k in range(numst):
 			stlen = 60
