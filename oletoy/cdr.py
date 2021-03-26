@@ -1251,18 +1251,18 @@ lcv4styles = {
 def loda_coords_v4 (hd,data,offset,l_type,length):
 	x = struct.unpack("<h",data[offset:offset+2])[0]*0.0254
 	y = struct.unpack("<h",data[offset+2:offset+4])[0]
+	off = 4
+	clen = struct.unpack("<h",data[offset+off:offset+off+2])[0]
+	off += 2
 	if l_type == 4: # artistic text
 		add_iter (hd,"[001e] # of chars",y,offset+2,2,"<h")
 		term = 6 + 25*y
 	else:
 		add_iter (hd,"[001e] X/Y","%.2f  %.2f"%(x,y*0.0254),offset,4,"<hh")
 		term = clen - 3
+		return
 
-	off = 4
-	clen = struct.unpack("<h",data[offset+off:offset+off+2])[0]
-	off += 2
-
-	while off < term:
+	for _ in range(y):
 		flag = ord(data[offset+off])
 		ch = data[offset+off+1]
 		chdesc = ""
