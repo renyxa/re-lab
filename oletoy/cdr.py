@@ -1733,29 +1733,13 @@ def txsm16 (hd,size,data):
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
 
-	if frameflag == 0:
-		for i in range(num_frames):
-			fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
-			off += 4
-			for i in range(6):
-				var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-				add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
-			off += 48
-			off += 28
-			tlen = struct.unpack('<I', data[off:off+4])[0]
-			off += 4
-			if hd.version > 16:
-				frametxt = data[off:off+tlen]
-				add_iter (hd, "FrameTxt", unicode(frametxt,"utf-8"),off,tlen,"txt", parent=fr_iter)
-				off += tlen
-			else:
-				frametxt = data[off:off+tlen*2]
-				add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt", parent=fr_iter)
-				off += tlen*2
-		num_para = struct.unpack('<I', data[off:off+4])[0]
-		add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
+	for i in range(num_frames):
+		fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 4
-	else:
+		for i in range(6):
+			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
+		off += 48
 		txtonpath = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
 		if txtonpath == 1:
@@ -1785,7 +1769,23 @@ def txsm16 (hd,size,data):
 			off += 4
 		else:
 			off += 8
-		off += 4
+
+		if frameflag == 0:
+			off += 16
+			tlen = struct.unpack('<I', data[off:off+4])[0]
+			off += 4
+			if hd.version > 16:
+				frametxt = data[off:off+tlen]
+				add_iter (hd, "FrameTxt", unicode(frametxt,"utf-8"),off,tlen,"txt", parent=fr_iter)
+				off += tlen
+			else:
+				frametxt = data[off:off+tlen*2]
+				add_iter (hd, "FrameTxt", unicode(frametxt,"utf-16"),off,tlen*2,"txt", parent=fr_iter)
+				off += tlen*2
+
+	num_para = struct.unpack('<I', data[off:off+4])[0]
+	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
+	off += 4
 	for _ in range(num_para):
 		st_iter = add_iter (hd, "style ID", d2hex(data[off:off+4]),off,4,"<I")
 		off += 5 #!!! one more byte
@@ -1794,11 +1794,11 @@ def txsm16 (hd,size,data):
 		style_len = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
 		if hd.version > 16:
-			frametxt = data[off:off+tlen]
+			frametxt = data[off:off+style_len]
 			add_iter (hd, "Style Txt", unicode(frametxt,"utf-8"), off, style_len,"txt", parent=st_iter)
 			off += style_len
 		else:
-			frametxt = data[off:off+tlen*2]
+			frametxt = data[off:off+style_len*2]
 			add_iter (hd, "Style Txt", unicode(frametxt,"utf-16"),off,style_len*2,"txt", parent=st_iter)
 			off += style_len*2
 		num_rec = struct.unpack('<I', data[off:off+4])[0]
@@ -1811,12 +1811,12 @@ def txsm16 (hd,size,data):
 			st_flag2 = struct.unpack('<H', data[off:off+2])[0]
 			off += 2
 			rec_iter = add_iter (hd, "Rec %#x" % nr, "%#x, %#x" % (st_flag1, st_flag2), off - 6, 6, "txt")
-			if st_flag1 == 0x3fff:
-				if st_flag2 == 0x2c34:
-					# "ENI"
-					enc_len = struct.unpack('<I', data[off:off+4])[0]
-					off += 4
-					off += enc_len * 2 # skip for now ("ENI")
+			if st_flag2 & 0x4:
+				# encoding
+				enc_len = struct.unpack('<I', data[off:off+4])[0]
+				off += 4
+				off += enc_len * 2 # skip for now
+			if st_flag1 or st_flag2 & 0x4:
 				# JSON
 				json_len = struct.unpack('<I', data[off:off+4])[0]
 				off += 4
@@ -1826,20 +1826,13 @@ def txsm16 (hd,size,data):
 					enc = "utf-16"
 				add_iter (hd, "Style Txt", unicode(data[off:off+json_len], enc), off, json_len, "txt", parent=rec_iter)
 				off += json_len
-			elif st_flag2 == 4:
-				# ENI + 'character" JSON
-				enc_len = struct.unpack('<I', data[off:off+4])[0]
-				off += 4
-				off += enc_len * 2 # skip for now ("ENI")
-				enc_len2 = struct.unpack('<I', data[off:off+4])[0]
-				off += 4
-				if hd.version < 17:
-					enc_len2 *= 2
-				off += enc_len2 # skip for now ("{{'character'}}")
 
 		num2 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 		off += 4
+		if num2 > 50:
+			# catch: most of the samples are shorter
+			return
 		for i in range(num2):
 			add_iter (hd, "Char %u"%i, "%s [%s] %s"%(d2hex(data[off:off+2]),d2hex(data[off+2:off+3]),d2hex(data[off+3:off+8])),off,8,"txt")
 			off += 8
@@ -1930,11 +1923,7 @@ def txsm6 (hd,size,data):
 	elif hd.version < 5:
 		return
 
-	paraflag = struct.unpack("<i",data[0:4])[0]
-	bump = 0
-	if paraflag == 0:
-		bump = 8
-
+	frameflag = struct.unpack("<i",data[0:4])[0]
 	off = 0x20
 	num_frames = struct.unpack("<I", data[off:off+4])[0]
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
@@ -1946,7 +1935,8 @@ def txsm6 (hd,size,data):
 			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
 			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
 		off += 48
-		off += 8
+		if not frameflag:
+			off += 8
 
 	num_para = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
@@ -1987,9 +1977,12 @@ def txsm (hd,size,data):
 		txsm6 (hd,size,data)
 		return
 
-	# ver16 -- add '40 06' parsing (seems to be different '40 06').
-	# 6,7,8 -- 3, 8bidi,9 -- 4
+	# 6 -- 0/3, all other versions are 8/x
+	# 7 -- 2, 8 -- 3, 8bidi,9 -- 4
 	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c; 17-21 -- d;
+
+	off = 0
+	frameflag = struct.unpack('<i', data[off:off + 4])[0]
 
 	off = 0x24
 	if hd.version == 15:
@@ -2000,6 +1993,10 @@ def txsm (hd,size,data):
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
 
+	if num_frames > 2:
+		# catch: we don't have samples with more than 2 frames
+		return
+
 	for i in range(num_frames):
 		fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 4
@@ -2007,20 +2004,34 @@ def txsm (hd,size,data):
 			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
 			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
 		off += 48
-		off += 36
+		if frameflag == 0:
+			off += 36
+		elif hd.version > 7:
+			off += 2
+		if hd.version == 8 and frameflag != 0:
+			off += 2
 		if hd.version > 8:
 			off += 2
-		if hd.version > 13:
+		if hd.version > 13 and frameflag == 0:
 			off += 2
 		if hd.version > 14: # i.e. 15 in this case...
-			off += 12
+			if frameflag == 0:
+				off += 12
+			else:
+				off += 10
 	num_para = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
 	off += 4
 
+	if num_para > 40:
+		# catch: we don't have samples with that many para
+		return
+
 	for _ in range(num_para):
 		para_iter = add_iter (hd, "Para ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 5 # !!! one more byte
+		if hd.version > 12 and frameflag != 0:
+			off += 1 # ??? extra 00
 		numst = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "# style recs", numst, off, 4, "<I", parent=para_iter)
 		off += 4
