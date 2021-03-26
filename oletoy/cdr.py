@@ -1951,21 +1951,53 @@ def txsm (hd,size,data):
 			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
 			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
 		off += 48
+		txtonpath = struct.unpack('<I', data[off:off+4])[0]
+		off += 4
+		if txtonpath == 1:
+			add_iter (hd, "tonp var1", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			if hd.version > 12:
+				add_iter (hd, "tonp Orientation", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+				off += 4
+				add_iter (hd, "tonp var2", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+				off += 4
+			add_iter (hd, "tonp var3", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Offset", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp var4", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Distance", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+			off += 4
+			# var5 could be "orientation" for ver 12
+			add_iter (hd, "tonp var5", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			add_iter (hd, "tonp Mirror Vert", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			# Mirror Hor could be same as var5 in newer versions
+			add_iter (hd, "tonp Mirror Hor", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			off += 4
+			if hd.version == 15:
+				add_iter (hd, "tonp var6", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+				off += 4
+				add_iter (hd, "tonp var7", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+				off += 4
+		else:
+			if hd.version == 15:
+				off += 8
+
 		if frameflag == 0:
-			off += 36
-		elif hd.version > 7:
-			off += 2
-		if hd.version == 8 and frameflag != 0:
-			off += 2
-		if hd.version > 8:
-			off += 2
-		if hd.version > 13 and frameflag == 0:
-			off += 2
-		if hd.version > 14: # i.e. 15 in this case...
-			if frameflag == 0:
-				off += 12
-			else:
-				off += 10
+			if hd.version == 15:
+				off += 40
+			if hd.version == 14:
+				off += 36
+			if hd.version in [8.01, 9, 10, 11, 12, 13]: # 8.01 -- 8bidi
+				off += 34
+			if hd.version in [7, 8]:
+				off += 32
+		else:
+			if hd.version == 15:
+				off += 4
 	num_para = struct.unpack('<I', data[off:off+4])[0]
 	add_iter (hd, "# of paragraphs", num_para, off, 4, "<I")
 	off += 4
