@@ -1924,7 +1924,29 @@ def txsm6 (hd,size,data):
 		return
 
 	frameflag = struct.unpack("<i",data[0:4])[0]
-	off = 0x20
+	off = 0x1c
+	txtonpath = struct.unpack('<I', data[off:off+4])[0]
+	off += 4
+	if txtonpath == 1:
+		add_iter (hd, "tonp var1", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_iter (hd, "tonp var3", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_iter (hd, "tonp Offset", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+		off += 4
+		add_iter (hd, "tonp var4", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_iter (hd, "tonp Distance", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+		off += 4
+		# var5 could be "orientation" for ver 12
+		add_iter (hd, "tonp var5", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+		off += 4
+		add_iter (hd, "tonp var6", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+		off += 4
+		# Mirror Hor could be same as var5 in newer versions
+		add_iter (hd, "tonp var7", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+		off += 4
+
 	num_frames = struct.unpack("<I", data[off:off+4])[0]
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
