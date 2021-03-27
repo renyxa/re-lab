@@ -18,6 +18,7 @@ import sys,struct,gtk,zlib
 import gobject
 import icc,cmx
 from utils import *
+import traceback
 
 ri = {0:"Per", 1:"Rel.clr",2:"Sat",3:"Abs.clr"}
 
@@ -2002,6 +2003,7 @@ def txsm (hd,size,data):
 	# 6 -- 0/3, all other versions are 8/x
 	# 7 -- 2, 8 -- 3, 8bidi,9 -- 4
 	# 10,11 -- 5; 12 -- 6; 13 -- 8; 14 -- 9; 15 -- b; 16 -- c; 17-21 -- d;
+	# 22, 23 -- e
 
 	off = 0
 	frameflag = struct.unpack('<i', data[off:off + 4])[0]
@@ -2403,6 +2405,7 @@ def stlt(data,page,parent):
 	except:
 			add_pgiter(page,"Tail","cdr","",data[bkpoff:],parent)
 			print "stlt exception, see 'tail'"
+			traceback.print_exc()
 
 cdr_ids = {
 	"arrw":arrw,
@@ -2598,6 +2601,7 @@ class record:
 					print key2txt(lid,langids)
 			except:
 				print "Failed to parse 'sumi'"
+				traceback.print_exc()
 		if page.version < 16 and (self.fourcc == "outl" or self.fourcc == "fild" or self.fourcc == "fill" or self.fourcc == "arrw" or self.fourcc == "bmpf"):
 			d_iter = add_dictiter(page,f_iter,d2hex(self.data[0:4]),self.fourcc)
 			if self.fourcc == "fild" or self.fourcc == "fill":
@@ -2616,7 +2620,8 @@ class record:
 					page.hd.width = struct.unpack("<H",self.data[0x1c:0x20])[0]*0.0254
 					page.hd.height = struct.unpack("<H",self.data[0x20:0x24])[0]*0.0254
 				except:
-					print "Oops"
+					print "Something failed in mcfg v < 16."
+					traceback.print_exc()
 			else:
 				page.hd.width = struct.unpack("<I",self.data[4:8])[0]/10000
 				page.hd.height = struct.unpack("<I",self.data[8:12])[0]/10000
@@ -2627,8 +2632,8 @@ class record:
 		if self.fourcc == 'page' and fmttype == "cmx":
 			cmx.parse_page(page,self.data,f_iter)
 		if self.fourcc == 'vrsn' and len(self.data) == 2: # ver 16
-				page.version = struct.unpack("<H",self.data)[0]/100.
-				print page.version
+			page.version = struct.unpack("<H",self.data)[0]/100.
+			print page.version
 
 		page.hd.version = page.version
 
@@ -2651,10 +2656,10 @@ class record:
 				chunk.load(self.data[16:],page,parent,0,(),"cmx")
 			if name == 'stlt' and page.version >= 7:
 				try:
-#					print 'stlt'
 					stlt(self.data,page,parent)
 				except:
 					print "Something failed in 'stlt'."
+					traceback.print_exc()
 			elif name == 'cmpr':
 				self.cmpr(page,parent,fmttype)
 			else:
@@ -2689,6 +2694,7 @@ class record:
 							stlt("stlt"+data,page,p_iter)
 						except:
 							print "Something failed in 'stlt'."
+							traceback.print_exc()
 
 					if self.fourcc == 'mcfg':
 						if page.version == 6:
@@ -2702,3 +2708,4 @@ class record:
 							page.hd.height = struct.unpack("<I",data[8:12])[0]/10000
 			except:
 				print 'Failed in v16 or v17 dat'
+				traceback.print_exc()

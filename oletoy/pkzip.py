@@ -20,6 +20,8 @@ from utils import *
 def open(fname,page,parent=None):
 	try:
 		dirstruct = {}
+		iters = []
+		root_itr = None
 		z = zipfile.ZipFile(fname,"r")
 		for i in z.filelist:
 			fn = i.filename
@@ -27,12 +29,20 @@ def open(fname,page,parent=None):
 			print fn
 			pos = fn.rfind("/")
 			if pos == -1:
-				iter = add_pgiter(page,fn,"pkzip",0,data)
+				name = fn
 			else:
-				iter = add_pgiter(page,"[%s]%s"%(fn[:pos],fn[pos:]),"pkzip",0,data)
+				name = "[%s]%s"%(fn[:pos],fn[pos:])
+			itr = add_pgiter(page,name,"pkzip",0,data)
 			if len(data) > 0:
-				page.fload(data,iter)
-			
+				if "root.dat" in name:
+					root_itr = (data, itr)
+				else:
+					iters.append((data, itr))
+		if root_itr:
+			iters.append(root_itr)
+		for (data, itr) in iters:
+			page.fload(data, itr)
+
 	except zipfile.BadZipfile:
 		print "Open as PKZIP failed"
 	except zipfile.LargeZipFile:

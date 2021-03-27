@@ -118,7 +118,8 @@ class Page:
 			if parname == "[content]/dataFileList.dat":
 				print "Found XMLish CDR version"
 				self.wtable = self.model.get_value(parent,3).split("\n")
-			elif "[content/" in parname and ".dat" in parname:
+			#elif ("[content/" in parname or "[font]/" in parname) and ".dat" in parname:
+			elif ".dat" in parname:
 				if self.wdata == None:
 					self.wdata = {}
 				p = parname.rfind("/")

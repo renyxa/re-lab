@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Copyright (C) 2007-2013,	Valek Filippov (frob@df.ru)
 #
 # This program is free software; you can redistribute it and/or
