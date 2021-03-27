@@ -20,6 +20,8 @@ from utils import *
 def open(fname,page,parent=None):
 	try:
 		dirstruct = {}
+		iters = []
+		root_itr = None
 		z = zipfile.ZipFile(fname,"r")
 		page.fdata = {}
 		for i in z.filelist:
@@ -28,23 +30,20 @@ def open(fname,page,parent=None):
 			print(fn)
 			pos = fn.rfind("/")
 			if pos == -1:
-				iter = add_pgiter(page,fn,"pkzip",0,data,parent)
+				name = fn
 			else:
-				iter = add_pgiter(page,"[%s]%s"%(fn[:pos],fn[pos:]),"pkzip",0,data,parent)
-			if "[%s]%s"%(fn[:pos],fn[pos:]) == "[content]/dataFileList.dat":
-				print("Found XMLish CDR version")
-				page.wtable = data.split("\n")
-			elif ".dat" in fn[-4:]:
-				if page.wdata == None:
-					page.wdata = {}
-				page.wdata[fn[pos+1:]] = iter
-			else:
-				page.fdata[fn] = iter
-		for i in page.fdata.values():
-			data = page.model.get_value(i,3)
+				name = "[%s]%s"%(fn[:pos],fn[pos:])
+			itr = add_pgiter(page,name,"pkzip",0,data)
 			if len(data) > 0:
-				page.fload(data,i,z)
-			
+				if "root.dat" in name:
+					root_itr = (data, itr)
+				else:
+					iters.append((data, itr))
+		if root_itr:
+			iters.append(root_itr)
+		for (data, itr) in iters:
+			page.fload(data, itr)
+
 	except zipfile.BadZipfile:
 		print("Open as PKZIP failed")
 	except zipfile.LargeZipFile:
