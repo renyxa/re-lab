@@ -1691,32 +1691,45 @@ def txsm16 (hd,size,data):
 		txtonpath = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
 		if txtonpath == 1:
-			add_iter (hd, "tonp var1", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			# sample in 'fancy_text'
+			add_iter (hd, "tonp var1", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp Orientation", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp Orientation", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp var2", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp var2", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp var3", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp var3", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp Offset", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+			add_iter (hd, "tonp Offset", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp var4", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp var4", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp Distance", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I")
+			add_iter (hd, "tonp Distance", struct.unpack('<I', data[off:off+4])[0]/10000.,off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp var5", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp var5", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp Mirror Vert", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp Mirror Vert", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp Mirror Hor", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp Mirror Hor", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp var6", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp var6", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
-			add_iter (hd, "tonp var7", struct.unpack('<I', data[off:off+4])[0],off,4,"<I")
+			add_iter (hd, "tonp var7", struct.unpack('<I', data[off:off+4])[0],off,4,"<I", parent=fr_iter)
 			off += 4
 		else:
-			off += 8
+			frame_unkn1 = struct.unpack('<I', data[off:off+4])[0]
+			add_iter (hd, "frame unknw1", "%d" % frame_unkn1 , off, 4, "<I", parent=fr_iter)
+			off += 4
+			frame_unkn2 = struct.unpack('<I', data[off:off+4])[0]
+			add_iter (hd, "frame unknw2", "%d" % frame_unkn2 , off, 4, "<I", parent=fr_iter)
+			off += 4
+			# palette_frames file has unkn1 == 1 and unkn2 == 3 (ver21), 0x16 (ver16)
+			if frame_unkn1 == 1:
+				for i in range(6):
+					var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
+					add_iter (hd, "frame var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
+				off += 48
+				off += 4  # extra 4 bytes could be flagged by unkn2 != 0 ???
 
 		if frameflag == 0:
 			off += 16
@@ -1778,7 +1791,7 @@ def txsm16 (hd,size,data):
 		num2 = struct.unpack('<I', data[off:off+4])[0]
 		add_iter (hd, "Num of 'Char'", num2,off,4,"<I")
 		off += 4
-		if num2 > 50:
+		if num2 > 120:
 			# catch: most of the samples are shorter
 			return
 		for i in range(num2):
