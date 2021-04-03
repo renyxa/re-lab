@@ -227,18 +227,19 @@ class ApplicationMainWindow(gtk.Window):
 		self.hv_fontsize = 14
 		self.gsfname = 'libgsf-1.so'
 		self.snipsdir = os.path.join(os.path.expanduser("~"), ".oletoy")
-
+		config_path = os.path.join(self.snipsdir, "oletoy.cfg")
 		try:
-			execfile("oletoy.cfg")
+			execfile(config_path)
 			print('Config loaded...')
 		except:
 			pass
 
 	def save_config(self):
-		cfg = open("oletoy.cfg", "w")
+		cfg = open(os.path.join(self.snipsdir, "oletoy.cfg"), "w")
 		cfg.write("# Monospace font for HexView\nself.font='%s'\n\n"%self.font)
-		cfg.write("# Font size for HexView\nself.fontsize=%s\n\n"%self.fontsize)
+		cfg.write("# Font size for TreeView\nself.fontsize=%s\n\n"%self.fontsize)
 		cfg.write("# Name of the libgsf\nself.gsfname='%s'\n\n"%self.gsfname)
+		cfg.write("# Font size for Hexview\nself.hv_fontsize='%s'\n\n"%self.hv_fontsize)
 
 	def __create_action_group(self):
 		# GtkActionEntry
@@ -1167,7 +1168,7 @@ class ApplicationMainWindow(gtk.Window):
 							self.das[pn].view.row_activated(mpath,self.das[pn].view.get_column(0))
 						except:
 							print("No such path")
-						 
+
 				elif model.iter_n_children(iter1)>0:
 					intPath = model.get_path(iter1)
 					view.expand_row(intPath,False)
@@ -1250,7 +1251,7 @@ class ApplicationMainWindow(gtk.Window):
 				if self.options_be == 1:
 					val = rfract(buf, 0, big_endian)[0]
 					txt += "BE: %s\t" % fmt(val)
-			
+
 			if self.options_le == 1:
 				txt += "LE: %s"%((struct.unpack("<i",buf[0:4])[0])/self.options_div)
 				txt += "\tLEF: %s\t"%((struct.unpack("<f",buf[0:4])[0])/self.options_div)

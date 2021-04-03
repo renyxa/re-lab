@@ -1684,9 +1684,9 @@ def txsm16 (hd,size,data):
 	for i in range(num_frames):
 		fr_iter = add_iter (hd, "Frame ID", d2hex(data[off:off+4]), off, 4, "<I")
 		off += 4
-		for i in range(6):
-			var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-			add_iter (hd, "var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
+		for j in range(6):
+			var = struct.unpack('<d', data[off+j*8:off+8+j*8])[0]
+			add_iter (hd, "var%d"%(j+1), "%d"%(var/10000), off+j*8, 8, "<d", parent=fr_iter)
 		off += 48
 		txtonpath = struct.unpack('<I', data[off:off+4])[0]
 		off += 4
@@ -1720,14 +1720,14 @@ def txsm16 (hd,size,data):
 			frame_unkn1 = struct.unpack('<I', data[off:off+4])[0]
 			add_iter (hd, "frame unknw1", "%d" % frame_unkn1 , off, 4, "<I", parent=fr_iter)
 			off += 4
-			frame_unkn2 = struct.unpack('<I', data[off:off+4])[0]
-			add_iter (hd, "frame unknw2", "%d" % frame_unkn2 , off, 4, "<I", parent=fr_iter)
+			frame_xfid = struct.unpack('<I', data[off:off+4])[0]
+			add_iter (hd, "frame xform ID", "%d" % frame_xfid , off, 4, "<I", parent=fr_iter)
 			off += 4
 			# palette_frames file has unkn1 == 1 and unkn2 == 3 (ver21), 0x16 (ver16)
 			if frame_unkn1 == 1:
-				for i in range(6):
-					var = struct.unpack('<d', data[off+i*8:off+8+i*8])[0]
-					add_iter (hd, "frame var%d"%(i+1), "%d"%(var/10000), off+i*8, 8, "<d", parent=fr_iter)
+				for k in range(6):
+					var = struct.unpack('<d', data[off+k*8:off+8+k*8])[0]
+					add_iter (hd, "frame var%d"%(k+1), "%d" % var, off+k*8, 8, "<d", parent=fr_iter)
 				off += 48
 				off += 4  # extra 4 bytes could be flagged by unkn2 != 0 ???
 
@@ -1999,8 +1999,8 @@ def txsm (hd,size,data):
 	add_iter (hd, "Num Frames", num_frames, off, 4, "<I")
 	off += 4
 
-	if num_frames > 2:
-		# catch: we don't have samples with more than 2 frames
+	if num_frames > 5:
+		# catch: we don't have samples with more than 4 frames
 		return
 
 	for i in range(num_frames):
@@ -2044,7 +2044,19 @@ def txsm (hd,size,data):
 					off += 4
 			else:
 				if hd.version == 15:
-					off += 8
+					frame_unkn1 = struct.unpack('<I', data[off:off+4])[0]
+					add_iter (hd, "frame unknw1", "%d" % frame_unkn1 , off, 4, "<I", parent=fr_iter)
+					off += 4
+					frame_xfid = struct.unpack('<I', data[off:off+4])[0]
+					add_iter (hd, "frame xform ID", "%d" % frame_xfid , off, 4, "<I", parent=fr_iter)
+					off += 4
+					# palette_frames file has unkn1 == 1 and unkn2 == 3 (ver21), 0x16 (ver16)
+					if frame_unkn1 == 1:
+						for k in range(6):
+							var = struct.unpack('<d', data[off+k*8:off+8+k*8])[0]
+							add_iter (hd, "frame var%d"%(k+1), "%d" % var, off+k*8, 8, "<d", parent=fr_iter)
+						off += 48
+						off += 20
 
 		if frameflag == 0:
 			if hd.version == 15:
@@ -2093,8 +2105,8 @@ def txsm (hd,size,data):
 				# Font
 				enctxt = "Unknown"
 				enc = struct.unpack("<H", data[off+2:off+4])[0]
-				if charsets.has_key(enc):
-					enctxt = charsets[enc]
+				if ms_charsets.has_key(enc):
+					enctxt = ms_charsets[enc]
 				add_iter (hd, "\tFont ID, Charset", "%s, %s (%02x)"%(d2hex(data[off:off+2]), enctxt, enc), off, 4, "txt", parent=st_iter)
 				off += 4
 			if flag2&2 == 2:
