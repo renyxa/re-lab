@@ -14,6 +14,7 @@
 # USA
 #
 
+import binascii
 import re
 import struct
 
@@ -142,7 +143,7 @@ def uncompress(data):
 			# print('  far ref: offset = %x, length = %x' % (offset, length))
 			append_ref(offset, length)
 		else:
-			print(("unknown type at offset 0x%x inside block" % (off + 4)))
+			print("unknown type at offset 0x%x inside block" % (off + 4))
 			assert False
 
 	assert uncompressed_length == len(result)
@@ -324,6 +325,9 @@ class message:
 				raise self.unknown_type()
 			if field_num not in msg:
 				msg[field_num] = []
+			if off>end:
+				#print("iwa[message]: type=%d %x %x %x"%(wire_type,off,start,end))
+				off=end
 			desc = self._desc(field_num, wire_type == 2, visualizer)
 			msg[field_num].append(desc(data, stt_data, stt, off))
 		if off != end:
@@ -379,13 +383,14 @@ class message:
 
 ### File parser
 
-def handle_tile_row_defs(parser, page, data, parent):
+def handle_tile_row_defs1(parser, page, data, parent):
 	off = find_var(data, 0)
 	off = find_var(data, off)
 	parser.tile_row_data = data[off:]
 	parser.tile_row_iter = parent
+	parser.tile_row_offsets = {}
 
-def handle_tile_row_offsets(parser, page, data, parent):
+def handle_tile_row_offsets1(parser, page, data, parent):
 	parser.tile_row_offsets = {}
 	off = find_var(data, 0)
 	off = find_var(data, off)
@@ -396,13 +401,49 @@ def handle_tile_row_offsets(parser, page, data, parent):
 			parser.tile_row_offsets[offset] = n
 		n += 1
 
+def handle_tile_row_defs2(parser, page, data, parent):
+	off = find_var(data, 0)
+	off = find_var(data, off)
+	parser.tile_big_offset = False
+	parser.tile_row_data2 = data[off:]
+	parser.tile_row_iter2 = parent
+
+def handle_tile_row_offsets2(parser, page, data, parent):
+	parser.tile_row_offsets2 = {}
+	off = find_var(data, 0)
+	off = find_var(data, off)
+	n = 0
+	while off + 2 <= len(data):
+		(offset, off) = rdata(data, off, '<H')
+		if offset != 0xffff:
+			parser.tile_row_offsets2[offset] = n
+		n += 1
+
+def handle_tile_row_big_offset(parser, page, data, parent):
+	parser.tile_big_offset = bool(read_var(data, 0)[0])
+	
 def handle_tile_row(parser, page, data, parent):
 	data = parser.tile_row_data
-	offsets = sorted(parser.tile_row_offsets.keys())
-	for (start, end) in zip(offsets, offsets[1:] + [len(data)]):
-		add_pgiter(page, 'Column %d' % parser.tile_row_offsets[start], 'iwa', 'iwa_tile_row', data[start:end], parser.tile_row_iter)
-	parser.tile_row_data = ''
+	if data != None:
+		offsets = sorted(parser.tile_row_offsets.keys())
+		for (start, end) in zip(offsets, offsets[1:] + [len(data)]):
+			add_pgiter(page, 'Column %d' % parser.tile_row_offsets[start], 'iwa', 'iwa_tile_row', data[start:end], parser.tile_row_iter)
+		parser.tile_row_data = None
 	parser.tile_row_offsets = {}
+	
+	data = parser.tile_row_data2
+	if data != None:
+		offsets = sorted(parser.tile_row_offsets2.keys())
+		l = len(data)
+		if parser.tile_big_offset:
+			l /= 4
+		for (start, end) in zip(offsets, offsets[1:] + [l]):
+			if not parser.tile_big_offset:
+				add_pgiter(page, 'Column %d(2)' % parser.tile_row_offsets2[start], 'iwa', 'iwa_tile_row2', data[start:end], parser.tile_row_iter2)
+			else:
+				add_pgiter(page, 'Column %d(2)' % parser.tile_row_offsets2[start], 'iwa', 'iwa_tile_row2', data[4*start:4*end], parser.tile_row_iter2)
+		parser.tile_row_data2 = None
+	parser.tile_row_offsets2 = {}
 
 FUNCTIONS = {
 	1: 'ABS',
@@ -752,7 +793,7 @@ MESSAGES = {
 		9: ('Template', string),
 		12: ('Custom format ref', 'Ref'), # maybe only date time?
 	},
-	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref'), 4: ('??? ref', 'Ref')},
+	'Drawable shape': {1: ('Shape',), 2: ('Text ref', 'Ref'), 4: ('Text(bis) ref', 'Ref')},
 	'Fill': {
 		1: ('Color',),
 		2: ('Gradient',),
@@ -952,7 +993,7 @@ MESSAGES = {
 		3: ('Offset', float_),
 		4: ('Blur', int64),
 		5: ('Opacity', float_),
-                6: ('Visible?', bool_),
+		6: ('Visible?', bool_),
 		7: ('Type', enum({0: 'drop', 1: 'contact', 2: 'curved'})),
 		9: ('Contact shadow', {2: ('Perspective', float_)}),
 		10: ('Curved shadow', {1: ('Balance', float_)}),
@@ -986,7 +1027,7 @@ MESSAGES = {
 		4: ('Join', enum({0: 'miter', 1: 'round'})),
 		5: ('Miter limit', float_),
 		6: ('Stroke', {
-			1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'auto'})),
+			1: ('Type', enum({0: 'dashed', 1: 'solid', 2: 'none'})),
 			3: ('Number of elements', int64),
 			4: ('Pattern element', float_),
 		}),
@@ -1188,10 +1229,11 @@ COMMON_OBJECTS = {
 		4: ('Grid', {
 			1: ('Row headers?', {2: ('Row headers ref', 'Ref')}),
 			2: ('Column headers ref', 'Ref'),
-			3: ('Cells', {1: ('Tile', {2: ('Tile ref', 'Ref')})}),
+			3: ('Cells', {1: ('Tile', {1: ('id', int64), 2: ('Tile ref', 'Ref')})}),
 			4: ('Simple text list ref', 'Ref'),
 			5: ('Cell style list ref', 'Ref'),
 			6: ('Formula list ref', 'Ref'),
+			9: ('Tile positions Y', {1: ('Tile', {1:('decal', int64), 2: ('id', int64)})}),
 			11: ('Format list ref', 'Ref'),
 			12: ('Invalid formula list ref', 'Ref'),
 			16: ('Menu list ref', 'Ref'),
@@ -1239,12 +1281,16 @@ COMMON_OBJECTS = {
 		2: ('Last row', int64),
 		3: ('Number of cells', int64),
 		4: ('Number of rows', int64),
-		5: ('Row', custom(handle_tile_row, {
+		5: ('Rows',  custom(handle_tile_row, {
 			1: ('Row', int64),
 			2: ('Number of cells', int64),
-			3: ('Definitions', custom(handle_tile_row_defs)),
-			4: ('Definition offsets', custom(handle_tile_row_offsets, bytes_('iwa_tile_offsets'))),
-		})),
+			3: ('Definitions', custom(handle_tile_row_defs1, bytes_())),
+			4: ('Definition offsets', custom(handle_tile_row_offsets1, bytes_('iwa_tile_offsets'))),
+			5: ('Version', int64), # always 5
+			6: ('Definitions(2)', custom(handle_tile_row_defs2)),
+			7: ('Definition offsets(2)', custom(handle_tile_row_offsets2, bytes_('iwa_tile_offsets'))),
+			8: ('Definition[long,offset](2)', custom(handle_tile_row_big_offset, bytes_('bool_'))), # checkme, find how to print the bool value:-~
+			})),
 	}),
 	6003: ('Table style', {
 		1: ('Style info',),
@@ -1345,40 +1391,40 @@ COMMON_OBJECTS = {
 		3: ('Rule', {1: ('Filter formula', {1: ('Formula',)})}),
 	}),
 	6247: ('Object 6247', {
-                # 1-12 appears 2 times
-                1: ('Para0 style ref', 'Ref'),
-                2: ('Para1 style ref', 'Ref'),
-                3: ('Para2 style ref', 'Ref'),
-                4: ('Para3 style ref', 'Ref'),
-                5: ('Graph1 style ref', 'Ref'),
-                6: ('Graph2 style ref', 'Ref'),
-                7: ('Cell1 style ref', 'Ref'),
-                8: ('Cell2 style ref', 'Ref'),
-                9: ('Table style ref', 'Ref'),
-                10: ('Para4 style ref', 'Ref'),
-                11: ('Graph3 style ref', 'Ref'),
-                # 12 a bool
-                13: ('Para5 style ref', 'Ref'),
-                14: ('Para6 style ref', 'Ref'),
-                15: ('Para7 style ref', 'Ref'),
-                16: ('Para8 style ref', 'Ref'),
-                17: ('Para9 style ref', 'Ref'),
-                18: ('Cell3 style ref', 'Ref'),
-                19: ('Cell4 style ref', 'Ref'),
-                20: ('Cell5 style ref', 'Ref'),
-                21: ('Cell6 style ref', 'Ref'),
-                22: ('Cell7 style ref', 'Ref'),
-                23: ('Cell8 style ref', 'Ref'),
-                24: ('Cell9 style ref', 'Ref'),
-                25: ('Cell10 style ref', 'Ref'),
-                26: ('Cell11 style ref', 'Ref'),
-                27: ('Cell12 style ref', 'Ref'),
-                28: ('Cell13 style ref', 'Ref'),
-                29: ('Cell14 style ref', 'Ref'),
-                30: ('Cell15 style ref', 'Ref'),
-                31: ('Cell16 style ref', 'Ref'),
-                32: ('Cell17 style ref', 'Ref'),
-        }),
+		# 1-12 appears 2 times
+		1: ('Para0 style ref', 'Ref'),
+		2: ('Para1 style ref', 'Ref'),
+		3: ('Para2 style ref', 'Ref'),
+		4: ('Para3 style ref', 'Ref'),
+		5: ('Graph1 style ref', 'Ref'),
+		6: ('Graph2 style ref', 'Ref'),
+		7: ('Cell1 style ref', 'Ref'),
+		8: ('Cell2 style ref', 'Ref'),
+		9: ('Table style ref', 'Ref'),
+		10: ('Para4 style ref', 'Ref'),
+		11: ('Graph3 style ref', 'Ref'),
+		# 12 a bool
+		13: ('Para5 style ref', 'Ref'),
+		14: ('Para6 style ref', 'Ref'),
+		15: ('Para7 style ref', 'Ref'),
+		16: ('Para8 style ref', 'Ref'),
+		17: ('Para9 style ref', 'Ref'),
+		18: ('Cell3 style ref', 'Ref'),
+		19: ('Cell4 style ref', 'Ref'),
+		20: ('Cell5 style ref', 'Ref'),
+		21: ('Cell6 style ref', 'Ref'),
+		22: ('Cell7 style ref', 'Ref'),
+		23: ('Cell8 style ref', 'Ref'),
+		24: ('Cell9 style ref', 'Ref'),
+		25: ('Cell10 style ref', 'Ref'),
+		26: ('Cell11 style ref', 'Ref'),
+		27: ('Cell12 style ref', 'Ref'),
+		28: ('Cell13 style ref', 'Ref'),
+		29: ('Cell14 style ref', 'Ref'),
+		30: ('Cell15 style ref', 'Ref'),
+		31: ('Cell16 style ref', 'Ref'),
+		32: ('Cell17 style ref', 'Ref'),
+	}),
 	6305: ('GridLines', {
 		1: (None,int64),
 		2: (None,int64),
@@ -1399,26 +1445,26 @@ COMMON_OBJECTS = {
 	}),
 	11006: ('MetaData', {
 		1: ('ReplaceColor Corr id', int64),
-                2: (None, {
-                        2: ('ID', string),
-                        3: (None, int64),
-                }),
+		2: (None, {
+			2: ('ID', string),
+			3: (None, int64),
+		}),
 		3: ('IWA file',),
 		4: ('Other file',),
-                10: ('ReplaceColor Corr ref', 'Ref'),
+		10: ('ReplaceColor Corr ref', 'Ref'),
 	}),
-        11011: ('Document Metadata', {
-                1: (None, bool_),
-        }),
-        11014: ('ReplaceColor', {
-                1: ('Color', ),
-        }),
-        11015: ('ReplaceColor Corr', {
-                1: ('Corresp', {
-                        1: ('ID', int64),
-                        2: ('ReplaceColor Ref', 'Ref'),
-                }),
-        }),
+	11011: ('Document Metadata', {
+		1: (None, bool_),
+	}),
+	11014: ('ReplaceColor', {
+		1: ('Color', ),
+	}),
+	11015: ('ReplaceColor Corr', {
+		1: ('Corresp', {
+			1: ('ID', int64),
+			2: ('ReplaceColor Ref', 'Ref'),
+		}),
+	}),
 }
 
 KEYNOTE_OBJECTS = {
@@ -1455,17 +1501,17 @@ KEYNOTE_OBJECTS = {
 		5: ('Title placeholder ref', 'Ref'),
 		6: ('Body placeholder ref', 'Ref'),
 		7: ('Shape ref', 'Ref'),
-                10: ('Name', string),
+		10: ('Name', string),
 		17: ('Master ref', 'Ref'),
 		20: ('Slide number placeholder ref', 'Ref'),
 		27: ('Notes ref', 'Ref'),
-                29: ('Style name ref', 'Ref'),
-                30: ('PlaceHolder ref', 'Ref'), # main ?
-                31: (None, 'Ref'),
-                35: ('List ref', 'Ref'),
-                36: ('Object 3047 ref', 'Ref'),
-                37: (None, string), # default title?
-                38: (None, string),
+		29: ('Style name ref', 'Ref'),
+		30: ('PlaceHolder ref', 'Ref'), # main ?
+		31: (None, 'Ref'),
+		35: ('List ref', 'Ref'),
+		36: ('Object 3047 ref', 'Ref'),
+		37: (None, string), # default title?
+		38: (None, string),
 		42: ('Object Bg ref', 'Ref'), # find image, place holder
 	}),
 	7: ('Placeholder', {
@@ -1493,21 +1539,21 @@ KEYNOTE_OBJECTS = {
 			3: ('Name', string),
 			4: ('StyleSheet ref', 'Ref'),
 			5: (None, 'Ref'), # checkme
-                        10: ('Color', ),
-                        100: (None, {
-                                1: ('Gradient', 'Fill'),
-                                2: ('Image', 'Fill'),
-                                3: ('Shadow', ),
-                                4: ('Line Graphic Style ref', 'Ref'),
-                                5: ('Shape Graphic Style ref', 'Ref'),
-                                6: ('Textbox Graphic Style ref', 'Ref'),
-                                7: ('Image Graphic Style ref', 'Ref'),
-                                8: ('Movie Graphic Style ref', 'Ref'),
-                                9: ('Drawing Line Graphic Style ref', 'Ref'),
-                        }),
-                        110: (None, { 1: ('List Style Ref', 'Ref'), 6: ('Character Ref', 'Ref'), 7: ('Paragraph Ref', 'Ref'), }),
-                        120: (None, { 1: ('Object 5020 Ref', 'Ref'), }),
-                        200: (None, { 1: ('Object 6008 Ref', 'Ref'), }),
+			10: ('Color', ),
+			100: (None, {
+				1: ('Gradient', 'Fill'),
+				2: ('Image', 'Fill'),
+				3: ('Shadow', ),
+				4: ('Line Graphic Style ref', 'Ref'),
+				5: ('Shape Graphic Style ref', 'Ref'),
+				6: ('Textbox Graphic Style ref', 'Ref'),
+				7: ('Image Graphic Style ref', 'Ref'),
+				8: ('Movie Graphic Style ref', 'Ref'),
+				9: ('Drawing Line Graphic Style ref', 'Ref'),
+			}),
+			110: (None, { 1: ('List Style Ref', 'Ref'), 6: ('Character Ref', 'Ref'), 7: ('Paragraph Ref', 'Ref'), }),
+			120: (None, { 1: ('Object 5020 Ref', 'Ref'), }),
+			200: (None, { 1: ('Object 6008 Ref', 'Ref'), }),
 		}),
 		2: ('Slide list ref', 'Ref'),
 		3: ('Group UUID', string),
@@ -1565,7 +1611,10 @@ PAGES_OBJECTS = {
 		2: ('Stylesheet', 'Ref'),
 		3: ('List drawables ref', 'Ref'),
 		4: ('Text body ref', 'Ref'),
+		6: ('Object 10001', 'Ref'),
 		7: ('Document settings ref', 'Ref'),
+		15: ('Document info', ),
+		20: ('Object 10015', 'Ref'),
 		30: ('Page width', float_),
 		31: ('Page height', float_),
 		32: ('Left page margin', float_),
@@ -1576,7 +1625,9 @@ PAGES_OBJECTS = {
 		37: ('Footer bottom margin', float_),
 		38: ('Scale', float_),
 		42: ('Page orientation', enum({0: 'Portrait', 1: 'Landscape'})),
+		43: ('Printer name', string),
 		44: ('Paper size', string),
+		47: ('Object 2411', 'Ref'),
 	}),
 	10010: ('List drawables', {
 		1: ('List by page', {
@@ -1584,12 +1635,14 @@ PAGES_OBJECTS = {
 			4: ('Drawable', {1: ('ref', 'Ref')}),
 		}),
 	}),
-	10011: ('Section', {
+	10011: ('PageMaster', {
 		17: ('Match previous section', bool_),
 		23: ('Left page h&f ref?', 'Ref'),
 		24: ('Right page h&f ref?', 'Ref'),
 		25: ('Both pages h&f ref', 'Ref'),
 		28: ('Hide h&f on first page', bool_),
+		29: ('Object 10016', 'Ref'),
+		30: ('Background', 'Fill')
 	}),
 	10012: ('Document settings', {
 		1: ('Type', enum({0: 'Page layout', 1: 'Word processing'})),
@@ -1639,9 +1692,13 @@ class IWAParser(object):
 		self.page = page
 		self.parent = parent
 		self.objects = objects
-		self.tile_row_data = None
+		self.tile_big_offset = False
 		self.tile_row_iter = None
+		self.tile_row_data = None
 		self.tile_row_offsets = {}
+		self.tile_row_iter2 = None
+		self.tile_row_data2 = None
+		self.tile_row_offsets2 = {}
 
 	def parse(self):
 		off = 0
@@ -1656,11 +1713,11 @@ class IWAParser(object):
 				obj_id = hdr.value[1][0].value
 			obj_type = None
 			if 2 in hdr.value:
-                                for data in hdr.value[2]:
-				        if 1 in data.value:
-					        obj_type = data.value[1][0].value
-				        if 3 in data.value:
-					        data_len += data.value[3][0].value
+				for data in hdr.value[2]:
+					if 1 in data.value:
+						obj_type = data.value[1][0].value
+					if 3 in data.value:
+						data_len += data.value[3][0].value
 			obj_name = None
 			if obj_type:
 				if obj_type in self.objects:
@@ -1899,9 +1956,8 @@ def add_tile_offsets(hd, size, data):
 	while off + 2 <= size:
 		(offset, off) = rdata(data, off, '<H')
 		offset_str = offset
-		if offset == 0xffff:
-			offset_str = 'none'
-		add_iter(hd, 'Column %d' % n, offset_str, off - 2, 2, '<H')
+		if offset != 0xffff:
+			add_iter(hd, 'Column %d' % n, offset_str, off - 2, 2, '<H')
 		n += 1
 
 def add_tile_row(hd, size, data):
@@ -1916,7 +1972,8 @@ def add_tile_row(hd, size, data):
 		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
 		0x80: 'unknown',
 		0x200: 'paragraph text',
-		0xc00: 'conditional format',
+		0x400: 'conditional format',
+		0x800: 'conditional format(II)',
 		0x1000: 'comment',
 	}
 	(flags, off) = rdata(data, off, '<H')
@@ -1959,6 +2016,107 @@ def add_tile_row(hd, size, data):
 	if flags & 0x200:
 		(text, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Paragraph text ID', text, off - 4, 4, '<I')
+	if off<len(data):
+		add_iter(hd, 'unparsed', binascii.hexlify(data[off:]), off, len(data)-off, "txt")
+
+def add_tile_row2(hd, size, data):
+	# The IDs point to appropriate data lists (c.f. table model)
+	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6:'button'}
+	off = 1
+	(typ, off) = rdata(data, off, '<B')
+	add_iter(hd, 'Data type', key2txt(typ, type_map), off - 1, 1, '<B')
+	off +=2
+	(unkn, off) = rdata(data, off, '<I')
+	if unkn !=0 :
+		add_iter(hd, 'f0', "%x"%unkn, off - 4, 4, '<H')
+	flags_set = {
+		0x1: 'int',
+		0x2: 'bool',
+		0x4: 'date',
+		0x8: 'simple text',
+		0x10: 'paragraph text',
+		0x20: 'style',
+		0x40: 'style(II)',
+		0x80: 'conditional',
+		0x100: 'conditional(II)',
+		0x200: 'formula',
+		0x400: 'button/menu/...',
+		0x1000: 'type',
+		0x2000: 'format',
+		0x8000: 'unknown(1)',
+		0x10000: 'unknown(2)',
+		0x20000: 'format(II)',
+		0x40000: 'format(III)',
+		0x80000: 'comment',
+	}
+	(flags, off) = rdata(data, off, '<I')
+	add_iter(hd, 'Flags', bflag2txt(flags, flags_set), off - 4, 4, '<I')
+	if flags & 0x1:
+		# mantissa on 12 bytes?, unknown: 2 bytes, exponent_10 : 2 bytes (last byte for nan?)
+		(num, off) = rdata(data, off, '<Q')
+		off+=6
+		(exp,off) = rdata(data, off, '<H')
+		if exp & 0x8000:
+			add_iter(hd, 'mantissa', -num, off - 16, 8, '<Q')
+			exp &= 0x7fff
+		else:
+			add_iter(hd, 'mantissa', num, off - 16, 8, '<Q')
+		add_iter(hd, 'exp', (exp-12352)/2, off - 2, 2, '<I') # 4030=0
+	if flags & 0x2:
+		(value, off) = rdata(data, off, '<d')
+		value_str = value
+		add_iter(hd, 'Value', value_str, off - 8, 8, '<d')
+	if flags & 0x4:
+		(value, off) = rdata(data, off, '<d')
+		value_str = value
+		add_iter(hd, 'Value', value_str, off - 8, 8, '<d')
+	if flags & 0x8:
+		(text, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Simple text ID', text, off - 4, 4, '<I')
+	if flags & 0x10:
+		(text, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Paragraph text ID', text, off - 4, 4, '<I')
+	if flags & 0x20:
+		(style, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
+	if flags & 0x40:
+		(style, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Style(based) ID', style, off - 4, 4, '<I')
+	if flags & 0x80:
+		(cond, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Conditional ID', cond, off - 4, 4, '<I')
+	if flags & 0x100:
+		(cond, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Conditional ID(II)', cond, off - 4, 4, '<I')
+	if flags & 0x200:
+		(formula, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Formula ID', formula, off - 4, 4, '<I')
+	if flags & 0x400:
+		(button, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Button/Menu ID', button, off - 4, 4, '<I')
+	if flags & 0x1000:
+		(resType, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Type(res)', resType, off - 4, 4, '<I')
+	if flags & 0x2000:
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format(number) ID', fmt, off - 4, 4, '<I')
+	if flags & 0x8000:
+		(unkn, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Unknown ID', unkn, off - 4, 4, '<I')
+	if flags & 0x10000:
+		(unkn, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Unknown ID(2)', unkn, off - 4, 4, '<I')
+	if flags & 0x20000:
+		(border, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format(cell) ID', border, off - 4, 4, '<I')
+	if flags & 0x40000:
+		(unkn, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format(def,number) ID', unkn, off - 4, 4, '<I')
+	if flags & 0x80000:
+		(unkn, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Comment ID', unkn, off - 4, 4, '<I')
+	if off<len(data):
+		add_iter(hd, 'unparsed', binascii.hexlify(data[off:]), off, len(data)-off, "txt")
 
 iwa_ids = {
 	'iwa_32bit': add_32bit,
@@ -1991,6 +2149,7 @@ iwa_ids = {
 
 	'iwa_tile_offsets': add_tile_offsets,
 	'iwa_tile_row': add_tile_row,
+	'iwa_tile_row2': add_tile_row2,
 }
 
 ### Entry point
@@ -2000,9 +2159,9 @@ def detect(package):
 		names = package.namelist()
 		if "Index/MasterSlide.iwa" in names:
 			return "Keynote"
-                for name in names:
-                        if re.match(r'^Index/MasterSlide.*\.iwa$', name):
-                                return "Keynote"
+		for name in names:
+			if re.match(r'^Index/MasterSlide.*\.iwa$', name):
+				return "Keynote"
 	except:
 		pass
 	# I see no way to differentiate Pages and Numbers document just from
@@ -2025,8 +2184,9 @@ def open(data, page, parent, subtype):
 	while off < len(data):
 		off += 1
 		(length, off) = rdata(data, off, '<H')
-		off += 1
-
+		(length2, off) = rdata(data, off, '<B')
+		length=length+65536*length2
+	
 		block = data[off - 4:off + int(length)]
 		uncompressed = uncompress(block[4:])
 		uncompressed_data.extend(uncompressed)
