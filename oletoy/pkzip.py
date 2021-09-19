@@ -17,6 +17,15 @@
 import zipfile
 from utils import *
 
+class PkzipPackage:
+	def __init__(self, names):
+		self.listNames = []
+		for n in names:
+			self.listNames.append(n.filename)
+
+	def namelist(self):
+		return self.listNames
+
 def open(fname,page,parent=None):
 	try:
 		dirstruct = {}
@@ -24,6 +33,7 @@ def open(fname,page,parent=None):
 		root_itr = None
 		z = zipfile.ZipFile(fname,"r")
 		page.fdata = {}
+		package = PkzipPackage(z.filelist)
 		for i in z.filelist:
 			fn = i.filename
 			data = z.read(fn)
@@ -42,7 +52,7 @@ def open(fname,page,parent=None):
 		if root_itr:
 			iters.append(root_itr)
 		for (data, itr) in iters:
-			page.fload(data, itr)
+			page.fload(data, itr, package)
 
 	except zipfile.BadZipfile:
 		print("Open as PKZIP failed")
