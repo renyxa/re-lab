@@ -756,7 +756,9 @@ MESSAGES = {
 		21: ('Text shadow', 'Shadow'),
 		23: ('Strikethru color', 'Color'),
 		26: ('Text background', 'Color'),
-		27: ('Tracking', float_),
+		27: ('Tracking', float_), # in percent
+		44: ('Text stroke', 'Stroke'),
+		46: (None, {1: ('Color', )} ), # checkme probably a known structure which begins by a color
 	},
 	'Color': {1: ('Type?', int64), 3: ('Red', float_), 4: ('Green', float_), 5: ('Blue', float_), 6: ('Alpha', float_)},
 	'Columns': {
@@ -799,9 +801,10 @@ MESSAGES = {
 		2: ('Gradient',),
 		3: ('Image', {
 			2: ('Type', enum({0: 'original size', 1: 'stretch', 2: 'tile', 3: 'scale to fill', 4: 'scale to fit'})),
-			3: ('Color'),
+			3: ('Color',),
 			4: ('Size',),
 			6: ('File ref', 'Ref'),
+			9: ('Color2',),
 		}),
 	},
 	'Format': {
@@ -865,7 +868,9 @@ MESSAGES = {
 					29: 'range',
 					32: 'space', 33: 'space2', # difference, the position?
 					34: 'argument[begin]', 35: 'argument[end]',
-					36: 'address'
+					36: 'address',
+					45: ':',
+					63: 'current[cell]',
 				})),
 				2: ('Function', enum(FUNCTIONS)),
 				3: ('Number of arguments', int64),
@@ -1018,6 +1023,8 @@ MESSAGES = {
 		6: ('Comment ref', 'Ref'),
 		7: ('Aspect ratio locked', bool_),
 		8: ('Description', string),
+		10: ('Object 3097 ref', 'Ref'),
+		11: ('Object 3097 ref', 'Ref'),
 	},
 	'Size': {1: ('Width', float_), 2: ('Height', float_)},
 	'Stroke': {
@@ -1036,7 +1043,7 @@ MESSAGES = {
 	},
 	'Style info': {1: ('UI name', string), 2: ('Name', string), 3: ('Parent', 'Ref'), 5: ('Stylesheet', 'Ref')},
 	'Style name association': {1: ('Name', string), 2: ('Ref', 'Ref')},
-	'Text address': {1: ('Start', int64), 2: ('Style ref', 'Ref')},
+	'Text address': {1: ('Start', int64), 2: ('ref', 'Ref')},
 	'UID': {1: ('high', int64), 2: ('low', int64)},
 	'UUID': {2: ('h0', int64), 3: ('h1', int64), 4: ('h2', int64), 5: ('h3', int64)},
 }
@@ -1060,16 +1067,17 @@ COMMON_OBJECTS = {
 		7: ('List styles', {1: ('List style', {1: ('Start', int64), 2: ('List style ref', 'Ref')})}),
 		8: ('Spans', {1: ('Span', 'Text address')}),
 		9: ('Fields', {1: ('Field', {1: ('Index', int64), 2: ('Replacement ref', 'Ref')})}),
-		11: ('Links', {1: ('Link', 'Text address')}),
+		11: ('Links', {1: ('Link', 'Text address'), 2: ('ref', 'Ref')}),
 		12: ('Layouts', {1: ('Layout', 'Text address')}),
 		14: ('List numbers', { 1: ('List number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
 		16: ('Footnotes', {1: ('Footnote', {1: ('Index', int64), 2: ('Ref',)})}),
-		17: ('Sections', {1: ('Section', {1: ('Start', int64), 2: ('Section ref', 'Ref')})}),
+		17: ('PageMasters', {1: ('PageMaster', {1: ('Start', int64), 2: ('PageMaster ref', 'Ref')})}),
 		19: ('Languages', {1: ('Span', {1: ('Start', int64), 2: ('Language', string)})}),
 		20: ('Change IDs?', {1: ('Change ID', {1: ('Start', int64), 2: ('UUID', string)})}),
 		21: ('Changes', {1: ('Change', {1: ('Start', int64), 2: ('Change ref', 'Ref')})}),
 		23: ('Comments', {1: ('Comment', {1: ('Start', int64), 2: ('Text comment ref', 'Ref')})}),
 		24: ('Unknown numbers', { 1: ('Unknown number', { 1: ('Start', int64), 2: ('Start from', int64)})}),
+		28: ('DropCap', { 1: ('DropCap', { 1:  ('Start', int64), 2: ('DropCap ref', 'Ref')})}),
 	}),
 	2004: ('Footnote mark', {}),
 	2008: ('Footnote', {2: ('Text ref', 'Ref')}),
@@ -1132,10 +1140,18 @@ COMMON_OBJECTS = {
 	2026: ('ToC style', {
 		1: ('Paragraph style',),
 	}),
+	2031: ('LinkID', {
+		1: ('UID', string),
+		2: (None, bool_),
+	}),
 	2032: ('Link', {
 		2: ('Href', string),
 	}),
-	2043: ('Slide number', {}),
+	2043: ('Slide number', { 4: ('name', string) }),
+	2051: ('ToC unknown', {
+		1: ('Name', string),
+		3: ('styles', { 1: ('Paragraph style ref', 'Ref'), 2: ('ToC entry ref', 'Ref'), }),
+	}),
 	2052: ('ToC entry', {
 		4: ('Text', string),
 		5: ('Paragraph style ref', 'Ref'),
@@ -1163,6 +1179,7 @@ COMMON_OBJECTS = {
 		12: ('Small File ref', 'Ref'),
 		13: ('File ref?', 'Ref'),
 		15: ('Filtered ref', 'Ref'),
+		19: ('Bezier', ),
 	}),
 	3006: ('Mask', {
 		1: ('Mask placement', 'Shape placement',),
@@ -1208,6 +1225,16 @@ COMMON_OBJECTS = {
 	4004: ('Sort', {
 		3: ('Criterion', 'Formula'),
 	}),
+	5020: ('Chart', {
+		1: ('Chart Style ref', 'Ref'),
+		2: ('Chart Legend Style ref', 'Ref'),
+		3: ('Chart Axis Style ref', 'Ref'),
+		4: ('Chart Axis Style ref(II)', 'Ref'),
+		5: ('Chart Serie Style ref', 'Ref'),
+		6: ('Paragraph Style ref', 'Ref'),
+		# 7 some uid?
+		# 10000
+	}),
 	5021: ('Chart info', {
 		1: ('Shape placement',),
 		10000: ('Chart model', {
@@ -1218,10 +1245,29 @@ COMMON_OBJECTS = {
 			}),
 		}),
 	}),
+	5022: ('Chart Style', {
+		1: ('Style info', ),
+	}),
+	5024: ('Chart Legend Style', {
+		1: ('Style info', ),
+	}),
+	5026: ('Chart Axis Style', {
+		1: ('Style info', ),
+	}),
+	5028: ('Chart Serie Style', {
+		1: ('Style info', ),
+	}),
+	5030: ('Chart Reference Style', {
+		1: ('Style info', ),
+	}),
 	6000: ('Tabular info', {
 		1: ('Shape placement',),
 		2: ('Tabular model ref', 'Ref'),
 		3: ('A ref', 'Ref'),
+		4: ('A ref(II)', 'Ref'), # type 6316
+		5: ('A ref(III)', 'Ref'), # type 6318
+		7: ('An UID', 'UID'), # same id find in object of type 4008
+		8: ('An UID(II)', 'UID'), # same id find in tabular model (field 70)
 	}),
 	6001: ('Tabular model', {
 		1: ('UUID', string),
@@ -1234,13 +1280,15 @@ COMMON_OBJECTS = {
 			5: ('Cell style list ref', 'Ref'),
 			6: ('Formula list ref', 'Ref'),
 			9: ('Tile positions Y', {1: ('Tile', {1:('decal', int64), 2: ('id', int64)})}),
-			11: ('Format list ref', 'Ref'),
+			11: ('Format(input) list ref', 'Ref'),
 			12: ('Invalid formula list ref', 'Ref'),
 			16: ('Menu list ref', 'Ref'),
 			17: ('Paragraph text list ref', 'Ref'),
 			18: ('Conditional format list ref', 'Ref'),
 			19: ('Comment list ref', 'Ref'),
 			20: ('A data list ref', 'Ref'),
+			21: ('Menu Choice list ref', 'Ref'),
+			22: ('Format(value) list ref', 'Ref'),
 		}),
 		6: ('Number of rows', int64),
 		7: ('Number of columns', int64),
@@ -1369,7 +1417,7 @@ COMMON_OBJECTS = {
 			4: ('Number of cells', int64),
 		}),
 	}),
-	6008: ('Object 6008', {3: ('Object 6247 ref', 'Ref')}),
+	6008: ('Object 6247 entry', {3: ('Object 6247 ref', 'Ref')}),
 	6010: ('Conditional format', {
 		1: ('Number of rules', int64),
 		2: ('Rule', {
@@ -1443,6 +1491,26 @@ COMMON_OBJECTS = {
 			4: (None, int64),
 		}),
 	}),
+	10024: ('DropCap Style', {
+		1: ('Style info', ),
+		10: ('Number of properties', int64), # checkme
+		11: ('Character properties', ),
+		12: ('DropCap', {
+			1: ('DropCap', {
+				# 1,7: bool?
+				2: ( 'num lines', int64),
+				3: ( 'num span lines', int64),
+				6: ( 'adjust text', bool_),
+				10: ( 'num char', int64),
+				11: ( 'decrement indent', double_), # in percent
+				12: ( 'supplemental space', double_),
+				13: ( 'val2', double_), # 0.2
+				14: ( 'val3', double_), # 0.8
+			}),
+			3: ( 'Stroke', ),
+			5: ( None, { 1: ('Color', )}),
+		} ),
+	} ),
 	11006: ('MetaData', {
 		1: ('ReplaceColor Corr id', int64),
 		2: (None, {
@@ -1485,6 +1553,7 @@ KEYNOTE_OBJECTS = {
 	4: ('Slide list', {
 		1: ('Slide list ref', 'Ref'),
 		2: ('Slide ref', 'Ref'),
+		25: ('UUID', string),
 	}),
 	5: ('Slide', {
 		1: ('Style ref', 'Ref'),
@@ -1505,9 +1574,10 @@ KEYNOTE_OBJECTS = {
 		17: ('Master ref', 'Ref'),
 		20: ('Slide number placeholder ref', 'Ref'),
 		27: ('Notes ref', 'Ref'),
+		28: ('Title', { 1: (None, string), 2: ('Drawable shape ref', 'Ref') } ),
 		29: ('Style name ref', 'Ref'),
-		30: ('PlaceHolder ref', 'Ref'), # main ?
-		31: (None, 'Ref'),
+		30: ('PlaceHolder ref', 'Ref'), # main/background ?
+		31: ('Paragraph ref', 'Ref'),
 		35: ('List ref', 'Ref'),
 		36: ('Object 3047 ref', 'Ref'),
 		37: (None, string), # default title?
@@ -1516,7 +1586,7 @@ KEYNOTE_OBJECTS = {
 	}),
 	7: ('Placeholder', {
 		1: ('Drawable shape',),
-		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body'})),
+		2: ('Type', enum({1: 'Slide number', 2: 'Slide title', 3: 'Slide body', 4: 'Slide background'})),
 	}),
 	8: ('Build', {
 		1: ('Info ref', 'Ref'),
@@ -1552,8 +1622,8 @@ KEYNOTE_OBJECTS = {
 				9: ('Drawing Line Graphic Style ref', 'Ref'),
 			}),
 			110: (None, { 1: ('List Style Ref', 'Ref'), 6: ('Character Ref', 'Ref'), 7: ('Paragraph Ref', 'Ref'), }),
-			120: (None, { 1: ('Object 5020 Ref', 'Ref'), }),
-			200: (None, { 1: ('Object 6008 Ref', 'Ref'), }),
+			120: (None, { 1: ('Chart Ref', 'Ref'), }),
+			200: (None, { 1: ('Object 6247 entry Ref', 'Ref'), }),
 		}),
 		2: ('Slide list ref', 'Ref'),
 		3: ('Group UUID', string),
@@ -1603,18 +1673,19 @@ NUMBERS_OBJECTS = {
 		18: ('Header ref', 'Ref'),
 		19: ('Footer ref', 'Ref'),
 		# 20 bool
+		22: (None, 'Ref'), # to 12050
 	}),
 }
 
 PAGES_OBJECTS = {
 	10000: ('Document', {
 		2: ('Stylesheet', 'Ref'),
-		3: ('List drawables ref', 'Ref'),
+		3: ('Page Drawables List ref', 'Ref'),
 		4: ('Text body ref', 'Ref'),
-		6: ('Object 10001', 'Ref'),
+		6: ('Document styles ref', 'Ref'),
 		7: ('Document settings ref', 'Ref'),
 		15: ('Document info', ),
-		20: ('Object 10015', 'Ref'),
+		20: ('DrawablesList ref', 'Ref'),
 		30: ('Page width', float_),
 		31: ('Page height', float_),
 		32: ('Left page margin', float_),
@@ -1628,8 +1699,36 @@ PAGES_OBJECTS = {
 		43: ('Printer name', string),
 		44: ('Paper size', string),
 		47: ('Object 2411', 'Ref'),
+		48: ('TemplatePage ref', 'Ref'),
 	}),
-	10010: ('List drawables', {
+	10001: ('Document styles', {
+		1: ('Lists', {
+			3: ('Name', string),
+			4: ('Stylesheet ref', 'Ref'),
+			10: ('Color', ),
+			100: ('Graphic styles', {
+				1: ('Fill', ), # gradient
+				2: ('Fill(image)', 'Fill'),
+				3: ('Shadow', ),
+				4: ('Graphic style ref', 'Ref'),
+				5: ('Graphic style ref(II)', 'Ref'),
+				6: ('Graphic style ref(III)', 'Ref'),
+				7: ('Media style ref', 'Ref'),
+				8: ('Media style ref(II)', 'Ref'),
+				9: ('Graphic style ref(IV)', 'Ref'),
+			}),
+			110: ('Text styles', {
+				1: ('List style ref', 'Ref'),
+				4: ('ToC style ref', 'Ref'),
+				5: ('ToC unknown ref', 'Ref'),
+				6: ('Character style ref', 'Ref'),
+				7: ('Paragraph style ref', 'Ref'),
+			}),
+			120: ('Chart styles', { 1: ('Chart ref', 'Ref') }, ),
+			200: ('Object 6247 entries', { 1: ('Object 6247 entry ref', 'Ref') }, ),
+		}),
+	}),
+	10010: ('Page Drawables List', {
 		1: ('List by page', {
 			1: ('page', int64),
 			4: ('Drawable', {1: ('ref', 'Ref')}),
@@ -1640,6 +1739,7 @@ PAGES_OBJECTS = {
 		23: ('Left page h&f ref?', 'Ref'),
 		24: ('Right page h&f ref?', 'Ref'),
 		25: ('Both pages h&f ref', 'Ref'),
+		26: ('Name', string),
 		28: ('Hide h&f on first page', bool_),
 		29: ('Object 10016', 'Ref'),
 		30: ('Background', 'Fill')
@@ -1654,6 +1754,19 @@ PAGES_OBJECTS = {
 		31: ('Note format', enum({0: '1', 1: 'i', 2: '*'})),
 		32: ('Note numbering', enum({0: 'Document', 1: 'Page', 2: 'Section'})),
 		33: ('Space between notes', int64),
+	}),
+	10015: ('DrawablesList', {
+		1: ('Drawable ref', 'Ref'),
+	}),
+	10016: ('Object 10016', { # related to pagemaster
+		1: (None, {2: ('Object 3047 ref', 'Ref'),}), # maybe a ref to the template parent?
+	}),
+	10017: ('TemplatePage', {
+		1: ('Name', string),
+		3: ('SubZone', { 1: ('Name', string), 2: ('Drawable ref', 'Ref'), } ), # 3: bool?
+		# 4,5: bool?
+		6: ('Background', 'Fill'),
+		7: ('Object 3047 ref', 'Ref'),
 	}),
 	10143: ('Header & footer', {
 		1: ('Header text ref', 'Ref'),
@@ -1962,7 +2075,7 @@ def add_tile_offsets(hd, size, data):
 
 def add_tile_row(hd, size, data):
 	# The IDs point to appropriate data lists (c.f. table model)
-	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6: 'boolean', 7: 'duration', 9: 'paragraph text'}
+	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6: 'boolean', 7: 'duration', 8: 'nan', 9: 'paragraph text'}
 	off = 1
 	(typ, off) = rdata(data, off, '<B')
 	add_iter(hd, 'Data type', key2txt(typ, type_map), off - 1, 1, '<B')
@@ -1970,7 +2083,7 @@ def add_tile_row(hd, size, data):
 	flags_set = {
 		0x2: 'style', 0x4: 'format', 0x8: 'formula',
 		0x10: 'simple text', 0x20: 'number', 0x40: 'date',
-		0x80: 'unknown',
+		0x80: 'paragraph style',
 		0x200: 'paragraph text',
 		0x400: 'conditional format',
 		0x800: 'conditional format(II)',
@@ -1987,7 +2100,7 @@ def add_tile_row(hd, size, data):
 		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
 	if flags & 0x80:
 		(unkn, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Unknown ID', unkn, off - 4, 4, '<I')
+		add_iter(hd, 'Paragraph Style ID', unkn, off - 4, 4, '<I')
 	if flags & 0xc00:
 		(fmt, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Conditional format ID', fmt, off - 4, 4, '<I')
@@ -2021,10 +2134,10 @@ def add_tile_row(hd, size, data):
 
 def add_tile_row2(hd, size, data):
 	# The IDs point to appropriate data lists (c.f. table model)
-	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6:'button'}
+	type_map = {0: 'empty', 2: 'number', 3: 'simple text', 5: 'date', 6:'other', 7:'duration', 8:'nan', 9:'paragraph text', 10:'devise' }
 	off = 1
 	(typ, off) = rdata(data, off, '<B')
-	add_iter(hd, 'Data type', key2txt(typ, type_map), off - 1, 1, '<B')
+	add_iter(hd, 'Data type', key2txt(typ, type_map, "Unknown%d"%typ), off - 1, 1, '<B')
 	off +=2
 	(unkn, off) = rdata(data, off, '<I')
 	if unkn !=0 :
@@ -2036,31 +2149,39 @@ def add_tile_row2(hd, size, data):
 		0x8: 'simple text',
 		0x10: 'paragraph text',
 		0x20: 'style',
-		0x40: 'style(II)',
+		0x40: 'style(para)',
 		0x80: 'conditional',
 		0x100: 'conditional(II)',
 		0x200: 'formula',
-		0x400: 'button/menu/...',
+		0x400: 'button_menu_...',
 		0x1000: 'type',
-		0x2000: 'format',
-		0x8000: 'unknown(1)',
-		0x10000: 'unknown(2)',
-		0x20000: 'format(II)',
-		0x40000: 'format(III)',
+		0x2000: 'format(number)',
+		0x4000: 'format(devise)',
+		0x8000: 'format(date)',
+		0x10000: 'format(duration)',
+		0x20000: 'format(text)',
+		0x40000: 'format(other)',
 		0x80000: 'comment',
 	}
 	(flags, off) = rdata(data, off, '<I')
 	add_iter(hd, 'Flags', bflag2txt(flags, flags_set), off - 4, 4, '<I')
 	if flags & 0x1:
 		# mantissa on 12 bytes?, unknown: 2 bytes, exponent_10 : 2 bytes (last byte for nan?)
-		(num, off) = rdata(data, off, '<Q')
-		off+=6
+		decal=1
+		num=0
+		for i in range(7):
+			(num1, off) = rdata(data, off, '<H')
+			num+=num1*decal
+			decal*=65536
 		(exp,off) = rdata(data, off, '<H')
+		if exp & 1:
+			num+=decal
+			exp-=1
 		if exp & 0x8000:
-			add_iter(hd, 'mantissa', -num, off - 16, 8, '<Q')
+			add_iter(hd, 'mantissa', -num, off - 16, 14, '<Q')
 			exp &= 0x7fff
 		else:
-			add_iter(hd, 'mantissa', num, off - 16, 8, '<Q')
+			add_iter(hd, 'mantissa', num, off - 16, 14, '<Q')
 		add_iter(hd, 'exp', (exp-12352)/2, off - 2, 2, '<I') # 4030=0
 	if flags & 0x2:
 		(value, off) = rdata(data, off, '<d')
@@ -2081,7 +2202,7 @@ def add_tile_row2(hd, size, data):
 		add_iter(hd, 'Style ID', style, off - 4, 4, '<I')
 	if flags & 0x40:
 		(style, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Style(based) ID', style, off - 4, 4, '<I')
+		add_iter(hd, 'Style Paragraph ID', style, off - 4, 4, '<I')
 	if flags & 0x80:
 		(cond, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Conditional ID', cond, off - 4, 4, '<I')
@@ -2095,23 +2216,27 @@ def add_tile_row2(hd, size, data):
 		(button, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Button/Menu ID', button, off - 4, 4, '<I')
 	if flags & 0x1000:
+		type_res_map = {1:'number', 2:'devise', 3:'date', 4: 'duration', 5: 'text', 6: 'bool'}
 		(resType, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Type(res)', resType, off - 4, 4, '<I')
+		add_iter(hd, 'Type(res)', key2txt(resType, type_res_map, "Unknown%d"%resType), off - 4, 4, '<I')
 	if flags & 0x2000:
 		(fmt, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Format(number) ID', fmt, off - 4, 4, '<I')
+	if flags & 0x4000:
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format(bool) ID', fmt, off - 4, 4, '<I')
 	if flags & 0x8000:
-		(unkn, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Unknown ID', unkn, off - 4, 4, '<I')
+		(fmt, off) = rdata(data, off, '<I')
+		add_iter(hd, 'Format(date) ID', fmt, off - 4, 4, '<I')
 	if flags & 0x10000:
 		(unkn, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Unknown ID(2)', unkn, off - 4, 4, '<I')
+		add_iter(hd, 'Format(duration) ID', unkn, off - 4, 4, '<I')
 	if flags & 0x20000:
 		(border, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Format(cell) ID', border, off - 4, 4, '<I')
+		add_iter(hd, 'Format(text) ID', border, off - 4, 4, '<I')
 	if flags & 0x40000:
 		(unkn, off) = rdata(data, off, '<I')
-		add_iter(hd, 'Format(def,number) ID', unkn, off - 4, 4, '<I')
+		add_iter(hd, 'Format(other) ID', unkn, off - 4, 4, '<I')
 	if flags & 0x80000:
 		(unkn, off) = rdata(data, off, '<I')
 		add_iter(hd, 'Comment ID', unkn, off - 4, 4, '<I')
@@ -2160,7 +2285,7 @@ def detect(package):
 		if "Index/MasterSlide.iwa" in names:
 			return "Keynote"
 		for name in names:
-			if re.match(r'^Index/MasterSlide.*\.iwa$', name):
+			if re.match(r'^Index/MasterSlide.*\.iwa$', name) or re.match(r'^Index/Slide.*\.iwa$', name):
 				return "Keynote"
 	except:
 		pass
